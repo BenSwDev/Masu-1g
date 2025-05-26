@@ -11,6 +11,7 @@ import { generateAndSendOTP, verifyOTP } from "@/actions/notification-actions"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useToast } from "@/components/common/ui/use-toast"
+import { useSession } from "next-auth/react"
 
 interface OTPFormProps {
   className?: string
@@ -32,6 +33,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null, null, null, null])
   const router = useRouter()
   const { toast } = useToast()
+  const { data: session } = useSession()
 
   // Update current identifier when identifier prop changes
   useEffect(() => {
@@ -318,6 +320,11 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
             description: t("login.redirecting"),
             variant: "default"
           })
+          // הפניה אוטומטית לעמוד התפקיד
+          setTimeout(() => {
+            const role = session?.user?.activeRole || "member"
+            router.push(`/dashboard/${role}`)
+          }, 500)
         }
       } else {
         setError(result.message)

@@ -16,6 +16,7 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { OTPForm } from "./otp-form"
 import { useToast } from "@/components/common/ui/use-toast"
+import { useSession } from "next-auth/react"
 
 interface LoginMethodProps {
   children: ReactNode
@@ -36,6 +37,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
   const emailInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const { toast } = useToast()
+  const { data: session } = useSession()
 
   // Focus email input on mount
   useEffect(() => {
@@ -111,7 +113,11 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           variant: "default"
         })
 
-        // אין צורך ב-router.push או refresh, ה-UI יתעדכן לפי ה-session
+        // הפניה אוטומטית לעמוד התפקיד
+        setTimeout(() => {
+          const role = session?.user?.activeRole || "member"
+          router.push(`/dashboard/${role}`)
+        }, 500)
       }
     } catch (error) {
       console.error("Login error:", error)

@@ -78,13 +78,13 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
 
   const handleRoleSwitch = async (role: string) => {
     if (role === activeRole) return
-
     setIsLoading(true)
     try {
-      // Update the session with the new active role
       await update({ activeRole: role })
-      // הצג toast הצלחה
       toast({ title: "החלפת תפקיד בהצלחה", variant: "default" })
+      if (window.location.pathname !== `/dashboard/${role}`) {
+        router.push(`/dashboard/${role}`)
+      }
     } catch (error) {
       console.error("Error switching role:", error)
     } finally {

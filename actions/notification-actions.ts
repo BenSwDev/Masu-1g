@@ -103,7 +103,7 @@ export async function generateAndSendOTP(
     // עדכון חיפוש משתמש לפי טלפון - תמיכה בפורמטים שונים
     let user
     if (identifierType === "email") {
-      user = await User.findOne({ email: identifier.toLowerCase() })
+      user = await User.findOne({ email: identifier.toLowerCase() }).lean()
     } else {
       // טיפול במספרי טלפון עם או בלי 0 בהתחלה
       if (identifier.startsWith("+")) {
@@ -131,9 +131,9 @@ export async function generateAndSendOTP(
             { phone: withoutZero },
             { phone: identifier }, // הגרסה המקורית
           ],
-        })
+        }).lean()
       } else {
-        user = await User.findOne({ phone: identifier })
+        user = await User.findOne({ phone: identifier }).lean()
       }
     }
 
@@ -329,7 +329,7 @@ export async function verifyOTP(
     // Find the user
     const user = await User.findOne({ 
       [identifierType === "email" ? "email" : "phone"]: identifierType === "email" ? identifier.toLowerCase() : identifier 
-    }).exec() as (Document & IUser) | null
+    }).lean() as (Document & IUser) | null
 
     if (!user) {
       logger.warn(`[${otpId}] User not found for ${identifierType}: ${identifier}`)

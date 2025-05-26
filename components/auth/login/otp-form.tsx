@@ -316,10 +316,8 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
           toast({
             title: t("login.authenticationSuccessful"),
             description: t("login.redirecting"),
+            variant: "default"
           })
-
-          router.push("/dashboard")
-          router.refresh()
         }
       } else {
         setError(result.message)

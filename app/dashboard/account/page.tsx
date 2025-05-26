@@ -1,14 +1,20 @@
 import { AccountForm } from "@/components/dashboard/account/account-form"
 import { getUserProfile } from "@/actions/profile-actions"
 import { redirect } from "next/navigation"
-
 export const dynamic = 'force-dynamic'
 
 export default async function AccountPage() {
   const result = await getUserProfile()
 
-  if (!result.success) {
+  if (!result.success || !result.user) {
     redirect("/auth/login")
+  }
+
+  // Convert dates to strings
+  const user = {
+    ...result.user,
+    dateOfBirth: result.user.dateOfBirth?.toISOString(),
+    createdAt: result.user.createdAt.toISOString()
   }
 
   return (
@@ -18,7 +24,7 @@ export default async function AccountPage() {
         <p className="text-gray-600">Manage your account security and contact information.</p>
       </div>
 
-      <AccountForm user={result.user} />
+      <AccountForm user={user} />
     </div>
   )
 }

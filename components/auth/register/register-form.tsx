@@ -15,6 +15,7 @@ import { PhoneInput } from "@/components/common/phone-input"
 import { useRouter } from "next/navigation"
 import { registerUser } from "@/actions/auth-actions"
 import { Checkbox } from "@/components/common/ui/checkbox"
+import { useToast } from "@/components/common/ui/use-toast"
 
 export function RegisterForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
   const { t, dir } = useTranslation()
@@ -29,6 +30,7 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
   const [success, setSuccess] = useState(false)
   const [isProfessional, setIsProfessional] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   // Generate years for date of birth (from current year - 100 to current year - 13)
   const currentYear = new Date().getFullYear()
@@ -97,22 +99,26 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
       if (!result.success) {
         if (result.message === "emailExists") {
           setError(t("errors.emailExists"))
+          toast({ title: t("errors.emailExists"), variant: "destructive" })
         } else if (result.message === "phoneExists") {
           setError(t("errors.phoneExists"))
+          toast({ title: t("errors.phoneExists"), variant: "destructive" })
         } else if (result.message === "weakPassword") {
           setError(t("errors.weakPassword"))
+          toast({ title: t("errors.weakPassword"), variant: "destructive" })
         } else if (result.message === "invalidDateOfBirth") {
           setError(t("errors.invalidDateOfBirth"))
+          toast({ title: t("errors.invalidDateOfBirth"), variant: "destructive" })
         } else if (result.message === "missingFields") {
           setError(t("errors.missingFields"))
+          toast({ title: t("errors.missingFields"), variant: "destructive" })
         } else {
           setError(t("errors.registrationFailed"))
+          toast({ title: t("errors.registrationFailed"), variant: "destructive" })
         }
       } else {
         setSuccess(true)
-        setTimeout(() => {
-          router.push("/auth/login")
-        }, 2000)
+        toast({ title: t("success.registrationComplete"), variant: "default" })
       }
     } catch (error) {
       setError(t("errors.unknown"))

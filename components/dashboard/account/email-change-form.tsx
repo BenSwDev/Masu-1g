@@ -9,12 +9,14 @@ import { Input } from "@/components/common/ui/input"
 import { Label } from "@/components/common/ui/label"
 import { requestEmailChange, confirmEmailChange } from "@/actions/account-actions"
 import { Mail } from "lucide-react"
+import { useToast } from "@/components/common/ui/use-toast"
 
 interface EmailChangeFormProps {
   currentEmail: string
+  onEmailChanged?: (newEmail: string) => void
 }
 
-export function EmailChangeForm({ currentEmail }: EmailChangeFormProps) {
+export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFormProps) {
   const { t, language } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -23,6 +25,7 @@ export function EmailChangeForm({ currentEmail }: EmailChangeFormProps) {
   const [newEmail, setNewEmail] = useState("")
   const [obscuredEmail, setObscuredEmail] = useState("")
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""])
+  const { toast } = useToast()
 
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -85,10 +88,19 @@ export function EmailChangeForm({ currentEmail }: EmailChangeFormProps) {
         setStep("email")
         setNewEmail("")
         setOtpCode(["", "", "", "", "", ""])
-        // Refresh the page to show new email
-        window.location.reload()
+        if (onEmailChanged) {
+          onEmailChanged(newEmail)
+        }
+        toast({
+          title: language === "he" ? "כתובת האימייל שונתה בהצלחה" : language === "ru" ? "Адрес электронной почты успешно изменен" : "Email address changed successfully",
+          variant: "default"
+        })
       } else {
         setError(result.message)
+        toast({
+          title: result.message,
+          variant: "destructive"
+        })
       }
     } catch (error) {
       setError(t("errors.unknown"))

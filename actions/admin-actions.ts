@@ -7,9 +7,16 @@ import { UserQueries } from "@/lib/db/query-builders"
 import User from "@/lib/db/models/user"
 
 /**
- * Get all users with pagination and filtering (admin only)
+ * Get all users with pagination, filtering, and sorting (admin only)
  */
-export async function getAllUsers(page = 1, limit = 20, searchTerm?: string) {
+export async function getAllUsers(
+  page = 1,
+  limit = 20,
+  searchTerm?: string,
+  roleFilter?: string[],
+  sortField: string = "name",
+  sortDirection: "asc" | "desc" = "asc"
+) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -23,25 +30,40 @@ export async function getAllUsers(page = 1, limit = 20, searchTerm?: string) {
 
     await dbConnect()
 
-    // Use optimized query with pagination
-    let result
+    // Build query
+    const query: any = {}
+    
+    // Add search term
     if (searchTerm) {
-      // Use text search if search term is provided
-      const users = await UserQueries.searchUsers(searchTerm, limit)
-      result = {
-        users,
-        total: users.length,
-        page: 1,
-        totalPages: 1,
-      }
-    } else {
-      result = await UserQueries.findForAdmin(page, limit)
+      query.$or = [
+        { name: { $regex: searchTerm, $options: "i" } },
+        { email: { $regex: searchTerm, $options: "i" } }
+      ]
     }
+    
+    // Add role filter
+    if (roleFilter && roleFilter.length > 0) {
+      query.roles = { $in: roleFilter }
+    }
+
+    // Build sort object
+    const sort: any = {}
+    sort[sortField] = sortDirection === "asc" ? 1 : -1
+
+    // Execute query with pagination
+    const skip = (page - 1) * limit
+    const [users, total] = await Promise.all([
+      User.find(query)
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      User.countDocuments(query)
+    ])
 
     return {
       success: true,
-      ...result,
-      users: result.users.map((user: any) => ({
+      users: users.map((user: any) => ({
         id: user._id.toString(),
         name: user.name,
         email: user.email,
@@ -49,6 +71,9 @@ export async function getAllUsers(page = 1, limit = 20, searchTerm?: string) {
         roles: user.roles,
         createdAt: user.createdAt,
       })),
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
     }
   } catch (error) {
     console.error("Error getting users:", error)

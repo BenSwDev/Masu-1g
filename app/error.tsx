@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { Button } from "@/components/common/ui/button"
 import { AlertTriangle } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function Error({
   error,
@@ -11,6 +12,8 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const router = useRouter()
+
   useEffect(() => {
     // Log the error to an error reporting service
     console.error(error)
@@ -26,9 +29,7 @@ export default function Error({
           <h2 className="text-2xl font-bold tracking-tight">Something went wrong!</h2>
           <p className="text-muted-foreground">{error.message || "An unexpected error occurred. Please try again."}</p>
           <div className="flex gap-4 mt-4">
-            <Button variant="outline" onClick={() => (window.location.href = "/")}>
-              Go Home
-            </Button>
+            <Button variant="outline" onClick={() => router.push("/")}>Go Home</Button>
             <Button onClick={() => reset()}>Try Again</Button>
           </div>
         </div>

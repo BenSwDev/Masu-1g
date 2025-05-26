@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { Button } from "@/components/common/ui/button"
 import { AlertTriangle } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 export default function DashboardError({
   error,
@@ -11,6 +12,8 @@ export default function DashboardError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const router = useRouter()
+
   useEffect(() => {
     // Log the error to an error reporting service
     console.error(error)
@@ -28,7 +31,7 @@ export default function DashboardError({
             {error.message || "An error occurred while loading the dashboard."}
           </p>
           <div className="flex gap-4 mt-4">
-            <Button variant="outline" size="sm" onClick={() => (window.location.href = "/dashboard")}>
+            <Button variant="outline" size="sm" onClick={() => router.push("/dashboard")}>
               Dashboard Home
             </Button>
             <Button size="sm" onClick={() => reset()}>

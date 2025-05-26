@@ -24,6 +24,7 @@ import {
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/common/ui/dropdown-menu"
+import { toast } from "@/components/common/ui/use-toast"
 
 interface SidebarProps {
   isMobileOpen: boolean
@@ -82,9 +83,8 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
     try {
       // Update the session with the new active role
       await update({ activeRole: role })
-
-      // Redirect to the appropriate dashboard
-      router.push(`/dashboard/${role}`)
+      // הצג toast הצלחה
+      toast({ title: "החלפת תפקיד בהצלחה", variant: "default" })
     } catch (error) {
       console.error("Error switching role:", error)
     } finally {

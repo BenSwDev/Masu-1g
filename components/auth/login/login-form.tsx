@@ -107,12 +107,11 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         toast({
           title: t("login.authenticationSuccessful"),
           description: t("login.redirecting"),
-          duration: 1000, // Reduced from 3000ms to 1000ms
+          duration: 1000,
+          variant: "default"
         })
 
-        // Immediate redirect without waiting for toast
-        router.push("/dashboard")
-        router.refresh()
+        // אין צורך ב-router.push או refresh, ה-UI יתעדכן לפי ה-session
       }
     } catch (error) {
       console.error("Login error:", error)

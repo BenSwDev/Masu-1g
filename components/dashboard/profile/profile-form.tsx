@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { updateProfile } from "@/actions/profile-actions"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/common/ui/avatar"
+import { useToast } from "@/components/common/ui/use-toast"
 
 interface User {
   id: string
@@ -35,6 +36,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const { toast } = useToast()
 
   // Parse date of birth
   const dateOfBirth = user.dateOfBirth ? new Date(user.dateOfBirth) : null
@@ -93,7 +95,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
               ? "Профиль успешно обновлен"
               : "Profile updated successfully",
         )
-        router.refresh()
+        toast({
+          title: language === "he" ? "הפרופיל עודכן בהצלחה" : language === "ru" ? "Профиль успешно обновлен" : "Profile updated successfully",
+          variant: "default"
+        })
       } else {
         setError(
           language === "he"
@@ -102,6 +107,10 @@ export function ProfileForm({ user }: ProfileFormProps) {
               ? "Ошибка обновления профиля"
               : "Error updating profile",
         )
+        toast({
+          title: language === "he" ? "שגיאה בעדכון הפרופיל" : language === "ru" ? "Ошибка обновления профиля" : "Error updating profile",
+          variant: "destructive"
+        })
       }
     } catch (error) {
       setError(t("errors.unknown"))

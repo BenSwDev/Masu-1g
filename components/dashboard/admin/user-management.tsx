@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent } from "@/components/common/ui/card"
@@ -11,6 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/c
 import { makeUserAdmin, removeAdminRole, updateUserRoles } from "@/actions/admin-actions"
 import { toast } from "@/components/common/ui/use-toast"
 import { Shield, ShieldCheck, User, Briefcase, Handshake } from "lucide-react"
+import { useTranslation } from "@/lib/translations/i18n"
+import { Input } from "@/components/common/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Pagination, PaginationContent, PaginationItem } from "@/components/common/ui/pagination"
+import { ArrowUpDown } from "lucide-react"
 
 interface UserData {
   id: string
@@ -23,15 +28,101 @@ interface UserData {
 
 interface UserManagementProps {
   users: UserData[]
+  totalPages: number
+  currentPage: number
+  searchTerm?: string
+  roleFilter?: string[]
+  sortField: string
+  sortDirection: "asc" | "desc"
 }
 
-export function UserManagement({ users }: UserManagementProps) {
+export function UserManagement({ 
+  users: initialUsers,
+  totalPages: initialTotalPages,
+  currentPage: initialPage,
+  searchTerm: initialSearchTerm,
+  roleFilter: initialRoleFilter,
+  sortField: initialSortField,
+  sortDirection: initialSortDirection
+}: UserManagementProps) {
+  const { t } = useTranslation()
   const { data: session } = useSession()
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({})
-  const [localUsers, setLocalUsers] = useState<UserData[]>(users)
+  const [currentPage, setCurrentPage] = useState(initialPage)
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "")
+  const [roleFilter, setRoleFilter] = useState<string[]>(initialRoleFilter || [])
+  const [sortField, setSortField] = useState<string>(initialSortField)
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(initialSortDirection)
+  const [localUsers, setLocalUsers] = useState<UserData[]>(initialUsers)
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [selectedRoles, setSelectedRoles] = useState<Record<string, boolean>>({})
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const itemsPerPage = 10
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (currentPage > 1) params.set("page", currentPage.toString())
+    if (searchTerm) params.set("search", searchTerm)
+    if (roleFilter.length > 0) params.set("roles", roleFilter.join(","))
+    if (sortField !== "name") params.set("sortField", sortField)
+    if (sortDirection !== "asc") params.set("sortDirection", sortDirection)
+    
+    const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`
+    window.history.pushState({}, "", newUrl)
+  }, [currentPage, searchTerm, roleFilter, sortField, sortDirection])
+
+  // Filter and sort users
+  const filteredUsers = useMemo(() => {
+    let result = [...localUsers]
+    
+    // Apply search
+    if (searchTerm) {
+      result = result.filter(user => 
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+    
+    // Apply role filter
+    if (roleFilter.length > 0) {
+      result = result.filter(user => 
+        roleFilter.some(role => user.roles.includes(role))
+      )
+    }
+    
+    // Apply sorting
+    result.sort((a, b) => {
+      const aValue = a[sortField as keyof UserData]
+      const bValue = b[sortField as keyof UserData]
+      
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc' 
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue)
+      }
+      return 0
+    })
+    
+    return result
+  }, [localUsers, searchTerm, roleFilter, sortField, sortDirection])
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  // Handle sort
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
 
   // Get role icon
   const getRoleIcon = (role: string) => {
@@ -221,18 +312,71 @@ export function UserManagement({ users }: UserManagementProps) {
   return (
     <Card>
       <CardContent className="p-6">
+        {/* Search and Filters */}
+        <div className="mb-4 flex gap-4">
+          <Input
+            placeholder={t("admin.users.searchPlaceholder")}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm"
+          />
+          <Select
+            value={roleFilter.join(',')}
+            onValueChange={(value) => setRoleFilter(value ? value.split(',') : [])}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder={t("admin.users.filterByRole")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{t("admin.users.allRoles")}</SelectItem>
+              <SelectItem value="admin">{t("roles.admin")}</SelectItem>
+              <SelectItem value="professional">{t("roles.professional")}</SelectItem>
+              <SelectItem value="partner">{t("roles.partner")}</SelectItem>
+              <SelectItem value="member">{t("roles.member")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Table */}
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Roles</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("name")}
+                  className="flex items-center gap-1"
+                >
+                  {t("admin.users.name")}
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("email")}
+                  className="flex items-center gap-1"
+                >
+                  {t("admin.users.email")}
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead>{t("admin.users.roles")}</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("createdAt")}
+                  className="flex items-center gap-1"
+                >
+                  {t("admin.users.created")}
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead>{t("admin.users.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {localUsers.map((user) => (
+            {paginatedUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.name}</TableCell>
                 <TableCell>{user.email}</TableCell>
@@ -284,6 +428,47 @@ export function UserManagement({ users }: UserManagementProps) {
             ))}
           </TableBody>
         </Table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    {t("common.previous")}
+                  </Button>
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <Button
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    {t("common.next")}
+                  </Button>
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
 
         {/* Edit Roles Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

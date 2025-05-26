@@ -10,12 +10,14 @@ import { Label } from "@/components/common/ui/label"
 import { PhoneInput } from "@/components/common/phone-input"
 import { requestPhoneChange, confirmPhoneChange } from "@/actions/account-actions"
 import { Phone } from "lucide-react"
+import { useToast } from "@/components/common/ui/use-toast"
 
 interface PhoneChangeFormProps {
   currentPhone?: string
+  onPhoneChanged?: (newPhone: string) => void
 }
 
-export function PhoneChangeForm({ currentPhone }: PhoneChangeFormProps) {
+export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFormProps) {
   const { t, language } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -24,6 +26,7 @@ export function PhoneChangeForm({ currentPhone }: PhoneChangeFormProps) {
   const [newPhone, setNewPhone] = useState("")
   const [obscuredPhone, setObscuredPhone] = useState("")
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""])
+  const { toast } = useToast()
 
   const handlePhoneSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -93,10 +96,19 @@ export function PhoneChangeForm({ currentPhone }: PhoneChangeFormProps) {
         setStep("phone")
         setNewPhone("")
         setOtpCode(["", "", "", "", "", ""])
-        // Refresh the page to show new phone
-        window.location.reload()
+        if (onPhoneChanged) {
+          onPhoneChanged(newPhone)
+        }
+        toast({
+          title: language === "he" ? "מספר הטלפון שונה בהצלחה" : language === "ru" ? "Номер телефона успешно изменен" : "Phone number changed successfully",
+          variant: "default"
+        })
       } else {
         setError(result.message)
+        toast({
+          title: result.message,
+          variant: "destructive"
+        })
       }
     } catch (error) {
       setError(t("errors.unknown"))

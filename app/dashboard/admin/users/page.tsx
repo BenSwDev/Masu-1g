@@ -6,7 +6,17 @@ import { UserManagement } from "@/components/dashboard/admin/user-management"
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminUsersPage() {
+interface PageProps {
+  searchParams: {
+    page?: string
+    search?: string
+    roles?: string
+    sortField?: string
+    sortDirection?: "asc" | "desc"
+  }
+}
+
+export default async function AdminUsersPage({ searchParams }: PageProps) {
   const session = await getServerSession(authOptions)
 
   if (!session) {
@@ -18,8 +28,15 @@ export default async function AdminUsersPage() {
     redirect("/dashboard")
   }
 
-  // Fetch all users
-  const result = await getAllUsers()
+  // Parse search params
+  const page = parseInt(searchParams.page || "1")
+  const search = searchParams.search
+  const roles = searchParams.roles ? searchParams.roles.split(",") : undefined
+  const sortField = searchParams.sortField || "name"
+  const sortDirection = searchParams.sortDirection || "asc"
+
+  // Fetch users with filters
+  const result = await getAllUsers(page, 10, search, roles, sortField, sortDirection as "asc" | "desc")
   const users = result.success ? result.users : []
 
   return (
@@ -29,7 +46,15 @@ export default async function AdminUsersPage() {
         <p className="text-gray-600">Manage users and their roles.</p>
       </div>
 
-      <UserManagement users={users} />
+      <UserManagement 
+        users={users} 
+        totalPages={result.totalPages || 1}
+        currentPage={page}
+        searchTerm={search}
+        roleFilter={roles}
+        sortField={sortField}
+        sortDirection={sortDirection as "asc" | "desc"}
+      />
     </div>
   )
 }

@@ -1,0 +1,33 @@
+import type React from "react"
+import "./globals.css"
+import type { Metadata } from "next"
+import { Inter } from "next/font/google"
+import { ThemeProvider } from "@/components/common/theme-provider"
+import { I18nProvider } from "@/lib/translations/i18n"
+import { AuthProvider } from "@/components/auth/providers/auth-provider"
+
+const inter = Inter({ subsets: ["latin"] })
+
+export const metadata: Metadata = {
+  title: "Masu",
+  description: "Masu Application",
+    generator: 'v0.dev'
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <AuthProvider>
+            <I18nProvider defaultLanguage="he">{children}</I18nProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}

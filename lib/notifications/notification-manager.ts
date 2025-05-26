@@ -107,13 +107,26 @@ export class NotificationManager {
       }
       return { code, expiryDate, result: { success: true } }
     } catch (error) {
-      logger.error("Failed to send OTP:", error)
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      const errorStack = error instanceof Error ? error.stack : undefined
+      logger.error("Failed to send OTP:", {
+        error: errorMessage,
+        stack: errorStack,
+        recipientType: recipient.type,
+        recipientValue: recipient.value,
+        language: recipient.language
+      })
       return {
         code,
         expiryDate,
         result: {
           success: false,
-          error: error instanceof Error ? error.message : "Failed to send OTP",
+          error: errorMessage,
+          details: {
+            type: recipient.type,
+            value: recipient.value,
+            language: recipient.language
+          }
         },
       }
     }

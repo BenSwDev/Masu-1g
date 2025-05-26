@@ -2,6 +2,8 @@ import { ProfileForm } from "@/components/dashboard/profile/profile-form"
 import { getUserProfile } from "@/actions/profile-actions"
 import { redirect } from "next/navigation"
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProfilePage() {
   const result = await getUserProfile()
 

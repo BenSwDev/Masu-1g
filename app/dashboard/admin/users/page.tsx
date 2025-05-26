@@ -4,6 +4,8 @@ import { redirect } from "next/navigation"
 import { getAllUsers } from "@/actions/admin-actions"
 import { UserManagement } from "@/components/dashboard/admin/user-management"
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminUsersPage() {
   const session = await getServerSession(authOptions)
 

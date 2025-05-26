@@ -213,9 +213,9 @@ export async function generateAndSendOTP(
       }
     }
 
-    // Store OTP (in production, use Redis or database)
-    otpStore.set(storeKey, { code, expiryDate, attempts: 0 })
-    logger.info(`[${otpId}] OTP stored successfully, expires at: ${expiryDate.toISOString()}`)
+    // Store OTP in database
+    await VerificationQueries.createOTP(identifier, identifierType, code, 10)
+    logger.info(`[${otpId}] OTP stored in database, expires in 10 minutes`)
 
     // Return success response
     return {
@@ -225,11 +225,21 @@ export async function generateAndSendOTP(
       expiryMinutes: 10,
     }
   } catch (error) {
-    logger.error(`[${otpId}] Error generating OTP:`, error)
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const errorStack = error instanceof Error ? error.stack : undefined
+    logger.error(`[${otpId}] Error generating OTP:`, {
+      error: errorMessage,
+      stack: errorStack,
+      identifierType,
+      identifier: identifierType === "email" 
+        ? `${identifier.substring(0, 3)}***${identifier.split("@")[1]}`
+        : `${identifier.substring(0, 5)}***${identifier.substring(identifier.length - 3)}`,
+      language
+    })
     return {
       success: false,
       message: "An unexpected error occurred",
-      error: "UNKNOWN_ERROR",
+      error: "UNKNOWN_ERROR"
     }
   }
 }

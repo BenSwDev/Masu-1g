@@ -28,9 +28,10 @@ const verificationTokenSchema = new mongoose.Schema({
   },
 })
 
-// Create index for faster queries
+// Create indexes for faster queries
 verificationTokenSchema.index({ identifier: 1, identifierType: 1, code: 1 })
 verificationTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+verificationTokenSchema.index({ identifier: 1, identifierType: 1, expiresAt: 1 })
 
 const VerificationToken = mongoose.models.VerificationToken || mongoose.model("VerificationToken", verificationTokenSchema)
 

@@ -86,8 +86,13 @@ export type NotificationData =
  */
 export interface NotificationResult {
   success: boolean
-  messageId?: string
   error?: string
+  details?: {
+    type?: string
+    value?: string
+    language?: string
+  }
+  messageId?: string
 }
 
 /**

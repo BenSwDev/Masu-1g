@@ -4,7 +4,7 @@ import { validateEmail, validatePhone } from "@/lib/auth/auth"
 import { notificationManager } from "@/lib/notifications/notification-manager"
 import type { EmailRecipient, PhoneRecipient, NotificationLanguage } from "@/lib/notifications/notification-types"
 import { obscureEmail, obscurePhone } from "@/lib/notifications/notification-utils"
-import clientPromise from "@/lib/db/mongodb"
+import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
 import { logger } from "@/lib/logs/logger"
 import VerificationQueries from "@/lib/db/queries/verification-queries"
@@ -16,11 +16,6 @@ import { hashPassword } from "@/lib/auth/auth"
 
 // In-memory OTP storage (in production, should use Redis or similar)
 const otpStore = new Map<string, { code: string; expiryDate: Date; attempts: number }>()
-
-// Update the dbConnect function to use the clientPromise
-async function dbConnect() {
-  await clientPromise
-}
 
 /**
  * Generate and send OTP to email or phone

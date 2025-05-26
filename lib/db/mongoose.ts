@@ -13,10 +13,9 @@ if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable inside .env.local")
 }
 
-let cached = global.mongooseConnection
-
+let cached = (global as any).mongooseConnection
 if (!cached) {
-  cached = global.mongooseConnection = { conn: null, promise: null }
+  cached = (global as any).mongooseConnection = { conn: null, promise: null }
 }
 
 // MongoDB connection options optimized for performance
@@ -47,69 +46,14 @@ const connectionOptions = {
   retryReads: true,
 }
 
-async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn
-  }
-
+export default async function dbConnect() {
+  if (cached.conn) return cached.conn
   if (!cached.promise) {
-    cached.promise = mongoose
-      .connect(MONGODB_URI, connectionOptions)
-      .then((mongoose) => {
-        console.log("MongoDB connected successfully")
-
-        // Set up connection monitoring
-        mongoose.connection.on("connected", () => {
-          console.log("Mongoose connected to MongoDB")
-        })
-
-        mongoose.connection.on("error", (err) => {
-          console.error("Mongoose connection error:", err)
-        })
-
-        mongoose.connection.on("disconnected", () => {
-          console.log("Mongoose disconnected")
-        })
-
-        // Monitor slow queries in development
-        if (process.env.NODE_ENV === "development") {
-          mongoose.set("debug", (collectionName: string, method: string, query: any, doc: any, options: any) => {
-            const start = Date.now()
-            console.log(`${collectionName}.${method}`, JSON.stringify(query), options)
-
-            // Log slow queries (> 100ms)
-            const duration = Date.now() - start
-            if (duration > 100) {
-              console.warn(`Slow query detected: ${duration}ms`, {
-                collection: collectionName,
-                method,
-                query,
-              })
-            }
-          })
-        }
-
-        return mongoose
-      })
-      .catch((error) => {
-        console.error("MongoDB connection error:", error)
-        cached.promise = null
-        throw error
-      })
+    cached.promise = mongoose.connect(MONGODB_URI, connectionOptions).then((mongoose) => mongoose)
   }
-
-  try {
-    cached.conn = await cached.promise
-  } catch (e) {
-    cached.promise = null
-    console.error("Failed to connect to MongoDB:", e)
-    throw e
-  }
-
+  cached.conn = await cached.promise
   return cached.conn
 }
-
-export default dbConnect
 
 // Export connection stats function
 export async function getConnectionStats() {
@@ -130,4 +74,13 @@ export async function getConnectionStats() {
     console.error("Error getting connection stats:", error)
     return null
   }
+}
+
+if (process.env.NODE_ENV === "development") {
+  mongoose.set("debug", function (collectionName, method, query, doc, options) {
+    const start = Date.now()
+    const result = JSON.stringify(query)
+    const duration = Date.now() - start
+    console.log(`[Mongoose][${collectionName}.${method}] query:`, result, 'duration:', duration, 'ms')
+  })
 }

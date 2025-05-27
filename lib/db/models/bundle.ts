@@ -20,7 +20,7 @@ export interface IBundle extends Document {
     name: string
   }[]
   discountType: DiscountType
-  discountValue: number // Free quantity, percentage, or fixed amount
+  discountValue: number
   createdAt: Date
   updatedAt: Date
 }
@@ -50,7 +50,14 @@ const BundleSchema = new Schema<IBundle>(
   { timestamps: true },
 )
 
-// Create or retrieve the Bundle model
-export const Bundle: Model<IBundle> = mongoose.models.Bundle || mongoose.model<IBundle>("Bundle", BundleSchema)
+// Ensure we don't re-compile the model if it already exists
+let Bundle: Model<IBundle>
 
+try {
+  Bundle = mongoose.model<IBundle>("Bundle")
+} catch {
+  Bundle = mongoose.model<IBundle>("Bundle", BundleSchema)
+}
+
+export { Bundle }
 export default Bundle

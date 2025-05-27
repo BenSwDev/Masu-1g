@@ -5,10 +5,7 @@ import { Skeleton } from "@/components/common/ui/skeleton"
 
 // Get treatments from the database
 async function getTreatments() {
-  // This is a placeholder - you should implement the actual treatment fetching
-  // from your treatment actions file
   try {
-    // Import the treatment actions
     const { getTreatments } = await import("@/actions/treatment-actions")
     const result = await getTreatments()
     return result.success ? result.treatments : []
@@ -30,10 +27,14 @@ function extractCategories(treatments: any[]): string[] {
 }
 
 export default async function BundlesPage() {
-  // Fetch bundles and treatments
-  const bundlesResult = await getBundles()
-  const treatments = await getTreatments()
-  const categories = extractCategories(treatments)
+  // Fetch bundles and treatments with error handling
+  const [bundlesResult, treatmentsResult] = await Promise.allSettled([getBundles(), getTreatments()])
+
+  const bundles = bundlesResult.status === "fulfilled" && bundlesResult.value.success ? bundlesResult.value.bundles : []
+
+  const treatmentsList = treatmentsResult.status === "fulfilled" ? treatmentsResult.value : []
+
+  const categories = extractCategories(treatmentsList)
 
   return (
     <div className="container px-4 py-6 mx-auto max-w-7xl">
@@ -43,11 +44,7 @@ export default async function BundlesPage() {
       </div>
 
       <Suspense fallback={<BundlesSkeleton />}>
-        <BundlesClient
-          initialBundles={bundlesResult.success ? bundlesResult.bundles : []}
-          treatments={treatments}
-          categories={categories}
-        />
+        <BundlesClient initialBundles={bundles} treatments={treatmentsList} categories={categories} />
       </Suspense>
     </div>
   )

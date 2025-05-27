@@ -3,7 +3,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { PaymentMethod, type IPaymentMethod } from "@/lib/db/models/payment-method"
-import { connectToDatabase } from "@/lib/db/mongoose"
+import dbConnect from "@/lib/db/mongoose"
 import { revalidatePath } from "next/cache"
 
 export interface PaymentMethodFormData {
@@ -23,7 +23,7 @@ export async function getPaymentMethods(): Promise<IPaymentMethod[]> {
       throw new Error("Unauthorized")
     }
 
-    await connectToDatabase()
+    await dbConnect()
 
     const paymentMethods = await PaymentMethod.find({
       userId: session.user.id,
@@ -45,7 +45,7 @@ export async function createPaymentMethod(data: PaymentMethodFormData) {
       throw new Error("Unauthorized")
     }
 
-    await connectToDatabase()
+    await dbConnect()
 
     // If this is set as default, unset all other defaults
     if (data.isDefault) {
@@ -88,7 +88,7 @@ export async function updatePaymentMethod(id: string, data: PaymentMethodFormDat
       throw new Error("Unauthorized")
     }
 
-    await connectToDatabase()
+    await dbConnect()
 
     // If this is set as default, unset all other defaults
     if (data.isDefault) {
@@ -119,7 +119,7 @@ export async function deletePaymentMethod(id: string) {
       throw new Error("Unauthorized")
     }
 
-    await connectToDatabase()
+    await dbConnect()
 
     const paymentMethod = await PaymentMethod.findOneAndDelete({
       _id: id,
@@ -146,7 +146,7 @@ export async function setDefaultPaymentMethod(id: string) {
       throw new Error("Unauthorized")
     }
 
-    await connectToDatabase()
+    await dbConnect()
 
     // Unset all defaults first
     await PaymentMethod.updateMany({ userId: session.user.id }, { isDefault: false })

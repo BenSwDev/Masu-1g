@@ -87,4 +87,4 @@ class AddressQueries {
   }
 }
 
-export default AddressQueries 
+export default AddressQueries

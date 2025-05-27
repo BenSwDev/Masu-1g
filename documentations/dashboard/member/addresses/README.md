@@ -8,7 +8,7 @@ The addresses management feature allows users to manage their delivery addresses
 
 ## File Structure
 
-```
+\`\`\`
 ├── app/
 │   └── dashboard/
 │       └── member/
@@ -31,7 +31,7 @@ The addresses management feature allows users to manage their delivery addresses
 │       └── ru.json                   # Russian translations
 └── actions/
     └── address-actions.ts            # Server actions for address operations
-```
+\`\`\`
 
 ## Components
 
@@ -67,7 +67,7 @@ Form component for creating and editing addresses:
 
 ### Address Schema (`lib/db/models/address.ts`)
 
-```typescript
+\`\`\`typescript
 interface IAddress {
   userId: mongoose.Types.ObjectId
   country: string
@@ -104,7 +104,7 @@ interface IAddress {
   createdAt: Date
   updatedAt: Date
 }
-```
+\`\`\`
 
 ## Database Queries
 

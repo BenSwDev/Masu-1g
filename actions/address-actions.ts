@@ -197,4 +197,4 @@ export async function setDefaultAddress(id: string) {
     logger.error("Error setting default address:", error)
     return { success: false, error: "Failed to set default address" }
   }
-} 
+}

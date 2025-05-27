@@ -21,4 +21,4 @@ export default async function MemberPaymentMethodsPage() {
       </div>
     </div>
   )
-} 
+}

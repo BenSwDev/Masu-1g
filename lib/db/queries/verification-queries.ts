@@ -41,4 +41,4 @@ class VerificationQueries {
   }
 }
 
-export default VerificationQueries 
+export default VerificationQueries

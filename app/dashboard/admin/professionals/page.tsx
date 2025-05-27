@@ -21,4 +21,4 @@ export default async function AdminProfessionalsPage() {
       </div>
     </div>
   )
-} 
+}

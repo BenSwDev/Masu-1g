@@ -21,4 +21,4 @@ export default async function AdminPartnersPage() {
       </div>
     </div>
   )
-} 
+}

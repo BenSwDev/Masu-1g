@@ -115,4 +115,4 @@ AddressSchema.index({ createdAt: -1 })
 
 const Address: Model<IAddress> = mongoose.models.Address || mongoose.model<IAddress>("Address", AddressSchema)
 
-export default Address 
+export default Address

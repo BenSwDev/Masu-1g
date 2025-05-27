@@ -132,7 +132,17 @@
       "profile": "Profile",
       "account": "Account",
       "signOut": "Sign Out",
-      "users": "Users"
+      "users": "Users",
+      "clients": "Clients",
+      "professionals": "Professionals",
+      "partners": "Partners",
+      "treatments": "Treatments",
+      "workingHours": "Working Hours",
+      "addresses": "Addresses",
+      "paymentMethods": "Payment Methods",
+      "location": "Location Settings",
+      "bankAccount": "Bank Account",
+      "documents": "Documents"
     },
     "roles": {
       "member": "Member",

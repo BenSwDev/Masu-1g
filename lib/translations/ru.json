@@ -113,7 +113,17 @@
       "profile": "Профиль",
       "account": "Аккаунт",
       "signOut": "Выйти",
-      "users": "Пользователи"
+      "users": "Пользователи",
+      "clients": "Клиенты",
+      "professionals": "Профессионалы",
+      "partners": "Партнеры",
+      "treatments": "Процедуры",
+      "workingHours": "Часы работы",
+      "addresses": "Адреса",
+      "paymentMethods": "Способы оплаты",
+      "location": "Настройки местоположения",
+      "bankAccount": "Банковский счет",
+      "documents": "Документы"
     },
     "roles": {
       "member": "Участник",

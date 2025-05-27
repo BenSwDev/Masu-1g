@@ -20,6 +20,10 @@ import {
   ChevronDown,
   Briefcase,
   Handshake,
+  Clock,
+  MapPin,
+  CreditCard,
+  FileText,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
@@ -199,14 +203,97 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       },
     ]
 
-    // Add admin-specific menu items
+    // Add role-specific menu items
     if (activeRole === "admin") {
-      baseItems.splice(1, 0, {
-        title: t("dashboard.sidebar.users"),
-        icon: User,
-        href: "/dashboard/admin/users",
-        isActive: pathname === "/dashboard/admin/users",
-      })
+      baseItems.push(
+        {
+          title: t("dashboard.sidebar.users"),
+          icon: User,
+          href: "/dashboard/admin/users",
+          isActive: pathname === "/dashboard/admin/users",
+        },
+        {
+          title: t("dashboard.sidebar.clients"),
+          icon: User,
+          href: "/dashboard/admin/clients",
+          isActive: pathname === "/dashboard/admin/clients",
+        },
+        {
+          title: t("dashboard.sidebar.professionals"),
+          icon: Briefcase,
+          href: "/dashboard/admin/professionals",
+          isActive: pathname === "/dashboard/admin/professionals",
+        },
+        {
+          title: t("dashboard.sidebar.partners"),
+          icon: Handshake,
+          href: "/dashboard/admin/partners",
+          isActive: pathname === "/dashboard/admin/partners",
+        },
+        {
+          title: t("dashboard.sidebar.treatments"),
+          icon: Shield,
+          href: "/dashboard/admin/treatments",
+          isActive: pathname === "/dashboard/admin/treatments",
+        },
+        {
+          title: t("dashboard.sidebar.workingHours"),
+          icon: Clock,
+          href: "/dashboard/admin/working-hours",
+          isActive: pathname === "/dashboard/admin/working-hours",
+        }
+      )
+    } else if (activeRole === "member") {
+      baseItems.push(
+        {
+          title: t("dashboard.sidebar.addresses"),
+          icon: MapPin,
+          href: "/dashboard/member/addresses",
+          isActive: pathname === "/dashboard/member/addresses",
+        },
+        {
+          title: t("dashboard.sidebar.paymentMethods"),
+          icon: CreditCard,
+          href: "/dashboard/member/payment-methods",
+          isActive: pathname === "/dashboard/member/payment-methods",
+        }
+      )
+    } else if (activeRole === "professional") {
+      baseItems.push(
+        {
+          title: t("dashboard.sidebar.profile"),
+          icon: User,
+          href: "/dashboard/professional/profile",
+          isActive: pathname === "/dashboard/professional/profile",
+        },
+        {
+          title: t("dashboard.sidebar.location"),
+          icon: MapPin,
+          href: "/dashboard/professional/location",
+          isActive: pathname === "/dashboard/professional/location",
+        },
+        {
+          title: t("dashboard.sidebar.bankAccount"),
+          icon: CreditCard,
+          href: "/dashboard/professional/bank-account",
+          isActive: pathname === "/dashboard/professional/bank-account",
+        },
+        {
+          title: t("dashboard.sidebar.documents"),
+          icon: FileText,
+          href: "/dashboard/professional/documents",
+          isActive: pathname === "/dashboard/professional/documents",
+        }
+      )
+    } else if (activeRole === "partner") {
+      baseItems.push(
+        {
+          title: t("dashboard.sidebar.profile"),
+          icon: User,
+          href: "/dashboard/partner/profile",
+          isActive: pathname === "/dashboard/partner/profile",
+        }
+      )
     }
 
     return baseItems

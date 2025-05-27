@@ -132,7 +132,17 @@
       "profile": "פרופיל",
       "account": "חשבון",
       "signOut": "התנתק",
-      "users": "משתמשים"
+      "users": "משתמשים",
+      "clients": "לקוחות",
+      "professionals": "בעלי מקצוע",
+      "partners": "שותפים",
+      "treatments": "טיפולים",
+      "workingHours": "שעות פעילות",
+      "addresses": "ניהול כתובות",
+      "paymentMethods": "אמצעי תשלום",
+      "location": "הגדרות מיקום",
+      "bankAccount": "פרטי חשבון בנק",
+      "documents": "העלאת מסמכים"
     },
     "roles": {
       "member": "חבר",

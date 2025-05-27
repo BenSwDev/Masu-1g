@@ -16,6 +16,7 @@ export function PaymentMethodsClient({ initialPaymentMethods }: PaymentMethodsCl
   const { t } = useTranslation()
   const [showForm, setShowForm] = useState(false)
   const [editingPaymentMethod, setEditingPaymentMethod] = useState<IPaymentMethod | undefined>()
+  const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>(initialPaymentMethods)
 
   const handleEdit = (paymentMethod: IPaymentMethod) => {
     setEditingPaymentMethod(paymentMethod)
@@ -25,6 +26,27 @@ export function PaymentMethodsClient({ initialPaymentMethods }: PaymentMethodsCl
   const handleCloseForm = () => {
     setShowForm(false)
     setEditingPaymentMethod(undefined)
+  }
+
+  const updatePaymentMethods = (updatedMethod: IPaymentMethod) => {
+    setPaymentMethods((prev) => prev.map((method) => (method._id === updatedMethod._id ? updatedMethod : method)))
+  }
+
+  const addPaymentMethod = (newMethod: IPaymentMethod) => {
+    setPaymentMethods((prev) => [...prev, newMethod])
+  }
+
+  const removePaymentMethod = (methodId: string) => {
+    setPaymentMethods((prev) => prev.filter((method) => method._id !== methodId))
+  }
+
+  const setDefaultMethod = (methodId: string) => {
+    setPaymentMethods((prev) =>
+      prev.map((method) => ({
+        ...method,
+        isDefault: method._id === methodId,
+      })),
+    )
   }
 
   return (
@@ -37,7 +59,7 @@ export function PaymentMethodsClient({ initialPaymentMethods }: PaymentMethodsCl
         </Button>
       </div>
 
-      {initialPaymentMethods.length === 0 ? (
+      {paymentMethods.length === 0 ? (
         <div className="text-center py-12">
           <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
             <Plus className="w-8 h-8 text-gray-400" />
@@ -51,8 +73,15 @@ export function PaymentMethodsClient({ initialPaymentMethods }: PaymentMethodsCl
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {initialPaymentMethods.map((paymentMethod) => (
-            <PaymentMethodCard key={paymentMethod._id} paymentMethod={paymentMethod} onEdit={handleEdit} />
+          {paymentMethods.map((paymentMethod) => (
+            <PaymentMethodCard
+              key={paymentMethod._id}
+              paymentMethod={paymentMethod}
+              onEdit={handleEdit}
+              onUpdate={updatePaymentMethods}
+              onDelete={removePaymentMethod}
+              onSetDefault={setDefaultMethod}
+            />
           ))}
         </div>
       )}

@@ -49,43 +49,40 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
   const form = useForm<PaymentMethodFormValues>({
     resolver: zodResolver(paymentMethodSchema),
     defaultValues: {
-      cardNumber: paymentMethod?.cardNumber || "",
-      expiryMonth: paymentMethod?.expiryMonth || "",
-      expiryYear: paymentMethod?.expiryYear || "",
-      cvv: paymentMethod?.cvv || "",
-      cardHolderName: paymentMethod?.cardHolderName || "",
-      cardName: paymentMethod?.cardName || "",
-      isDefault: paymentMethod?.isDefault || false,
+      cardNumber: "",
+      expiryMonth: "",
+      expiryYear: "",
+      cvv: "",
+      cardHolderName: "",
+      cardName: "",
+      isDefault: false,
     },
   })
 
   useEffect(() => {
-    if (open) {
-      if (paymentMethod) {
-        // Only fill form when editing
-        form.reset({
-          cardNumber: paymentMethod.cardNumber || "",
-          expiryMonth: paymentMethod.expiryMonth || "",
-          expiryYear: paymentMethod.expiryYear || "",
-          cvv: paymentMethod.cvv || "",
-          cardHolderName: paymentMethod.cardHolderName || "",
-          cardName: paymentMethod.cardName || "",
-          isDefault: paymentMethod.isDefault || false,
-        })
-      } else {
-        // Reset form for new card
-        form.reset({
-          cardNumber: "",
-          expiryMonth: "",
-          expiryYear: "",
-          cvv: "",
-          cardHolderName: "",
-          cardName: "",
-          isDefault: false,
-        })
-      }
+    if (paymentMethod && isEditing) {
+      form.reset({
+        cardNumber: paymentMethod.cardNumber || "",
+        expiryMonth: paymentMethod.expiryMonth || "",
+        expiryYear: paymentMethod.expiryYear || "",
+        cvv: paymentMethod.cvv || "",
+        cardHolderName: paymentMethod.cardHolderName || "",
+        cardName: paymentMethod.cardName || "",
+        isDefault: paymentMethod.isDefault || false,
+      })
+    } else if (!isEditing) {
+      // Reset to empty values for new payment method
+      form.reset({
+        cardNumber: "",
+        expiryMonth: "",
+        expiryYear: "",
+        cvv: "",
+        cardHolderName: "",
+        cardName: "",
+        isDefault: false,
+      })
     }
-  }, [open, paymentMethod, form])
+  }, [paymentMethod, isEditing, form])
 
   const onSubmit = async (data: PaymentMethodFormValues) => {
     setIsLoading(true)
@@ -108,8 +105,6 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
         toast.success(isEditing ? t("paymentMethods.updated") : t("paymentMethods.created"))
         onOpenChange(false)
         form.reset()
-        // Force refresh of the page data
-        window.location.reload()
       } else {
         toast.error(isEditing ? t("paymentMethods.updateError") : t("paymentMethods.createError"))
       }

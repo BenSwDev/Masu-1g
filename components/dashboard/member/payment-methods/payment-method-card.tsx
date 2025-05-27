@@ -29,9 +29,12 @@ import { useTranslation } from "@/lib/translations/i18n"
 interface PaymentMethodCardProps {
   paymentMethod: IPaymentMethod
   onEdit: (paymentMethod: IPaymentMethod) => void
+  onUpdate?: (paymentMethod: IPaymentMethod) => void
+  onDelete?: (methodId: string) => void
+  onSetDefault?: (methodId: string) => void
 }
 
-export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardProps) {
+export function PaymentMethodCard({ paymentMethod, onEdit, onUpdate, onDelete, onSetDefault }: PaymentMethodCardProps) {
   const { t } = useTranslation()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -42,9 +45,7 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
       const result = await deletePaymentMethod(paymentMethod._id)
       if (result.success) {
         toast.success(t("paymentMethods.deleted"))
-        setShowDeleteDialog(false)
-        // Force refresh to show updated list
-        window.location.reload()
+        onDelete?.(paymentMethod._id) // עדכון מיידי
       } else {
         toast.error(t("paymentMethods.deleteError"))
       }
@@ -52,6 +53,7 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
       toast.error(t("paymentMethods.error"))
     } finally {
       setIsLoading(false)
+      setShowDeleteDialog(false)
     }
   }
 
@@ -63,8 +65,7 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
       const result = await setDefaultPaymentMethod(paymentMethod._id)
       if (result.success) {
         toast.success(t("paymentMethods.defaultSet"))
-        // Force refresh to show updated state
-        window.location.reload()
+        onSetDefault?.(paymentMethod._id) // עדכון מיידי
       } else {
         toast.error(t("paymentMethods.setDefaultError"))
       }

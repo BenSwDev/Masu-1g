@@ -25,22 +25,13 @@ export function PaymentMethodsClient({ initialPaymentMethods }: PaymentMethodsCl
   const handleCloseForm = () => {
     setShowForm(false)
     setEditingPaymentMethod(undefined)
-    // Force refresh to show updated data
-    if (typeof window !== "undefined") {
-      window.location.reload()
-    }
-  }
-
-  const handleAddNew = () => {
-    setEditingPaymentMethod(undefined)
-    setShowForm(true)
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-semibold text-gray-900">{t("paymentMethods.title")}</h2>
-        <Button onClick={handleAddNew}>
+        <Button onClick={() => setShowForm(true)}>
           <Plus className="mr-2 h-4 w-4" />
           {t("paymentMethods.addNew")}
         </Button>
@@ -53,7 +44,7 @@ export function PaymentMethodsClient({ initialPaymentMethods }: PaymentMethodsCl
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">{t("paymentMethods.noPaymentMethods")}</h3>
           <p className="text-gray-500 mb-6">הוסף את אמצעי התשלום הראשון שלך כדי להתחיל</p>
-          <Button onClick={handleAddNew}>
+          <Button onClick={() => setShowForm(true)}>
             <Plus className="mr-2 h-4 w-4" />
             {t("paymentMethods.addNew")}
           </Button>

@@ -60,29 +60,32 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
   })
 
   useEffect(() => {
-    if (paymentMethod && isEditing) {
-      form.reset({
-        cardNumber: paymentMethod.cardNumber || "",
-        expiryMonth: paymentMethod.expiryMonth || "",
-        expiryYear: paymentMethod.expiryYear || "",
-        cvv: paymentMethod.cvv || "",
-        cardHolderName: paymentMethod.cardHolderName || "",
-        cardName: paymentMethod.cardName || "",
-        isDefault: paymentMethod.isDefault || false,
-      })
-    } else if (!isEditing) {
-      // Reset form for new card
-      form.reset({
-        cardNumber: "",
-        expiryMonth: "",
-        expiryYear: "",
-        cvv: "",
-        cardHolderName: "",
-        cardName: "",
-        isDefault: false,
-      })
+    if (open) {
+      if (paymentMethod) {
+        // Only fill form when editing
+        form.reset({
+          cardNumber: paymentMethod.cardNumber || "",
+          expiryMonth: paymentMethod.expiryMonth || "",
+          expiryYear: paymentMethod.expiryYear || "",
+          cvv: paymentMethod.cvv || "",
+          cardHolderName: paymentMethod.cardHolderName || "",
+          cardName: paymentMethod.cardName || "",
+          isDefault: paymentMethod.isDefault || false,
+        })
+      } else {
+        // Reset form for new card
+        form.reset({
+          cardNumber: "",
+          expiryMonth: "",
+          expiryYear: "",
+          cvv: "",
+          cardHolderName: "",
+          cardName: "",
+          isDefault: false,
+        })
+      }
     }
-  }, [paymentMethod, isEditing, form])
+  }, [open, paymentMethod, form])
 
   const onSubmit = async (data: PaymentMethodFormValues) => {
     setIsLoading(true)
@@ -105,6 +108,8 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
         toast.success(isEditing ? t("paymentMethods.updated") : t("paymentMethods.created"))
         onOpenChange(false)
         form.reset()
+        // Force refresh of the page data
+        window.location.reload()
       } else {
         toast.error(isEditing ? t("paymentMethods.updateError") : t("paymentMethods.createError"))
       }
@@ -141,22 +146,9 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
     return { value: year, label: year }
   })
 
-  const handleCloseForm = () => {
-    form.reset({
-      cardNumber: "",
-      expiryMonth: "",
-      expiryYear: "",
-      cvv: "",
-      cardHolderName: "",
-      cardName: "",
-      isDefault: false,
-    })
-    onOpenChange(false)
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md mx-4 sm:mx-auto max-w-[calc(100vw-2rem)]">
+      <DialogContent className="sm:max-w-md mx-4 sm:mx-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? t("paymentMethods.edit") : t("paymentMethods.addNew")}</DialogTitle>
         </DialogHeader>
@@ -303,7 +295,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
             />
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={handleCloseForm} disabled={isLoading}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isLoading} className="bg-turquoise-500 hover:bg-turquoise-600">

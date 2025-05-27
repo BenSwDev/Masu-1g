@@ -49,13 +49,12 @@ export async function createPaymentMethod(data: PaymentMethodFormData) {
 
     // If this is set as default, unset all other defaults
     if (data.isDefault) {
-      await PaymentMethod.updateMany({ userId: session.user.id }, { isDefault: false })
+      await PaymentMethod.updateMany({ userId: session.user.id }, { $set: { isDefault: false } })
     }
 
     // Generate card name if not provided
     let cardName = data.cardName
     if (!cardName) {
-      const existingCount = await PaymentMethod.countDocuments({ userId: session.user.id })
       const lastFourDigits = data.cardNumber.slice(-4)
       cardName = `כרטיס ${lastFourDigits}`
     }
@@ -72,7 +71,9 @@ export async function createPaymentMethod(data: PaymentMethodFormData) {
     })
 
     await paymentMethod.save()
+
     revalidatePath("/dashboard/member/payment-methods")
+    revalidatePath("/dashboard")
 
     return { success: true, paymentMethod: JSON.parse(JSON.stringify(paymentMethod)) }
   } catch (error) {
@@ -92,18 +93,21 @@ export async function updatePaymentMethod(id: string, data: PaymentMethodFormDat
 
     // If this is set as default, unset all other defaults
     if (data.isDefault) {
-      await PaymentMethod.updateMany({ userId: session.user.id, _id: { $ne: id } }, { isDefault: false })
+      await PaymentMethod.updateMany({ userId: session.user.id, _id: { $ne: id } }, { $set: { isDefault: false } })
     }
 
-    const paymentMethod = await PaymentMethod.findOneAndUpdate({ _id: id, userId: session.user.id }, data, {
-      new: true,
-    })
+    const paymentMethod = await PaymentMethod.findOneAndUpdate(
+      { _id: id, userId: session.user.id },
+      { $set: data },
+      { new: true },
+    )
 
     if (!paymentMethod) {
       throw new Error("Payment method not found")
     }
 
     revalidatePath("/dashboard/member/payment-methods")
+    revalidatePath("/dashboard")
 
     return { success: true, paymentMethod: JSON.parse(JSON.stringify(paymentMethod)) }
   } catch (error) {
@@ -131,6 +135,7 @@ export async function deletePaymentMethod(id: string) {
     }
 
     revalidatePath("/dashboard/member/payment-methods")
+    revalidatePath("/dashboard")
 
     return { success: true }
   } catch (error) {
@@ -148,13 +153,13 @@ export async function setDefaultPaymentMethod(id: string) {
 
     await dbConnect()
 
-    // Unset all defaults first
-    await PaymentMethod.updateMany({ userId: session.user.id }, { isDefault: false })
+    // First, unset all defaults for this user
+    await PaymentMethod.updateMany({ userId: session.user.id }, { $set: { isDefault: false } })
 
-    // Set the selected one as default
+    // Then set the selected one as default
     const paymentMethod = await PaymentMethod.findOneAndUpdate(
       { _id: id, userId: session.user.id },
-      { isDefault: true },
+      { $set: { isDefault: true } },
       { new: true },
     )
 
@@ -163,8 +168,9 @@ export async function setDefaultPaymentMethod(id: string) {
     }
 
     revalidatePath("/dashboard/member/payment-methods")
+    revalidatePath("/dashboard")
 
-    return { success: true }
+    return { success: true, paymentMethod: JSON.parse(JSON.stringify(paymentMethod)) }
   } catch (error) {
     console.error("Error setting default payment method:", error)
     return { success: false, error: "Failed to set default payment method" }

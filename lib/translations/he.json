@@ -151,5 +151,58 @@
       "partner": "שותף",
       "switchRole": "החלף תפקיד"
     }
+  },
+  "addresses": {
+    "title": "ניהול כתובות",
+    "addNew": "הוסף כתובת חדשה",
+    "edit": "ערוך כתובת",
+    "noAddresses": "אין כתובות",
+    "types": {
+      "apartment": "דירה",
+      "house": "בית פרטי",
+      "office": "משרד",
+      "hotel": "מלון",
+      "other": "אחר"
+    },
+    "fields": {
+      "country": "מדינה",
+      "city": "עיר",
+      "street": "רחוב",
+      "streetNumber": "מספר בית",
+      "addressType": "סוג כתובת",
+      "floor": "קומה",
+      "apartmentNumber": "מספר דירה",
+      "entrance": "כניסה",
+      "doorName": "שם דלת",
+      "buildingName": "שם בניין",
+      "hotelName": "שם מלון",
+      "roomNumber": "מספר חדר",
+      "instructions": "הוראות הגעה",
+      "hasPrivateParking": "חניה פרטית",
+      "isDefault": "כתובת ברירת מחדל",
+      "additionalNotes": "הערות נוספות"
+    },
+    "createSuccess": "הכתובת נוצרה בהצלחה",
+    "createError": "שגיאה ביצירת הכתובת",
+    "updateSuccess": "הכתובת עודכנה בהצלחה",
+    "updateError": "שגיאה בעדכון הכתובת",
+    "deleteSuccess": "הכתובת נמחקה בהצלחה",
+    "deleteError": "שגיאה במחיקת הכתובת",
+    "setDefaultSuccess": "הכתובת הוגדרה כברירת מחדל",
+    "setDefaultError": "שגיאה בהגדרת כתובת כברירת מחדל",
+    "error": "אירעה שגיאה",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק כתובת זו?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
+    "noDetails": "אין פרטים נוספים",
+    "setDefault": "הגדר כברירת מחדל",
+    "setDefaultError": "שגיאה בהגדרת כתובת כברירת מחדל",
+    "deleted": "הכתובת נמחקה",
+    "defaultSet": "כתובת ברירת מחדל עודכנה",
+    "defaultSetError": "שגיאה בהגדרת כתובת כברירת מחדל",
+    "created": "הכתובת נוצרה",
+    "updated": "הכתובת עודכנה",
+    "updateError": "שגיאה בעדכון הכתובת",
+    "createError": "שגיאה ביצירת הכתובת",
+    "edit": "ערוך כתובת"
   }
 }

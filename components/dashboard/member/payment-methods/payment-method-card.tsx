@@ -85,9 +85,9 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
 
   return (
     <>
-      <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-lg">
-        {/* Credit Card Design */}
-        <div className="relative h-48 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white p-6 rounded-t-lg">
+      <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-lg mx-4 sm:mx-0">
+        {/* Credit Card Design - Changed to teal/turquoise */}
+        <div className="relative h-48 bg-gradient-to-br from-teal-500 via-teal-600 to-teal-700 text-white p-6 rounded-t-lg">
           {/* Card Background Pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-4 right-4 w-12 h-8 bg-white rounded opacity-50"></div>
@@ -110,7 +110,10 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
             </div>
 
             <div className="space-y-4">
-              <div className="text-xl font-mono tracking-wider">{maskCardNumber(paymentMethod.cardNumber)}</div>
+              {/* Card number - centered for RTL */}
+              <div className="text-xl font-mono tracking-wider text-center">
+                {maskCardNumber(paymentMethod.cardNumber)}
+              </div>
 
               <div className="flex justify-between items-end">
                 <div>
@@ -119,9 +122,10 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
                   </div>
                   <div className="font-medium">{paymentMethod.cardHolderName}</div>
                 </div>
-                <div className="text-right">
+                <div className="text-center">
                   <div className="text-xs opacity-75 uppercase tracking-wide">{t("paymentMethods.fields.expiry")}</div>
-                  <div className="font-mono">
+                  {/* Expiry date - centered for RTL */}
+                  <div className="font-mono text-center">
                     {paymentMethod.expiryMonth}/{paymentMethod.expiryYear}
                   </div>
                 </div>
@@ -137,7 +141,7 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
               <h3 className="font-medium text-gray-900">
                 {paymentMethod.cardName || `כרטיס ${paymentMethod.cardNumber.slice(-4)}`}
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 text-center">
                 {getCardType(paymentMethod.cardNumber)} • {maskCardNumber(paymentMethod.cardNumber)}
               </p>
             </div>
@@ -170,7 +174,7 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
       </Card>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="mx-4 sm:mx-auto">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("paymentMethods.deleteConfirm")}</AlertDialogTitle>
             <AlertDialogDescription>{t("paymentMethods.deleteConfirmDescription")}</AlertDialogDescription>

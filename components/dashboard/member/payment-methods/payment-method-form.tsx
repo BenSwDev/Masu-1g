@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -58,6 +58,20 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
       isDefault: paymentMethod?.isDefault || false,
     },
   })
+
+  useEffect(() => {
+    if (paymentMethod) {
+      form.reset({
+        cardNumber: paymentMethod.cardNumber || "",
+        expiryMonth: paymentMethod.expiryMonth || "",
+        expiryYear: paymentMethod.expiryYear || "",
+        cvv: paymentMethod.cvv || "",
+        cardHolderName: paymentMethod.cardHolderName || "",
+        cardName: paymentMethod.cardName || "",
+        isDefault: paymentMethod.isDefault || false,
+      })
+    }
+  }, [paymentMethod, form])
 
   const onSubmit = async (data: PaymentMethodFormValues) => {
     setIsLoading(true)
@@ -118,7 +132,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md mx-4 sm:mx-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? t("paymentMethods.edit") : t("paymentMethods.addNew")}</DialogTitle>
         </DialogHeader>
@@ -138,6 +152,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
                       value={formatCardNumber(field.value)}
                       onChange={(e) => handleCardNumberChange(e.target.value)}
                       maxLength={19}
+                      className="text-center"
                     />
                   </FormControl>
                   <FormMessage />
@@ -212,6 +227,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
                         const value = e.target.value.replace(/\D/g, "")
                         field.onChange(value)
                       }}
+                      className="text-center"
                     />
                   </FormControl>
                   <FormMessage />
@@ -266,7 +282,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading} className="bg-turquoise-500 hover:bg-turquoise-600">
                 {isLoading ? t("common.loading") : t("common.save")}
               </Button>
             </div>

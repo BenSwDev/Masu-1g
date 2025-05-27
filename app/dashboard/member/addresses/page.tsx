@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/common/ui/button"
 import { Skeleton } from "@/components/common/ui/skeleton"
-import { AddressCard } from "@/components/dashboard/addresses/address-card"
-import { AddressForm } from "@/components/dashboard/addresses/address-form"
+import { AddressCard } from "@/components/dashboard/member/addresses/address-card"
+import { AddressForm } from "@/components/dashboard/member/addresses/address-form"
 import { getUserAddresses } from "@/actions/address-actions"
 import type { IAddress } from "@/lib/db/models/address"
 import { useTranslation } from "@/lib/translations/i18n"

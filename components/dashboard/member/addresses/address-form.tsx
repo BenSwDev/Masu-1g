@@ -1,8 +1,10 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { IAddress } from "@/lib/db/models/address"
+import type { IAddress } from "@/lib/db/models/address"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Label } from "@/components/common/ui/label"
@@ -47,7 +49,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
       switch (data.addressType) {
         case "apartment":
           data.apartmentDetails = {
-            floor: parseInt(formData.get("floor") as string),
+            floor: Number.parseInt(formData.get("floor") as string),
             apartmentNumber: formData.get("apartmentNumber") as string,
             entrance: formData.get("entrance") as string,
           }
@@ -62,7 +64,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
           data.officeDetails = {
             buildingName: formData.get("buildingName") as string,
             entrance: formData.get("entrance") as string,
-            floor: parseInt(formData.get("floor") as string),
+            floor: Number.parseInt(formData.get("floor") as string),
           }
           break
         case "hotel":
@@ -78,9 +80,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
           break
       }
 
-      const result = address
-        ? await updateAddress(address._id.toString(), data)
-        : await createAddress(data)
+      const result = address ? await updateAddress(address._id.toString(), data) : await createAddress(data)
 
       if (result.success) {
         toast.success(address ? t("addresses.updateSuccess") : t("addresses.createSuccess"))
@@ -102,13 +102,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="city">{t("addresses.fields.city")}</Label>
-          <Input
-            id="city"
-            name="city"
-            defaultValue={address?.city}
-            required
-            className="focus:ring-turquoise-500"
-          />
+          <Input id="city" name="city" defaultValue={address?.city} required className="focus:ring-turquoise-500" />
         </div>
 
         <div className="space-y-2">
@@ -135,11 +129,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="addressType">{t("addresses.fields.addressType")}</Label>
-          <Select
-            name="addressType"
-            defaultValue={addressType}
-            onValueChange={setAddressType}
-          >
+          <Select name="addressType" defaultValue={addressType} onValueChange={setAddressType}>
             <SelectTrigger className="focus:ring-turquoise-500">
               <SelectValue />
             </SelectTrigger>
@@ -326,18 +316,16 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
         >
           {t("common.cancel")}
         </Button>
-        <Button 
-          type="submit" 
-          disabled={isLoading}
-          className="bg-turquoise-500 hover:bg-turquoise-600"
-        >
+        <Button type="submit" disabled={isLoading} className="bg-turquoise-500 hover:bg-turquoise-600">
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               {t("common.loading")}
             </>
+          ) : address ? (
+            t("common.save")
           ) : (
-            address ? t("common.save") : t("common.create")
+            t("common.create")
           )}
         </Button>
       </div>

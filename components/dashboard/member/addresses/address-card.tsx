@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { IAddress } from "@/lib/db/models/address"
+import type { IAddress } from "@/lib/db/models/address"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
@@ -10,7 +10,17 @@ import { MapPin, Edit, Trash2, Star } from "lucide-react"
 import { setDefaultAddress, deleteAddress } from "@/actions/address-actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/common/ui/alert-dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/common/ui/alert-dialog"
 import { useQueryClient } from "@tanstack/react-query"
 
 interface AddressCardProps {
@@ -59,10 +69,10 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
   }
 
   // Compose the main address line
-  const mainLine = [address.street, address.streetNumber, address.city]
-    .filter((v) => typeof v === 'string' && v.trim() !== '')
-    .join(' ')
-    || t('addresses.noDetails')
+  const mainLine =
+    [address.street, address.streetNumber, address.city]
+      .filter((v) => typeof v === "string" && v.trim() !== "")
+      .join(" ") || t("addresses.noDetails")
 
   // Compose details
   const details: string[] = []
@@ -118,9 +128,7 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
     <Card className="relative overflow-hidden hover:shadow-md transition-shadow duration-200">
       <CardHeader className="pb-2 flex flex-col items-start gap-2">
         <div className="flex items-center gap-2 w-full">
-          <CardTitle className="text-lg font-bold flex-1">
-            {mainLine}
-          </CardTitle>
+          <CardTitle className="text-lg font-bold flex-1">{mainLine}</CardTitle>
           <MapPin className="h-5 w-5 text-turquoise-500" />
         </div>
         <CardDescription className="text-turquoise-700 font-medium">
@@ -134,11 +142,13 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
       </CardHeader>
       <CardContent className="pb-2">
         <div className="space-y-1 text-sm text-gray-600">
-          {details.length > 0 ? details.map((detail, index) => (
-            <p key={index} className="text-sm text-muted-foreground">
-              {detail}
-            </p>
-          )) : (
+          {details.length > 0 ? (
+            details.map((detail, index) => (
+              <p key={index} className="text-sm text-muted-foreground">
+                {detail}
+              </p>
+            ))
+          ) : (
             <p className="text-sm text-muted-foreground">{t("addresses.noDetails")}</p>
           )}
         </div>
@@ -170,12 +180,7 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
         </div>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button
-              variant="destructive"
-              size="sm"
-              disabled={isLoading}
-              className="flex items-center gap-2"
-            >
+            <Button variant="destructive" size="sm" disabled={isLoading} className="flex items-center gap-2">
               <Trash2 className="h-4 w-4 ml-2" />
               {t("common.delete")}
             </Button>
@@ -183,15 +188,11 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{t("addresses.deleteConfirm")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("addresses.deleteConfirmDescription")}
-              </AlertDialogDescription>
+              <AlertDialogDescription>{t("addresses.deleteConfirmDescription")}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>
-                {t("common.delete")}
-              </AlertDialogAction>
+              <AlertDialogAction onClick={handleDelete}>{t("common.delete")}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

@@ -204,5 +204,37 @@
     "updateError": "שגיאה בעדכון הכתובת",
     "createError": "שגיאה ביצירת הכתובת",
     "edit": "ערוך כתובת"
+  },
+  "paymentMethods": {
+    "title": "ניהול אמצעי תשלום",
+    "addNew": "הוסף אמצעי תשלום חדש",
+    "edit": "ערוך אמצעי תשלום",
+    "noPaymentMethods": "אין אמצעי תשלום",
+    "fields": {
+      "cardNumber": "מספר כרטיס",
+      "expiryMonth": "חודש תוקף",
+      "expiryYear": "שנת תוקף",
+      "expiry": "תוקף",
+      "cvv": "CVV",
+      "cardHolderName": "שם בעל הכרטיס",
+      "cardName": "שם הכרטיס",
+      "isDefault": "ברירת מחדל"
+    },
+    "createSuccess": "אמצעי התשלום נוצר בהצלחה",
+    "createError": "שגיאה ביצירת אמצעי התשלום",
+    "updateSuccess": "אמצעי התשלום עודכן בהצלחה",
+    "updateError": "שגיאה בעדכון אמצעי התשלום",
+    "deleteSuccess": "אמצעי התשלום נמחק בהצלחה",
+    "deleteError": "שגיאה במחיקת אמצעי התשלום",
+    "setDefaultSuccess": "אמצעי התשלום הוגדר כברירת מחדל",
+    "setDefaultError": "שגיאה בהגדרת אמצעי תשלום כברירת מחדל",
+    "error": "אירעה שגיאה",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק אמצעי תשלום זה?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
+    "setDefault": "הגדר כברירת מחדל",
+    "deleted": "אמצעי התשלום נמחק",
+    "defaultSet": "אמצעי תשלום ברירת מחדל עודכן",
+    "created": "אמצעי התשלום נוצר",
+    "updated": "אמצעי התשלום עודכן"
   }
 }

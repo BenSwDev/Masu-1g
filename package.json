@@ -12,7 +12,7 @@
     "@auth/core": "latest",
     "@auth/mongodb-adapter": "latest",
     "@aws-sdk/credential-providers": "latest",
-    "@hookform/resolvers": "^3.9.1",
+    "@hookform/resolvers": "latest",
     "@mongodb-js/zstd": "latest",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",

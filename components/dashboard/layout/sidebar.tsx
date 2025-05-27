@@ -24,10 +24,16 @@ import {
   MapPin,
   CreditCard,
   FileText,
+  Package,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/common/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/common/ui/dropdown-menu"
 import { toast } from "@/components/common/ui/use-toast"
 import { setActiveRole } from "@/actions/role-actions"
 
@@ -237,11 +243,17 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           isActive: pathname === "/dashboard/admin/treatments",
         },
         {
+          title: t("dashboard.sidebar.bundles"),
+          icon: Package,
+          href: "/dashboard/admin/bundles",
+          isActive: pathname === "/dashboard/admin/bundles",
+        },
+        {
           title: t("dashboard.sidebar.workingHours"),
           icon: Clock,
           href: "/dashboard/admin/working-hours",
           isActive: pathname === "/dashboard/admin/working-hours",
-        }
+        },
       )
     } else if (activeRole === "member") {
       baseItems.push(
@@ -256,7 +268,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: CreditCard,
           href: "/dashboard/member/payment-methods",
           isActive: pathname === "/dashboard/member/payment-methods",
-        }
+        },
       )
     } else if (activeRole === "professional") {
       baseItems.push(
@@ -283,17 +295,15 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: FileText,
           href: "/dashboard/professional/documents",
           isActive: pathname === "/dashboard/professional/documents",
-        }
+        },
       )
     } else if (activeRole === "partner") {
-      baseItems.push(
-        {
-          title: t("dashboard.sidebar.profile"),
-          icon: User,
-          href: "/dashboard/partner/profile",
-          isActive: pathname === "/dashboard/partner/profile",
-        }
-      )
+      baseItems.push({
+        title: t("dashboard.sidebar.profile"),
+        icon: User,
+        href: "/dashboard/partner/profile",
+        isActive: pathname === "/dashboard/partner/profile",
+      })
     }
 
     return baseItems

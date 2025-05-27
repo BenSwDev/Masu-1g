@@ -6,10 +6,9 @@ import type { IAddress } from "@/lib/db/models/address"
 import { Button } from "@/components/common/ui/button"
 import { AddressCard } from "@/components/dashboard/addresses/address-card"
 import { AddressForm } from "@/components/dashboard/addresses/address-form"
-import { useAddresses } from "@/hooks/use-addresses"
+import { getUserAddresses } from "@/actions/address-actions"
+import { useQuery } from "@tanstack/react-query"
 import { Skeleton } from "@/components/common/ui/skeleton"
-import { Alert, AlertDescription } from "@/components/common/ui/alert"
-import { AlertCircle, Plus } from "lucide-react"
 
 export default function AddressesPage() {
   const { t } = useTranslation()
@@ -17,18 +16,19 @@ export default function AddressesPage() {
   const [editingAddress, setEditingAddress] = useState<IAddress | undefined>()
 
   const {
-    addresses,
+    data: addresses,
     isLoading,
     error,
-    createAddress,
-    updateAddress,
-    deleteAddress,
-    setDefaultAddress,
-    isCreating,
-    isUpdating,
-    isDeleting,
-    isSettingDefault,
-  } = useAddresses()
+  } = useQuery({
+    queryKey: ["addresses"],
+    queryFn: async () => {
+      const result = await getUserAddresses()
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch addresses")
+      }
+      return result.addresses || []
+    },
+  })
 
   const handleEdit = (address: IAddress) => {
     setEditingAddress(address)
@@ -40,21 +40,12 @@ export default function AddressesPage() {
     setIsAddingAddress(false)
   }
 
-  const handleCreateSuccess = () => {
-    setIsAddingAddress(false)
-  }
-
-  const handleUpdateSuccess = () => {
-    setEditingAddress(undefined)
-  }
-
   if (error) {
     return (
       <div className="container mx-auto py-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error instanceof Error ? error.message : t("errors.unknown")}</AlertDescription>
-        </Alert>
+        <div className="bg-destructive/10 text-destructive p-4 rounded-lg">
+          {error instanceof Error ? error.message : t("errors.unknown")}
+        </div>
       </div>
     )
   }
@@ -64,29 +55,21 @@ export default function AddressesPage() {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">{t("addresses.title")}</h1>
         {!isAddingAddress && !editingAddress && (
-          <Button onClick={() => setIsAddingAddress(true)} disabled={isCreating}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t("addresses.addNew")}
-          </Button>
+          <Button onClick={() => setIsAddingAddress(true)}>{t("addresses.addNew")}</Button>
         )}
       </div>
 
       {isAddingAddress && (
         <div className="bg-card rounded-lg p-6 shadow-sm">
           <h2 className="text-xl font-semibold mb-4">{t("addresses.addNew")}</h2>
-          <AddressForm onCancel={handleCancel} onSuccess={handleCreateSuccess} isLoading={isCreating} />
+          <AddressForm onCancel={handleCancel} />
         </div>
       )}
 
       {editingAddress && (
         <div className="bg-card rounded-lg p-6 shadow-sm">
           <h2 className="text-xl font-semibold mb-4">{t("addresses.edit")}</h2>
-          <AddressForm
-            address={editingAddress}
-            onCancel={handleCancel}
-            onSuccess={handleUpdateSuccess}
-            isLoading={isUpdating}
-          />
+          <AddressForm address={editingAddress} onCancel={handleCancel} />
         </div>
       )}
 
@@ -104,26 +87,14 @@ export default function AddressesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {addresses?.map((address) => (
-            <AddressCard
-              key={address._id}
-              address={address}
-              onEdit={handleEdit}
-              onDelete={deleteAddress}
-              onSetDefault={setDefaultAddress}
-              isDeleting={isDeleting}
-              isSettingDefault={isSettingDefault}
-            />
+            <AddressCard key={address._id} address={address} onEdit={handleEdit} />
           ))}
         </div>
       )}
 
       {!isLoading && !isAddingAddress && !editingAddress && addresses?.length === 0 && (
         <div className="text-center py-12 bg-card rounded-lg shadow-sm">
-          <p className="text-muted-foreground mb-4">{t("addresses.noAddresses")}</p>
-          <Button onClick={() => setIsAddingAddress(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t("addresses.addFirst")}
-          </Button>
+          <p className="text-muted-foreground">{t("addresses.noAddresses")}</p>
         </div>
       )}
     </div>

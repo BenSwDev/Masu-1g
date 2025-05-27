@@ -60,7 +60,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
   })
 
   useEffect(() => {
-    if (paymentMethod) {
+    if (paymentMethod && isEditing) {
       form.reset({
         cardNumber: paymentMethod.cardNumber || "",
         expiryMonth: paymentMethod.expiryMonth || "",
@@ -70,8 +70,19 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
         cardName: paymentMethod.cardName || "",
         isDefault: paymentMethod.isDefault || false,
       })
+    } else if (!isEditing) {
+      // Reset form for new card
+      form.reset({
+        cardNumber: "",
+        expiryMonth: "",
+        expiryYear: "",
+        cvv: "",
+        cardHolderName: "",
+        cardName: "",
+        isDefault: false,
+      })
     }
-  }, [paymentMethod, form])
+  }, [paymentMethod, isEditing, form])
 
   const onSubmit = async (data: PaymentMethodFormValues) => {
     setIsLoading(true)
@@ -130,9 +141,22 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
     return { value: year, label: year }
   })
 
+  const handleCloseForm = () => {
+    form.reset({
+      cardNumber: "",
+      expiryMonth: "",
+      expiryYear: "",
+      cvv: "",
+      cardHolderName: "",
+      cardName: "",
+      isDefault: false,
+    })
+    onOpenChange(false)
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md mx-4 sm:mx-auto">
+      <DialogContent className="sm:max-w-md mx-4 sm:mx-auto max-w-[calc(100vw-2rem)]">
         <DialogHeader>
           <DialogTitle>{isEditing ? t("paymentMethods.edit") : t("paymentMethods.addNew")}</DialogTitle>
         </DialogHeader>
@@ -279,7 +303,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
             />
 
             <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+              <Button type="button" variant="outline" onClick={handleCloseForm} disabled={isLoading}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isLoading} className="bg-turquoise-500 hover:bg-turquoise-600">

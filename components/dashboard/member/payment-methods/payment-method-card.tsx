@@ -61,10 +61,13 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
       const result = await setDefaultPaymentMethod(paymentMethod._id)
       if (result.success) {
         toast.success(t("paymentMethods.defaultSet"))
+        // Force page refresh to update all cards
+        window.location.reload()
       } else {
-        toast.error(t("paymentMethods.setDefaultError"))
+        toast.error(result.error || t("paymentMethods.setDefaultError"))
       }
     } catch (error) {
+      console.error("Error setting default payment method:", error)
       toast.error(t("paymentMethods.setDefaultError"))
     } finally {
       setIsLoading(false)
@@ -85,7 +88,7 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
 
   return (
     <>
-      <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-lg mx-4 sm:mx-0">
+      <Card className="relative overflow-hidden transition-all duration-200 hover:shadow-lg mx-2 sm:mx-0">
         {/* Credit Card Design - Changed to teal/turquoise */}
         <div className="relative h-48 bg-gradient-to-br from-teal-500 via-teal-600 to-teal-700 text-white p-6 rounded-t-lg">
           {/* Card Background Pattern */}
@@ -174,7 +177,7 @@ export function PaymentMethodCard({ paymentMethod, onEdit }: PaymentMethodCardPr
       </Card>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="mx-4 sm:mx-auto">
+        <AlertDialogContent className="mx-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("paymentMethods.deleteConfirm")}</AlertDialogTitle>
             <AlertDialogDescription>{t("paymentMethods.deleteConfirmDescription")}</AlertDialogDescription>

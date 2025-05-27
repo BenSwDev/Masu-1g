@@ -31,3 +31,17 @@ if (process.env.NODE_ENV === "development") {
 // Export a module-scoped MongoClient promise. By doing this in a
 // separate module, the client can be shared across functions.
 export default clientPromise
+
+/**
+ * Connects to MongoDB and returns the client
+ * This is a utility function for direct MongoDB operations
+ */
+export async function connectDB() {
+  try {
+    const client = await clientPromise
+    return client
+  } catch (error) {
+    console.error("Failed to connect to MongoDB:", error)
+    throw new Error("Failed to connect to the database")
+  }
+}

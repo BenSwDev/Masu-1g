@@ -124,27 +124,27 @@ export function TreatmentsClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <Button onClick={handleAddTreatment} className="bg-teal-500 hover:bg-teal-600">
+        <Button onClick={handleAddTreatment} className="bg-teal-500 hover:bg-teal-600 w-full sm:w-auto">
           <Plus className="h-4 w-4 ml-2" />
           הוסף טיפול חדש
         </Button>
 
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-2 w-full">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="חיפוש טיפולים..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10"
+              className="pr-10 w-full"
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue placeholder="קטגוריה" />
               </SelectTrigger>
               <SelectContent>
@@ -155,7 +155,7 @@ export function TreatmentsClient() {
             </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue placeholder="סטטוס" />
               </SelectTrigger>
               <SelectContent>
@@ -166,7 +166,7 @@ export function TreatmentsClient() {
             </Select>
 
             <Select value={pricingFilter} onValueChange={setPricingFilter}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue placeholder="תמחור" />
               </SelectTrigger>
               <SelectContent>

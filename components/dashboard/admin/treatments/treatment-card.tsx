@@ -129,8 +129,8 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
 
   return (
     <>
-      <Card className={`transition-all ${!treatment.isActive ? "opacity-60" : ""}`}>
-        <CardContent className="p-6">
+      <Card className={`transition-all ${!treatment.isActive ? "opacity-60" : ""} mx-0`}>
+        <CardContent className="p-4 sm:p-6">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <h3 className="text-lg font-semibold mb-1">{treatment.name}</h3>
@@ -213,7 +213,7 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
       </Card>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="mx-4 w-[calc(100%-2rem)] max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>האם אתה בטוח?</AlertDialogTitle>
             <AlertDialogDescription>

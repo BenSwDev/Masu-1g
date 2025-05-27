@@ -16,7 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { MoreVertical, Edit, Copy, Trash2, Clock, DollarSignIcon as Shekel } from "lucide-react"
+import { MoreVertical, Edit, Copy, Trash2, Clock, DollarSign } from "lucide-react"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import { toggleTreatmentStatus, deleteTreatment, duplicateTreatment } from "@/actions/treatment-actions"
 import { toast } from "@/components/ui/use-toast"
@@ -24,11 +24,12 @@ import { toast } from "@/components/ui/use-toast"
 interface TreatmentCardProps {
   treatment: ITreatment
   onEdit: (treatment: ITreatment) => void
-  onUpdate: (treatment: ITreatment) => void
+  onUpdate: (updatedTreatment: ITreatment) => void
+  onDuplicate: (newTreatment: ITreatment) => void
   onDelete: (id: string) => void
 }
 
-export function TreatmentCard({ treatment, onEdit, onUpdate, onDelete }: TreatmentCardProps) {
+export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDelete }: TreatmentCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isToggling, setIsToggling] = useState(false)
@@ -99,7 +100,7 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDelete }: Treatme
     try {
       const result = await duplicateTreatment(treatment._id)
       if (result.success && result.treatment) {
-        onUpdate(result.treatment)
+        onDuplicate(result.treatment)
         toast({
           title: "הטיפול שוכפל בהצלחה",
           variant: "default",
@@ -112,6 +113,7 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDelete }: Treatme
         })
       }
     } catch (error) {
+      console.error("Error duplicating treatment:", error)
       toast({
         title: "שגיאה בשכפול הטיפול",
         variant: "destructive",
@@ -137,7 +139,14 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDelete }: Treatme
               </Badge>
             </div>
             <div className="flex items-center gap-2">
-              <Switch checked={treatment.isActive} onCheckedChange={handleToggleStatus} disabled={isToggling} />
+              <div className="flex items-center rtl:flex-row-reverse">
+                <Switch
+                  checked={treatment.isActive}
+                  onCheckedChange={handleToggleStatus}
+                  disabled={isToggling}
+                  className="rtl:data-[state=checked]:justify-start rtl:data-[state=unchecked]:justify-end"
+                />
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon">
@@ -168,12 +177,12 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDelete }: Treatme
             {treatment.pricingType === "fixed" ? (
               <div className="bg-muted/50 rounded-lg p-3">
                 <div className="flex items-center gap-2 text-sm">
-                  <Shekel className="h-4 w-4 text-muted-foreground" />
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">מחיר קבוע:</span>
                   <span>₪{treatment.fixedPrice}</span>
                 </div>
                 <div className="text-sm text-muted-foreground mt-1">
-                  מחיר למטפל: ₪{treatment.fixedProfessionalPrice}(
+                  מחיר למטפל: ₪{treatment.fixedProfessionalPrice} (
                   {calculateProfessionalPercentage(treatment.fixedProfessionalPrice!, treatment.fixedPrice!)}%)
                 </div>
               </div>
@@ -192,7 +201,7 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDelete }: Treatme
                         <span className="font-medium">₪{duration.price}</span>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        למטפל: ₪{duration.professionalPrice}(
+                        למטפל: ₪{duration.professionalPrice} (
                         {calculateProfessionalPercentage(duration.professionalPrice, duration.price)}%)
                       </div>
                     </div>

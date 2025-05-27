@@ -1,14 +1,14 @@
 "use client"
 
-import { useState } from "react"
-import { useTranslation } from "@/lib/translations/i18n"
-import type { IAddress } from "@/lib/db/models/address"
 import { Button } from "@/components/common/ui/button"
+import { Skeleton } from "@/components/common/ui/skeleton"
 import { AddressCard } from "@/components/dashboard/addresses/address-card"
 import { AddressForm } from "@/components/dashboard/addresses/address-form"
 import { getUserAddresses } from "@/actions/address-actions"
+import type { IAddress } from "@/lib/db/models/address"
+import { useTranslation } from "@/lib/translations/i18n"
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Skeleton } from "@/components/common/ui/skeleton"
 
 export default function AddressesPage() {
   const { t } = useTranslation()
@@ -41,6 +41,7 @@ export default function AddressesPage() {
   }
 
   if (error) {
+    console.error("Addresses fetch error:", error)
     return (
       <div className="container mx-auto py-6">
         <div className="bg-destructive/10 text-destructive p-4 rounded-lg">

@@ -337,7 +337,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
               {t("common.loading")}
             </>
           ) : (
-            address ? t("common.save") : t("addresses.addNew"")
+            address ? t("common.save") : t("common.create")
           )}
         </Button>
       </div>

@@ -189,10 +189,24 @@ export async function updateUserRoles(userId: string, roles: string[]) {
     await dbConnect()
 
     // Update user roles
-    const updatedUser = await User.findByIdAndUpdate(userId, { roles }, { new: true, select: "roles" }).lean()
+    const updatedUser = await User.findByIdAndUpdate(userId, { roles }, { new: true, select: "roles activeRole" })
 
     if (!updatedUser) {
       return { success: false, message: "userNotFound" }
+    }
+
+    // If activeRole is not valid anymore, set to default
+    if (!updatedUser.roles.includes(updatedUser.activeRole)) {
+      const getDefaultActiveRole = (roles: string[]) => {
+        if (!roles || roles.length === 0) return "member"
+        if (roles.includes("admin")) return "admin"
+        if (roles.includes("professional")) return "professional"
+        if (roles.includes("partner")) return "partner"
+        if (roles.includes("member")) return "member"
+        return roles[0] || "member"
+      }
+      const fallback = getDefaultActiveRole(updatedUser.roles) || "member"
+      await User.findByIdAndUpdate(userId, { activeRole: fallback })
     }
 
     return { success: true, message: "rolesUpdated" }

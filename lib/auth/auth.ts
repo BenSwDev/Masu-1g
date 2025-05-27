@@ -15,6 +15,7 @@ interface CustomUser {
   image?: string | null
   roles?: string[]
   password?: string
+  activeRole?: string
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -179,26 +180,59 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account, trigger, session }) {
+      await dbConnect();
+      // On first login
       if (user) {
-        token.id = user.id
-        const customUser = user as unknown as CustomUser
-        token.roles = customUser.roles && customUser.roles.length > 0 ? customUser.roles : ["member"]
-        token.activeRole = getDefaultActiveRole(token.roles as string[])
-        return token
-      }
-      if (trigger === "update" && session && session.activeRole) {
-        await dbConnect()
-        const dbUser = await User.findById(token.id).select("roles")
-        if (dbUser) {
-          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
-          token.activeRole = session.activeRole
+        token.id = user.id;
+        const customUser = user as unknown as CustomUser;
+        token.roles = customUser.roles && customUser.roles.length > 0 ? customUser.roles : ["member"];
+        // Always pull from DB for activeRole
+        const dbUser = await User.findById(token.id).select("roles activeRole");
+        let activeRole = dbUser?.activeRole;
+        if (!activeRole || !dbUser.roles.includes(activeRole)) {
+          // Fallback to default and update DB if needed
+          activeRole = getDefaultActiveRole(dbUser.roles);
+          if (dbUser) {
+            dbUser.activeRole = activeRole;
+            await dbUser.save();
+          }
         }
-        return token
+        token.activeRole = activeRole;
+        return token;
+      }
+      // On session update (role switch)
+      if (trigger === "update" && session && session.activeRole) {
+        const dbUser = await User.findById(token.id).select("roles activeRole");
+        if (dbUser) {
+          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"];
+          let activeRole = session.activeRole;
+          if (!dbUser.roles.includes(activeRole)) {
+            activeRole = getDefaultActiveRole(dbUser.roles);
+            dbUser.activeRole = activeRole;
+            await dbUser.save();
+          }
+          token.activeRole = activeRole;
+        }
+        return token;
+      }
+      // On every other call, always sync from DB
+      if (token.id) {
+        const dbUser = await User.findById(token.id).select("roles activeRole");
+        if (dbUser) {
+          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"];
+          let activeRole = dbUser.activeRole;
+          if (!activeRole || !dbUser.roles.includes(activeRole)) {
+            activeRole = getDefaultActiveRole(dbUser.roles);
+            dbUser.activeRole = activeRole;
+            await dbUser.save();
+          }
+          token.activeRole = activeRole;
+        }
       }
       if (account) {
-        token.accessToken = account.access_token
+        token.accessToken = account.access_token;
       }
-      return token
+      return token;
     },
     async session({ session, token }) {
       if (session.user && token) {

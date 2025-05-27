@@ -7,8 +7,15 @@ export const dynamic = 'force-dynamic'
 export default async function ProfilePage() {
   const result = await getUserProfile()
 
-  if (!result.success) {
+  if (!result.success || !result.user) {
     redirect("/auth/login")
+  }
+
+  // Convert dateOfBirth to string if it exists
+  const user = {
+    ...result.user,
+    dateOfBirth: result.user.dateOfBirth?.toISOString(),
+    createdAt: result.user.createdAt.toISOString()
   }
 
   return (
@@ -18,7 +25,7 @@ export default async function ProfilePage() {
         <p className="text-gray-600">Manage your personal information and preferences.</p>
       </div>
 
-      <ProfileForm user={result.user} />
+      <ProfileForm user={user} />
     </div>
   )
 }

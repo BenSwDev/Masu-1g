@@ -11,6 +11,7 @@ export interface IUser extends Document {
   emailVerified?: Date
   phoneVerified?: Date
   roles: string[] // Array of roles
+  activeRole?: string // Add activeRole
   createdAt: Date
   updatedAt: Date
 }
@@ -57,6 +58,11 @@ const UserSchema: Schema = new Schema(
       type: [String],
       default: ["member"],
       enum: ["member", "professional", "partner", "admin"],
+    },
+    activeRole: {
+      type: String,
+      enum: ["member", "professional", "partner", "admin"],
+      required: false,
     },
     emailVerified: {
       type: Date,

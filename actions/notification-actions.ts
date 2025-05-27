@@ -283,81 +283,97 @@ export async function verifyOTP(
       clearDevOTP(identifier, identifierType)
       
       // In development mode, return the real user ID if exists
-      let user = await User.findOne({ [identifierType]: identifier })
-      if (!user) {
-        logger.warn(`[${otpId}] Dev user not found for ${identifierType}: ${identifier}`)
+      try {
+        await dbConnect()
+        const user = await User.findOne({ [identifierType]: identifier }).select('_id').lean()
+        if (!user) {
+          logger.warn(`[${otpId}] Dev user not found for ${identifierType}: ${identifier}`)
+          return {
+            success: false,
+            message: "Dev user not found",
+            error: "USER_NOT_FOUND",
+          }
+        }
+        logger.info(`[${otpId}] OTP verified successfully for ${identifierType}: ${identifier}`)
+        return {
+          success: true,
+          message: "OTP verified successfully",
+          userId: user._id.toString(),
+        }
+      } catch (error) {
+        logger.error(`[${otpId}] Database error during user lookup:`, error)
         return {
           success: false,
-          message: "Dev user not found",
-          error: "USER_NOT_FOUND",
+          message: "Database error during verification",
+          error: "DATABASE_ERROR",
         }
-      }
-      logger.info(`[${otpId}] OTP verified successfully for ${identifierType}: ${identifier}`)
-      return {
-        success: true,
-        message: "OTP verified successfully",
-        userId: (user._id as any).toString(),
       }
     }
 
     // Production mode - use the database
-    await dbConnect()
-    logger.info(`[${otpId}] Database connection established`)
+    try {
+      await dbConnect()
+      logger.info(`[${otpId}] Database connection established`)
 
-    // Find the OTP token
-    const token = await VerificationQueries.findValidOTP(identifier, identifierType, code)
+      // Find and verify the token in a single operation
+      const token = await VerificationToken.findOneAndUpdate(
+        {
+          identifier,
+          identifierType,
+          code,
+          expiresAt: { $gt: new Date() },
+          attempts: { $lt: 3 } // Limit attempts
+        },
+        {
+          $inc: { attempts: 1 },
+          $set: { lastAttempt: new Date() }
+        },
+        { new: true }
+      ).lean()
 
-    if (!token) {
-      logger.warn(`[${otpId}] No valid OTP found for ${identifierType}: ${identifier}`)
+      if (!token) {
+        logger.warn(`[${otpId}] Invalid or expired OTP for ${identifierType}: ${identifier}`)
+        return {
+          success: false,
+          message: "Invalid or expired code",
+          error: "INVALID_OTP",
+        }
+      }
+
+      // Find user in parallel with token verification
+      const user = await User.findOne({ [identifierType]: identifier }).select('_id').lean()
+      if (!user) {
+        logger.warn(`[${otpId}] User not found for ${identifierType}: ${identifier}`)
+        return {
+          success: false,
+          message: "User not found",
+          error: "USER_NOT_FOUND",
+        }
+      }
+
+      // Delete the used token
+      await VerificationToken.deleteOne({ _id: token._id })
+
+      logger.info(`[${otpId}] OTP verified successfully for ${identifierType}: ${identifier}`)
+      return {
+        success: true,
+        message: "OTP verified successfully",
+        userId: user._id.toString(),
+      }
+    } catch (error) {
+      logger.error(`[${otpId}] Error during OTP verification:`, error)
       return {
         success: false,
-        message: "Invalid or expired code",
-        error: "INVALID_OTP",
+        message: "Error during verification",
+        error: "VERIFICATION_ERROR",
       }
-    }
-
-    // Check attempts
-    if (token.attempts >= 3) {
-      logger.warn(`[${otpId}] Too many attempts for ${identifierType}: ${identifier}`)
-      return {
-        success: false,
-        message: "Too many attempts",
-        error: "TOO_MANY_ATTEMPTS",
-      }
-    }
-
-    // Find the user
-    const user = await User.findOne({ 
-      [identifierType === "email" ? "email" : "phone"]: identifierType === "email" ? identifier.toLowerCase() : identifier 
-    }).lean() as (Document & IUser) | null
-
-    if (!user) {
-      logger.warn(`[${otpId}] User not found for ${identifierType}: ${identifier}`)
-      return {
-        success: false,
-        message: "User not found",
-        error: "USER_NOT_FOUND",
-      }
-    }
-
-    // Increment attempts
-    await VerificationQueries.incrementAttempts(token._id)
-
-    // Delete the token
-    await VerificationToken.deleteOne({ _id: token._id })
-
-    logger.info(`[${otpId}] OTP verified successfully for ${identifierType}: ${identifier}`)
-    return {
-      success: true,
-      message: "OTP verified successfully",
-      userId: (user._id as any).toString(),
     }
   } catch (error) {
-    logger.error(`[${otpId}] Error verifying OTP:`, error)
+    logger.error(`[${otpId}] Unexpected error during OTP verification:`, error)
     return {
       success: false,
-      message: "An unexpected error occurred",
-      error: "UNKNOWN_ERROR",
+      message: "Unexpected error during verification",
+      error: "UNEXPECTED_ERROR",
     }
   }
 }

@@ -18,40 +18,29 @@ if (!cached) {
   cached = (global as any).mongooseConnection = { conn: null, promise: null }
 }
 
-// MongoDB connection options optimized for performance
-const connectionOptions = {
-  bufferCommands: false,
-
-  // Connection pool settings
-  maxPoolSize: 10, // Maximum number of connections in the pool
-  minPoolSize: 2, // Minimum number of connections in the pool
-  maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
-
-  // Timeout settings
-  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-  socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
-
-  // Write concern for better performance
-  writeConcern: {
-    w: 1, // Wait for acknowledgment from primary only
-    j: false, // Don't wait for journal sync
-    wtimeout: 5000, // Write timeout
-  },
-
-  // Read preference for distributed reads
-  readPreference: "primaryPreferred" as const, // Read from primary, fallback to secondary
-
-  // Enable retries
-  retryWrites: true,
-  retryReads: true,
-}
-
 export default async function dbConnect() {
-  if (cached.conn) return cached.conn
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, connectionOptions).then((mongoose) => mongoose)
+  if (cached.conn) {
+    return cached.conn
   }
-  cached.conn = await cached.promise
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI)
+      .then((mongoose) => {
+        return mongoose
+      })
+      .catch((error) => {
+        cached.promise = null
+        throw error
+      })
+  }
+
+  try {
+    cached.conn = await cached.promise
+  } catch (e) {
+    cached.promise = null
+    throw e
+  }
+
   return cached.conn
 }
 

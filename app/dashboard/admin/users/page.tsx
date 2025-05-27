@@ -7,13 +7,13 @@ import { UserManagement } from "@/components/dashboard/admin/user-management"
 export const dynamic = 'force-dynamic'
 
 interface PageProps {
-  searchParams: {
+  searchParams: Promise<{
     page?: string
     search?: string
     roles?: string
     sortField?: string
     sortDirection?: "asc" | "desc"
-  }
+  }>
 }
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
@@ -28,12 +28,13 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     redirect("/dashboard")
   }
 
-  // Parse search params
-  const page = parseInt(searchParams.page || "1")
-  const search = searchParams.search
-  const roles = searchParams.roles ? searchParams.roles.split(",") : undefined
-  const sortField = searchParams.sortField || "name"
-  const sortDirection = searchParams.sortDirection || "asc"
+  // Await and parse search params
+  const params = await searchParams
+  const page = parseInt(params.page || "1")
+  const search = params.search
+  const roles = params.roles ? params.roles.split(",") : undefined
+  const sortField = params.sortField || "name"
+  const sortDirection = params.sortDirection || "asc"
 
   // Fetch users with filters
   const result = await getAllUsers(page, 10, search, roles, sortField, sortDirection as "asc" | "desc")

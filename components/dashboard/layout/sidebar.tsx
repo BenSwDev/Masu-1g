@@ -25,6 +25,7 @@ import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/common/ui/dropdown-menu"
 import { toast } from "@/components/common/ui/use-toast"
+import { setActiveRole } from "@/actions/role-actions"
 
 interface SidebarProps {
   isMobileOpen: boolean
@@ -80,13 +81,20 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
     if (role === activeRole) return
     setIsLoading(true)
     try {
-      await update({ activeRole: role })
-      toast({ title: "החלפת תפקיד בהצלחה", variant: "default" })
-      if (window.location.pathname !== `/dashboard/${role}`) {
-        router.push(`/dashboard/${role}`)
+      // Update in DB
+      const result = await setActiveRole(role)
+      if (result.success || result.activeRole) {
+        // Always update session to the new/fallback role
+        await update({ activeRole: result.activeRole || role })
+        toast({ title: "החלפת תפקיד בהצלחה", variant: "default" })
+        // Always redirect to the main dashboard page of the new role
+        router.push(`/dashboard/${result.activeRole || role}`)
+      } else {
+        toast({ title: "לא ניתן להחליף לתפקיד זה", variant: "destructive" })
       }
     } catch (error) {
       console.error("Error switching role:", error)
+      toast({ title: "שגיאה בהחלפת תפקיד", variant: "destructive" })
     } finally {
       setIsLoading(false)
     }

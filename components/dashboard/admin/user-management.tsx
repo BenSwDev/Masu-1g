@@ -322,13 +322,13 @@ export function UserManagement({
           />
           <Select
             value={roleFilter.join(',')}
-            onValueChange={(value) => setRoleFilter(value ? value.split(',') : [])}
+            onValueChange={(value) => setRoleFilter(value === "all" ? [] : value.split(','))}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder={t("admin.users.filterByRole")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">{t("admin.users.allRoles")}</SelectItem>
+              <SelectItem value="all">{t("admin.users.allRoles")}</SelectItem>
               <SelectItem value="admin">{t("roles.admin")}</SelectItem>
               <SelectItem value="professional">{t("roles.professional")}</SelectItem>
               <SelectItem value="partner">{t("roles.partner")}</SelectItem>

@@ -12,17 +12,20 @@ export default async function DashboardPage() {
   const activeRole = session.user?.activeRole || "member"
   const roles = session.user?.roles || []
 
-  // Redirect to role-specific dashboard
-  if (roles.includes("admin")) {
-    redirect("/dashboard/admin")
-  } else if (roles.includes("professional")) {
-    redirect("/dashboard/professional")
-  } else if (roles.includes("partner")) {
-    redirect("/dashboard/partner")
-  } else {
-    redirect("/dashboard/member")
+  // Ensure activeRole is valid
+  if (!roles.includes(activeRole)) {
+    // fallback to first available role
+    if (roles.includes("admin")) {
+      redirect("/dashboard/admin")
+    } else if (roles.includes("professional")) {
+      redirect("/dashboard/professional")
+    } else if (roles.includes("partner")) {
+      redirect("/dashboard/partner")
+    } else {
+      redirect("/dashboard/member")
+    }
   }
 
-  // This part won't be reached due to redirects, but TypeScript needs it
-  return null
+  // Redirect to the active role's dashboard
+  redirect(`/dashboard/${activeRole}`)
 }

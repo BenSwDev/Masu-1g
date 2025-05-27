@@ -141,3 +141,41 @@ export async function removeRoleFromUser(
     return { success: false, message: "removeFailed" }
   }
 }
+
+/**
+ * Set the active role for the current user in the database
+ */
+export async function setActiveRole(role: string): Promise<{
+  success: boolean
+  message: string
+  activeRole?: string
+}> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return { success: false, message: "notAuthenticated" }
+    }
+    await dbConnect()
+    const user = await User.findById(session.user.id)
+    if (!user) {
+      return { success: false, message: "userNotFound" }
+    }
+    // Check if user has the requested role
+    if (!user.roles.includes(role)) {
+      // Fallback to default role
+      const fallback = user.roles.includes("admin") ? "admin"
+        : user.roles.includes("professional") ? "professional"
+        : user.roles.includes("partner") ? "partner"
+        : "member"
+      user.activeRole = fallback
+      await user.save()
+      return { success: false, message: "roleNotAssigned", activeRole: fallback }
+    }
+    user.activeRole = role
+    await user.save()
+    return { success: true, message: "activeRoleUpdated", activeRole: role }
+  } catch (error) {
+    console.error("Error setting active role:", error)
+    return { success: false, message: "setActiveRoleFailed" }
+  }
+}

@@ -1,5 +1,12 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
+export enum UserRole {
+  MEMBER = "member",
+  PROFESSIONAL = "professional",
+  PARTNER = "partner",
+  ADMIN = "admin",
+}
+
 export interface IUser extends Document {
   name: string
   email: string
@@ -56,12 +63,12 @@ const UserSchema: Schema = new Schema(
     },
     roles: {
       type: [String],
-      default: ["member"],
-      enum: ["member", "professional", "partner", "admin"],
+      default: [UserRole.MEMBER],
+      enum: Object.values(UserRole),
     },
     activeRole: {
       type: String,
-      enum: ["member", "professional", "partner", "admin"],
+      enum: Object.values(UserRole),
       required: false,
     },
     emailVerified: {

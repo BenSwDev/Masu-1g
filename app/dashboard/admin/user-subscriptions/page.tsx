@@ -4,6 +4,9 @@ import AdminUserSubscriptionsClient from "@/components/dashboard/admin/user-subs
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
 
+// הגדרת הדף כדינמי
+export const dynamic = "force-dynamic"
+
 // קומפוננטת טעינה
 function UserSubscriptionsLoading() {
   return (

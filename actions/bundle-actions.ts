@@ -4,12 +4,24 @@ import dbConnect from "@/lib/db/mongoose"
 import Bundle, { type IBundle } from "@/lib/db/models/bundle"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { UserRole } from "@/lib/db/models/user"
 
 // Get all bundles
 export async function getBundles() {
   try {
     await dbConnect()
+    const session = await getServerSession(authOptions)
+
+    // Check if user is logged in
+    if (!session) {
+      return { success: false, error: "Unauthorized", bundles: [] }
+    }
+
+    // Check if user has admin role
+    const isAdmin = session.user.roles?.includes("admin")
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized", bundles: [] }
+    }
+
     const bundles = await Bundle.find({}).sort({ createdAt: -1 }).lean()
     return { success: true, bundles: JSON.parse(JSON.stringify(bundles)) }
   } catch (error) {
@@ -22,6 +34,19 @@ export async function getBundles() {
 export async function getBundleById(id: string) {
   try {
     await dbConnect()
+    const session = await getServerSession(authOptions)
+
+    // Check if user is logged in
+    if (!session) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    // Check if user has admin role
+    const isAdmin = session.user.roles?.includes("admin")
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const bundle = await Bundle.findById(id).lean()
     if (!bundle) {
       return { success: false, error: "Bundle not found" }
@@ -36,12 +61,20 @@ export async function getBundleById(id: string) {
 // Create a new bundle
 export async function createBundle(bundleData: Partial<IBundle>) {
   try {
+    await dbConnect()
     const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== UserRole.ADMIN) {
+
+    // Check if user is logged in
+    if (!session) {
       return { success: false, error: "Unauthorized" }
     }
 
-    await dbConnect()
+    // Check if user has admin role
+    const isAdmin = session.user.roles?.includes("admin")
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const newBundle = new Bundle(bundleData)
     await newBundle.save()
 
@@ -55,12 +88,20 @@ export async function createBundle(bundleData: Partial<IBundle>) {
 // Update a bundle
 export async function updateBundle(id: string, bundleData: Partial<IBundle>) {
   try {
+    await dbConnect()
     const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== UserRole.ADMIN) {
+
+    // Check if user is logged in
+    if (!session) {
       return { success: false, error: "Unauthorized" }
     }
 
-    await dbConnect()
+    // Check if user has admin role
+    const isAdmin = session.user.roles?.includes("admin")
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const updatedBundle = await Bundle.findByIdAndUpdate(id, { $set: bundleData }, { new: true, lean: true })
 
     if (!updatedBundle) {
@@ -77,12 +118,20 @@ export async function updateBundle(id: string, bundleData: Partial<IBundle>) {
 // Delete a bundle
 export async function deleteBundle(id: string) {
   try {
+    await dbConnect()
     const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== UserRole.ADMIN) {
+
+    // Check if user is logged in
+    if (!session) {
       return { success: false, error: "Unauthorized" }
     }
 
-    await dbConnect()
+    // Check if user has admin role
+    const isAdmin = session.user.roles?.includes("admin")
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const deletedBundle = await Bundle.findByIdAndDelete(id)
 
     if (!deletedBundle) {
@@ -99,12 +148,20 @@ export async function deleteBundle(id: string) {
 // Duplicate a bundle
 export async function duplicateBundle(id: string) {
   try {
+    await dbConnect()
     const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== UserRole.ADMIN) {
+
+    // Check if user is logged in
+    if (!session) {
       return { success: false, error: "Unauthorized" }
     }
 
-    await dbConnect()
+    // Check if user has admin role
+    const isAdmin = session.user.roles?.includes("admin")
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const bundle = await Bundle.findById(id).lean()
 
     if (!bundle) {
@@ -128,12 +185,20 @@ export async function duplicateBundle(id: string) {
 // Toggle bundle active status
 export async function toggleBundleStatus(id: string) {
   try {
+    await dbConnect()
     const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== UserRole.ADMIN) {
+
+    // Check if user is logged in
+    if (!session) {
       return { success: false, error: "Unauthorized" }
     }
 
-    await dbConnect()
+    // Check if user has admin role
+    const isAdmin = session.user.roles?.includes("admin")
+    if (!isAdmin) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     const bundle = await Bundle.findById(id)
 
     if (!bundle) {

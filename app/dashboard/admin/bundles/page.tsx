@@ -2,6 +2,9 @@ import { Suspense } from "react"
 import { getBundles } from "@/actions/bundle-actions"
 import { BundlesClient } from "@/components/dashboard/admin/bundles/bundles-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth/auth"
+import { redirect } from "next/navigation"
 
 // Get treatments from the database
 async function getTreatments() {
@@ -27,6 +30,18 @@ function extractCategories(treatments: any[]): string[] {
 }
 
 export default async function BundlesPage() {
+  // Check authentication and authorization
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    redirect("/auth/login?callbackUrl=/dashboard/admin/bundles")
+  }
+
+  const isAdmin = session.user.roles?.includes("admin")
+  if (!isAdmin) {
+    redirect("/dashboard")
+  }
+
   // Fetch bundles and treatments with error handling
   const [bundlesResult, treatmentsResult] = await Promise.allSettled([getBundles(), getTreatments()])
 

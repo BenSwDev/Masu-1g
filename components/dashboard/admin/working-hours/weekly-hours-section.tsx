@@ -57,25 +57,26 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
           שעות פעילות שבועיות
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4">
         {hours.map((dayHour) => (
-          <div key={dayHour.day} className="space-y-4 p-4 border rounded-lg">
+          <div key={dayHour.day} className="space-y-3 p-3 border rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Switch
                   checked={dayHour.isActive}
                   onCheckedChange={(checked) => handleDayToggle(dayHour.day, checked)}
+                  className="data-[state=checked]:bg-teal-500"
                 />
-                <Label className="text-lg font-medium">{DAYS[dayHour.day]}</Label>
+                <Label className="text-base font-medium">{DAYS[dayHour.day]}</Label>
               </div>
               {!dayHour.isActive && <span className="text-sm text-muted-foreground">לא פעיל</span>}
             </div>
 
             {dayHour.isActive && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>שעת התחלה</Label>
+                    <Label className="text-sm">שעת התחלה</Label>
                     <Input
                       type="time"
                       value={dayHour.startTime}
@@ -84,7 +85,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                     />
                   </div>
                   <div>
-                    <Label>שעת סיום</Label>
+                    <Label className="text-sm">שעת סיום</Label>
                     <Input
                       type="time"
                       value={dayHour.endTime}
@@ -94,8 +95,8 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <Label>תוספת מחיר</Label>
+                <div className="space-y-2">
+                  <Label className="text-sm">תוספת מחיר</Label>
                   <Select
                     value={dayHour.priceAdjustment?.type || "none"}
                     onValueChange={(value) => {
@@ -121,9 +122,11 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                   </Select>
 
                   {dayHour.priceAdjustment && (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label>{dayHour.priceAdjustment.type === "percentage" ? "אחוז (%)" : "סכום (₪)"}</Label>
+                        <Label className="text-sm">
+                          {dayHour.priceAdjustment.type === "percentage" ? "אחוז (%)" : "סכום (₪)"}
+                        </Label>
                         <Input
                           type="number"
                           min="0"
@@ -138,7 +141,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                         />
                       </div>
                       <div>
-                        <Label>סיבה (אופציונלי)</Label>
+                        <Label className="text-sm">סיבה (אופציונלי)</Label>
                         <Input
                           value={dayHour.priceAdjustment.reason || ""}
                           onChange={(e) =>
@@ -158,7 +161,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
           </div>
         ))}
 
-        <Button onClick={handleSave} disabled={isLoading} className="w-full">
+        <Button onClick={handleSave} disabled={isLoading} className="w-full bg-teal-500 hover:bg-teal-600">
           {isLoading ? "שומר..." : "שמור שעות פעילות"}
         </Button>
       </CardContent>

@@ -115,33 +115,37 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="h-[95vh] mx-4 sm:mx-auto max-w-md">
+      <DrawerContent className="h-[95vh] mx-4 sm:mx-auto max-w-lg">
         <div className="flex flex-col h-full">
           <DrawerHeader className="flex-shrink-0">
-            <DrawerTitle>{editingDate ? "עריכת תאריך מיוחד" : "הוספת תאריך מיוחד"}</DrawerTitle>
+            <DrawerTitle className="text-center text-lg">
+              {editingDate ? "עריכת תאריך מיוחד" : "הוספת תאריך מיוחד"}
+            </DrawerTitle>
           </DrawerHeader>
 
           <div className="flex-1 overflow-y-auto px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-3 sticky top-0 bg-background z-10">
-                <TabsTrigger value="basic" className="text-xs sm:text-sm">
-                  <Calendar className="h-4 w-4 ml-1" />
+              <TabsList className="grid w-full grid-cols-3 sticky top-0 bg-background z-10 mb-4">
+                <TabsTrigger value="basic" className="text-xs">
+                  <Calendar className="h-3 w-3 ml-1" />
                   פרטים
                 </TabsTrigger>
-                <TabsTrigger value="hours" className="text-xs sm:text-sm">
-                  <Clock className="h-4 w-4 ml-1" />
+                <TabsTrigger value="hours" className="text-xs">
+                  <Clock className="h-3 w-3 ml-1" />
                   שעות
                 </TabsTrigger>
-                <TabsTrigger value="pricing" className="text-xs sm:text-sm">
-                  <DollarSign className="h-4 w-4 ml-1" />
+                <TabsTrigger value="pricing" className="text-xs">
+                  <DollarSign className="h-3 w-3 ml-1" />
                   תמחור
                 </TabsTrigger>
               </TabsList>
 
-              <div className="mt-6 space-y-6">
+              <div className="space-y-4">
                 <TabsContent value="basic" className="space-y-4">
                   <div>
-                    <Label htmlFor="name">שם התאריך *</Label>
+                    <Label htmlFor="name" className="text-sm">
+                      שם התאריך *
+                    </Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -151,7 +155,9 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                   </div>
 
                   <div>
-                    <Label htmlFor="date">תאריך *</Label>
+                    <Label htmlFor="date" className="text-sm">
+                      תאריך *
+                    </Label>
                     <Input
                       id="date"
                       type="date"
@@ -162,7 +168,9 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                   </div>
 
                   <div>
-                    <Label htmlFor="description">תיאור</Label>
+                    <Label htmlFor="description" className="text-sm">
+                      תיאור
+                    </Label>
                     <Textarea
                       id="description"
                       value={formData.description}
@@ -175,17 +183,20 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
                 <TabsContent value="hours" className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label>היום פעיל</Label>
+                    <Label className="text-sm">היום פעיל</Label>
                     <Switch
                       checked={formData.isActive}
                       onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
+                      className="data-[state=checked]:bg-teal-500"
                     />
                   </div>
 
                   {formData.isActive && (
-                    <>
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label htmlFor="startTime">שעת התחלה</Label>
+                        <Label htmlFor="startTime" className="text-sm">
+                          שעת התחלה
+                        </Label>
                         <Input
                           id="startTime"
                           type="time"
@@ -196,7 +207,9 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                       </div>
 
                       <div>
-                        <Label htmlFor="endTime">שעת סיום</Label>
+                        <Label htmlFor="endTime" className="text-sm">
+                          שעת סיום
+                        </Label>
                         <Input
                           id="endTime"
                           type="time"
@@ -205,13 +218,13 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                           className="text-center"
                         />
                       </div>
-                    </>
+                    </div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="pricing" className="space-y-4">
                   <div>
-                    <Label>סוג תוספת מחיר</Label>
+                    <Label className="text-sm">סוג תוספת מחיר</Label>
                     <Select
                       value={formData.priceAdjustment.type}
                       onValueChange={(value: "none" | "percentage" | "fixed") =>
@@ -235,7 +248,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                   {formData.priceAdjustment.type !== "none" && (
                     <>
                       <div>
-                        <Label>
+                        <Label className="text-sm">
                           {formData.priceAdjustment.type === "percentage" ? "אחוז תוספת (%)" : "סכום תוספת (₪)"}
                         </Label>
                         <Input
@@ -248,12 +261,12 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                               priceAdjustment: { ...prev.priceAdjustment, value: Number(e.target.value) },
                             }))
                           }
-                          className="text-center"
+                          className="text-center max-w-32"
                         />
                       </div>
 
                       <div>
-                        <Label>סיבה לתוספת</Label>
+                        <Label className="text-sm">סיבה לתוספת</Label>
                         <Input
                           value={formData.priceAdjustment.reason}
                           onChange={(e) =>
@@ -274,7 +287,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
           <DrawerFooter className="flex-shrink-0">
             <div className="flex gap-2">
-              <Button onClick={handleSubmit} disabled={isLoading} className="flex-1">
+              <Button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-teal-500 hover:bg-teal-600">
                 {isLoading ? "שומר..." : editingDate ? "עדכן" : "הוסף"}
               </Button>
               <Button variant="outline" onClick={onClose} disabled={isLoading} className="flex-1">

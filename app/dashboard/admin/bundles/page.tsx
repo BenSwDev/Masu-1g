@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/common/ui/skeleton"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
-import { useTranslation } from "@/lib/translations/i18n"
+import { getTranslations } from "@/lib/translations/i18n"
 
 // Get treatments from the database
 async function getTreatments() {
@@ -31,7 +31,7 @@ function extractCategories(treatments: any[]): string[] {
 }
 
 export default async function BundlesPage() {
-  const { t } = await useTranslation("common")
+  const { t } = await getTranslations("common")
 
   // Check authentication and authorization
   const session = await getServerSession(authOptions)

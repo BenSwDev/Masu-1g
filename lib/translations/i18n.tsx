@@ -106,3 +106,28 @@ export const useDirection = () => {
   }
   return context.dir
 }
+
+// Server-compatible translation function
+export const getTranslations = (lang: Language = "he") => {
+  // Create a translation function that works on the server
+  const t = (key: string): string => {
+    const keys = key.split(".")
+    let result: any = translations[lang]
+
+    for (const k of keys) {
+      if (result && result[k]) {
+        result = result[k]
+      } else {
+        // Fallback to key if translation not found
+        return key
+      }
+    }
+
+    return result
+  }
+
+  return {
+    t,
+    dir: getDirection(lang),
+  }
+}

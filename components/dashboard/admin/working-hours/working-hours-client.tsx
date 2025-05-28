@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WeeklyHoursSection } from "./weekly-hours-section"
 import { SpecialDatesSection } from "./special-dates-section"
 import { SpecialDateForm } from "./special-date-form"
@@ -11,6 +12,7 @@ import {
   updateSpecialDate,
   deleteSpecialDate,
 } from "@/actions/working-hours-actions"
+import { Calendar, Clock } from "lucide-react"
 import { toast } from "sonner"
 
 interface WorkingHoursClientProps {
@@ -21,6 +23,7 @@ export function WorkingHoursClient({ initialData }: WorkingHoursClientProps) {
   const [workingHours, setWorkingHours] = useState<IWorkingHours>(initialData)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingDate, setEditingDate] = useState<IWorkingHours["specialDates"][0] | null>(null)
+  const [activeTab, setActiveTab] = useState("weekly")
 
   const handleUpdateWeeklyHours = async (weeklyHours: IWorkingHours["weeklyHours"]) => {
     const result = await updateWeeklyHours(weeklyHours)
@@ -85,15 +88,32 @@ export function WorkingHoursClient({ initialData }: WorkingHoursClientProps) {
   }
 
   return (
-    <div className="space-y-6 px-4 sm:px-6">
-      <WeeklyHoursSection weeklyHours={workingHours.weeklyHours} onUpdate={handleUpdateWeeklyHours} />
+    <div className="container mx-auto max-w-6xl">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="weekly" className="flex items-center gap-2 py-3">
+            <Clock className="h-4 w-4" />
+            שעות פעילות שבועיות
+          </TabsTrigger>
+          <TabsTrigger value="special" className="flex items-center gap-2 py-3">
+            <Calendar className="h-4 w-4" />
+            תאריכים מיוחדים
+          </TabsTrigger>
+        </TabsList>
 
-      <SpecialDatesSection
-        specialDates={workingHours.specialDates}
-        onAdd={openAddForm}
-        onEdit={openEditForm}
-        onDelete={handleDeleteSpecialDate}
-      />
+        <TabsContent value="weekly" className="mt-0">
+          <WeeklyHoursSection weeklyHours={workingHours.weeklyHours} onUpdate={handleUpdateWeeklyHours} />
+        </TabsContent>
+
+        <TabsContent value="special" className="mt-0">
+          <SpecialDatesSection
+            specialDates={workingHours.specialDates}
+            onAdd={openAddForm}
+            onEdit={openEditForm}
+            onDelete={handleDeleteSpecialDate}
+          />
+        </TabsContent>
+      </Tabs>
 
       <SpecialDateForm isOpen={isFormOpen} onClose={closeForm} onSubmit={handleFormSubmit} editingDate={editingDate} />
     </div>

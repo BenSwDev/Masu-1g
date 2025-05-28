@@ -12,6 +12,8 @@ import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Clock, Coins, Info, CheckCircle2, XCircle } from "lucide-react"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import { createTreatment, updateTreatment, type TreatmentFormData } from "@/actions/treatment-actions"
 import { toast } from "@/components/ui/use-toast"
@@ -181,202 +183,173 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto rtl:text-right">
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>שם הטיפול</FormLabel>
-                <FormControl>
-                  <Input {...field} placeholder="לדוגמה: עיסוי שוודי" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>קטגוריה</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="massages">עיסויים</SelectItem>
-                    <SelectItem value="facial_treatments">טיפולי פנים</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>תיאור (אופציונלי)</FormLabel>
-                <FormControl>
-                  <Textarea {...field} placeholder="תיאור קצר של הטיפול" rows={3} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="isActive"
-            render={({ field }) => (
-              <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-0.5">
-                  <FormLabel>סטטוס</FormLabel>
-                  <FormDescription>האם הטיפול זמין להזמנה?</FormDescription>
-                </div>
-                <FormControl>
-                  <Switch checked={field.value} onCheckedChange={field.onChange} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <Separator />
-
-        <div className="space-y-4">
-          <FormField
-            control={form.control}
-            name="pricingType"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>סוג תמחור</FormLabel>
-                <FormControl>
-                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-3">
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                      <RadioGroupItem value="fixed" id="fixed" />
-                      <label htmlFor="fixed" className="cursor-pointer">
-                        מחיר קבוע (ללא תלות בזמן)
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                      <RadioGroupItem value="duration_based" id="duration_based" />
-                      <label htmlFor="duration_based" className="cursor-pointer">
-                        מחיר לפי זמנים
-                      </label>
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {pricingType === "fixed" ? (
-            <div className="space-y-4 bg-muted/50 rounded-lg p-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
+        <Card className="border-2 border-muted">
+          <CardHeader className="bg-muted/30">
+            <CardTitle className="text-xl flex items-center gap-2">
+              {treatment ? "עריכת טיפול" : "הוספת טיפול חדש"}
+            </CardTitle>
+            <CardDescription>{treatment ? "עדכן את פרטי הטיפול הקיים" : "הוסף טיפול חדש למערכת"}</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
-                name="fixedPrice"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>מחיר כללי</FormLabel>
+                    <FormLabel className="text-base font-medium">שם הטיפול</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
-                        placeholder="0"
-                        className="text-center max-w-32"
-                      />
+                      <Input {...field} placeholder="לדוגמה: עיסוי שוודי" className="border-2" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="space-y-3">
-                <FormLabel>מחיר למטפל</FormLabel>
-                <div className="flex gap-2 items-end">
-                  <Select
-                    value={professionalPriceType}
-                    onValueChange={(value: "amount" | "percentage") => setProfessionalPriceType(value)}
-                  >
-                    <SelectTrigger className="w-28">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="amount">סכום</SelectItem>
-                      <SelectItem value="percentage">אחוז</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    placeholder={professionalPriceType === "amount" ? "0" : "0%"}
-                    onChange={(e) => handleProfessionalPriceChange(e.target.value, professionalPriceType)}
-                    className="text-center max-w-32"
-                  />
-                </div>
-                <div className="text-sm text-muted-foreground">סכום: ₪{form.watch("fixedProfessionalPrice") || 0}</div>
-              </div>
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base font-medium">קטגוריה</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="border-2">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="massages">עיסויים</SelectItem>
+                        <SelectItem value="facial_treatments">טיפולי פנים</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">בחר את הזמנים הזמינים והגדר מחיר לכל אחד</p>
-              {form.watch("durations")?.map((duration, index) => (
-                <div key={duration.minutes} className="border rounded-lg p-4 space-y-4">
-                  <FormField
-                    control={form.control}
-                    name={`durations.${index}.isActive`}
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between">
-                        <FormLabel className="text-base font-medium">{duration.minutes} דקות</FormLabel>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
 
-                  {duration.isActive && (
-                    <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-base font-medium">תיאור הטיפול</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} placeholder="תיאור קצר של הטיפול" rows={3} className="border-2" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border-2 p-4 shadow-sm">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      {field.value ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-500" />
+                      )}
+                      <FormLabel className="text-base font-medium">סטטוס הטיפול</FormLabel>
+                    </div>
+                    <FormDescription>האם הטיפול זמין להזמנה?</FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <Separator className="my-6" />
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Coins className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-medium">תמחור</h3>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="pricingType"
+                render={({ field }) => (
+                  <FormItem className="space-y-4">
+                    <FormLabel className="text-base font-medium">סוג תמחור</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                      >
+                        <div className="flex items-start space-x-2 space-x-reverse border-2 rounded-lg p-4 hover:bg-muted/20 transition-colors cursor-pointer">
+                          <RadioGroupItem value="fixed" id="fixed" className="mt-1" />
+                          <div className="space-y-1 w-full">
+                            <label htmlFor="fixed" className="text-base font-medium cursor-pointer block">
+                              מחיר קבוע
+                            </label>
+                            <p className="text-sm text-muted-foreground">מחיר אחיד ללא תלות במשך הטיפול</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-2 space-x-reverse border-2 rounded-lg p-4 hover:bg-muted/20 transition-colors cursor-pointer">
+                          <RadioGroupItem value="duration_based" id="duration_based" className="mt-1" />
+                          <div className="space-y-1 w-full">
+                            <label htmlFor="duration_based" className="text-base font-medium cursor-pointer block">
+                              מחיר לפי זמן
+                            </label>
+                            <p className="text-sm text-muted-foreground">מחירים שונים לפי משך הטיפול</p>
+                          </div>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {pricingType === "fixed" ? (
+                <Card className="border-2 border-muted">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base font-medium">מחיר קבוע</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
                         control={form.control}
-                        name={`durations.${index}.price`}
+                        name="fixedPrice"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>מחיר</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                {...field}
-                                onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
-                                placeholder="0"
-                                className="text-center max-w-32"
-                              />
-                            </FormControl>
+                            <FormLabel className="text-base font-medium">מחיר כללי</FormLabel>
+                            <div className="relative">
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
+                                  placeholder="0"
+                                  className="pl-8 text-left border-2"
+                                />
+                              </FormControl>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₪</span>
+                            </div>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
 
-                      <div className="space-y-3">
-                        <FormLabel>מחיר למטפל</FormLabel>
+                      <div className="space-y-2">
+                        <FormLabel className="text-base font-medium">מחיר למטפל</FormLabel>
                         <div className="flex gap-2 items-end">
                           <Select
-                            value={durationPriceTypes[duration.minutes] || "amount"}
-                            onValueChange={(value: "amount" | "percentage") =>
-                              setDurationPriceTypes((prev) => ({ ...prev, [duration.minutes]: value }))
-                            }
+                            value={professionalPriceType}
+                            onValueChange={(value: "amount" | "percentage") => setProfessionalPriceType(value)}
                           >
-                            <SelectTrigger className="w-28">
+                            <SelectTrigger className="w-28 border-2">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -384,37 +357,149 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                               <SelectItem value="percentage">אחוז</SelectItem>
                             </SelectContent>
                           </Select>
-                          <Input
-                            type="number"
-                            placeholder={durationPriceTypes[duration.minutes] === "percentage" ? "0%" : "0"}
-                            onChange={(e) =>
-                              handleDurationProfessionalPriceChange(
-                                index,
-                                e.target.value,
-                                durationPriceTypes[duration.minutes] || "amount",
-                              )
-                            }
-                            className="text-center max-w-32"
-                          />
+                          <div className="relative flex-1">
+                            <Input
+                              type="number"
+                              placeholder={professionalPriceType === "amount" ? "0" : "0%"}
+                              onChange={(e) => handleProfessionalPriceChange(e.target.value, professionalPriceType)}
+                              className={`pl-8 text-left border-2 ${
+                                professionalPriceType === "percentage" ? "pl-10" : "pl-8"
+                              }`}
+                            />
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                              {professionalPriceType === "amount" ? "₪" : "%"}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">סכום: ₪{duration.professionalPrice || 0}</div>
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Info className="h-4 w-4" />
+                          סכום למטפל: ₪{form.watch("fixedProfessionalPrice") || 0}
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-primary" />
+                    <h3 className="text-base font-medium">זמני טיפול</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">בחר את הזמנים הזמינים והגדר מחיר לכל אחד</p>
 
-        <div className="flex gap-3 pt-4">
-          <Button type="submit" disabled={isSubmitting} className="flex-1">
-            {isSubmitting ? "שומר..." : treatment ? "עדכן טיפול" : "צור טיפול"}
-          </Button>
-          <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-            ביטול
-          </Button>
-        </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {form.watch("durations")?.map((duration, index) => (
+                      <Card
+                        key={duration.minutes}
+                        className={`border-2 ${duration.isActive ? "border-primary/30" : ""}`}
+                      >
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-primary" />
+                              <CardTitle className="text-base font-medium">{duration.minutes} דקות</CardTitle>
+                            </div>
+                            <FormField
+                              control={form.control}
+                              name={`durations.${index}.isActive`}
+                              render={({ field }) => (
+                                <FormItem className="flex items-center space-x-2 space-x-reverse m-0">
+                                  <FormControl>
+                                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </CardHeader>
+
+                        {duration.isActive && (
+                          <CardContent className="space-y-4 pt-0">
+                            <FormField
+                              control={form.control}
+                              name={`durations.${index}.price`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>מחיר</FormLabel>
+                                  <div className="relative">
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        {...field}
+                                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
+                                        placeholder="0"
+                                        className="pl-8 text-left border-2"
+                                      />
+                                    </FormControl>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                      ₪
+                                    </span>
+                                  </div>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <div className="space-y-2">
+                              <FormLabel>מחיר למטפל</FormLabel>
+                              <div className="flex gap-2 items-end">
+                                <Select
+                                  value={durationPriceTypes[duration.minutes] || "amount"}
+                                  onValueChange={(value: "amount" | "percentage") =>
+                                    setDurationPriceTypes((prev) => ({ ...prev, [duration.minutes]: value }))
+                                  }
+                                >
+                                  <SelectTrigger className="w-24 border-2">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="amount">סכום</SelectItem>
+                                    <SelectItem value="percentage">אחוז</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <div className="relative flex-1">
+                                  <Input
+                                    type="number"
+                                    placeholder={durationPriceTypes[duration.minutes] === "percentage" ? "0%" : "0"}
+                                    onChange={(e) =>
+                                      handleDurationProfessionalPriceChange(
+                                        index,
+                                        e.target.value,
+                                        durationPriceTypes[duration.minutes] || "amount",
+                                      )
+                                    }
+                                    className={`pl-8 text-left border-2 ${
+                                      durationPriceTypes[duration.minutes] === "percentage" ? "pl-10" : "pl-8"
+                                    }`}
+                                  />
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                    {durationPriceTypes[duration.minutes] === "percentage" ? "%" : "₪"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-sm text-muted-foreground flex items-center gap-1">
+                                <Info className="h-4 w-4" />
+                                סכום למטפל: ₪{duration.professionalPrice || 0}
+                              </div>
+                            </div>
+                          </CardContent>
+                        )}
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-between bg-muted/30 border-t">
+            <Button type="button" variant="outline" onClick={onCancel} className="min-w-24">
+              ביטול
+            </Button>
+            <Button type="submit" disabled={isSubmitting} className="min-w-24">
+              {isSubmitting ? "שומר..." : treatment ? "עדכן טיפול" : "צור טיפול"}
+            </Button>
+          </CardFooter>
+        </Card>
       </form>
     </Form>
   )

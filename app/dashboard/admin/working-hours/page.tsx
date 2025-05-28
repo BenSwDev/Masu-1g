@@ -23,9 +23,9 @@ export default async function AdminWorkingHoursPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">ניהול שעות פעילות</h1>
-        <p className="text-gray-600">הגדר שעות פעילות שבועיות ותאריכים מיוחדים עם תוספות מחיר.</p>
+      <div className="rounded-lg bg-white p-4 shadow-sm mb-4">
+        <h1 className="text-xl font-bold text-gray-900">ניהול שעות פעילות</h1>
+        <p className="text-sm text-gray-600">הגדר שעות פעילות שבועיות ותאריכים מיוחדים עם תוספות מחיר.</p>
       </div>
 
       <WorkingHoursClient initialData={result.data} />

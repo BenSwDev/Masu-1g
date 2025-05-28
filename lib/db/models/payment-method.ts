@@ -59,3 +59,5 @@ PaymentMethodSchema.index({ userId: 1, isDefault: 1 })
 
 export const PaymentMethod =
   mongoose.models.PaymentMethod || mongoose.model<IPaymentMethod>("PaymentMethod", PaymentMethodSchema)
+
+export default PaymentMethod

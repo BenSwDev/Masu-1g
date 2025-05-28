@@ -5,7 +5,11 @@
       "users": "משתמשים",
       "products": "מוצרים",
       "orders": "הזמנות",
-      "settings": "הגדרות"
+      "settings": "הגדרות",
+      "subscriptions": "מנויים",
+      "userSubscriptions": "מנויי משתמשים",
+      "mySubscriptions": "המנויים שלי",
+      "purchaseSubscription": "רכישת מנוי"
     }
   },
   "common": {
@@ -38,5 +42,59 @@
     "title": "הגדרות",
     "language": "שפה",
     "theme": "ערכת נושא"
+  },
+  "subscriptions": {
+    "title": "ניהול מנויים",
+    "addNew": "הוסף מנוי חדש",
+    "edit": "ערוך מנוי",
+    "searchPlaceholder": "חפש מנוי לפי שם",
+    "noSubscriptions": "אין מנויים",
+    "createSuccess": "המנוי נוצר בהצלחה",
+    "updateSuccess": "המנוי עודכן בהצלחה",
+    "deactivateSuccess": "המנוי הושבת בהצלחה",
+    "activateSuccess": "המנוי הופעל בהצלחה",
+    "statusUpdateError": "שגיאה בעדכון סטטוס המנוי",
+    "deleteSuccess": "המנוי נמחק בהצלחה",
+    "deleteError": "שגיאה במחיקת המנוי",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק מנוי זה?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
+    "months": "חודשים",
+    "includedTreatments": "טיפולים כלולים",
+    "sortAscending": "סדר עולה",
+    "sortDescending": "סדר יורד",
+    "fields": {
+      "name": "שם המנוי",
+      "description": "תיאור",
+      "isActive": "פעיל",
+      "quantity": "כמות טיפולים",
+      "bonusQuantity": "כמות בונוס",
+      "validityMonths": "תוקף (חודשים)",
+      "treatments": "טיפולים"
+    }
+  },
+  "userSubscriptions": {
+    "title": "מנויי משתמשים",
+    "mySubscriptions": "המנויים שלי",
+    "purchaseSubscription": "רכישת מנוי",
+    "noSubscriptions": "לא נמצאו מנויים",
+    "noActiveSubscriptions": "אין מנויים פעילים זמינים לרכישה",
+    "purchaseSuccess": "המנוי נרכש בהצלחה",
+    "purchaseError": "שגיאה ברכישת המנוי",
+    "remainingTreatments": "טיפולים נותרים",
+    "validUntil": "בתוקף עד",
+    "expired": "פג תוקף",
+    "active": "פעיל",
+    "status": "סטטוס",
+    "purchaseDate": "תאריך רכישה",
+    "price": "מחיר",
+    "totalTreatments": "סך הכל טיפולים",
+    "usedTreatments": "טיפולים שנוצלו",
+    "selectPaymentMethod": "בחר אמצעי תשלום",
+    "noPaymentMethods": "לא נמצאו אמצעי תשלום. אנא הוסף אמצעי תשלום תחילה.",
+    "confirmPurchase": "אישור רכישה",
+    "purchaseDetails": "פרטי הרכישה",
+    "subscriptionDetails": "פרטי המנוי",
+    "paymentDetails": "פרטי התשלום",
+    "totalPrice": "מחיר כולל"
   }
 }

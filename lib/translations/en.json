@@ -88,5 +88,25 @@
       "validityRequired": "Validity must be at least 1 month",
       "treatmentsRequired": "At least one treatment must be selected"
     }
+  },
+  "coupons": {
+    "title": "Coupons",
+    "description": "Manage coupons"
+  },
+  "giftVouchers": {
+    "title": "Gift Vouchers",
+    "description": "Manage gift vouchers"
+  },
+  "partnerCoupons": {
+    "title": "Partner Coupons",
+    "description": "Manage partner coupons"
+  },
+  "memberCoupons": {
+    "title": "Member Coupons",
+    "description": "View available coupons"
+  },
+  "memberGiftVouchers": {
+    "title": "Member Gift Vouchers",
+    "description": "View available gift vouchers"
   }
 }

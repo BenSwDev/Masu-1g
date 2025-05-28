@@ -1,10 +1,14 @@
-const MemberGiftVouchersPage = () => {
+"use client"
+
+import { useTranslation } from "@/lib/translations/i18n"
+
+export default function MemberGiftVouchersPage() {
+  const { t } = useTranslation()
+
   return (
     <div>
-      <h1>Member Gift Vouchers Page</h1>
-      <p>This is the gift vouchers page for members.</p>
+      <h1>{t("memberGiftVouchers.title")}</h1>
+      <p>{t("memberGiftVouchers.description")}</p>
     </div>
   )
 }
-
-export default MemberGiftVouchersPage

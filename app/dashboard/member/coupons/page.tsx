@@ -1,10 +1,14 @@
-const MemberCouponsPage = () => {
+"use client"
+
+import { useTranslation } from "@/lib/translations/i18n"
+
+export default function MemberCouponsPage() {
+  const { t } = useTranslation()
+
   return (
     <div>
-      <h1>Member Coupons Page</h1>
-      <p>This is the coupons page for members.</p>
+      <h1>{t("memberCoupons.title")}</h1>
+      <p>{t("memberCoupons.description")}</p>
     </div>
   )
 }
-
-export default MemberCouponsPage

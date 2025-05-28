@@ -284,7 +284,7 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
             setSelectedBundle(undefined)
             setIsFormOpen(true)
           }}
-          className="w-full sm:w-auto bg-teal-500 hover:bg-teal-600"
+          className="w-full sm:w-auto bg-teal-500 hover:bg-teal-600 flex flex-row-reverse"
           disabled={isLoading || !hasTreatments || !hasCategories}
         >
           {isLoading ? (
@@ -310,8 +310,8 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
 
       {(!hasTreatments || !hasCategories) && (
         <Alert className="mb-4">
-          <AlertTitle>שים לב</AlertTitle>
-          <AlertDescription>
+          <AlertTitle className="text-right">שים לב</AlertTitle>
+          <AlertDescription className="text-right">
             {!hasTreatments && !hasCategories
               ? "לא ניתן ליצור חבילות כרגע. נדרש להגדיר טיפולים וקטגוריות תחילה."
               : !hasTreatments

@@ -59,7 +59,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-xl rtl:flex-row-reverse">
+        <CardTitle className="flex items-center gap-2 text-xl flex-row-reverse">
           <Clock className="h-5 w-5" />
           שעות פעילות שבועיות
         </CardTitle>
@@ -75,7 +75,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
             >
               <div className="p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-row-reverse">
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium ${
                         dayHour.isActive ? "bg-teal-500 text-white" : "bg-gray-200 text-gray-600"
@@ -87,12 +87,12 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                   </div>
                   <div className="flex items-center gap-2">
                     {dayHour.isActive ? (
-                      <span className="text-xs text-teal-600 flex items-center rtl:flex-row-reverse">
+                      <span className="text-xs text-teal-600 flex items-center flex-row-reverse">
                         <Check className="h-3 w-3 mr-1 rtl:mr-0 rtl:ml-1" />
                         פעיל
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-500 flex items-center rtl:flex-row-reverse">
+                      <span className="text-xs text-gray-500 flex items-center flex-row-reverse">
                         <X className="h-3 w-3 mr-1 rtl:mr-0 rtl:ml-1" />
                         לא פעיל
                       </span>
@@ -100,14 +100,14 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                     <Switch
                       checked={dayHour.isActive}
                       onCheckedChange={(checked) => handleDayToggle(dayHour.day, checked)}
-                      className="data-[state=checked]:bg-teal-500"
+                      className="data-[state=checked]:bg-teal-500 rtl:data-[state=checked]:justify-start rtl:data-[state=unchecked]:justify-end"
                     />
                   </div>
                 </div>
 
                 {dayHour.isActive && (
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <div className="flex items-center gap-1 rtl:flex-row-reverse">
+                    <div className="flex items-center gap-1 flex-row-reverse">
                       <Clock className="h-3 w-3" />
                       <span>שעות:</span>
                     </div>

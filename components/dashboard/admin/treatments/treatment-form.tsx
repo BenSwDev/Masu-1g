@@ -198,7 +198,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-medium">שם הטיפול</FormLabel>
+                    <FormLabel className="text-base font-medium text-right w-full">שם הטיפול</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="לדוגמה: עיסוי שוודי" className="border-2" />
                     </FormControl>
@@ -332,10 +332,12 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                                   {...field}
                                   onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
                                   placeholder="0"
-                                  className="pl-8 text-left border-2"
+                                  className="pl-8 text-left border-2 rtl:pl-3 rtl:pr-8 rtl:text-right"
                                 />
                               </FormControl>
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">₪</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground rtl:left-auto rtl:right-3">
+                                ₪
+                              </span>
                             </div>
                             <FormMessage />
                           </FormItem>
@@ -362,16 +364,18 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                               type="number"
                               placeholder={professionalPriceType === "amount" ? "0" : "0%"}
                               onChange={(e) => handleProfessionalPriceChange(e.target.value, professionalPriceType)}
-                              className={`pl-8 text-left border-2 ${
-                                professionalPriceType === "percentage" ? "pl-10" : "pl-8"
+                              className={`pl-8 text-left border-2 rtl:pl-3 rtl:pr-8 rtl:text-right ${
+                                professionalPriceType === "percentage"
+                                  ? "pl-10 rtl:pl-3 rtl:pr-10"
+                                  : "pl-8 rtl:pl-3 rtl:pr-8"
                               }`}
                             />
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground rtl:left-auto rtl:right-3">
                               {professionalPriceType === "amount" ? "₪" : "%"}
                             </span>
                           </div>
                         </div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
+                        <div className="text-sm text-muted-foreground flex items-center gap-1 rtl:flex-row-reverse">
                           <Info className="h-4 w-4" />
                           סכום למטפל: ₪{form.watch("fixedProfessionalPrice") || 0}
                         </div>
@@ -493,7 +497,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4 border-t rtl:flex-row-reverse">
           <Button type="button" variant="outline" onClick={onCancel} className="min-w-24">
             ביטול
           </Button>

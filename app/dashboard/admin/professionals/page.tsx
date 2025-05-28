@@ -16,8 +16,8 @@ export default async function AdminProfessionalsPage() {
   return (
     <div className="space-y-6">
       <div className="rounded-lg bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 rtl:text-right">ניהול בעלי מקצוע</h1>
-        <p className="text-gray-600 rtl:text-right">ניהול וצפייה ברשימת בעלי המקצוע במערכת.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2 text-right">ניהול בעלי מקצוע</h1>
+        <p className="text-gray-600 text-right">ניהול וצפייה ברשימת בעלי המקצוע במערכת.</p>
       </div>
     </div>
   )

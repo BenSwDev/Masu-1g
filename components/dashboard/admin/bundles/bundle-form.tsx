@@ -252,11 +252,11 @@ export function BundleForm({
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>שם החבילה</FormLabel>
+                          <FormLabel className="text-right w-full">שם החבילה</FormLabel>
                           <FormControl>
-                            <Input placeholder="לדוגמא: חבילת 5+1 עיסויים" {...field} />
+                            <Input placeholder="לדוגמא: חבילת 5+1 עיסויים" {...field} className="text-right" />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="text-right" />
                         </FormItem>
                       )}
                     />
@@ -373,7 +373,7 @@ export function BundleForm({
                       {filteredTreatments.length > 0 ? (
                         <div className="space-y-3">
                           {filteredTreatments.map((treatment, index) => (
-                            <div key={treatment._id} className="flex items-center space-x-2 rtl:space-x-reverse">
+                            <div key={treatment._id} className="flex items-center space-x-2 space-x-reverse">
                               <Checkbox
                                 id={`treatment-${treatment._id}`}
                                 checked={form.watch(`treatments.${index}.isSelected`)}
@@ -383,7 +383,10 @@ export function BundleForm({
                                   form.setValue("treatments", treatments)
                                 }}
                               />
-                              <Label htmlFor={`treatment-${treatment._id}`} className="flex-1 cursor-pointer text-sm">
+                              <Label
+                                htmlFor={`treatment-${treatment._id}`}
+                                className="flex-1 cursor-pointer text-sm text-right"
+                              >
                                 {treatment.name}
                               </Label>
                             </div>
@@ -423,33 +426,33 @@ export function BundleForm({
                               defaultValue={field.value}
                               className="flex flex-col space-y-2"
                             >
-                              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                              <div className="flex items-center space-x-2 space-x-reverse">
                                 <RadioGroupItem
                                   value={DiscountType.FREE_QUANTITY}
                                   id="discount-free"
                                   checked={field.value === DiscountType.FREE_QUANTITY}
                                 />
-                                <Label htmlFor="discount-free" className="text-sm">
+                                <Label htmlFor="discount-free" className="text-sm text-right">
                                   כמות חינם
                                 </Label>
                               </div>
-                              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                              <div className="flex items-center space-x-2 space-x-reverse">
                                 <RadioGroupItem
                                   value={DiscountType.PERCENTAGE}
                                   id="discount-percentage"
                                   checked={field.value === DiscountType.PERCENTAGE}
                                 />
-                                <Label htmlFor="discount-percentage" className="text-sm">
+                                <Label htmlFor="discount-percentage" className="text-sm text-right">
                                   אחוז הנחה
                                 </Label>
                               </div>
-                              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                              <div className="flex items-center space-x-2 space-x-reverse">
                                 <RadioGroupItem
                                   value={DiscountType.FIXED_AMOUNT}
                                   id="discount-fixed"
                                   checked={field.value === DiscountType.FIXED_AMOUNT}
                                 />
-                                <Label htmlFor="discount-fixed" className="text-sm">
+                                <Label htmlFor="discount-fixed" className="text-sm text-right">
                                   סכום הנחה קבוע
                                 </Label>
                               </div>
@@ -573,7 +576,7 @@ export function BundleForm({
           </div>
 
           <DrawerFooter className="flex-shrink-0 pt-2">
-            <div className="flex justify-between gap-2 rtl:flex-row-reverse">
+            <div className="flex justify-between gap-2 flex-row-reverse">
               <Button
                 type="button"
                 variant="outline"
@@ -610,7 +613,7 @@ export function BundleForm({
                   }
                 }}
                 disabled={isSubmitting || (activeTab === "treatments" && !hasSelectedTreatments)}
-                className="bg-teal-500 hover:bg-teal-600 flex-1"
+                className="bg-teal-500 hover:bg-teal-600 flex-1 flex flex-row-reverse"
               >
                 {isSubmitting ? (
                   <>

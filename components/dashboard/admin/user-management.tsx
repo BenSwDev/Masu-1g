@@ -339,7 +339,7 @@ export function UserManagement({
                 <Button
                   variant="ghost"
                   onClick={() => handleSort("name")}
-                  className="flex items-center gap-1 rtl:flex-row-reverse"
+                  className="flex items-center gap-1 flex-row-reverse"
                 >
                   {t("admin.users.name")}
                   <ArrowUpDown className="h-4 w-4" />
@@ -349,7 +349,7 @@ export function UserManagement({
                 <Button
                   variant="ghost"
                   onClick={() => handleSort("email")}
-                  className="flex items-center gap-1 rtl:flex-row-reverse"
+                  className="flex items-center gap-1 flex-row-reverse"
                 >
                   {t("admin.users.email")}
                   <ArrowUpDown className="h-4 w-4" />
@@ -360,7 +360,7 @@ export function UserManagement({
                 <Button
                   variant="ghost"
                   onClick={() => handleSort("createdAt")}
-                  className="flex items-center gap-1 rtl:flex-row-reverse"
+                  className="flex items-center gap-1 flex-row-reverse"
                 >
                   {t("admin.users.created")}
                   <ArrowUpDown className="h-4 w-4" />
@@ -378,7 +378,7 @@ export function UserManagement({
                   <div className="flex flex-wrap gap-1">
                     {user.roles.map((role) => (
                       <Badge key={role} variant="outline" className={getRoleBadgeColor(role)}>
-                        <span className="flex items-center gap-1 rtl:flex-row-reverse">
+                        <span className="flex items-center gap-1 flex-row-reverse">
                           {getRoleIcon(role)}
                           {role}
                         </span>
@@ -388,7 +388,7 @@ export function UserManagement({
                 </TableCell>
                 <TableCell>{formatDate(user.createdAt)}</TableCell>
                 <TableCell>
-                  <div className="flex gap-2 rtl:flex-row-reverse">
+                  <div className="flex gap-2 flex-row-reverse">
                     <Button
                       variant="outline"
                       size="sm"
@@ -472,21 +472,18 @@ export function UserManagement({
             </DialogHeader>
             <div className="py-4">
               <div className="space-y-4">
-                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                <div className="flex items-center space-x-2 space-x-reverse">
                   <Checkbox
                     id="role-admin"
                     checked={selectedRoles["admin"] || false}
                     onCheckedChange={(checked) => handleRoleChange("admin", checked === true)}
                   />
-                  <label
-                    htmlFor="role-admin"
-                    className="flex items-center gap-2 text-sm font-medium rtl:flex-row-reverse"
-                  >
+                  <label htmlFor="role-admin" className="flex items-center gap-2 text-sm font-medium flex-row-reverse">
                     <ShieldCheck className="h-4 w-4" />
                     Admin
                   </label>
                 </div>
-                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                <div className="flex items-center space-x-2 space-x-reverse">
                   <Checkbox
                     id="role-professional"
                     checked={selectedRoles["professional"] || false}
@@ -494,13 +491,13 @@ export function UserManagement({
                   />
                   <label
                     htmlFor="role-professional"
-                    className="flex items-center gap-2 text-sm font-medium rtl:flex-row-reverse"
+                    className="flex items-center gap-2 text-sm font-medium flex-row-reverse"
                   >
                     <Briefcase className="h-4 w-4" />
                     Professional
                   </label>
                 </div>
-                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                <div className="flex items-center space-x-2 space-x-reverse">
                   <Checkbox
                     id="role-partner"
                     checked={selectedRoles["partner"] || false}
@@ -508,28 +505,25 @@ export function UserManagement({
                   />
                   <label
                     htmlFor="role-partner"
-                    className="flex items-center gap-2 text-sm font-medium rtl:flex-row-reverse"
+                    className="flex items-center gap-2 text-sm font-medium flex-row-reverse"
                   >
                     <Handshake className="h-4 w-4" />
                     Partner
                   </label>
                 </div>
-                <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                <div className="flex items-center space-x-2 space-x-reverse">
                   <Checkbox
                     id="role-member"
                     checked={selectedRoles["member"] || false}
                     onCheckedChange={(checked) => handleRoleChange("member", checked === true)}
                   />
-                  <label
-                    htmlFor="role-member"
-                    className="flex items-center gap-2 text-sm font-medium rtl:flex-row-reverse"
-                  >
+                  <label htmlFor="role-member" className="flex items-center gap-2 text-sm font-medium flex-row-reverse">
                     <User className="h-4 w-4" />
                     Member
                   </label>
                 </div>
               </div>
-              <div className="mt-6 flex justify-end gap-2 rtl:flex-row-reverse">
+              <div className="mt-6 flex justify-end gap-2 flex-row-reverse">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>

@@ -155,12 +155,12 @@ export function TreatmentsClient() {
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <div className="relative w-full sm:w-auto">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground rtl:right-auto rtl:left-3" />
             <Input
               placeholder="חיפוש טיפולים..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10 w-full"
+              className="pr-10 w-full rtl:pr-3 rtl:pl-10"
             />
           </div>
 
@@ -277,7 +277,7 @@ export function TreatmentsClient() {
                         <div className="font-medium">{treatment.name}</div>
                         <div className="text-sm text-muted-foreground">{getCategoryName(treatment.category)}</div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 rtl:flex-row-reverse">
                         <div className="text-sm hidden md:block">
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-xs ${
@@ -292,7 +292,7 @@ export function TreatmentsClient() {
                             {getPricingTypeName(treatment.pricingType)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 rtl:flex-row-reverse">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -313,7 +313,7 @@ export function TreatmentsClient() {
       </Tabs>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rtl:text-right">
           <DialogHeader>
             <DialogTitle>{editingTreatment ? "עריכת טיפול" : "הוספת טיפול חדש"}</DialogTitle>
             <DialogDescription>

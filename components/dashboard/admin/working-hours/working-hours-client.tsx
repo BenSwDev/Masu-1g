@@ -91,11 +91,11 @@ export function WorkingHoursClient({ initialData }: WorkingHoursClientProps) {
     <div className="container mx-auto max-w-6xl">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="weekly" className="flex items-center gap-2 py-3 rtl:flex-row-reverse">
+          <TabsTrigger value="weekly" className="flex items-center gap-2 py-3 flex-row-reverse">
             <Clock className="h-4 w-4" />
             שעות פעילות שבועיות
           </TabsTrigger>
-          <TabsTrigger value="special" className="flex items-center gap-2 py-3 rtl:flex-row-reverse">
+          <TabsTrigger value="special" className="flex items-center gap-2 py-3 flex-row-reverse">
             <Calendar className="h-4 w-4" />
             תאריכים מיוחדים
           </TabsTrigger>

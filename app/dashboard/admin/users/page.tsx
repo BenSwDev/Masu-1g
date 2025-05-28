@@ -43,8 +43,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-6">
       <div className="rounded-lg bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 rtl:text-right">User Management</h1>
-        <p className="text-gray-600 rtl:text-right">Manage users and their roles.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2 text-right">ניהול משתמשים</h1>
+        <p className="text-gray-600 text-right">ניהול משתמשים ותפקידיהם במערכת.</p>
       </div>
 
       <UserManagement

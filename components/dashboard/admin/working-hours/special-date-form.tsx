@@ -126,15 +126,15 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
           <div className="flex-1 overflow-y-auto px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3 sticky top-0 bg-background z-10 mb-4">
-                <TabsTrigger value="basic" className="text-xs rtl:flex-row-reverse">
+                <TabsTrigger value="basic" className="text-xs flex flex-row-reverse">
                   <Calendar className="h-3 w-3 ml-1 rtl:ml-0 rtl:mr-1" />
                   פרטים
                 </TabsTrigger>
-                <TabsTrigger value="hours" className="text-xs rtl:flex-row-reverse">
+                <TabsTrigger value="hours" className="text-xs flex flex-row-reverse">
                   <Clock className="h-3 w-3 ml-1 rtl:ml-0 rtl:mr-1" />
                   שעות
                 </TabsTrigger>
-                <TabsTrigger value="pricing" className="text-xs rtl:flex-row-reverse">
+                <TabsTrigger value="pricing" className="text-xs flex flex-row-reverse">
                   <DollarSign className="h-3 w-3 ml-1 rtl:ml-0 rtl:mr-1" />
                   תמחור
                 </TabsTrigger>
@@ -143,7 +143,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
               <div className="space-y-4 rtl:text-right">
                 <TabsContent value="basic" className="space-y-4">
                   <div>
-                    <Label htmlFor="name" className="text-sm">
+                    <Label htmlFor="name" className="text-sm text-right w-full block">
                       שם התאריך *
                     </Label>
                     <Input
@@ -151,6 +151,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                       value={formData.name}
                       onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                       placeholder="למשל: חג המולד"
+                      className="text-right"
                     />
                   </div>
 
@@ -183,11 +184,11 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
                 <TabsContent value="hours" className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm">היום פעיל</Label>
+                    <Label className="text-sm text-right">היום פעיל</Label>
                     <Switch
                       checked={formData.isActive}
                       onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
-                      className="data-[state=checked]:bg-teal-500"
+                      className="data-[state=checked]:bg-teal-500 rtl:data-[state=checked]:justify-start rtl:data-[state=unchecked]:justify-end"
                     />
                   </div>
 
@@ -286,7 +287,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
           </div>
 
           <DrawerFooter className="flex-shrink-0">
-            <div className="flex gap-2 rtl:flex-row-reverse">
+            <div className="flex gap-2 flex-row-reverse">
               <Button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-teal-500 hover:bg-teal-600">
                 {isLoading ? "שומר..." : editingDate ? "עדכן" : "הוסף"}
               </Button>

@@ -154,21 +154,21 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(treatment)} className="rtl:flex rtl:flex-row-reverse">
+                  <DropdownMenuItem onClick={() => onEdit(treatment)} className="flex flex-row-reverse">
                     <Edit className="h-4 w-4 ml-2 rtl:ml-0 rtl:mr-2" />
                     עריכה
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={handleDuplicate}
                     disabled={isDuplicating}
-                    className="rtl:flex rtl:flex-row-reverse"
+                    className="flex flex-row-reverse"
                   >
                     <Copy className="h-4 w-4 ml-2 rtl:ml-0 rtl:mr-2" />
                     שכפול
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setShowDeleteDialog(true)}
-                    className="text-red-600 rtl:flex rtl:flex-row-reverse"
+                    className="text-red-600 flex flex-row-reverse"
                   >
                     <Trash2 className="h-4 w-4 ml-2 rtl:ml-0 rtl:mr-2" />
                     מחיקה
@@ -183,7 +183,7 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
           <div className="space-y-3">
             {treatment.pricingType === "fixed" ? (
               <div className="bg-muted/50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-sm rtl:flex-row-reverse">
+                <div className="flex items-center gap-2 text-sm flex-row-reverse">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">מחיר קבוע:</span>
                   <span>₪{treatment.fixedPrice}</span>
@@ -227,7 +227,7 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
               פעולה זו תמחק את הטיפול "{treatment.name}" לצמיתות. לא ניתן לבטל פעולה זו.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-row-reverse rtl:flex-row">
             <AlertDialogCancel>ביטול</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
               {isDeleting ? "מוחק..." : "מחק"}

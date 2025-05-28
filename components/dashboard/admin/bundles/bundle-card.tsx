@@ -86,7 +86,7 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
         <CardContent className="p-0">
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center rtl:flex-row-reverse">
+              <div className="flex items-center flex-row-reverse">
                 <Package className="w-5 h-5 ml-2 rtl:ml-0 rtl:mr-2 text-teal-500" />
                 <h3 className="text-lg font-semibold">{bundle.name}</h3>
               </div>
@@ -95,7 +95,7 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
                   checked={bundle.isActive}
                   onCheckedChange={handleToggleStatus}
                   disabled={isTogglingStatus}
-                  className="ml-4 rtl:ml-0 rtl:mr-4 data-[state=checked]:bg-teal-500"
+                  className="ml-4 rtl:ml-0 rtl:mr-4 data-[state=checked]:bg-teal-500 rtl:data-[state=checked]:justify-start rtl:data-[state=unchecked]:justify-end"
                 />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -130,15 +130,15 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div className="flex items-center rtl:flex-row-reverse">
+              <div className="flex items-center flex-row-reverse">
                 <Package className="w-4 h-4 ml-2 rtl:ml-0 rtl:mr-2 text-gray-500" />
                 <span className="text-sm">{bundle.quantity} טיפולים</span>
               </div>
-              <div className="flex items-center rtl:flex-row-reverse">
+              <div className="flex items-center flex-row-reverse">
                 <Calendar className="w-4 h-4 ml-2 rtl:ml-0 rtl:mr-2 text-gray-500" />
                 <span className="text-sm">תוקף: {bundle.validityMonths} חודשים</span>
               </div>
-              <div className="flex items-center rtl:flex-row-reverse">
+              <div className="flex items-center flex-row-reverse">
                 <Gift className="w-4 h-4 ml-2 rtl:ml-0 rtl:mr-2 text-gray-500" />
                 <span className="text-sm">{formatDiscountValue()}</span>
               </div>
@@ -149,7 +149,7 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
               <div className="space-y-1">
                 {Array.isArray(bundle.treatments) && bundle.treatments.length > 0 ? (
                   bundle.treatments.map((treatment, index) => (
-                    <div className="flex items-center text-sm rtl:flex-row-reverse" key={index}>
+                    <div className="flex items-center text-sm flex-row-reverse" key={index}>
                       <Clock className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1 text-gray-400" />
                       {treatment.name}
                     </div>

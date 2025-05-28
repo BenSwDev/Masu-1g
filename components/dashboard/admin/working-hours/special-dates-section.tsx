@@ -73,11 +73,11 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
     <Card>
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-xl rtl:flex-row-reverse">
+          <CardTitle className="flex items-center gap-2 text-xl flex-row-reverse">
             <Calendar className="h-5 w-5" />
             תאריכים מיוחדים
           </CardTitle>
-          <Button onClick={onAdd} size="sm" className="bg-teal-500 hover:bg-teal-600 text-white rtl:flex-row-reverse">
+          <Button onClick={onAdd} size="sm" className="bg-teal-500 hover:bg-teal-600 text-white flex flex-row-reverse">
             <Plus className="h-4 w-4 ml-1 rtl:ml-0 rtl:mr-1" />
             הוסף תאריך מיוחד
           </Button>
@@ -163,7 +163,7 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
 
                         {date.isActive && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            <Badge variant="outline" className="flex items-center gap-1 text-xs rtl:flex-row-reverse">
+                            <Badge variant="outline" className="flex items-center gap-1 text-xs flex-row-reverse">
                               <Clock className="h-3 w-3" />
                               {date.startTime} - {date.endTime}
                             </Badge>

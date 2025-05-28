@@ -140,12 +140,7 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center rtl:flex-row-reverse">
-                <Switch
-                  checked={treatment.isActive}
-                  onCheckedChange={handleToggleStatus}
-                  disabled={isToggling}
-                  className="rtl:data-[state=checked]:justify-start rtl:data-[state=unchecked]:justify-end"
-                />
+                <Switch checked={treatment.isActive} onCheckedChange={handleToggleStatus} disabled={isToggling} />
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

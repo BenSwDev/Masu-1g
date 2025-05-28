@@ -95,7 +95,7 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
                   checked={bundle.isActive}
                   onCheckedChange={handleToggleStatus}
                   disabled={isTogglingStatus}
-                  className="ml-4 rtl:ml-0 rtl:mr-4 data-[state=checked]:bg-teal-500"
+                  className="ml-4 rtl:ml-0 rtl:mr-4"
                 />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

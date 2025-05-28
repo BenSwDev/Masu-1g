@@ -100,7 +100,6 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                     <Switch
                       checked={dayHour.isActive}
                       onCheckedChange={(checked) => handleDayToggle(dayHour.day, checked)}
-                      className="data-[state=checked]:bg-teal-500"
                     />
                   </div>
                 </div>

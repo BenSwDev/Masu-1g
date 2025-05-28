@@ -1,9 +1,9 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/common/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
-import { Plus, Search, Edit, Trash, Tag, Calendar, Percent, Users } from "lucide-react"
+import { Plus, Search, Edit, Trash, Tag, Calendar, Percent, DollarSign } from "lucide-react"
 import { Input } from "@/components/common/ui/input"
 import { useState } from "react"
 import { Badge } from "@/components/common/ui/badge"
@@ -11,9 +11,11 @@ import { format } from "date-fns"
 import { Pagination } from "@/components/common/ui/pagination"
 import { AlertModal } from "@/components/common/modals/alert-modal"
 import { toast } from "sonner"
+import { deleteCoupon } from "@/actions/coupon-actions"
+import type { ICoupon } from "@/lib/db/models/coupon"
 
 interface CouponsClientProps {
-  coupons?: any[]
+  coupons?: ICoupon[]
   pagination?: {
     total: number
     page: number
@@ -26,32 +28,27 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
   const { t } = useTranslation()
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(pagination?.page || 1)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [currentCoupon, setCurrentCoupon] = useState<any>(null)
+  const [currentCoupon, setCurrentCoupon] = useState<ICoupon | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [couponsList, setCouponsList] = useState<ICoupon[]>(coupons)
 
   // Filter coupons based on search term
-  const filteredCoupons = coupons.filter((coupon) => {
-    return (
-      !searchTerm ||
-      coupon.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      coupon.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  const filteredCoupons = couponsList.filter((coupon) => {
+    return !searchTerm || coupon.code?.toLowerCase().includes(searchTerm.toLowerCase())
   })
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    // Here you would typically fetch data for the new page
+    // TODO: Implement data fetching for new page
   }
 
-  const handleEdit = (coupon: any) => {
-    setCurrentCoupon(coupon)
-    setIsEditDialogOpen(true)
+  const handleEdit = (coupon: ICoupon) => {
+    // TODO: Implement edit functionality when form component is ready
+    toast.info(t("common.comingSoon"))
   }
 
-  const handleDeleteClick = (coupon: any) => {
+  const handleDeleteClick = (coupon: ICoupon) => {
     setCurrentCoupon(coupon)
     setIsDeleteDialogOpen(true)
   }
@@ -61,20 +58,31 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
 
     setIsLoading(true)
     try {
-      // Implement delete action here
-      toast.success(t("coupons.deleteSuccess"))
-      setIsDeleteDialogOpen(false)
+      const result = await deleteCoupon(currentCoupon._id)
+      if (result.success) {
+        setCouponsList(couponsList.filter((c) => c._id !== currentCoupon._id))
+        toast.success(t("coupons.deleteSuccess"))
+        setIsDeleteDialogOpen(false)
+      } else {
+        toast.error(result.error || t("coupons.deleteError"))
+      }
     } catch (error) {
-      toast.error(t("common.error"))
+      toast.error(t("coupons.deleteError"))
     } finally {
       setIsLoading(false)
     }
   }
 
-  const getStatusBadge = (coupon: any) => {
+  const getStatusBadge = (coupon: ICoupon) => {
+    const now = new Date()
+    const validFrom = new Date(coupon.validFrom)
+    const validUntil = new Date(coupon.validUntil)
+
     if (!coupon.isActive) {
       return <Badge variant="secondary">{t("common.inactive")}</Badge>
-    } else if (new Date(coupon.expiryDate) < new Date()) {
+    } else if (now < validFrom) {
+      return <Badge variant="outline">{t("coupons.pending")}</Badge>
+    } else if (now > validUntil) {
       return <Badge variant="destructive">{t("coupons.expired")}</Badge>
     } else {
       return <Badge variant="default">{t("common.active")}</Badge>
@@ -88,7 +96,7 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("coupons.title")}</h1>
           <p className="text-gray-600">{t("coupons.description")}</p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Button onClick={() => toast.info(t("common.comingSoon"))}>
           <Plus className="h-4 w-4 mr-2" />
           {t("coupons.addNew")}
         </Button>
@@ -99,7 +107,7 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input
-              placeholder={t("coupons.searchPlaceholder")}
+              placeholder={t("coupons.searchPlaceholder") || t("common.search")}
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -112,7 +120,7 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
         <Card>
           <CardContent className="flex flex-col items-center justify-center h-40 p-6">
             <p className="text-gray-500 mb-4">{t("coupons.noCoupons")}</p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button onClick={() => toast.info(t("common.comingSoon"))}>
               <Plus className="h-4 w-4 mr-2" />
               {t("coupons.addNew")}
             </Button>
@@ -130,31 +138,32 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
                   </CardTitle>
                   {getStatusBadge(coupon)}
                 </div>
-                {coupon.description && <CardDescription>{coupon.description}</CardDescription>}
               </CardHeader>
               <CardContent className="pb-2">
                 <div className="space-y-2">
                   <div className="flex items-center text-sm">
-                    <Percent className="mr-2 h-4 w-4 text-gray-500" />
+                    {coupon.discountType === "percentage" ? (
+                      <Percent className="mr-2 h-4 w-4 text-gray-500" />
+                    ) : (
+                      <DollarSign className="mr-2 h-4 w-4 text-gray-500" />
+                    )}
                     <span>
-                      {t("coupons.discount")}:{" "}
-                      {coupon.discountType === "percentage" ? `${coupon.discount}%` : `₪${coupon.discount}`}
+                      {t("coupons.fields.discountValue")}:{" "}
+                      {coupon.discountType === "percentage" ? `${coupon.discountValue}%` : `₪${coupon.discountValue}`}
                     </span>
                   </div>
                   <div className="flex items-center text-sm">
                     <Calendar className="mr-2 h-4 w-4 text-gray-500" />
                     <span>
-                      {t("coupons.expiresOn")}: {format(new Date(coupon.expiryDate), "dd/MM/yyyy")}
+                      {t("coupons.fields.validFrom")}: {format(new Date(coupon.validFrom), "dd/MM/yyyy")}
                     </span>
                   </div>
-                  {coupon.maxUses && (
-                    <div className="flex items-center text-sm">
-                      <Users className="mr-2 h-4 w-4 text-gray-500" />
-                      <span>
-                        {t("coupons.usage")}: {coupon.usedCount || 0} / {coupon.maxUses}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex items-center text-sm">
+                    <Calendar className="mr-2 h-4 w-4 text-gray-500" />
+                    <span>
+                      {t("coupons.fields.validUntil")}: {format(new Date(coupon.validUntil), "dd/MM/yyyy")}
+                    </span>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end gap-2 pt-2 border-t">
@@ -184,8 +193,8 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDelete}
         loading={isLoading}
-        title={t("coupons.deleteConfirm")}
-        description={t("coupons.deleteConfirmDescription")}
+        title={t("coupons.deleteConfirm") || t("common.deleteConfirm")}
+        description={t("coupons.deleteConfirmDescription") || t("common.deleteConfirmDescription")}
       />
     </div>
   )

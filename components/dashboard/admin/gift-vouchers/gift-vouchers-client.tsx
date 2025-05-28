@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/common/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
-import { Plus, Search, Edit, Trash, Gift, Calendar, User, Check, X } from "lucide-react"
+import { Plus, Search, Edit, Trash, Gift, Calendar, Check, X } from "lucide-react"
 import { Input } from "@/components/common/ui/input"
 import { useState } from "react"
 import { Badge } from "@/components/common/ui/badge"
@@ -11,9 +11,11 @@ import { format } from "date-fns"
 import { Pagination } from "@/components/common/ui/pagination"
 import { AlertModal } from "@/components/common/modals/alert-modal"
 import { toast } from "sonner"
+import { deleteGiftVoucher } from "@/actions/gift-voucher-actions"
+import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
 
 interface GiftVouchersClientProps {
-  giftVouchers?: any[]
+  giftVouchers?: IGiftVoucher[]
   pagination?: {
     total: number
     page: number
@@ -26,33 +28,27 @@ const GiftVouchersClient = ({ giftVouchers = [], pagination }: GiftVouchersClien
   const { t } = useTranslation()
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(pagination?.page || 1)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [currentVoucher, setCurrentVoucher] = useState<any>(null)
+  const [currentVoucher, setCurrentVoucher] = useState<IGiftVoucher | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [vouchers, setVouchers] = useState<IGiftVoucher[]>(giftVouchers)
 
   // Filter vouchers based on search term
-  const filteredVouchers = giftVouchers.filter((voucher) => {
-    return (
-      !searchTerm ||
-      voucher.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      voucher.recipientEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      voucher.senderName?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  const filteredVouchers = vouchers.filter((voucher) => {
+    return !searchTerm || voucher.code?.toLowerCase().includes(searchTerm.toLowerCase())
   })
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    // Here you would typically fetch data for the new page
+    // TODO: Implement data fetching for new page
   }
 
-  const handleEdit = (voucher: any) => {
-    setCurrentVoucher(voucher)
-    setIsEditDialogOpen(true)
+  const handleEdit = (voucher: IGiftVoucher) => {
+    // TODO: Implement edit functionality when form component is ready
+    toast.info(t("common.comingSoon"))
   }
 
-  const handleDeleteClick = (voucher: any) => {
+  const handleDeleteClick = (voucher: IGiftVoucher) => {
     setCurrentVoucher(voucher)
     setIsDeleteDialogOpen(true)
   }
@@ -62,23 +58,34 @@ const GiftVouchersClient = ({ giftVouchers = [], pagination }: GiftVouchersClien
 
     setIsLoading(true)
     try {
-      // Implement delete action here
-      toast.success(t("giftVouchers.deleteSuccess"))
-      setIsDeleteDialogOpen(false)
+      const result = await deleteGiftVoucher(currentVoucher._id)
+      if (result.success) {
+        setVouchers(vouchers.filter((v) => v._id !== currentVoucher._id))
+        toast.success(t("giftVouchers.deleteSuccess"))
+        setIsDeleteDialogOpen(false)
+      } else {
+        toast.error(result.error || t("giftVouchers.deleteError"))
+      }
     } catch (error) {
-      toast.error(t("common.error"))
+      toast.error(t("giftVouchers.deleteError"))
     } finally {
       setIsLoading(false)
     }
   }
 
-  const getStatusBadge = (voucher: any) => {
-    if (voucher.isRedeemed) {
-      return <Badge variant="secondary">{t("giftVouchers.redeemed")}</Badge>
-    } else if (new Date(voucher.expiryDate) < new Date()) {
+  const getStatusBadge = (voucher: IGiftVoucher) => {
+    const now = new Date()
+    const validFrom = new Date(voucher.validFrom)
+    const validUntil = new Date(voucher.validUntil)
+
+    if (!voucher.isActive) {
+      return <Badge variant="secondary">{t("common.inactive")}</Badge>
+    } else if (now < validFrom) {
+      return <Badge variant="outline">{t("giftVouchers.pending")}</Badge>
+    } else if (now > validUntil) {
       return <Badge variant="destructive">{t("giftVouchers.expired")}</Badge>
     } else {
-      return <Badge variant="default">{t("giftVouchers.active")}</Badge>
+      return <Badge variant="default">{t("common.active")}</Badge>
     }
   }
 
@@ -89,7 +96,7 @@ const GiftVouchersClient = ({ giftVouchers = [], pagination }: GiftVouchersClien
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("giftVouchers.title")}</h1>
           <p className="text-gray-600">{t("giftVouchers.description")}</p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
+        <Button onClick={() => toast.info(t("common.comingSoon"))}>
           <Plus className="h-4 w-4 mr-2" />
           {t("giftVouchers.addNew")}
         </Button>
@@ -100,7 +107,7 @@ const GiftVouchersClient = ({ giftVouchers = [], pagination }: GiftVouchersClien
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input
-              placeholder={t("giftVouchers.searchPlaceholder")}
+              placeholder={t("giftVouchers.searchPlaceholder") || t("common.search")}
               className="pl-8"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -113,7 +120,7 @@ const GiftVouchersClient = ({ giftVouchers = [], pagination }: GiftVouchersClien
         <Card>
           <CardContent className="flex flex-col items-center justify-center h-40 p-6">
             <p className="text-gray-500 mb-4">{t("giftVouchers.noGiftVouchers")}</p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Button onClick={() => toast.info(t("common.comingSoon"))}>
               <Plus className="h-4 w-4 mr-2" />
               {t("giftVouchers.addNew")}
             </Button>
@@ -132,35 +139,33 @@ const GiftVouchersClient = ({ giftVouchers = [], pagination }: GiftVouchersClien
                   {getStatusBadge(voucher)}
                 </div>
                 <CardDescription>
-                  {t("giftVouchers.amount")}: ₪{voucher.amount.toLocaleString()}
+                  {t("giftVouchers.fields.value")}: ₪{voucher.value.toLocaleString()}
                 </CardDescription>
               </CardHeader>
               <CardContent className="pb-2">
                 <div className="space-y-2">
-                  {voucher.recipientEmail && (
-                    <div className="flex items-center text-sm">
-                      <User className="mr-2 h-4 w-4 text-gray-500" />
-                      <span>{voucher.recipientEmail}</span>
-                    </div>
-                  )}
                   <div className="flex items-center text-sm">
                     <Calendar className="mr-2 h-4 w-4 text-gray-500" />
                     <span>
-                      {t("giftVouchers.expiresOn")}: {format(new Date(voucher.expiryDate), "dd/MM/yyyy")}
+                      {t("giftVouchers.fields.validFrom")}: {format(new Date(voucher.validFrom), "dd/MM/yyyy")}
                     </span>
                   </div>
                   <div className="flex items-center text-sm">
-                    {voucher.isRedeemed ? (
+                    <Calendar className="mr-2 h-4 w-4 text-gray-500" />
+                    <span>
+                      {t("giftVouchers.fields.validUntil")}: {format(new Date(voucher.validUntil), "dd/MM/yyyy")}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-sm">
+                    {voucher.isActive ? (
                       <>
                         <Check className="mr-2 h-4 w-4 text-green-500" />
-                        <span>
-                          {t("giftVouchers.redeemedOn")}: {format(new Date(voucher.redeemedDate), "dd/MM/yyyy")}
-                        </span>
+                        <span>{t("common.active")}</span>
                       </>
                     ) : (
                       <>
                         <X className="mr-2 h-4 w-4 text-gray-500" />
-                        <span>{t("giftVouchers.notRedeemed")}</span>
+                        <span>{t("common.inactive")}</span>
                       </>
                     )}
                   </div>
@@ -193,8 +198,8 @@ const GiftVouchersClient = ({ giftVouchers = [], pagination }: GiftVouchersClien
         onClose={() => setIsDeleteDialogOpen(false)}
         onConfirm={handleDelete}
         loading={isLoading}
-        title={t("giftVouchers.deleteConfirm")}
-        description={t("giftVouchers.deleteConfirmDescription")}
+        title={t("giftVouchers.deleteConfirm") || t("common.deleteConfirm")}
+        description={t("giftVouchers.deleteConfirmDescription") || t("common.deleteConfirmDescription")}
       />
     </div>
   )

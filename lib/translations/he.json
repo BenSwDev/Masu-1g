@@ -19,7 +19,10 @@
     "duplicate": "שכפל",
     "actions": "פעולות",
     "create": "צור",
-    "loading": "טוען..."
+    "loading": "טוען...",
+    "comingSoon": "בקרוב",
+    "deleteConfirm": "האם אתה בטוח?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו."
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -413,5 +416,25 @@
       "createError": "שגיאה ביצירת תאריך מיוחד",
       "updateError": "שגיאה בעדכון תאריך מיוחד"
     }
+  },
+  "coupons": {
+    "searchPlaceholder": "חפש קופונים לפי קוד...",
+    "noCoupons": "לא נמצאו קופונים",
+    "deleteSuccess": "הקופון נמחק בהצלחה",
+    "deleteError": "שגיאה במחיקת הקופון",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק קופון זה?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
+    "pending": "ממתין",
+    "expired": "פג תוקף"
+  },
+  "giftVouchers": {
+    "searchPlaceholder": "חפש שוברי מתנה לפי קוד...",
+    "noGiftVouchers": "לא נמצאו שוברי מתנה",
+    "deleteSuccess": "שובר המתנה נמחק בהצלחה",
+    "deleteError": "שגיאה במחיקת שובר המתנה",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק שובר מתנה זה?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
+    "pending": "ממתין",
+    "expired": "פג תוקף"
   }
 }

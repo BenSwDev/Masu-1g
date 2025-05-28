@@ -19,7 +19,10 @@
     "created": "Создано",
     "actions": "Действия",
     "view": "Просмотр",
-    "duplicate": "Дублировать"
+    "duplicate": "Дублировать",
+    "comingSoon": "Скоро",
+    "deleteConfirm": "Вы уверены?",
+    "deleteConfirmDescription": "Это действие нельзя отменить."
   },
   "dashboard": {
     "sidebar": {
@@ -139,7 +142,15 @@
       "validFrom": "Действителен с",
       "validUntil": "Действителен до",
       "isActive": "Активный"
-    }
+    },
+    "searchPlaceholder": "Поиск купонов по коду...",
+    "noCoupons": "Купоны не найдены",
+    "deleteSuccess": "Купон успешно удален",
+    "deleteError": "Ошибка удаления купона",
+    "deleteConfirm": "Вы уверены, что хотите удалить этот купон?",
+    "deleteConfirmDescription": "Это действие нельзя отменить",
+    "pending": "Ожидание",
+    "expired": "Истек"
   },
   "giftVouchers": {
     "title": "Подарочные сертификаты",
@@ -151,7 +162,15 @@
       "validFrom": "Действителен с",
       "validUntil": "Действителен до",
       "isActive": "Активный"
-    }
+    },
+    "searchPlaceholder": "Поиск подарочных сертификатов по коду...",
+    "noGiftVouchers": "Подарочные сертификаты не найдены",
+    "deleteSuccess": "Подарочный сертификат успешно удален",
+    "deleteError": "Ошибка удаления подарочного сертификата",
+    "deleteConfirm": "Вы уверены, что хотите удалить этот подарочный сертификат?",
+    "deleteConfirmDescription": "Это действие нельзя отменить",
+    "pending": "Ожидание",
+    "expired": "Истек"
   },
   "partnerCoupons": {
     "title": "Купоны партнеров",

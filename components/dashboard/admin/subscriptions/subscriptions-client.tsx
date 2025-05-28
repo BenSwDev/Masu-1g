@@ -2,7 +2,18 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 
-const SubscriptionsClient = () => {
+interface SubscriptionsClientProps {
+  initialSubscriptions?: any[]
+  treatments?: any[]
+  pagination?: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+}
+
+const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagination }: SubscriptionsClientProps) => {
   const { t } = useTranslation()
 
   return (

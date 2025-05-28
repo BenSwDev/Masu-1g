@@ -29,11 +29,17 @@ export async function getTreatments() {
     }
 
     await connectDB()
-    const treatments = await Treatment.find({}).sort({ category: 1, name: 1 })
+    const treatments = await Treatment.find({}).sort({ category: 1, name: 1 }).lean()
+
+    // Serialize the treatments to plain objects
+    const serializedTreatments = treatments.map(treatment => ({
+      ...treatment,
+      _id: treatment._id.toString()
+    }))
 
     return {
       success: true,
-      treatments: JSON.parse(JSON.stringify(treatments)),
+      treatments: serializedTreatments,
     }
   } catch (error) {
     console.error("Error fetching treatments:", error)

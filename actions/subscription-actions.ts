@@ -200,9 +200,19 @@ export async function getSubscriptions(
 
     const total = await Subscription.countDocuments(query)
 
+    // Serialize the subscriptions to plain objects
+    const serializedSubscriptions = subscriptions.map(sub => ({
+      ...sub,
+      _id: sub._id.toString(),
+      treatments: sub.treatments.map(treatment => ({
+        ...treatment,
+        _id: treatment._id.toString()
+      }))
+    }))
+
     return {
       success: true,
-      subscriptions,
+      subscriptions: serializedSubscriptions,
       pagination: {
         total,
         page,
@@ -227,7 +237,17 @@ export async function getSubscriptionById(id: string) {
       return { success: false, error: "Subscription not found" }
     }
 
-    return { success: true, subscription }
+    // Serialize the subscription to a plain object
+    const serializedSubscription = {
+      ...subscription,
+      _id: subscription._id.toString(),
+      treatments: subscription.treatments.map(treatment => ({
+        ...treatment,
+        _id: treatment._id.toString()
+      }))
+    }
+
+    return { success: true, subscription: serializedSubscription }
   } catch (error) {
     logger.error("Error fetching subscription:", error)
     return { success: false, error: "Failed to fetch subscription" }
@@ -270,7 +290,13 @@ export async function getAllTreatments() {
 
     const treatments = await Treatment.find({ isActive: true }).select("_id name price").sort({ name: 1 }).lean()
 
-    return { success: true, treatments }
+    // Serialize the treatments to plain objects
+    const serializedTreatments = treatments.map(treatment => ({
+      ...treatment,
+      _id: treatment._id.toString()
+    }))
+
+    return { success: true, treatments: serializedTreatments }
   } catch (error) {
     logger.error("Error fetching treatments:", error)
     return { success: false, error: "Failed to fetch treatments" }
@@ -287,7 +313,17 @@ export async function getActiveSubscriptions() {
       .sort({ createdAt: -1 })
       .lean()
 
-    return { success: true, subscriptions }
+    // Serialize the subscriptions to plain objects
+    const serializedSubscriptions = subscriptions.map(sub => ({
+      ...sub,
+      _id: sub._id.toString(),
+      treatments: sub.treatments.map(treatment => ({
+        ...treatment,
+        _id: treatment._id.toString()
+      }))
+    }))
+
+    return { success: true, subscriptions: serializedSubscriptions }
   } catch (error) {
     logger.error("Error fetching active subscriptions:", error)
     return { success: false, error: "Failed to fetch active subscriptions" }

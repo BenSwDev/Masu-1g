@@ -45,9 +45,14 @@ async function SubscriptionsData() {
 
   return (
     <SubscriptionsClient
-      initialSubscriptions={subscriptionsResult.subscriptions}
-      treatments={treatmentsResult.treatments}
-      pagination={subscriptionsResult.pagination}
+      initialSubscriptions={subscriptionsResult.subscriptions || []}
+      treatments={treatmentsResult.treatments || []}
+      pagination={subscriptionsResult.pagination || {
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0
+      }}
     />
   )
 }

@@ -19,7 +19,12 @@
     "duplicate": "שכפל",
     "actions": "פעולות",
     "create": "צור",
-    "loading": "טוען..."
+    "previous": "הקודם",
+    "page": "עמוד",
+    "search": "חיפוש",
+    "roles": "תפקידים",
+    "sortField": "מיין לפי",
+    "sortDirection": "כיוון מיון"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -146,7 +151,7 @@
       "professionals": "בעלי מקצוע",
       "partners": "שותפים",
       "treatments": "טיפולים",
-      "bundles" : "חבילות",
+      "bundles": "חבילות",
       "workingHours": "שעות פעילות",
       "addresses": "ניהול כתובות",
       "paymentMethods": "אמצעי תשלום",
@@ -155,11 +160,17 @@
       "documents": "העלאת מסמכים"
     },
     "roles": {
-      "member": "חבר",
+      "member": "לקוח",
       "admin": "מנהל",
-      "professional": "בעל מקצוע",
+      "professional": "מטפל",
       "partner": "שותף",
       "switchRole": "החלף תפקיד"
+    },
+    "account": {
+      "currentPassword": "סיסמה נוכחית",
+      "newPassword": "סיסמה חדשה",
+      "confirmPassword": "אימות סיסמה",
+      "newEmail": "דוא״ל חדש"
     }
   },
   "addresses": {
@@ -187,9 +198,9 @@
       "buildingName": "שם בניין",
       "hotelName": "שם מלון",
       "roomNumber": "מספר חדר",
-      "instructions": "הוראות הגעה",
+      "instructions": "הוראות מיוחדות",
       "hasPrivateParking": "חניה פרטית",
-      "isDefault": "כתובת ברירת מחדל",
+      "isDefault": "הגדר כברירת מחדל",
       "additionalNotes": "הערות נוספות"
     },
     "createSuccess": "הכתובת נוצרה בהצלחה",
@@ -205,15 +216,11 @@
     "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
     "noDetails": "אין פרטים נוספים",
     "setDefault": "הגדר כברירת מחדל",
-    "setDefaultError": "שגיאה בהגדרת כתובת כברירת מחדל",
     "deleted": "הכתובת נמחקה",
     "defaultSet": "כתובת ברירת מחדל עודכנה",
     "defaultSetError": "שגיאה בהגדרת כתובת כברירת מחדל",
     "created": "הכתובת נוצרה",
-    "updated": "הכתובת עודכנה",
-    "updateError": "שגיאה בעדכון הכתובת",
-    "createError": "שגיאה ביצירת הכתובת",
-    "edit": "ערוך כתובת"
+    "updated": "הכתובת עודכנה"
   },
   "paymentMethods": {
     "title": "ניהול אמצעי תשלום",
@@ -292,8 +299,12 @@
     "duration": "משך זמן",
     "errors": {
       "nameRequired": "שם הטיפול נדרש",
-      "categoryRequired": "קטגוריה נדרשת"
-    }
+      "categoryRequired": "קטגוריה נדרשת",
+      "invalidDuration": "משך טיפול לא תקין"
+    },
+    "updateError": "עדכון הטיפול נכשל",
+    "createError": "יצירת הטיפול נכשלה",
+    "basicInfo": "מידע בסיסי"
   },
   "bundles": {
     "title": "ניהול חבילות",
@@ -410,5 +421,59 @@
       "createError": "שגיאה ביצירת תאריך מיוחד",
       "updateError": "שגיאה בעדכון תאריך מיוחד"
     }
-  }
+  },
+  "/auth/login": "/auth/login",
+  "/dashboard/admin": "/dashboard/admin",
+  "/dashboard/professional": "/dashboard/professional",
+  "/dashboard/partner": "/dashboard/partner",
+  "/dashboard/member": "/dashboard/member",
+  "/dashboard": "/dashboard",
+  ",": ",",
+  " ": " ",
+  "admin": {
+    "users": {
+      "searchPlaceholder": "חיפוש משתמשים...",
+      "filterByRole": "סינון לפי תפקיד",
+      "allRoles": "כל התפקידים",
+      "name": "שם",
+      "email": "דוא״ל",
+      "roles": "תפקידים",
+      "created": "נוצר",
+      "actions": "פעולות"
+    }
+  },
+  "roles": {
+    "admin": "מנהל",
+    "professional": "מטפל",
+    "partner": "שותף",
+    "member": "לקוח"
+  },
+  "name": "name",
+  "email": "email",
+  "createdAt": "createdAt",
+  "sortField": "sortField",
+  "sortDirection": "sortDirection",
+  "currentPassword": "currentPassword",
+  "newPassword": "newPassword",
+  "confirmPassword": "confirmPassword",
+  "newEmail": "newEmail",
+  "identifier": "דוא״ל או טלפון",
+  "password": "סיסמה",
+  ":": ":",
+  "en-US": "en-US",
+  "city": "עיר",
+  "street": "רחוב",
+  "streetNumber": "מספר בית",
+  "addressType": "סוג כתובת",
+  "hasPrivateParking": "חניה פרטית",
+  "additionalNotes": "הערות נוספות",
+  "isDefault": "הגדר כברירת מחדל",
+  "floor": "קומה",
+  "apartmentNumber": "מספר דירה",
+  "entrance": "כניסה",
+  "doorName": "שם דלת",
+  "buildingName": "שם בניין",
+  "hotelName": "שם מלון",
+  "roomNumber": "מספר חדר",
+  "instructions": "הוראות מיוחדות"
 }

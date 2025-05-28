@@ -10,7 +10,13 @@
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
-    "submit": "Submit"
+    "submit": "Submit",
+    "previous": "Previous",
+    "page": "Page",
+    "search": "Search",
+    "roles": "Roles",
+    "sortField": "Sort by",
+    "sortDirection": "Sort direction"
   },
   "login": {
     "welcome": "Welcome Back",
@@ -150,6 +156,12 @@
       "professional": "Professional",
       "partner": "Partner",
       "switchRole": "Switch Role"
+    },
+    "account": {
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "newEmail": "New Email"
     }
   },
   "addresses": {
@@ -177,9 +189,9 @@
       "buildingName": "Building Name",
       "hotelName": "Hotel Name",
       "roomNumber": "Room Number",
-      "instructions": "Arrival Instructions",
-      "hasPrivateParking": "Private Parking",
-      "isDefault": "Default Address",
+      "instructions": "Special Instructions",
+      "hasPrivateParking": "Has Private Parking",
+      "isDefault": "Set as Default",
       "additionalNotes": "Additional Notes"
     },
     "createSuccess": "Address created successfully",
@@ -195,15 +207,11 @@
     "deleteConfirmDescription": "This action cannot be undone",
     "noDetails": "No additional details",
     "setDefault": "Set as default",
-    "setDefaultError": "Error setting default address",
     "deleted": "Address deleted",
     "defaultSet": "Default address updated",
     "defaultSetError": "Error setting default address",
     "created": "Address created",
-    "updated": "Address updated",
-    "updateError": "Error updating address",
-    "createError": "Error creating address",
-    "edit": "Edit Address"
+    "updated": "Address updated"
   },
   "paymentMethods": {
     "title": "Manage Payment Methods",
@@ -282,7 +290,60 @@
     "duration": "Duration",
     "errors": {
       "nameRequired": "Treatment name is required",
-      "categoryRequired": "Category is required"
+      "categoryRequired": "Category is required",
+      "invalidDuration": "Invalid duration"
+    },
+    "updateError": "Failed to update treatment",
+    "createError": "Failed to create treatment",
+    "basicInfo": "Basic Information"
+  },
+  "/auth/login": "/auth/login",
+  "/dashboard/admin": "/dashboard/admin",
+  "/dashboard/professional": "/dashboard/professional",
+  "/dashboard/partner": "/dashboard/partner",
+  "/dashboard/member": "/dashboard/member",
+  "/dashboard": "/dashboard",
+  ",": ",",
+  " ": " ",
+  "admin": {
+    "users": {
+      "searchPlaceholder": "Search users...",
+      "filterByRole": "Filter by role",
+      "allRoles": "All roles",
+      "name": "Name",
+      "email": "Email",
+      "roles": "Roles",
+      "created": "Created",
+      "actions": "Actions"
     }
-  }
+  },
+  "roles": {
+    "admin": "Administrator",
+    "professional": "Professional",
+    "partner": "Partner",
+    "member": "Member"
+  },
+  "name": "name",
+  "email": "email",
+  "createdAt": "createdAt",
+  "newEmail": "newEmail",
+  "identifier": "Email or Phone",
+  "password": "Password",
+  ":": ":",
+  "en-US": "en-US",
+  "city": "City",
+  "street": "Street",
+  "streetNumber": "Street Number",
+  "addressType": "Address Type",
+  "hasPrivateParking": "Has Private Parking",
+  "additionalNotes": "Additional Notes",
+  "isDefault": "Set as Default",
+  "floor": "Floor",
+  "apartmentNumber": "Apartment Number",
+  "entrance": "Entrance",
+  "doorName": "Door Name",
+  "buildingName": "Building Name",
+  "hotelName": "Hotel Name",
+  "roomNumber": "Room Number",
+  "instructions": "Special Instructions"
 }

@@ -10,7 +10,13 @@
     "confirm": "Подтвердить",
     "back": "Назад",
     "next": "Далее",
-    "submit": "Отправить"
+    "submit": "Отправить",
+    "previous": "Предыдущий",
+    "page": "Страница",
+    "search": "Поиск",
+    "roles": "Роли",
+    "sortField": "Сортировать по",
+    "sortDirection": "Направление сортировки"
   },
   "login": {
     "welcome": "Добро пожаловать",
@@ -43,7 +49,8 @@
     "termsOfService": "Условиями использования",
     "and": "и",
     "privacyPolicy": "Политикой конфиденциальности",
-    "languageSelector": "Выбрать язык"
+    "languageSelector": "Выбрать язык",
+    "identifier": "Email или телефон"
   },
   "register": {
     "welcome": "Создать аккаунт",
@@ -87,7 +94,8 @@
     "termsOfService": "Условиями использования",
     "and": "и",
     "privacyPolicy": "Политикой конфиденциальности",
-    "registerAsProfessional": "Зарегистрироваться как профессионал"
+    "registerAsProfessional": "Зарегистрироваться как профессионал",
+    "newEmail": "Новый email"
   },
   "errors": {
     "unknown": "Произошла непредвиденная ошибка",
@@ -101,7 +109,8 @@
     "weakPassword": "Пароль слишком слабый",
     "registrationFailed": "Регистрация не удалась",
     "invalidOTP": "Пожалуйста, введите действительный 6-значный код",
-    "authFailed": "Аутентификация не удалась"
+    "authFailed": "Аутентификация не удалась",
+    "invalidDuration": "Неверная продолжительность"
   },
   "success": {
     "registrationComplete": "Регистрация успешна! Перенаправление на страницу входа..."
@@ -126,11 +135,17 @@
       "documents": "Документы"
     },
     "roles": {
-      "member": "Участник",
+      "member": "Клиент",
       "admin": "Администратор",
       "professional": "Профессионал",
       "partner": "Партнер",
       "switchRole": "Сменить роль"
+    },
+    "account": {
+      "currentPassword": "Текущий пароль",
+      "newPassword": "Новый пароль",
+      "confirmPassword": "Подтвердите пароль",
+      "newEmail": "Новый email"
     }
   },
   "addresses": {
@@ -158,9 +173,9 @@
       "buildingName": "Название здания",
       "hotelName": "Название отеля",
       "roomNumber": "Номер комнаты",
-      "instructions": "Инструкции по прибытию",
-      "hasPrivateParking": "Частная парковка",
-      "isDefault": "Адрес по умолчанию",
+      "instructions": "Особые указания",
+      "hasPrivateParking": "Есть парковка",
+      "isDefault": "Установить по умолчанию",
       "additionalNotes": "Дополнительные заметки"
     },
     "createSuccess": "Адрес успешно создан",
@@ -176,15 +191,11 @@
     "deleteConfirmDescription": "Это действие нельзя отменить",
     "noDetails": "Нет дополнительных данных",
     "setDefault": "Сделать по умолчанию",
-    "setDefaultError": "Ошибка при установке адреса по умолчанию",
     "deleted": "Адрес удален",
     "defaultSet": "Адрес по умолчанию обновлен",
     "defaultSetError": "Ошибка при установке адреса по умолчанию",
     "created": "Адрес создан",
-    "updated": "Адрес обновлен",
-    "updateError": "Ошибка при обновлении адреса",
-    "createError": "Ошибка при создании адреса",
-    "edit": "Редактировать адрес"
+    "updated": "Адрес обновлен"
   },
   "paymentMethods": {
     "title": "Управление способами оплаты",
@@ -263,7 +274,40 @@
     "duration": "Продолжительность",
     "errors": {
       "nameRequired": "Название процедуры обязательно",
-      "categoryRequired": "Категория обязательна"
+      "categoryRequired": "Категория обязательна",
+      "invalidDuration": "Неверная продолжительность"
+    },
+    "updateError": "Не удалось обновить лечение",
+    "createError": "Не удалось создать лечение",
+    "basicInfo": "Основная информация"
+  },
+  "/auth/login": "/auth/login",
+  "/dashboard/admin": "/dashboard/admin",
+  "/dashboard/professional": "/dashboard/professional",
+  "/dashboard/partner": "/dashboard/partner",
+  "/dashboard/member": "/dashboard/member",
+  "/dashboard": "/dashboard",
+  ",": ",",
+  " ": " ",
+  "admin": {
+    "users": {
+      "searchPlaceholder": "Поиск пользователей...",
+      "filterByRole": "Фильтр по роли",
+      "allRoles": "Все роли",
+      "name": "Имя",
+      "email": "Email",
+      "roles": "Роли",
+      "created": "Создан",
+      "actions": "Действия"
     }
-  }
+  },
+  "roles": {
+    "admin": "Администратор",
+    "professional": "Профессионал",
+    "partner": "Партнер",
+    "member": "Клиент"
+  },
+  "name": "name",
+  "email": "email",
+  "createdAt": "createdAt"
 }

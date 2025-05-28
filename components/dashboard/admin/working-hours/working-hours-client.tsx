@@ -21,7 +21,13 @@ export function WorkingHoursClient() {
     refetch,
   } = useQuery({
     queryKey: ["workingHours"],
-    queryFn: getWorkingHours,
+    queryFn: async () => {
+      const result = await getWorkingHours()
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch working hours")
+      }
+      return result
+    },
   })
 
   if (isLoading) {

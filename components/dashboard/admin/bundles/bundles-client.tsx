@@ -29,7 +29,13 @@ export function BundlesClient() {
     refetch,
   } = useQuery({
     queryKey: ["bundles"],
-    queryFn: getBundles,
+    queryFn: async () => {
+      const result = await getBundles()
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch bundles")
+      }
+      return result
+    },
   })
 
   const bundles = bundlesData?.bundles || []

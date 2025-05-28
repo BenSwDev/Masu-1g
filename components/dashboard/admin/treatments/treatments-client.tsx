@@ -22,15 +22,18 @@ export function TreatmentsClient() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeCategory, setActiveCategory] = useState("all")
 
-  const {
-    data: treatments = [],
-    isLoading,
-    isError,
-    refetch,
-  } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["treatments"],
-    queryFn: getTreatments,
+    queryFn: async () => {
+      const result = await getTreatments()
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch treatments")
+      }
+      return result.treatments || []
+    },
   })
+
+  const treatments = data || []
 
   const handleAddSuccess = () => {
     setIsAddingTreatment(false)
@@ -55,13 +58,15 @@ export function TreatmentsClient() {
     setEditingTreatment(null)
   }
 
-  const filteredTreatments = treatments.filter((treatment) => {
-    const matchesSearch = treatment.name.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = activeCategory === "all" || treatment.category === activeCategory
-    return matchesSearch && matchesCategory
-  })
+  const filteredTreatments = Array.isArray(treatments)
+    ? treatments.filter((treatment) => {
+        const matchesSearch = treatment.name.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesCategory = activeCategory === "all" || treatment.category === activeCategory
+        return matchesSearch && matchesCategory
+      })
+    : []
 
-  const categories = ["all", ...new Set(treatments.map((t) => t.category))]
+  const categories = ["all", ...new Set(Array.isArray(treatments) ? treatments.map((t) => t.category) : [])]
 
   if (isAddingTreatment) {
     return (

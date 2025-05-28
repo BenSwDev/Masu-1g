@@ -14,12 +14,16 @@ import {
 } from "@/actions/working-hours-actions"
 import { Calendar, Clock } from "lucide-react"
 import { toast } from "sonner"
+import { useTranslation } from "@/lib/translations/i18n"
+import { useDirection } from "@/lib/translations/i18n"
 
 interface WorkingHoursClientProps {
   initialData: IWorkingHours
 }
 
 export function WorkingHoursClient({ initialData }: WorkingHoursClientProps) {
+  const { t } = useTranslation()
+  const dir = useDirection()
   const [workingHours, setWorkingHours] = useState<IWorkingHours>(initialData)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingDate, setEditingDate] = useState<IWorkingHours["specialDates"][0] | null>(null)
@@ -58,9 +62,9 @@ export function WorkingHoursClient({ initialData }: WorkingHoursClientProps) {
     const result = await deleteSpecialDate(dateId)
     if (result.success) {
       setWorkingHours(result.data)
-      toast.success("התאריך נמחק בהצלחה")
+      toast.success(t("admin.workingHours.specialDates.deleteSuccess"))
     } else {
-      toast.error(result.error || "שגיאה במחיקת התאריך")
+      toast.error(result.error || t("admin.workingHours.specialDates.deleteError"))
     }
   }
 
@@ -88,16 +92,16 @@ export function WorkingHoursClient({ initialData }: WorkingHoursClientProps) {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl">
+    <div className="container mx-auto max-w-6xl" dir={dir}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="weekly" className="flex items-center gap-2 py-3 flex-row-reverse">
+          <TabsTrigger value="weekly" className="flex items-center gap-2 py-3">
             <Clock className="h-4 w-4" />
-            שעות פעילות שבועיות
+            {t("admin.workingHours.tabs.weekly")}
           </TabsTrigger>
-          <TabsTrigger value="special" className="flex items-center gap-2 py-3 flex-row-reverse">
+          <TabsTrigger value="special" className="flex items-center gap-2 py-3">
             <Calendar className="h-4 w-4" />
-            תאריכים מיוחדים
+            {t("admin.workingHours.tabs.special")}
           </TabsTrigger>
         </TabsList>
 

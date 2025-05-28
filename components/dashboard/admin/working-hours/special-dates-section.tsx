@@ -10,6 +10,8 @@ import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useTranslation } from "@/lib/translations/i18n"
+import { useDirection } from "@/lib/translations/i18n"
 
 interface SpecialDatesSectionProps {
   specialDates: IWorkingHours["specialDates"]
@@ -19,6 +21,8 @@ interface SpecialDatesSectionProps {
 }
 
 export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: SpecialDatesSectionProps) {
+  const { t } = useTranslation()
+  const dir = useDirection()
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState<"all" | "active" | "inactive">("all")
@@ -33,7 +37,7 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
   }
 
   const formatPriceAdjustment = (adjustment?: IWorkingHours["specialDates"][0]["priceAdjustment"]) => {
-    if (!adjustment) return "ללא תוספת"
+    if (!adjustment) return t("admin.workingHours.adjustmentTypes.none")
 
     if (adjustment.type === "percentage") {
       return `+${adjustment.value}%`
@@ -42,7 +46,7 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
     }
   }
 
-  // סינון תאריכים לפי חיפוש ומצב פעילות
+  // Filter dates by search and activity status
   const filteredDates = specialDates.filter((date) => {
     const matchesSearch =
       date.name.includes(searchTerm) ||
@@ -56,10 +60,10 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
     return matchesSearch
   })
 
-  // מיון תאריכים לפי תאריך (מהקרוב לרחוק)
+  // Sort dates by date (from closest to furthest)
   const sortedDates = [...filteredDates].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-  // קבוצות תאריכים לפי חודש
+  // Group dates by month
   const groupedDates: Record<string, typeof sortedDates> = {}
   sortedDates.forEach((date) => {
     const monthYear = format(new Date(date.date), "MMMM yyyy", { locale: he })
@@ -73,37 +77,39 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
     <Card>
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-xl flex-row-reverse">
+          <CardTitle className="flex items-center gap-2 text-xl">
             <Calendar className="h-5 w-5" />
-            תאריכים מיוחדים
+            {t("admin.workingHours.specialDates.title")}
           </CardTitle>
-          <Button onClick={onAdd} size="sm" className="bg-teal-500 hover:bg-teal-600 text-white flex flex-row-reverse">
-            <Plus className="h-4 w-4 ml-1 rtl:ml-0 rtl:mr-1" />
-            הוסף תאריך מיוחד
+          <Button onClick={onAdd} size="sm" className="bg-teal-500 hover:bg-teal-600 text-white flex">
+            <Plus className="h-4 w-4 mr-1" />
+            {t("admin.workingHours.specialDates.addButton")}
           </Button>
         </div>
       </CardHeader>
       <CardContent>
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute right-2 rtl:right-auto rtl:left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search
+              className={`absolute ${dir === "rtl" ? "left-2" : "right-2"} top-2.5 h-4 w-4 text-muted-foreground`}
+            />
             <Input
-              placeholder="חיפוש תאריכים..."
+              placeholder={t("admin.workingHours.specialDates.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-3 pr-8 rtl:pl-8 rtl:pr-3"
+              className={`${dir === "rtl" ? "pl-8 pr-3" : "pl-3 pr-8"}`}
             />
           </div>
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-full sm:w-auto">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="all" className="text-xs px-2">
-                הכל
+                {t("admin.workingHours.specialDates.viewAll")}
               </TabsTrigger>
               <TabsTrigger value="active" className="text-xs px-2">
-                פעילים
+                {t("admin.workingHours.specialDates.viewActive")}
               </TabsTrigger>
               <TabsTrigger value="inactive" className="text-xs px-2">
-                לא פעילים
+                {t("admin.workingHours.specialDates.viewInactive")}
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -112,9 +118,9 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
         {sortedDates.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>לא נמצאו תאריכים מיוחדים</p>
+            <p>{t("admin.workingHours.specialDates.noResults")}</p>
             <Button onClick={onAdd} variant="outline" className="mt-4">
-              הוסף תאריך ראשון
+              {t("admin.workingHours.specialDates.addFirstButton")}
             </Button>
           </div>
         ) : (
@@ -138,7 +144,9 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
                               >
                                 {format(new Date(date.date), "dd/MM/yyyy")}
                               </Badge>
-                              {!date.isActive && <Badge variant="outline">לא פעיל</Badge>}
+                              {!date.isActive && (
+                                <Badge variant="outline">{t("admin.workingHours.specialDates.inactive")}</Badge>
+                              )}
                             </div>
                             <h3 className="font-medium mt-1">{date.name}</h3>
                             {date.description && (
@@ -163,7 +171,7 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
 
                         {date.isActive && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            <Badge variant="outline" className="flex items-center gap-1 text-xs flex-row-reverse">
+                            <Badge variant="outline" className="flex items-center gap-1 text-xs">
                               <Clock className="h-3 w-3" />
                               {date.startTime} - {date.endTime}
                             </Badge>

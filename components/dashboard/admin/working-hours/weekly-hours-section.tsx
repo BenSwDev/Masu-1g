@@ -11,16 +11,17 @@ import { Clock, Check, X } from "lucide-react"
 import type { IWorkingHours } from "@/lib/db/models/working-hours"
 import { toast } from "sonner"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { useTranslation } from "@/lib/translations/i18n"
+import { useDirection } from "@/lib/translations/i18n"
 
 interface WeeklyHoursSectionProps {
   weeklyHours: IWorkingHours["weeklyHours"]
   onUpdate: (weeklyHours: IWorkingHours["weeklyHours"]) => Promise<void>
 }
 
-const DAYS = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"]
-const DAYS_SHORT = ["א'", "ב'", "ג'", "ד'", "ה'", "ו'", "ש'"]
-
 export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSectionProps) {
+  const { t } = useTranslation()
+  const dir = useDirection()
   const [hours, setHours] = useState(weeklyHours)
   const [isLoading, setIsLoading] = useState(false)
   const [expandedDay, setExpandedDay] = useState<number | null>(null)
@@ -44,9 +45,9 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
     setIsLoading(true)
     try {
       await onUpdate(hours)
-      toast.success("שעות הפעילות עודכנו בהצלחה")
+      toast.success(t("admin.workingHours.weekly.saveSuccess"))
     } catch (error) {
-      toast.error("שגיאה בעדכון שעות הפעילות")
+      toast.error(t("admin.workingHours.weekly.saveError"))
     } finally {
       setIsLoading(false)
     }
@@ -59,9 +60,9 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-xl flex-row-reverse">
+        <CardTitle className="flex items-center gap-2 text-xl">
           <Clock className="h-5 w-5" />
-          שעות פעילות שבועיות
+          {t("admin.workingHours.weekly.title")}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -75,41 +76,41 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
             >
               <div className="p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2 flex-row-reverse">
+                  <div className="flex items-center gap-2">
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium ${
                         dayHour.isActive ? "bg-teal-500 text-white" : "bg-gray-200 text-gray-600"
                       }`}
                     >
-                      {DAYS_SHORT[dayHour.day]}
+                      {t(`admin.workingHours.days.short.${dayHour.day}`)}
                     </div>
-                    <span className="font-medium">{DAYS[dayHour.day]}</span>
+                    <span className="font-medium">{t(`admin.workingHours.days.full.${dayHour.day}`)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {dayHour.isActive ? (
-                      <span className="text-xs text-teal-600 flex items-center flex-row-reverse">
-                        <Check className="h-3 w-3 mr-1 rtl:mr-0 rtl:ml-1" />
-                        פעיל
+                      <span className="text-xs text-teal-600 flex items-center">
+                        <Check className="h-3 w-3 mr-1" />
+                        {t("admin.workingHours.weekly.active")}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-500 flex items-center flex-row-reverse">
-                        <X className="h-3 w-3 mr-1 rtl:mr-0 rtl:ml-1" />
-                        לא פעיל
+                      <span className="text-xs text-gray-500 flex items-center">
+                        <X className="h-3 w-3 mr-1" />
+                        {t("admin.workingHours.weekly.inactive")}
                       </span>
                     )}
                     <Switch
                       checked={dayHour.isActive}
                       onCheckedChange={(checked) => handleDayToggle(dayHour.day, checked)}
-                      className="data-[state=checked]:bg-teal-500 rtl:data-[state=checked]:justify-start rtl:data-[state=unchecked]:justify-end"
+                      className="data-[state=checked]:bg-teal-500"
                     />
                   </div>
                 </div>
 
                 {dayHour.isActive && (
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <div className="flex items-center gap-1 flex-row-reverse">
+                    <div className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      <span>שעות:</span>
+                      <span>{t("admin.workingHours.weekly.hours")}:</span>
                     </div>
                     <div className="font-medium">
                       {dayHour.startTime} - {dayHour.endTime}
@@ -120,14 +121,16 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                 <Accordion type="single" collapsible className="w-full">
                   <AccordionItem value="details" className="border-0">
                     <AccordionTrigger className="py-1 text-xs">
-                      {dayHour.isActive ? "הגדרות מתקדמות" : "הפעל יום זה"}
+                      {dayHour.isActive
+                        ? t("admin.workingHours.weekly.advancedSettings")
+                        : t("admin.workingHours.weekly.activateDay")}
                     </AccordionTrigger>
                     <AccordionContent>
                       {dayHour.isActive && (
                         <>
                           <div className="grid grid-cols-2 gap-2 mb-3">
                             <div>
-                              <Label className="text-xs">התחלה</Label>
+                              <Label className="text-xs">{t("admin.workingHours.weekly.start")}</Label>
                               <Input
                                 type="time"
                                 value={dayHour.startTime}
@@ -136,7 +139,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                               />
                             </div>
                             <div>
-                              <Label className="text-xs">סיום</Label>
+                              <Label className="text-xs">{t("admin.workingHours.weekly.end")}</Label>
                               <Input
                                 type="time"
                                 value={dayHour.endTime}
@@ -147,7 +150,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                           </div>
 
                           <div className="space-y-2">
-                            <Label className="text-xs">תוספת מחיר</Label>
+                            <Label className="text-xs">{t("admin.workingHours.weekly.priceAdjustment")}</Label>
                             <Select
                               value={dayHour.priceAdjustment?.type || "none"}
                               onValueChange={(value) => {
@@ -163,12 +166,14 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                               }}
                             >
                               <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="בחר סוג תוספת" />
+                                <SelectValue placeholder={t("admin.workingHours.weekly.selectAdjustmentType")} />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="none">ללא תוספת</SelectItem>
-                                <SelectItem value="percentage">אחוז תוספת</SelectItem>
-                                <SelectItem value="fixed">סכום קבוע</SelectItem>
+                                <SelectItem value="none">{t("admin.workingHours.adjustmentTypes.none")}</SelectItem>
+                                <SelectItem value="percentage">
+                                  {t("admin.workingHours.adjustmentTypes.percentage")}
+                                </SelectItem>
+                                <SelectItem value="fixed">{t("admin.workingHours.adjustmentTypes.fixed")}</SelectItem>
                               </SelectContent>
                             </Select>
 
@@ -176,7 +181,9 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                               <div className="grid grid-cols-2 gap-2 mt-2">
                                 <div>
                                   <Label className="text-xs">
-                                    {dayHour.priceAdjustment.type === "percentage" ? "אחוז (%)" : "סכום (₪)"}
+                                    {dayHour.priceAdjustment.type === "percentage"
+                                      ? t("admin.workingHours.weekly.percentageValue")
+                                      : t("admin.workingHours.weekly.fixedValue")}
                                   </Label>
                                   <Input
                                     type="number"
@@ -192,7 +199,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                                   />
                                 </div>
                                 <div>
-                                  <Label className="text-xs">סיבה</Label>
+                                  <Label className="text-xs">{t("admin.workingHours.weekly.reason")}</Label>
                                   <Input
                                     value={dayHour.priceAdjustment.reason || ""}
                                     onChange={(e) =>
@@ -201,7 +208,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                                         reason: e.target.value,
                                       })
                                     }
-                                    placeholder="סיבה"
+                                    placeholder={t("admin.workingHours.weekly.reasonPlaceholder")}
                                     className="h-8 text-sm"
                                   />
                                 </div>
@@ -223,7 +230,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
           disabled={isLoading}
           className="w-full bg-teal-500 hover:bg-teal-600 text-white font-medium"
         >
-          {isLoading ? "שומר..." : "שמור שעות פעילות"}
+          {isLoading ? t("admin.workingHours.weekly.saving") : t("admin.workingHours.weekly.saveButton")}
         </Button>
       </CardContent>
     </Card>

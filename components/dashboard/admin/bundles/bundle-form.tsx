@@ -25,30 +25,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui
 import { DiscountType, type IBundle } from "@/lib/db/models/bundle"
 import { Clock, Loader2, AlertTriangle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
-
-const bundleFormSchema = z.object({
-  name: z.string().min(2, { message: "שם החבילה חייב להכיל לפחות 2 תווים" }),
-  description: z.string().optional(),
-  category: z.string().min(1, { message: "יש לבחור קטגוריה" }),
-  isActive: z.boolean().default(true),
-  quantity: z.number().min(1, { message: "כמות הטיפולים חייבת להיות לפחות 1" }),
-  validityMonths: z.number().min(1, { message: "תוקף החבילה חייב להיות לפחות חודש אחד" }),
-  treatments: z
-    .array(
-      z.object({
-        treatmentId: z.string(),
-        name: z.string(),
-        isSelected: z.boolean().default(false),
-      }),
-    )
-    .refine((treatments) => treatments.some((t) => t.isSelected), {
-      message: "יש לבחור לפחות טיפול אחד",
-    }),
-  discountType: z.enum([DiscountType.FREE_QUANTITY, DiscountType.PERCENTAGE, DiscountType.FIXED_AMOUNT]),
-  discountValue: z.number().min(0, { message: "ערך ההנחה לא יכול להיות שלילי" }),
-})
-
-type BundleFormValues = z.infer<typeof bundleFormSchema>
+import { useTranslation } from "@/lib/translations/i18n"
+import { useDirection } from "@/lib/translations/i18n"
 
 interface BundleFormProps {
   isOpen: boolean
@@ -60,17 +38,6 @@ interface BundleFormProps {
   isSubmitting: boolean
 }
 
-const getCategoryDisplayName = (category: string) => {
-  switch (category) {
-    case "massages":
-      return "עיסויים"
-    case "facial_treatments":
-      return "טיפולי פנים"
-    default:
-      return category
-  }
-}
-
 export function BundleForm({
   isOpen,
   onClose,
@@ -80,8 +47,35 @@ export function BundleForm({
   categories,
   isSubmitting,
 }: BundleFormProps) {
+  const { t } = useTranslation("common")
+  const { dir } = useDirection()
+
   const [activeTab, setActiveTab] = useState("details")
   const [formError, setFormError] = useState<string | null>(null)
+
+  const bundleFormSchema = z.object({
+    name: z.string().min(2, { message: t("admin.bundles.form.validation.nameMin") }),
+    description: z.string().optional(),
+    category: z.string().min(1, { message: t("admin.bundles.form.validation.categoryRequired") }),
+    isActive: z.boolean().default(true),
+    quantity: z.number().min(1, { message: t("admin.bundles.form.validation.quantityMin") }),
+    validityMonths: z.number().min(1, { message: t("admin.bundles.form.validation.validityMin") }),
+    treatments: z
+      .array(
+        z.object({
+          treatmentId: z.string(),
+          name: z.string(),
+          isSelected: z.boolean().default(false),
+        }),
+      )
+      .refine((treatments) => treatments.some((t) => t.isSelected), {
+        message: t("admin.bundles.form.validation.treatmentRequired"),
+      }),
+    discountType: z.enum([DiscountType.FREE_QUANTITY, DiscountType.PERCENTAGE, DiscountType.FIXED_AMOUNT]),
+    discountValue: z.number().min(0, { message: t("admin.bundles.form.validation.discountMin") }),
+  })
+
+  type BundleFormValues = z.infer<typeof bundleFormSchema>
 
   const form = useForm<BundleFormValues>({
     resolver: zodResolver(bundleFormSchema),
@@ -146,19 +140,19 @@ export function BundleForm({
         .map(({ treatmentId, name }) => ({ treatmentId, name }))
 
       if (selectedTreatments.length === 0) {
-        setFormError("יש לבחור לפחות טיפול אחד")
+        setFormError(t("admin.bundles.form.errors.noTreatmentsSelected"))
         setActiveTab("treatments")
         return
       }
 
       if (values.discountType === DiscountType.FREE_QUANTITY && values.discountValue > values.quantity) {
-        setFormError("כמות הטיפולים החינם לא יכולה להיות גדולה מכמות הטיפולים הכוללת")
+        setFormError(t("admin.bundles.form.errors.freeQuantityTooLarge"))
         setActiveTab("discount")
         return
       }
 
       if (values.discountType === DiscountType.PERCENTAGE && values.discountValue > 100) {
-        setFormError("אחוז ההנחה לא יכול להיות גדול מ-100%")
+        setFormError(t("admin.bundles.form.errors.percentageTooLarge"))
         setActiveTab("discount")
         return
       }
@@ -174,7 +168,7 @@ export function BundleForm({
       }
     } catch (error) {
       console.error("Error submitting bundle form:", error)
-      setFormError("אירעה שגיאה בשמירת החבילה. נסה שוב.")
+      setFormError(t("admin.bundles.form.errors.savingError"))
     }
   }
 
@@ -211,19 +205,25 @@ export function BundleForm({
 
   const hasSelectedTreatments = form.watch("treatments").some((t) => t.isSelected)
 
+  const textAlign = dir === "rtl" ? "text-right" : "text-left"
+  const flexDirection = dir === "rtl" ? "flex-row-reverse" : "flex-row"
+  const spaceDirection = dir === "rtl" ? "space-x-reverse" : ""
+
   return (
     <Drawer open={isOpen} onOpenChange={onClose} direction="bottom">
       <DrawerContent className="h-[95vh]">
-        <div className="flex flex-col h-full rtl:text-right">
+        <div className="flex flex-col h-full" dir={dir}>
           <DrawerHeader className="flex-shrink-0 pb-2">
-            <DrawerTitle className="text-center text-lg">{bundle ? "עריכת חבילה" : "הוספת חבילה חדשה"}</DrawerTitle>
+            <DrawerTitle className="text-center text-lg">
+              {bundle ? t("admin.bundles.form.editTitle") : t("admin.bundles.form.addTitle")}
+            </DrawerTitle>
           </DrawerHeader>
 
           <div className="flex-1 overflow-y-auto px-4">
             {formError && (
               <Alert variant="destructive" className="mb-4">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>שגיאה</AlertTitle>
+                <AlertTitle>{t("common.error")}</AlertTitle>
                 <AlertDescription>{formError}</AlertDescription>
               </Alert>
             )}
@@ -231,32 +231,36 @@ export function BundleForm({
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-4 sticky top-0 bg-background z-10 mb-4">
                 <TabsTrigger value="details" className="text-xs">
-                  פרטים
+                  {t("admin.bundles.form.tabs.details")}
                 </TabsTrigger>
                 <TabsTrigger value="treatments" className="text-xs">
-                  טיפולים
+                  {t("admin.bundles.form.tabs.treatments")}
                 </TabsTrigger>
                 <TabsTrigger value="discount" className="text-xs">
-                  הנחה
+                  {t("admin.bundles.form.tabs.discount")}
                 </TabsTrigger>
                 <TabsTrigger value="preview" className="text-xs">
-                  תצוגה
+                  {t("admin.bundles.form.tabs.preview")}
                 </TabsTrigger>
               </TabsList>
 
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 rtl:text-right">
+                <form onSubmit={form.handleSubmit(handleSubmit)} className={`space-y-4 ${textAlign}`}>
                   <TabsContent value="details" className="space-y-4 mt-0">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-right w-full">שם החבילה</FormLabel>
+                          <FormLabel className="w-full">{t("admin.bundles.form.fields.name")}</FormLabel>
                           <FormControl>
-                            <Input placeholder="לדוגמא: חבילת 5+1 עיסויים" {...field} className="text-right" />
+                            <Input
+                              placeholder={t("admin.bundles.form.placeholders.name")}
+                              {...field}
+                              className={textAlign}
+                            />
                           </FormControl>
-                          <FormMessage className="text-right" />
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -266,15 +270,15 @@ export function BundleForm({
                       name="category"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>קטגוריה</FormLabel>
+                          <FormLabel>{t("admin.bundles.form.fields.category")}</FormLabel>
                           <FormControl>
                             <select
-                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${textAlign}`}
                               {...field}
                             >
                               {categories.map((category) => (
                                 <option key={category} value={category}>
-                                  {getCategoryDisplayName(category)}
+                                  {t(`categories.${category}`, { defaultValue: category })}
                                 </option>
                               ))}
                             </select>
@@ -289,9 +293,14 @@ export function BundleForm({
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>תיאור (אופציונלי)</FormLabel>
+                          <FormLabel>{t("admin.bundles.form.fields.description")}</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="תיאור החבילה..." rows={3} {...field} />
+                            <Textarea
+                              placeholder={t("admin.bundles.form.placeholders.description")}
+                              rows={3}
+                              {...field}
+                              className={textAlign}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -304,7 +313,7 @@ export function BundleForm({
                         name="quantity"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>כמות טיפולים</FormLabel>
+                            <FormLabel>{t("admin.bundles.form.fields.quantity")}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
@@ -324,7 +333,7 @@ export function BundleForm({
                         name="validityMonths"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>תוקף (חודשים)</FormLabel>
+                            <FormLabel>{t("admin.bundles.form.fields.validity")}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
@@ -346,8 +355,10 @@ export function BundleForm({
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-sm">סטטוס</FormLabel>
-                            <FormDescription className="text-xs">האם החבילה פעילה ומוצגת ללקוחות?</FormDescription>
+                            <FormLabel className="text-sm">{t("admin.bundles.form.fields.status")}</FormLabel>
+                            <FormDescription className="text-xs">
+                              {t("admin.bundles.form.statusDescription")}
+                            </FormDescription>
                           </div>
                           <FormControl>
                             <Switch
@@ -363,17 +374,15 @@ export function BundleForm({
 
                   <TabsContent value="treatments" className="space-y-4 mt-0">
                     <div className="mb-4">
-                      <h3 className="text-base font-medium mb-2">טיפולים זמינים בחבילה</h3>
-                      <p className="text-xs text-gray-500">
-                        בחר את הטיפולים שיהיו זמינים בחבילה זו. כל הטיפולים חייבים להיות מאותה קטגוריה.
-                      </p>
+                      <h3 className="text-base font-medium mb-2">{t("admin.bundles.form.treatmentsTitle")}</h3>
+                      <p className="text-xs text-gray-500">{t("admin.bundles.form.treatmentsDescription")}</p>
                     </div>
 
                     <div className="border rounded-md p-3 max-h-60 overflow-y-auto">
                       {filteredTreatments.length > 0 ? (
                         <div className="space-y-3">
                           {filteredTreatments.map((treatment, index) => (
-                            <div key={treatment._id} className="flex items-center space-x-2 space-x-reverse">
+                            <div key={treatment._id} className={`flex items-center space-x-2 ${spaceDirection}`}>
                               <Checkbox
                                 id={`treatment-${treatment._id}`}
                                 checked={form.watch(`treatments.${index}.isSelected`)}
@@ -385,7 +394,7 @@ export function BundleForm({
                               />
                               <Label
                                 htmlFor={`treatment-${treatment._id}`}
-                                className="flex-1 cursor-pointer text-sm text-right"
+                                className={`flex-1 cursor-pointer text-sm ${textAlign}`}
                               >
                                 {treatment.name}
                               </Label>
@@ -393,16 +402,20 @@ export function BundleForm({
                           ))}
                         </div>
                       ) : (
-                        <div className="text-center py-6 text-gray-500 text-sm">אין טיפולים זמינים בקטגוריה זו</div>
+                        <div className="text-center py-6 text-gray-500 text-sm">
+                          {t("admin.bundles.form.noTreatmentsInCategory")}
+                        </div>
                       )}
                     </div>
 
                     {!hasSelectedTreatments && (
                       <Alert className="border-orange-200 bg-orange-50">
                         <AlertTriangle className="h-4 w-4 text-orange-600" />
-                        <AlertTitle className="text-orange-800 text-sm">שים לב</AlertTitle>
+                        <AlertTitle className="text-orange-800 text-sm">
+                          {t("admin.bundles.alerts.attention")}
+                        </AlertTitle>
                         <AlertDescription className="text-orange-700 text-xs">
-                          יש לבחור לפחות טיפול אחד
+                          {t("admin.bundles.form.selectAtLeastOne")}
                         </AlertDescription>
                       </Alert>
                     )}
@@ -410,8 +423,8 @@ export function BundleForm({
 
                   <TabsContent value="discount" className="space-y-4 mt-0">
                     <div className="mb-4">
-                      <h3 className="text-base font-medium mb-2">הגדרת הנחה</h3>
-                      <p className="text-xs text-gray-500">בחר את סוג ההנחה שתינתן בחבילה זו.</p>
+                      <h3 className="text-base font-medium mb-2">{t("admin.bundles.form.discountTitle")}</h3>
+                      <p className="text-xs text-gray-500">{t("admin.bundles.form.discountDescription")}</p>
                     </div>
 
                     <FormField
@@ -419,41 +432,41 @@ export function BundleForm({
                       name="discountType"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel>סוג הנחה</FormLabel>
+                          <FormLabel>{t("admin.bundles.form.fields.discountType")}</FormLabel>
                           <FormControl>
                             <RadioGroup
                               onValueChange={field.onChange}
                               defaultValue={field.value}
-                              className="flex flex-col space-y-2"
+                              className={`flex flex-col space-y-2 ${textAlign}`}
                             >
-                              <div className="flex items-center space-x-2 space-x-reverse">
+                              <div className={`flex items-center space-x-2 ${spaceDirection}`}>
                                 <RadioGroupItem
                                   value={DiscountType.FREE_QUANTITY}
                                   id="discount-free"
                                   checked={field.value === DiscountType.FREE_QUANTITY}
                                 />
-                                <Label htmlFor="discount-free" className="text-sm text-right">
-                                  כמות חינם
+                                <Label htmlFor="discount-free" className="text-sm">
+                                  {t("admin.bundles.form.discountTypes.freeQuantity")}
                                 </Label>
                               </div>
-                              <div className="flex items-center space-x-2 space-x-reverse">
+                              <div className={`flex items-center space-x-2 ${spaceDirection}`}>
                                 <RadioGroupItem
                                   value={DiscountType.PERCENTAGE}
                                   id="discount-percentage"
                                   checked={field.value === DiscountType.PERCENTAGE}
                                 />
-                                <Label htmlFor="discount-percentage" className="text-sm text-right">
-                                  אחוז הנחה
+                                <Label htmlFor="discount-percentage" className="text-sm">
+                                  {t("admin.bundles.form.discountTypes.percentage")}
                                 </Label>
                               </div>
-                              <div className="flex items-center space-x-2 space-x-reverse">
+                              <div className={`flex items-center space-x-2 ${spaceDirection}`}>
                                 <RadioGroupItem
                                   value={DiscountType.FIXED_AMOUNT}
                                   id="discount-fixed"
                                   checked={field.value === DiscountType.FIXED_AMOUNT}
                                 />
-                                <Label htmlFor="discount-fixed" className="text-sm text-right">
-                                  סכום הנחה קבוע
+                                <Label htmlFor="discount-fixed" className="text-sm">
+                                  {t("admin.bundles.form.discountTypes.fixedAmount")}
                                 </Label>
                               </div>
                             </RadioGroup>
@@ -470,10 +483,10 @@ export function BundleForm({
                         <FormItem>
                           <FormLabel className="text-sm">
                             {form.watch("discountType") === DiscountType.FREE_QUANTITY
-                              ? "כמות טיפולים חינם"
+                              ? t("admin.bundles.form.fields.freeQuantity")
                               : form.watch("discountType") === DiscountType.PERCENTAGE
-                                ? "אחוז הנחה"
-                                : "סכום הנחה (₪)"}
+                                ? t("admin.bundles.form.fields.percentageDiscount")
+                                : t("admin.bundles.form.fields.fixedDiscount")}
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -493,10 +506,10 @@ export function BundleForm({
                           </FormControl>
                           <FormDescription className="text-xs">
                             {form.watch("discountType") === DiscountType.FREE_QUANTITY
-                              ? `מתוך ${form.watch("quantity")} טיפולים בסך הכל`
+                              ? t("admin.bundles.form.freeQuantityDescription", { total: form.watch("quantity") })
                               : form.watch("discountType") === DiscountType.PERCENTAGE
-                                ? "הזן ערך בין 0 ל-100"
-                                : "הזן סכום הנחה בשקלים"}
+                                ? t("admin.bundles.form.percentageDescription")
+                                : t("admin.bundles.form.fixedAmountDescription")}
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -506,65 +519,87 @@ export function BundleForm({
 
                   <TabsContent value="preview" className="space-y-4 mt-0">
                     <div className="mb-4">
-                      <h3 className="text-base font-medium mb-2">תצוגה מקדימה</h3>
-                      <p className="text-xs text-gray-500">בדוק את פרטי החבילה לפני שמירה.</p>
+                      <h3 className="text-base font-medium mb-2">{t("admin.bundles.form.previewTitle")}</h3>
+                      <p className="text-xs text-gray-500">{t("admin.bundles.form.previewDescription")}</p>
                     </div>
 
                     <div className="border rounded-md p-4 space-y-3 max-h-80 overflow-y-auto">
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
-                          <h4 className="font-medium text-gray-700 text-xs">שם החבילה</h4>
-                          <p className="text-gray-900">{form.watch("name") || "לא הוגדר"}</p>
+                          <h4 className="font-medium text-gray-700 text-xs">{t("admin.bundles.form.fields.name")}</h4>
+                          <p className="text-gray-900">{form.watch("name") || t("admin.bundles.form.notDefined")}</p>
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-700 text-xs">קטגוריה</h4>
-                          <p className="text-gray-900">{getCategoryDisplayName(form.watch("category"))}</p>
+                          <h4 className="font-medium text-gray-700 text-xs">
+                            {t("admin.bundles.form.fields.category")}
+                          </h4>
+                          <p className="text-gray-900">
+                            {t(`categories.${form.watch("category")}`, { defaultValue: form.watch("category") })}
+                          </p>
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-700 text-xs">כמות טיפולים</h4>
+                          <h4 className="font-medium text-gray-700 text-xs">
+                            {t("admin.bundles.form.fields.quantity")}
+                          </h4>
                           <p className="text-gray-900 text-center">{form.watch("quantity")}</p>
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-700 text-xs">תוקף</h4>
-                          <p className="text-gray-900 text-center">{form.watch("validityMonths")} חודשים</p>
+                          <h4 className="font-medium text-gray-700 text-xs">
+                            {t("admin.bundles.form.fields.validity")}
+                          </h4>
+                          <p className="text-gray-900 text-center">
+                            {t("admin.bundles.card.validityValue", { months: form.watch("validityMonths") })}
+                          </p>
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-700 text-xs">סטטוס</h4>
-                          <p className="text-gray-900">{form.watch("isActive") ? "פעיל" : "לא פעיל"}</p>
+                          <h4 className="font-medium text-gray-700 text-xs">{t("admin.bundles.form.fields.status")}</h4>
+                          <p className="text-gray-900">
+                            {form.watch("isActive")
+                              ? t("admin.bundles.filters.active")
+                              : t("admin.bundles.filters.inactive")}
+                          </p>
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-700 text-xs">הנחה</h4>
+                          <h4 className="font-medium text-gray-700 text-xs">
+                            {t("admin.bundles.form.fields.discount")}
+                          </h4>
                           <p className="text-gray-900">
                             {form.watch("discountType") === DiscountType.FREE_QUANTITY
-                              ? `${form.watch("discountValue")} טיפולים חינם`
+                              ? t("admin.bundles.discount.freeQuantity", { value: form.watch("discountValue") })
                               : form.watch("discountType") === DiscountType.PERCENTAGE
-                                ? `${form.watch("discountValue")}% הנחה`
-                                : `₪${form.watch("discountValue")} הנחה`}
+                                ? t("admin.bundles.discount.percentage", { value: form.watch("discountValue") })
+                                : t("admin.bundles.discount.fixedAmount", { value: form.watch("discountValue") })}
                           </p>
                         </div>
                       </div>
 
                       {form.watch("description") && (
                         <div>
-                          <h4 className="font-medium text-gray-700 text-xs">תיאור</h4>
+                          <h4 className="font-medium text-gray-700 text-xs">
+                            {t("admin.bundles.form.fields.description")}
+                          </h4>
                           <p className="text-gray-900 text-sm">{form.watch("description")}</p>
                         </div>
                       )}
 
                       <div>
-                        <h4 className="font-medium text-gray-700 text-xs mb-2">טיפולים כלולים</h4>
+                        <h4 className="font-medium text-gray-700 text-xs mb-2">
+                          {t("admin.bundles.form.includedTreatments")}
+                        </h4>
                         <div className="space-y-1 max-h-32 overflow-y-auto">
                           {form
                             .watch("treatments")
                             .filter((t) => t.isSelected)
                             .map((treatment, index) => (
-                              <div key={index} className="flex items-center rtl:flex-row-reverse">
-                                <Clock className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1 text-gray-400" />
+                              <div key={index} className={`flex items-center ${flexDirection}`}>
+                                <Clock
+                                  className={`w-3 h-3 ${dir === "rtl" ? "ml-0 mr-1" : "ml-1 mr-0"} text-gray-400`}
+                                />
                                 <span className="text-xs text-gray-900">{treatment.name}</span>
                               </div>
                             ))}
                           {form.watch("treatments").filter((t) => t.isSelected).length === 0 && (
-                            <p className="text-xs text-gray-500">לא נבחרו טיפולים</p>
+                            <p className="text-xs text-gray-500">{t("admin.bundles.form.noTreatmentsSelected")}</p>
                           )}
                         </div>
                       </div>
@@ -576,7 +611,7 @@ export function BundleForm({
           </div>
 
           <DrawerFooter className="flex-shrink-0 pt-2">
-            <div className="flex justify-between gap-2 flex-row-reverse">
+            <div className={`flex justify-between gap-2 ${flexDirection}`}>
               <Button
                 type="button"
                 variant="outline"
@@ -593,7 +628,7 @@ export function BundleForm({
                 }}
                 className="flex-1"
               >
-                {activeTab === "details" ? "ביטול" : "חזרה"}
+                {activeTab === "details" ? t("common.cancel") : t("common.back")}
               </Button>
               <Button
                 type="button"
@@ -602,7 +637,7 @@ export function BundleForm({
                     setActiveTab("treatments")
                   } else if (activeTab === "treatments") {
                     if (!hasSelectedTreatments) {
-                      setFormError("יש לבחור לפחות טיפול אחד")
+                      setFormError(t("admin.bundles.form.errors.noTreatmentsSelected"))
                       return
                     }
                     setActiveTab("discount")
@@ -613,21 +648,21 @@ export function BundleForm({
                   }
                 }}
                 disabled={isSubmitting || (activeTab === "treatments" && !hasSelectedTreatments)}
-                className="bg-teal-500 hover:bg-teal-600 flex-1 flex flex-row-reverse"
+                className={`bg-teal-500 hover:bg-teal-600 flex-1 ${flexDirection}`}
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 animate-spin" />
-                    שומר...
+                    <Loader2 className={`${dir === "rtl" ? "ml-0 mr-2" : "ml-2 mr-0"} h-4 w-4 animate-spin`} />
+                    {t("common.saving")}
                   </>
                 ) : activeTab === "preview" ? (
                   bundle ? (
-                    "עדכן חבילה"
+                    t("admin.bundles.actions.update")
                   ) : (
-                    "צור חבילה"
+                    t("admin.bundles.actions.create")
                   )
                 ) : (
-                  "הבא"
+                  t("common.next")
                 )}
               </Button>
             </div>

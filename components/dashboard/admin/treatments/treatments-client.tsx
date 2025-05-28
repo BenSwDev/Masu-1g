@@ -13,8 +13,12 @@ import { getTreatments } from "@/actions/treatment-actions"
 import { toast } from "@/components/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
+import { useTranslation } from "@/lib/translations/i18n"
+import { useDirection } from "@/lib/translations/i18n"
 
 export function TreatmentsClient() {
+  const { t } = useTranslation()
+  const { dir } = useDirection()
   const [treatments, setTreatments] = useState<ITreatment[]>([])
   const [filteredTreatments, setFilteredTreatments] = useState<ITreatment[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -37,14 +41,14 @@ export function TreatmentsClient() {
           setFilteredTreatments(result.treatments)
         } else {
           toast({
-            title: "שגיאה בטעינת הטיפולים",
+            title: t("admin.treatments.errors.loadFailed"),
             description: result.error,
             variant: "destructive",
           })
         }
       } catch (error) {
         toast({
-          title: "שגיאה בטעינת הטיפולים",
+          title: t("admin.treatments.errors.loadFailed"),
           variant: "destructive",
         })
       } finally {
@@ -53,7 +57,7 @@ export function TreatmentsClient() {
     }
 
     fetchTreatments()
-  }, [])
+  }, [t])
 
   useEffect(() => {
     applyFilters()
@@ -122,45 +126,47 @@ export function TreatmentsClient() {
   const getCategoryName = (category: string) => {
     switch (category) {
       case "massages":
-        return "עיסויים"
+        return t("admin.treatments.categories.massages")
       case "facial_treatments":
-        return "טיפולי פנים"
+        return t("admin.treatments.categories.facialTreatments")
       default:
         return category
     }
   }
 
   const getStatusName = (status: boolean) => {
-    return status ? "פעיל" : "לא פעיל"
+    return status ? t("admin.treatments.status.active") : t("admin.treatments.status.inactive")
   }
 
   const getPricingTypeName = (type: string) => {
     switch (type) {
       case "fixed":
-        return "מחיר קבוע"
+        return t("admin.treatments.pricingTypes.fixed")
       case "duration_based":
-        return "לפי זמנים"
+        return t("admin.treatments.pricingTypes.durationBased")
       default:
         return type
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <Button onClick={handleAddTreatment} className="bg-teal-500 hover:bg-teal-600 w-full sm:w-auto">
-          <Plus className="h-4 w-4 ml-2" />
-          הוסף טיפול חדש
+          <Plus className="h-4 w-4 mr-2" />
+          {t("admin.treatments.actions.addNew")}
         </Button>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <div className="relative w-full sm:w-auto">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground rtl:right-auto rtl:left-3" />
+            <Search
+              className={`absolute ${dir === "rtl" ? "right" : "left"}-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground`}
+            />
             <Input
-              placeholder="חיפוש טיפולים..."
+              placeholder={t("admin.treatments.search.placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pr-10 w-full rtl:pr-3 rtl:pl-10"
+              className={`${dir === "rtl" ? "pr-10" : "pl-10"} w-full`}
             />
           </div>
 
@@ -169,7 +175,7 @@ export function TreatmentsClient() {
             size="icon"
             onClick={() => setShowFilters(!showFilters)}
             className="sm:hidden"
-            aria-label="סינון"
+            aria-label={t("admin.treatments.actions.filter")}
           >
             <Filter className="h-4 w-4" />
           </Button>
@@ -180,34 +186,34 @@ export function TreatmentsClient() {
         <div className="flex flex-wrap gap-2 w-full">
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue placeholder="קטגוריה" />
+              <SelectValue placeholder={t("admin.treatments.filters.category")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">כל הקטגוריות</SelectItem>
-              <SelectItem value="massages">עיסויים</SelectItem>
-              <SelectItem value="facial_treatments">טיפולי פנים</SelectItem>
+              <SelectItem value="all">{t("admin.treatments.filters.allCategories")}</SelectItem>
+              <SelectItem value="massages">{t("admin.treatments.categories.massages")}</SelectItem>
+              <SelectItem value="facial_treatments">{t("admin.treatments.categories.facialTreatments")}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue placeholder="סטטוס" />
+              <SelectValue placeholder={t("admin.treatments.filters.status")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">כל הסטטוסים</SelectItem>
-              <SelectItem value="active">פעיל</SelectItem>
-              <SelectItem value="inactive">לא פעיל</SelectItem>
+              <SelectItem value="all">{t("admin.treatments.filters.allStatuses")}</SelectItem>
+              <SelectItem value="active">{t("admin.treatments.status.active")}</SelectItem>
+              <SelectItem value="inactive">{t("admin.treatments.status.inactive")}</SelectItem>
             </SelectContent>
           </Select>
 
           <Select value={pricingFilter} onValueChange={setPricingFilter}>
             <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue placeholder="תמחור" />
+              <SelectValue placeholder={t("admin.treatments.filters.pricing")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">כל סוגי התמחור</SelectItem>
-              <SelectItem value="fixed">מחיר קבוע</SelectItem>
-              <SelectItem value="duration_based">לפי זמנים</SelectItem>
+              <SelectItem value="all">{t("admin.treatments.filters.allPricingTypes")}</SelectItem>
+              <SelectItem value="fixed">{t("admin.treatments.pricingTypes.fixed")}</SelectItem>
+              <SelectItem value="duration_based">{t("admin.treatments.pricingTypes.durationBased")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -216,12 +222,13 @@ export function TreatmentsClient() {
       <Tabs defaultValue="grid" className="w-full" onValueChange={(value) => setActiveView(value as "grid" | "list")}>
         <div className="flex justify-between items-center mb-4">
           <div className="text-sm text-muted-foreground">
-            {filteredTreatments.length} טיפולים{" "}
-            {filteredTreatments.length !== treatments.length && `(מתוך ${treatments.length})`}
+            {t("admin.treatments.results.count", { count: filteredTreatments.length })}
+            {filteredTreatments.length !== treatments.length &&
+              t("admin.treatments.results.filtered", { total: treatments.length })}
           </div>
           <TabsList>
-            <TabsTrigger value="grid">גריד</TabsTrigger>
-            <TabsTrigger value="list">רשימה</TabsTrigger>
+            <TabsTrigger value="grid">{t("admin.treatments.views.grid")}</TabsTrigger>
+            <TabsTrigger value="list">{t("admin.treatments.views.list")}</TabsTrigger>
           </TabsList>
         </div>
 
@@ -235,8 +242,8 @@ export function TreatmentsClient() {
           ) : filteredTreatments.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold mb-2">לא נמצאו טיפולים</h3>
-              <p className="text-muted-foreground">נסה לשנות את הפילטרים או להוסיף טיפול חדש</p>
+              <h3 className="text-xl font-semibold mb-2">{t("admin.treatments.noResults.title")}</h3>
+              <p className="text-muted-foreground">{t("admin.treatments.noResults.description")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -264,8 +271,8 @@ export function TreatmentsClient() {
           ) : filteredTreatments.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-4xl mb-4">🔍</div>
-              <h3 className="text-xl font-semibold mb-2">לא נמצאו טיפולים</h3>
-              <p className="text-muted-foreground">נסה לשנות את הפילטרים או להוסיף טיפול חדש</p>
+              <h3 className="text-xl font-semibold mb-2">{t("admin.treatments.noResults.title")}</h3>
+              <p className="text-muted-foreground">{t("admin.treatments.noResults.description")}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -277,7 +284,7 @@ export function TreatmentsClient() {
                         <div className="font-medium">{treatment.name}</div>
                         <div className="text-sm text-muted-foreground">{getCategoryName(treatment.category)}</div>
                       </div>
-                      <div className="flex items-center gap-4 rtl:flex-row-reverse">
+                      <div className="flex items-center gap-4">
                         <div className="text-sm hidden md:block">
                           <span
                             className={`inline-block px-2 py-1 rounded-full text-xs ${
@@ -292,14 +299,14 @@ export function TreatmentsClient() {
                             {getPricingTypeName(treatment.pricingType)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 rtl:flex-row-reverse">
+                        <div className="flex items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditTreatment(treatment)}
                             className="h-8 px-2"
                           >
-                            ערוך
+                            {t("admin.treatments.actions.edit")}
                           </Button>
                         </div>
                       </div>
@@ -313,11 +320,15 @@ export function TreatmentsClient() {
       </Tabs>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rtl:text-right">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingTreatment ? "עריכת טיפול" : "הוספת טיפול חדש"}</DialogTitle>
+            <DialogTitle>
+              {editingTreatment ? t("admin.treatments.form.editTitle") : t("admin.treatments.form.addTitle")}
+            </DialogTitle>
             <DialogDescription>
-              {editingTreatment ? "ערוך את פרטי הטיפול הקיים" : "הוסף טיפול חדש למערכת"}
+              {editingTreatment
+                ? t("admin.treatments.form.editDescription")
+                : t("admin.treatments.form.addDescription")}
             </DialogDescription>
           </DialogHeader>
           <TreatmentForm

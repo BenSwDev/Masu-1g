@@ -17,40 +17,10 @@ import type { ITreatment } from "@/lib/db/models/treatment"
 import { createTreatment, updateTreatment, type TreatmentFormData } from "@/actions/treatment-actions"
 import { toast } from "@/components/ui/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useTranslation } from "@/lib/translations/i18n"
+import { useDirection } from "@/lib/translations/i18n"
 
-const formSchema = z
-  .object({
-    name: z.string().min(2, "שם הטיפול חייב להכיל לפחות 2 תווים"),
-    category: z.enum(["massages", "facial_treatments"]),
-    description: z.string().optional(),
-    isActive: z.boolean(),
-    pricingType: z.enum(["fixed", "duration_based"]),
-    fixedPrice: z.number().min(0).optional(),
-    fixedProfessionalPrice: z.number().min(0).optional(),
-    durations: z
-      .array(
-        z.object({
-          minutes: z.number(),
-          price: z.number().min(0),
-          professionalPrice: z.number().min(0),
-          isActive: z.boolean(),
-        }),
-      )
-      .optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.pricingType === "fixed") {
-        return data.fixedPrice !== undefined && data.fixedProfessionalPrice !== undefined
-      } else {
-        return data.durations && data.durations.some((d) => d.isActive)
-      }
-    },
-    {
-      message: "יש להגדיר מחיר",
-      path: ["pricingType"],
-    },
-  )
+const AVAILABLE_DURATIONS = [60, 75, 90, 120]
 
 interface TreatmentFormProps {
   treatment?: ITreatment | null
@@ -58,24 +28,47 @@ interface TreatmentFormProps {
   onCancel: () => void
 }
 
-const AVAILABLE_DURATIONS = [60, 75, 90, 120]
-
-const getCategoryDisplayName = (category: string) => {
-  switch (category) {
-    case "massages":
-      return "עיסויים"
-    case "facial_treatments":
-      return "טיפולי פנים"
-    default:
-      return category
-  }
-}
-
 export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormProps) {
+  const { t } = useTranslation()
+  const { dir } = useDirection()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [professionalPriceType, setProfessionalPriceType] = useState<"amount" | "percentage">("amount")
   const [durationPriceTypes, setDurationPriceTypes] = useState<Record<number, "amount" | "percentage">>({})
   const [activeTab, setActiveTab] = useState("basic")
+
+  const formSchema = z
+    .object({
+      name: z.string().min(2, t("admin.treatments.validation.nameMinLength")),
+      category: z.enum(["massages", "facial_treatments"]),
+      description: z.string().optional(),
+      isActive: z.boolean(),
+      pricingType: z.enum(["fixed", "duration_based"]),
+      fixedPrice: z.number().min(0).optional(),
+      fixedProfessionalPrice: z.number().min(0).optional(),
+      durations: z
+        .array(
+          z.object({
+            minutes: z.number(),
+            price: z.number().min(0),
+            professionalPrice: z.number().min(0),
+            isActive: z.boolean(),
+          }),
+        )
+        .optional(),
+    })
+    .refine(
+      (data) => {
+        if (data.pricingType === "fixed") {
+          return data.fixedPrice !== undefined && data.fixedProfessionalPrice !== undefined
+        } else {
+          return data.durations && data.durations.some((d) => d.isActive)
+        }
+      },
+      {
+        message: t("admin.treatments.validation.priceRequired"),
+        path: ["pricingType"],
+      },
+    )
 
   const form = useForm<TreatmentFormData>({
     resolver: zodResolver(formSchema),
@@ -158,21 +151,23 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
 
       if (result.success && result.treatment) {
         toast({
-          title: treatment ? "הטיפול עודכן בהצלחה" : "הטיפול נוצר בהצלחה",
+          title: treatment
+            ? t("admin.treatments.notifications.updateSuccess")
+            : t("admin.treatments.notifications.createSuccess"),
           variant: "default",
         })
         onSuccess(result.treatment)
       } else {
         toast({
-          title: "שגיאה",
+          title: t("admin.treatments.notifications.error"),
           description: result.error,
           variant: "destructive",
         })
       }
     } catch (error) {
       toast({
-        title: "שגיאה",
-        description: "אירעה שגיאה בשמירת הטיפול",
+        title: t("admin.treatments.notifications.error"),
+        description: t("admin.treatments.notifications.saveFailed"),
         variant: "destructive",
       })
     } finally {
@@ -184,11 +179,11 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" dir={dir}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="basic">פרטים בסיסיים</TabsTrigger>
-            <TabsTrigger value="pricing">תמחור</TabsTrigger>
+            <TabsTrigger value="basic">{t("admin.treatments.form.tabs.basic")}</TabsTrigger>
+            <TabsTrigger value="pricing">{t("admin.treatments.form.tabs.pricing")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
@@ -198,9 +193,13 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-medium text-right w-full">שם הטיפול</FormLabel>
+                    <FormLabel className="text-base font-medium">{t("admin.treatments.form.fields.name")}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="לדוגמה: עיסוי שוודי" className="border-2" />
+                      <Input
+                        {...field}
+                        placeholder={t("admin.treatments.form.placeholders.name")}
+                        className="border-2"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -212,7 +211,9 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-medium">קטגוריה</FormLabel>
+                    <FormLabel className="text-base font-medium">
+                      {t("admin.treatments.form.fields.category")}
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger className="border-2">
@@ -220,8 +221,10 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="massages">עיסויים</SelectItem>
-                        <SelectItem value="facial_treatments">טיפולי פנים</SelectItem>
+                        <SelectItem value="massages">{t("admin.treatments.categories.massages")}</SelectItem>
+                        <SelectItem value="facial_treatments">
+                          {t("admin.treatments.categories.facialTreatments")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -235,9 +238,16 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-medium">תיאור הטיפול</FormLabel>
+                  <FormLabel className="text-base font-medium">
+                    {t("admin.treatments.form.fields.description")}
+                  </FormLabel>
                   <FormControl>
-                    <Textarea {...field} placeholder="תיאור קצר של הטיפול" rows={3} className="border-2" />
+                    <Textarea
+                      {...field}
+                      placeholder={t("admin.treatments.form.placeholders.description")}
+                      rows={3}
+                      className="border-2"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -256,9 +266,11 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                       ) : (
                         <XCircle className="h-5 w-5 text-red-500" />
                       )}
-                      <FormLabel className="text-base font-medium">סטטוס הטיפול</FormLabel>
+                      <FormLabel className="text-base font-medium">
+                        {t("admin.treatments.form.fields.status")}
+                      </FormLabel>
                     </div>
-                    <FormDescription>האם הטיפול זמין להזמנה?</FormDescription>
+                    <FormDescription>{t("admin.treatments.form.descriptions.status")}</FormDescription>
                   </div>
                   <FormControl>
                     <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -272,7 +284,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <Coins className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-medium">תמחור</h3>
+                <h3 className="text-lg font-medium">{t("admin.treatments.form.sections.pricing")}</h3>
               </div>
 
               <FormField
@@ -280,7 +292,9 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                 name="pricingType"
                 render={({ field }) => (
                   <FormItem className="space-y-4">
-                    <FormLabel className="text-base font-medium">סוג תמחור</FormLabel>
+                    <FormLabel className="text-base font-medium">
+                      {t("admin.treatments.form.fields.pricingType")}
+                    </FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -291,18 +305,22 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                           <RadioGroupItem value="fixed" id="fixed" className="mt-1" />
                           <div className="space-y-1 w-full">
                             <label htmlFor="fixed" className="text-base font-medium cursor-pointer block">
-                              מחיר קבוע
+                              {t("admin.treatments.pricingTypes.fixed")}
                             </label>
-                            <p className="text-sm text-muted-foreground">מחיר אחיד ללא תלות במשך הטיפול</p>
+                            <p className="text-sm text-muted-foreground">
+                              {t("admin.treatments.form.descriptions.fixedPricing")}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-start space-x-2 space-x-reverse border-2 rounded-lg p-4 hover:bg-muted/20 transition-colors cursor-pointer">
                           <RadioGroupItem value="duration_based" id="duration_based" className="mt-1" />
                           <div className="space-y-1 w-full">
                             <label htmlFor="duration_based" className="text-base font-medium cursor-pointer block">
-                              מחיר לפי זמן
+                              {t("admin.treatments.pricingTypes.durationBased")}
                             </label>
-                            <p className="text-sm text-muted-foreground">מחירים שונים לפי משך הטיפול</p>
+                            <p className="text-sm text-muted-foreground">
+                              {t("admin.treatments.form.descriptions.durationBasedPricing")}
+                            </p>
                           </div>
                         </div>
                       </RadioGroup>
@@ -315,7 +333,9 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
               {pricingType === "fixed" ? (
                 <Card className="border-2 border-muted">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base font-medium">מחיר קבוע</CardTitle>
+                    <CardTitle className="text-base font-medium">
+                      {t("admin.treatments.form.sections.fixedPrice")}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -324,7 +344,9 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                         name="fixedPrice"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-base font-medium">מחיר כללי</FormLabel>
+                            <FormLabel className="text-base font-medium">
+                              {t("admin.treatments.form.fields.generalPrice")}
+                            </FormLabel>
                             <div className="relative">
                               <FormControl>
                                 <Input
@@ -332,10 +354,12 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                                   {...field}
                                   onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
                                   placeholder="0"
-                                  className="pl-8 text-left border-2 rtl:pl-3 rtl:pr-8 rtl:text-right"
+                                  className={`${dir === "rtl" ? "pr-8 text-right" : "pl-8 text-left"} border-2`}
                                 />
                               </FormControl>
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground rtl:left-auto rtl:right-3">
+                              <span
+                                className={`absolute ${dir === "rtl" ? "right" : "left"}-3 top-1/2 -translate-y-1/2 text-muted-foreground`}
+                              >
                                 ₪
                               </span>
                             </div>
@@ -345,7 +369,9 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                       />
 
                       <div className="space-y-2">
-                        <FormLabel className="text-base font-medium">מחיר למטפל</FormLabel>
+                        <FormLabel className="text-base font-medium">
+                          {t("admin.treatments.form.fields.professionalPrice")}
+                        </FormLabel>
                         <div className="flex gap-2 items-end">
                           <Select
                             value={professionalPriceType}
@@ -355,8 +381,10 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="amount">סכום</SelectItem>
-                              <SelectItem value="percentage">אחוז</SelectItem>
+                              <SelectItem value="amount">{t("admin.treatments.form.priceTypes.amount")}</SelectItem>
+                              <SelectItem value="percentage">
+                                {t("admin.treatments.form.priceTypes.percentage")}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <div className="relative flex-1">
@@ -364,20 +392,24 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                               type="number"
                               placeholder={professionalPriceType === "amount" ? "0" : "0%"}
                               onChange={(e) => handleProfessionalPriceChange(e.target.value, professionalPriceType)}
-                              className={`pl-8 text-left border-2 rtl:pl-3 rtl:pr-8 rtl:text-right ${
+                              className={`${dir === "rtl" ? "pr-8 text-right" : "pl-8 text-left"} border-2 ${
                                 professionalPriceType === "percentage"
-                                  ? "pl-10 rtl:pl-3 rtl:pr-10"
-                                  : "pl-8 rtl:pl-3 rtl:pr-8"
+                                  ? `${dir === "rtl" ? "pr-10" : "pl-10"}`
+                                  : `${dir === "rtl" ? "pr-8" : "pl-8"}`
                               }`}
                             />
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground rtl:left-auto rtl:right-3">
+                            <span
+                              className={`absolute ${dir === "rtl" ? "right" : "left"}-3 top-1/2 -translate-y-1/2 text-muted-foreground`}
+                            >
                               {professionalPriceType === "amount" ? "₪" : "%"}
                             </span>
                           </div>
                         </div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1 rtl:flex-row-reverse">
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
                           <Info className="h-4 w-4" />
-                          סכום למטפל: ₪{form.watch("fixedProfessionalPrice") || 0}
+                          {t("admin.treatments.form.professionalAmount", {
+                            amount: form.watch("fixedProfessionalPrice") || 0,
+                          })}
                         </div>
                       </div>
                     </div>
@@ -387,9 +419,11 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-primary" />
-                    <h3 className="text-base font-medium">זמני טיפול</h3>
+                    <h3 className="text-base font-medium">{t("admin.treatments.form.sections.treatmentDurations")}</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground">בחר את הזמנים הזמינים והגדר מחיר לכל אחד</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("admin.treatments.form.descriptions.selectDurations")}
+                  </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {form.watch("durations")?.map((duration, index) => (
@@ -401,7 +435,9 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-primary" />
-                              <CardTitle className="text-base font-medium">{duration.minutes} דקות</CardTitle>
+                              <CardTitle className="text-base font-medium">
+                                {t("admin.treatments.form.duration", { minutes: duration.minutes })}
+                              </CardTitle>
                             </div>
                             <FormField
                               control={form.control}
@@ -424,7 +460,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                               name={`durations.${index}.price`}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>מחיר</FormLabel>
+                                  <FormLabel>{t("admin.treatments.form.fields.price")}</FormLabel>
                                   <div className="relative">
                                     <FormControl>
                                       <Input
@@ -432,10 +468,12 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                                         {...field}
                                         onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
                                         placeholder="0"
-                                        className="pl-8 text-left border-2"
+                                        className={`${dir === "rtl" ? "pr-8 text-right" : "pl-8 text-left"} border-2`}
                                       />
                                     </FormControl>
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                    <span
+                                      className={`absolute ${dir === "rtl" ? "right" : "left"}-3 top-1/2 -translate-y-1/2 text-muted-foreground`}
+                                    >
                                       ₪
                                     </span>
                                   </div>
@@ -445,7 +483,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                             />
 
                             <div className="space-y-2">
-                              <FormLabel>מחיר למטפל</FormLabel>
+                              <FormLabel>{t("admin.treatments.form.fields.professionalPrice")}</FormLabel>
                               <div className="flex gap-2 items-end">
                                 <Select
                                   value={durationPriceTypes[duration.minutes] || "amount"}
@@ -457,8 +495,12 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="amount">סכום</SelectItem>
-                                    <SelectItem value="percentage">אחוז</SelectItem>
+                                    <SelectItem value="amount">
+                                      {t("admin.treatments.form.priceTypes.amount")}
+                                    </SelectItem>
+                                    <SelectItem value="percentage">
+                                      {t("admin.treatments.form.priceTypes.percentage")}
+                                    </SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <div className="relative flex-1">
@@ -472,18 +514,24 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                                         durationPriceTypes[duration.minutes] || "amount",
                                       )
                                     }
-                                    className={`pl-8 text-left border-2 ${
-                                      durationPriceTypes[duration.minutes] === "percentage" ? "pl-10" : "pl-8"
+                                    className={`${dir === "rtl" ? "pr-8 text-right" : "pl-8 text-left"} border-2 ${
+                                      durationPriceTypes[duration.minutes] === "percentage"
+                                        ? `${dir === "rtl" ? "pr-10" : "pl-10"}`
+                                        : `${dir === "rtl" ? "pr-8" : "pl-8"}`
                                     }`}
                                   />
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                                  <span
+                                    className={`absolute ${dir === "rtl" ? "right" : "left"}-3 top-1/2 -translate-y-1/2 text-muted-foreground`}
+                                  >
                                     {durationPriceTypes[duration.minutes] === "percentage" ? "%" : "₪"}
                                   </span>
                                 </div>
                               </div>
                               <div className="text-sm text-muted-foreground flex items-center gap-1">
                                 <Info className="h-4 w-4" />
-                                סכום למטפל: ₪{duration.professionalPrice || 0}
+                                {t("admin.treatments.form.professionalAmount", {
+                                  amount: duration.professionalPrice || 0,
+                                })}
                               </div>
                             </div>
                           </CardContent>
@@ -497,12 +545,16 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end gap-3 pt-4 border-t rtl:flex-row-reverse">
+        <div className="flex justify-end gap-3 pt-4 border-t">
           <Button type="button" variant="outline" onClick={onCancel} className="min-w-24">
-            ביטול
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={isSubmitting} className="min-w-24">
-            {isSubmitting ? "שומר..." : treatment ? "עדכן טיפול" : "צור טיפול"}
+            {isSubmitting
+              ? t("common.saving")
+              : treatment
+                ? t("admin.treatments.actions.update")
+                : t("admin.treatments.actions.create")}
           </Button>
         </div>
       </form>

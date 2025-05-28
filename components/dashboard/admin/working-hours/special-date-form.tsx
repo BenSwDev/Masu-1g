@@ -13,6 +13,8 @@ import { Calendar, Clock, DollarSign } from "lucide-react"
 import type { IWorkingHours } from "@/lib/db/models/working-hours"
 import { format } from "date-fns"
 import { toast } from "sonner"
+import { useTranslation } from "@/lib/translations/i18n"
+import { useDirection } from "@/lib/translations/i18n"
 
 interface SpecialDateFormProps {
   isOpen: boolean
@@ -22,6 +24,8 @@ interface SpecialDateFormProps {
 }
 
 export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: SpecialDateFormProps) {
+  const { t } = useTranslation()
+  const dir = useDirection()
   const [activeTab, setActiveTab] = useState("basic")
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -72,12 +76,12 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.date) {
-      toast.error("אנא מלא את כל השדות הנדרשים")
+      toast.error(t("admin.workingHours.specialDates.form.requiredFieldsError"))
       return
     }
 
     if (formData.isActive && formData.startTime >= formData.endTime) {
-      toast.error("שעת הסיום חייבת להיות אחרי שעת ההתחלה")
+      toast.error(t("admin.workingHours.specialDates.form.timeError"))
       return
     }
 
@@ -105,9 +109,13 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
       await onSubmit(submitData)
       onClose()
-      toast.success(editingDate ? "התאריך עודכן בהצלחה" : "התאריך נוסף בהצלחה")
+      toast.success(
+        editingDate
+          ? t("admin.workingHours.specialDates.form.updateSuccess")
+          : t("admin.workingHours.specialDates.form.addSuccess"),
+      )
     } catch (error) {
-      toast.error("שגיאה בשמירת התאריך")
+      toast.error(t("admin.workingHours.specialDates.form.saveError"))
     } finally {
       setIsLoading(false)
     }
@@ -116,48 +124,49 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
       <DrawerContent className="h-[95vh]">
-        <div className="flex flex-col h-full rtl:text-right">
+        <div className="flex flex-col h-full" dir={dir}>
           <DrawerHeader className="flex-shrink-0">
             <DrawerTitle className="text-center text-lg">
-              {editingDate ? "עריכת תאריך מיוחד" : "הוספת תאריך מיוחד"}
+              {editingDate
+                ? t("admin.workingHours.specialDates.form.editTitle")
+                : t("admin.workingHours.specialDates.form.addTitle")}
             </DrawerTitle>
           </DrawerHeader>
 
           <div className="flex-1 overflow-y-auto px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3 sticky top-0 bg-background z-10 mb-4">
-                <TabsTrigger value="basic" className="text-xs flex flex-row-reverse">
-                  <Calendar className="h-3 w-3 ml-1 rtl:ml-0 rtl:mr-1" />
-                  פרטים
+                <TabsTrigger value="basic" className="text-xs flex">
+                  <Calendar className="h-3 w-3 mr-1" />
+                  {t("admin.workingHours.specialDates.form.tabs.basic")}
                 </TabsTrigger>
-                <TabsTrigger value="hours" className="text-xs flex flex-row-reverse">
-                  <Clock className="h-3 w-3 ml-1 rtl:ml-0 rtl:mr-1" />
-                  שעות
+                <TabsTrigger value="hours" className="text-xs flex">
+                  <Clock className="h-3 w-3 mr-1" />
+                  {t("admin.workingHours.specialDates.form.tabs.hours")}
                 </TabsTrigger>
-                <TabsTrigger value="pricing" className="text-xs flex flex-row-reverse">
-                  <DollarSign className="h-3 w-3 ml-1 rtl:ml-0 rtl:mr-1" />
-                  תמחור
+                <TabsTrigger value="pricing" className="text-xs flex">
+                  <DollarSign className="h-3 w-3 mr-1" />
+                  {t("admin.workingHours.specialDates.form.tabs.pricing")}
                 </TabsTrigger>
               </TabsList>
 
-              <div className="space-y-4 rtl:text-right">
+              <div className="space-y-4">
                 <TabsContent value="basic" className="space-y-4">
                   <div>
-                    <Label htmlFor="name" className="text-sm text-right w-full block">
-                      שם התאריך *
+                    <Label htmlFor="name" className="text-sm w-full block">
+                      {t("admin.workingHours.specialDates.form.name")} *
                     </Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                      placeholder="למשל: חג המולד"
-                      className="text-right"
+                      placeholder={t("admin.workingHours.specialDates.form.namePlaceholder")}
                     />
                   </div>
 
                   <div>
                     <Label htmlFor="date" className="text-sm">
-                      תאריך *
+                      {t("admin.workingHours.specialDates.form.date")} *
                     </Label>
                     <Input
                       id="date"
@@ -170,13 +179,13 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
                   <div>
                     <Label htmlFor="description" className="text-sm">
-                      תיאור
+                      {t("admin.workingHours.specialDates.form.description")}
                     </Label>
                     <Textarea
                       id="description"
                       value={formData.description}
                       onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                      placeholder="תיאור אופציונלי לתאריך"
+                      placeholder={t("admin.workingHours.specialDates.form.descriptionPlaceholder")}
                       rows={3}
                     />
                   </div>
@@ -184,11 +193,11 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
                 <TabsContent value="hours" className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <Label className="text-sm text-right">היום פעיל</Label>
+                    <Label className="text-sm">{t("admin.workingHours.specialDates.form.isActive")}</Label>
                     <Switch
                       checked={formData.isActive}
                       onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, isActive: checked }))}
-                      className="data-[state=checked]:bg-teal-500 rtl:data-[state=checked]:justify-start rtl:data-[state=unchecked]:justify-end"
+                      className="data-[state=checked]:bg-teal-500"
                     />
                   </div>
 
@@ -196,7 +205,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label htmlFor="startTime" className="text-sm">
-                          שעת התחלה
+                          {t("admin.workingHours.specialDates.form.startTime")}
                         </Label>
                         <Input
                           id="startTime"
@@ -209,7 +218,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
                       <div>
                         <Label htmlFor="endTime" className="text-sm">
-                          שעת סיום
+                          {t("admin.workingHours.specialDates.form.endTime")}
                         </Label>
                         <Input
                           id="endTime"
@@ -225,7 +234,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
                 <TabsContent value="pricing" className="space-y-4">
                   <div>
-                    <Label className="text-sm">סוג תוספת מחיר</Label>
+                    <Label className="text-sm">{t("admin.workingHours.specialDates.form.adjustmentType")}</Label>
                     <Select
                       value={formData.priceAdjustment.type}
                       onValueChange={(value: "none" | "percentage" | "fixed") =>
@@ -239,9 +248,9 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">ללא תוספת</SelectItem>
-                        <SelectItem value="percentage">אחוז תוספת</SelectItem>
-                        <SelectItem value="fixed">סכום קבוע</SelectItem>
+                        <SelectItem value="none">{t("admin.workingHours.adjustmentTypes.none")}</SelectItem>
+                        <SelectItem value="percentage">{t("admin.workingHours.adjustmentTypes.percentage")}</SelectItem>
+                        <SelectItem value="fixed">{t("admin.workingHours.adjustmentTypes.fixed")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -250,7 +259,9 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                     <>
                       <div>
                         <Label className="text-sm">
-                          {formData.priceAdjustment.type === "percentage" ? "אחוז תוספת (%)" : "סכום תוספת (₪)"}
+                          {formData.priceAdjustment.type === "percentage"
+                            ? t("admin.workingHours.specialDates.form.percentageValue")
+                            : t("admin.workingHours.specialDates.form.fixedValue")}
                         </Label>
                         <Input
                           type="number"
@@ -267,7 +278,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                       </div>
 
                       <div>
-                        <Label className="text-sm">סיבה לתוספת</Label>
+                        <Label className="text-sm">{t("admin.workingHours.specialDates.form.reason")}</Label>
                         <Input
                           value={formData.priceAdjustment.reason}
                           onChange={(e) =>
@@ -276,7 +287,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                               priceAdjustment: { ...prev.priceAdjustment, reason: e.target.value },
                             }))
                           }
-                          placeholder="למשל: חג מיוחד"
+                          placeholder={t("admin.workingHours.specialDates.form.reasonPlaceholder")}
                         />
                       </div>
                     </>
@@ -287,12 +298,12 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
           </div>
 
           <DrawerFooter className="flex-shrink-0">
-            <div className="flex gap-2 flex-row-reverse">
-              <Button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-teal-500 hover:bg-teal-600">
-                {isLoading ? "שומר..." : editingDate ? "עדכן" : "הוסף"}
+            <div className="flex gap-2">
+              <Button onClick={onClose} disabled={isLoading} className="flex-1" variant="outline">
+                {t("common.cancel")}
               </Button>
-              <Button variant="outline" onClick={onClose} disabled={isLoading} className="flex-1">
-                ביטול
+              <Button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-teal-500 hover:bg-teal-600">
+                {isLoading ? t("common.saving") : editingDate ? t("common.update") : t("common.add")}
               </Button>
             </div>
           </DrawerFooter>

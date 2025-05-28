@@ -22,6 +22,8 @@ import {
 } from "@/components/common/ui/alert-dialog"
 import { DiscountType, type IBundle } from "@/lib/db/models/bundle"
 import { Package, MoreVertical, Calendar, Gift, Clock, Loader2 } from "lucide-react"
+import { useTranslation } from "@/lib/translations/i18n"
+import { useDirection } from "@/lib/translations/i18n"
 
 interface BundleCardProps {
   bundle: IBundle
@@ -32,6 +34,9 @@ interface BundleCardProps {
 }
 
 export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStatus }: BundleCardProps) {
+  const { t } = useTranslation("common")
+  const { dir } = useDirection()
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDuplicating, setIsDuplicating] = useState(false)
@@ -70,15 +75,20 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
   const formatDiscountValue = () => {
     switch (bundle.discountType) {
       case DiscountType.FREE_QUANTITY:
-        return `${bundle.discountValue} טיפולים חינם`
+        return t("admin.bundles.discount.freeQuantity", { value: bundle.discountValue })
       case DiscountType.PERCENTAGE:
-        return `${bundle.discountValue}% הנחה`
+        return t("admin.bundles.discount.percentage", { value: bundle.discountValue })
       case DiscountType.FIXED_AMOUNT:
-        return `₪${bundle.discountValue} הנחה`
+        return t("admin.bundles.discount.fixedAmount", { value: bundle.discountValue })
       default:
         return ""
     }
   }
+
+  const flexDirection = dir === "rtl" ? "flex-row-reverse" : "flex-row"
+  const marginClass = dir === "rtl" ? "ml-0 mr-2" : "ml-2 mr-0"
+  const marginClassReverse = dir === "rtl" ? "mr-4" : "ml-4"
+  const textAlign = dir === "rtl" ? "text-right" : "text-left"
 
   return (
     <>
@@ -86,8 +96,8 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
         <CardContent className="p-0">
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center flex-row-reverse">
-                <Package className="w-5 h-5 ml-2 rtl:ml-0 rtl:mr-2 text-teal-500" />
+              <div className={`flex items-center ${flexDirection}`}>
+                <Package className={`w-5 h-5 ${marginClass} text-teal-500`} />
                 <h3 className="text-lg font-semibold">{bundle.name}</h3>
               </div>
               <div className="flex items-center">
@@ -95,7 +105,9 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
                   checked={bundle.isActive}
                   onCheckedChange={handleToggleStatus}
                   disabled={isTogglingStatus}
-                  className="ml-4 rtl:ml-0 rtl:mr-4 data-[state=checked]:bg-teal-500 rtl:data-[state=checked]:justify-start rtl:data-[state=unchecked]:justify-end"
+                  className={`${marginClassReverse} data-[state=checked]:bg-teal-500 ${
+                    dir === "rtl" ? "data-[state=checked]:justify-start data-[state=unchecked]:justify-end" : ""
+                  }`}
                 />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -107,17 +119,19 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
                       )}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(bundle)}>עריכה</DropdownMenuItem>
+                  <DropdownMenuContent align={dir === "rtl" ? "start" : "end"}>
+                    <DropdownMenuItem onClick={() => onEdit(bundle)}>
+                      {t("admin.bundles.actions.edit")}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
-                      {isDuplicating ? "משכפל..." : "שכפול"}
+                      {isDuplicating ? t("admin.bundles.actions.duplicating") : t("admin.bundles.actions.duplicate")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setShowDeleteDialog(true)}
                       className="text-red-600"
                       disabled={isDeleting}
                     >
-                      {isDeleting ? "מוחק..." : "מחיקה"}
+                      {isDeleting ? t("admin.bundles.actions.deleting") : t("admin.bundles.actions.delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -125,37 +139,42 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
             </div>
 
             <div className="mb-4">
-              <div className="text-sm text-gray-500 mb-2">קטגוריה: {bundle.category}</div>
-              {bundle.description && <p className="text-sm text-gray-700">{bundle.description}</p>}
+              <div className={`text-sm text-gray-500 mb-2 ${textAlign}`}>
+                {t("admin.bundles.card.category")}:{" "}
+                {t(`categories.${bundle.category}`, { defaultValue: bundle.category })}
+              </div>
+              {bundle.description && <p className={`text-sm text-gray-700 ${textAlign}`}>{bundle.description}</p>}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div className="flex items-center flex-row-reverse">
-                <Package className="w-4 h-4 ml-2 rtl:ml-0 rtl:mr-2 text-gray-500" />
-                <span className="text-sm">{bundle.quantity} טיפולים</span>
+              <div className={`flex items-center ${flexDirection}`}>
+                <Package className={`w-4 h-4 ${marginClass} text-gray-500`} />
+                <span className="text-sm">{t("admin.bundles.card.treatments", { count: bundle.quantity })}</span>
               </div>
-              <div className="flex items-center flex-row-reverse">
-                <Calendar className="w-4 h-4 ml-2 rtl:ml-0 rtl:mr-2 text-gray-500" />
-                <span className="text-sm">תוקף: {bundle.validityMonths} חודשים</span>
+              <div className={`flex items-center ${flexDirection}`}>
+                <Calendar className={`w-4 h-4 ${marginClass} text-gray-500`} />
+                <span className="text-sm">{t("admin.bundles.card.validity", { months: bundle.validityMonths })}</span>
               </div>
-              <div className="flex items-center flex-row-reverse">
-                <Gift className="w-4 h-4 ml-2 rtl:ml-0 rtl:mr-2 text-gray-500" />
+              <div className={`flex items-center ${flexDirection}`}>
+                <Gift className={`w-4 h-4 ${marginClass} text-gray-500`} />
                 <span className="text-sm">{formatDiscountValue()}</span>
               </div>
             </div>
 
             <div className="border-t pt-4">
-              <h4 className="text-sm font-medium mb-2">טיפולים זמינים:</h4>
+              <h4 className={`text-sm font-medium mb-2 ${textAlign}`}>
+                {t("admin.bundles.card.availableTreatments")}:
+              </h4>
               <div className="space-y-1">
                 {Array.isArray(bundle.treatments) && bundle.treatments.length > 0 ? (
                   bundle.treatments.map((treatment, index) => (
-                    <div className="flex items-center text-sm flex-row-reverse" key={index}>
-                      <Clock className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1 text-gray-400" />
+                    <div className={`flex items-center text-sm ${flexDirection}`} key={index}>
+                      <Clock className={`w-3 h-3 ${dir === "rtl" ? "ml-0 mr-1" : "ml-1 mr-0"} text-gray-400`} />
                       {treatment.name}
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-gray-500">אין טיפולים זמינים</div>
+                  <div className="text-sm text-gray-500">{t("admin.bundles.card.noTreatments")}</div>
                 )}
               </div>
             </div>
@@ -166,11 +185,13 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="max-w-md mx-4">
           <AlertDialogHeader>
-            <AlertDialogTitle>האם אתה בטוח שברצונך למחוק חבילה זו?</AlertDialogTitle>
-            <AlertDialogDescription>פעולה זו לא ניתנת לביטול. חבילה זו תימחק לצמיתות מהמערכת.</AlertDialogDescription>
+            <AlertDialogTitle>{t("admin.bundles.deleteDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("admin.bundles.deleteDialog.description")}</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row-reverse sm:justify-end rtl:flex-row rtl:sm:justify-start">
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
+          <AlertDialogFooter
+            className={`${dir === "rtl" ? "flex-row sm:justify-start" : "flex-row-reverse sm:justify-end"}`}
+          >
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isDeleting}
@@ -178,11 +199,11 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 animate-spin" />
-                  מוחק...
+                  <Loader2 className={`${dir === "rtl" ? "ml-0 mr-2" : "ml-2 mr-0"} h-4 w-4 animate-spin`} />
+                  {t("admin.bundles.actions.deleting")}
                 </>
               ) : (
-                "מחק"
+                t("admin.bundles.actions.confirmDelete")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

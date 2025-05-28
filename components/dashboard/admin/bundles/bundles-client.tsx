@@ -10,6 +10,8 @@ import { createBundle, updateBundle, deleteBundle, duplicateBundle, toggleBundle
 import { Plus, Search, Loader2 } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
+import { useTranslation } from "@/lib/translations/i18n"
+import { useDirection } from "@/lib/translations/i18n"
 
 interface BundlesClientProps {
   initialBundles: IBundle[]
@@ -18,6 +20,9 @@ interface BundlesClientProps {
 }
 
 export function BundlesClient({ initialBundles, treatments, categories }: BundlesClientProps) {
+  const { t } = useTranslation("common")
+  const { dir } = useDirection()
+
   const [bundles, setBundles] = useState<IBundle[]>(initialBundles || [])
   const [filteredBundles, setFilteredBundles] = useState<IBundle[]>(initialBundles || [])
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -62,25 +67,25 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
       if (result.success && result.bundle) {
         setBundles((prev) => [result.bundle, ...prev])
         toast({
-          title: "חבילה נוצרה בהצלחה",
-          description: `החבילה "${data.name}" נוצרה בהצלחה.`,
+          title: t("admin.bundles.notifications.createSuccess"),
+          description: t("admin.bundles.notifications.createSuccessDesc", { name: data.name }),
         })
         return true
       } else {
-        setError(result.error || "שגיאה ביצירת חבילה")
+        setError(result.error || t("admin.bundles.errors.createError"))
         toast({
-          title: "שגיאה ביצירת חבילה",
-          description: result.error || "אירעה שגיאה. נסה שוב.",
+          title: t("admin.bundles.errors.createError"),
+          description: result.error || t("admin.bundles.errors.genericError"),
           variant: "destructive",
         })
         return false
       }
     } catch (error) {
       console.error("Error creating bundle:", error)
-      setError("שגיאה בלתי צפויה ביצירת חבילה")
+      setError(t("admin.bundles.errors.unexpectedError"))
       toast({
-        title: "שגיאה ביצירת חבילה",
-        description: "אירעה שגיאה בלתי צפויה. נסה שוב מאוחר יותר.",
+        title: t("admin.bundles.errors.createError"),
+        description: t("admin.bundles.errors.tryAgainLater"),
         variant: "destructive",
       })
       return false
@@ -102,25 +107,25 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
           prev.map((bundle) => (bundle._id.toString() === selectedBundle._id.toString() ? result.bundle : bundle)),
         )
         toast({
-          title: "חבילה עודכנה בהצלחה",
-          description: `החבילה "${data.name}" עודכנה בהצלחה.`,
+          title: t("admin.bundles.notifications.updateSuccess"),
+          description: t("admin.bundles.notifications.updateSuccessDesc", { name: data.name }),
         })
         return true
       } else {
-        setError(result.error || "שגיאה בעדכון חבילה")
+        setError(result.error || t("admin.bundles.errors.updateError"))
         toast({
-          title: "שגיאה בעדכון חבילה",
-          description: result.error || "אירעה שגיאה. נסה שוב.",
+          title: t("admin.bundles.errors.updateError"),
+          description: result.error || t("admin.bundles.errors.genericError"),
           variant: "destructive",
         })
         return false
       }
     } catch (error) {
       console.error("Error updating bundle:", error)
-      setError("שגיאה בלתי צפויה בעדכון חבילה")
+      setError(t("admin.bundles.errors.unexpectedError"))
       toast({
-        title: "שגיאה בעדכון חבילה",
-        description: "אירעה שגיאה בלתי צפויה. נסה שוב מאוחר יותר.",
+        title: t("admin.bundles.errors.updateError"),
+        description: t("admin.bundles.errors.tryAgainLater"),
         variant: "destructive",
       })
       return false
@@ -138,25 +143,25 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
       if (result.success) {
         setBundles((prev) => prev.filter((bundle) => bundle._id.toString() !== id))
         toast({
-          title: "חבילה נמחקה בהצלחה",
-          description: "החבילה נמחקה בהצלחה מהמערכת.",
+          title: t("admin.bundles.notifications.deleteSuccess"),
+          description: t("admin.bundles.notifications.deleteSuccessDesc"),
         })
         return true
       } else {
-        setError(result.error || "שגיאה במחיקת חבילה")
+        setError(result.error || t("admin.bundles.errors.deleteError"))
         toast({
-          title: "שגיאה במחיקת חבילה",
-          description: result.error || "אירעה שגיאה. נסה שוב.",
+          title: t("admin.bundles.errors.deleteError"),
+          description: result.error || t("admin.bundles.errors.genericError"),
           variant: "destructive",
         })
         return false
       }
     } catch (error) {
       console.error("Error deleting bundle:", error)
-      setError("שגיאה בלתי צפויה במחיקת חבילה")
+      setError(t("admin.bundles.errors.unexpectedError"))
       toast({
-        title: "שגיאה במחיקת חבילה",
-        description: "אירעה שגיאה בלתי צפויה. נסה שוב מאוחר יותר.",
+        title: t("admin.bundles.errors.deleteError"),
+        description: t("admin.bundles.errors.tryAgainLater"),
         variant: "destructive",
       })
       return false
@@ -174,25 +179,25 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
       if (result.success && result.bundle) {
         setBundles((prev) => [result.bundle, ...prev])
         toast({
-          title: "חבילה שוכפלה בהצלחה",
-          description: `החבילה שוכפלה בהצלחה.`,
+          title: t("admin.bundles.notifications.duplicateSuccess"),
+          description: t("admin.bundles.notifications.duplicateSuccessDesc"),
         })
         return true
       } else {
-        setError(result.error || "שגיאה בשכפול חבילה")
+        setError(result.error || t("admin.bundles.errors.duplicateError"))
         toast({
-          title: "שגיאה בשכפול חבילה",
-          description: result.error || "אירעה שגיאה. נסה שוב.",
+          title: t("admin.bundles.errors.duplicateError"),
+          description: result.error || t("admin.bundles.errors.genericError"),
           variant: "destructive",
         })
         return false
       }
     } catch (error) {
       console.error("Error duplicating bundle:", error)
-      setError("שגיאה בלתי צפויה בשכפול חבילה")
+      setError(t("admin.bundles.errors.unexpectedError"))
       toast({
-        title: "שגיאה בשכפול חבילה",
-        description: "אירעה שגיאה בלתי צפויה. נסה שוב מאוחר יותר.",
+        title: t("admin.bundles.errors.duplicateError"),
+        description: t("admin.bundles.errors.tryAgainLater"),
         variant: "destructive",
       })
       return false
@@ -210,25 +215,27 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
       if (result.success && result.bundle) {
         setBundles((prev) => prev.map((bundle) => (bundle._id.toString() === id ? result.bundle : bundle)))
         toast({
-          title: "סטטוס חבילה עודכן",
-          description: `החבילה ${result.bundle.isActive ? "הופעלה" : "הושבתה"} בהצלחה.`,
+          title: t("admin.bundles.notifications.statusUpdated"),
+          description: result.bundle.isActive
+            ? t("admin.bundles.notifications.statusActivated")
+            : t("admin.bundles.notifications.statusDeactivated"),
         })
         return true
       } else {
-        setError(result.error || "שגיאה בעדכון סטטוס")
+        setError(result.error || t("admin.bundles.errors.statusError"))
         toast({
-          title: "שגיאה בעדכון סטטוס",
-          description: result.error || "אירעה שגיאה. נסה שוב.",
+          title: t("admin.bundles.errors.statusError"),
+          description: result.error || t("admin.bundles.errors.genericError"),
           variant: "destructive",
         })
         return false
       }
     } catch (error) {
       console.error("Error toggling bundle status:", error)
-      setError("שגיאה בלתי צפויה בעדכון סטטוס")
+      setError(t("admin.bundles.errors.unexpectedError"))
       toast({
-        title: "שגיאה בעדכון סטטוס",
-        description: "אירעה שגיאה בלתי צפויה. נסה שוב מאוחר יותר.",
+        title: t("admin.bundles.errors.statusError"),
+        description: t("admin.bundles.errors.tryAgainLater"),
         variant: "destructive",
       })
       return false
@@ -270,10 +277,10 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
   const hasCategories = Array.isArray(categories) && categories.length > 0
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       {error && (
         <Alert variant="destructive" className="mb-4">
-          <AlertTitle>שגיאה</AlertTitle>
+          <AlertTitle>{t("common.error")}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -284,25 +291,27 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
             setSelectedBundle(undefined)
             setIsFormOpen(true)
           }}
-          className="w-full sm:w-auto bg-teal-500 hover:bg-teal-600 flex flex-row-reverse"
+          className={`w-full sm:w-auto bg-teal-500 hover:bg-teal-600 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
           disabled={isLoading || !hasTreatments || !hasCategories}
         >
           {isLoading ? (
-            <Loader2 className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className={`${dir === "rtl" ? "ml-0 mr-2" : "ml-2 mr-0"} h-4 w-4 animate-spin`} />
           ) : (
-            <Plus className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4" />
+            <Plus className={`${dir === "rtl" ? "ml-0 mr-2" : "ml-2 mr-0"} h-4 w-4`} />
           )}
-          הוסף חבילה חדשה
+          {t("admin.bundles.actions.addNew")}
         </Button>
 
         <div className="w-full sm:w-auto">
           <div className="relative">
-            <Search className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search
+              className={`absolute ${dir === "rtl" ? "left-3" : "right-3"} top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400`}
+            />
             <Input
-              placeholder="חיפוש חבילות..."
+              placeholder={t("admin.bundles.search.placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-3 pr-10 rtl:pl-10 rtl:pr-3 w-full"
+              className={`${dir === "rtl" ? "pl-10 pr-3" : "pl-3 pr-10"} w-full`}
             />
           </div>
         </div>
@@ -310,13 +319,15 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
 
       {(!hasTreatments || !hasCategories) && (
         <Alert className="mb-4">
-          <AlertTitle className="text-right">שים לב</AlertTitle>
-          <AlertDescription className="text-right">
+          <AlertTitle className={dir === "rtl" ? "text-right" : "text-left"}>
+            {t("admin.bundles.alerts.attention")}
+          </AlertTitle>
+          <AlertDescription className={dir === "rtl" ? "text-right" : "text-left"}>
             {!hasTreatments && !hasCategories
-              ? "לא ניתן ליצור חבילות כרגע. נדרש להגדיר טיפולים וקטגוריות תחילה."
+              ? t("admin.bundles.alerts.noTreatmentsNoCategories")
               : !hasTreatments
-                ? "לא ניתן ליצור חבילות כרגע. נדרש להגדיר טיפולים תחילה."
-                : "לא ניתן ליצור חבילות כרגע. נדרש להגדיר קטגוריות תחילה."}
+                ? t("admin.bundles.alerts.noTreatments")
+                : t("admin.bundles.alerts.noCategories")}
           </AlertDescription>
         </Alert>
       )}
@@ -328,10 +339,10 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
           className="px-3 py-2 border rounded-md text-sm"
           disabled={!hasCategories}
         >
-          <option value="">כל הקטגוריות</option>
+          <option value="">{t("admin.bundles.filters.allCategories")}</option>
           {categories.map((category) => (
             <option key={category} value={category}>
-              {category}
+              {t(`categories.${category}`, { defaultValue: category })}
             </option>
           ))}
         </select>
@@ -341,9 +352,9 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2 border rounded-md text-sm"
         >
-          <option value="">כל הסטטוסים</option>
-          <option value="active">פעיל</option>
-          <option value="inactive">לא פעיל</option>
+          <option value="">{t("admin.bundles.filters.allStatuses")}</option>
+          <option value="active">{t("admin.bundles.filters.active")}</option>
+          <option value="inactive">{t("admin.bundles.filters.inactive")}</option>
         </select>
       </div>
 
@@ -369,9 +380,9 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
       ) : (
         !isLoading && (
           <div className="text-center py-12 border rounded-lg">
-            <p className="text-gray-500">לא נמצאו חבילות</p>
+            <p className="text-gray-500">{t("admin.bundles.emptyState.noBundles")}</p>
             {(searchQuery || categoryFilter || statusFilter) && (
-              <p className="text-sm text-gray-400 mt-2">נסה לשנות את הסינון או החיפוש</p>
+              <p className="text-sm text-gray-400 mt-2">{t("admin.bundles.emptyState.tryChangingFilters")}</p>
             )}
             {!bundles.length && !searchQuery && !categoryFilter && !statusFilter && hasTreatments && hasCategories && (
               <Button
@@ -383,7 +394,7 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
                 className="mt-4"
                 disabled={isLoading}
               >
-                הוסף חבילה ראשונה
+                {t("admin.bundles.actions.addFirstBundle")}
               </Button>
             )}
           </div>

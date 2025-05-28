@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/common/ui/skeleton"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+import { useTranslation } from "@/lib/translations/i18n"
 
 // Get treatments from the database
 async function getTreatments() {
@@ -30,6 +31,8 @@ function extractCategories(treatments: any[]): string[] {
 }
 
 export default async function BundlesPage() {
+  const { t } = await useTranslation("common")
+
   // Check authentication and authorization
   const session = await getServerSession(authOptions)
 
@@ -54,8 +57,8 @@ export default async function BundlesPage() {
   return (
     <div className="container px-4 py-6 mx-auto max-w-7xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-right">ניהול חבילות</h1>
-        <p className="text-gray-500 text-right">צור וערוך חבילות טיפולים למכירה</p>
+        <h1 className="text-2xl font-bold text-right">{t("admin.bundles.title")}</h1>
+        <p className="text-gray-500 text-right">{t("admin.bundles.description")}</p>
       </div>
 
       <Suspense fallback={<BundlesSkeleton />}>

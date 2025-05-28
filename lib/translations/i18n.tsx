@@ -97,3 +97,12 @@ export const useTranslation = () => {
   }
   return context
 }
+
+// Hook for using direction
+export const useDirection = () => {
+  const context = useContext(I18nContext)
+  if (!context) {
+    throw new Error("useDirection must be used within an I18nProvider")
+  }
+  return context.dir
+}

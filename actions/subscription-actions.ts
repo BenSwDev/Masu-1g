@@ -276,3 +276,20 @@ export async function getAllTreatments() {
     return { success: false, error: "Failed to fetch treatments" }
   }
 }
+
+// קבלת רשימת מנויים פעילים (לשימוש בדף רכישת מנויים)
+export async function getActiveSubscriptions() {
+  try {
+    await dbConnect()
+
+    const subscriptions = await Subscription.find({ isActive: true })
+      .populate("treatments")
+      .sort({ createdAt: -1 })
+      .lean()
+
+    return { success: true, subscriptions }
+  } catch (error) {
+    logger.error("Error fetching active subscriptions:", error)
+    return { success: false, error: "Failed to fetch active subscriptions" }
+  }
+}

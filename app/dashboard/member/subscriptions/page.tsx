@@ -3,7 +3,6 @@ import { getUserSubscriptions } from "@/actions/user-subscription-actions"
 import UserSubscriptionsClient from "@/components/dashboard/member/subscriptions/user-subscriptions-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
-import { useTranslation } from "@/lib/translations/i18n"
 
 // קומפוננטת טעינה
 function SubscriptionsLoading() {
@@ -14,46 +13,34 @@ function SubscriptionsLoading() {
         <Skeleton className="h-4 w-full mt-2" />
       </div>
 
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-8 w-64" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-32 w-full rounded-lg" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-full mt-2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-32 mt-2" />
+              <Skeleton className="h-4 w-28 mt-2" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }
 
 // קומפוננטת טעינת נתונים
 async function SubscriptionsData() {
-  const { t } = await useTranslation()
-
   const result = await getUserSubscriptions()
 
   if (!result.success) {
-    return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        {t("common.error")}: {result.error || t("common.unknown")}
-      </div>
-    )
+    return <div className="p-4 bg-red-50 text-red-600 rounded-md">Error: {result.error || "Unknown error"}</div>
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("subscriptions.mySubscriptions.title")}</h1>
-        <p className="text-gray-600">{t("subscriptions.mySubscriptions.description")}</p>
-      </div>
-
-      <UserSubscriptionsClient userSubscriptions={result.userSubscriptions} />
-    </div>
-  )
+  return <UserSubscriptionsClient userSubscriptions={result.userSubscriptions} pagination={result.pagination} />
 }
 
 export default function UserSubscriptionsPage() {

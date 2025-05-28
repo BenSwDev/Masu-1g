@@ -33,32 +33,22 @@ function SubscriptionsLoading() {
 
 // קומפוננטת טעינת נתונים
 async function SubscriptionsData() {
-  const { getTranslations } = await import("@/lib/translations/i18n")
-  const t = await getTranslations()
-
   const [subscriptionsResult, treatmentsResult] = await Promise.all([getSubscriptions(), getAllTreatments()])
 
   if (!subscriptionsResult.success || !treatmentsResult.success) {
     return (
       <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        {t("common.error")}: {subscriptionsResult.error || treatmentsResult.error || t("common.unknown")}
+        Error: {subscriptionsResult.error || treatmentsResult.error || "Unknown error"}
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("subscriptions.title")}</h1>
-        <p className="text-gray-600">{t("subscriptions.description")}</p>
-      </div>
-
-      <SubscriptionsClient
-        initialSubscriptions={subscriptionsResult.subscriptions}
-        treatments={treatmentsResult.treatments}
-        pagination={subscriptionsResult.pagination}
-      />
-    </div>
+    <SubscriptionsClient
+      initialSubscriptions={subscriptionsResult.subscriptions}
+      treatments={treatmentsResult.treatments}
+      pagination={subscriptionsResult.pagination}
+    />
   )
 }
 

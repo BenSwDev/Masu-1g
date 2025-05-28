@@ -1,10 +1,9 @@
 import { Suspense } from "react"
-import { getSubscriptions } from "@/actions/subscription-actions"
+import { getActiveSubscriptions } from "@/actions/subscription-actions"
 import { getPaymentMethods } from "@/actions/payment-method-actions"
 import PurchaseSubscriptionClient from "@/components/dashboard/member/subscriptions/purchase-subscription-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
-import { useTranslation } from "@/lib/translations/i18n"
 
 // קומפוננטת טעינה
 function PurchaseLoading() {
@@ -15,51 +14,42 @@ function PurchaseLoading() {
         <Skeleton className="h-4 w-full mt-2" />
       </div>
 
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-8 w-64" />
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-64 w-full rounded-lg" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-4 w-full mt-2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-24" />
+              <Skeleton className="h-4 w-full mt-4" />
+              <Skeleton className="h-10 w-full mt-4" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }
 
 // קומפוננטת טעינת נתונים
 async function PurchaseData() {
-  const { t } = await useTranslation()
+  const [subscriptionsResult, paymentMethodsResult] = await Promise.all([getActiveSubscriptions(), getPaymentMethods()])
 
-  const [subscriptionsResult, paymentMethodsResult] = await Promise.all([
-    getSubscriptions({ isActive: true }),
-    getPaymentMethods(),
-  ])
-
-  if (!subscriptionsResult.success) {
+  if (!subscriptionsResult.success || !paymentMethodsResult.success) {
     return (
       <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        {t("common.error")}: {subscriptionsResult.error || t("common.unknown")}
+        Error: {subscriptionsResult.error || paymentMethodsResult.error || "Unknown error"}
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("subscriptions.purchase.title")}</h1>
-        <p className="text-gray-600">{t("subscriptions.purchase.description")}</p>
-      </div>
-
-      <PurchaseSubscriptionClient
-        subscriptions={subscriptionsResult.subscriptions}
-        paymentMethods={paymentMethodsResult.success ? paymentMethodsResult.paymentMethods : []}
-      />
-    </div>
+    <PurchaseSubscriptionClient
+      subscriptions={subscriptionsResult.subscriptions}
+      paymentMethods={paymentMethodsResult.paymentMethods}
+    />
   )
 }
 

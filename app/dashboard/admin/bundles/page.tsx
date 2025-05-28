@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { BundlesClient } from "@/components/dashboard/admin/bundles/bundles-client"
 
 export const metadata: Metadata = {
   title: "Admin - Bundles",
@@ -7,5 +6,4 @@ export const metadata: Metadata = {
 }
 
 export default function BundlesPage() {
-  return <BundlesClient />
 }

@@ -8,7 +8,7 @@ import { Button } from "@/components/common/ui/button"
 import { Switch } from "@/components/common/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { useToast } from "@/components/common/ui/use-toast"
-import { Loader2 } from "lucide-react"
+import { Loader2 } from 'lucide-react'
 
 interface WeeklyHoursSectionProps {
   weeklyHours: any[]
@@ -28,7 +28,7 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
           { day: 2, isActive: true, startTime: "09:00", endTime: "17:00" },
           { day: 3, isActive: true, startTime: "09:00", endTime: "17:00" },
           { day: 4, isActive: true, startTime: "09:00", endTime: "17:00" },
-          { day: 5, isActive: true, startTime: "09:00", endTime: "17:00" },
+          { day: 5, isActive: true, startTime: "09:00", endTime: "14:00" },
           { day: 6, isActive: false, startTime: "09:00", endTime: "17:00" },
         ],
   )

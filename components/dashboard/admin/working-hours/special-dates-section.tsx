@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
-import { PlusIcon, ClockIcon, Edit, Trash, Power } from "lucide-react"
+import { PlusIcon, ClockIcon, Edit, Trash, Power } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,

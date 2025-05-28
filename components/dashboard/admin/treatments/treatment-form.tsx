@@ -124,210 +124,229 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
       <CardContent className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("treatments.fields.name")}</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("treatments.fields.category")}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("treatments.selectCategory")} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="massage">{t("treatments.categories.massage")}</SelectItem>
-                      <SelectItem value="facial">{t("treatments.categories.facial")}</SelectItem>
-                      <SelectItem value="body">{t("treatments.categories.body")}</SelectItem>
-                      <SelectItem value="other">{t("treatments.categories.other")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("treatments.fields.description")}</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} rows={3} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="isActive"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">{t("treatments.fields.isActive")}</FormLabel>
-                    <FormDescription>{t("treatments.activeDescription")}</FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="pricingType"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>{t("treatments.fields.pricingType")}</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={(value) => {
-                        field.onChange(value)
-                        setPricingType(value)
-                      }}
-                      defaultValue={field.value}
-                      className="flex flex-col space-y-1"
-                    >
-                      <FormItem className="flex items-center space-x-3 space-y-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left column */}
+              <div className="space-y-6">
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="text-base font-medium mb-2">{t("treatments.basicInfo")}</h3>
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("treatments.fields.name")}</FormLabel>
                         <FormControl>
-                          <RadioGroupItem value="fixed" />
+                          <Input {...field} />
                         </FormControl>
-                        <FormLabel className="font-normal">{t("treatments.pricingTypes.fixed")}</FormLabel>
+                        <FormMessage />
                       </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="duration_based" />
-                        </FormControl>
-                        <FormLabel className="font-normal">{t("treatments.pricingTypes.durationBased")}</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    )}
+                  />
 
-            {pricingType === "fixed" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("treatments.fields.price")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="professionalPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("treatments.fields.professionalPrice")}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-medium">{t("treatments.fields.durations")}</h3>
-                  <Button type="button" variant="outline" size="sm" onClick={addDuration}>
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    {t("treatments.addDuration")}
-                  </Button>
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("treatments.fields.category")}</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t("treatments.selectCategory")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="massage">{t("treatments.categories.massage")}</SelectItem>
+                            <SelectItem value="facial">{t("treatments.categories.facial")}</SelectItem>
+                            <SelectItem value="body">{t("treatments.categories.body")}</SelectItem>
+                            <SelectItem value="other">{t("treatments.categories.other")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("treatments.fields.description")}</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} rows={3} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="isActive"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                        <div className="space-y-0.5">
+                          <FormLabel>{t("treatments.fields.isActive")}</FormLabel>
+                          <FormDescription className="text-xs">{t("treatments.activeDescription")}</FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 </div>
-
-                {durations.map((duration, index) => (
-                  <div key={index} className="border rounded-md p-4 space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-sm font-medium">
-                        {t("treatments.duration")} #{index + 1}
-                      </h4>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeDuration(index)}
-                        disabled={durations.length <= 1}
-                      >
-                        <MinusIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <FormLabel>{t("treatments.fields.minutes")}</FormLabel>
-                        <Input
-                          type="number"
-                          min="15"
-                          step="15"
-                          value={duration.minutes}
-                          onChange={(e) => updateDuration(index, "minutes", Number(e.target.value))}
-                        />
-                      </div>
-                      <div>
-                        <FormLabel>{t("treatments.fields.price")}</FormLabel>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={duration.price}
-                          onChange={(e) => updateDuration(index, "price", Number(e.target.value))}
-                        />
-                      </div>
-                      <div>
-                        <FormLabel>{t("treatments.fields.professionalPrice")}</FormLabel>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={duration.professionalPrice}
-                          onChange={(e) => updateDuration(index, "professionalPrice", Number(e.target.value))}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
-            )}
 
-            <div className="flex justify-end space-x-2">
+              {/* Right column */}
+              <div className="space-y-6">
+                <div className="border rounded-md p-4 space-y-4">
+                  <h3 className="text-base font-medium mb-2">{t("treatments.pricing")}</h3>
+                  <FormField
+                    control={form.control}
+                    name="pricingType"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>{t("treatments.fields.pricingType")}</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={(value) => {
+                              field.onChange(value)
+                              setPricingType(value)
+                            }}
+                            defaultValue={field.value}
+                            className="flex space-x-4"
+                          >
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="fixed" />
+                              </FormControl>
+                              <FormLabel className="font-normal">{t("treatments.pricingTypes.fixed")}</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="duration_based" />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                {t("treatments.pricingTypes.durationBased")}
+                              </FormLabel>
+                            </FormItem>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {pricingType === "fixed" ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="price"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("treatments.fields.price")}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="professionalPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("treatments.fields.professionalPrice")}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-sm font-medium">{t("treatments.fields.durations")}</h4>
+                        <Button type="button" variant="outline" size="sm" onClick={addDuration}>
+                          <PlusIcon className="h-4 w-4 mr-1" />
+                          {t("treatments.addDuration")}
+                        </Button>
+                      </div>
+
+                      {durations.map((duration, index) => (
+                        <div key={index} className="border rounded-md p-3 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <h4 className="text-sm font-medium">
+                              {t("treatments.duration")} #{index + 1}
+                            </h4>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeDuration(index)}
+                              disabled={durations.length <= 1}
+                            >
+                              <MinusIcon className="h-4 w-4" />
+                            </Button>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-3">
+                            <div>
+                              <FormLabel className="text-xs">{t("treatments.fields.minutes")}</FormLabel>
+                              <Input
+                                type="number"
+                                min="15"
+                                step="15"
+                                value={duration.minutes}
+                                onChange={(e) => updateDuration(index, "minutes", Number(e.target.value))}
+                                className="h-8"
+                              />
+                            </div>
+                            <div>
+                              <FormLabel className="text-xs">{t("treatments.fields.price")}</FormLabel>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={duration.price}
+                                onChange={(e) => updateDuration(index, "price", Number(e.target.value))}
+                                className="h-8"
+                              />
+                            </div>
+                            <div>
+                              <FormLabel className="text-xs">{t("treatments.fields.professionalPrice")}</FormLabel>
+                              <Input
+                                type="number"
+                                min="0"
+                                value={duration.professionalPrice}
+                                onChange={(e) => updateDuration(index, "professionalPrice", Number(e.target.value))}
+                                className="h-8"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
               <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
                 {t("common.cancel")}
               </Button>

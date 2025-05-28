@@ -9,6 +9,7 @@ import { Switch } from "@/components/common/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Loader2 } from 'lucide-react'
+import { TabsContent } from "@/components/common/ui/tabs" // ADD THIS LINE
 
 interface WeeklyHoursSectionProps {
   weeklyHours: any[]

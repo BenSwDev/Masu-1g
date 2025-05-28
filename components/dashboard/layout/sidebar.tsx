@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { usePathname } from "next/navigation"
-import { useTranslation } from "react-i18next"
+import { useTranslation } from "@/lib/translations/i18n"
 import {
   LayoutDashboard,
   Users,
@@ -17,10 +17,11 @@ import {
   LogOut,
   User,
   Package,
+  Gift,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/common/ui/button"
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 
@@ -81,16 +82,22 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className }) => {
           isActive: pathname === "/dashboard/admin/coupons",
         },
         {
+          title: t("dashboard.sidebar.giftVouchers"),
+          icon: Gift,
+          href: "/dashboard/admin/gift-vouchers",
+          isActive: pathname === "/dashboard/admin/gift-vouchers",
+        },
+        {
           title: t("dashboard.sidebar.subscriptions"),
           icon: Package,
           href: "/dashboard/admin/subscriptions",
           isActive: pathname === "/dashboard/admin/subscriptions",
         },
         {
-          title: t("dashboard.sidebar.analytics"),
+          title: t("dashboard.sidebar.workingHours"),
           icon: BarChart,
-          href: "/dashboard/admin/analytics",
-          isActive: pathname === "/dashboard/admin/analytics",
+          href: "/dashboard/admin/working-hours",
+          isActive: pathname === "/dashboard/admin/working-hours",
         },
         {
           title: t("dashboard.sidebar.support"),
@@ -105,25 +112,37 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className }) => {
           isActive: pathname === "/dashboard/admin/settings",
         },
       ]
-    } else if (activeRole === "user") {
+    } else if (activeRole === "member") {
       return [
         {
           title: t("dashboard.sidebar.dashboard"),
           icon: LayoutDashboard,
-          href: "/dashboard/user",
-          isActive: pathname === "/dashboard/user",
+          href: "/dashboard/member",
+          isActive: pathname === "/dashboard/member",
         },
         {
           title: t("dashboard.sidebar.profile"),
           icon: User,
-          href: "/dashboard/user/profile",
-          isActive: pathname === "/dashboard/user/profile",
+          href: "/dashboard/member/profile",
+          isActive: pathname === "/dashboard/member/profile",
+        },
+        {
+          title: t("dashboard.sidebar.addresses"),
+          icon: User,
+          href: "/dashboard/member/addresses",
+          isActive: pathname === "/dashboard/member/addresses",
+        },
+        {
+          title: t("dashboard.sidebar.paymentMethods"),
+          icon: User,
+          href: "/dashboard/member/payment-methods",
+          isActive: pathname === "/dashboard/member/payment-methods",
         },
         {
           title: t("dashboard.sidebar.support"),
           icon: HelpCircle,
-          href: "/dashboard/user/support",
-          isActive: pathname === "/dashboard/user/support",
+          href: "/dashboard/member/support",
+          isActive: pathname === "/dashboard/member/support",
         },
       ]
     } else {
@@ -161,7 +180,7 @@ const DashboardSidebar: React.FC<SidebarProps> = ({ className }) => {
           onClick={() => signOut()}
         >
           <LogOut className="h-4 w-4" />
-          {t("dashboard.sidebar.logout")}
+          {t("dashboard.sidebar.signOut")}
         </button>
       </div>
     </div>

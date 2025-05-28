@@ -1,42 +1,123 @@
 {
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успех",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "edit": "Редактировать",
+    "delete": "Удалить",
+    "confirm": "Подтвердить",
+    "back": "Назад",
+    "next": "Вперед",
+    "submit": "Отправить",
+    "all": "Все",
+    "active": "Активный",
+    "inactive": "Неактивный",
+    "deactivate": "Деактивировать",
+    "activate": "Активировать",
+    "create": "Создать",
+    "created": "Создано"
+  },
   "dashboard": {
     "sidebar": {
-      "home": "בית",
-      "users": "משתמשים",
-      "products": "מוצרים",
-      "orders": "הזמנות",
-      "settings": "הגדרות"
+      "title": "Панель управления",
+      "dashboard": "Панель управления",
+      "profile": "Профиль",
+      "account": "Аккаунт",
+      "signOut": "Выйти",
+      "users": "Пользователи",
+      "clients": "Клиенты",
+      "professionals": "Профессионалы",
+      "partners": "Партнеры",
+      "treatments": "Процедуры",
+      "subscriptions": "Подписки",
+      "workingHours": "Рабочие часы",
+      "addresses": "Управление адресами",
+      "paymentMethods": "Способы оплаты",
+      "location": "Настройки местоположения",
+      "bankAccount": "Банковский счет",
+      "documents": "Загрузка документов"
     }
   },
-  "common": {
-    "save": "שמור",
-    "cancel": "ביטול",
-    "edit": "ערוך",
-    "delete": "מחק",
-    "add": "הוסף"
+  "subscriptions": {
+    "title": "Управление подписками",
+    "addNew": "Добавить новую подписку",
+    "edit": "Редактировать подписку",
+    "searchPlaceholder": "Поиск подписок по имени",
+    "noSubscriptions": "Нет подписок",
+    "createSuccess": "Подписка успешно создана",
+    "updateSuccess": "Подписка успешно обновлена",
+    "deactivateSuccess": "Подписка успешно деактивирована",
+    "activateSuccess": "Подписка успешно активирована",
+    "statusUpdateError": "Ошибка обновления статуса подписки",
+    "deleteSuccess": "Подписка успешно удалена",
+    "deleteError": "Ошибка удаления подписки",
+    "deleteConfirm": "Вы уверены, что хотите удалить эту подписку?",
+    "deleteConfirmDescription": "Это действие нельзя отменить",
+    "months": "месяцев",
+    "includedTreatments": "Включенные процедуры",
+    "sortAscending": "По возрастанию",
+    "sortDescending": "По убыванию",
+    "fields": {
+      "name": "Название подписки",
+      "description": "Описание",
+      "isActive": "Активный",
+      "quantity": "Количество процедур",
+      "bonusQuantity": "Бонусное количество",
+      "validityMonths": "Срок действия (месяцы)",
+      "treatments": "Процедуры"
+    },
+    "activeDescription": "Активные подписки будут показаны клиентам",
+    "quantityDescription": "Количество процедур, включенных в подписку",
+    "bonusDescription": "Количество бонусных процедур (бесплатно)",
+    "validityDescription": "Срок действия подписки в месяцах",
+    "treatmentsDescription": "Выберите процедуры, включенные в эту подписку",
+    "noTreatmentsAvailable": "Нет доступных процедур",
+    "errors": {
+      "nameRequired": "Требуется название подписки",
+      "descriptionRequired": "Требуется описание",
+      "quantityRequired": "Количество должно быть не менее 1",
+      "bonusQuantityInvalid": "Бонусное количество должно быть не менее 0",
+      "validityRequired": "Срок действия должен быть не менее 1 месяца",
+      "treatmentsRequired": "Необходимо выбрать хотя бы одну процедуру"
+    }
   },
-  "users": {
-    "title": "משתמשים",
-    "name": "שם",
-    "email": "אימייל",
-    "role": "תפקיד"
+  "coupons": {
+    "title": "Купоны",
+    "description": "Управление купонами",
+    "addNew": "Добавить новый купон",
+    "fields": {
+      "code": "Код",
+      "discountType": "Тип скидки",
+      "discountValue": "Значение скидки",
+      "validFrom": "Действителен с",
+      "validUntil": "Действителен до",
+      "isActive": "Активный"
+    }
   },
-  "products": {
-    "title": "מוצרים",
-    "name": "שם מוצר",
-    "description": "תיאור",
-    "price": "מחיר"
+  "giftVouchers": {
+    "title": "Подарочные сертификаты",
+    "description": "Управление подарочными сертификатами",
+    "addNew": "Добавить новый подарочный сертификат",
+    "fields": {
+      "code": "Код",
+      "value": "Стоимость",
+      "validFrom": "Действителен с",
+      "validUntil": "Действителен до",
+      "isActive": "Активный"
+    }
   },
-  "orders": {
-    "title": "הזמנות",
-    "orderId": "מספר הזמנה",
-    "customer": "לקוח",
-    "date": "תאריך",
-    "total": "סך הכל"
+  "partnerCoupons": {
+    "title": "Купоны партнеров",
+    "description": "Управление купонами партнеров"
   },
-  "settings": {
-    "title": "הגדרות",
-    "language": "שפה",
-    "theme": "ערכת נושא"
+  "memberCoupons": {
+    "title": "Купоны для участников",
+    "description": "Просмотр доступных купонов"
+  },
+  "memberGiftVouchers": {
+    "title": "Подарочные сертификаты для участников",
+    "description": "Просмотр доступных подарочных сертификатов"
   }
 }

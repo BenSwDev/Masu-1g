@@ -82,5 +82,42 @@
       "validityRequired": "תוקף חייב להיות לפחות חודש אחד",
       "treatmentsRequired": "יש לבחור לפחות טיפול אחד"
     }
+  },
+  "coupons": {
+    "title": "קופונים",
+    "description": "ניהול קופונים",
+    "addNew": "הוסף קופון חדש",
+    "fields": {
+      "code": "קוד",
+      "discountType": "סוג הנחה",
+      "discountValue": "ערך הנחה",
+      "validFrom": "תקף מ",
+      "validUntil": "תקף עד",
+      "isActive": "פעיל"
+    }
+  },
+  "giftVouchers": {
+    "title": "שוברים",
+    "description": "ניהול שוברים",
+    "addNew": "הוסף שובר חדש",
+    "fields": {
+      "code": "קוד",
+      "value": "ערך",
+      "validFrom": "תקף מ",
+      "validUntil": "תקף עד",
+      "isActive": "פעיל"
+    }
+  },
+  "partnerCoupons": {
+    "title": "קופונים לשותפים",
+    "description": "ניהול קופונים לשותפים"
+  },
+  "memberCoupons": {
+    "title": "קופונים לחברים",
+    "description": "צפייה בקופונים זמינים"
+  },
+  "memberGiftVouchers": {
+    "title": "שוברים לחברים",
+    "description": "צפייה בשוברים זמינים"
   }
 }

@@ -3,16 +3,19 @@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/common/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
-import { Plus, Search, Edit, Trash, Tag, Calendar, Percent, DollarSign } from "lucide-react"
+import { Plus, Search, Edit, Trash, Tag, Calendar, Percent, DollarSign, FilterX } from "lucide-react"
 import { Input } from "@/components/common/ui/input"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/common/ui/badge"
 import { format } from "date-fns"
 import { Pagination } from "@/components/common/ui/pagination"
 import { AlertModal } from "@/components/common/modals/alert-modal"
 import { toast } from "sonner"
-import { deleteCoupon } from "@/actions/coupon-actions"
 import type { ICoupon } from "@/lib/db/models/coupon"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
+import CouponForm from "./coupon-form"
+import { createCoupon, updateCoupon, deleteCoupon, getCoupons } from "@/actions/coupon-actions"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 
 interface CouponsClientProps {
   coupons?: ICoupon[]
@@ -32,20 +35,118 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
   const [currentCoupon, setCurrentCoupon] = useState<ICoupon | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [couponsList, setCouponsList] = useState<ICoupon[]>(coupons)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<string>("all")
+  const [paginationData, setPaginationData] = useState(pagination)
+  const [isSearching, setIsSearching] = useState(false)
 
-  // Filter coupons based on search term
+  const fetchCoupons = async (page = 1, search = searchTerm, isActive?: boolean) => {
+    setIsSearching(true)
+    try {
+      const options: any = { page, limit: 10 }
+
+      if (search) {
+        options.search = search
+      }
+
+      if (isActive !== undefined) {
+        options.isActive = isActive
+      }
+
+      const result = await getCoupons(options)
+      if (result.success) {
+        setCouponsList(result.coupons)
+        setPaginationData(result.pagination)
+      } else {
+        toast.error(result.error || t("coupons.fetchError"))
+      }
+    } catch (error) {
+      toast.error(t("coupons.fetchError"))
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  useEffect(() => {
+    // Only fetch if we're not on the initial load
+    if (searchTerm || activeFilter !== "all" || currentPage > 1) {
+      const isActive = activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
+      fetchCoupons(currentPage, searchTerm, isActive)
+    }
+  }, [currentPage, activeFilter])
+
+  const handleSearch = () => {
+    const isActive = activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
+    setCurrentPage(1) // Reset to first page on new search
+    fetchCoupons(1, searchTerm, isActive)
+  }
+
+  const handleResetFilters = () => {
+    setSearchTerm("")
+    setActiveFilter("all")
+    setCurrentPage(1)
+    fetchCoupons(1, "", undefined)
+  }
+
+  // Filter coupons based on search term (client-side filtering as backup)
   const filteredCoupons = couponsList.filter((coupon) => {
     return !searchTerm || coupon.code?.toLowerCase().includes(searchTerm.toLowerCase())
   })
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    // TODO: Implement data fetching for new page
+    const isActive = activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined
+    fetchCoupons(page, searchTerm, isActive)
+  }
+
+  const handleCreate = async (data: FormData) => {
+    setIsLoading(true)
+    try {
+      const result = await createCoupon(data)
+      if (result.success) {
+        setCouponsList([result.coupon, ...couponsList])
+        toast.success(t("coupons.createSuccess"))
+        setIsCreateDialogOpen(false)
+        // Refresh the list to ensure correct ordering and pagination
+        fetchCoupons(
+          currentPage,
+          searchTerm,
+          activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined,
+        )
+      } else {
+        toast.error(result.error || t("coupons.createError"))
+      }
+    } catch (error) {
+      toast.error(t("coupons.createError"))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleUpdate = async (data: FormData) => {
+    if (!currentCoupon) return
+
+    setIsLoading(true)
+    try {
+      const result = await updateCoupon(currentCoupon._id, data)
+      if (result.success) {
+        setCouponsList(couponsList.map((c) => (c._id === currentCoupon._id ? result.coupon : c)))
+        toast.success(t("coupons.updateSuccess"))
+        setIsEditDialogOpen(false)
+      } else {
+        toast.error(result.error || t("coupons.updateError"))
+      }
+    } catch (error) {
+      toast.error(t("coupons.updateError"))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleEdit = (coupon: ICoupon) => {
-    // TODO: Implement edit functionality when form component is ready
-    toast.info(t("common.comingSoon"))
+    setCurrentCoupon(coupon)
+    setIsEditDialogOpen(true)
   }
 
   const handleDeleteClick = (coupon: ICoupon) => {
@@ -63,6 +164,16 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
         setCouponsList(couponsList.filter((c) => c._id !== currentCoupon._id))
         toast.success(t("coupons.deleteSuccess"))
         setIsDeleteDialogOpen(false)
+
+        // If we deleted the last item on a page, go to previous page
+        if (couponsList.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1)
+          fetchCoupons(
+            currentPage - 1,
+            searchTerm,
+            activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined,
+          )
+        }
       } else {
         toast.error(result.error || t("coupons.deleteError"))
       }
@@ -96,7 +207,7 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("coupons.title")}</h1>
           <p className="text-gray-600">{t("coupons.description")}</p>
         </div>
-        <Button onClick={() => toast.info(t("common.comingSoon"))}>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           {t("coupons.addNew")}
         </Button>
@@ -104,14 +215,38 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
 
       <Card className="mb-6">
         <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              placeholder={t("coupons.searchPlaceholder") || t("common.search")}
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                placeholder={t("coupons.searchPlaceholder") || t("common.search")}
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+            </div>
+            <div className="w-full md:w-48">
+              <Select value={activeFilter} onValueChange={setActiveFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("common.status")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("common.all")}</SelectItem>
+                  <SelectItem value="active">{t("common.active")}</SelectItem>
+                  <SelectItem value="inactive">{t("common.inactive")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleSearch} disabled={isSearching}>
+                {isSearching ? t("common.searching") : t("common.search")}
+              </Button>
+              <Button variant="ghost" onClick={handleResetFilters} disabled={isSearching}>
+                <FilterX className="h-4 w-4 mr-2" />
+                {t("common.reset")}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -120,7 +255,7 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
         <Card>
           <CardContent className="flex flex-col items-center justify-center h-40 p-6">
             <p className="text-gray-500 mb-4">{t("coupons.noCoupons")}</p>
-            <Button onClick={() => toast.info(t("common.comingSoon"))}>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               {t("coupons.addNew")}
             </Button>
@@ -181,9 +316,13 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
         </div>
       )}
 
-      {pagination && pagination.totalPages > 1 && (
+      {paginationData && paginationData.totalPages > 1 && (
         <div className="flex justify-center mt-6">
-          <Pagination currentPage={currentPage} totalPages={pagination.totalPages} onPageChange={handlePageChange} />
+          <Pagination
+            currentPage={currentPage}
+            totalPages={paginationData.totalPages}
+            onPageChange={handlePageChange}
+          />
         </div>
       )}
 
@@ -196,6 +335,26 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
         title={t("coupons.deleteConfirm") || t("common.deleteConfirm")}
         description={t("coupons.deleteConfirmDescription") || t("common.deleteConfirmDescription")}
       />
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("coupons.addNew")}</DialogTitle>
+          </DialogHeader>
+          <CouponForm onSubmit={handleCreate} isLoading={isLoading} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("coupons.edit")}</DialogTitle>
+          </DialogHeader>
+          {currentCoupon && <CouponForm onSubmit={handleUpdate} isLoading={isLoading} initialData={currentCoupon} />}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

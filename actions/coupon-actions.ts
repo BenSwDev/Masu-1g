@@ -2,651 +2,377 @@
 
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
-import mongoose from "mongoose"
 import { authOptions } from "@/lib/auth/auth"
 import { Coupon } from "@/lib/db/models/coupon"
 import { connectToDatabase } from "@/lib/db/mongodb"
-import { Treatment } from "@/lib/db/models/treatment"
-import { User } from "@/lib/db/models/user"
-
-// Types for coupon operations
-export type CouponFormData = {
-  code: string
-  description: string
-  discountType: "percentage" | "fixed"
-  discountValue: number
-  minPurchaseAmount: number
-  maxDiscountAmount: number
-  startDate: Date | string
-  endDate: Date | string
-  isActive: boolean
-  usageLimit: number
-  applicableTreatments: string[]
-  partnerId?: string
-}
-
-export type CouponResponse = {
-  success: boolean
-  message: string
-  coupon?: any
-  coupons?: any[]
-  error?: any
-}
+import { logger } from "@/lib/logs/logger"
+import { UserRole } from "@/lib/db/models/user"
 
 // Create a new coupon
-export async function createCoupon(formData: CouponFormData): Promise<CouponResponse> {
+export async function createCoupon(formData: FormData) {
   try {
-    await connectToDatabase()
-
     const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== "admin") {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
     }
 
+    // Check if user has admin role
+    if (!session.user.roles.includes(UserRole.ADMIN)) {
+      return { success: false, message: "forbidden" }
+    }
+
+    await connectToDatabase()
+
+    const code = (formData.get("code") as string).toUpperCase()
+    const description = formData.get("description") as string
+    const discountType = formData.get("discountType") as "percentage" | "fixed"
+    const discountValue = Number.parseFloat(formData.get("discountValue") as string)
+    const startDate = new Date(formData.get("startDate") as string)
+    const endDate = new Date(formData.get("endDate") as string)
+    const isActive = formData.get("isActive") === "true"
+    const maxUses = Number.parseInt(formData.get("maxUses") as string, 10)
+    const minPurchaseAmount = formData.get("minPurchaseAmount")
+      ? Number.parseFloat(formData.get("minPurchaseAmount") as string)
+      : undefined
+    const maxDiscountAmount = formData.get("maxDiscountAmount")
+      ? Number.parseFloat(formData.get("maxDiscountAmount") as string)
+      : undefined
+
+    // Check if applicableServices is provided
+    const applicableServicesString = formData.get("applicableServices") as string
+    const applicableServices = applicableServicesString ? JSON.parse(applicableServicesString) : []
+
+    // Check if applicableUsers is provided
+    const applicableUsersString = formData.get("applicableUsers") as string
+    const applicableUsers = applicableUsersString ? JSON.parse(applicableUsersString) : []
+
     // Check if coupon code already exists
-    const existingCoupon = await Coupon.findOne({ code: formData.code.toUpperCase() })
+    const existingCoupon = await Coupon.findOne({ code })
     if (existingCoupon) {
-      return {
-        success: false,
-        message: "Coupon code already exists",
-      }
+      return { success: false, message: "coupon_code_exists" }
     }
 
     // Create new coupon
     const coupon = new Coupon({
-      ...formData,
-      code: formData.code.toUpperCase(),
-      startDate: new Date(formData.startDate),
-      endDate: new Date(formData.endDate),
-      usedCount: 0,
+      code,
+      description,
+      discountType,
+      discountValue,
+      startDate,
+      endDate,
+      isActive,
+      maxUses,
+      currentUses: 0,
+      minPurchaseAmount,
+      maxDiscountAmount,
+      applicableServices,
+      applicableUsers,
       createdBy: session.user.id,
-      applicableTreatments: formData.applicableTreatments.map((id) => new mongoose.Types.ObjectId(id)),
-      partnerId: formData.partnerId ? new mongoose.Types.ObjectId(formData.partnerId) : undefined,
+      usageHistory: [],
     })
 
     await coupon.save()
 
     revalidatePath("/dashboard/admin/coupons")
-
-    return {
-      success: true,
-      message: "Coupon created successfully",
-      coupon: coupon.toObject(),
-    }
-  } catch (error: any) {
-    console.error("Error creating coupon:", error)
-    return {
-      success: false,
-      message: "Failed to create coupon",
-      error: error.message,
-    }
+    return { success: true, coupon }
+  } catch (error) {
+    logger.error("Error creating coupon:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
 // Update an existing coupon
-export async function updateCoupon(couponId: string, formData: CouponFormData): Promise<CouponResponse> {
+export async function updateCoupon(couponId: string, formData: FormData) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
+    // Check if user has admin role
+    if (!session.user.roles.includes(UserRole.ADMIN)) {
+      return { success: false, message: "forbidden" }
+    }
+
     await connectToDatabase()
 
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== "admin") {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    // Check if coupon exists
     const coupon = await Coupon.findById(couponId)
     if (!coupon) {
-      return {
-        success: false,
-        message: "Coupon not found",
-      }
+      return { success: false, message: "coupon_not_found" }
     }
 
-    // Check if updated code already exists (if code is changed)
-    if (formData.code !== coupon.code) {
-      const existingCoupon = await Coupon.findOne({ code: formData.code.toUpperCase(), _id: { $ne: couponId } })
+    const code = (formData.get("code") as string).toUpperCase()
+
+    // Check if the updated code already exists for another coupon
+    if (code !== coupon.code) {
+      const existingCoupon = await Coupon.findOne({ code })
       if (existingCoupon) {
-        return {
-          success: false,
-          message: "Coupon code already exists",
-        }
+        return { success: false, message: "coupon_code_exists" }
       }
     }
 
-    // Update coupon
-    const updatedCoupon = await Coupon.findByIdAndUpdate(
-      couponId,
-      {
-        ...formData,
-        code: formData.code.toUpperCase(),
-        startDate: new Date(formData.startDate),
-        endDate: new Date(formData.endDate),
-        applicableTreatments: formData.applicableTreatments.map((id) => new mongoose.Types.ObjectId(id)),
-        partnerId: formData.partnerId ? new mongoose.Types.ObjectId(formData.partnerId) : undefined,
-      },
-      { new: true },
-    )
+    // Update coupon fields
+    coupon.code = code
+    coupon.description = formData.get("description") as string
+    coupon.discountType = formData.get("discountType") as "percentage" | "fixed"
+    coupon.discountValue = Number.parseFloat(formData.get("discountValue") as string)
+    coupon.startDate = new Date(formData.get("startDate") as string)
+    coupon.endDate = new Date(formData.get("endDate") as string)
+    coupon.isActive = formData.get("isActive") === "true"
+    coupon.maxUses = Number.parseInt(formData.get("maxUses") as string, 10)
+
+    if (formData.get("minPurchaseAmount")) {
+      coupon.minPurchaseAmount = Number.parseFloat(formData.get("minPurchaseAmount") as string)
+    } else {
+      coupon.minPurchaseAmount = undefined
+    }
+
+    if (formData.get("maxDiscountAmount")) {
+      coupon.maxDiscountAmount = Number.parseFloat(formData.get("maxDiscountAmount") as string)
+    } else {
+      coupon.maxDiscountAmount = undefined
+    }
+
+    // Update applicableServices if provided
+    const applicableServicesString = formData.get("applicableServices") as string
+    if (applicableServicesString) {
+      coupon.applicableServices = JSON.parse(applicableServicesString)
+    }
+
+    // Update applicableUsers if provided
+    const applicableUsersString = formData.get("applicableUsers") as string
+    if (applicableUsersString) {
+      coupon.applicableUsers = JSON.parse(applicableUsersString)
+    }
+
+    await coupon.save()
 
     revalidatePath("/dashboard/admin/coupons")
-
-    return {
-      success: true,
-      message: "Coupon updated successfully",
-      coupon: updatedCoupon?.toObject(),
-    }
-  } catch (error: any) {
-    console.error("Error updating coupon:", error)
-    return {
-      success: false,
-      message: "Failed to update coupon",
-      error: error.message,
-    }
+    return { success: true, coupon }
+  } catch (error) {
+    logger.error("Error updating coupon:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
 // Delete a coupon
-export async function deleteCoupon(couponId: string): Promise<CouponResponse> {
+export async function deleteCoupon(couponId: string) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
+    // Check if user has admin role
+    if (!session.user.roles.includes(UserRole.ADMIN)) {
+      return { success: false, message: "forbidden" }
+    }
+
     await connectToDatabase()
 
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== "admin") {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    // Check if coupon exists
     const coupon = await Coupon.findById(couponId)
     if (!coupon) {
-      return {
-        success: false,
-        message: "Coupon not found",
-      }
+      return { success: false, message: "coupon_not_found" }
     }
 
-    // Delete coupon
-    await Coupon.findByIdAndDelete(couponId)
+    // If coupon has been used, deactivate instead of deleting
+    if (coupon.currentUses > 0) {
+      coupon.isActive = false
+      await coupon.save()
+    } else {
+      await Coupon.findByIdAndDelete(couponId)
+    }
 
     revalidatePath("/dashboard/admin/coupons")
-
-    return {
-      success: true,
-      message: "Coupon deleted successfully",
-    }
-  } catch (error: any) {
-    console.error("Error deleting coupon:", error)
-    return {
-      success: false,
-      message: "Failed to delete coupon",
-      error: error.message,
-    }
-  }
-}
-
-// Toggle coupon active status
-export async function toggleCouponStatus(couponId: string): Promise<CouponResponse> {
-  try {
-    await connectToDatabase()
-
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== "admin") {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    // Check if coupon exists
-    const coupon = await Coupon.findById(couponId)
-    if (!coupon) {
-      return {
-        success: false,
-        message: "Coupon not found",
-      }
-    }
-
-    // Toggle status
-    coupon.isActive = !coupon.isActive
-    await coupon.save()
-
-    revalidatePath("/dashboard/admin/coupons")
-
-    return {
-      success: true,
-      message: coupon.isActive ? "Coupon activated successfully" : "Coupon deactivated successfully",
-      coupon: coupon.toObject(),
-    }
-  } catch (error: any) {
-    console.error("Error toggling coupon status:", error)
-    return {
-      success: false,
-      message: "Failed to update coupon status",
-      error: error.message,
-    }
+    return { success: true }
+  } catch (error) {
+    logger.error("Error deleting coupon:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
 // Get all coupons (admin)
-export async function getAdminCoupons(
-  searchQuery = "",
-  sortField = "createdAt",
-  sortDirection: "asc" | "desc" = "desc",
-  page = 1,
-  limit = 10,
-  filterActive?: boolean,
-): Promise<CouponResponse> {
+export async function getAllCoupons() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
+    // Check if user has admin role
+    if (!session.user.roles.includes(UserRole.ADMIN)) {
+      return { success: false, message: "forbidden" }
+    }
+
     await connectToDatabase()
 
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== "admin") {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
+    const coupons = await Coupon.find()
+      .sort({ createdAt: -1 })
+      .populate("createdBy", "name email")
+      .populate("applicableServices", "name")
+      .populate("applicableUsers", "name email")
 
-    // Build query
-    const query: any = {}
-
-    // Add search filter
-    if (searchQuery) {
-      query.$or = [
-        { code: { $regex: searchQuery, $options: "i" } },
-        { description: { $regex: searchQuery, $options: "i" } },
-      ]
-    }
-
-    // Add active filter
-    if (filterActive !== undefined) {
-      query.isActive = filterActive
-    }
-
-    // Count total documents
-    const totalCoupons = await Coupon.countDocuments(query)
-
-    // Get coupons with pagination and sorting
-    const coupons = await Coupon.find(query)
-      .sort({ [sortField]: sortDirection === "asc" ? 1 : -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate("applicableTreatments", "name price")
-      .populate("partnerId", "name email")
-      .lean()
-
-    return {
-      success: true,
-      message: "Coupons retrieved successfully",
-      coupons,
-      total: totalCoupons,
-      page,
-      limit,
-      totalPages: Math.ceil(totalCoupons / limit),
-    }
-  } catch (error: any) {
-    console.error("Error getting coupons:", error)
-    return {
-      success: false,
-      message: "Failed to retrieve coupons",
-      error: error.message,
-    }
+    return { success: true, coupons }
+  } catch (error) {
+    logger.error("Error getting all coupons:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
 // Get coupon by ID
-export async function getCouponById(couponId: string): Promise<CouponResponse> {
+export async function getCouponById(couponId: string) {
   try {
-    await connectToDatabase()
-
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
     }
 
-    // Get coupon
+    await connectToDatabase()
+
     const coupon = await Coupon.findById(couponId)
-      .populate("applicableTreatments", "name price")
-      .populate("partnerId", "name email")
-      .lean()
+      .populate("createdBy", "name email")
+      .populate("applicableServices", "name")
+      .populate("applicableUsers", "name email")
+      .populate("usageHistory.userId", "name email")
 
     if (!coupon) {
-      return {
-        success: false,
-        message: "Coupon not found",
-      }
+      return { success: false, message: "coupon_not_found" }
     }
 
-    return {
-      success: true,
-      message: "Coupon retrieved successfully",
-      coupon,
-    }
-  } catch (error: any) {
-    console.error("Error getting coupon:", error)
-    return {
-      success: false,
-      message: "Failed to retrieve coupon",
-      error: error.message,
-    }
+    return { success: true, coupon }
+  } catch (error) {
+    logger.error("Error getting coupon by ID:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
-// Get partner coupons
-export async function getPartnerCoupons(
-  searchQuery = "",
-  sortField = "createdAt",
-  sortDirection: "asc" | "desc" = "desc",
-  page = 1,
-  limit = 10,
-  filterActive?: boolean,
-): Promise<CouponResponse> {
+// Get coupons for a specific user
+export async function getUserCoupons() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
     await connectToDatabase()
 
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== "partner") {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    // Build query
-    const query: any = {
-      partnerId: session.user.id,
-    }
-
-    // Add search filter
-    if (searchQuery) {
-      query.$or = [
-        { code: { $regex: searchQuery, $options: "i" } },
-        { description: { $regex: searchQuery, $options: "i" } },
-      ]
-    }
-
-    // Add active filter
-    if (filterActive !== undefined) {
-      query.isActive = filterActive
-    }
-
-    // Count total documents
-    const totalCoupons = await Coupon.countDocuments(query)
-
-    // Get coupons with pagination and sorting
-    const coupons = await Coupon.find(query)
-      .sort({ [sortField]: sortDirection === "asc" ? 1 : -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate("applicableTreatments", "name price")
-      .lean()
-
-    return {
-      success: true,
-      message: "Coupons retrieved successfully",
-      coupons,
-      total: totalCoupons,
-      page,
-      limit,
-      totalPages: Math.ceil(totalCoupons / limit),
-    }
-  } catch (error: any) {
-    console.error("Error getting partner coupons:", error)
-    return {
-      success: false,
-      message: "Failed to retrieve coupons",
-      error: error.message,
-    }
-  }
-}
-
-// Get member coupons
-export async function getMemberCoupons(
-  searchQuery = "",
-  sortField = "createdAt",
-  sortDirection: "asc" | "desc" = "desc",
-  page = 1,
-  limit = 10,
-): Promise<CouponResponse> {
-  try {
-    await connectToDatabase()
-
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    // Build query for active coupons
-    const now = new Date()
-    const query: any = {
-      isActive: true,
-      startDate: { $lte: now },
-      endDate: { $gte: now },
+    // Get coupons applicable to all users or specifically to this user
+    const coupons = await Coupon.find({
       $or: [
-        { partnerId: { $exists: false } }, // General coupons
-        { usageLimit: { $gt: "$usedCount" } }, // Coupons with remaining uses
-        { usageLimit: 0 }, // Unlimited use coupons
+        { applicableUsers: { $size: 0 } }, // Coupons for all users
+        { applicableUsers: session.user.id }, // Coupons specifically for this user
       ],
-    }
-
-    // Add search filter
-    if (searchQuery) {
-      query.$and = [
-        {
-          $or: [
-            { code: { $regex: searchQuery, $options: "i" } },
-            { description: { $regex: searchQuery, $options: "i" } },
-          ],
-        },
-      ]
-    }
-
-    // Count total documents
-    const totalCoupons = await Coupon.countDocuments(query)
-
-    // Get coupons with pagination and sorting
-    const coupons = await Coupon.find(query)
-      .sort({ [sortField]: sortDirection === "asc" ? 1 : -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate("applicableTreatments", "name price")
-      .lean()
-
-    return {
-      success: true,
-      message: "Coupons retrieved successfully",
-      coupons,
-      total: totalCoupons,
-      page,
-      limit,
-      totalPages: Math.ceil(totalCoupons / limit),
-    }
-  } catch (error: any) {
-    console.error("Error getting member coupons:", error)
-    return {
-      success: false,
-      message: "Failed to retrieve coupons",
-      error: error.message,
-    }
-  }
-}
-
-// Validate coupon code
-export async function validateCoupon(code: string, treatmentIds: string[] = []): Promise<CouponResponse> {
-  try {
-    await connectToDatabase()
-
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    // Find coupon by code
-    const coupon = await Coupon.findOne({
-      code: code.toUpperCase(),
       isActive: true,
-      startDate: { $lte: new Date() },
       endDate: { $gte: new Date() },
-    }).populate("applicableTreatments", "name price")
+    }).sort({ createdAt: -1 })
 
+    // Filter out coupons that have reached max uses
+    const validCoupons = coupons.filter((coupon) => {
+      return !(coupon.maxUses > 0 && coupon.currentUses >= coupon.maxUses)
+    })
+
+    // Filter out coupons already used by this user
+    const unusedCoupons = validCoupons.filter((coupon) => {
+      const userUsage = coupon.usageHistory.find((usage) => usage.userId.toString() === session.user.id)
+      return !userUsage
+    })
+
+    return { success: true, coupons: unusedCoupons }
+  } catch (error) {
+    logger.error("Error getting user coupons:", error)
+    return { success: false, message: "server_error" }
+  }
+}
+
+// Validate a coupon code
+export async function validateCoupon(code: string, amount: number) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
+    await connectToDatabase()
+
+    const coupon = await Coupon.findOne({ code: code.toUpperCase() })
     if (!coupon) {
-      return {
-        success: false,
-        message: "Invalid or expired coupon code",
-      }
+      return { success: false, message: "coupon_not_found" }
     }
 
-    // Check usage limit
-    if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit) {
-      return {
-        success: false,
-        message: "Coupon usage limit reached",
-      }
+    const validation = coupon.validateUse(session.user.id, amount)
+    if (!validation.valid) {
+      return { success: false, message: validation.message }
     }
 
-    // Check if coupon is applicable to the treatments
-    if (coupon.applicableTreatments.length > 0 && treatmentIds.length > 0) {
-      const applicableTreatmentIds = coupon.applicableTreatments.map((t) => t._id.toString())
-      const hasApplicableTreatment = treatmentIds.some((id) => applicableTreatmentIds.includes(id))
-
-      if (!hasApplicableTreatment) {
-        return {
-          success: false,
-          message: "Coupon is not applicable to selected treatments",
-        }
-      }
-    }
+    const discountAmount = coupon.calculateDiscount(amount)
 
     return {
       success: true,
-      message: "Coupon is valid",
-      coupon: coupon.toObject(),
+      coupon: {
+        _id: coupon._id,
+        code: coupon.code,
+        description: coupon.description,
+        discountType: coupon.discountType,
+        discountValue: coupon.discountValue,
+        discountAmount,
+      },
     }
-  } catch (error: any) {
-    console.error("Error validating coupon:", error)
-    return {
-      success: false,
-      message: "Failed to validate coupon",
-      error: error.message,
-    }
+  } catch (error) {
+    logger.error("Error validating coupon:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
-// Apply coupon (increment used count)
-export async function applyCoupon(code: string): Promise<CouponResponse> {
+// Apply a coupon to an order
+export async function applyCoupon(code: string, amount: number, orderId?: string) {
   try {
-    await connectToDatabase()
-
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
     }
 
-    // Find and update coupon
-    const coupon = await Coupon.findOneAndUpdate(
-      { code: code.toUpperCase(), isActive: true },
-      { $inc: { usedCount: 1 } },
-      { new: true },
-    )
+    await connectToDatabase()
 
+    const coupon = await Coupon.findOne({ code: code.toUpperCase() })
     if (!coupon) {
-      return {
-        success: false,
-        message: "Invalid or expired coupon code",
-      }
+      return { success: false, message: "coupon_not_found" }
     }
 
-    return {
-      success: true,
-      message: "Coupon applied successfully",
-      coupon: coupon.toObject(),
-    }
-  } catch (error: any) {
-    console.error("Error applying coupon:", error)
-    return {
-      success: false,
-      message: "Failed to apply coupon",
-      error: error.message,
-    }
+    const result = await coupon.apply(session.user.id, amount, orderId)
+
+    revalidatePath("/dashboard/member/coupons")
+    return result
+  } catch (error) {
+    logger.error("Error applying coupon:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
-// Get all treatments for coupon form
-export async function getTreatmentsForCouponForm(): Promise<any> {
+// Get coupons for partner
+export async function getPartnerCoupons() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
+    // Check if user has partner role
+    if (!session.user.roles.includes(UserRole.PARTNER)) {
+      return { success: false, message: "forbidden" }
+    }
+
     await connectToDatabase()
 
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== "admin") {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
+    // Get coupons specifically assigned to this partner
+    const coupons = await Coupon.find({
+      applicableUsers: session.user.id,
+      isActive: true,
+      endDate: { $gte: new Date() },
+    }).sort({ createdAt: -1 })
 
-    const treatments = await Treatment.find({ isActive: true }).select("_id name price").sort({ name: 1 }).lean()
-
-    return {
-      success: true,
-      treatments,
-    }
-  } catch (error: any) {
-    console.error("Error getting treatments:", error)
-    return {
-      success: false,
-      message: "Failed to retrieve treatments",
-      error: error.message,
-    }
-  }
-}
-
-// Get all partners for coupon form
-export async function getPartnersForCouponForm(): Promise<any> {
-  try {
-    await connectToDatabase()
-
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== "admin") {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    const partners = await User.find({ role: "partner", isActive: true })
-      .select("_id name email")
-      .sort({ name: 1 })
-      .lean()
-
-    return {
-      success: true,
-      partners,
-    }
-  } catch (error: any) {
-    console.error("Error getting partners:", error)
-    return {
-      success: false,
-      message: "Failed to retrieve partners",
-      error: error.message,
-    }
+    return { success: true, coupons }
+  } catch (error) {
+    logger.error("Error getting partner coupons:", error)
+    return { success: false, message: "server_error" }
   }
 }

@@ -1,44 +1,26 @@
 import type { Metadata } from "next"
-import { getServerSession } from "next-auth"
-import { redirect } from "next/navigation"
-import { authOptions } from "@/lib/auth/auth"
+import { getUserGiftVouchers } from "@/actions/gift-voucher-actions"
 import MemberGiftVouchersClient from "@/components/dashboard/member/gift-vouchers/member-gift-vouchers-client"
+import { RoleProtectedRoute } from "@/components/auth/role-protected-route"
+import { UserRole } from "@/lib/db/models/user"
 
 export const metadata: Metadata = {
   title: "Gift Vouchers",
-  description: "Purchase, send and redeem gift vouchers",
+  description: "Purchase and manage gift vouchers",
 }
 
-export const dynamic = "force-dynamic"
-
-export default async function MemberGiftVouchersPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect("/auth/login")
-  }
-
-  // Get search and filter parameters
-  const search = typeof searchParams.search === "string" ? searchParams.search : ""
-  const page = typeof searchParams.page === "string" ? Number.parseInt(searchParams.page) : 1
-  const sortField = typeof searchParams.sortField === "string" ? searchParams.sortField : "createdAt"
-  const sortDirection =
-    typeof searchParams.sortDirection === "string" ? (searchParams.sortDirection as "asc" | "desc") : "desc"
-  const type = typeof searchParams.type === "string" ? (searchParams.type as "purchased" | "received" | "all") : "all"
+export default async function MemberGiftVouchersPage() {
+  const { success, purchasedVouchers, redeemedVouchers, message } = await getUserGiftVouchers()
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <MemberGiftVouchersClient
-        initialSearch={search}
-        initialPage={page}
-        initialSortField={sortField}
-        initialSortDirection={sortDirection}
-        initialType={type}
-      />
-    </div>
+    <RoleProtectedRoute allowedRoles={[UserRole.MEMBER]}>
+      <div className="container mx-auto py-6 space-y-6">
+        <MemberGiftVouchersClient
+          initialPurchasedVouchers={success ? purchasedVouchers : []}
+          initialRedeemedVouchers={success ? redeemedVouchers : []}
+          error={success ? null : message}
+        />
+      </div>
+    </RoleProtectedRoute>
   )
 }

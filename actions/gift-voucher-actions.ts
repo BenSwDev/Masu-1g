@@ -2,480 +2,343 @@
 
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
-import mongoose from "mongoose"
 import { authOptions } from "@/lib/auth/auth"
 import { GiftVoucher } from "@/lib/db/models/gift-voucher"
 import { connectToDatabase } from "@/lib/db/mongodb"
+import { logger } from "@/lib/logs/logger"
+import { UserRole } from "@/lib/db/models/user"
 import { NotificationManager } from "@/lib/notifications/notification-manager"
-import { generateRandomCode } from "@/lib/utils/utils"
-
-// Types for gift voucher operations
-export type GiftVoucherFormData = {
-  amount: number
-  recipientName: string
-  recipientEmail: string
-  senderName: string
-  senderEmail: string
-  message: string
-  expiryDate: Date | string
-  paymentId?: string
-}
-
-export type GiftVoucherResponse = {
-  success: boolean
-  message: string
-  voucher?: any
-  vouchers?: any[]
-  error?: any
-}
+import { NotificationType } from "@/lib/notifications/notification-types"
 
 // Create a new gift voucher
-export async function createGiftVoucher(formData: GiftVoucherFormData): Promise<GiftVoucherResponse> {
+export async function createGiftVoucher(formData: FormData) {
   try {
-    await connectToDatabase()
-
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
     }
 
-    // Generate unique code
-    const code = generateRandomCode(8)
+    await connectToDatabase()
+
+    // Generate a unique voucher code
+    const code = await GiftVoucher.generateUniqueCode()
+
+    const amount = Number.parseFloat(formData.get("amount") as string)
+    const currency = (formData.get("currency") as string) || "ILS"
+
+    // Calculate expiry date (1 year from now by default)
+    const expiryDate = new Date()
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1)
+
+    const recipientEmail = formData.get("recipientEmail") as string
+    const recipientName = formData.get("recipientName") as string
+    const recipientPhone = formData.get("recipientPhone") as string
+    const message = formData.get("message") as string
+    const transactionId = formData.get("transactionId") as string
 
     // Create new gift voucher
-    const voucher = new GiftVoucher({
-      ...formData,
+    const giftVoucher = new GiftVoucher({
       code,
-      expiryDate: new Date(formData.expiryDate),
-      isRedeemed: false,
+      amount,
+      currency,
+      isActive: true,
+      expiryDate,
       purchasedBy: session.user.id,
+      purchasedAt: new Date(),
+      recipientEmail,
+      recipientName,
+      recipientPhone,
+      message,
+      isRedeemed: false,
+      transactionId,
     })
 
-    await voucher.save()
+    await giftVoucher.save()
 
-    // Send notification to recipient
-    try {
+    // Send notification to recipient if email is provided
+    if (recipientEmail) {
       const notificationManager = new NotificationManager()
-      await notificationManager.sendGiftVoucherNotification({
-        recipientEmail: formData.recipientEmail,
-        recipientName: formData.recipientName,
-        senderName: formData.senderName,
-        code: code,
-        amount: formData.amount,
-        message: formData.message,
-        expiryDate: new Date(formData.expiryDate),
+      await notificationManager.sendNotification({
+        type: NotificationType.GIFT_VOUCHER_CREATED,
+        recipient: {
+          email: recipientEmail,
+          name: recipientName,
+          phone: recipientPhone,
+        },
+        data: {
+          voucherCode: code,
+          amount,
+          currency,
+          expiryDate,
+          message,
+          senderName: session.user.name,
+        },
       })
-    } catch (notificationError) {
-      console.error("Error sending gift voucher notification:", notificationError)
-      // Continue even if notification fails
     }
 
     revalidatePath("/dashboard/member/gift-vouchers")
-
-    return {
-      success: true,
-      message: "Gift voucher created and sent successfully",
-      voucher: voucher.toObject(),
-    }
-  } catch (error: any) {
-    console.error("Error creating gift voucher:", error)
-    return {
-      success: false,
-      message: "Failed to create gift voucher",
-      error: error.message,
-    }
-  }
-}
-
-// Redeem a gift voucher
-export async function redeemGiftVoucher(code: string): Promise<GiftVoucherResponse> {
-  try {
-    await connectToDatabase()
-
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    // Find voucher by code
-    const voucher = await GiftVoucher.findOne({ code: code.toUpperCase() })
-
-    if (!voucher) {
-      return {
-        success: false,
-        message: "Invalid voucher code",
-      }
-    }
-
-    // Check if voucher is already redeemed
-    if (voucher.isRedeemed) {
-      return {
-        success: false,
-        message: "Voucher has already been redeemed",
-      }
-    }
-
-    // Check if voucher is expired
-    if (new Date() > voucher.expiryDate) {
-      return {
-        success: false,
-        message: "Voucher has expired",
-      }
-    }
-
-    // Redeem voucher
-    voucher.isRedeemed = true
-    voucher.redeemedBy = new mongoose.Types.ObjectId(session.user.id)
-    voucher.redeemedAt = new Date()
-
-    await voucher.save()
-
-    revalidatePath("/dashboard/member/gift-vouchers")
-
-    return {
-      success: true,
-      message: "Voucher redeemed successfully",
-      voucher: voucher.toObject(),
-    }
-  } catch (error: any) {
-    console.error("Error redeeming gift voucher:", error)
-    return {
-      success: false,
-      message: "Failed to redeem voucher",
-      error: error.message,
-    }
+    return { success: true, giftVoucher }
+  } catch (error) {
+    logger.error("Error creating gift voucher:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
 // Get all gift vouchers (admin)
-export async function getAdminGiftVouchers(
-  searchQuery = "",
-  sortField = "createdAt",
-  sortDirection: "asc" | "desc" = "desc",
-  page = 1,
-  limit = 10,
-  filterRedeemed?: boolean,
-): Promise<GiftVoucherResponse> {
+export async function getAllGiftVouchers() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
+    // Check if user has admin role
+    if (!session.user.roles.includes(UserRole.ADMIN)) {
+      return { success: false, message: "forbidden" }
+    }
+
     await connectToDatabase()
 
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== "admin") {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    // Build query
-    const query: any = {}
-
-    // Add search filter
-    if (searchQuery) {
-      query.$or = [
-        { code: { $regex: searchQuery, $options: "i" } },
-        { recipientName: { $regex: searchQuery, $options: "i" } },
-        { recipientEmail: { $regex: searchQuery, $options: "i" } },
-        { senderName: { $regex: searchQuery, $options: "i" } },
-        { senderEmail: { $regex: searchQuery, $options: "i" } },
-      ]
-    }
-
-    // Add redeemed filter
-    if (filterRedeemed !== undefined) {
-      query.isRedeemed = filterRedeemed
-    }
-
-    // Count total documents
-    const totalVouchers = await GiftVoucher.countDocuments(query)
-
-    // Get vouchers with pagination and sorting
-    const vouchers = await GiftVoucher.find(query)
-      .sort({ [sortField]: sortDirection === "asc" ? 1 : -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
+    const giftVouchers = await GiftVoucher.find()
+      .sort({ createdAt: -1 })
       .populate("purchasedBy", "name email")
       .populate("redeemedBy", "name email")
-      .lean()
 
-    return {
-      success: true,
-      message: "Gift vouchers retrieved successfully",
-      vouchers,
-      total: totalVouchers,
-      page,
-      limit,
-      totalPages: Math.ceil(totalVouchers / limit),
-    }
-  } catch (error: any) {
-    console.error("Error getting gift vouchers:", error)
-    return {
-      success: false,
-      message: "Failed to retrieve gift vouchers",
-      error: error.message,
-    }
+    return { success: true, giftVouchers }
+  } catch (error) {
+    logger.error("Error getting all gift vouchers:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
 // Get gift voucher by ID
-export async function getGiftVoucherById(voucherId: string): Promise<GiftVoucherResponse> {
+export async function getGiftVoucherById(voucherId: string) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
     await connectToDatabase()
 
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
-
-    // Get voucher
-    const voucher = await GiftVoucher.findById(voucherId)
+    const giftVoucher = await GiftVoucher.findById(voucherId)
       .populate("purchasedBy", "name email")
       .populate("redeemedBy", "name email")
-      .lean()
 
-    if (!voucher) {
-      return {
-        success: false,
-        message: "Gift voucher not found",
-      }
+    if (!giftVoucher) {
+      return { success: false, message: "gift_voucher_not_found" }
     }
 
-    // Check if user is authorized to view this voucher
-    if (
-      session.user.role !== "admin" &&
-      voucher.purchasedBy._id.toString() !== session.user.id &&
-      (!voucher.redeemedBy || voucher.redeemedBy._id.toString() !== session.user.id)
-    ) {
-      return {
-        success: false,
-        message: "Unauthorized access to this voucher",
-      }
+    // Check if user is admin, the purchaser, or the redeemer
+    const isAdmin = session.user.roles.includes(UserRole.ADMIN)
+    const isPurchaser = giftVoucher.purchasedBy._id.toString() === session.user.id
+    const isRedeemer = giftVoucher.redeemedBy && giftVoucher.redeemedBy._id.toString() === session.user.id
+
+    if (!isAdmin && !isPurchaser && !isRedeemer) {
+      return { success: false, message: "forbidden" }
     }
 
-    return {
-      success: true,
-      message: "Gift voucher retrieved successfully",
-      voucher,
-    }
-  } catch (error: any) {
-    console.error("Error getting gift voucher:", error)
-    return {
-      success: false,
-      message: "Failed to retrieve gift voucher",
-      error: error.message,
-    }
+    return { success: true, giftVoucher }
+  } catch (error) {
+    logger.error("Error getting gift voucher by ID:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
-// Get member gift vouchers (purchased and received)
-export async function getMemberGiftVouchers(
-  searchQuery = "",
-  sortField = "createdAt",
-  sortDirection: "asc" | "desc" = "desc",
-  page = 1,
-  limit = 10,
-  type: "purchased" | "received" | "all" = "all",
-): Promise<GiftVoucherResponse> {
+// Get user's gift vouchers
+export async function getUserGiftVouchers() {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
     await connectToDatabase()
 
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
-    }
+    // Get vouchers purchased by the user
+    const purchasedVouchers = await GiftVoucher.find({
+      purchasedBy: session.user.id,
+    }).sort({ createdAt: -1 })
 
-    // Build query
-    const query: any = {}
-
-    if (type === "purchased") {
-      // Vouchers purchased by the user
-      query.purchasedBy = session.user.id
-    } else if (type === "received") {
-      // Vouchers received by the user (by email or redeemed)
-      query.$or = [{ recipientEmail: session.user.email }, { redeemedBy: session.user.id }]
-    } else {
-      // All vouchers related to the user
-      query.$or = [
-        { purchasedBy: session.user.id },
-        { recipientEmail: session.user.email },
-        { redeemedBy: session.user.id },
-      ]
-    }
-
-    // Add search filter
-    if (searchQuery) {
-      const searchConditions = [
-        { code: { $regex: searchQuery, $options: "i" } },
-        { recipientName: { $regex: searchQuery, $options: "i" } },
-        { senderName: { $regex: searchQuery, $options: "i" } },
-      ]
-
-      if (query.$or) {
-        query.$and = [{ $or: query.$or }, { $or: searchConditions }]
-        delete query.$or
-      } else {
-        query.$or = searchConditions
-      }
-    }
-
-    // Count total documents
-    const totalVouchers = await GiftVoucher.countDocuments(query)
-
-    // Get vouchers with pagination and sorting
-    const vouchers = await GiftVoucher.find(query)
-      .sort({ [sortField]: sortDirection === "asc" ? 1 : -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .populate("purchasedBy", "name email")
-      .populate("redeemedBy", "name email")
-      .lean()
+    // Get vouchers redeemed by the user
+    const redeemedVouchers = await GiftVoucher.find({
+      redeemedBy: session.user.id,
+    }).sort({ redeemedAt: -1 })
 
     return {
       success: true,
-      message: "Gift vouchers retrieved successfully",
-      vouchers,
-      total: totalVouchers,
-      page,
-      limit,
-      totalPages: Math.ceil(totalVouchers / limit),
+      purchasedVouchers,
+      redeemedVouchers,
     }
-  } catch (error: any) {
-    console.error("Error getting member gift vouchers:", error)
+  } catch (error) {
+    logger.error("Error getting user gift vouchers:", error)
+    return { success: false, message: "server_error" }
+  }
+}
+
+// Validate a gift voucher code
+export async function validateGiftVoucher(code: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
+    await connectToDatabase()
+
+    const giftVoucher = await GiftVoucher.findOne({ code: code.toUpperCase() })
+    if (!giftVoucher) {
+      return { success: false, message: "gift_voucher_not_found" }
+    }
+
+    const validation = giftVoucher.validateRedemption()
+    if (!validation.valid) {
+      return { success: false, message: validation.message }
+    }
+
     return {
-      success: false,
-      message: "Failed to retrieve gift vouchers",
-      error: error.message,
+      success: true,
+      giftVoucher: {
+        _id: giftVoucher._id,
+        code: giftVoucher.code,
+        amount: giftVoucher.amount,
+        currency: giftVoucher.currency,
+        expiryDate: giftVoucher.expiryDate,
+      },
     }
+  } catch (error) {
+    logger.error("Error validating gift voucher:", error)
+    return { success: false, message: "server_error" }
+  }
+}
+
+// Redeem a gift voucher
+export async function redeemGiftVoucher(code: string, transactionId?: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
+    await connectToDatabase()
+
+    const giftVoucher = await GiftVoucher.findOne({ code: code.toUpperCase() })
+    if (!giftVoucher) {
+      return { success: false, message: "gift_voucher_not_found" }
+    }
+
+    // Check if the user is trying to redeem their own voucher
+    if (giftVoucher.purchasedBy.toString() === session.user.id) {
+      return { success: false, message: "cannot_redeem_own_voucher" }
+    }
+
+    const result = await giftVoucher.redeem(session.user.id, transactionId)
+
+    if (result.success) {
+      // Send notification to purchaser
+      const notificationManager = new NotificationManager()
+      await notificationManager.sendNotification({
+        type: NotificationType.GIFT_VOUCHER_REDEEMED,
+        recipientId: giftVoucher.purchasedBy.toString(),
+        data: {
+          voucherCode: giftVoucher.code,
+          amount: giftVoucher.amount,
+          currency: giftVoucher.currency,
+          redeemedBy: session.user.name,
+          redeemedAt: new Date(),
+        },
+      })
+    }
+
+    revalidatePath("/dashboard/member/gift-vouchers")
+    return result
+  } catch (error) {
+    logger.error("Error redeeming gift voucher:", error)
+    return { success: false, message: "server_error" }
+  }
+}
+
+// Deactivate a gift voucher (admin only)
+export async function deactivateGiftVoucher(voucherId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
+    // Check if user has admin role
+    if (!session.user.roles.includes(UserRole.ADMIN)) {
+      return { success: false, message: "forbidden" }
+    }
+
+    await connectToDatabase()
+
+    const giftVoucher = await GiftVoucher.findById(voucherId)
+    if (!giftVoucher) {
+      return { success: false, message: "gift_voucher_not_found" }
+    }
+
+    giftVoucher.isActive = false
+    await giftVoucher.save()
+
+    revalidatePath("/dashboard/admin/gift-vouchers")
+    return { success: true }
+  } catch (error) {
+    logger.error("Error deactivating gift voucher:", error)
+    return { success: false, message: "server_error" }
   }
 }
 
 // Resend gift voucher notification
-export async function resendGiftVoucherNotification(voucherId: string): Promise<GiftVoucherResponse> {
+export async function resendGiftVoucherNotification(voucherId: string) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || !session.user) {
+      return { success: false, message: "unauthorized" }
+    }
+
     await connectToDatabase()
 
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return {
-        success: false,
-        message: "Unauthorized access",
-      }
+    const giftVoucher = await GiftVoucher.findById(voucherId)
+    if (!giftVoucher) {
+      return { success: false, message: "gift_voucher_not_found" }
     }
 
-    // Get voucher
-    const voucher = await GiftVoucher.findById(voucherId)
+    // Check if user is admin or the purchaser
+    const isAdmin = session.user.roles.includes(UserRole.ADMIN)
+    const isPurchaser = giftVoucher.purchasedBy.toString() === session.user.id
 
-    if (!voucher) {
-      return {
-        success: false,
-        message: "Gift voucher not found",
-      }
+    if (!isAdmin && !isPurchaser) {
+      return { success: false, message: "forbidden" }
     }
 
-    // Check if user is authorized to resend this voucher
-    if (session.user.role !== "admin" && voucher.purchasedBy.toString() !== session.user.id) {
-      return {
-        success: false,
-        message: "Unauthorized access to resend this voucher",
-      }
+    // Check if recipient email exists
+    if (!giftVoucher.recipientEmail) {
+      return { success: false, message: "no_recipient_email" }
     }
 
     // Send notification to recipient
-    try {
-      const notificationManager = new NotificationManager()
-      await notificationManager.sendGiftVoucherNotification({
-        recipientEmail: voucher.recipientEmail,
-        recipientName: voucher.recipientName,
-        senderName: voucher.senderName,
-        code: voucher.code,
-        amount: voucher.amount,
-        message: voucher.message,
-        expiryDate: voucher.expiryDate,
-      })
-    } catch (notificationError) {
-      console.error("Error resending gift voucher notification:", notificationError)
-      return {
-        success: false,
-        message: "Failed to resend notification",
-        error: notificationError,
-      }
-    }
-
-    return {
-      success: true,
-      message: "Gift voucher notification resent successfully",
-      voucher: voucher.toObject(),
-    }
-  } catch (error: any) {
-    console.error("Error resending gift voucher notification:", error)
-    return {
-      success: false,
-      message: "Failed to resend gift voucher notification",
-      error: error.message,
-    }
-  }
-}
-
-// Validate gift voucher code
-export async function validateGiftVoucher(code: string): Promise<GiftVoucherResponse> {
-  try {
-    await connectToDatabase()
-
-    // Find voucher by code
-    const voucher = await GiftVoucher.findOne({ code: code.toUpperCase() })
-
-    if (!voucher) {
-      return {
-        success: false,
-        message: "Invalid voucher code",
-      }
-    }
-
-    // Check if voucher is already redeemed
-    if (voucher.isRedeemed) {
-      return {
-        success: false,
-        message: "Voucher has already been redeemed",
-      }
-    }
-
-    // Check if voucher is expired
-    if (new Date() > voucher.expiryDate) {
-      return {
-        success: false,
-        message: "Voucher has expired",
-      }
-    }
-
-    return {
-      success: true,
-      message: "Voucher is valid",
-      voucher: {
-        code: voucher.code,
-        amount: voucher.amount,
-        recipientName: voucher.recipientName,
-        senderName: voucher.senderName,
-        expiryDate: voucher.expiryDate,
+    const notificationManager = new NotificationManager()
+    await notificationManager.sendNotification({
+      type: NotificationType.GIFT_VOUCHER_CREATED,
+      recipient: {
+        email: giftVoucher.recipientEmail,
+        name: giftVoucher.recipientName,
+        phone: giftVoucher.recipientPhone,
       },
-    }
-  } catch (error: any) {
-    console.error("Error validating gift voucher:", error)
-    return {
-      success: false,
-      message: "Failed to validate voucher",
-      error: error.message,
-    }
+      data: {
+        voucherCode: giftVoucher.code,
+        amount: giftVoucher.amount,
+        currency: giftVoucher.currency,
+        expiryDate: giftVoucher.expiryDate,
+        message: giftVoucher.message,
+        senderName: session.user.name,
+      },
+    })
+
+    return { success: true }
+  } catch (error) {
+    logger.error("Error resending gift voucher notification:", error)
+    return { success: false, message: "server_error" }
   }
 }

@@ -1,42 +1,22 @@
 import type { Metadata } from "next"
-import { getServerSession } from "next-auth"
-import { redirect } from "next/navigation"
-import { authOptions } from "@/lib/auth/auth"
+import { getUserCoupons } from "@/actions/coupon-actions"
 import MemberCouponsClient from "@/components/dashboard/member/coupons/member-coupons-client"
+import { RoleProtectedRoute } from "@/components/auth/role-protected-route"
+import { UserRole } from "@/lib/db/models/user"
 
 export const metadata: Metadata = {
-  title: "Available Coupons",
-  description: "View and use discount coupons for your treatments",
+  title: "My Coupons",
+  description: "View and manage your discount coupons",
 }
 
-export const dynamic = "force-dynamic"
-
-export default async function MemberCouponsPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect("/auth/login")
-  }
-
-  // Get search and filter parameters
-  const search = typeof searchParams.search === "string" ? searchParams.search : ""
-  const page = typeof searchParams.page === "string" ? Number.parseInt(searchParams.page) : 1
-  const sortField = typeof searchParams.sortField === "string" ? searchParams.sortField : "createdAt"
-  const sortDirection =
-    typeof searchParams.sortDirection === "string" ? (searchParams.sortDirection as "asc" | "desc") : "desc"
+export default async function MemberCouponsPage() {
+  const { success, coupons, message } = await getUserCoupons()
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <MemberCouponsClient
-        initialSearch={search}
-        initialPage={page}
-        initialSortField={sortField}
-        initialSortDirection={sortDirection}
-      />
-    </div>
+    <RoleProtectedRoute allowedRoles={[UserRole.MEMBER]}>
+      <div className="container mx-auto py-6 space-y-6">
+        <MemberCouponsClient initialCoupons={success ? coupons : []} error={success ? null : message} />
+      </div>
+    </RoleProtectedRoute>
   )
 }

@@ -117,3 +117,47 @@ export async function getAllGiftVouchers() {
     return { success: false, error: "Failed to fetch gift vouchers" }
   }
 }
+
+export async function getGiftVouchers() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const giftVouchers = await GiftVoucher.find().sort({ createdAt: -1 }).lean()
+
+    return { success: true, giftVouchers }
+  } catch (error) {
+    logger.error("Error fetching gift vouchers:", error)
+    return { success: false, error: "Failed to fetch gift vouchers" }
+  }
+}
+
+export async function getMemberGiftVouchers() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    // Get active gift vouchers that are valid for the current date
+    const currentDate = new Date()
+    const giftVouchers = await GiftVoucher.find({
+      isActive: true,
+      validFrom: { $lte: currentDate },
+      validUntil: { $gte: currentDate },
+    })
+      .sort({ validUntil: 1 })
+      .lean()
+
+    return { success: true, giftVouchers }
+  } catch (error) {
+    logger.error("Error fetching member gift vouchers:", error)
+    return { success: false, error: "Failed to fetch gift vouchers" }
+  }
+}

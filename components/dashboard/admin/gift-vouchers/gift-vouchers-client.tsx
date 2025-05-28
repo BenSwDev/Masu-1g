@@ -11,7 +11,7 @@ interface GiftVouchersClientProps {
   initialGiftVouchers: IGiftVoucher[]
 }
 
-export function GiftVouchersClient({ initialGiftVouchers }: GiftVouchersClientProps) {
+export default function GiftVouchersClient({ initialGiftVouchers }: GiftVouchersClientProps) {
   const { t } = useTranslation()
   const [giftVouchers, setGiftVouchers] = useState(initialGiftVouchers)
 
@@ -27,18 +27,36 @@ export function GiftVouchersClient({ initialGiftVouchers }: GiftVouchersClientPr
     {
       accessorKey: "value",
       header: t("giftVouchers.fields.value"),
+      cell: ({ row }: any) => {
+        const value = Number.parseFloat(row.getValue("value"))
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(value)
+      },
     },
     {
       accessorKey: "validFrom",
       header: t("giftVouchers.fields.validFrom"),
+      cell: ({ row }: any) => {
+        const date = new Date(row.getValue("validFrom"))
+        return date.toLocaleDateString()
+      },
     },
     {
       accessorKey: "validUntil",
       header: t("giftVouchers.fields.validUntil"),
+      cell: ({ row }: any) => {
+        const date = new Date(row.getValue("validUntil"))
+        return date.toLocaleDateString()
+      },
     },
     {
       accessorKey: "isActive",
       header: t("giftVouchers.fields.isActive"),
+      cell: ({ row }: any) => {
+        return row.getValue("isActive") ? t("common.yes") : t("common.no")
+      },
     },
   ]
 
@@ -50,7 +68,7 @@ export function GiftVouchersClient({ initialGiftVouchers }: GiftVouchersClientPr
       </div>
       <Card>
         <CardContent className="p-2">
-          <DataTable columns={columns} data={giftVouchers} searchKey="name" />
+          <DataTable columns={columns} data={giftVouchers} searchKey="code" />
         </CardContent>
       </Card>
     </div>

@@ -11,7 +11,7 @@ interface CouponsClientProps {
   initialCoupons: ICoupon[]
 }
 
-export function CouponsClient({ initialCoupons }: CouponsClientProps) {
+export default function CouponsClient({ initialCoupons }: CouponsClientProps) {
   const { t } = useTranslation()
   const [coupons, setCoupons] = useState(initialCoupons)
 
@@ -35,14 +35,25 @@ export function CouponsClient({ initialCoupons }: CouponsClientProps) {
     {
       accessorKey: "validFrom",
       header: t("coupons.fields.validFrom"),
+      cell: ({ row }: any) => {
+        const date = new Date(row.getValue("validFrom"))
+        return date.toLocaleDateString()
+      },
     },
     {
       accessorKey: "validUntil",
       header: t("coupons.fields.validUntil"),
+      cell: ({ row }: any) => {
+        const date = new Date(row.getValue("validUntil"))
+        return date.toLocaleDateString()
+      },
     },
     {
       accessorKey: "isActive",
       header: t("coupons.fields.isActive"),
+      cell: ({ row }: any) => {
+        return row.getValue("isActive") ? t("common.yes") : t("common.no")
+      },
     },
   ]
 
@@ -54,7 +65,7 @@ export function CouponsClient({ initialCoupons }: CouponsClientProps) {
       </div>
       <Card>
         <CardContent className="p-2">
-          <DataTable columns={columns} data={coupons} searchKey="name" />
+          <DataTable columns={columns} data={coupons} searchKey="code" />
         </CardContent>
       </Card>
     </div>

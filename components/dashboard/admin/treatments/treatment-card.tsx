@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/common/ui/switch"
+import { Switch } from "@/components/ui/switch"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
@@ -140,7 +140,12 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center rtl:flex-row-reverse">
-                <Switch checked={treatment.isActive} onCheckedChange={handleToggleStatus} disabled={isToggling} />
+                <Switch
+                  checked={treatment.isActive}
+                  onCheckedChange={handleToggleStatus}
+                  disabled={isToggling}
+                  className="rtl:data-[state=checked]:justify-start rtl:data-[state=unchecked]:justify-end"
+                />
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

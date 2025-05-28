@@ -21,33 +21,50 @@ import {
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
 import { DiscountType, type IBundle } from "@/lib/db/models/bundle"
-import { Package, MoreVertical, Calendar, Gift, Clock } from "lucide-react"
+import { Package, MoreVertical, Calendar, Gift, Clock, Loader2 } from "lucide-react"
 
 interface BundleCardProps {
   bundle: IBundle
   onEdit: (bundle: IBundle) => void
-  onDelete: (id: string) => Promise<void>
-  onDuplicate: (id: string) => Promise<void>
-  onToggleStatus: (id: string) => Promise<void>
+  onDelete: (id: string) => Promise<boolean>
+  onDuplicate: (id: string) => Promise<boolean>
+  onToggleStatus: (id: string) => Promise<boolean>
 }
 
 export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStatus }: BundleCardProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isDuplicating, setIsDuplicating] = useState(false)
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false)
 
   const handleDelete = async () => {
     setIsDeleting(true)
-    await onDelete(bundle._id.toString())
-    setIsDeleting(false)
-    setShowDeleteDialog(false)
+    try {
+      const success = await onDelete(bundle._id.toString())
+      if (!success) {
+        setShowDeleteDialog(false)
+      }
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleDuplicate = async () => {
-    await onDuplicate(bundle._id.toString())
+    setIsDuplicating(true)
+    try {
+      await onDuplicate(bundle._id.toString())
+    } finally {
+      setIsDuplicating(false)
+    }
   }
 
   const handleToggleStatus = async () => {
-    await onToggleStatus(bundle._id.toString())
+    setIsTogglingStatus(true)
+    try {
+      await onToggleStatus(bundle._id.toString())
+    } finally {
+      setIsTogglingStatus(false)
+    }
   }
 
   const formatDiscountValue = () => {
@@ -65,7 +82,7 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
 
   return (
     <>
-      <Card className="w-full overflow-hidden border rounded-lg shadow-sm">
+      <Card className="w-full overflow-hidden border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
         <CardContent className="p-0">
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
@@ -77,19 +94,30 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
                 <Switch
                   checked={bundle.isActive}
                   onCheckedChange={handleToggleStatus}
+                  disabled={isTogglingStatus}
                   className="ml-4 rtl:ml-0 rtl:mr-4 data-[state=checked]:bg-teal-500"
                 />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreVertical className="w-4 h-4" />
+                    <Button variant="ghost" size="icon" disabled={isDeleting || isDuplicating || isTogglingStatus}>
+                      {isDeleting || isDuplicating || isTogglingStatus ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <MoreVertical className="w-4 h-4" />
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => onEdit(bundle)}>עריכה</DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleDuplicate}>שכפול</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600">
-                      מחיקה
+                    <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
+                      {isDuplicating ? "משכפל..." : "שכפול"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="text-red-600"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? "מוחק..." : "מחיקה"}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -119,13 +147,16 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
             <div className="border-t pt-4">
               <h4 className="text-sm font-medium mb-2">טיפולים זמינים:</h4>
               <div className="space-y-1">
-                {bundle.treatments.map((treatment, index) => (
-                  <div key={index} className="flex items-center text-sm">
-                    <Clock className="w-3 h-3 ml-1 text-gray-400" />
-                    {treatment.name}
-                  </div>
-                ))}
-                {bundle.treatments.length === 0 && <div className="text-sm text-gray-500">אין טיפולים זמינים</div>}
+                {Array.isArray(bundle.treatments) && bundle.treatments.length > 0 ? (
+                  bundle.treatments.map((treatment, index) => (
+                    <div key={index} className="flex items-center text-sm">
+                      <Clock className="w-3 h-3 ml-1 text-gray-400" />
+                      {treatment.name}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-gray-500">אין טיפולים זמינים</div>
+                )}
               </div>
             </div>
           </div>
@@ -145,7 +176,14 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
               disabled={isDeleting}
               className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
-              {isDeleting ? "מוחק..." : "מחק"}
+              {isDeleting ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  מוחק...
+                </>
+              ) : (
+                "מחק"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

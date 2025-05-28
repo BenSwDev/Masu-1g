@@ -23,7 +23,8 @@ import {
 } from "@/components/common/ui/form"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { DiscountType, type IBundle } from "@/lib/db/models/bundle"
-import { Clock } from "lucide-react"
+import { Clock, Loader2, AlertTriangle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
 
 // Define the form schema
 const bundleFormSchema = z.object({
@@ -33,13 +34,17 @@ const bundleFormSchema = z.object({
   isActive: z.boolean().default(true),
   quantity: z.number().min(1, { message: "כמות הטיפולים חייבת להיות לפחות 1" }),
   validityMonths: z.number().min(1, { message: "תוקף החבילה חייב להיות לפחות חודש אחד" }),
-  treatments: z.array(
-    z.object({
-      treatmentId: z.string(),
-      name: z.string(),
-      isSelected: z.boolean().default(false),
+  treatments: z
+    .array(
+      z.object({
+        treatmentId: z.string(),
+        name: z.string(),
+        isSelected: z.boolean().default(false),
+      }),
+    )
+    .refine((treatments) => treatments.some((t) => t.isSelected), {
+      message: "יש לבחור לפחות טיפול אחד",
     }),
-  ),
   discountType: z.enum([DiscountType.FREE_QUANTITY, DiscountType.PERCENTAGE, DiscountType.FIXED_AMOUNT]),
   discountValue: z.number().min(0, { message: "ערך ההנחה לא יכול להיות שלילי" }),
 })
@@ -49,15 +54,24 @@ type BundleFormValues = z.infer<typeof bundleFormSchema>
 interface BundleFormProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: any) => Promise<void>
+  onSubmit: (data: any) => Promise<boolean>
   bundle?: IBundle
   treatments: any[]
   categories: string[]
+  isSubmitting: boolean
 }
 
-export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, categories }: BundleFormProps) {
+export function BundleForm({
+  isOpen,
+  onClose,
+  onSubmit,
+  bundle,
+  treatments,
+  categories,
+  isSubmitting,
+}: BundleFormProps) {
   const [activeTab, setActiveTab] = useState("details")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   // Initialize the form
   const form = useForm<BundleFormValues>({
@@ -116,16 +130,35 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
         discountValue: 1,
       })
     }
-  }, [bundle, treatments, categories, form])
+  }, [bundle, treatments, categories, form, isOpen])
 
   // Handle form submission
   const handleSubmit = async (values: BundleFormValues) => {
-    setIsSubmitting(true)
+    setFormError(null)
     try {
       // Filter selected treatments
       const selectedTreatments = values.treatments
         .filter((t) => t.isSelected)
         .map(({ treatmentId, name }) => ({ treatmentId, name }))
+
+      if (selectedTreatments.length === 0) {
+        setFormError("יש לבחור לפחות טיפול אחד")
+        setActiveTab("treatments")
+        return
+      }
+
+      // Validate discount value
+      if (values.discountType === DiscountType.FREE_QUANTITY && values.discountValue > values.quantity) {
+        setFormError("כמות הטיפולים החינם לא יכולה להיות גדולה מכמות הטיפולים הכוללת")
+        setActiveTab("discount")
+        return
+      }
+
+      if (values.discountType === DiscountType.PERCENTAGE && values.discountValue > 100) {
+        setFormError("אחוז ההנחה לא יכול להיות גדול מ-100%")
+        setActiveTab("discount")
+        return
+      }
 
       // Prepare data for submission
       const bundleData = {
@@ -133,15 +166,13 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
         treatments: selectedTreatments,
       }
 
-      // Remove isSelected property as it's not part of the model
-      delete bundleData.treatments.isSelected
-
-      await onSubmit(bundleData)
-      onClose()
+      const success = await onSubmit(bundleData)
+      if (!success) {
+        // Error is handled by the parent component
+      }
     } catch (error) {
       console.error("Error submitting bundle form:", error)
-    } finally {
-      setIsSubmitting(false)
+      setFormError("אירעה שגיאה בשמירת החבילה. נסה שוב.")
     }
   }
 
@@ -179,6 +210,9 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
     }
   }, [form.watch("discountType"), form.watch("quantity"), form.watch("discountValue"), form])
 
+  // Check if any treatments are selected
+  const hasSelectedTreatments = form.watch("treatments").some((t) => t.isSelected)
+
   return (
     <Drawer open={isOpen} onOpenChange={onClose} direction="bottom">
       <DrawerContent className="max-h-[90vh] overflow-y-auto">
@@ -187,8 +221,16 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
         </DrawerHeader>
 
         <div className="px-4 pb-4">
+          {formError && (
+            <Alert variant="destructive" className="mb-4 mx-auto max-w-md">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>שגיאה</AlertTitle>
+              <AlertDescription>{formError}</AlertDescription>
+            </Alert>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 mb-4">
+            <TabsList className="grid grid-cols-4 mb-4 mx-auto max-w-md">
               <TabsTrigger value="details">פרטים בסיסיים</TabsTrigger>
               <TabsTrigger value="treatments">טיפולים</TabsTrigger>
               <TabsTrigger value="discount">הנחה</TabsTrigger>
@@ -196,7 +238,7 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
             </TabsList>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(handleSubmit)}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mx-auto max-w-md">
                 <TabsContent value="details" className="space-y-4">
                   <FormField
                     control={form.control}
@@ -262,6 +304,7 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
                               min={1}
                               {...field}
                               onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 1)}
+                              className="text-center"
                             />
                           </FormControl>
                           <FormMessage />
@@ -281,6 +324,7 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
                               min={1}
                               {...field}
                               onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 1)}
+                              className="text-center"
                             />
                           </FormControl>
                           <FormMessage />
@@ -354,6 +398,14 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
                     )}
                   </div>
 
+                  {!hasSelectedTreatments && (
+                    <Alert variant="warning" className="mb-4">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>שים לב</AlertTitle>
+                      <AlertDescription>יש לבחור לפחות טיפול אחד</AlertDescription>
+                    </Alert>
+                  )}
+
                   <div className="flex justify-between mt-6">
                     <Button type="button" variant="outline" onClick={() => setActiveTab("details")}>
                       חזרה
@@ -362,6 +414,7 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
                       type="button"
                       onClick={() => setActiveTab("discount")}
                       className="bg-teal-500 hover:bg-teal-600"
+                      disabled={!hasSelectedTreatments}
                     >
                       הבא
                     </Button>
@@ -442,6 +495,7 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
                             }
                             {...field}
                             onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 0)}
+                            className="text-center"
                           />
                         </FormControl>
                         <FormDescription>
@@ -534,8 +588,21 @@ export function BundleForm({ isOpen, onClose, onSubmit, bundle, treatments, cate
                       <Button type="button" variant="outline" onClick={() => setActiveTab("discount")}>
                         חזרה
                       </Button>
-                      <Button type="submit" disabled={isSubmitting} className="bg-teal-500 hover:bg-teal-600">
-                        {isSubmitting ? "שומר..." : bundle ? "עדכן חבילה" : "צור חבילה"}
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting || !hasSelectedTreatments}
+                        className="bg-teal-500 hover:bg-teal-600"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                            שומר...
+                          </>
+                        ) : bundle ? (
+                          "עדכן חבילה"
+                        ) : (
+                          "צור חבילה"
+                        )}
                       </Button>
                     </div>
                   </DrawerFooter>

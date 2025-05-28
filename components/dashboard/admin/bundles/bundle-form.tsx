@@ -215,12 +215,12 @@ export function BundleForm({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose} direction="bottom">
-      <DrawerContent className="max-h-[90vh] overflow-y-auto">
-        <DrawerHeader>
+      <DrawerContent className="h-[95vh] flex flex-col">
+        <DrawerHeader className="flex-shrink-0 pb-2">
           <DrawerTitle className="text-center text-xl">{bundle ? "עריכת חבילה" : "הוספת חבילה חדשה"}</DrawerTitle>
         </DrawerHeader>
 
-        <div className="px-4 pb-4">
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
           {formError && (
             <Alert variant="destructive" className="mb-4 mx-auto max-w-md">
               <AlertTriangle className="h-4 w-4" />
@@ -230,16 +230,24 @@ export function BundleForm({
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-4 mb-4 mx-auto max-w-md">
-              <TabsTrigger value="details">פרטים בסיסיים</TabsTrigger>
-              <TabsTrigger value="treatments">טיפולים</TabsTrigger>
-              <TabsTrigger value="discount">הנחה</TabsTrigger>
-              <TabsTrigger value="preview">תצוגה מקדימה</TabsTrigger>
+            <TabsList className="grid grid-cols-4 mb-4 mx-auto max-w-md sticky top-0 bg-background z-10">
+              <TabsTrigger value="details" className="text-xs sm:text-sm">
+                פרטים
+              </TabsTrigger>
+              <TabsTrigger value="treatments" className="text-xs sm:text-sm">
+                טיפולים
+              </TabsTrigger>
+              <TabsTrigger value="discount" className="text-xs sm:text-sm">
+                הנחה
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="text-xs sm:text-sm">
+                תצוגה
+              </TabsTrigger>
             </TabsList>
 
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mx-auto max-w-md">
-                <TabsContent value="details" className="space-y-4">
+                <TabsContent value="details" className="space-y-4 mt-0">
                   <FormField
                     control={form.control}
                     name="name"
@@ -284,14 +292,14 @@ export function BundleForm({
                       <FormItem>
                         <FormLabel>תיאור (אופציונלי)</FormLabel>
                         <FormControl>
-                          <Textarea placeholder="תיאור החבילה..." {...field} />
+                          <Textarea placeholder="תיאור החבילה..." rows={3} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="quantity"
@@ -340,7 +348,7 @@ export function BundleForm({
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
                           <FormLabel className="text-base">סטטוס</FormLabel>
-                          <FormDescription>האם החבילה פעילה ומוצגת ללקוחות?</FormDescription>
+                          <FormDescription className="text-sm">האם החבילה פעילה ומוצגת ללקוחות?</FormDescription>
                         </div>
                         <FormControl>
                           <Switch
@@ -352,22 +360,9 @@ export function BundleForm({
                       </FormItem>
                     )}
                   />
-
-                  <div className="flex justify-between mt-6">
-                    <Button type="button" variant="outline" onClick={onClose}>
-                      ביטול
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => setActiveTab("treatments")}
-                      className="bg-teal-500 hover:bg-teal-600"
-                    >
-                      הבא
-                    </Button>
-                  </div>
                 </TabsContent>
 
-                <TabsContent value="treatments" className="space-y-4">
+                <TabsContent value="treatments" className="space-y-4 mt-0">
                   <div className="mb-4">
                     <h3 className="text-lg font-medium mb-2">טיפולים זמינים בחבילה</h3>
                     <p className="text-sm text-gray-500">
@@ -375,53 +370,41 @@ export function BundleForm({
                     </p>
                   </div>
 
-                  <div className="border rounded-md p-4 space-y-4">
+                  <div className="border rounded-md p-4 max-h-60 overflow-y-auto">
                     {filteredTreatments.length > 0 ? (
-                      filteredTreatments.map((treatment, index) => (
-                        <div key={treatment._id} className="flex items-center space-x-2 rtl:space-x-reverse">
-                          <Checkbox
-                            id={`treatment-${treatment._id}`}
-                            checked={form.watch(`treatments.${index}.isSelected`)}
-                            onCheckedChange={(checked) => {
-                              const treatments = [...form.getValues("treatments")]
-                              treatments[index].isSelected = !!checked
-                              form.setValue("treatments", treatments)
-                            }}
-                          />
-                          <Label htmlFor={`treatment-${treatment._id}`} className="flex-1 cursor-pointer">
-                            {treatment.name}
-                          </Label>
-                        </div>
-                      ))
+                      <div className="space-y-3">
+                        {filteredTreatments.map((treatment, index) => (
+                          <div key={treatment._id} className="flex items-center space-x-2 rtl:space-x-reverse">
+                            <Checkbox
+                              id={`treatment-${treatment._id}`}
+                              checked={form.watch(`treatments.${index}.isSelected`)}
+                              onCheckedChange={(checked) => {
+                                const treatments = [...form.getValues("treatments")]
+                                treatments[index].isSelected = !!checked
+                                form.setValue("treatments", treatments)
+                              }}
+                            />
+                            <Label htmlFor={`treatment-${treatment._id}`} className="flex-1 cursor-pointer text-sm">
+                              {treatment.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     ) : (
-                      <div className="text-center py-4 text-gray-500">אין טיפולים זמינים בקטגוריה זו</div>
+                      <div className="text-center py-8 text-gray-500">אין טיפולים זמינים בקטגוריה זו</div>
                     )}
                   </div>
 
                   {!hasSelectedTreatments && (
-                    <Alert variant="warning" className="mb-4">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>שים לב</AlertTitle>
-                      <AlertDescription>יש לבחור לפחות טיפול אחד</AlertDescription>
+                    <Alert className="border-orange-200 bg-orange-50">
+                      <AlertTriangle className="h-4 w-4 text-orange-600" />
+                      <AlertTitle className="text-orange-800">שים לב</AlertTitle>
+                      <AlertDescription className="text-orange-700">יש לבחור לפחות טיפול אחד</AlertDescription>
                     </Alert>
                   )}
-
-                  <div className="flex justify-between mt-6">
-                    <Button type="button" variant="outline" onClick={() => setActiveTab("details")}>
-                      חזרה
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => setActiveTab("discount")}
-                      className="bg-teal-500 hover:bg-teal-600"
-                      disabled={!hasSelectedTreatments}
-                    >
-                      הבא
-                    </Button>
-                  </div>
                 </TabsContent>
 
-                <TabsContent value="discount" className="space-y-4">
+                <TabsContent value="discount" className="space-y-4 mt-0">
                   <div className="mb-4">
                     <h3 className="text-lg font-medium mb-2">הגדרת הנחה</h3>
                     <p className="text-sm text-gray-500">בחר את סוג ההנחה שתינתן בחבילה זו.</p>
@@ -437,7 +420,7 @@ export function BundleForm({
                           <RadioGroup
                             onValueChange={field.onChange}
                             defaultValue={field.value}
-                            className="flex flex-col space-y-1"
+                            className="flex flex-col space-y-3"
                           >
                             <div className="flex items-center space-x-2 rtl:space-x-reverse">
                               <RadioGroupItem
@@ -445,7 +428,9 @@ export function BundleForm({
                                 id="discount-free"
                                 checked={field.value === DiscountType.FREE_QUANTITY}
                               />
-                              <Label htmlFor="discount-free">כמות חינם</Label>
+                              <Label htmlFor="discount-free" className="text-sm">
+                                כמות חינם
+                              </Label>
                             </div>
                             <div className="flex items-center space-x-2 rtl:space-x-reverse">
                               <RadioGroupItem
@@ -453,7 +438,9 @@ export function BundleForm({
                                 id="discount-percentage"
                                 checked={field.value === DiscountType.PERCENTAGE}
                               />
-                              <Label htmlFor="discount-percentage">אחוז הנחה</Label>
+                              <Label htmlFor="discount-percentage" className="text-sm">
+                                אחוז הנחה
+                              </Label>
                             </div>
                             <div className="flex items-center space-x-2 rtl:space-x-reverse">
                               <RadioGroupItem
@@ -461,7 +448,9 @@ export function BundleForm({
                                 id="discount-fixed"
                                 checked={field.value === DiscountType.FIXED_AMOUNT}
                               />
-                              <Label htmlFor="discount-fixed">סכום הנחה קבוע</Label>
+                              <Label htmlFor="discount-fixed" className="text-sm">
+                                סכום הנחה קבוע
+                              </Label>
                             </div>
                           </RadioGroup>
                         </FormControl>
@@ -498,7 +487,7 @@ export function BundleForm({
                             className="text-center"
                           />
                         </FormControl>
-                        <FormDescription>
+                        <FormDescription className="text-xs">
                           {form.watch("discountType") === DiscountType.FREE_QUANTITY
                             ? `מתוך ${form.watch("quantity")} טיפולים בסך הכל`
                             : form.watch("discountType") === DiscountType.PERCENTAGE
@@ -509,52 +498,39 @@ export function BundleForm({
                       </FormItem>
                     )}
                   />
-
-                  <div className="flex justify-between mt-6">
-                    <Button type="button" variant="outline" onClick={() => setActiveTab("treatments")}>
-                      חזרה
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => setActiveTab("preview")}
-                      className="bg-teal-500 hover:bg-teal-600"
-                    >
-                      הבא
-                    </Button>
-                  </div>
                 </TabsContent>
 
-                <TabsContent value="preview" className="space-y-4">
+                <TabsContent value="preview" className="space-y-4 mt-0">
                   <div className="mb-4">
                     <h3 className="text-lg font-medium mb-2">תצוגה מקדימה</h3>
                     <p className="text-sm text-gray-500">בדוק את פרטי החבילה לפני שמירה.</p>
                   </div>
 
-                  <div className="border rounded-md p-4 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className="border rounded-md p-4 space-y-4 max-h-80 overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <h4 className="text-sm font-medium">שם החבילה</h4>
-                        <p>{form.watch("name")}</p>
+                        <h4 className="font-medium text-gray-700">שם החבילה</h4>
+                        <p className="text-gray-900">{form.watch("name") || "לא הוגדר"}</p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-medium">קטגוריה</h4>
-                        <p>{form.watch("category")}</p>
+                        <h4 className="font-medium text-gray-700">קטגוריה</h4>
+                        <p className="text-gray-900">{form.watch("category")}</p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-medium">כמות טיפולים</h4>
-                        <p>{form.watch("quantity")}</p>
+                        <h4 className="font-medium text-gray-700">כמות טיפולים</h4>
+                        <p className="text-gray-900">{form.watch("quantity")}</p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-medium">תוקף</h4>
-                        <p>{form.watch("validityMonths")} חודשים</p>
+                        <h4 className="font-medium text-gray-700">תוקף</h4>
+                        <p className="text-gray-900">{form.watch("validityMonths")} חודשים</p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-medium">סטטוס</h4>
-                        <p>{form.watch("isActive") ? "פעיל" : "לא פעיל"}</p>
+                        <h4 className="font-medium text-gray-700">סטטוס</h4>
+                        <p className="text-gray-900">{form.watch("isActive") ? "פעיל" : "לא פעיל"}</p>
                       </div>
                       <div>
-                        <h4 className="text-sm font-medium">הנחה</h4>
-                        <p>
+                        <h4 className="font-medium text-gray-700">הנחה</h4>
+                        <p className="text-gray-900">
                           {form.watch("discountType") === DiscountType.FREE_QUANTITY
                             ? `${form.watch("discountValue")} טיפולים חינם`
                             : form.watch("discountType") === DiscountType.PERCENTAGE
@@ -564,16 +540,23 @@ export function BundleForm({
                       </div>
                     </div>
 
+                    {form.watch("description") && (
+                      <div>
+                        <h4 className="font-medium text-gray-700 text-sm">תיאור</h4>
+                        <p className="text-gray-900 text-sm">{form.watch("description")}</p>
+                      </div>
+                    )}
+
                     <div>
-                      <h4 className="text-sm font-medium mb-2">טיפולים כלולים</h4>
-                      <div className="space-y-1">
+                      <h4 className="font-medium text-gray-700 text-sm mb-2">טיפולים כלולים</h4>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
                         {form
                           .watch("treatments")
                           .filter((t) => t.isSelected)
                           .map((treatment, index) => (
                             <div key={index} className="flex items-center">
                               <Clock className="w-3 h-3 ml-1 text-gray-400" />
-                              <span className="text-sm">{treatment.name}</span>
+                              <span className="text-sm text-gray-900">{treatment.name}</span>
                             </div>
                           ))}
                         {form.watch("treatments").filter((t) => t.isSelected).length === 0 && (
@@ -582,35 +565,69 @@ export function BundleForm({
                       </div>
                     </div>
                   </div>
-
-                  <DrawerFooter className="px-0">
-                    <div className="flex justify-between">
-                      <Button type="button" variant="outline" onClick={() => setActiveTab("discount")}>
-                        חזרה
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isSubmitting || !hasSelectedTreatments}
-                        className="bg-teal-500 hover:bg-teal-600"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                            שומר...
-                          </>
-                        ) : bundle ? (
-                          "עדכן חבילה"
-                        ) : (
-                          "צור חבילה"
-                        )}
-                      </Button>
-                    </div>
-                  </DrawerFooter>
                 </TabsContent>
               </form>
             </Form>
           </Tabs>
         </div>
+
+        <DrawerFooter className="flex-shrink-0 pt-2">
+          <div className="flex justify-between gap-3 max-w-md mx-auto w-full">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (activeTab === "details") {
+                  onClose()
+                } else if (activeTab === "treatments") {
+                  setActiveTab("details")
+                } else if (activeTab === "discount") {
+                  setActiveTab("treatments")
+                } else if (activeTab === "preview") {
+                  setActiveTab("discount")
+                }
+              }}
+              className="flex-1"
+            >
+              {activeTab === "details" ? "ביטול" : "חזרה"}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (activeTab === "details") {
+                  setActiveTab("treatments")
+                } else if (activeTab === "treatments") {
+                  if (!hasSelectedTreatments) {
+                    setFormError("יש לבחור לפחות טיפול אחד")
+                    return
+                  }
+                  setActiveTab("discount")
+                } else if (activeTab === "discount") {
+                  setActiveTab("preview")
+                } else if (activeTab === "preview") {
+                  form.handleSubmit(handleSubmit)()
+                }
+              }}
+              disabled={isSubmitting || (activeTab === "treatments" && !hasSelectedTreatments)}
+              className="bg-teal-500 hover:bg-teal-600 flex-1"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  שומר...
+                </>
+              ) : activeTab === "preview" ? (
+                bundle ? (
+                  "עדכן חבילה"
+                ) : (
+                  "צור חבילה"
+                )
+              ) : (
+                "הבא"
+              )}
+            </Button>
+          </div>
+        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   )

@@ -10,7 +10,16 @@
     "confirm": "אישור",
     "back": "חזרה",
     "next": "הבא",
-    "submit": "שלח"
+    "submit": "שלח",
+    "all": "הכל",
+    "active": "פעיל",
+    "inactive": "לא פעיל",
+    "deactivate": "השבת",
+    "activate": "הפעל",
+    "duplicate": "שכפל",
+    "actions": "פעולות",
+    "create": "צור",
+    "loading": "טוען..."
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -236,5 +245,171 @@
     "defaultSet": "אמצעי תשלום ברירת מחדל עודכן",
     "created": "אמצעי התשלום נוצר",
     "updated": "אמצעי התשלום עודכן"
+  },
+  "treatments": {
+    "title": "ניהול טיפולים",
+    "addNew": "הוסף טיפול חדש",
+    "edit": "ערוך טיפול",
+    "searchPlaceholder": "חפש טיפול לפי שם",
+    "noTreatments": "אין טיפולים",
+    "createSuccess": "הטיפול נוצר בהצלחה",
+    "updateSuccess": "הטיפול עודכן בהצלחה",
+    "deactivateSuccess": "הטיפול הושבת בהצלחה",
+    "activateSuccess": "הטיפול הופעל בהצלחה",
+    "statusUpdateError": "שגיאה בעדכון סטטוס הטיפול",
+    "duplicateSuccess": "הטיפול שוכפל בהצלחה",
+    "duplicateError": "שגיאה בשכפול הטיפול",
+    "deleteSuccess": "הטיפול נמחק בהצלחה",
+    "deleteError": "שגיאה במחיקת הטיפול",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק טיפול זה?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
+    "pricing": "מחירים",
+    "price": "מחיר",
+    "minutes": "דקות",
+    "categories": {
+      "massage": "עיסוי",
+      "facial": "טיפולי פנים",
+      "body": "טיפולי גוף",
+      "other": "אחר"
+    },
+    "fields": {
+      "name": "שם הטיפול",
+      "category": "קטגוריה",
+      "description": "תיאור",
+      "isActive": "פעיל",
+      "pricingType": "סוג תמחור",
+      "price": "מחיר",
+      "professionalPrice": "מחיר למטפל",
+      "durations": "משכי זמן",
+      "minutes": "דקות"
+    },
+    "pricingTypes": {
+      "fixed": "מחיר קבוע",
+      "durationBased": "מחיר לפי משך"
+    },
+    "selectCategory": "בחר קטגוריה",
+    "activeDescription": "טיפול פעיל יוצג ללקוחות",
+    "addDuration": "הוסף משך זמן",
+    "duration": "משך זמן",
+    "errors": {
+      "nameRequired": "שם הטיפול נדרש",
+      "categoryRequired": "קטגוריה נדרשת"
+    }
+  },
+  "bundles": {
+    "title": "ניהול חבילות",
+    "addNew": "הוסף חבילה חדשה",
+    "edit": "ערוך חבילה",
+    "searchPlaceholder": "חפש חבילה לפי שם",
+    "noBundles": "אין חבילות",
+    "createSuccess": "החבילה נוצרה בהצלחה",
+    "updateSuccess": "החבילה עודכנה בהצלחה",
+    "deactivateSuccess": "החבילה הושבתה בהצלחה",
+    "activateSuccess": "החבילה הופעלה בהצלחה",
+    "statusUpdateError": "שגיאה בעדכון סטטוס החבילה",
+    "duplicateSuccess": "החבילה שוכפלה בהצלחה",
+    "duplicateError": "שגיאה בשכפול החבילה",
+    "deleteSuccess": "החבילה נמחקה בהצלחה",
+    "deleteError": "שגיאה במחיקת החבילה",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק חבילה זו?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
+    "quantity": "כמות טיפולים",
+    "validity": "תוקף",
+    "months": "חודשים",
+    "discount": "הנחה",
+    "includedTreatments": "טיפולים כלולים",
+    "categories": {
+      "massage": "עיסוי",
+      "facial": "טיפולי פנים",
+      "mixed": "מעורב"
+    },
+    "fields": {
+      "name": "שם החבילה",
+      "category": "קטגוריה",
+      "description": "תיאור",
+      "isActive": "פעיל",
+      "quantity": "כמות טיפולים",
+      "validityMonths": "תוקף (חודשים)",
+      "discountType": "סוג הנחה",
+      "discountPercentage": "אחוז הנחה",
+      "discountAmount": "סכום הנחה",
+      "treatments": "טיפולים"
+    },
+    "selectCategory": "בחר קטגוריה",
+    "activeDescription": "חבילה פעילה תוצג ללקוחות",
+    "quantityDescription": "מספר הטיפולים בחבילה",
+    "validityDescription": "תוקף החבילה בחודשים",
+    "selectDiscountType": "בחר סוג הנחה",
+    "discountTypes": {
+      "none": "ללא הנחה",
+      "percentage": "אחוז",
+      "fixed": "סכום קבוע"
+    },
+    "treatmentsDescription": "בחר את הטיפולים שיכללו בחבילה",
+    "noTreatmentsAvailable": "אין טיפולים זמינים",
+    "errors": {
+      "nameRequired": "שם החבילה נדרש",
+      "categoryRequired": "קטגוריה נדרשת",
+      "quantityRequired": "כמות הטיפולים נדרשת",
+      "validityRequired": "תוקף החבילה נדרש",
+      "treatmentsRequired": "יש לבחור לפחות טיפול אחד"
+    }
+  },
+  "workingHours": {
+    "title": "ניהול שעות פעילות",
+    "weeklyHours": "שעות שבועיות",
+    "specialDates": "תאריכים מיוחדים",
+    "weeklyDescription": "הגדר את שעות הפעילות הרגילות לכל יום בשבוע",
+    "updateSuccess": "שעות הפעילות עודכנו בהצלחה",
+    "updateError": "שגיאה בעדכון שעות הפעילות",
+    "selectTime": "בחר שעה",
+    "days": {
+      "0": "ראשון",
+      "1": "שני",
+      "2": "שלישי",
+      "3": "רביעי",
+      "4": "חמישי",
+      "5": "שישי",
+      "6": "שבת"
+    },
+    "specialDate": {
+      "description": "הגדר תאריכים מיוחדים כמו חגים או ימים עם שעות פעילות שונות",
+      "addNew": "הוסף תאריך מיוחד",
+      "edit": "ערוך תאריך מיוחד",
+      "calendar": "לוח שנה",
+      "calendarDescription": "בחר תאריך לצפייה או עריכה",
+      "clearSelection": "נקה בחירה",
+      "selectedDate": "תאריך נבחר",
+      "allDates": "כל התאריכים המיוחדים",
+      "noSpecialDatesForSelection": "אין תאריכים מיוחדים ליום זה",
+      "noSpecialDates": "אין תאריכים מיוחדים",
+      "createSuccess": "התאריך המיוחד נוצר בהצלחה",
+      "updateSuccess": "התאריך המיוחד עודכן בהצלחה",
+      "deactivateSuccess": "התאריך המיוחד הושבת בהצלחה",
+      "activateSuccess": "התאריך המיוחד הופעל בהצלחה",
+      "statusUpdateError": "שגיאה בעדכון סטטוס התאריך המיוחד",
+      "deleteSuccess": "התאריך המיוחד נמחק בהצלחה",
+      "deleteError": "שגיאה במחיקת התאריך המיוחד",
+      "deleteConfirm": "האם אתה בטוח שברצונך למחוק תאריך מיוחד זה?",
+      "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
+      "selectDate": "בחר תאריך",
+      "fields": {
+        "date": "תאריך",
+        "name": "שם",
+        "description": "תיאור",
+        "startTime": "שעת התחלה",
+        "endTime": "שעת סיום",
+        "isActive": "פעיל"
+      },
+      "activeDescription": "תאריך מיוחד פעיל ישפיע על שעות הפעילות",
+      "errors": {
+        "dateRequired": "תאריך נדרש",
+        "nameRequired": "שם נדרש",
+        "startTimeRequired": "שעת התחלה נדרשת",
+        "endTimeRequired": "שעת סיום נדרשת"
+      },
+      "createError": "שגיאה ביצירת תאריך מיוחד",
+      "updateError": "שגיאה בעדכון תאריך מיוחד"
+    }
   }
 }

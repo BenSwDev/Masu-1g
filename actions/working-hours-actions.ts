@@ -160,3 +160,48 @@ export async function deleteSpecialDate(dateId: string) {
     }
   }
 }
+
+// שינוי סטטוס פעילות של תאריך מיוחד
+export async function toggleSpecialDateStatus(dateId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
+      throw new Error("Unauthorized")
+    }
+
+    await dbConnect()
+
+    // מצא את התאריך המיוחד הנוכחי כדי לקבל את הסטטוס הנוכחי
+    const currentWorkingHours = await WorkingHours.findOne({ "specialDates._id": dateId })
+    if (!currentWorkingHours) {
+      throw new Error("Special date not found")
+    }
+
+    const specialDate = currentWorkingHours.specialDates.find((date) => date._id.toString() === dateId)
+    if (!specialDate) {
+      throw new Error("Special date not found")
+    }
+
+    // הפוך את הסטטוס
+    const newIsActive = !specialDate.isActive
+
+    // עדכן את הסטטוס
+    const workingHours = await WorkingHours.findOneAndUpdate(
+      { "specialDates._id": dateId },
+      { $set: { "specialDates.$.isActive": newIsActive } },
+      { new: true },
+    )
+
+    return {
+      success: true,
+      data: JSON.parse(JSON.stringify(workingHours)),
+      isActive: newIsActive,
+    }
+  } catch (error) {
+    console.error("Error toggling special date status:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to toggle special date status",
+    }
+  }
+}

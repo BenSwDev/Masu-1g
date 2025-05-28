@@ -213,8 +213,8 @@ export function BundleForm({
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose} direction="bottom">
-      <DrawerContent className="h-[95vh] mx-4 sm:mx-auto max-w-lg">
-        <div className="flex flex-col h-full">
+      <DrawerContent className="h-[95vh]">
+        <div className="flex flex-col h-full rtl:text-right">
           <DrawerHeader className="flex-shrink-0 pb-2">
             <DrawerTitle className="text-center text-lg">{bundle ? "עריכת חבילה" : "הוספת חבילה חדשה"}</DrawerTitle>
           </DrawerHeader>
@@ -245,7 +245,7 @@ export function BundleForm({
               </TabsList>
 
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 rtl:text-right">
                   <TabsContent value="details" className="space-y-4 mt-0">
                     <FormField
                       control={form.control}

@@ -115,8 +115,8 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
 
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="h-[95vh] mx-4 sm:mx-auto max-w-lg">
-        <div className="flex flex-col h-full">
+      <DrawerContent className="h-[95vh]">
+        <div className="flex flex-col h-full rtl:text-right">
           <DrawerHeader className="flex-shrink-0">
             <DrawerTitle className="text-center text-lg">
               {editingDate ? "עריכת תאריך מיוחד" : "הוספת תאריך מיוחד"}
@@ -140,7 +140,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
                 </TabsTrigger>
               </TabsList>
 
-              <div className="space-y-4">
+              <div className="space-y-4 rtl:text-right">
                 <TabsContent value="basic" className="space-y-4">
                   <div>
                     <Label htmlFor="name" className="text-sm">

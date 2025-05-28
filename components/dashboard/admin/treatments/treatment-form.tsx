@@ -181,7 +181,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto rtl:text-right">
         <div className="space-y-4">
           <FormField
             control={form.control}

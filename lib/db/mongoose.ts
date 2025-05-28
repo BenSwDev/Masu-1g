@@ -18,13 +18,14 @@ if (!cached) {
   cached = (global as any).mongooseConnection = { conn: null, promise: null }
 }
 
-export default async function dbConnect() {
+async function dbConnect() {
   if (cached.conn) {
     return cached.conn
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI)
+    cached.promise = mongoose
+      .connect(MONGODB_URI)
       .then((mongoose) => {
         return mongoose
       })
@@ -66,10 +67,14 @@ export async function getConnectionStats() {
 }
 
 if (process.env.NODE_ENV === "development") {
-  mongoose.set("debug", function (collectionName, method, query, doc, options) {
+  mongoose.set("debug", (collectionName, method, query, doc, options) => {
     const start = Date.now()
     const result = JSON.stringify(query)
     const duration = Date.now() - start
-    console.log(`[Mongoose][${collectionName}.${method}] query:`, result, 'duration:', duration, 'ms')
+    console.log(`[Mongoose][${collectionName}.${method}] query:`, result, "duration:", duration, "ms")
   })
 }
+
+// Export both as default and named export
+export default dbConnect
+export { dbConnect }

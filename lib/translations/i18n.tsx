@@ -98,7 +98,7 @@ export const useTranslation = () => {
   return context
 }
 
-// Hook for using direction
+// Hook for using direction only
 export const useDirection = () => {
   const context = useContext(I18nContext)
   if (!context) {

@@ -51,6 +51,26 @@ async function initIndexes() {
         console.error("Error creating subscription index:", error)
       }
     }
+
+    // Create Coupon indexes
+    const Coupon = mongoose.connection.collection("coupons")
+    try {
+      await Coupon.createIndex({ code: 1 }, { unique: true })
+      await Coupon.createIndex({ validFrom: 1, validUntil: 1 })
+      await Coupon.createIndex({ isActive: 1 })
+    } catch (error) {
+      console.error("Error creating coupon indexes:", error)
+    }
+
+    // Create GiftVoucher indexes
+    const GiftVoucher = mongoose.connection.collection("giftvouchers")
+    try {
+      await GiftVoucher.createIndex({ code: 1 }, { unique: true })
+      await GiftVoucher.createIndex({ validFrom: 1, validUntil: 1 })
+      await GiftVoucher.createIndex({ isActive: 1 })
+    } catch (error) {
+      console.error("Error creating gift voucher indexes:", error)
+    }
   } catch (error) {
     console.error("Error initializing indexes:", error)
   }

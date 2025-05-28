@@ -9,10 +9,10 @@ import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface PaymentMethodsClientProps {
-  initialPaymentMethods: IPaymentMethod[]
+  initialPaymentMethods?: any[]
 }
 
-export function PaymentMethodsClient({ initialPaymentMethods }: PaymentMethodsClientProps) {
+export function PaymentMethodsClient({ initialPaymentMethods = [] }: PaymentMethodsClientProps) {
   const { t } = useTranslation()
   const [showForm, setShowForm] = useState(false)
   const [editingPaymentMethod, setEditingPaymentMethod] = useState<IPaymentMethod | undefined>()
@@ -42,10 +42,11 @@ export function PaymentMethodsClient({ initialPaymentMethods }: PaymentMethodsCl
 
   const setDefaultMethod = (methodId: string) => {
     setPaymentMethods((prev) =>
-      prev.map((method) => ({
-        ...method,
-        isDefault: method._id === methodId,
-      })),
+      prev.map((method) => {
+        const updatedMethod = { ...method } as IPaymentMethod
+        updatedMethod.isDefault = method._id === methodId
+        return updatedMethod
+      }),
     )
   }
 
@@ -75,7 +76,7 @@ export function PaymentMethodsClient({ initialPaymentMethods }: PaymentMethodsCl
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {paymentMethods.map((paymentMethod) => (
             <PaymentMethodCard
-              key={paymentMethod._id}
+              key={paymentMethod._id as string}
               paymentMethod={paymentMethod}
               onEdit={handleEdit}
               onUpdate={updatePaymentMethods}

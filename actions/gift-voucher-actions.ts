@@ -120,16 +120,21 @@ export async function getAllGiftVouchers() {
 
 export async function getGiftVouchers() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
-    }
-
     await dbConnect()
 
-    const giftVouchers = await GiftVoucher.find().sort({ createdAt: -1 }).lean()
+    const giftVouchers = await GiftVoucher.find().lean()
+    const total = await GiftVoucher.countDocuments()
 
-    return { success: true, giftVouchers }
+    return {
+      success: true,
+      giftVouchers,
+      pagination: {
+        total,
+        page: 1,
+        limit: 10,
+        totalPages: Math.ceil(total / 10)
+      }
+    }
   } catch (error) {
     logger.error("Error fetching gift vouchers:", error)
     return { success: false, error: "Failed to fetch gift vouchers" }
@@ -145,7 +150,6 @@ export async function getMemberGiftVouchers() {
 
     await dbConnect()
 
-    // Get active gift vouchers that are valid for the current date
     const currentDate = new Date()
     const giftVouchers = await GiftVoucher.find({
       isActive: true,
@@ -155,7 +159,22 @@ export async function getMemberGiftVouchers() {
       .sort({ validUntil: 1 })
       .lean()
 
-    return { success: true, giftVouchers }
+    const total = await GiftVoucher.countDocuments({
+      isActive: true,
+      validFrom: { $lte: currentDate },
+      validUntil: { $gte: currentDate },
+    })
+
+    return {
+      success: true,
+      giftVouchers,
+      pagination: {
+        total,
+        page: 1,
+        limit: 10,
+        totalPages: Math.ceil(total / 10)
+      }
+    }
   } catch (error) {
     logger.error("Error fetching member gift vouchers:", error)
     return { success: false, error: "Failed to fetch gift vouchers" }

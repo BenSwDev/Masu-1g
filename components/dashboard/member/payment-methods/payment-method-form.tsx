@@ -98,7 +98,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
       }
 
       const result = isEditing
-        ? await updatePaymentMethod(paymentMethod._id, formData)
+        ? await updatePaymentMethod(paymentMethod._id as string, formData)
         : await createPaymentMethod(formData)
 
       if (result.success) {

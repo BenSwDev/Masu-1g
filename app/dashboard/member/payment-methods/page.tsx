@@ -15,7 +15,11 @@ export default async function MemberPaymentMethodsPage() {
     redirect("/dashboard")
   }
 
-  const paymentMethods = await getPaymentMethods()
+  const result = await getPaymentMethods()
+
+  if (!result.success) {
+    return <div className="p-4 bg-red-50 text-red-600 rounded-md">Error: {result.error}</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -24,7 +28,7 @@ export default async function MemberPaymentMethodsPage() {
         <p className="text-gray-600">ניהול אמצעי התשלום שלך.</p>
       </div>
 
-      <PaymentMethodsClient initialPaymentMethods={paymentMethods} />
+      <PaymentMethodsClient initialPaymentMethods={result.paymentMethods || []} />
     </div>
   )
 }

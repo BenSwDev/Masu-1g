@@ -42,10 +42,10 @@ export function PaymentMethodCard({ paymentMethod, onEdit, onUpdate, onDelete, o
   const handleDelete = async () => {
     setIsLoading(true)
     try {
-      const result = await deletePaymentMethod(paymentMethod._id)
+      const result = await deletePaymentMethod(paymentMethod._id as string)
       if (result.success) {
         toast.success(t("paymentMethods.deleted"))
-        onDelete?.(paymentMethod._id) // עדכון מיידי
+        onDelete?.(paymentMethod._id as string)
       } else {
         toast.error(t("paymentMethods.deleteError"))
       }
@@ -62,10 +62,10 @@ export function PaymentMethodCard({ paymentMethod, onEdit, onUpdate, onDelete, o
 
     setIsLoading(true)
     try {
-      const result = await setDefaultPaymentMethod(paymentMethod._id)
+      const result = await setDefaultPaymentMethod(paymentMethod._id as string)
       if (result.success) {
         toast.success(t("paymentMethods.defaultSet"))
-        onSetDefault?.(paymentMethod._id) // עדכון מיידי
+        onSetDefault?.(paymentMethod._id as string)
       } else {
         toast.error(t("paymentMethods.setDefaultError"))
       }

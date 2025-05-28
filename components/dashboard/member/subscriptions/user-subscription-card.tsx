@@ -19,11 +19,11 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
-        return <Badge variant="success">{t("common.active")}</Badge>
+        return <Badge variant="default">{t("common.active")}</Badge>
       case "expired":
         return <Badge variant="secondary">{t("subscriptions.status.expired")}</Badge>
       case "depleted":
-        return <Badge variant="warning">{t("subscriptions.status.depleted")}</Badge>
+        return <Badge variant="outline">{t("subscriptions.status.depleted")}</Badge>
       case "cancelled":
         return <Badge variant="destructive">{t("subscriptions.status.cancelled")}</Badge>
       default:

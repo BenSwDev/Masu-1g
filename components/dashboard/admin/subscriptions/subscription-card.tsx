@@ -20,7 +20,7 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Sub
       <CardHeader className={`pb-2 ${subscription.isActive ? "bg-green-50" : "bg-gray-100"}`}>
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg">{subscription.name}</CardTitle>
-          <Badge variant={subscription.isActive ? "success" : "secondary"}>
+          <Badge variant={subscription.isActive ? "default" : "secondary"}>
             {subscription.isActive ? t("common.active") : t("common.inactive")}
           </Badge>
         </div>

@@ -17,17 +17,18 @@ import { toast } from "sonner"
 import { createSubscription, updateSubscription } from "@/actions/subscription-actions"
 import type { ISubscription } from "@/lib/db/models/subscription"
 
-// סכמת בדיקת תקינות
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
   description: z.string().min(5, { message: "Description must be at least 5 characters" }),
   quantity: z.coerce.number().int().min(1, { message: "Quantity must be at least 1" }),
   bonusQuantity: z.coerce.number().int().min(0, { message: "Bonus quantity must be at least 0" }),
   validityMonths: z.coerce.number().int().min(1, { message: "Validity must be at least 1 month" }),
-  isActive: z.boolean().default(true),
-  treatments: z.array(z.string()).optional(),
+  isActive: z.boolean(),
+  treatments: z.array(z.string()),
   price: z.coerce.number().min(0, { message: "Price must be at least 0" }),
 })
+
+type FormValues = z.infer<typeof formSchema>
 
 interface SubscriptionFormProps {
   open: boolean
@@ -46,23 +47,21 @@ export default function SubscriptionForm({
 }: SubscriptionFormProps) {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
-
-  // הגדרת טופס
-  const form = useForm<z.infer<typeof formSchema>>({
+  
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      description: "",
+      description: "", 
+      price: 0,
       quantity: 1,
-      bonusQuantity: 0,
       validityMonths: 12,
+      bonusQuantity: 0,
       isActive: true,
       treatments: [],
-      price: 0,
     },
   })
 
-  // עדכון ערכי ברירת מחדל כאשר יש מנוי לעריכה
   useEffect(() => {
     if (subscription) {
       form.reset({
@@ -72,7 +71,7 @@ export default function SubscriptionForm({
         bonusQuantity: subscription.bonusQuantity,
         validityMonths: subscription.validityMonths,
         isActive: subscription.isActive,
-        treatments: subscription.treatments?.map((t: any) => t._id || t),
+        treatments: subscription.treatments?.map((t: any) => t._id || t) || [],
         price: subscription.price,
       })
     } else {
@@ -89,16 +88,13 @@ export default function SubscriptionForm({
     }
   }, [subscription, form])
 
-  // שליחת הטופס
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: FormValues) => {
     setIsLoading(true)
     try {
       const formData = new FormData()
 
-      // הוספת שדות לטופס
       Object.entries(values).forEach(([key, value]) => {
         if (key === "treatments") {
-          // טיפול במערך של טיפולים
           if (Array.isArray(value)) {
             value.forEach((treatmentId) => {
               formData.append("treatments", treatmentId)
@@ -109,7 +105,6 @@ export default function SubscriptionForm({
         }
       })
 
-      // שליחת הנתונים לשרת
       const result = subscription
         ? await updateSubscription(subscription._id, formData)
         : await createSubscription(formData)

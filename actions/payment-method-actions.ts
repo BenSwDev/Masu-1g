@@ -15,25 +15,23 @@ export interface PaymentMethodFormData {
   isDefault?: boolean
 }
 
-export async function getPaymentMethods(): Promise<IPaymentMethod[]> {
+export async function getPaymentMethods() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      throw new Error("Unauthorized")
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" }
     }
 
     await dbConnect()
 
-    const paymentMethods = await PaymentMethod.find({
-      userId: session.user.id,
-    })
-      .sort({ isDefault: -1, createdAt: -1 })
-      .lean()
+    const paymentMethods = await PaymentMethod.find({ userId: session.user.id }).lean()
 
-    return JSON.parse(JSON.stringify(paymentMethods))
+    return {
+      success: true,
+      paymentMethods
+    }
   } catch (error) {
-    console.error("Error fetching payment methods:", error)
-    throw new Error("Failed to fetch payment methods")
+    return { success: false, error: "Failed to fetch payment methods" }
   }
 }
 

@@ -124,16 +124,21 @@ export async function getAllCoupons() {
 
 export async function getCoupons() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
-    }
-
     await dbConnect()
 
-    const coupons = await Coupon.find().sort({ createdAt: -1 }).lean()
+    const coupons = await Coupon.find().lean()
+    const total = await Coupon.countDocuments()
 
-    return { success: true, coupons }
+    return {
+      success: true,
+      coupons,
+      pagination: {
+        total,
+        page: 1,
+        limit: 10,
+        totalPages: Math.ceil(total / 10)
+      }
+    }
   } catch (error) {
     logger.error("Error fetching coupons:", error)
     return { success: false, error: "Failed to fetch coupons" }
@@ -149,7 +154,6 @@ export async function getMemberCoupons() {
 
     await dbConnect()
 
-    // Get active coupons that are valid for the current date
     const currentDate = new Date()
     const coupons = await Coupon.find({
       isActive: true,
@@ -159,7 +163,22 @@ export async function getMemberCoupons() {
       .sort({ validUntil: 1 })
       .lean()
 
-    return { success: true, coupons }
+    const total = await Coupon.countDocuments({
+      isActive: true,
+      validFrom: { $lte: currentDate },
+      validUntil: { $gte: currentDate },
+    })
+
+    return {
+      success: true,
+      coupons,
+      pagination: {
+        total,
+        page: 1,
+        limit: 10,
+        totalPages: Math.ceil(total / 10)
+      }
+    }
   } catch (error) {
     logger.error("Error fetching member coupons:", error)
     return { success: false, error: "Failed to fetch coupons" }
@@ -175,10 +194,19 @@ export async function getPartnerCoupons() {
 
     await dbConnect()
 
-    // Partners can see all active coupons
     const coupons = await Coupon.find({ isActive: true }).sort({ createdAt: -1 }).lean()
+    const total = await Coupon.countDocuments({ isActive: true })
 
-    return { success: true, coupons }
+    return {
+      success: true,
+      coupons,
+      pagination: {
+        total,
+        page: 1,
+        limit: 10,
+        totalPages: Math.ceil(total / 10)
+      }
+    }
   } catch (error) {
     logger.error("Error fetching partner coupons:", error)
     return { success: false, error: "Failed to fetch coupons" }

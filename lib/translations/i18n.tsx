@@ -1,7 +1,14 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { type Language, getDirection } from "./server"
+
+// Supported languages
+export type Language = "he" | "en" | "ru"
+
+// Direction based on language
+export const getDirection = (lang: Language): "rtl" | "ltr" => {
+  return lang === "he" ? "rtl" : "ltr"
+}
 
 // Interface for the translation context
 interface I18nContextType {
@@ -89,13 +96,4 @@ export const useTranslation = () => {
     throw new Error("useTranslation must be used within an I18nProvider")
   }
   return context
-}
-
-// Hook for using direction only
-export const useDirection = () => {
-  const context = useContext(I18nContext)
-  if (!context) {
-    throw new Error("useDirection must be used within an I18nProvider")
-  }
-  return context.dir
 }

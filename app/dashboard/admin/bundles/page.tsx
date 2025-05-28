@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/common/ui/skeleton"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
-import { getTranslations } from "@/lib/translations/i18n"
+import { getTranslations } from "@/lib/translations/server"
 
 // Get treatments from the database
 async function getTreatments() {

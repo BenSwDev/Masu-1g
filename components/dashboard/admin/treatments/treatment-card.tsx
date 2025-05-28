@@ -43,7 +43,7 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
       await toggleTreatmentStatus(treatment._id)
       toast({
         title: treatment.isActive ? t("treatments.deactivateSuccess") : t("treatments.activateSuccess"),
-        variant: "success",
+        variant: "default",
       })
       onRefresh()
     } catch (error) {
@@ -63,7 +63,7 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
       await duplicateTreatment(treatment._id)
       toast({
         title: t("treatments.duplicateSuccess"),
-        variant: "success",
+        variant: "default",
       })
       onRefresh()
     } catch (error) {
@@ -83,7 +83,7 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
       await deleteTreatment(treatment._id)
       toast({
         title: t("treatments.deleteSuccess"),
-        variant: "success",
+        variant: "default",
       })
       onRefresh()
     } catch (error) {
@@ -155,14 +155,19 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
             {treatment.pricingType === "fixed" ? (
               <div className="flex justify-between text-sm">
                 <span>{t("treatments.price")}</span>
-                <span className="font-medium">{formatPrice(treatment.price)}</span>
+                <span className="font-medium">{formatPrice(treatment.fixedPrice || 0)}</span>
               </div>
             ) : (
               <div className="space-y-1">
-                {treatment.durations.map((duration: any) => (
+                {treatment.durations?.map((duration: { minutes: number; price: number; professionalPrice: number; isActive: boolean }) => (
                   <div key={duration.minutes} className="flex justify-between text-sm">
                     <span>
                       {duration.minutes} {t("treatments.minutes")}
+                      {!duration.isActive && (
+                        <Badge variant="outline" className="ml-2">
+                          {t("common.inactive")}
+                        </Badge>
+                      )}
                     </span>
                     <span className="font-medium">{formatPrice(duration.price)}</span>
                   </div>

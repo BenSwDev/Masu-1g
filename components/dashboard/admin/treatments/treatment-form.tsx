@@ -31,6 +31,22 @@ interface TreatmentFormProps {
   onCancel: () => void
 }
 
+type TreatmentFormValues = {
+  name: string
+  category: "massages" | "facial_treatments"
+  description?: string
+  isActive: boolean
+  pricingType: "fixed" | "duration_based"
+  fixedPrice?: number
+  fixedProfessionalPrice?: number
+  durations?: {
+    minutes: number
+    price: number
+    professionalPrice: number
+    isActive: boolean
+  }[]
+}
+
 export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -40,48 +56,51 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
   // Create form schema based on pricing type
   const formSchema = z.object({
     name: z.string().min(2, { message: t("treatments.errors.nameRequired") }),
-    category: z.string().min(1, { message: t("treatments.errors.categoryRequired") }),
+    category: z.enum(["massages", "facial_treatments"], { 
+      required_error: t("treatments.errors.categoryRequired") 
+    }),
     description: z.string().optional(),
-    isActive: z.boolean().default(true),
+    isActive: z.boolean(),
     pricingType: z.enum(["fixed", "duration_based"]),
-    price: z.number().optional(),
-    professionalPrice: z.number().optional(),
-    durations: z
-      .array(
-        z.object({
-          minutes: z.number(),
-          price: z.number(),
-          professionalPrice: z.number(),
+    fixedPrice: z.number().min(0).optional(),
+    fixedProfessionalPrice: z.number().min(0).optional(),
+    durations: z.array(
+      z.object({
+        minutes: z.number().refine(val => [60, 75, 90, 120].includes(val), {
+          message: t("treatments.errors.invalidDuration")
         }),
-      )
-      .optional(),
-  })
+        price: z.number().min(0),
+        professionalPrice: z.number().min(0),
+        isActive: z.boolean()
+      })
+    ).optional(),
+  }) satisfies z.ZodType<TreatmentFormValues>
 
   // Initialize form with existing treatment data or defaults
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<TreatmentFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: treatment?.name || "",
-      category: treatment?.category || "massage",
+      category: treatment?.category || "massages",
       description: treatment?.description || "",
       isActive: treatment?.isActive ?? true,
       pricingType: treatment?.pricingType || "fixed",
-      price: treatment?.price || 0,
-      professionalPrice: treatment?.professionalPrice || 0,
-      durations: treatment?.durations || [{ minutes: 60, price: 0, professionalPrice: 0 }],
+      fixedPrice: treatment?.fixedPrice || 0,
+      fixedProfessionalPrice: treatment?.fixedProfessionalPrice || 0,
+      durations: treatment?.durations || [{ minutes: 60, price: 0, professionalPrice: 0, isActive: true }],
     },
   })
 
   // Initialize durations state for duration-based pricing
-  const [durations, setDurations] = useState(treatment?.durations || [{ minutes: 60, price: 0, professionalPrice: 0 }])
+  const [durations, setDurations] = useState(treatment?.durations || [{ minutes: 60, price: 0, professionalPrice: 0, isActive: true }])
 
   const addDuration = () => {
-    setDurations([...durations, { minutes: 60, price: 0, professionalPrice: 0 }])
+    setDurations([...durations, { minutes: 60, price: 0, professionalPrice: 0, isActive: true }])
   }
 
   const removeDuration = (index: number) => {
     if (durations.length > 1) {
-      setDurations(durations.filter((_, i) => i !== index))
+      setDurations(durations.filter((_: any, i: number) => i !== index))
     }
   }
 
@@ -91,7 +110,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
     setDurations(newDurations)
   }
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: TreatmentFormValues) => {
     try {
       setIsSubmitting(true)
 
@@ -156,10 +175,8 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="massage">{t("treatments.categories.massage")}</SelectItem>
-                            <SelectItem value="facial">{t("treatments.categories.facial")}</SelectItem>
-                            <SelectItem value="body">{t("treatments.categories.body")}</SelectItem>
-                            <SelectItem value="other">{t("treatments.categories.other")}</SelectItem>
+                            <SelectItem value="massages">{t("treatments.categories.massages")}</SelectItem>
+                            <SelectItem value="facial_treatments">{t("treatments.categories.facial_treatments")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -243,7 +260,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="price"
+                        name="fixedPrice"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("treatments.fields.price")}</FormLabel>
@@ -261,7 +278,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                       />
                       <FormField
                         control={form.control}
-                        name="professionalPrice"
+                        name="fixedProfessionalPrice"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>{t("treatments.fields.professionalPrice")}</FormLabel>
@@ -288,7 +305,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                         </Button>
                       </div>
 
-                      {durations.map((duration, index) => (
+                      {durations.map((duration: { minutes: number; price: number; professionalPrice: number; isActive: boolean }, index: number) => (
                         <div key={index} className="border rounded-md p-3 space-y-3">
                           <div className="flex justify-between items-center">
                             <h4 className="text-sm font-medium">
@@ -305,17 +322,23 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                             </Button>
                           </div>
 
-                          <div className="grid grid-cols-3 gap-3">
+                          <div className="grid grid-cols-4 gap-3">
                             <div>
                               <FormLabel className="text-xs">{t("treatments.fields.minutes")}</FormLabel>
-                              <Input
-                                type="number"
-                                min="15"
-                                step="15"
-                                value={duration.minutes}
-                                onChange={(e) => updateDuration(index, "minutes", Number(e.target.value))}
-                                className="h-8"
-                              />
+                              <Select
+                                value={duration.minutes.toString()}
+                                onValueChange={(value) => updateDuration(index, "minutes", Number(value))}
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="60">60</SelectItem>
+                                  <SelectItem value="75">75</SelectItem>
+                                  <SelectItem value="90">90</SelectItem>
+                                  <SelectItem value="120">120</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                             <div>
                               <FormLabel className="text-xs">{t("treatments.fields.price")}</FormLabel>
@@ -335,6 +358,13 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                                 value={duration.professionalPrice}
                                 onChange={(e) => updateDuration(index, "professionalPrice", Number(e.target.value))}
                                 className="h-8"
+                              />
+                            </div>
+                            <div>
+                              <FormLabel className="text-xs">{t("treatments.fields.isActive")}</FormLabel>
+                              <Switch
+                                checked={duration.isActive}
+                                onCheckedChange={(checked: boolean) => updateDuration(index, "isActive", checked ? 1 : 0)}
                               />
                             </div>
                           </div>

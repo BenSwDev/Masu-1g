@@ -268,10 +268,8 @@
     "price": "מחיר",
     "minutes": "דקות",
     "categories": {
-      "massage": "עיסוי",
-      "facial": "טיפולי פנים",
-      "body": "טיפולי גוף",
-      "other": "אחר"
+      "massages": "עיסויים",
+      "facial_treatments": "טיפולי פנים"
     },
     "fields": {
       "name": "שם הטיפול",

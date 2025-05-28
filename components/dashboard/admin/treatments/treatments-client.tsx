@@ -66,7 +66,7 @@ export function TreatmentsClient() {
       })
     : []
 
-  const categories = ["all", ...new Set(Array.isArray(treatments) ? treatments.map((t) => t.category) : [])]
+  const categories = ["all", "massages", "facial_treatments"]
 
   if (isAddingTreatment) {
     return (

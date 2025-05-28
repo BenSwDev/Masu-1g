@@ -13,7 +13,12 @@ export interface TreatmentFormData {
   pricingType: "fixed" | "duration_based"
   fixedPrice?: number
   fixedProfessionalPrice?: number
-  durations?: ITreatmentDuration[]
+  durations?: {
+    minutes: number
+    price: number
+    professionalPrice: number
+    isActive: boolean
+  }[]
 }
 
 export async function getTreatments() {
@@ -48,6 +53,20 @@ export async function createTreatment(data: TreatmentFormData) {
 
     await connectDB()
 
+    // Validate data before creating
+    if (data.pricingType === "fixed") {
+      if (!data.fixedPrice || !data.fixedProfessionalPrice) {
+        throw new Error("Fixed pricing requires both price and professional price")
+      }
+      data.durations = undefined
+    } else if (data.pricingType === "duration_based") {
+      if (!data.durations || data.durations.length === 0) {
+        throw new Error("Duration-based pricing requires at least one duration")
+      }
+      data.fixedPrice = undefined
+      data.fixedProfessionalPrice = undefined
+    }
+
     const treatment = new Treatment(data)
     await treatment.save()
 
@@ -72,6 +91,20 @@ export async function updateTreatment(id: string, data: TreatmentFormData) {
     }
 
     await connectDB()
+
+    // Validate data before updating
+    if (data.pricingType === "fixed") {
+      if (!data.fixedPrice || !data.fixedProfessionalPrice) {
+        throw new Error("Fixed pricing requires both price and professional price")
+      }
+      data.durations = undefined
+    } else if (data.pricingType === "duration_based") {
+      if (!data.durations || data.durations.length === 0) {
+        throw new Error("Duration-based pricing requires at least one duration")
+      }
+      data.fixedPrice = undefined
+      data.fixedProfessionalPrice = undefined
+    }
 
     const treatment = await Treatment.findByIdAndUpdate(id, data, { new: true, runValidators: true })
 
@@ -163,7 +196,14 @@ export async function duplicateTreatment(id: string) {
       throw new Error("Treatment not found")
     }
 
-    const treatmentData = originalTreatment.toObject()
+    const treatmentData = originalTreatment.toObject() as {
+      _id?: string;
+      createdAt?: Date;
+      updatedAt?: Date;
+      name: string;
+      [key: string]: any;
+    }
+
     delete treatmentData._id
     delete treatmentData.createdAt
     delete treatmentData.updatedAt

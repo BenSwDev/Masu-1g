@@ -236,5 +236,53 @@
     "defaultSet": "Default payment method updated",
     "created": "Payment method created",
     "updated": "Payment method updated"
+  },
+  "treatments": {
+    "title": "Manage Treatments",
+    "addNew": "Add New Treatment",
+    "edit": "Edit Treatment",
+    "searchPlaceholder": "Search treatments by name",
+    "noTreatments": "No treatments found",
+    "createSuccess": "Treatment created successfully",
+    "updateSuccess": "Treatment updated successfully",
+    "deactivateSuccess": "Treatment deactivated successfully",
+    "activateSuccess": "Treatment activated successfully",
+    "statusUpdateError": "Error updating treatment status",
+    "duplicateSuccess": "Treatment duplicated successfully",
+    "duplicateError": "Error duplicating treatment",
+    "deleteSuccess": "Treatment deleted successfully",
+    "deleteError": "Error deleting treatment",
+    "deleteConfirm": "Are you sure you want to delete this treatment?",
+    "deleteConfirmDescription": "This action cannot be undone",
+    "pricing": "Pricing",
+    "price": "Price",
+    "minutes": "minutes",
+    "categories": {
+      "massages": "Massages",
+      "facial_treatments": "Facial Treatments"
+    },
+    "fields": {
+      "name": "Treatment Name",
+      "category": "Category",
+      "description": "Description",
+      "isActive": "Active",
+      "pricingType": "Pricing Type",
+      "price": "Price",
+      "professionalPrice": "Professional Price",
+      "durations": "Durations",
+      "minutes": "minutes"
+    },
+    "pricingTypes": {
+      "fixed": "Fixed Price",
+      "durationBased": "Duration Based"
+    },
+    "selectCategory": "Select Category",
+    "activeDescription": "Active treatments will be shown to clients",
+    "addDuration": "Add Duration",
+    "duration": "Duration",
+    "errors": {
+      "nameRequired": "Treatment name is required",
+      "categoryRequired": "Category is required"
+    }
   }
 }

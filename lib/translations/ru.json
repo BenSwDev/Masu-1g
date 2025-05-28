@@ -217,5 +217,53 @@
     "defaultSet": "Способ оплаты по умолчанию обновлен",
     "created": "Способ оплаты создан",
     "updated": "Способ оплаты обновлен"
+  },
+  "treatments": {
+    "title": "Управление процедурами",
+    "addNew": "Добавить новую процедуру",
+    "edit": "Редактировать процедуру",
+    "searchPlaceholder": "Поиск процедуры по названию",
+    "noTreatments": "Процедуры не найдены",
+    "createSuccess": "Процедура успешно создана",
+    "updateSuccess": "Процедура успешно обновлена",
+    "deactivateSuccess": "Процедура успешно деактивирована",
+    "activateSuccess": "Процедура успешно активирована",
+    "statusUpdateError": "Ошибка обновления статуса процедуры",
+    "duplicateSuccess": "Процедура успешно скопирована",
+    "duplicateError": "Ошибка копирования процедуры",
+    "deleteSuccess": "Процедура успешно удалена",
+    "deleteError": "Ошибка удаления процедуры",
+    "deleteConfirm": "Вы уверены, что хотите удалить эту процедуру?",
+    "deleteConfirmDescription": "Это действие нельзя отменить",
+    "pricing": "Цены",
+    "price": "Цена",
+    "minutes": "минут",
+    "categories": {
+      "massages": "Массажи",
+      "facial_treatments": "Уход за лицом"
+    },
+    "fields": {
+      "name": "Название процедуры",
+      "category": "Категория",
+      "description": "Описание",
+      "isActive": "Активна",
+      "pricingType": "Тип ценообразования",
+      "price": "Цена",
+      "professionalPrice": "Цена для специалиста",
+      "durations": "Продолжительность",
+      "minutes": "минут"
+    },
+    "pricingTypes": {
+      "fixed": "Фиксированная цена",
+      "durationBased": "Цена по продолжительности"
+    },
+    "selectCategory": "Выберите категорию",
+    "activeDescription": "Активные процедуры будут показаны клиентам",
+    "addDuration": "Добавить продолжительность",
+    "duration": "Продолжительность",
+    "errors": {
+      "nameRequired": "Название процедуры обязательно",
+      "categoryRequired": "Категория обязательна"
+    }
   }
 }

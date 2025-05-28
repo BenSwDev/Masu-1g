@@ -11,12 +11,12 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Clock, Coins, Info, CheckCircle2, XCircle } from "lucide-react"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import { createTreatment, updateTreatment, type TreatmentFormData } from "@/actions/treatment-actions"
 import { toast } from "@/components/ui/use-toast"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const formSchema = z
   .object({
@@ -75,6 +75,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [professionalPriceType, setProfessionalPriceType] = useState<"amount" | "percentage">("amount")
   const [durationPriceTypes, setDurationPriceTypes] = useState<Record<number, "amount" | "percentage">>({})
+  const [activeTab, setActiveTab] = useState("basic")
 
   const form = useForm<TreatmentFormData>({
     resolver: zodResolver(formSchema),
@@ -183,15 +184,14 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-2xl mx-auto">
-        <Card className="border-2 border-muted">
-          <CardHeader className="bg-muted/30">
-            <CardTitle className="text-xl flex items-center gap-2">
-              {treatment ? "עריכת טיפול" : "הוספת טיפול חדש"}
-            </CardTitle>
-            <CardDescription>{treatment ? "עדכן את פרטי הטיפול הקיים" : "הוסף טיפול חדש למערכת"}</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-2 mb-4">
+            <TabsTrigger value="basic">פרטים בסיסיים</TabsTrigger>
+            <TabsTrigger value="pricing">תמחור</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="basic" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -266,9 +266,9 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                 </FormItem>
               )}
             />
+          </TabsContent>
 
-            <Separator className="my-6" />
-
+          <TabsContent value="pricing" className="space-y-4">
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <Coins className="h-5 w-5 text-primary" />
@@ -490,16 +490,17 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                 </div>
               )}
             </div>
-          </CardContent>
-          <CardFooter className="flex justify-between bg-muted/30 border-t">
-            <Button type="button" variant="outline" onClick={onCancel} className="min-w-24">
-              ביטול
-            </Button>
-            <Button type="submit" disabled={isSubmitting} className="min-w-24">
-              {isSubmitting ? "שומר..." : treatment ? "עדכן טיפול" : "צור טיפול"}
-            </Button>
-          </CardFooter>
-        </Card>
+          </TabsContent>
+        </Tabs>
+
+        <div className="flex justify-end gap-3 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={onCancel} className="min-w-24">
+            ביטול
+          </Button>
+          <Button type="submit" disabled={isSubmitting} className="min-w-24">
+            {isSubmitting ? "שומר..." : treatment ? "עדכן טיפול" : "צור טיפול"}
+          </Button>
+        </div>
       </form>
     </Form>
   )

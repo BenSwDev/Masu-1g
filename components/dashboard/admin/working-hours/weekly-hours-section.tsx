@@ -59,7 +59,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-xl">
+        <CardTitle className="flex items-center gap-2 text-xl rtl:flex-row-reverse">
           <Clock className="h-5 w-5" />
           שעות פעילות שבועיות
         </CardTitle>
@@ -87,13 +87,13 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
                   </div>
                   <div className="flex items-center gap-2">
                     {dayHour.isActive ? (
-                      <span className="text-xs text-teal-600 flex items-center">
-                        <Check className="h-3 w-3 mr-1" />
+                      <span className="text-xs text-teal-600 flex items-center rtl:flex-row-reverse">
+                        <Check className="h-3 w-3 mr-1 rtl:mr-0 rtl:ml-1" />
                         פעיל
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-500 flex items-center">
-                        <X className="h-3 w-3 mr-1" />
+                      <span className="text-xs text-gray-500 flex items-center rtl:flex-row-reverse">
+                        <X className="h-3 w-3 mr-1 rtl:mr-0 rtl:ml-1" />
                         לא פעיל
                       </span>
                     )}
@@ -107,7 +107,7 @@ export function WeeklyHoursSection({ weeklyHours, onUpdate }: WeeklyHoursSection
 
                 {dayHour.isActive && (
                   <div className="flex items-center justify-between text-sm mb-2">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 rtl:flex-row-reverse">
                       <Clock className="h-3 w-3" />
                       <span>שעות:</span>
                     </div>

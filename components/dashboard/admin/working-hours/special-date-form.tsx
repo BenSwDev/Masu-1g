@@ -126,16 +126,16 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
           <div className="flex-1 overflow-y-auto px-4">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3 sticky top-0 bg-background z-10 mb-4">
-                <TabsTrigger value="basic" className="text-xs">
-                  <Calendar className="h-3 w-3 ml-1" />
+                <TabsTrigger value="basic" className="text-xs rtl:flex-row-reverse">
+                  <Calendar className="h-3 w-3 ml-1 rtl:ml-0 rtl:mr-1" />
                   פרטים
                 </TabsTrigger>
-                <TabsTrigger value="hours" className="text-xs">
-                  <Clock className="h-3 w-3 ml-1" />
+                <TabsTrigger value="hours" className="text-xs rtl:flex-row-reverse">
+                  <Clock className="h-3 w-3 ml-1 rtl:ml-0 rtl:mr-1" />
                   שעות
                 </TabsTrigger>
-                <TabsTrigger value="pricing" className="text-xs">
-                  <DollarSign className="h-3 w-3 ml-1" />
+                <TabsTrigger value="pricing" className="text-xs rtl:flex-row-reverse">
+                  <DollarSign className="h-3 w-3 ml-1 rtl:ml-0 rtl:mr-1" />
                   תמחור
                 </TabsTrigger>
               </TabsList>
@@ -286,7 +286,7 @@ export function SpecialDateForm({ isOpen, onClose, onSubmit, editingDate }: Spec
           </div>
 
           <DrawerFooter className="flex-shrink-0">
-            <div className="flex gap-2">
+            <div className="flex gap-2 rtl:flex-row-reverse">
               <Button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-teal-500 hover:bg-teal-600">
                 {isLoading ? "שומר..." : editingDate ? "עדכן" : "הוסף"}
               </Button>

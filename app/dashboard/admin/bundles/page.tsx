@@ -54,8 +54,8 @@ export default async function BundlesPage() {
   return (
     <div className="container px-4 py-6 mx-auto max-w-7xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">ניהול חבילות</h1>
-        <p className="text-gray-500">צור וערוך חבילות טיפולים למכירה</p>
+        <h1 className="text-2xl font-bold rtl:text-right">ניהול חבילות</h1>
+        <p className="text-gray-500 rtl:text-right">צור וערוך חבילות טיפולים למכירה</p>
       </div>
 
       <Suspense fallback={<BundlesSkeleton />}>

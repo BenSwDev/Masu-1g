@@ -154,16 +154,23 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(treatment)}>
-                    <Edit className="h-4 w-4 ml-2" />
+                  <DropdownMenuItem onClick={() => onEdit(treatment)} className="rtl:flex rtl:flex-row-reverse">
+                    <Edit className="h-4 w-4 ml-2 rtl:ml-0 rtl:mr-2" />
                     עריכה
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
-                    <Copy className="h-4 w-4 ml-2" />
+                  <DropdownMenuItem
+                    onClick={handleDuplicate}
+                    disabled={isDuplicating}
+                    className="rtl:flex rtl:flex-row-reverse"
+                  >
+                    <Copy className="h-4 w-4 ml-2 rtl:ml-0 rtl:mr-2" />
                     שכפול
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600">
-                    <Trash2 className="h-4 w-4 ml-2" />
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="text-red-600 rtl:flex rtl:flex-row-reverse"
+                  >
+                    <Trash2 className="h-4 w-4 ml-2 rtl:ml-0 rtl:mr-2" />
                     מחיקה
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -176,7 +183,7 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
           <div className="space-y-3">
             {treatment.pricingType === "fixed" ? (
               <div className="bg-muted/50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2 text-sm rtl:flex-row-reverse">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">מחיר קבוע:</span>
                   <span>₪{treatment.fixedPrice}</span>
@@ -188,7 +195,7 @@ export function TreatmentCard({ treatment, onEdit, onUpdate, onDuplicate, onDele
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm font-medium">
+                <div className="flex items-center gap-2 text-sm font-medium rtl:flex-row-reverse">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span>זמנים זמינים:</span>
                 </div>

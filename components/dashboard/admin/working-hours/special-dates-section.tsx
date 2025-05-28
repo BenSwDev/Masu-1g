@@ -73,12 +73,12 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
     <Card>
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-xl">
+          <CardTitle className="flex items-center gap-2 text-xl rtl:flex-row-reverse">
             <Calendar className="h-5 w-5" />
             תאריכים מיוחדים
           </CardTitle>
-          <Button onClick={onAdd} size="sm" className="bg-teal-500 hover:bg-teal-600 text-white">
-            <Plus className="h-4 w-4 ml-1" />
+          <Button onClick={onAdd} size="sm" className="bg-teal-500 hover:bg-teal-600 text-white rtl:flex-row-reverse">
+            <Plus className="h-4 w-4 ml-1 rtl:ml-0 rtl:mr-1" />
             הוסף תאריך מיוחד
           </Button>
         </div>
@@ -86,12 +86,12 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
       <CardContent>
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute right-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute right-2 rtl:right-auto rtl:left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="חיפוש תאריכים..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-3 pr-8"
+              className="pl-3 pr-8 rtl:pl-8 rtl:pr-3"
             />
           </div>
           <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)} className="w-full sm:w-auto">
@@ -163,7 +163,7 @@ export function SpecialDatesSection({ specialDates, onAdd, onEdit, onDelete }: S
 
                         {date.isActive && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            <Badge variant="outline" className="flex items-center gap-1 text-xs">
+                            <Badge variant="outline" className="flex items-center gap-1 text-xs rtl:flex-row-reverse">
                               <Clock className="h-3 w-3" />
                               {date.startTime} - {date.endTime}
                             </Badge>

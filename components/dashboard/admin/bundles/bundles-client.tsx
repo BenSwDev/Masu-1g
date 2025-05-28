@@ -287,18 +287,22 @@ export function BundlesClient({ initialBundles, treatments, categories }: Bundle
           className="w-full sm:w-auto bg-teal-500 hover:bg-teal-600"
           disabled={isLoading || !hasTreatments || !hasCategories}
         >
-          {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Plus className="ml-2 h-4 w-4" />}
+          {isLoading ? (
+            <Loader2 className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4" />
+          )}
           הוסף חבילה חדשה
         </Button>
 
         <div className="w-full sm:w-auto">
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute right-3 rtl:right-auto rtl:left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
               placeholder="חיפוש חבילות..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-3 pr-10 w-full"
+              className="pl-3 pr-10 rtl:pl-10 rtl:pr-3 w-full"
             />
           </div>
         </div>

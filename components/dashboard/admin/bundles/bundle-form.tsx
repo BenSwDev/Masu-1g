@@ -555,8 +555,8 @@ export function BundleForm({
                             .watch("treatments")
                             .filter((t) => t.isSelected)
                             .map((treatment, index) => (
-                              <div key={index} className="flex items-center">
-                                <Clock className="w-3 h-3 ml-1 text-gray-400" />
+                              <div key={index} className="flex items-center rtl:flex-row-reverse">
+                                <Clock className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1 text-gray-400" />
                                 <span className="text-xs text-gray-900">{treatment.name}</span>
                               </div>
                             ))}
@@ -573,7 +573,7 @@ export function BundleForm({
           </div>
 
           <DrawerFooter className="flex-shrink-0 pt-2">
-            <div className="flex justify-between gap-2">
+            <div className="flex justify-between gap-2 rtl:flex-row-reverse">
               <Button
                 type="button"
                 variant="outline"
@@ -614,7 +614,7 @@ export function BundleForm({
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 animate-spin" />
                     שומר...
                   </>
                 ) : activeTab === "preview" ? (

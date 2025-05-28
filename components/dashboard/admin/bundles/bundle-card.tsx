@@ -86,8 +86,8 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
         <CardContent className="p-0">
           <div className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <Package className="w-5 h-5 ml-2 text-teal-500" />
+              <div className="flex items-center rtl:flex-row-reverse">
+                <Package className="w-5 h-5 ml-2 rtl:ml-0 rtl:mr-2 text-teal-500" />
                 <h3 className="text-lg font-semibold">{bundle.name}</h3>
               </div>
               <div className="flex items-center">
@@ -130,16 +130,16 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              <div className="flex items-center">
-                <Package className="w-4 h-4 ml-2 text-gray-500" />
+              <div className="flex items-center rtl:flex-row-reverse">
+                <Package className="w-4 h-4 ml-2 rtl:ml-0 rtl:mr-2 text-gray-500" />
                 <span className="text-sm">{bundle.quantity} טיפולים</span>
               </div>
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 ml-2 text-gray-500" />
+              <div className="flex items-center rtl:flex-row-reverse">
+                <Calendar className="w-4 h-4 ml-2 rtl:ml-0 rtl:mr-2 text-gray-500" />
                 <span className="text-sm">תוקף: {bundle.validityMonths} חודשים</span>
               </div>
-              <div className="flex items-center">
-                <Gift className="w-4 h-4 ml-2 text-gray-500" />
+              <div className="flex items-center rtl:flex-row-reverse">
+                <Gift className="w-4 h-4 ml-2 rtl:ml-0 rtl:mr-2 text-gray-500" />
                 <span className="text-sm">{formatDiscountValue()}</span>
               </div>
             </div>
@@ -149,8 +149,8 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
               <div className="space-y-1">
                 {Array.isArray(bundle.treatments) && bundle.treatments.length > 0 ? (
                   bundle.treatments.map((treatment, index) => (
-                    <div key={index} className="flex items-center text-sm">
-                      <Clock className="w-3 h-3 ml-1 text-gray-400" />
+                    <div className="flex items-center text-sm rtl:flex-row-reverse" key={index}>
+                      <Clock className="w-3 h-3 ml-1 rtl:ml-0 rtl:mr-1 text-gray-400" />
                       {treatment.name}
                     </div>
                   ))
@@ -169,7 +169,7 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
             <AlertDialogTitle>האם אתה בטוח שברצונך למחוק חבילה זו?</AlertDialogTitle>
             <AlertDialogDescription>פעולה זו לא ניתנת לביטול. חבילה זו תימחק לצמיתות מהמערכת.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row-reverse sm:justify-end">
+          <AlertDialogFooter className="flex-row-reverse sm:justify-end rtl:flex-row rtl:sm:justify-start">
             <AlertDialogCancel>ביטול</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
@@ -178,7 +178,7 @@ export function BundleCard({ bundle, onEdit, onDelete, onDuplicate, onToggleStat
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="ml-2 rtl:ml-0 rtl:mr-2 h-4 w-4 animate-spin" />
                   מוחק...
                 </>
               ) : (

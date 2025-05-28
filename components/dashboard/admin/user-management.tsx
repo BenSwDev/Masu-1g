@@ -36,14 +36,14 @@ interface UserManagementProps {
   sortDirection: "asc" | "desc"
 }
 
-export function UserManagement({ 
+export function UserManagement({
   users: initialUsers,
   totalPages: initialTotalPages,
   currentPage: initialPage,
   searchTerm: initialSearchTerm,
   roleFilter: initialRoleFilter,
   sortField: initialSortField,
-  sortDirection: initialSortDirection
+  sortDirection: initialSortDirection,
 }: UserManagementProps) {
   const { t } = useTranslation()
   const { data: session } = useSession()
@@ -67,7 +67,7 @@ export function UserManagement({
     if (roleFilter.length > 0) params.set("roles", roleFilter.join(","))
     if (sortField !== "name") params.set("sortField", sortField)
     if (sortDirection !== "asc") params.set("sortDirection", sortDirection)
-    
+
     const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`
     window.history.pushState({}, "", newUrl)
   }, [currentPage, searchTerm, roleFilter, sortField, sortDirection])
@@ -75,52 +75,46 @@ export function UserManagement({
   // Filter and sort users
   const filteredUsers = useMemo(() => {
     let result = [...localUsers]
-    
+
     // Apply search
     if (searchTerm) {
-      result = result.filter(user => 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      result = result.filter(
+        (user) =>
+          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
-    
+
     // Apply role filter
     if (roleFilter.length > 0) {
-      result = result.filter(user => 
-        roleFilter.some(role => user.roles.includes(role))
-      )
+      result = result.filter((user) => roleFilter.some((role) => user.roles.includes(role)))
     }
-    
+
     // Apply sorting
     result.sort((a, b) => {
       const aValue = a[sortField as keyof UserData]
       const bValue = b[sortField as keyof UserData]
-      
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' 
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue)
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortDirection === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue)
       }
       return 0
     })
-    
+
     return result
   }, [localUsers, searchTerm, roleFilter, sortField, sortDirection])
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   // Handle sort
   const handleSort = (field: string) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
     } else {
       setSortField(field)
-      setSortDirection('asc')
+      setSortDirection("asc")
     }
   }
 
@@ -321,8 +315,8 @@ export function UserManagement({
             className="max-w-sm"
           />
           <Select
-            value={roleFilter.join(',')}
-            onValueChange={(value) => setRoleFilter(value === "all" ? [] : value.split(','))}
+            value={roleFilter.join(",")}
+            onValueChange={(value) => setRoleFilter(value === "all" ? [] : value.split(","))}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder={t("admin.users.filterByRole")} />
@@ -345,7 +339,7 @@ export function UserManagement({
                 <Button
                   variant="ghost"
                   onClick={() => handleSort("name")}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 rtl:flex-row-reverse"
                 >
                   {t("admin.users.name")}
                   <ArrowUpDown className="h-4 w-4" />
@@ -355,7 +349,7 @@ export function UserManagement({
                 <Button
                   variant="ghost"
                   onClick={() => handleSort("email")}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 rtl:flex-row-reverse"
                 >
                   {t("admin.users.email")}
                   <ArrowUpDown className="h-4 w-4" />
@@ -366,7 +360,7 @@ export function UserManagement({
                 <Button
                   variant="ghost"
                   onClick={() => handleSort("createdAt")}
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 rtl:flex-row-reverse"
                 >
                   {t("admin.users.created")}
                   <ArrowUpDown className="h-4 w-4" />
@@ -384,7 +378,7 @@ export function UserManagement({
                   <div className="flex flex-wrap gap-1">
                     {user.roles.map((role) => (
                       <Badge key={role} variant="outline" className={getRoleBadgeColor(role)}>
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 rtl:flex-row-reverse">
                           {getRoleIcon(role)}
                           {role}
                         </span>
@@ -394,7 +388,7 @@ export function UserManagement({
                 </TableCell>
                 <TableCell>{formatDate(user.createdAt)}</TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 rtl:flex-row-reverse">
                     <Button
                       variant="outline"
                       size="sm"
@@ -438,7 +432,7 @@ export function UserManagement({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
                   >
                     {t("common.previous")}
@@ -459,7 +453,7 @@ export function UserManagement({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage === totalPages}
                   >
                     {t("common.next")}
@@ -478,52 +472,64 @@ export function UserManagement({
             </DialogHeader>
             <div className="py-4">
               <div className="space-y-4">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <Checkbox
                     id="role-admin"
                     checked={selectedRoles["admin"] || false}
                     onCheckedChange={(checked) => handleRoleChange("admin", checked === true)}
                   />
-                  <label htmlFor="role-admin" className="flex items-center gap-2 text-sm font-medium">
+                  <label
+                    htmlFor="role-admin"
+                    className="flex items-center gap-2 text-sm font-medium rtl:flex-row-reverse"
+                  >
                     <ShieldCheck className="h-4 w-4" />
                     Admin
                   </label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <Checkbox
                     id="role-professional"
                     checked={selectedRoles["professional"] || false}
                     onCheckedChange={(checked) => handleRoleChange("professional", checked === true)}
                   />
-                  <label htmlFor="role-professional" className="flex items-center gap-2 text-sm font-medium">
+                  <label
+                    htmlFor="role-professional"
+                    className="flex items-center gap-2 text-sm font-medium rtl:flex-row-reverse"
+                  >
                     <Briefcase className="h-4 w-4" />
                     Professional
                   </label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <Checkbox
                     id="role-partner"
                     checked={selectedRoles["partner"] || false}
                     onCheckedChange={(checked) => handleRoleChange("partner", checked === true)}
                   />
-                  <label htmlFor="role-partner" className="flex items-center gap-2 text-sm font-medium">
+                  <label
+                    htmlFor="role-partner"
+                    className="flex items-center gap-2 text-sm font-medium rtl:flex-row-reverse"
+                  >
                     <Handshake className="h-4 w-4" />
                     Partner
                   </label>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 rtl:space-x-reverse">
                   <Checkbox
                     id="role-member"
                     checked={selectedRoles["member"] || false}
                     onCheckedChange={(checked) => handleRoleChange("member", checked === true)}
                   />
-                  <label htmlFor="role-member" className="flex items-center gap-2 text-sm font-medium">
+                  <label
+                    htmlFor="role-member"
+                    className="flex items-center gap-2 text-sm font-medium rtl:flex-row-reverse"
+                  >
                     <User className="h-4 w-4" />
                     Member
                   </label>
                 </div>
               </div>
-              <div className="mt-6 flex justify-end gap-2">
+              <div className="mt-6 flex justify-end gap-2 rtl:flex-row-reverse">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>

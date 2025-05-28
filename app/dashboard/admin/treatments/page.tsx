@@ -17,8 +17,8 @@ export default async function AdminTreatmentsPage() {
   return (
     <div className="space-y-6">
       <div className="rounded-lg bg-white p-6 shadow-sm mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">ניהול טיפולים</h1>
-        <p className="text-gray-600">ניהול וצפייה ברשימת הטיפולים במערכת.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2 rtl:text-right">ניהול טיפולים</h1>
+        <p className="text-gray-600 rtl:text-right">ניהול וצפייה ברשימת הטיפולים במערכת.</p>
       </div>
 
       <TreatmentsClient />

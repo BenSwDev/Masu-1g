@@ -1,29 +1,36 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+import { getTreatments } from "@/actions/treatment-actions"
 import { TreatmentsClient } from "@/components/dashboard/admin/treatments/treatments-client"
-import { useTranslation } from "@/lib/translations/i18n"
+import { getTranslations } from "@/lib/translations/server"
 
 export default async function AdminTreatmentsPage() {
+  const { t, dir } = getTranslations()
   const session = await getServerSession(authOptions)
-  const { t } = await useTranslation()
 
   if (!session) {
     redirect("/auth/login")
   }
 
-  if (session.user.activeRole !== "admin") {
+  if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
 
+  const result = await getTreatments()
+
+  if (!result.success) {
+    throw new Error(result.error)
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("admin.treatments.title")}</h1>
-        <p className="text-gray-600">{t("admin.treatments.description")}</p>
+    <div className="space-y-6" dir={dir}>
+      <div className="rounded-lg bg-white p-4 shadow-sm mb-4">
+        <h1 className="text-xl font-bold text-gray-900">{t("admin.treatments.title")}</h1>
+        <p className="text-sm text-gray-600">{t("admin.treatments.description")}</p>
       </div>
 
-      <TreatmentsClient />
+      <TreatmentsClient initialData={result.data} />
     </div>
   )
 }

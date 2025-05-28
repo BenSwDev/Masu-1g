@@ -91,11 +91,28 @@
   },
   "coupons": {
     "title": "Coupons",
-    "description": "Manage coupons"
+    "description": "Manage coupons",
+    "addNew": "Add New Coupon",
+    "fields": {
+      "code": "Code",
+      "discountType": "Discount Type",
+      "discountValue": "Discount Value",
+      "validFrom": "Valid From",
+      "validUntil": "Valid Until",
+      "isActive": "Active"
+    }
   },
   "giftVouchers": {
     "title": "Gift Vouchers",
-    "description": "Manage gift vouchers"
+    "description": "Manage gift vouchers",
+    "addNew": "Add New Gift Voucher",
+    "fields": {
+      "code": "Code",
+      "value": "Value",
+      "validFrom": "Valid From",
+      "validUntil": "Valid Until",
+      "isActive": "Active"
+    }
   },
   "partnerCoupons": {
     "title": "Partner Coupons",

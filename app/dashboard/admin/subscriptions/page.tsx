@@ -3,7 +3,6 @@ import { getSubscriptions, getAllTreatments } from "@/actions/subscription-actio
 import SubscriptionsClient from "@/components/dashboard/admin/subscriptions/subscriptions-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
-import { useTranslation } from "@/lib/translations/i18n"
 
 // קומפוננטת טעינה
 function SubscriptionsLoading() {
@@ -34,7 +33,8 @@ function SubscriptionsLoading() {
 
 // קומפוננטת טעינת נתונים
 async function SubscriptionsData() {
-  const { t } = await useTranslation()
+  const { getTranslations } = await import("@/lib/translations/i18n")
+  const t = await getTranslations()
 
   const [subscriptionsResult, treatmentsResult] = await Promise.all([getSubscriptions(), getAllTreatments()])
 

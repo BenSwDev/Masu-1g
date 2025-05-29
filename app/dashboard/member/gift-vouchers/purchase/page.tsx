@@ -3,6 +3,7 @@ import { getTreatmentsForSelection } from "@/actions/gift-voucher-actions"
 import PurchaseGiftVoucherClient from "@/components/dashboard/member/gift-vouchers/purchase-gift-voucher-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent } from "@/components/common/ui/card"
+import { useTranslation } from "@/lib/translations/i18n"
 
 export const dynamic = "force-dynamic"
 
@@ -33,12 +34,13 @@ function PurchaseGiftVoucherLoading() {
 }
 
 async function PurchaseGiftVoucherData() {
+  const { t } = useTranslation()
   const treatmentsResult = await getTreatmentsForSelection()
 
   if (!treatmentsResult.success) {
     return (
       <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        Error: {treatmentsResult.error || "Failed to load treatments"}
+        {t("common.error")}: {treatmentsResult.error || t("common.failedToLoadTreatments")}
       </div>
     )
   }

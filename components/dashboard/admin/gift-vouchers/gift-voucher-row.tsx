@@ -18,6 +18,7 @@ import { Button } from "@/components/common/ui/button" // Corrected import path
 import { Badge } from "@/components/common/ui/badge" // Corrected import path
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions" // Corrected import path
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip" // Corrected import path
+import { useTranslation } from "@/lib/translations/i18n"
 
 interface GiftVoucherRowProps {
   voucher: GiftVoucherPlain
@@ -75,6 +76,7 @@ const getStatusIcon = (status: GiftVoucherPlain["status"], isActive: boolean) =>
 }
 
 export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProps) {
+  const { t } = useTranslation()
   const validFromDate = typeof voucher.validFrom === "string" ? parseISO(voucher.validFrom) : voucher.validFrom
   const validUntilDate = typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
   const purchaseDate = typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
@@ -90,7 +92,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               <span className="cursor-default">{voucher.code}</span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Code: {voucher.code}</p>
+              <p>{t("giftVouchers.fields.code")}: {voucher.code}</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -113,14 +115,14 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Type: {voucher.voucherType}</p>
-              {voucher.voucherType === "monetary" && <p>Value: {voucher.monetaryValue?.toFixed(2)} ILS</p>}
+              <p>{t("giftVouchers.fields.voucherType")}: {voucher.voucherType}</p>
+              {voucher.voucherType === "monetary" && <p>{t("giftVouchers.fields.value")}: {voucher.monetaryValue?.toFixed(2)} ILS</p>}
               {voucher.voucherType === "monetary" && (
-                <p>Remaining: {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} ILS</p>
+                <p>{t("giftVouchers.fields.remainingAmount")}: {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} ILS</p>
               )}
-              {voucher.voucherType === "treatment" && <p>Treatment: {voucher.treatmentName || "N/A"}</p>}
+              {voucher.voucherType === "treatment" && <p>{t("giftVouchers.fields.treatment")}: {voucher.treatmentName || "N/A"}</p>}
               {voucher.voucherType === "treatment" && voucher.selectedDurationName && (
-                <p>Duration: {voucher.selectedDurationName}</p>
+                <p>{t("giftVouchers.fields.duration")}: {voucher.selectedDurationName}</p>
               )}
             </TooltipContent>
           </Tooltip>
@@ -135,10 +137,10 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Owner: {voucher.ownerName || "N/A"}</p>
-              <p>Owner ID: {voucher.ownerUserId}</p>
-              {voucher.isGift && voucher.purchaserName && <p>Purchased by: {voucher.purchaserName}</p>}
-              {voucher.isGift && voucher.recipientName && <p>Recipient: {voucher.recipientName}</p>}
+              <p>{t("giftVouchers.fields.owner")}: {voucher.ownerName || "N/A"}</p>
+              <p>{t("giftVouchers.fields.owner")}: {voucher.ownerUserId}</p>
+              {voucher.isGift && voucher.purchaserName && <p>{t("giftVouchers.fields.purchaser")}: {voucher.purchaserName}</p>}
+              {voucher.isGift && voucher.recipientName && <p>{t("giftVouchers.fields.recipientName")}: {voucher.recipientName}</p>}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -152,9 +154,9 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Valid From: {format(validFromDate, "MMM d, yyyy")}</p>
-              <p>Valid Until: {format(validUntilDate, "MMM d, yyyy")}</p>
-              <p>Purchased: {format(purchaseDate, "MMM d, yyyy")}</p>
+              <p>{t("giftVouchers.fields.validFrom")}: {format(validFromDate, "MMM d, yyyy")}</p>
+              <p>{t("giftVouchers.fields.validUntil")}: {format(validUntilDate, "MMM d, yyyy")}</p>
+              <p>{t("giftVouchers.fields.purchaseDate")}: {format(purchaseDate, "MMM d, yyyy")}</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -172,17 +174,17 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Status: {statusDisplay}</p>
+              <p>{t("giftVouchers.fields.status")}: {statusDisplay}</p>
               {voucher.isGift && voucher.sendDate && (
                 <p>
-                  Send Date:{" "}
+                  {t("giftVouchers.fields.sendDate")}:{" "}
                   {format(
                     typeof voucher.sendDate === "string" ? parseISO(voucher.sendDate) : voucher.sendDate,
                     "MMM d, yyyy",
                   )}
                 </p>
               )}
-              <p>Admin Active: {voucher.isActive ? "Yes" : "No"}</p>
+              <p>{t("giftVouchers.fields.isActive")}: {voucher.isActive ? "Yes" : "No"}</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -196,13 +198,13 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
-                <p>This is a gift voucher.</p>
-                {voucher.recipientName && <p>To: {voucher.recipientName}</p>}
-                {voucher.greetingMessage && <p>Message: {voucher.greetingMessage}</p>}
+                <p>{t("giftVouchers.purchase.sendAsGift")}</p>
+                {voucher.recipientName && <p>{t("giftVouchers.myVouchers.giftedTo")}: {voucher.recipientName}</p>}
+                {voucher.greetingMessage && <p>{t("giftVouchers.fields.greetingMessage")}: {voucher.greetingMessage}</p>}
               </TooltipContent>
             </Tooltip>
           ) : (
-            <span className="text-xs text-gray-500">Personal</span>
+            <span className="text-xs text-gray-500">{t("giftVouchers.myVouchers.ownedVouchers")}</span>
           )}
         </div>
 
@@ -226,7 +228,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Edit Voucher</p>
+              <p>{t("giftVouchers.editVoucher")}</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -242,7 +244,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Delete Voucher</p>
+              <p>{t("common.delete")}</p>
             </TooltipContent>
           </Tooltip>
         </div>

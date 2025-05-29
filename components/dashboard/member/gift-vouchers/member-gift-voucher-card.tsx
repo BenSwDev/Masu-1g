@@ -7,7 +7,7 @@ import { Separator } from "@/components/common/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { Gift, CreditCard, Calendar, User, MessageCircle, Phone } from "lucide-react"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 
 interface MemberGiftVoucherCardProps {
   voucher: GiftVoucherPlain
@@ -59,59 +59,55 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
               <h3 className="font-semibold text-lg">{voucher.code}</h3>
               <p className="text-sm text-gray-600">
                 {voucher.voucherType === "treatment"
-                  ? t("giftVoucher.treatmentVoucher")
-                  : t("giftVoucher.monetaryVoucher")}
+                  ? t("giftVouchers.fields.treatment")
+                  : t("giftVouchers.fields.monetaryValue")}
               </p>
             </div>
           </div>
-          <Badge className={getStatusColor(voucher.status)}>{getStatusText(voucher.status)}</Badge>
+          <Badge className={getStatusColor(voucher.status)}>{t(`giftVouchers.status.${voucher.status}`)}</Badge>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Voucher Value/Treatment */}
-        <div>
-          {voucher.voucherType === "treatment" ? (
-            <div>
-              <p className="font-medium text-gray-900">{voucher.treatmentName}</p>
-              {voucher.selectedDurationName && <p className="text-sm text-gray-600">{voucher.selectedDurationName}</p>}
-              <p className="text-lg font-bold text-blue-600">₪{voucher.monetaryValue}</p>
-            </div>
-          ) : (
-            <div>
-              <p className="text-sm text-gray-600">{t("giftVoucher.originalAmount")}</p>
-              <p className="text-lg font-bold text-green-600">₪{voucher.originalAmount}</p>
-              {voucher.status === "partially_used" && (
-                <p className="text-sm text-orange-600">
-                  {t("giftVoucher.remaining")}: ₪{voucher.remainingAmount}
-                </p>
-              )}
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">{t("giftVouchers.myVouchers.originalValue")}:</span>
+            <span className="font-medium">
+              {voucher.voucherType === "monetary"
+                ? `${voucher.monetaryValue?.toFixed(2)} ${t("common.currency")}`
+                : voucher.treatmentName}
+            </span>
+          </div>
+          {voucher.voucherType === "monetary" && (
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">{t("giftVouchers.fields.remainingAmount")}:</span>
+              <span className="font-medium">
+                {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} {t("common.currency")}
+              </span>
             </div>
           )}
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">{t("giftVouchers.fields.validUntil")}:</span>
+            <span className="font-medium">
+              {format(
+                typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil,
+                "MMM d, yyyy",
+              )}
+            </span>
+          </div>
         </div>
 
-        <Separator />
-
-        {/* Validity */}
-        <div className="flex items-center gap-2 text-sm">
-          <Calendar className="h-4 w-4 text-gray-500" />
-          <span className={isExpired ? "text-red-600" : "text-gray-600"}>
-            {t("giftVoucher.validUntil")}: {format(new Date(voucher.validUntil), "dd/MM/yyyy")}
-          </span>
-        </div>
-
-        {/* Gift Information */}
         {voucher.isGift && (
           <>
             <Separator />
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-900">{t("giftVoucher.giftInfo")}</p>
+              <p className="text-sm font-medium text-gray-900">{t("giftVouchers.myVouchers.giftDetails")}</p>
 
               {voucher.purchaserName && voucher.purchaserUserId !== voucher.ownerUserId && (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User className="h-4 w-4" />
                   <span>
-                    {t("giftVoucher.from")}: {voucher.purchaserName}
+                    {t("giftVouchers.myVouchers.receivedFrom")}: {voucher.purchaserName}
                   </span>
                 </div>
               )}
@@ -120,7 +116,7 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <User className="h-4 w-4" />
                   <span>
-                    {t("giftVoucher.to")}: {voucher.recipientName}
+                    {t("giftVouchers.myVouchers.giftedTo")}: {voucher.recipientName}
                   </span>
                 </div>
               )}
@@ -147,29 +143,42 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
           <>
             <Separator />
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-900">{t("giftVoucher.usageHistory")}</p>
-              <div className="space-y-1 max-h-20 overflow-y-auto">
-                {voucher.usageHistory.map((usage, index) => (
-                  <div key={index} className="flex justify-between text-xs text-gray-600">
-                    <span>{format(new Date(usage.date), "dd/MM/yyyy")}</span>
-                    <span>-₪{usage.amountUsed}</span>
-                  </div>
-                ))}
-              </div>
+              <p className="text-sm font-medium text-gray-900">{t("giftVouchers.myVouchers.usageHistory")}</p>
+              {voucher.usageHistory.map((usage, index) => (
+                <div key={index} className="flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    {format(
+                      typeof usage.date === "string" ? parseISO(usage.date) : usage.date,
+                      "MMM d, yyyy",
+                    )}
+                  </span>
+                  <span className="font-medium">
+                    -{usage.amount.toFixed(2)} {t("common.currency")}
+                  </span>
+                </div>
+              ))}
             </div>
           </>
         )}
 
-        {/* Actions */}
         <div className="flex gap-2 pt-2">
-          {isUsable && onUse && (
-            <Button onClick={() => onUse(voucher)} className="flex-1">
-              {t("giftVoucher.useVoucher")}
+          {onUse && voucher.status === "active" && (
+            <Button
+              variant="default"
+              className="flex-1"
+              onClick={() => onUse(voucher)}
+              disabled={!voucher.isActive}
+            >
+              {t("giftVouchers.myVouchers.useVoucher")}
             </Button>
           )}
           {onViewDetails && (
-            <Button variant="outline" onClick={() => onViewDetails(voucher)} className="flex-1">
-              {t("giftVoucher.viewDetails")}
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => onViewDetails(voucher)}
+            >
+              {t("giftVouchers.myVouchers.viewDetails")}
             </Button>
           )}
         </div>

@@ -375,7 +375,7 @@ export default function PurchaseGiftVoucherClient({ treatments }: PurchaseGiftVo
 
               <div className="space-y-2">
                 <Label htmlFor="recipientPhone">{t("purchaseGiftVoucher.recipientPhone")}</Label>
-                <Input id="recipientPhone" {...giftForm.register("recipientPhone")} placeholder="05X-XXXXXXX" />
+                <Input id="recipientPhone" {...giftForm.register("recipientPhone")} placeholder={t("purchaseGiftVoucher.phonePlaceholder")} />
                 {giftForm.formState.errors.recipientPhone && (
                   <p className="text-sm text-red-600">{giftForm.formState.errors.recipientPhone.message}</p>
                 )}

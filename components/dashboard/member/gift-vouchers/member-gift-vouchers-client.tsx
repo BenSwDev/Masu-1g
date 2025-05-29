@@ -147,7 +147,7 @@ export default function MemberGiftVouchersClient({
           {ownedVouchers.length === 0 ? (
             <Alert>
               <Gift className="h-4 w-4" />
-              <AlertDescription>{t("memberGiftVouchers.noOwnedVouchers")}</AlertDescription>
+              <AlertDescription>{t("memberGiftVouchers.noGiftVouchers")}</AlertDescription>
             </Alert>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -197,7 +197,7 @@ export default function MemberGiftVouchersClient({
           {purchasedVouchers.length === 0 ? (
             <Alert>
               <ShoppingBag className="h-4 w-4" />
-              <AlertDescription>{t("memberGiftVouchers.noPurchasedVouchers")}</AlertDescription>
+              <AlertDescription>{t("memberGiftVouchers.noGiftVouchers")}</AlertDescription>
             </Alert>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

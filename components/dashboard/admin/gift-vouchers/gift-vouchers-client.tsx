@@ -28,6 +28,7 @@ import { getGiftVouchers, deleteGiftVoucher, type GiftVoucherPlain } from "@/act
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { Calendar } from "@/components/common/ui/calendar"
 import type { DateRange } from "react-day-picker"
+import { useTranslation } from "@/lib/translations/i18n"
 
 interface GiftVouchersClientProps {
   initialVouchers: GiftVoucherPlain[]
@@ -68,6 +69,8 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
   const [editingVoucher, setEditingVoucher] = useState<GiftVoucherPlain | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [voucherToDeleteId, setVoucherToDeleteId] = useState<string | null>(null)
+
+  const { t } = useTranslation()
 
   const loadVouchers = useCallback(
     async (page = 1, newSearch = search, newFilters?: any) => {
@@ -165,9 +168,9 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Gift Voucher Management</h1>
+        <h1 className="text-2xl font-semibold">{t("giftVouchers.title")}</h1>
         <Button onClick={() => handleOpenFormModal()} disabled={isLoading}>
-          <Plus className="mr-2 h-4 w-4" /> New Voucher
+          <Plus className="mr-2 h-4 w-4" /> {t("giftVouchers.addNew")}
         </Button>
       </div>
 
@@ -175,7 +178,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       <div className="p-4 border rounded-lg space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <Input
-            placeholder="Search by code..."
+            placeholder={t("giftVouchers.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="lg:col-span-2"
@@ -187,7 +190,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
             disabled={isLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Filter by Type" />
+              <SelectValue placeholder={t("giftVouchers.admin.filterByType")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
@@ -200,7 +203,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
           </Select>
           <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)} disabled={isLoading}>
             <SelectTrigger>
-              <SelectValue placeholder="Filter by Status" />
+              <SelectValue placeholder={t("giftVouchers.filterByStatus")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
@@ -224,7 +227,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
                     format(filterDateRange.from, "LLL dd, y")
                   )
                 ) : (
-                  <span>Filter by Validity Date</span>
+                  <span>{t("giftVouchers.fields.validFrom")}</span>
                 )}
               </Button>
             </PopoverTrigger>
@@ -250,10 +253,10 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
             />
             <label htmlFor="filter-is-active" className="text-sm font-medium">
               {filterIsActive === "true"
-                ? "Admin Active Only"
+                ? t("giftVouchers.fields.isActive")
                 : filterIsActive === "false"
-                  ? "Admin Inactive Only"
-                  : "Admin Active (All)"}
+                  ? t("giftVouchers.fields.isActive")
+                  : t("giftVouchers.fields.isActive")}
             </label>
             {filterIsActive !== "all" && (
               <Button variant="ghost" size="sm" onClick={() => setFilterIsActive("all")}>
@@ -262,7 +265,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
             )}
           </div>
           <Button variant="outline" onClick={resetFilters} disabled={isLoading}>
-            <RotateCcw className="mr-2 h-4 w-4" /> Reset Filters
+            <RotateCcw className="mr-2 h-4 w-4" /> {t("giftVouchers.admin.clearFilters")}
           </Button>
         </div>
       </div>
@@ -270,20 +273,20 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       {isLoading && vouchers.length === 0 && (
         <div className="flex justify-center items-center py-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="ml-2">Loading vouchers...</p>
+          <p className="ml-2">{t("common.loading")}</p>
         </div>
       )}
 
       {!isLoading && vouchers.length === 0 && (
         <div className="text-center py-10">
           <Gift className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No gift vouchers found</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">{t("giftVouchers.noGiftVouchers")}</h3>
           <p className="mt-1 text-sm text-gray-500">
-            No vouchers match your current filters, or no vouchers have been created yet.
+            {t("giftVouchers.noVouchers")}
           </p>
           <div className="mt-6">
             <Button onClick={() => handleOpenFormModal()} disabled={isLoading}>
-              <Plus className="mr-2 h-4 w-4" /> Create New Voucher
+              <Plus className="mr-2 h-4 w-4" /> {t("giftVouchers.addNew")}
             </Button>
           </div>
         </div>
@@ -292,13 +295,13 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       {vouchers.length > 0 && (
         <div className="rounded-md border bg-card">
           <div className="hidden md:grid grid-cols-7 gap-4 p-4 font-semibold text-sm text-muted-foreground border-b">
-            <div>Code</div>
-            <div>Type/Value</div>
-            <div>Owner</div>
-            <div>Validity</div>
-            <div>Status</div>
-            <div>Gift?</div>
-            <div className="text-right">Actions</div>
+            <div>{t("giftVouchers.fields.code")}</div>
+            <div>{t("giftVouchers.fields.voucherType")}</div>
+            <div>{t("giftVouchers.fields.owner")}</div>
+            <div>{t("giftVouchers.fields.validFrom")}</div>
+            <div>{t("giftVouchers.fields.status")}</div>
+            <div>{t("giftVouchers.purchase.sendAsGift")}</div>
+            <div className="text-right">{t("common.actions")}</div>
           </div>
           {vouchers.map((voucher) => (
             <GiftVoucherRow
@@ -331,11 +334,11 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       >
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingVoucher ? "Edit Gift Voucher" : "Create New Gift Voucher"}</DialogTitle>
+            <DialogTitle>{editingVoucher ? t("giftVouchers.edit") : t("giftVouchers.addNew")}</DialogTitle>
             <DialogDescription>
               {editingVoucher
-                ? `Update details for voucher ${editingVoucher.code}.`
-                : "Fill in the details to create a new gift voucher."}
+                ? `${t("giftVouchers.edit")} ${editingVoucher.code}.`
+                : t("giftVouchers.description")}
             </DialogDescription>
           </DialogHeader>
           <GiftVoucherForm
@@ -352,20 +355,20 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t("giftVouchers.deleteConfirm")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the gift voucher.
+              {t("giftVouchers.deleteConfirmDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isLoading}
               className="bg-red-600 hover:bg-red-700"
             >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

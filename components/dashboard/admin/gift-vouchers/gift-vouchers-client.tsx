@@ -192,7 +192,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
               <SelectItem value="all">All Types</SelectItem>
               {VOUCHER_TYPES.map((type) => (
                 <SelectItem key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {t(`giftVouchers.types.${type}`)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -205,7 +205,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
               <SelectItem value="all">All Statuses</SelectItem>
               {VOUCHER_STATUSES.map((status) => (
                 <SelectItem key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1).replace("_", " ")}
+                  {t(`giftVouchers.statuses.${status}`)}
                 </SelectItem>
               ))}
             </SelectContent>

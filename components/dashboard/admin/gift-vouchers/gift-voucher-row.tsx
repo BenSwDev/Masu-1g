@@ -14,37 +14,38 @@ import {
   Clock,
   Send,
 } from "lucide-react"
-import { Button } from "@/components/common/ui/button"
-import { Badge } from "@/components/common/ui/badge"
-import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
+import { Button } from "@/components/common/ui/button" // Corrected import path
+import { Badge } from "@/components/common/ui/badge" // Corrected import path
+import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions" // Corrected import path
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip" // Corrected import path
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface GiftVoucherRowProps {
   voucher: GiftVoucherPlain
   onEdit: (voucher: GiftVoucherPlain) => void
   onDelete: (id: string) => void
+  // onViewDetails?: (voucher: GiftVoucherPlain) => void; // Optional: for a detailed view modal
 }
 
 const getStatusBadgeVariant = (
   status: GiftVoucherPlain["status"],
   isActive: boolean,
-): "default" | "secondary" | "destructive" | "outline" => {
-  if (!isActive) return "secondary"
+): "default" | "secondary" | "destructive" | "outline" | "warning" => {
+  if (!isActive) return "secondary" // Overriding status if not active by admin
   switch (status) {
     case "active":
     case "sent":
-      return "default"
+      return "default" // Green in many themes
     case "partially_used":
-      return "default"
+      return "default" // Could be a different color like blue
     case "pending_payment":
     case "pending_send":
-      return "outline"
+      return "warning" // Yellow / Orange
     case "fully_used":
-      return "secondary"
+      return "secondary" // Grey / Success variant
     case "expired":
     case "cancelled":
-      return "destructive"
+      return "destructive" // Red
     default:
       return "outline"
   }
@@ -81,7 +82,6 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
   const purchaseDate = typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
 
   const statusDisplay = t(`giftVouchers.statuses.${voucher.status}`)
-  const daysUntilExpiry = differenceInDays(validUntilDate, new Date())
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -109,7 +109,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
                   <Tag className="h-4 w-4 mr-1 text-purple-600" />
                 )}
                 {voucher.voucherType === "monetary"
-                  ? `${voucher.monetaryValue?.toFixed(2)} ${t("common.currency")} (${t("giftVouchers.fields.remainingAmount")}: ${voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)})`
+                  ? `${voucher.monetaryValue?.toFixed(2)} ILS (Rem: ${voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)})`
                   : voucher.treatmentName || "N/A"}
                 {voucher.voucherType === "treatment" && voucher.selectedDurationName && (
                   <span className="text-xs text-gray-500 ml-1">({voucher.selectedDurationName})</span>
@@ -118,17 +118,17 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
             </TooltipTrigger>
             <TooltipContent>
               <p>
-                {t("giftVouchers.fields.voucherType")}: {t(`giftVouchers.types.${voucher.voucherType}`)}
+                {t("giftVouchers.fields.voucherType")}: {voucher.voucherType}
               </p>
               {voucher.voucherType === "monetary" && (
                 <p>
-                  {t("giftVouchers.fields.value")}: {voucher.monetaryValue?.toFixed(2)} {t("common.currency")}
+                  {t("giftVouchers.fields.value")}: {voucher.monetaryValue?.toFixed(2)} ILS
                 </p>
               )}
               {voucher.voucherType === "monetary" && (
                 <p>
                   {t("giftVouchers.fields.remainingAmount")}:{" "}
-                  {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} {t("common.currency")}
+                  {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} ILS
                 </p>
               )}
               {voucher.voucherType === "treatment" && (
@@ -174,11 +174,12 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
           </Tooltip>
         </div>
 
+        {/* Purchase Date Column */}
         <div className="truncate">
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center">
-                <CalendarDays className="h-4 w-4 mr-1 text-blue-600" />
+                <CalendarDays className="h-4 w-4 mr-1 text-gray-600" />
                 {format(purchaseDate, "dd/MM/yy")}
               </div>
             </TooltipTrigger>
@@ -190,27 +191,40 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
           </Tooltip>
         </div>
 
+        {/* Expiry Date (Days Remaining) Column */}
         <div className="truncate">
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center">
                 <CalendarDays className="h-4 w-4 mr-1 text-gray-600" />
-                {format(validFromDate, "dd/MM/yy")} - {format(validUntilDate, "dd/MM/yy")}
-                {daysUntilExpiry >= 0 && (
-                  <span className="text-xs text-gray-500 ml-1">
-                    ({daysUntilExpiry} {daysUntilExpiry === 1 ? "day" : "days"})
-                  </span>
-                )}
+                {format(validUntilDate, "dd/MM/yy")}
+                {(() => {
+                  const daysLeft = differenceInDays(validUntilDate, new Date())
+                  if (daysLeft < 0) {
+                    return <span className="text-xs text-red-500 ml-1">({t("giftVouchers.expiredShort")})</span>
+                  }
+                  if (daysLeft === 0) {
+                    return (
+                      <span className="text-xs text-orange-500 ml-1">
+                        ({t("giftVouchers.fields.expiresToday", { count: daysLeft })})
+                      </span>
+                    ) // Add 'expiresToday' key
+                  }
+                  return (
+                    <span className="text-xs text-gray-500 ml-1">
+                      ({t("giftVouchers.fields.daysRemainingShortCount", { count: daysLeft })})
+                    </span>
+                  ) // Add 'daysRemainingShortCount' key
+                })()}
               </div>
             </TooltipTrigger>
             <TooltipContent>
               <p>
-                {t("giftVouchers.fields.validFrom")}: {format(validFromDate, "MMM d, yyyy")}
-              </p>
-              <p>
                 {t("giftVouchers.fields.validUntil")}: {format(validUntilDate, "MMM d, yyyy")}
               </p>
-              <p>Days until expiry: {daysUntilExpiry}</p>
+              <p>
+                {t("giftVouchers.fields.validFrom")}: {format(validFromDate, "MMM d, yyyy")}
+              </p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -224,7 +238,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               >
                 {getStatusIcon(voucher.status, voucher.isActive)}
                 {statusDisplay}
-                {!voucher.isActive && <span className="text-xs">(Admin Disabled)</span>}
+                {!voucher.isActive && <span className="text-xs">({t("giftVouchers.adminDisabled")})</span>}
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
@@ -252,7 +266,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
             <Tooltip>
               <TooltipTrigger asChild>
                 <Badge variant="outline" className="cursor-default">
-                  Gift
+                  {t("giftVouchers.isGiftBadge")}
                 </Badge>
               </TooltipTrigger>
               <TooltipContent>
@@ -275,6 +289,18 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
         </div>
 
         <div className="flex justify-end space-x-1 md:space-x-2">
+          {/* Optional View Details Button 
+        {onViewDetails && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => onViewDetails(voucher)} title="View Details">
+                <Eye className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent><p>View Details</p></TooltipContent>
+          </Tooltip>
+        )}
+        */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" onClick={() => onEdit(voucher)} title="Edit voucher">

@@ -1,7 +1,5 @@
 "use client"
 import { useEffect, useState } from "react"
-import { Calendar } from "@/components/ui/calendar"
-
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -9,7 +7,6 @@ import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import {
   createGiftVoucherByAdmin,
   updateGiftVoucherByAdmin,
@@ -20,9 +17,9 @@ import {
 } from "@/actions/gift-voucher-actions"
 import { format, parseISO } from "date-fns"
 import { useToast } from "@/components/common/ui/use-toast"
-import { CalendarIcon, Loader2, User, Gift, Settings } from "lucide-react"
+import { CalendarIcon, Loader2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
-import { Calendar as UICalendar } from "@/components/common/ui/calendar"
+import { Calendar } from "@/components/common/ui/calendar"
 import { cn } from "@/lib/utils/utils"
 import { useTranslation } from "@/lib/translations/i18n"
 
@@ -222,343 +219,265 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {initialData ? t("giftVouchers.edit") : t("giftVouchers.addNew")}
-          </h1>
-          <p className="text-gray-600">
-            {initialData ? `${t("giftVouchers.edit")} ${initialData.code}` : t("giftVouchers.description")}
-          </p>
-        </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="code"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("giftVouchers.fields.code")}</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isLoading} placeholder={t("giftVouchers.fields.codePlaceholder")} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic Information */}
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  {t("treatments.basicInfo")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="code"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg font-medium">{t("giftVouchers.fields.code")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            disabled={isLoading}
-                            placeholder={t("giftVouchers.fields.codePlaceholder")}
-                            className="text-lg p-3"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg font-medium">{t("giftVouchers.fields.status")}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-                          <FormControl>
-                            <SelectTrigger className="text-lg p-3">
-                              <SelectValue placeholder={t("giftVouchers.fields.selectStatus")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {giftVoucherStatuses.map((s) => (
-                              <SelectItem key={s} value={s}>
-                                {t(`giftVouchers.statuses.${s}`)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Owner Selection */}
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  {t("giftVouchers.fields.owner")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <FormField
-                  control={form.control}
-                  name="ownerUserId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-lg font-medium">{t("giftVouchers.fields.owner")}</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        disabled={isLoading || users.length === 0}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="text-lg p-3">
-                            <SelectValue placeholder={t("giftVouchers.fields.selectOwner")} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {users.map((user) => (
-                            <SelectItem key={user._id} value={user._id}>
-                              {user.name} ({user.email})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Voucher Type & Value */}
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <Gift className="h-5 w-5" />
-                  {t("giftVouchers.fields.voucherType")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                <FormField
-                  control={form.control}
-                  name="voucherType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-lg font-medium">{t("giftVouchers.fields.voucherType")}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-                        <FormControl>
-                          <SelectTrigger className="text-lg p-3">
-                            <SelectValue placeholder={t("giftVouchers.fields.selectType")} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="monetary">{t("giftVouchers.types.monetary")}</SelectItem>
-                          <SelectItem value="treatment">{t("giftVouchers.types.treatment")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {voucherType === "monetary" && (
-                  <FormField
-                    control={form.control}
-                    name="monetaryValue"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-lg font-medium">{t("giftVouchers.fields.monetaryValue")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            {...field}
-                            value={field.value ?? ""}
-                            onChange={(e) => field.onChange(e.target.value)}
-                            disabled={isLoading}
-                            placeholder={t("giftVouchers.fields.monetaryValuePlaceholder")}
-                            className="text-lg p-3"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-
-                {voucherType === "treatment" && (
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="treatmentId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-lg font-medium">{t("giftVouchers.fields.treatment")}</FormLabel>
-                          <Select
-                            onValueChange={(value) => {
-                              field.onChange(value)
-                              handleTreatmentChange(value)
-                            }}
-                            defaultValue={field.value}
-                            disabled={isLoading || treatments.length === 0}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="text-lg p-3">
-                                <SelectValue placeholder={t("giftVouchers.fields.selectTreatment")} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {treatments.map((treatment) => (
-                                <SelectItem key={treatment._id} value={treatment._id}>
-                                  {treatment.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {selectedTreatment && selectedTreatment.durations && selectedTreatment.durations.length > 0 && (
-                      <FormField
-                        control={form.control}
-                        name="selectedDurationId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-lg font-medium">{t("giftVouchers.fields.duration")}</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-                              <FormControl>
-                                <SelectTrigger className="text-lg p-3">
-                                  <SelectValue placeholder={t("giftVouchers.fields.selectDuration")} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {selectedTreatment.durations.map((duration) => (
-                                  <SelectItem key={duration._id} value={duration._id}>
-                                    {duration.name} - {duration.price} {t("common.currency")}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Validity Dates */}
-            <Card className="shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  {t("giftVouchers.fields.validFrom")} & {t("giftVouchers.fields.validUntil")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="validFrom"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-lg font-medium">{t("giftVouchers.fields.validFrom")}</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal text-lg p-3",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                                disabled={isLoading}
-                              >
-                                {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <UICalendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0)) || isLoading}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="validUntil"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className="text-lg font-medium">{t("giftVouchers.fields.validUntil")}</FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal text-lg p-3",
-                                  !field.value && "text-muted-foreground",
-                                )}
-                                disabled={isLoading}
-                              >
-                                {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <UICalendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={(date) => date < (form.getValues("validFrom") || new Date()) || isLoading}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 pt-6">
-              {onCancel && (
-                <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading} className="px-8 py-3">
-                  {t("common.cancel")}
-                </Button>
-              )}
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+        <FormField
+          control={form.control}
+          name="ownerUserId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("giftVouchers.fields.owner")}</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoading || users.length === 0}
               >
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isLoading ? t("common.saving") : initialData ? t("common.update") : t("common.create")}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </div>
-    </div>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("giftVouchers.fields.selectOwner")} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user._id} value={user._id}>
+                      {user.name} ({user.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="voucherType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("giftVouchers.fields.voucherType")}</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("giftVouchers.fields.selectType")} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="monetary">{t("giftVouchers.types.monetary")}</SelectItem>
+                  <SelectItem value="treatment">{t("giftVouchers.types.treatment")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {voucherType === "monetary" && (
+          <FormField
+            control={form.control}
+            name="monetaryValue"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("giftVouchers.fields.monetaryValue")}</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    disabled={isLoading}
+                    placeholder={t("giftVouchers.fields.monetaryValuePlaceholder")}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {voucherType === "treatment" && (
+          <>
+            <FormField
+              control={form.control}
+              name="treatmentId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("giftVouchers.fields.treatment")}</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value)
+                      handleTreatmentChange(value)
+                    }}
+                    defaultValue={field.value}
+                    disabled={isLoading || treatments.length === 0}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("giftVouchers.fields.selectTreatment")} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {treatments.map((treatment) => (
+                        <SelectItem key={treatment._id} value={treatment._id}>
+                          {treatment.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {selectedTreatment && selectedTreatment.durations && selectedTreatment.durations.length > 0 && (
+              <FormField
+                control={form.control}
+                name="selectedDurationId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("giftVouchers.fields.duration")}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("giftVouchers.fields.selectDuration")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {selectedTreatment.durations.map((duration) => (
+                          <SelectItem key={duration._id} value={duration._id}>
+                            {duration.name} - {duration.price} {t("common.currency")}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </>
+        )}
+
+        <FormField
+          control={form.control}
+          name="validFrom"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>{t("giftVouchers.fields.validFrom")}</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                      disabled={isLoading}
+                    >
+                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0)) || isLoading}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="validUntil"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>{t("giftVouchers.fields.validUntil")}</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                      disabled={isLoading}
+                    >
+                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) => date < (form.getValues("validFrom") || new Date()) || isLoading}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("giftVouchers.fields.status")}</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("giftVouchers.fields.selectStatus")} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {giftVoucherStatuses.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {t(`giftVouchers.statuses.${s}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end space-x-2 pt-4">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+              {t("common.cancel")}
+            </Button>
+          )}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? t("common.saving") : initialData ? t("common.update") : t("common.create")}
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }
 

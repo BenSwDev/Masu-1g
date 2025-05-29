@@ -24,6 +24,7 @@ const AdminUserSubscriptionsClient = ({ userSubscriptions = [], pagination }: Ad
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(pagination?.page || 1)
+  const [isLoading, setIsLoading] = useState(false)
 
   // Filter subscriptions based on search term and status filter
   const filteredSubscriptions = userSubscriptions.filter((subscription) => {
@@ -40,19 +41,22 @@ const AdminUserSubscriptionsClient = ({ userSubscriptions = [], pagination }: Ad
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
+    setIsLoading(true)
     // Here you would typically fetch data for the new page
+    setTimeout(() => setIsLoading(false), 500) // Simulate loading
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("userSubscriptions.title")}</h1>
-      <p className="text-gray-600 mb-6">{t("userSubscriptions.description")}</p>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("userSubscriptions.title")}</h1>
+          <p className="text-gray-600">{t("userSubscriptions.description")}</p>
+        </div>
+      </div>
 
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle>{t("userSubscriptions.filterAndSearch")}</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card>
+        <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
@@ -71,9 +75,9 @@ const AdminUserSubscriptionsClient = ({ userSubscriptions = [], pagination }: Ad
                 <SelectContent>
                   <SelectItem value="all">{t("userSubscriptions.allStatuses")}</SelectItem>
                   <SelectItem value="active">{t("common.active")}</SelectItem>
-                  <SelectItem value="expired">{t("subscriptions.status.expired")}</SelectItem>
-                  <SelectItem value="depleted">{t("subscriptions.status.depleted")}</SelectItem>
-                  <SelectItem value="cancelled">{t("subscriptions.status.cancelled")}</SelectItem>
+                  <SelectItem value="expired">{t("common.expired")}</SelectItem>
+                  <SelectItem value="depleted">{t("common.depleted")}</SelectItem>
+                  <SelectItem value="cancelled">{t("common.cancelled")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -81,7 +85,13 @@ const AdminUserSubscriptionsClient = ({ userSubscriptions = [], pagination }: Ad
         </CardContent>
       </Card>
 
-      {filteredSubscriptions.length === 0 ? (
+      {isLoading ? (
+        <Card>
+          <CardContent className="flex items-center justify-center h-40">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </CardContent>
+        </Card>
+      ) : filteredSubscriptions.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center h-40 p-6">
             <p className="text-gray-500">{t("userSubscriptions.noUserSubscriptions")}</p>
@@ -110,7 +120,7 @@ const AdminUserSubscriptionsClient = ({ userSubscriptions = [], pagination }: Ad
                 </thead>
                 <tbody>
                   {filteredSubscriptions.map((subscription) => (
-                    <UserSubscriptionRow key={subscription._id} userSubscription={subscription} />
+                    <UserSubscriptionRow key={String(subscription._id)} userSubscription={subscription} />
                   ))}
                 </tbody>
               </table>
@@ -121,7 +131,23 @@ const AdminUserSubscriptionsClient = ({ userSubscriptions = [], pagination }: Ad
 
       {pagination && pagination.totalPages > 1 && (
         <div className="flex justify-center mt-6">
-          <Pagination currentPage={currentPage} totalPages={pagination.totalPages} onPageChange={handlePageChange} />
+          <div className="flex gap-2">
+            <button
+              className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+            >
+              {t("common.previous")}
+            </button>
+            <span className="px-3 py-1">{currentPage} / {pagination.totalPages}</span>
+            <button
+              className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              disabled={currentPage === pagination.totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              {t("common.next")}
+            </button>
+          </div>
         </div>
       )}
     </div>

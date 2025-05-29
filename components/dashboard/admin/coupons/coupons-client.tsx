@@ -11,14 +11,14 @@ import { format } from "date-fns"
 import { Pagination } from "@/components/common/ui/pagination"
 import { AlertModal } from "@/components/common/modals/alert-modal"
 import { toast } from "sonner"
-import type { ICoupon } from "@/lib/db/models/coupon"
+import type { CouponPlain } from "./coupon-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import CouponForm from "./coupon-form"
 import { createCoupon, updateCoupon, deleteCoupon, getCoupons } from "@/actions/coupon-actions"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 
 interface CouponsClientProps {
-  coupons?: ICoupon[]
+  coupons?: CouponPlain[]
   pagination?: {
     total: number
     page: number
@@ -32,9 +32,9 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(pagination?.page || 1)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [currentCoupon, setCurrentCoupon] = useState<ICoupon | null>(null)
+  const [currentCoupon, setCurrentCoupon] = useState<CouponPlain | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [couponsList, setCouponsList] = useState<ICoupon[]>(coupons)
+  const [couponsList, setCouponsList] = useState<CouponPlain[]>(coupons)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState<string>("all")
@@ -100,7 +100,7 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
     fetchCoupons(page, searchTerm, isActive)
   }
 
-  const handleCreate = async (data: FormData) => {
+  const handleCreate = async (data: CouponPlain) => {
     setIsLoading(true)
     try {
       const result = await createCoupon(data)
@@ -108,7 +108,6 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
         setCouponsList([result.coupon, ...couponsList])
         toast.success(t("coupons.createSuccess"))
         setIsCreateDialogOpen(false)
-        // Refresh the list to ensure correct ordering and pagination
         fetchCoupons(
           currentPage,
           searchTerm,
@@ -124,12 +123,11 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
     }
   }
 
-  const handleUpdate = async (data: FormData) => {
+  const handleUpdate = async (data: CouponPlain) => {
     if (!currentCoupon) return
-
     setIsLoading(true)
     try {
-      const result = await updateCoupon(currentCoupon._id, data)
+      const result = await updateCoupon(currentCoupon._id!, data)
       if (result.success) {
         setCouponsList(couponsList.map((c) => (c._id === currentCoupon._id ? result.coupon : c)))
         toast.success(t("coupons.updateSuccess"))
@@ -144,12 +142,12 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
     }
   }
 
-  const handleEdit = (coupon: ICoupon) => {
+  const handleEdit = (coupon: CouponPlain) => {
     setCurrentCoupon(coupon)
     setIsEditDialogOpen(true)
   }
 
-  const handleDeleteClick = (coupon: ICoupon) => {
+  const handleDeleteClick = (coupon: CouponPlain) => {
     setCurrentCoupon(coupon)
     setIsDeleteDialogOpen(true)
   }
@@ -184,7 +182,7 @@ const CouponsClient = ({ coupons = [], pagination }: CouponsClientProps) => {
     }
   }
 
-  const getStatusBadge = (coupon: ICoupon) => {
+  const getStatusBadge = (coupon: CouponPlain) => {
     const now = new Date()
     const validFrom = new Date(coupon.validFrom)
     const validUntil = new Date(coupon.validUntil)

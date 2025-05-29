@@ -1,66 +1,28 @@
-import { Suspense } from "react"
 import { getGiftVouchers } from "@/actions/gift-voucher-actions"
-import GiftVouchersClient from "@/components/dashboard/admin/gift-vouchers/gift-vouchers-client"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
+import { GiftVouchersClient } from "@/components/dashboard/admin/gift-vouchers/gift-vouchers-client"
 
 // Define the page as dynamic
 export const dynamic = "force-dynamic"
+export const revalidate = 0
 
-// Loading component
-function GiftVouchersLoading() {
-  return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-4 w-full mt-2" />
-      </div>
+export default async function GiftVouchersPage() {
+  const result = await getGiftVouchers(1, "", true)
 
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-8 w-64" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between">
-              <Skeleton className="h-10 w-64" />
-              <Skeleton className="h-10 w-32" />
-            </div>
-            <Skeleton className="h-64 w-full rounded-lg" />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-// Data fetching component
-async function GiftVouchersData() {
-  const result = await getGiftVouchers()
-
-  if (!result.success) {
-    return <div className="p-4 bg-red-50 text-red-600 rounded-md">Error: {result.error || "Unknown error"}</div>
+  if (!result.success || !result.giftVouchers || !result.pagination) {
+    throw new Error(result.error || "Failed to load gift vouchers")
   }
 
   return (
-    <GiftVouchersClient
-      giftVouchers={result.giftVouchers || []}
-      pagination={
-        result.pagination || {
-          total: 0,
-          page: 1,
-          limit: 10,
-          totalPages: 0,
-        }
-      }
-    />
-  )
-}
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Gift Vouchers</h1>
+        <p className="text-gray-600">Manage your gift vouchers and their validity periods.</p>
+      </div>
 
-export default function GiftVouchersPage() {
-  return (
-    <Suspense fallback={<GiftVouchersLoading />}>
-      <GiftVouchersData />
-    </Suspense>
+      <GiftVouchersClient
+        initialVouchers={result.giftVouchers}
+        initialPagination={result.pagination}
+      />
+    </div>
   )
 }

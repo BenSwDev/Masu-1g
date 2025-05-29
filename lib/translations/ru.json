@@ -25,7 +25,15 @@
     "deleteConfirmDescription": "Это действие нельзя отменить.",
     "reset": "Сброс",
     "searching": "Поиск...",
-    "status": "Статус"
+    "status": "Статус",
+    "pickDate": "Выберите дату",
+    "saving": "Сохранение...",
+    "update": "Обновить",
+    "deleting": "deleting",
+    "expired": "expired",
+    "depleted": "depleted",
+    "cancelled": "cancelled",
+    "creating": "creating"
   },
   "dashboard": {
     "sidebar": {
@@ -100,7 +108,8 @@
     },
     "my": {
       "title": "Мои подписки",
-      "description": "Управление вашими подписками"
+      "description": "Управляйте своими подписками",
+      "noSubscriptions": "Подписки не найдены"
     },
     "status": {
       "expired": "Истек",
@@ -116,8 +125,9 @@
     "used": "Использовано",
     "total": "Всего",
     "purchase": {
-      "title": "Покупка подписки",
-      "description": "Выберите подписку для покупки"
+      "title": "Покупка",
+      "description": "Купить подписку",
+      "noSubscriptions": "Нет доступных подписок для покупки"
     },
     "cancelSuccess": "Подписка успешно отменена",
     "cancelConfirm": "Вы уверены, что хотите отменить эту подписку?",
@@ -149,7 +159,8 @@
       "validUntil": "Действителен до",
       "isActive": "Активный",
       "codePlaceholder": "Введите код купона",
-      "discountPercentage": "Процент скидки"
+      "discountPercentage": "Процент скидки",
+      "expiryDate": "Дата окончания"
     },
     "searchPlaceholder": "Поиск купонов по коду...",
     "noCoupons": "Купоны не найдены",
@@ -165,7 +176,24 @@
     "updateError": "Ошибка обновления купона",
     "fetchError": "Ошибка загрузки купонов",
     "edit": "Редактировать купон",
-    "discountType": "Тип скидки"
+    "discountType": "Тип скидки",
+    "validation": {
+      "codeRequired": "Требуется код купона",
+      "codeMinLength": "Код купона слишком короткий",
+      "codeMaxLength": "Код купона слишком длинный",
+      "discountValueRequired": "Требуется значение скидки",
+      "discountValueMin": "Значение скидки слишком мало",
+      "discountValueMax": "Значение скидки слишком велико",
+      "discountTypeRequired": "Требуется тип скидки",
+      "expiryDateFuture": "Дата окончания должна быть в будущем"
+    },
+    "form": {
+      "title": "Название купона"
+    },
+    "discountTypes": {
+      "percentage": "Процент",
+      "fixed": "Фиксированная"
+    }
   },
   "giftVouchers": {
     "title": "Подарочные сертификаты",
@@ -176,7 +204,8 @@
       "value": "Стоимость",
       "validFrom": "Действителен с",
       "validUntil": "Действителен до",
-      "isActive": "Активный"
+      "isActive": "Активный",
+      "codePlaceholder": "Введите код"
     },
     "searchPlaceholder": "Поиск подарочных сертификатов по коду...",
     "noGiftVouchers": "Подарочные сертификаты не найдены",
@@ -191,19 +220,32 @@
     "updateSuccess": "Подарочный сертификат успешно обновлен",
     "updateError": "Ошибка обновления подарочного сертификата",
     "fetchError": "Ошибка загрузки подарочных сертификатов",
-    "edit": "Редактировать подарочный сертификат"
+    "edit": "Редактировать подарочный сертификат",
+    "filterByStatus": "filterByStatus",
+    "allStatuses": "allStatuses",
+    "noVouchers": "noVouchers",
+    "code": "code",
+    "value": "value",
+    "validFrom": "validFrom",
+    "validUntil": "validUntil",
+    "status": "status",
+    "editVoucher": "editVoucher",
+    "deleteConfirmTitle": "deleteConfirmTitle"
   },
   "partnerCoupons": {
-    "title": "Купоны партнеров",
-    "description": "Управление купонами партнеров"
+    "title": "Купоны партнера",
+    "description": "Управление купонами партнера",
+    "noCoupons": "Купоны партнера не найдены"
   },
   "memberCoupons": {
-    "title": "Купоны для участников",
-    "description": "Просмотр доступных купонов"
+    "title": "Купоны участника",
+    "description": "Просмотр доступных купонов",
+    "noCoupons": "Купоны участника не найдены"
   },
   "memberGiftVouchers": {
-    "title": "Подарочные сертификаты для участников",
-    "description": "Просмотр доступных подарочных сертификатов"
+    "title": "Подарочные сертификаты участника",
+    "description": "Просмотр доступных подарочных сертификатов",
+    "noGiftVouchers": "Подарочные сертификаты не найдены"
   },
   "/auth/login": "/auth/login",
   "/dashboard/admin": "/dashboard/admin",
@@ -548,6 +590,16 @@
     "subscription": "Подписка",
     "remaining": "Осталось",
     "expiryDate": "Дата истечения",
-    "status": "Статус"
-  }
+    "status": "Статус",
+    "deleteSuccess": "deleteSuccess",
+    "deleteError": "deleteError",
+    "totalQuantity": "totalQuantity",
+    "purchaseDate": "purchaseDate",
+    "deleteConfirmTitle": "deleteConfirmTitle",
+    "deleteConfirmDescription": "deleteConfirmDescription"
+  },
+  "Roles": {},
+  "validFrom": "Действует с",
+  "validUntil": "Действует до",
+  "T": "T"
 }

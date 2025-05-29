@@ -94,7 +94,7 @@
     "tailwindcss-animate": "^1.0.7",
     "twilio": "latest",
     "vaul": "latest",
-    "yup": "latest",
+    "yup": "^1.6.1",
     "zod": "latest"
   },
   "devDependencies": {

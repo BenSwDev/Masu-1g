@@ -3,6 +3,7 @@ import { getCoupons } from "@/actions/coupon-actions"
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
+import type { CouponPlain } from "@/components/dashboard/admin/coupons/coupon-form"
 
 // Define the page as dynamic
 export const dynamic = "force-dynamic"
@@ -42,9 +43,21 @@ async function CouponsData() {
     return <div className="p-4 bg-red-50 text-red-600 rounded-md">Error: {result.error || "Unknown error"}</div>
   }
 
+  // Map coupons to CouponPlain[]
+  const coupons: CouponPlain[] = (result.coupons || []).map((c: any) => ({
+    _id: c._id?.toString?.() ?? c._id,
+    code: c.code,
+    discountType: c.discountType,
+    discountValue: c.discountValue,
+    expiryDate: c.validUntil ? new Date(c.validUntil).toISOString().slice(0, 10) : "",
+    isActive: c.isActive,
+    createdAt: c.createdAt ? new Date(c.createdAt).toISOString() : undefined,
+    updatedAt: c.updatedAt ? new Date(c.updatedAt).toISOString() : undefined,
+  }))
+
   return (
     <CouponsClient
-      coupons={result.coupons || []}
+      coupons={coupons}
       pagination={
         result.pagination || {
           total: 0,

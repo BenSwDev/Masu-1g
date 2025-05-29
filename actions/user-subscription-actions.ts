@@ -226,3 +226,14 @@ export async function cancelSubscription(userSubscriptionId: string) {
     return { success: false, error: "Failed to cancel subscription" }
   }
 }
+
+export async function deleteUserSubscription(id: string) {
+  try {
+    await dbConnect()
+    await UserSubscription.findByIdAndDelete(id)
+    revalidatePath("/dashboard/admin/user-subscriptions")
+  } catch (error) {
+    console.error("Error deleting user subscription:", error)
+    throw new Error("Failed to delete user subscription")
+  }
+}

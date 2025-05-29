@@ -170,3 +170,32 @@ async function findAndAddMissingTranslationKeys() {
 
 // Run the function
 findAndAddMissingTranslationKeys();
+
+const enTranslations = JSON.parse(fs.readFileSync('./lib/translations/en.json', 'utf8'));
+const heTranslations = JSON.parse(fs.readFileSync('./lib/translations/he.json', 'utf8'));
+
+function findMissingKeys(obj1, obj2, prefix = '') {
+  const missingKeys = {};
+  
+  for (const key in obj1) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    
+    if (typeof obj1[key] === 'object' && obj1[key] !== null) {
+      if (!obj2[key] || typeof obj2[key] !== 'object') {
+        missingKeys[key] = obj1[key];
+      } else {
+        const nestedMissing = findMissingKeys(obj1[key], obj2[key], fullKey);
+        if (Object.keys(nestedMissing).length > 0) {
+          missingKeys[key] = nestedMissing;
+        }
+      }
+    } else if (!(key in obj2)) {
+      missingKeys[key] = obj1[key];
+    }
+  }
+  
+  return missingKeys;
+}
+
+const missingKeys = findMissingKeys(enTranslations, heTranslations);
+console.log('Missing keys in he.json:', JSON.stringify(missingKeys, null, 2));

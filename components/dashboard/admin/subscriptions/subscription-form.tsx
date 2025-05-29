@@ -10,8 +10,26 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Switch } from "@/components/common/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Checkbox } from "@/components/common/ui/checkbox"
-import type { ISubscription } from "@/lib/db/models/subscription"
-import type { ITreatment } from "@/lib/db/models/treatment"
+
+interface SubscriptionPlain {
+  _id: string
+  name: string
+  description: string
+  quantity: number
+  bonusQuantity: number
+  validityMonths: number
+  isActive: boolean
+  treatments: string[]
+  price: number
+  createdAt?: string
+  updatedAt?: string
+}
+
+interface ITreatment {
+  _id: string;
+  name: string;
+  cost?: number;
+}
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -29,7 +47,7 @@ type FormValues = z.infer<typeof formSchema>
 interface SubscriptionFormProps {
   onSubmit: (data: FormData) => Promise<void>
   isLoading?: boolean
-  initialData?: ISubscription | null
+  initialData?: SubscriptionPlain | null
   treatments: ITreatment[]
 }
 
@@ -206,24 +224,24 @@ export default function SubscriptionForm({
               <FormLabel>{t("subscriptions.fields.treatments")}</FormLabel>
               <div className="space-y-2">
                 {treatments.map((treatment) => (
-                  <div key={treatment._id} className="flex items-center space-x-2">
+                  <div key={(treatment._id as string)} className="flex items-center space-x-2">
                     <Checkbox
-                      id={treatment._id}
-                      checked={field.value?.includes(treatment._id)}
+                      id={treatment._id as string}
+                      checked={field.value?.includes(treatment._id as string)}
                       onCheckedChange={(checked) => {
                         if (checked) {
-                          field.onChange([...(field.value || []), treatment._id])
+                          field.onChange([...(field.value || []), treatment._id as string])
                         } else {
-                          field.onChange(field.value?.filter((value) => value !== treatment._id) || [])
+                          field.onChange(field.value?.filter((value) => value !== (treatment._id as string)) || [])
                         }
                       }}
                       disabled={isLoading}
                     />
                     <label
-                      htmlFor={treatment._id}
+                      htmlFor={treatment._id as string}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      {treatment.name} - ₪{treatment.price.toLocaleString()}
+                      {treatment.name} - ₪{typeof treatment.cost === 'number' ? treatment.cost.toLocaleString() : 0}
                     </label>
                   </div>
                 ))}

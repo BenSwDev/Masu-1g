@@ -3,125 +3,201 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useTranslation } from "@/lib/translations/i18n"
+import { useTranslation } from "react-i18next"
+import { toast } from "sonner"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
-import { Label } from "@/components/common/ui/label"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
 import { Switch } from "@/components/common/ui/switch"
-import { Calendar } from "@/components/common/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
-import { CalendarIcon } from "lucide-react"
+import { createGiftVoucher, updateGiftVoucher } from "@/actions/gift-voucher-actions"
 import { format } from "date-fns"
-import { cn } from "@/lib/utils/utils"
-import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
+import { useToast } from "@/components/ui/use-toast"
 
-interface GiftVoucherFormProps {
-  onSubmit: (data: FormData) => Promise<void>
-  isLoading?: boolean
-  initialData?: IGiftVoucher | null
+export interface GiftVoucherPlain {
+  _id: string
+  code: string
+  value: number
+  validFrom: Date
+  validUntil: Date
+  isActive: boolean
+  createdAt?: Date
+  updatedAt?: Date
 }
 
-const GiftVoucherForm = ({ onSubmit, isLoading = false, initialData }: GiftVoucherFormProps) => {
-  const { t } = useTranslation()
-  const [validFrom, setValidFrom] = useState<Date>(initialData ? new Date(initialData.validFrom) : new Date())
-  const [validUntil, setValidUntil] = useState<Date>(
-    initialData ? new Date(initialData.validUntil) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-  )
+interface GiftVoucherFormProps {
+  initialData?: GiftVoucherPlain
+  onSuccess?: () => void
+  onCancel?: () => void
+}
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    formData.set("validFrom", validFrom.toISOString())
-    formData.set("validUntil", validUntil.toISOString())
-    await onSubmit(formData)
+const formSchema = z.object({
+  code: z.string().min(1, "Code is required"),
+  value: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+    message: "Value must be a positive number",
+  }),
+  validFrom: z.string().min(1, "Valid from date is required"),
+  validUntil: z.string().min(1, "Valid until date is required"),
+  isActive: z.boolean(),
+})
+
+export function GiftVoucherForm({
+  initialData,
+  onSuccess,
+  onCancel,
+}: GiftVoucherFormProps) {
+  const { toast } = useToast()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      code: initialData?.code ?? "",
+      value: initialData?.value?.toString() ?? "",
+      validFrom: initialData?.validFrom
+        ? format(new Date(initialData.validFrom), "yyyy-MM-dd")
+        : "",
+      validUntil: initialData?.validUntil
+        ? format(new Date(initialData.validUntil), "yyyy-MM-dd")
+        : "",
+      isActive: initialData?.isActive ?? true,
+    },
+  })
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      setIsLoading(true)
+      const formData = new FormData()
+      formData.append("code", values.code)
+      formData.append("value", values.value)
+      formData.append("validFrom", values.validFrom)
+      formData.append("validUntil", values.validUntil)
+      formData.append("isActive", values.isActive.toString())
+
+      const result = initialData
+        ? await updateGiftVoucher(initialData._id, formData)
+        : await createGiftVoucher(formData)
+
+      if (!result.success) {
+        throw new Error(result.error)
+      }
+
+      toast({
+        title: initialData ? "Gift voucher updated" : "Gift voucher created",
+        description: initialData
+          ? "The gift voucher has been updated successfully."
+          : "The gift voucher has been created successfully.",
+      })
+
+      onSuccess?.()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Something went wrong",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="code">{t("giftVouchers.fields.code")}</Label>
-          <Input
-            id="code"
-            name="code"
-            defaultValue={initialData?.code || ""}
-            required
-            placeholder={t("giftVouchers.fields.codePlaceholder")}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="value">{t("giftVouchers.fields.value")}</Label>
-          <Input
-            id="value"
-            name="value"
-            type="number"
-            min="0"
-            step="0.01"
-            defaultValue={initialData?.value || ""}
-            required
-            placeholder="0.00"
-          />
-        </div>
-      </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="code"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Code</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isLoading} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>{t("giftVouchers.fields.validFrom")}</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn("w-full justify-start text-left font-normal", !validFrom && "text-muted-foreground")}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {validFrom ? format(validFrom, "PPP") : <span>{t("common.pickDate")}</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={validFrom}
-                onSelect={(date) => date && setValidFrom(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div className="space-y-2">
-          <Label>{t("giftVouchers.fields.validUntil")}</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn("w-full justify-start text-left font-normal", !validUntil && "text-muted-foreground")}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {validUntil ? format(validUntil, "PPP") : <span>{t("common.pickDate")}</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={validUntil}
-                onSelect={(date) => date && setValidUntil(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+        <FormField
+          control={form.control}
+          name="value"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Value</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.01" {...field} disabled={isLoading} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <div className="flex items-center space-x-2">
-        <Switch id="isActive" name="isActive" defaultChecked={initialData?.isActive ?? true} />
-        <Label htmlFor="isActive">{t("common.active")}</Label>
-      </div>
+        <FormField
+          control={form.control}
+          name="validFrom"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Valid From</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} disabled={isLoading} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <div className="flex justify-end gap-2 pt-4">
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? t("common.saving") : initialData ? t("common.update") : t("common.create")}
-        </Button>
-      </div>
-    </form>
+        <FormField
+          control={form.control}
+          name="validUntil"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Valid Until</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} disabled={isLoading} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="isActive"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel>Active</FormLabel>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={isLoading}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end space-x-2">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : initialData ? "Update" : "Create"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }
 

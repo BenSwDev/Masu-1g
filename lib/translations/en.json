@@ -32,7 +32,15 @@
     "deleteConfirmDescription": "This action cannot be undone.",
     "reset": "Reset",
     "searching": "Searching...",
-    "status": "Status"
+    "status": "Status",
+    "pickDate": "Pick a date",
+    "saving": "Saving...",
+    "update": "Update",
+    "deleting": "deleting",
+    "expired": "expired",
+    "depleted": "depleted",
+    "cancelled": "cancelled",
+    "creating": "creating"
   },
   "dashboard": {
     "sidebar": {
@@ -108,7 +116,8 @@
     },
     "my": {
       "title": "My Subscriptions",
-      "description": "Manage your subscriptions"
+      "description": "Manage your subscriptions",
+      "noSubscriptions": "No subscriptions found"
     },
     "status": {
       "expired": "Expired",
@@ -125,7 +134,8 @@
     "total": "Total",
     "purchase": {
       "title": "Purchase",
-      "description": "Purchase a subscription"
+      "description": "Purchase a subscription",
+      "noSubscriptions": "No subscriptions available for purchase"
     },
     "cancelSuccess": "Cancel Success",
     "cancelConfirm": "Cancel Confirm",
@@ -164,8 +174,9 @@
       "validFrom": "Valid From",
       "validUntil": "Valid Until",
       "isActive": "Active",
-      "codePlaceholder": "Enter coupon code",
-      "discountPercentage": "Discount Percentage"
+      "codePlaceholder": "Enter code",
+      "discountPercentage": "Discount Percentage",
+      "expiryDate": "Expiry Date"
     },
     "createSuccess": "Coupon created successfully",
     "createError": "Error creating coupon",
@@ -173,7 +184,24 @@
     "updateError": "Error updating coupon",
     "fetchError": "Error fetching coupons",
     "edit": "Edit Coupon",
-    "discountType": "Discount Type"
+    "discountType": "Discount Type",
+    "validation": {
+      "codeRequired": "Coupon code is required",
+      "codeMinLength": "Coupon code is too short",
+      "codeMaxLength": "Coupon code is too long",
+      "discountValueRequired": "Discount value is required",
+      "discountValueMin": "Discount value is too low",
+      "discountValueMax": "Discount value is too high",
+      "discountTypeRequired": "Discount type is required",
+      "expiryDateFuture": "Expiry date must be in the future"
+    },
+    "form": {
+      "title": "Coupon Title"
+    },
+    "discountTypes": {
+      "percentage": "Percentage",
+      "fixed": "Fixed"
+    }
   },
   "giftVouchers": {
     "title": "Gift Vouchers",
@@ -192,26 +220,40 @@
       "value": "Value",
       "validFrom": "Valid From",
       "validUntil": "Valid Until",
-      "isActive": "Active"
+      "isActive": "Active",
+      "codePlaceholder": "Enter code"
     },
     "createSuccess": "Gift voucher created successfully",
     "createError": "Error creating gift voucher",
     "updateSuccess": "Gift voucher updated successfully",
     "updateError": "Error updating gift voucher",
     "fetchError": "Error fetching gift vouchers",
-    "edit": "Edit Gift Voucher"
+    "edit": "Edit Gift Voucher",
+    "filterByStatus": "filterByStatus",
+    "allStatuses": "allStatuses",
+    "noVouchers": "noVouchers",
+    "code": "code",
+    "value": "value",
+    "validFrom": "validFrom",
+    "validUntil": "validUntil",
+    "status": "status",
+    "editVoucher": "editVoucher",
+    "deleteConfirmTitle": "deleteConfirmTitle"
   },
   "partnerCoupons": {
     "title": "Partner Coupons",
-    "description": "Manage partner coupons"
+    "description": "Manage partner coupons",
+    "noCoupons": "No partner coupons found"
   },
   "memberCoupons": {
     "title": "Member Coupons",
-    "description": "View available coupons"
+    "description": "View available coupons",
+    "noCoupons": "No member coupons found"
   },
   "memberGiftVouchers": {
     "title": "Member Gift Vouchers",
-    "description": "View available gift vouchers"
+    "description": "View available gift vouchers",
+    "noGiftVouchers": "No gift vouchers found"
   },
   "errors": {
     "unknown": "An unknown error occurred",
@@ -380,7 +422,13 @@
       "actions": "Actions"
     }
   },
-  "roles": "Roles",
+  "roles": {
+    "admin": "Admin",
+    "member": "Member",
+    "partner": "Partner",
+    "professional": "Professional",
+    "guest": "Guest"
+  },
   "name": "Name",
   "email": "Email",
   "createdAt": "Created At",
@@ -546,6 +594,15 @@
     "subscription": "Subscription",
     "remaining": "Remaining",
     "expiryDate": "Expiry Date",
-    "status": "Status"
-  }
+    "status": "Status",
+    "deleteSuccess": "deleteSuccess",
+    "deleteError": "deleteError",
+    "totalQuantity": "totalQuantity",
+    "purchaseDate": "purchaseDate",
+    "deleteConfirmTitle": "deleteConfirmTitle",
+    "deleteConfirmDescription": "deleteConfirmDescription"
+  },
+  "validFrom": "Valid From",
+  "validUntil": "Valid Until",
+  "T": "T"
 }

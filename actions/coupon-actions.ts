@@ -6,8 +6,9 @@ import { authOptions } from "@/lib/auth/auth"
 import Coupon from "@/lib/db/models/coupon"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
+import { CouponPlain } from "@/components/dashboard/admin/coupons/coupon-form"
 
-export async function createCoupon(formData: FormData) {
+export async function createCoupon(data: CouponPlain) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles.includes("admin")) {
@@ -16,34 +17,36 @@ export async function createCoupon(formData: FormData) {
 
     await dbConnect()
 
-    const code = formData.get("code") as string
-    const discountType = formData.get("discountType") as string
-    const discountValue = Number(formData.get("discountValue"))
-    const validFrom = new Date(formData.get("validFrom") as string)
-    const validUntil = new Date(formData.get("validUntil") as string)
-    const isActive = formData.get("isActive") === "on"
-
     const coupon = new Coupon({
-      code,
-      discountType,
-      discountValue,
-      validFrom,
-      validUntil,
-      isActive,
+      code: data.code,
+      discountType: data.discountType,
+      discountValue: data.discountValue,
+      validFrom: new Date(), // Optionally add a validFrom field if needed
+      validUntil: new Date(data.expiryDate),
+      isActive: data.isActive,
     })
 
     await coupon.save()
 
     revalidatePath("/dashboard/admin/coupons")
 
-    return { success: true, message: "Coupon created successfully" }
+    return { success: true, coupon: {
+      _id: coupon._id.toString(),
+      code: coupon.code,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      expiryDate: data.expiryDate,
+      isActive: coupon.isActive,
+      createdAt: coupon.createdAt?.toISOString?.() ?? undefined,
+      updatedAt: coupon.updatedAt?.toISOString?.() ?? undefined,
+    }}
   } catch (error) {
     logger.error("Error creating coupon:", error)
     return { success: false, error: "Failed to create coupon" }
   }
 }
 
-export async function updateCoupon(id: string, formData: FormData) {
+export async function updateCoupon(id: string, data: CouponPlain) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles.includes("admin")) {
@@ -52,22 +55,14 @@ export async function updateCoupon(id: string, formData: FormData) {
 
     await dbConnect()
 
-    const code = formData.get("code") as string
-    const discountType = formData.get("discountType") as string
-    const discountValue = Number(formData.get("discountValue"))
-    const validFrom = new Date(formData.get("validFrom") as string)
-    const validUntil = new Date(formData.get("validUntil") as string)
-    const isActive = formData.get("isActive") === "on"
-
     const coupon = await Coupon.findByIdAndUpdate(
       id,
       {
-        code,
-        discountType,
-        discountValue,
-        validFrom,
-        validUntil,
-        isActive,
+        code: data.code,
+        discountType: data.discountType,
+        discountValue: data.discountValue,
+        validUntil: new Date(data.expiryDate),
+        isActive: data.isActive,
       },
       { new: true },
     )
@@ -78,7 +73,16 @@ export async function updateCoupon(id: string, formData: FormData) {
 
     revalidatePath("/dashboard/admin/coupons")
 
-    return { success: true, message: "Coupon updated successfully" }
+    return { success: true, coupon: {
+      _id: coupon._id.toString(),
+      code: coupon.code,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      expiryDate: data.expiryDate,
+      isActive: coupon.isActive,
+      createdAt: coupon.createdAt?.toISOString?.() ?? undefined,
+      updatedAt: coupon.updatedAt?.toISOString?.() ?? undefined,
+    }}
   } catch (error) {
     logger.error("Error updating coupon:", error)
     return { success: false, error: "Failed to update coupon" }

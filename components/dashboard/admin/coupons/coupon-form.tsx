@@ -1,169 +1,165 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import { useForm, Controller } from "react-hook-form"
-import { yupResolver } from "@hookform/resolvers/yup"
-import * as yup from "yup"
-import {
-  Box,
-  Button,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-  Typography,
-} from "@mui/material"
-import { DatePicker } from "@mui/x-date-pickers/DatePicker"
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider"
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
-import dayjs, { type Dayjs } from "dayjs"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Button } from "@/components/common/ui/button"
+import { Input } from "@/components/common/ui/input"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { useTranslation } from "next-i18next"
+import { format } from "date-fns"
 
-interface CouponFormProps {
-  onSubmit: (data: CouponFormData) => void
-  initialValues?: CouponFormData
-}
-
-interface CouponFormData {
+export interface CouponPlain {
+  _id?: string
   code: string
   discountValue: number
   discountType: "percentage" | "fixed"
-  expiryDate: Dayjs | null
+  expiryDate: string // yyyy-MM-dd
+  isActive: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
-const validationSchema = (t: any) =>
-  yup.object({
-    code: yup
-      .string()
-      .required(t("coupons.validation.codeRequired"))
-      .min(3, t("coupons.validation.codeMinLength"))
-      .max(20, t("coupons.validation.codeMaxLength")),
-    discountValue: yup
-      .number()
-      .required(t("coupons.validation.discountValueRequired"))
-      .min(0, t("coupons.validation.discountValueMin"))
-      .max(100, t("coupons.validation.discountValueMax")),
-    discountType: yup.string().required(t("coupons.validation.discountTypeRequired")),
-    expiryDate: yup
-      .date()
-      .nullable()
-      .transform((_, originalValue) => {
-        return originalValue ? dayjs(originalValue) : null
-      })
-      .test(
-        "is-future-date",
-        t("coupons.validation.expiryDateFuture"),
-        (value) => value === null || dayjs(value).isAfter(dayjs()),
-      ),
-  })
+const formSchema = z.object({
+  code: z.string().min(3, { message: "coupons.validation.codeMinLength" }).max(20, { message: "coupons.validation.codeMaxLength" }),
+  discountValue: z.coerce.number().min(0, { message: "coupons.validation.discountValueMin" }).max(100, { message: "coupons.validation.discountValueMax" }),
+  discountType: z.enum(["percentage", "fixed"]),
+  expiryDate: z.string().min(1, { message: "coupons.validation.expiryDateFuture" }),
+  isActive: z.boolean(),
+})
 
-const CouponForm: React.FC<CouponFormProps> = ({ onSubmit, initialValues }) => {
+interface CouponFormProps {
+  initialData?: CouponPlain
+  onSubmit: (data: CouponPlain) => void
+  onCancel?: () => void
+  isLoading?: boolean
+}
+
+export default function CouponForm({ initialData, onSubmit, onCancel, isLoading }: CouponFormProps) {
   const { t } = useTranslation()
-  const [expiryDateValue, setExpiryDateValue] = useState<Dayjs | null>(initialValues?.expiryDate || null)
+  const [submitting, setSubmitting] = useState(false)
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CouponFormData>({
-    resolver: yupResolver(validationSchema(t)),
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      code: initialValues?.code || "",
-      discountValue: initialValues?.discountValue || 0,
-      discountType: initialValues?.discountType || "percentage",
-      expiryDate: initialValues?.expiryDate || null,
+      code: initialData?.code ?? "",
+      discountValue: initialData?.discountValue ?? 0,
+      discountType: initialData?.discountType ?? "percentage",
+      expiryDate: initialData?.expiryDate ? format(new Date(initialData.expiryDate), "yyyy-MM-dd") : "",
+      isActive: initialData?.isActive ?? true,
     },
   })
 
-  const handleDateChange = (date: Dayjs | null) => {
-    setExpiryDateValue(date)
+  async function handleSubmit(values: z.infer<typeof formSchema>) {
+    setSubmitting(true)
+    try {
+      // Convert expiryDate to yyyy-MM-dd string
+      const coupon: CouponPlain = {
+        ...values,
+        expiryDate: values.expiryDate,
+      }
+      onSubmit(coupon)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        {t("coupons.form.title")}
-      </Typography>
-      <Controller
-        name="code"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            label={t("coupons.fields.code")}
-            placeholder={t("coupons.fields.codePlaceholder") || t("coupons.fields.code")}
-            fullWidth
-            margin="normal"
-            error={!!errors.code}
-            helperText={errors.code?.message}
-          />
-        )}
-      />
-      <Controller
-        name="discountValue"
-        control={control}
-        render={({ field }) => (
-          <TextField
-            {...field}
-            label={t("coupons.fields.discountValue")}
-            type="number"
-            fullWidth
-            margin="normal"
-            error={!!errors.discountValue}
-            helperText={errors.discountValue?.message}
-          />
-        )}
-      />
-      <Controller
-        name="discountType"
-        control={control}
-        render={({ field }) => (
-          <FormControl fullWidth margin="normal" error={!!errors.discountType}>
-            <InputLabel id="discount-type-label">{t("coupons.fields.discountType")}</InputLabel>
-            <Select
-              labelId="discount-type-label"
-              id="discount-type"
-              value={field.value}
-              label={t("coupons.fields.discountType")}
-              onChange={field.onChange}
-            >
-              <MenuItem value="percentage">{t("coupons.discountTypes.percentage")}</MenuItem>
-              <MenuItem value="fixed">{t("coupons.discountTypes.fixed")}</MenuItem>
-            </Select>
-            {errors.discountType && <FormHelperText>{errors.discountType.message}</FormHelperText>}
-          </FormControl>
-        )}
-      />
-      <FormControl fullWidth margin="normal" error={!!errors.expiryDate}>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <Controller
-            name="expiryDate"
-            control={control}
-            render={({ field }) => (
-              <DatePicker
-                label={t("coupons.fields.expiryDate")}
-                value={expiryDateValue}
-                onChange={(date: Dayjs | null) => {
-                  handleDateChange(date)
-                  field.onChange(date)
-                }}
-                renderInput={(params) => <TextField {...params} />}
-              />
-            )}
-          />
-        </LocalizationProvider>
-        {errors.expiryDate && <FormHelperText>{errors.expiryDate.message}</FormHelperText>}
-      </FormControl>
-
-      <Button type="submit" variant="contained" color="primary">
-        {t("common.submit")}
-      </Button>
-    </Box>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="code"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("coupons.fields.code")}</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={isLoading || submitting} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="discountValue"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("coupons.fields.discountValue")}</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.01" {...field} disabled={isLoading || submitting} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="discountType"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("coupons.fields.discountType")}</FormLabel>
+              <FormControl>
+                <Select value={field.value} onValueChange={field.onChange} disabled={isLoading || submitting}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("coupons.fields.discountType")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="percentage">{t("coupons.discountTypes.percentage")}</SelectItem>
+                    <SelectItem value="fixed">{t("coupons.discountTypes.fixed")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="expiryDate"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("coupons.fields.expiryDate")}</FormLabel>
+              <FormControl>
+                <Input type="date" {...field} disabled={isLoading || submitting} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="isActive"
+          render={({ field }) => (
+            <FormItem className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel>{t("coupons.fields.isActive")}</FormLabel>
+              </div>
+              <FormControl>
+                <input
+                  type="checkbox"
+                  checked={field.value}
+                  onChange={e => field.onChange(e.target.checked)}
+                  disabled={isLoading || submitting}
+                  className="form-checkbox h-5 w-5 text-blue-600"
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-end space-x-2">
+          {onCancel && (
+            <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading || submitting}>
+              {t("common.cancel")}
+            </Button>
+          )}
+          <Button type="submit" disabled={isLoading || submitting}>
+            {submitting ? t("common.saving") : initialData ? t("common.update") : t("common.create")}
+          </Button>
+        </div>
+      </form>
+    </Form>
   )
 }
-
-export default CouponForm

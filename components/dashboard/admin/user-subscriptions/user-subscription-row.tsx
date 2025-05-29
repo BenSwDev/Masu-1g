@@ -7,8 +7,9 @@ import { Badge } from "@/components/common/ui/badge"
 import { AlertModal } from "@/components/common/modals/alert-modal"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { Eye, Ban } from "lucide-react"
-import { cancelSubscription } from "@/actions/user-subscription-actions"
+import { Eye, Ban, Trash2 } from "lucide-react"
+import { cancelSubscription, deleteUserSubscription } from "@/actions/user-subscription-actions"
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
 
 interface UserSubscriptionRowProps {
   userSubscription: any
@@ -18,6 +19,8 @@ export default function UserSubscriptionRow({ userSubscription }: UserSubscripti
   const { t } = useTranslation()
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleCancel = async () => {
     setIsLoading(true)
@@ -38,6 +41,19 @@ export default function UserSubscriptionRow({ userSubscription }: UserSubscripti
     }
   }
 
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true)
+      await deleteUserSubscription(userSubscription._id)
+      toast.success(t("userSubscriptions.deleteSuccess"))
+    } catch (error) {
+      toast.error(t("userSubscriptions.deleteError"))
+    } finally {
+      setIsDeleting(false)
+      setIsOpen(false)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -53,43 +69,115 @@ export default function UserSubscriptionRow({ userSubscription }: UserSubscripti
     }
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800"
+      case "expired":
+        return "bg-red-100 text-red-800"
+      case "depleted":
+        return "bg-yellow-100 text-yellow-800"
+      case "cancelled":
+        return "bg-gray-100 text-gray-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("he-IL", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
   return (
     <>
       <tr className="border-b hover:bg-gray-50">
-        <td className="py-3 px-4 text-right">
-          {userSubscription.userId?.name || "N/A"}
-          <div className="text-xs text-gray-500">{userSubscription.userId?.email}</div>
+        <td className="py-4 px-4">
+          <div className="flex flex-col">
+            <span className="font-medium">{userSubscription.user?.name}</span>
+            <span className="text-sm text-gray-500">{userSubscription.user?.email}</span>
+          </div>
         </td>
-        <td className="py-3 px-4 text-right">{userSubscription.subscriptionId?.name || "N/A"}</td>
-        <td className="py-3 px-4 text-right">
-          {userSubscription.remainingQuantity} / {userSubscription.totalQuantity}
+        <td className="py-4 px-4">
+          <div className="flex flex-col">
+            <span className="font-medium">{userSubscription.subscriptionId?.name}</span>
+            <span className="text-sm text-gray-500">
+              {t("userSubscriptions.totalQuantity")}: {userSubscription.totalQuantity}
+            </span>
+          </div>
         </td>
-        <td className="py-3 px-4 text-right">{format(new Date(userSubscription.expiryDate), "dd/MM/yyyy")}</td>
-        <td className="py-3 px-4 text-right">{getStatusBadge(userSubscription.status)}</td>
-        <td className="py-3 px-4 text-right">
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm">
-              <Eye className="h-4 w-4 mr-1" />
-              {t("common.view")}
+        <td className="py-4 px-4">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{userSubscription.remainingQuantity}</span>
+            <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500"
+                style={{
+                  width: `${(userSubscription.remainingQuantity / userSubscription.totalQuantity) * 100}%`,
+                }}
+              />
+            </div>
+          </div>
+        </td>
+        <td className="py-4 px-4">
+          <div className="flex flex-col">
+            <span>{formatDate(userSubscription.expiryDate)}</span>
+            <span className="text-sm text-gray-500">
+              {t("userSubscriptions.purchaseDate")}: {formatDate(userSubscription.purchaseDate)}
+            </span>
+          </div>
+        </td>
+        <td className="py-4 px-4">
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+              userSubscription.status
+            )}`}
+          >
+            {t(`userSubscriptions.status.${userSubscription.status}`)}
+          </span>
+        </td>
+        <td className="py-4 px-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(true)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <Trash2 className="h-4 w-4" />
             </Button>
-            {userSubscription.status === "active" && (
-              <Button variant="ghost" size="sm" className="text-red-600" onClick={() => setShowCancelDialog(true)}>
-                <Ban className="h-4 w-4 mr-1" />
-                {t("common.cancel")}
-              </Button>
-            )}
           </div>
         </td>
       </tr>
 
-      <AlertModal
-        isOpen={showCancelDialog}
-        onClose={() => setShowCancelDialog(false)}
-        onConfirm={handleCancel}
-        loading={isLoading}
-        title={t("subscriptions.cancelConfirm")}
-        description={t("subscriptions.cancelConfirmDescription")}
-      />
+      <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("userSubscriptions.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("userSubscriptions.deleteConfirmDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  {t("common.deleting")}
+                </div>
+              ) : (
+                t("common.delete")
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

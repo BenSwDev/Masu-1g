@@ -19,13 +19,28 @@
     "duplicate": "שכפל",
     "actions": "פעולות",
     "create": "צור",
-    "loading": "טוען...",
     "comingSoon": "בקרוב",
     "deleteConfirm": "האם אתה בטוח?",
     "deleteConfirmDescription": "לא ניתן לבטל פעולה זו.",
     "reset": "איפוס",
     "searching": "מחפש...",
-    "status": "סטטוס"
+    "status": "סטטוס",
+    "pickDate": "בחר תאריך",
+    "saving": "שומר...",
+    "update": "עדכן",
+    "previous": "הקודם",
+    "page": "עמוד",
+    "search": "חיפוש",
+    "roles": "תפקידים",
+    "sortField": "מיין לפי",
+    "sortDirection": "כיוון מיון",
+    "created": "נוצר",
+    "view": "צפה",
+    "deleting": "מחיקה",
+    "expired": "מועד תפוגה",
+    "depleted": "מספר שוברים נגזר",
+    "cancelled": "ביטול",
+    "creating": "יצירה"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -161,7 +176,12 @@
       "bankAccount": "פרטי חשבון בנק",
       "documents": "העלאת מסמכים",
       "coupons": "קופונים",
-      "giftVouchers": "שוברי מתנה"
+      "giftVouchers": "שוברי מתנה",
+      "products": "מוצרים",
+      "categories": "קטגוריות",
+      "orders": "הזמנות",
+      "support": "תמיכה",
+      "settings": "הגדרות"
     },
     "roles": {
       "member": "חבר",
@@ -214,15 +234,11 @@
     "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
     "noDetails": "אין פרטים נוספים",
     "setDefault": "הגדר כברירת מחדל",
-    "setDefaultError": "שגיאה בהגדרת כתובת כברירת מחדל",
     "deleted": "הכתובת נמחקה",
     "defaultSet": "כתובת ברירת מחדל עודכנה",
     "defaultSetError": "שגיאה בהגדרת כתובת כברירת מחדל",
     "created": "הכתובת נוצרה",
-    "updated": "הכתובת עודכנה",
-    "updateError": "שגיאה בעדכון הכתובת",
-    "createError": "שגיאה ביצירת הכתובת",
-    "edit": "ערוך כתובת"
+    "updated": "הכתובת עודכנה"
   },
   "paymentMethods": {
     "title": "ניהול אמצעי תשלום",
@@ -254,7 +270,8 @@
     "deleted": "אמצעי התשלום נמחק",
     "defaultSet": "אמצעי תשלום ברירת מחדל עודכן",
     "created": "אמצעי התשלום נוצר",
-    "updated": "אמצעי התשלום עודכן"
+    "updated": "אמצעי התשלום עודכן",
+    "card": "כרטיס"
   },
   "treatments": {
     "title": "ניהול טיפולים",
@@ -301,8 +318,12 @@
     "duration": "משך זמן",
     "errors": {
       "nameRequired": "שם הטיפול נדרש",
-      "categoryRequired": "קטגוריה נדרשת"
-    }
+      "categoryRequired": "קטגוריה נדרשת",
+      "invalidDuration": "משך זמן לא תקין"
+    },
+    "updateError": "שגיאה בעדכון הטיפול",
+    "createError": "שגיאה ביצירת הטיפול",
+    "basicInfo": "מידע בסיסי"
   },
   "bundles": {
     "title": "ניהול חבילות",
@@ -423,7 +444,86 @@
   "subscriptions": {
     "createError": "שגיאה ביצירת מנוי",
     "updateError": "שגיאה בעדכון מנוי",
-    "fetchError": "שגיאה בטעינת מנויים"
+    "fetchError": "שגיאה בטעינת מנויים",
+    "my": {
+      "title": "המנויים שלי",
+      "description": "נהל את המנויים שלך",
+      "noSubscriptions": "לא נמצאו מנויים"
+    },
+    "purchase": {
+      "title": "רכישה",
+      "description": "רכוש מנוי",
+      "noSubscriptions": "אין מנויים זמינים לרכישה"
+    },
+    "title": "ניהול מנויים",
+    "addNew": "הוסף מנוי חדש",
+    "edit": "ערוך מנוי",
+    "searchPlaceholder": "חפש מנויים לפי שם",
+    "noSubscriptions": "לא נמצאו מנויים",
+    "createSuccess": "המנוי נוצר בהצלחה",
+    "updateSuccess": "המנוי עודכן בהצלחה",
+    "deactivateSuccess": "המנוי הושבת בהצלחה",
+    "activateSuccess": "המנוי הופעל בהצלחה",
+    "statusUpdateError": "שגיאה בעדכון סטטוס המנוי",
+    "deleteSuccess": "המנוי נמחק בהצלחה",
+    "deleteError": "שגיאה במחיקת המנוי",
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק מנוי זה?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
+    "months": "חודשים",
+    "includedTreatments": "טיפולים כלולים",
+    "sortAscending": "עולה",
+    "sortDescending": "יורד",
+    "fields": {
+      "name": "שם המנוי",
+      "description": "תיאור",
+      "isActive": "פעיל",
+      "quantity": "כמות",
+      "bonusQuantity": "כמות בונוס",
+      "validityMonths": "תוקף (חודשים)",
+      "treatments": "טיפולים",
+      "price": "מחיר"
+    },
+    "activeDescription": "מנויים פעילים יוצגו ללקוחות",
+    "quantityDescription": "מספר הטיפולים הכלולים במנוי",
+    "bonusDescription": "מספר טיפולי הבונוס (חינם)",
+    "validityDescription": "תקופת תוקף המנוי בחודשים",
+    "treatmentsDescription": "בחר טיפולים הכלולים במנוי זה",
+    "noTreatmentsAvailable": "אין טיפולים זמינים",
+    "errors": {
+      "nameRequired": "שם המנוי נדרש",
+      "descriptionRequired": "תיאור נדרש",
+      "quantityRequired": "הכמות חייבת להיות לפחות 1",
+      "bonusQuantityInvalid": "כמות הבונוס חייבת להיות לפחות 0",
+      "validityRequired": "התוקף חייב להיות לפחות חודש אחד",
+      "treatmentsRequired": "יש לבחור לפחות טיפול אחד"
+    },
+    "status": {
+      "expired": "פג תוקף",
+      "depleted": "אזל",
+      "cancelled": "בוטל"
+    },
+    "unknownSubscription": "מנוי לא ידוע",
+    "purchasedOn": "נרכש ב",
+    "remaining": "נותר",
+    "expiry": "תוקף",
+    "paymentMethod": "אמצעי תשלום",
+    "usage": "שימוש",
+    "used": "משומש",
+    "total": "סה״כ",
+    "cancelSuccess": "ביטול הצליח",
+    "cancelConfirm": "אשר ביטול",
+    "cancelConfirmDescription": "תיאור אישור ביטול",
+    "users": {
+      "title": "משתמשים",
+      "description": "ניהול משתמשים"
+    },
+    "description": "תיאור",
+    "create": "צור",
+    "selectValidity": "בחר תוקף",
+    "quantity": "כמות",
+    "bonus": "בונוס",
+    "validity": "תוקף",
+    "price": "מחיר"
   },
   "userSubscriptions": {
     "title": "מנויי משתמשים",
@@ -437,7 +537,13 @@
     "subscription": "מנוי",
     "remaining": "נותר",
     "expiryDate": "תאריך תפוגה",
-    "status": "סטטוס"
+    "status": "סטטוס",
+    "deleteSuccess": "המנוי נמחק בהצלחה",
+    "deleteError": "שגיאה במחיקת המנוי",
+    "totalQuantity": "סה״כ",
+    "purchaseDate": "נרכש ב",
+    "deleteConfirmTitle": "מחיקת מנוי",
+    "deleteConfirmDescription": "האם אתה בטוח שברצונך למחוק מנוי זה?"
   },
   "coupons": {
     "searchPlaceholder": "חפש קופונים לפי קוד...",
@@ -459,12 +565,33 @@
       "code": "קוד",
       "discountType": "סוג הנחה",
       "discountValue": "ערך הנחה",
-      "validFrom": "תקף מ",
-      "validUntil": "תקף עד",
+      "validFrom": "בתוקף מ-",
+      "validUntil": "בתוקף עד",
       "isActive": "פעיל",
       "codePlaceholder": "הכנס קוד קופון",
-      "discountPercentage": "אחוז הנחה"
-    }
+      "discountPercentage": "אחוז הנחה",
+      "expiryDate": "תאריך תפוגה"
+    },
+    "validation": {
+      "codeRequired": "יש להזין קוד קופון",
+      "codeMinLength": "קוד הקופון קצר מדי",
+      "codeMaxLength": "קוד הקופון ארוך מדי",
+      "discountValueRequired": "יש להזין ערך הנחה",
+      "discountValueMin": "ערך ההנחה נמוך מדי",
+      "discountValueMax": "ערך ההנחה גבוה מדי",
+      "discountTypeRequired": "יש לבחור סוג הנחה",
+      "expiryDateFuture": "תאריך התפוגה חייב להיות בעתיד"
+    },
+    "form": {
+      "title": "כותרת קופון"
+    },
+    "discountTypes": {
+      "percentage": "אחוז",
+      "fixed": "קבוע"
+    },
+    "title": "קופונים",
+    "description": "ניהול קופונים",
+    "addNew": "הוסף קופון חדש"
   },
   "giftVouchers": {
     "searchPlaceholder": "חפש שוברי מתנה לפי קוד...",
@@ -480,6 +607,99 @@
     "updateSuccess": "שובר המתנה עודכן בהצלחה",
     "updateError": "שגיאה בעדכון שובר מתנה",
     "fetchError": "שגיאה בטעינת שוברי מתנה",
-    "edit": "ערוך שובר מתנה"
-  }
+    "edit": "ערוך שובר מתנה",
+    "fields": {
+      "codePlaceholder": "הזן קוד",
+      "code": "קוד",
+      "value": "ערך",
+      "validFrom": "תקף מ",
+      "validUntil": "תקף עד",
+      "isActive": "פעיל"
+    },
+    "title": "שוברי מתנה",
+    "description": "ניהול שוברי מתנה",
+    "addNew": "הוסף שובר מתנה חדש",
+    "filterByStatus": "סנן לפי סטטוס",
+    "allStatuses": "כל הסטטוסים",
+    "noVouchers": "לא נמצאו שוברי מתנה",
+    "code": "קוד",
+    "value": "ערך",
+    "validFrom": "תקף מ",
+    "validUntil": "תקף עד",
+    "status": "סטטוס",
+    "editVoucher": "ערוך שובר מתנה",  
+    "deleteConfirmTitle": "מחיקת שובר מתנה"
+  },
+  "Roles": {
+    "admin": "מנהל",
+    "member": "חבר",
+    "partner": "שותף",
+    "professional": "מקצועי",
+    "guest": "אורח"
+  },
+  "partnerCoupons": {
+    "title": "קופוני שותפים",
+    "description": "ניהול קופוני שותפים",
+    "noCoupons": "לא נמצאו קופוני שותפים"
+  },
+  "memberCoupons": {
+    "title": "קופוני חבר",
+    "description": "הצג קופונים זמינים",
+    "noCoupons": "לא נמצאו קופוני חבר"
+  },
+  "memberGiftVouchers": {
+    "title": "שוברי מתנה לחבר",
+    "description": "הצג שוברי מתנה זמינים",
+    "noGiftVouchers": "לא נמצאו שוברי מתנה"
+  },
+  "validFrom": "בתוקף מ-",
+  "validUntil": "בתוקף עד",
+  "identifier": "מזהה",
+  "password": "סיסמה",
+  "currentPassword": "סיסמה נוכחית",
+  "newPassword": "סיסמה חדשה",
+  "confirmPassword": "אימות סיסמה",
+  "newEmail": "דוא״ל חדש",
+  "admin": {
+    "users": {
+      "searchPlaceholder": "חפש משתמשים...",
+      "filterByRole": "סנן לפי תפקיד",
+      "allRoles": "כל התפקידים",
+      "name": "שם",
+      "email": "דוא״ל",
+      "roles": "תפקידים",
+      "created": "נוצר",
+      "actions": "פעולות"
+    }
+  },
+  "roles": {
+    "admin": "מנהל",
+    "member": "חבר",
+    "partner": "שותף",
+    "professional": "מקצועי",
+    "guest": "אורח"
+  },
+  "name": "שם",
+  "email": "דוא״ל",
+  "createdAt": "נוצר ב",
+  "page": "עמוד",
+  "search": "חיפוש",
+  "sortField": "שדה מיון",
+  "sortDirection": "כיוון מיון",
+  "city": "עיר",
+  "street": "רחוב",
+  "streetNumber": "מספר בית",
+  "addressType": "סוג כתובת",
+  "hasPrivateParking": "חניה פרטית",
+  "additionalNotes": "הערות נוספות",
+  "isDefault": "ברירת מחדל",
+  "floor": "קומה",
+  "apartmentNumber": "מספר דירה",
+  "entrance": "כניסה",
+  "doorName": "שם דלת",
+  "buildingName": "שם בניין",
+  "hotelName": "שם מלון",
+  "roomNumber": "מספר חדר",
+  "instructions": "הוראות",
+  "T": "T"
 }

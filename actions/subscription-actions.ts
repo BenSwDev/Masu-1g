@@ -17,8 +17,6 @@ const subscriptionSchema = z.object({
   bonusQuantity: z.number().int().min(0, { message: "Bonus quantity must be at least 0" }),
   validityMonths: z.number().int().min(1, { message: "Validity must be at least 1 month" }),
   isActive: z.boolean().default(true),
-  treatments: z.array(z.string()).optional(),
-  price: z.number().min(0, { message: "Price must be at least 0" }),
 })
 
 // יצירת מנוי חדש
@@ -38,8 +36,6 @@ export async function createSubscription(formData: FormData) {
     const bonusQuantity = Number.parseInt(formData.get("bonusQuantity") as string)
     const validityMonths = Number.parseInt(formData.get("validityMonths") as string)
     const isActive = formData.get("isActive") === "true"
-    const price = Number.parseFloat(formData.get("price") as string)
-    const treatments = formData.getAll("treatments") as string[]
 
     // בדיקת תקינות
     const validatedData = subscriptionSchema.parse({
@@ -49,8 +45,6 @@ export async function createSubscription(formData: FormData) {
       bonusQuantity,
       validityMonths,
       isActive,
-      treatments,
-      price,
     })
 
     // יצירת מנוי חדש
@@ -86,8 +80,6 @@ export async function updateSubscription(id: string, formData: FormData) {
     const bonusQuantity = Number.parseInt(formData.get("bonusQuantity") as string)
     const validityMonths = Number.parseInt(formData.get("validityMonths") as string)
     const isActive = formData.get("isActive") === "true"
-    const price = Number.parseFloat(formData.get("price") as string)
-    const treatments = formData.getAll("treatments") as string[]
 
     // בדיקת תקינות
     const validatedData = subscriptionSchema.parse({
@@ -97,8 +89,6 @@ export async function updateSubscription(id: string, formData: FormData) {
       bonusQuantity,
       validityMonths,
       isActive,
-      treatments,
-      price,
     })
 
     // עדכון המנוי
@@ -191,23 +181,14 @@ export async function getSubscriptions(
     }
 
     // ביצוע השאילתה
-    const subscriptions = await Subscription.find(query)
-      .populate("treatments")
-      .sort(sort)
-      .skip(skip)
-      .limit(limit)
-      .lean()
+    const subscriptions = await Subscription.find(query).sort(sort).skip(skip).limit(limit).lean()
 
     const total = await Subscription.countDocuments(query)
 
     // Serialize the subscriptions to plain objects
-    const serializedSubscriptions = subscriptions.map(sub => ({
+    const serializedSubscriptions = subscriptions.map((sub) => ({
       ...sub,
       _id: sub._id.toString(),
-      treatments: sub.treatments.map(treatment => ({
-        ...treatment,
-        _id: treatment._id.toString()
-      }))
     }))
 
     return {
@@ -231,7 +212,7 @@ export async function getSubscriptionById(id: string) {
   try {
     await dbConnect()
 
-    const subscription = await Subscription.findById(id).populate("treatments").lean()
+    const subscription = await Subscription.findById(id).lean()
 
     if (!subscription) {
       return { success: false, error: "Subscription not found" }
@@ -241,10 +222,6 @@ export async function getSubscriptionById(id: string) {
     const serializedSubscription = {
       ...subscription,
       _id: subscription._id.toString(),
-      treatments: subscription.treatments.map(treatment => ({
-        ...treatment,
-        _id: treatment._id.toString()
-      }))
     }
 
     return { success: true, subscription: serializedSubscription }
@@ -288,12 +265,15 @@ export async function getAllTreatments() {
   try {
     await dbConnect()
 
-    const treatments = await Treatment.find({ isActive: true }).select("_id name price").sort({ name: 1 }).lean()
+    const treatments = await Treatment.find({ isActive: true })
+      .select("_id name price category duration")
+      .sort({ name: 1 })
+      .lean()
 
     // Serialize the treatments to plain objects
-    const serializedTreatments = treatments.map(treatment => ({
+    const serializedTreatments = treatments.map((treatment) => ({
       ...treatment,
-      _id: treatment._id.toString()
+      _id: treatment._id.toString(),
     }))
 
     return { success: true, treatments: serializedTreatments }
@@ -308,19 +288,12 @@ export async function getActiveSubscriptions() {
   try {
     await dbConnect()
 
-    const subscriptions = await Subscription.find({ isActive: true })
-      .populate("treatments")
-      .sort({ createdAt: -1 })
-      .lean()
+    const subscriptions = await Subscription.find({ isActive: true }).sort({ createdAt: -1 }).lean()
 
     // Serialize the subscriptions to plain objects
-    const serializedSubscriptions = subscriptions.map(sub => ({
+    const serializedSubscriptions = subscriptions.map((sub) => ({
       ...sub,
       _id: sub._id.toString(),
-      treatments: sub.treatments.map(treatment => ({
-        ...treatment,
-        _id: treatment._id.toString()
-      }))
     }))
 
     return { success: true, subscriptions: serializedSubscriptions }

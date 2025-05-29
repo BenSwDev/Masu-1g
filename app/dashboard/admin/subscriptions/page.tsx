@@ -3,7 +3,6 @@ import { getSubscriptions, getAllTreatments } from "@/actions/subscription-actio
 import SubscriptionsClient from "@/components/dashboard/admin/subscriptions/subscriptions-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
-import type { ISubscription } from "@/lib/db/models/subscription"
 
 // קומפוננטת טעינה
 function SubscriptionsLoading() {
@@ -56,20 +55,20 @@ async function SubscriptionsData() {
               bonusQuantity: obj.bonusQuantity ?? 0,
               validityMonths: obj.validityMonths ?? 0,
               isActive: obj.isActive ?? false,
-              treatments: Array.isArray(obj.treatments) ? obj.treatments.map((t: any) => String(t)) : [],
-              price: obj.price ?? 0,
               createdAt: obj.createdAt,
               updatedAt: obj.updatedAt,
             }))
           : []
       }
       treatments={treatmentsResult.treatments || []}
-      pagination={subscriptionsResult.pagination || {
-        total: 0,
-        page: 1,
-        limit: 10,
-        totalPages: 0
-      }}
+      pagination={
+        subscriptionsResult.pagination || {
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+        }
+      }
     />
   )
 }

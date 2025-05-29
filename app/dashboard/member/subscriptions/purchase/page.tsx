@@ -1,5 +1,6 @@
 import { Suspense } from "react"
 import { getActiveSubscriptions } from "@/actions/subscription-actions"
+import { getAllTreatments } from "@/actions/subscription-actions"
 import { getPaymentMethods } from "@/actions/payment-method-actions"
 import PurchaseSubscriptionClient from "@/components/dashboard/member/subscriptions/purchase-subscription-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
@@ -38,12 +39,16 @@ function PurchaseLoading() {
 
 // קומפוננטת טעינת נתונים
 async function PurchaseData() {
-  const [subscriptionsResult, paymentMethodsResult] = await Promise.all([getActiveSubscriptions(), getPaymentMethods()])
+  const [subscriptionsResult, treatmentsResult, paymentMethodsResult] = await Promise.all([
+    getActiveSubscriptions(),
+    getAllTreatments(),
+    getPaymentMethods(),
+  ])
 
-  if (!subscriptionsResult.success || !paymentMethodsResult.success) {
+  if (!subscriptionsResult.success || !treatmentsResult.success || !paymentMethodsResult.success) {
     return (
       <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        Error: {subscriptionsResult.error || paymentMethodsResult.error || "Unknown error"}
+        Error: {subscriptionsResult.error || treatmentsResult.error || paymentMethodsResult.error || "Unknown error"}
       </div>
     )
   }
@@ -51,6 +56,7 @@ async function PurchaseData() {
   return (
     <PurchaseSubscriptionClient
       subscriptions={subscriptionsResult.subscriptions}
+      treatments={treatmentsResult.treatments}
       paymentMethods={paymentMethodsResult.paymentMethods}
     />
   )

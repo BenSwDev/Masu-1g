@@ -9,7 +9,6 @@ import { Input } from "@/components/common/ui/input"
 import { Textarea } from "@/components/common/ui/textarea"
 import { Switch } from "@/components/common/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Checkbox } from "@/components/common/ui/checkbox"
 
 interface SubscriptionPlain {
   _id: string
@@ -19,16 +18,8 @@ interface SubscriptionPlain {
   bonusQuantity: number
   validityMonths: number
   isActive: boolean
-  treatments: string[]
-  price: number
   createdAt?: string
   updatedAt?: string
-}
-
-interface ITreatment {
-  _id: string;
-  name: string;
-  cost?: number;
 }
 
 const formSchema = z.object({
@@ -38,8 +29,6 @@ const formSchema = z.object({
   bonusQuantity: z.coerce.number().int().min(0, { message: "Bonus quantity must be at least 0" }),
   validityMonths: z.coerce.number().int().min(1, { message: "Validity must be at least 1 month" }),
   isActive: z.boolean(),
-  treatments: z.array(z.string()),
-  price: z.coerce.number().min(0, { message: "Price must be at least 0" }),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -48,14 +37,14 @@ interface SubscriptionFormProps {
   onSubmit: (data: FormData) => Promise<void>
   isLoading?: boolean
   initialData?: SubscriptionPlain | null
-  treatments: ITreatment[]
+  treatments?: any[]
 }
 
 export default function SubscriptionForm({
   onSubmit,
   isLoading = false,
   initialData,
-  treatments,
+  treatments = [],
 }: SubscriptionFormProps) {
   const { t } = useTranslation()
 
@@ -64,12 +53,10 @@ export default function SubscriptionForm({
     defaultValues: {
       name: initialData?.name || "",
       description: initialData?.description || "",
-      price: initialData?.price || 0,
       quantity: initialData?.quantity || 1,
       validityMonths: initialData?.validityMonths || 12,
       bonusQuantity: initialData?.bonusQuantity || 0,
       isActive: initialData?.isActive ?? true,
-      treatments: initialData?.treatments?.map((t: any) => t._id || t) || [],
     },
   })
 
@@ -78,15 +65,7 @@ export default function SubscriptionForm({
       const formData = new FormData()
 
       Object.entries(values).forEach(([key, value]) => {
-        if (key === "treatments") {
-          if (Array.isArray(value)) {
-            value.forEach((treatmentId) => {
-              formData.append("treatments", treatmentId)
-            })
-          }
-        } else {
-          formData.append(key, String(value))
-        }
+        formData.append(key, String(value))
       })
 
       await onSubmit(formData)
@@ -156,50 +135,34 @@ export default function SubscriptionForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="validityMonths"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("subscriptions.fields.validityMonths")}</FormLabel>
-                <Select
-                  disabled={isLoading}
-                  onValueChange={(value) => field.onChange(Number.parseInt(value))}
-                  value={field.value.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("subscriptions.selectValidity")} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {[1, 3, 6, 12, 24, 36].map((months) => (
-                      <SelectItem key={months} value={months.toString()}>
-                        {months} {t("subscriptions.months")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("subscriptions.fields.price")}</FormLabel>
+        <FormField
+          control={form.control}
+          name="validityMonths"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>{t("subscriptions.fields.validityMonths")}</FormLabel>
+              <Select
+                disabled={isLoading}
+                onValueChange={(value) => field.onChange(Number.parseInt(value))}
+                value={field.value.toString()}
+              >
                 <FormControl>
-                  <Input {...field} type="number" min={0} step={0.01} disabled={isLoading} />
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("subscriptions.selectValidity")} />
+                  </SelectTrigger>
                 </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                <SelectContent>
+                  {[1, 3, 6, 12, 24, 36].map((months) => (
+                    <SelectItem key={months} value={months.toString()}>
+                      {months} {t("subscriptions.months")}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
@@ -212,41 +175,6 @@ export default function SubscriptionForm({
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
               </FormControl>
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="treatments"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("subscriptions.fields.treatments")}</FormLabel>
-              <div className="space-y-2">
-                {treatments.map((treatment) => (
-                  <div key={(treatment._id as string)} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={treatment._id as string}
-                      checked={field.value?.includes(treatment._id as string)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          field.onChange([...(field.value || []), treatment._id as string])
-                        } else {
-                          field.onChange(field.value?.filter((value) => value !== (treatment._id as string)) || [])
-                        }
-                      }}
-                      disabled={isLoading}
-                    />
-                    <label
-                      htmlFor={treatment._id as string}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {treatment.name} - ₪{typeof treatment.cost === 'number' ? treatment.cost.toLocaleString() : 0}
-                    </label>
-                  </div>
-                ))}
-              </div>
-              <FormMessage />
             </FormItem>
           )}
         />

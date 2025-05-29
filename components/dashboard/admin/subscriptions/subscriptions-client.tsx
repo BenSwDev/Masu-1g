@@ -1,14 +1,13 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import SubscriptionCard from "./subscription-card"
-import { useState, useEffect } from "react"
 import { Button } from "@/components/common/ui/button"
 import { Plus, Search, FilterX } from "lucide-react"
 import { Card, CardContent } from "@/components/common/ui/card"
 import { AlertModal } from "@/components/common/modals/alert-modal"
-import { Pagination } from "@/components/common/ui/pagination"
-import type { ITreatment } from "@/lib/db/models/treatment"
+import { Input } from "@/components/common/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import {
   createSubscription,
@@ -18,7 +17,6 @@ import {
 } from "@/actions/subscription-actions"
 import { toast } from "sonner"
 import SubscriptionForm from "./subscription-form"
-import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 
 interface SubscriptionPlain {
@@ -29,15 +27,13 @@ interface SubscriptionPlain {
   bonusQuantity: number
   validityMonths: number
   isActive: boolean
-  treatments: string[]
-  price: number
   createdAt?: string
   updatedAt?: string
 }
 
 interface SubscriptionsClientProps {
   initialSubscriptions?: SubscriptionPlain[]
-  treatments?: ITreatment[]
+  treatments?: any[]
   pagination?: {
     total: number
     page: number
@@ -84,11 +80,9 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
             bonusQuantity: obj.bonusQuantity ?? 0,
             validityMonths: obj.validityMonths ?? 0,
             isActive: obj.isActive ?? false,
-            treatments: Array.isArray(obj.treatments) ? obj.treatments.map((t: any) => String(t)) : [],
-            price: obj.price ?? 0,
             createdAt: obj.createdAt,
             updatedAt: obj.updatedAt,
-          }))
+          })),
         )
         setPaginationData(result.pagination)
       } else {
@@ -148,23 +142,23 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
   }
 
   const handleUpdate = async (data: FormData) => {
-    if (!currentSubscription) return;
-    setIsLoading(true);
+    if (!currentSubscription) return
+    setIsLoading(true)
     try {
-      const result = await updateSubscription(currentSubscription._id as string, data);
+      const result = await updateSubscription(currentSubscription._id as string, data)
       if (result.success && result.subscription) {
-        setSubscriptions(subscriptions.map((s) => (s._id === currentSubscription._id ? result.subscription : s)));
-        toast.success(t("subscriptions.updateSuccess"));
-        setIsEditDialogOpen(false);
+        setSubscriptions(subscriptions.map((s) => (s._id === currentSubscription._id ? result.subscription : s)))
+        toast.success(t("subscriptions.updateSuccess"))
+        setIsEditDialogOpen(false)
       } else {
-        toast.error(result.error || t("subscriptions.updateError"));
+        toast.error(result.error || t("subscriptions.updateError"))
       }
     } catch (error) {
-      toast.error(t("subscriptions.updateError"));
+      toast.error(t("subscriptions.updateError"))
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleEdit = (subscription: SubscriptionPlain) => {
     setCurrentSubscription(subscription)
@@ -177,27 +171,31 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
   }
 
   const handleDelete = async () => {
-    if (!currentSubscription) return;
-    setIsLoading(true);
+    if (!currentSubscription) return
+    setIsLoading(true)
     try {
-      const result = await deleteSubscription(currentSubscription._id as string);
+      const result = await deleteSubscription(currentSubscription._id as string)
       if (result.success) {
-        setSubscriptions(subscriptions.filter((s) => s._id !== currentSubscription._id));
-        toast.success(t("subscriptions.deleteSuccess"));
-        setIsDeleteDialogOpen(false);
+        setSubscriptions(subscriptions.filter((s) => s._id !== currentSubscription._id))
+        toast.success(t("subscriptions.deleteSuccess"))
+        setIsDeleteDialogOpen(false)
         if (subscriptions.length === 1 && currentPage > 1) {
-          setCurrentPage(currentPage - 1);
-          fetchSubscriptions(currentPage - 1, searchTerm, activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined);
+          setCurrentPage(currentPage - 1)
+          fetchSubscriptions(
+            currentPage - 1,
+            searchTerm,
+            activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined,
+          )
         }
       } else {
-        toast.error(result.error || t("subscriptions.deleteError"));
+        toast.error(result.error || t("subscriptions.deleteError"))
       }
     } catch (error) {
-      toast.error(t("subscriptions.deleteError"));
+      toast.error(t("subscriptions.deleteError"))
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -274,8 +272,8 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
               subscription={{
                 ...subscription,
                 id: String(subscription._id),
-                interval: 'monthly',
-                features: []
+                interval: "monthly",
+                features: [],
               }}
               onEdit={() => handleEdit(subscription)}
               onDelete={() => handleDeleteClick(subscription)}
@@ -294,7 +292,9 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
             >
               {t("common.previous")}
             </button>
-            <span>{currentPage} / {paginationData.totalPages}</span>
+            <span>
+              {currentPage} / {paginationData.totalPages}
+            </span>
             <button
               className="px-3 py-1 border rounded"
               disabled={currentPage === paginationData.totalPages}
@@ -312,7 +312,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
           <DialogHeader>
             <DialogTitle>{t("subscriptions.addNew")}</DialogTitle>
           </DialogHeader>
-          <SubscriptionForm treatments={treatments.map(t => ({...t, _id: String(t._id)}))} onSubmit={handleCreate} isLoading={isLoading} />
+          <SubscriptionForm treatments={treatments} onSubmit={handleCreate} isLoading={isLoading} />
         </DialogContent>
       </Dialog>
 
@@ -324,7 +324,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
           </DialogHeader>
           {currentSubscription && (
             <SubscriptionForm
-              treatments={treatments.map(t => ({...t, _id: String(t._id)}))}
+              treatments={treatments}
               onSubmit={handleUpdate}
               isLoading={isLoading}
               initialData={currentSubscription}

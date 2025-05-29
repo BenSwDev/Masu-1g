@@ -3,6 +3,7 @@ import mongoose, { Schema, type Document } from "mongoose"
 export interface IUserSubscription extends Document {
   userId: mongoose.Types.ObjectId
   subscriptionId: mongoose.Types.ObjectId
+  treatmentId: mongoose.Types.ObjectId
   purchaseDate: Date
   expiryDate: Date
   totalQuantity: number
@@ -17,6 +18,7 @@ export interface IUserSubscription extends Document {
 const UserSubscriptionSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
   subscriptionId: { type: Schema.Types.ObjectId, ref: "Subscription", required: true },
+  treatmentId: { type: Schema.Types.ObjectId, ref: "Treatment", required: true },
   purchaseDate: { type: Date, default: Date.now },
   expiryDate: { type: Date, required: true },
   totalQuantity: { type: Number, required: true },
@@ -41,6 +43,7 @@ UserSubscriptionSchema.pre("save", function (next) {
 // אינדקסים
 UserSubscriptionSchema.index({ userId: 1 })
 UserSubscriptionSchema.index({ subscriptionId: 1 })
+UserSubscriptionSchema.index({ treatmentId: 1 })
 UserSubscriptionSchema.index({ status: 1 })
 UserSubscriptionSchema.index({ expiryDate: 1 })
 

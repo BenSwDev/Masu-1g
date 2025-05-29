@@ -5,12 +5,13 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import UserSubscription from "@/lib/db/models/user-subscription"
 import Subscription from "@/lib/db/models/subscription"
+import Treatment from "@/lib/db/models/treatment"
 import PaymentMethod from "@/lib/db/models/payment-method"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 
 // רכישת מנוי - גרסת דמה שתמיד מצליחה
-export async function purchaseSubscription(subscriptionId: string, paymentMethodId: string) {
+export async function purchaseSubscription(subscriptionId: string, treatmentId: string, paymentMethodId: string) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || !session.user) {
@@ -23,6 +24,12 @@ export async function purchaseSubscription(subscriptionId: string, paymentMethod
     const subscription = await Subscription.findById(subscriptionId)
     if (!subscription || !subscription.isActive) {
       return { success: false, error: "Subscription not found or inactive" }
+    }
+
+    // שליפת הטיפול
+    const treatment = await Treatment.findById(treatmentId)
+    if (!treatment || !treatment.isActive) {
+      return { success: false, error: "Treatment not found or inactive" }
     }
 
     // שליפת אמצעי התשלום
@@ -40,13 +47,14 @@ export async function purchaseSubscription(subscriptionId: string, paymentMethod
     const userSubscription = new UserSubscription({
       userId: session.user.id,
       subscriptionId: subscription._id,
+      treatmentId: treatment._id,
       purchaseDate,
       expiryDate,
       totalQuantity: subscription.quantity + subscription.bonusQuantity,
       remainingQuantity: subscription.quantity + subscription.bonusQuantity,
       status: "active",
       paymentMethodId: paymentMethod._id,
-      paymentAmount: subscription.price,
+      paymentAmount: treatment.price, // Use the treatment price as the payment amount
     })
 
     await userSubscription.save()
@@ -72,6 +80,7 @@ export async function getUserSubscriptions() {
 
     const userSubscriptions = await UserSubscription.find({ userId: session.user.id })
       .populate("subscriptionId")
+      .populate("treatmentId")
       .populate("paymentMethodId")
       .sort({ purchaseDate: -1 })
       .lean()
@@ -88,6 +97,7 @@ export async function getAllUserSubscriptions(
   options: {
     userId?: string
     subscriptionId?: string
+    treatmentId?: string
     status?: string
     search?: string
     page?: number
@@ -107,6 +117,7 @@ export async function getAllUserSubscriptions(
 
     if (options.userId) query.userId = options.userId
     if (options.subscriptionId) query.subscriptionId = options.subscriptionId
+    if (options.treatmentId) query.treatmentId = options.treatmentId
     if (options.status) query.status = options.status
 
     // עימוד
@@ -118,6 +129,7 @@ export async function getAllUserSubscriptions(
     const userSubscriptions = await UserSubscription.find(query)
       .populate("userId", "name email phone")
       .populate("subscriptionId")
+      .populate("treatmentId")
       .populate("paymentMethodId")
       .sort({ purchaseDate: -1 })
       .skip(skip)

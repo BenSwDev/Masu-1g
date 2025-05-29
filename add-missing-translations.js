@@ -193,4 +193,4 @@ mergeTranslations(heTranslations, hebrewTranslations);
 // Write back to he.json
 fs.writeFileSync('./lib/translations/he.json', JSON.stringify(heTranslations, null, 2));
 
-console.log('Hebrew translations have been updated successfully!'); 
+console.log('Hebrew translations have been updated successfully!');

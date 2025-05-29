@@ -58,4 +58,4 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
       </div>
     </div>
   )
-} 
+}

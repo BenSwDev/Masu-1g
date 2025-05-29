@@ -49,7 +49,13 @@
     "unknownUser": "משתמש לא ידוע",
     "thisUser": "משתמש זה",
     "confirmCancel": "אשר ביטול",
-    "totalPrice": "מחיר כולל"
+    "totalPrice": "מחיר כולל",
+    "currency": "ש״ח",
+    "close": "סגור",
+    "refresh": "רענן",
+    "processing": "מעבד...",
+    "unknownError": "אירעה שגיאה לא ידועה.",
+    "failedToLoadTreatments": "שגיאה בטעינת טיפולים."
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -658,6 +664,9 @@
     "updateSuccess": "שובר המתנה עודכן בהצלחה",
     "updateError": "שגיאה בעדכון שובר מתנה",
     "fetchError": "שגיאה בטעינת שוברי מתנה",
+    "fetchErrorTreatments": "שגיאה בטעינת טיפולים לבחירה.",
+    "fetchErrorUsers": "שגיאה בטעינת משתמשים לבחירה.",
+    "operationSuccessMessage": "שובר {{code}} {{operation}} בהצלחה.",
     "edit": "ערוך שובר מתנה",
     "fields": {
       "codePlaceholder": "הזן קוד",
@@ -678,7 +687,14 @@
       "sendDate": "תאריך שליחה",
       "status": "סטטוס",
       "purchaseDate": "תאריך רכישה",
-      "remainingAmount": "סכום נותר"
+      "remainingAmount": "סכום נותר",
+      "activeStatus": "סטטוס נוכחי",
+      "selectOwner": "בחר משתמש בעלים",
+      "selectType": "בחר סוג שובר",
+      "selectTreatment": "בחר טיפול",
+      "selectDuration": "בחר משך (אם רלוונטי)",
+      "selectStatus": "בחר סטטוס",
+      "monetaryValuePlaceholder": "הזן ערך כספי"
     },
     "title": "שוברי מתנה",
     "description": "ניהול שוברי מתנה",
@@ -782,7 +798,10 @@
       "active": "פעיל",
       "used": "נוצל",
       "expired": "פג תוקף",
-      "cancelled": "בוטל"
+      "cancelled": "בוטל",
+      "voucherDetailsTitle": "פרטי השובר",
+      "voucherDetailsDescription": "מידע מפורט על שובר המתנה שלך.",
+      "errorLoading": "שגיאה בטעינת השוברים שלך. אנא נסה לרענן."
     },
     "admin": {
       "assignToUser": "הקצה למשתמש",
@@ -804,7 +823,12 @@
       "voucherNotApplicable": "שובר זה אינו מתאים להזמנה זו.",
       "voucherDepleted": "שובר זה נוצל במלואו.",
       "errorApplying": "שגיאה בהחלת השובר."
-    }
+    },
+    "useCode": "השתמש בקוד זה בקופה או בעת הזמנה"
+  },
+  "purchaseGiftVoucher": {
+    "failedToLoadData": "שגיאה בטעינת הנתונים הנדרשים לרכישה",
+    "errorDetails": "פרטים"
   },
   "Roles": {
     "admin": "מנהל",

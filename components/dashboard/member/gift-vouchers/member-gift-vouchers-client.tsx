@@ -15,6 +15,7 @@ import {
 } from "@/actions/gift-voucher-actions"
 import MemberGiftVoucherCard from "./member-gift-voucher-card"
 import { Gift, Plus, ShoppingBag } from "lucide-react"
+import MemberGiftVoucherDetailsModal from "./member-gift-voucher-details-modal"
 
 interface MemberGiftVouchersClientProps {
   initialOwnedVouchers?: GiftVoucherPlain[]
@@ -32,6 +33,8 @@ export default function MemberGiftVouchersClient({
   const [ownedVouchers, setOwnedVouchers] = useState<GiftVoucherPlain[]>(initialOwnedVouchers)
   const [purchasedVouchers, setPurchasedVouchers] = useState<GiftVoucherPlain[]>(initialPurchasedVouchers)
   const [loading, setLoading] = useState(false)
+  const [selectedVoucherForDetails, setSelectedVoucherForDetails] = useState<GiftVoucherPlain | null>(null)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
   const refreshVouchers = async () => {
     setLoading(true)
@@ -71,8 +74,8 @@ export default function MemberGiftVouchersClient({
   }
 
   const handleViewDetails = (voucher: GiftVoucherPlain) => {
-    // Could open a modal or navigate to a details page
-    console.log("View details for voucher:", voucher)
+    setSelectedVoucherForDetails(voucher)
+    setIsDetailsModalOpen(true)
   }
 
   const getVoucherStats = (vouchers: GiftVoucherPlain[]) => {
@@ -215,6 +218,14 @@ export default function MemberGiftVouchersClient({
           {loading ? t("common.loading") : t("common.refresh")}
         </Button>
       </div>
+      <MemberGiftVoucherDetailsModal
+        voucher={selectedVoucherForDetails}
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false)
+          setSelectedVoucherForDetails(null)
+        }}
+      />
     </div>
   )
 }

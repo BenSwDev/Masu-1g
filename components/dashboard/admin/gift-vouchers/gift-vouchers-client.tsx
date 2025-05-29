@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Filter, RotateCcw, Loader2, XCircle, Gift } from "lucide-react"
+import { Plus, Filter, RotateCcw, Loader2, Gift } from "lucide-react"
 import { format } from "date-fns"
 
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Switch } from "@/components/common/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/common/ui/dialog"
 import {
   AlertDialog,
@@ -62,7 +61,6 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
   const [search, setSearch] = useState("")
   const [filterVoucherType, setFilterVoucherType] = useState<GiftVoucherPlain["voucherType"] | "all">("all")
   const [filterStatus, setFilterStatus] = useState<GiftVoucherPlain["status"] | "all">("all")
-  const [filterIsActive, setFilterIsActive] = useState<"all" | "true" | "false">("all")
   const [filterDateRange, setFilterDateRange] = useState<DateRange | undefined>(undefined)
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
@@ -79,7 +77,6 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         const currentFilters = newFilters || {
           voucherType: filterVoucherType === "all" ? undefined : filterVoucherType,
           status: filterStatus === "all" ? undefined : filterStatus,
-          isActive: filterIsActive === "all" ? undefined : filterIsActive === "true",
           dateRange: filterDateRange
             ? {
                 from: filterDateRange.from ? format(filterDateRange.from, "yyyy-MM-dd") : undefined,
@@ -105,7 +102,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         setIsLoading(false)
       }
     },
-    [search, filterVoucherType, filterStatus, filterIsActive, filterDateRange, pagination.limit, toast],
+    [search, filterVoucherType, filterStatus, filterDateRange, pagination.limit, toast],
   )
 
   useEffect(() => {
@@ -114,7 +111,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       loadVouchers(1) // Reset to page 1 on filter change
     }, 500) // Debounce search/filter changes
     return () => clearTimeout(timer)
-  }, [search, filterVoucherType, filterStatus, filterIsActive, filterDateRange, loadVouchers])
+  }, [search, filterVoucherType, filterStatus, filterDateRange, loadVouchers])
 
   const handleOpenFormModal = (voucher?: GiftVoucherPlain) => {
     setEditingVoucher(voucher || null)
@@ -160,7 +157,6 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
     setSearch("")
     setFilterVoucherType("all")
     setFilterStatus("all")
-    setFilterIsActive("all")
     setFilterDateRange(undefined)
     // loadVouchers will be called by useEffect
   }
@@ -244,26 +240,6 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
           </Popover>
         </div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="filter-is-active"
-              checked={filterIsActive === "true"}
-              onCheckedChange={(checked) => setFilterIsActive(checked ? "true" : "false")}
-              disabled={isLoading}
-            />
-            <label htmlFor="filter-is-active" className="text-sm font-medium">
-              {filterIsActive === "true"
-                ? t("giftVouchers.fields.isActive")
-                : filterIsActive === "false"
-                  ? t("giftVouchers.fields.isActive")
-                  : t("giftVouchers.fields.isActive")}
-            </label>
-            {filterIsActive !== "all" && (
-              <Button variant="ghost" size="sm" onClick={() => setFilterIsActive("all")}>
-                <XCircle className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
           <Button variant="outline" onClick={resetFilters} disabled={isLoading}>
             <RotateCcw className="mr-2 h-4 w-4" /> {t("giftVouchers.admin.clearFilters")}
           </Button>
@@ -281,9 +257,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         <div className="text-center py-10">
           <Gift className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">{t("giftVouchers.noGiftVouchers")}</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {t("giftVouchers.noVouchers")}
-          </p>
+          <p className="mt-1 text-sm text-gray-500">{t("giftVouchers.noVouchers")}</p>
           <div className="mt-6">
             <Button onClick={() => handleOpenFormModal()} disabled={isLoading}>
               <Plus className="mr-2 h-4 w-4" /> {t("giftVouchers.addNew")}
@@ -336,9 +310,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
           <DialogHeader>
             <DialogTitle>{editingVoucher ? t("giftVouchers.edit") : t("giftVouchers.addNew")}</DialogTitle>
             <DialogDescription>
-              {editingVoucher
-                ? `${t("giftVouchers.edit")} ${editingVoucher.code}.`
-                : t("giftVouchers.description")}
+              {editingVoucher ? `${t("giftVouchers.edit")} ${editingVoucher.code}.` : t("giftVouchers.description")}
             </DialogDescription>
           </DialogHeader>
           <GiftVoucherForm
@@ -356,9 +328,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("giftVouchers.deleteConfirm")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("giftVouchers.deleteConfirmDescription")}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t("giftVouchers.deleteConfirmDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>

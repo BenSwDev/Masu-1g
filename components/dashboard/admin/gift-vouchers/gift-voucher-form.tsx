@@ -5,16 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/common/ui/form"
-import { Switch } from "@/components/common/ui/switch"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import {
   createGiftVoucherByAdmin,
@@ -25,12 +16,23 @@ import {
   getUsersForAdminSelection,
 } from "@/actions/gift-voucher-actions"
 import { format, parseISO } from "date-fns"
-import { useToast } from "@/components/common/ui/use-toast" // Corrected import path
+import { useToast } from "@/components/common/ui/use-toast"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { Calendar } from "@/components/common/ui/calendar"
-import { cn } from "@/lib/utils/utils" // Assuming cn is in utils
+import { cn } from "@/lib/utils/utils"
 import { useTranslation } from "@/lib/translations/i18n"
+
+const giftVoucherStatuses = [
+  "pending_payment",
+  "active",
+  "partially_used",
+  "fully_used",
+  "expired",
+  "pending_send",
+  "sent",
+  "cancelled",
+] as const
 
 // Define Zod schema based on AdminGiftVoucherFormData
 const giftVoucherSchema = z
@@ -43,19 +45,7 @@ const giftVoucherSchema = z
     ownerUserId: z.string().min(1, "Owner user is required"),
     validFrom: z.date({ required_error: "Valid from date is required." }),
     validUntil: z.date({ required_error: "Valid until date is required." }),
-    isActive: z.boolean().default(true),
-    status: z
-      .enum([
-        "pending_payment",
-        "active",
-        "partially_used",
-        "fully_used",
-        "expired",
-        "pending_send",
-        "sent",
-        "cancelled",
-      ])
-      .default("active"),
+    status: z.enum(giftVoucherStatuses).default("active"),
   })
   .superRefine((data, ctx) => {
     if (data.voucherType === "monetary") {
@@ -136,7 +126,6 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           ? parseISO(initialData.validUntil)
           : initialData.validUntil
         : new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-      isActive: initialData?.isActive ?? true,
       status: initialData?.status ?? "active",
     },
   })
@@ -154,17 +143,25 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           if (foundTreatment) setSelectedTreatment(foundTreatment)
         }
       } else {
-        toast({ title: "Error", description: "Failed to load treatments.", variant: "destructive" })
+        toast({
+          title: t("common.error"),
+          description: t("giftVouchers.fetchErrorTreatments") || "Failed to load treatments.",
+          variant: "destructive",
+        })
       }
       if (usersRes.success && usersRes.users) {
         setUsers(usersRes.users)
       } else {
-        toast({ title: "Error", description: "Failed to load users.", variant: "destructive" })
+        toast({
+          title: t("common.error"),
+          description: t("giftVouchers.fetchErrorUsers") || "Failed to load users.",
+          variant: "destructive",
+        })
       }
       setIsLoading(false)
     }
     fetchData()
-  }, [toast, initialData?.treatmentId])
+  }, [toast, initialData?.treatmentId, t])
 
   useEffect(() => {
     if (voucherType === "monetary") {
@@ -187,10 +184,11 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
     try {
       setIsLoading(true)
       const formData: AdminGiftVoucherFormData = {
-        ...values,
+        ...values, // Spread validated form values
         monetaryValue: values.monetaryValue, // Keep as string for action
         validFrom: format(values.validFrom, "yyyy-MM-dd"),
         validUntil: format(values.validUntil, "yyyy-MM-dd"),
+        // 'status' is already part of 'values' from the form
       }
 
       const result = initialData
@@ -198,18 +196,21 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
         : await createGiftVoucherByAdmin(formData)
 
       if (!result.success || !result.giftVoucher) {
-        throw new Error(result.error || "Operation failed")
+        throw new Error(result.error || t("common.unknownError"))
       }
 
       toast({
-        title: initialData ? "Gift voucher updated" : "Gift voucher created",
-        description: `Voucher ${result.giftVoucher.code} has been ${initialData ? "updated" : "created"} successfully.`,
+        title: initialData ? t("giftVouchers.updateSuccess") : t("giftVouchers.createSuccess"),
+        description: t("giftVouchers.operationSuccessMessage", {
+          code: result.giftVoucher.code,
+          operation: initialData ? t("common.updated") : t("common.created"),
+        }),
       })
       onSuccess?.()
     } catch (error) {
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
+        title: t("common.error"),
+        description: error instanceof Error ? error.message : t("common.unknownError"),
         variant: "destructive",
       })
     } finally {
@@ -276,8 +277,8 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="monetary">{t("giftVouchers.fields.monetaryValue")}</SelectItem>
-                  <SelectItem value="treatment">{t("giftVouchers.fields.specificTreatment")}</SelectItem>
+                  <SelectItem value="monetary">{t("giftVouchers.types.monetary")}</SelectItem>
+                  <SelectItem value="treatment">{t("giftVouchers.types.treatment")}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -348,17 +349,17 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                 name="selectedDurationId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Duration</FormLabel>
+                    <FormLabel>{t("giftVouchers.fields.duration")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select duration (if applicable)" />
+                          <SelectValue placeholder={t("giftVouchers.fields.selectDuration")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {selectedTreatment.durations.map((duration) => (
                           <SelectItem key={duration._id} value={duration._id}>
-                            {duration.name} - {duration.price} ILS
+                            {duration.name} - {duration.price} {t("common.currency")}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -385,7 +386,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                       className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       disabled={isLoading}
                     >
-                      {field.value ? format(field.value, "PPP") : <span>{t("giftVouchers.fields.pickDate")}</span>}
+                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -419,7 +420,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                       className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
                       disabled={isLoading}
                     >
-                      {field.value ? format(field.value, "PPP") : <span>{t("giftVouchers.fields.pickDate")}</span>}
+                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </FormControl>
@@ -452,38 +453,14 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {[
-                    "pending_payment",
-                    "active",
-                    "pending_send",
-                    "partially_used",
-                    "fully_used",
-                    "expired",
-                    "cancelled",
-                  ].map((s) => (
+                  {giftVoucherStatuses.map((s) => (
                     <SelectItem key={s} value={s}>
-                      {t(`giftVouchers.status.${s}`)}
+                      {t(`giftVouchers.statuses.${s}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="isActive"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-              <div className="space-y-0.5">
-                <FormLabel>{t("giftVouchers.fields.isActive")}</FormLabel>
-                <FormDescription>{t("giftVouchers.fields.isActiveDescription")}</FormDescription>
-              </div>
-              <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
-              </FormControl>
             </FormItem>
           )}
         />
@@ -496,7 +473,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           )}
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isLoading ? t("common.saving") : initialData ? t("giftVouchers.update") : t("giftVouchers.create")}
+            {isLoading ? t("common.saving") : initialData ? t("common.update") : t("common.create")}
           </Button>
         </div>
       </form>

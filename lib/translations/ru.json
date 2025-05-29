@@ -42,7 +42,13 @@
     "unknownUser": "Неизвестный пользователь",
     "thisUser": "этот пользователь",
     "confirmCancel": "Подтвердить отмену",
-    "totalPrice": "Итоговая цена"
+    "totalPrice": "Итоговая цена",
+    "currency": "ILS",
+    "close": "Закрыть",
+    "refresh": "Обновить",
+    "processing": "Обработка...",
+    "unknownError": "Произошла неизвестная ошибка.",
+    "failedToLoadTreatments": "Ошибка загрузки процедур."
   },
   "dashboard": {
     "sidebar": {
@@ -244,7 +250,14 @@
       "sendDate": "Дата отправки",
       "status": "Статус",
       "purchaseDate": "Дата покупки",
-      "remainingAmount": "Оставшаяся сумма"
+      "remainingAmount": "Оставшаяся сумма",
+      "activeStatus": "Текущий статус",
+      "selectOwner": "Выберите пользователя-владельца",
+      "selectType": "Выберите тип сертификата",
+      "selectTreatment": "Выберите процедуру",
+      "selectDuration": "Выберите продолжительность (если применимо)",
+      "selectStatus": "Выберите статус",
+      "monetaryValuePlaceholder": "Введите денежную стоимость"
     },
     "searchPlaceholder": "Поиск подарочных сертификатов по коду...",
     "noGiftVouchers": "Подарочные сертификаты не найдены",
@@ -359,7 +372,10 @@
       "active": "Активные",
       "used": "Использованные",
       "expired": "Истекшие",
-      "cancelled": "Отмененные"
+      "cancelled": "Отмененные",
+      "voucherDetailsTitle": "Детали сертификата",
+      "voucherDetailsDescription": "Подробная информация о вашем подарочном сертификате.",
+      "errorLoading": "Ошибка загрузки ваших сертификатов. Пожалуйста, попробуйте обновить."
     },
     "admin": {
       "assignToUser": "Назначить пользователю",
@@ -381,7 +397,11 @@
       "voucherNotApplicable": "Этот сертификат не применим к данному заказу.",
       "voucherDepleted": "Этот сертификат полностью использован.",
       "errorApplying": "Ошибка применения сертификата."
-    }
+    },
+    "useCode": "Используйте этот код при оформлении заказа или бронировании",
+    "fetchErrorTreatments": "Не удалось загрузить процедуры для выбора.",
+    "fetchErrorUsers": "Не удалось загрузить пользователей для выбора.",
+    "operationSuccessMessage": "Сертификат {{code}} был успешно {{operation}}."
   },
   "partnerCoupons": {
     "title": "Купоны партнера",
@@ -774,5 +794,9 @@
   "validFrom": "Действует с",
   "validUntil": "Действует до",
   "T": "T",
-  "common.totalPrice": "Итоговая цена"
+  "common.totalPrice": "Итоговая цена",
+  "purchaseGiftVoucher": {
+    "failedToLoadData": "Не удалось загрузить данные, необходимые для покупки",
+    "errorDetails": "Детали"
+  }
 }

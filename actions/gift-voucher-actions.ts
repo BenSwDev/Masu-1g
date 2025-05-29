@@ -135,7 +135,10 @@ async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<strin
         date: formatDate(h.date)!,
         orderId: h.orderId?.toString(),
       })),
-      isActive: voucher.isActive,
+      isActive:
+        (voucher.status === "active" || voucher.status === "partially_used") &&
+        new Date(voucher.validUntil) >= new Date() &&
+        new Date(voucher.validFrom) <= new Date(),
       createdAt: formatDate(voucher.createdAt),
       updatedAt: formatDate(voucher.updatedAt),
     }
@@ -163,7 +166,10 @@ async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<strin
       purchaseDate: new Date(voucher.purchaseDate).toISOString(),
       validFrom: new Date(voucher.validFrom).toISOString(),
       validUntil: new Date(voucher.validUntil).toISOString(),
-      isActive: voucher.isActive,
+      isActive:
+        (voucher.status === "active" || voucher.status === "partially_used") &&
+        new Date(voucher.validUntil) >= new Date() &&
+        new Date(voucher.validFrom) <= new Date(),
       createdAt: voucher.createdAt ? new Date(voucher.createdAt).toISOString() : undefined,
       updatedAt: voucher.updatedAt ? new Date(voucher.updatedAt).toISOString() : undefined,
     } as GiftVoucherPlain // Cast to ensure all required fields are at least attempted
@@ -180,8 +186,7 @@ export interface AdminGiftVoucherFormData {
   ownerUserId: string
   validFrom: string // Comes as string (date) from form
   validUntil: string // Comes as string (date) from form
-  isActive: boolean
-  status?: GiftVoucherPlain["status"] // Optional, admin might set it
+  status: GiftVoucherPlain["status"] // Status is now mandatory from admin form
 }
 
 export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
@@ -242,18 +247,8 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
     }
     // --- End Input Validation ---
 
-    const {
-      code,
-      voucherType,
-      treatmentId,
-      selectedDurationId,
-      monetaryValue,
-      ownerUserId,
-      validFrom,
-      validUntil,
-      isActive,
-      status,
-    } = data
+    const { code, voucherType, treatmentId, selectedDurationId, monetaryValue, ownerUserId, validFrom, validUntil } =
+      data
 
     const owner = await User.findById(ownerUserId).lean() // Use lean if only checking existence
     if (!owner) {
@@ -267,9 +262,9 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
       ownerUserId: new mongoose.Types.ObjectId(ownerUserId),
       validFrom: new Date(validFrom),
       validUntil: new Date(validUntil),
-      isActive,
+      status: data.status, // Status is now directly from form
+      isActive: data.status === "active" || data.status === "partially_used", // Derive isActive from status
       isGift: false,
-      status: status || "active",
       purchaseDate: new Date(),
     }
 
@@ -367,6 +362,12 @@ export async function updateGiftVoucherByAdmin(id: string, data: Partial<AdminGi
     }
 
     const updateData: any = { ...data } // Start with all data
+    if (data.status) {
+      updateData.isActive = data.status === "active" || data.status === "partially_used"
+    } else {
+      // If status is not being updated, derive isActive from existing status
+      updateData.isActive = existingVoucher.status === "active" || existingVoucher.status === "partially_used"
+    }
 
     // Convert date strings to Date objects
     if (data.validFrom) updateData.validFrom = new Date(data.validFrom)
@@ -508,7 +509,6 @@ export async function getGiftVouchers(
   filters: {
     voucherType?: "treatment" | "monetary"
     status?: GiftVoucherPlain["status"]
-    isActive?: boolean
     dateRange?: { from?: string; to?: string } // For validUntil or purchaseDate
   } = {},
 ) {
@@ -543,9 +543,6 @@ export async function getGiftVouchers(
     }
     if (filters.status) {
       query.status = filters.status
-    }
-    if (typeof filters.isActive === "boolean") {
-      query.isActive = filters.isActive
     }
     if (filters.dateRange?.from && filters.dateRange?.to) {
       query.validUntil = { $gte: new Date(filters.dateRange.from), $lte: new Date(filters.dateRange.to) }

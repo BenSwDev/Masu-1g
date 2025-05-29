@@ -22,7 +22,10 @@
     "loading": "טוען...",
     "comingSoon": "בקרוב",
     "deleteConfirm": "האם אתה בטוח?",
-    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו."
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו.",
+    "reset": "איפוס",
+    "searching": "מחפש...",
+    "status": "סטטוס"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -417,6 +420,25 @@
       "updateError": "שגיאה בעדכון תאריך מיוחד"
     }
   },
+  "subscriptions": {
+    "createError": "שגיאה ביצירת מנוי",
+    "updateError": "שגיאה בעדכון מנוי",
+    "fetchError": "שגיאה בטעינת מנויים"
+  },
+  "userSubscriptions": {
+    "title": "מנויי משתמשים",
+    "description": "ניהול מנויי משתמשים",
+    "filterAndSearch": "סינון וחיפוש",
+    "searchPlaceholder": "חפש לפי אימייל, שם או מנוי...",
+    "allStatuses": "כל הסטטוסים",
+    "filterByStatus": "סנן לפי סטטוס",
+    "noUserSubscriptions": "לא נמצאו מנויי משתמשים",
+    "user": "משתמש",
+    "subscription": "מנוי",
+    "remaining": "נותר",
+    "expiryDate": "תאריך תפוגה",
+    "status": "סטטוס"
+  },
   "coupons": {
     "searchPlaceholder": "חפש קופונים לפי קוד...",
     "noCoupons": "לא נמצאו קופונים",
@@ -425,7 +447,24 @@
     "deleteConfirm": "האם אתה בטוח שברצונך למחוק קופון זה?",
     "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
     "pending": "ממתין",
-    "expired": "פג תוקף"
+    "expired": "פג תוקף",
+    "createSuccess": "הקופון נוצר בהצלחה",
+    "createError": "שגיאה ביצירת קופון",
+    "updateSuccess": "הקופון עודכן בהצלחה",
+    "updateError": "שגיאה בעדכון קופון",
+    "fetchError": "שגיאה בטעינת קופונים",
+    "edit": "ערוך קופון",
+    "discountType": "סוג הנחה",
+    "fields": {
+      "code": "קוד",
+      "discountType": "סוג הנחה",
+      "discountValue": "ערך הנחה",
+      "validFrom": "תקף מ",
+      "validUntil": "תקף עד",
+      "isActive": "פעיל",
+      "codePlaceholder": "הכנס קוד קופון",
+      "discountPercentage": "אחוז הנחה"
+    }
   },
   "giftVouchers": {
     "searchPlaceholder": "חפש שוברי מתנה לפי קוד...",
@@ -435,6 +474,12 @@
     "deleteConfirm": "האם אתה בטוח שברצונך למחוק שובר מתנה זה?",
     "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
     "pending": "ממתין",
-    "expired": "פג תוקף"
+    "expired": "פג תוקף",
+    "createSuccess": "שובר המתנה נוצר בהצלחה",
+    "createError": "שגיאה ביצירת שובר מתנה",
+    "updateSuccess": "שובר המתנה עודכן בהצלחה",
+    "updateError": "שגיאה בעדכון שובר מתנה",
+    "fetchError": "שגיאה בטעינת שוברי מתנה",
+    "edit": "ערוך שובר מתנה"
   }
 }

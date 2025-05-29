@@ -22,7 +22,10 @@
     "duplicate": "Дублировать",
     "comingSoon": "Скоро",
     "deleteConfirm": "Вы уверены?",
-    "deleteConfirmDescription": "Это действие нельзя отменить."
+    "deleteConfirmDescription": "Это действие нельзя отменить.",
+    "reset": "Сброс",
+    "searching": "Поиск...",
+    "status": "Статус"
   },
   "dashboard": {
     "sidebar": {
@@ -129,7 +132,10 @@
     "quantity": "Количество",
     "bonus": "Бонус",
     "validity": "Срок действия",
-    "price": "Цена"
+    "price": "Цена",
+    "createError": "Ошибка создания подписки",
+    "updateError": "Ошибка обновления подписки",
+    "fetchError": "Ошибка загрузки подписок"
   },
   "coupons": {
     "title": "Купоны",
@@ -141,7 +147,9 @@
       "discountValue": "Значение скидки",
       "validFrom": "Действителен с",
       "validUntil": "Действителен до",
-      "isActive": "Активный"
+      "isActive": "Активный",
+      "codePlaceholder": "Введите код купона",
+      "discountPercentage": "Процент скидки"
     },
     "searchPlaceholder": "Поиск купонов по коду...",
     "noCoupons": "Купоны не найдены",
@@ -150,7 +158,14 @@
     "deleteConfirm": "Вы уверены, что хотите удалить этот купон?",
     "deleteConfirmDescription": "Это действие нельзя отменить",
     "pending": "Ожидание",
-    "expired": "Истек"
+    "expired": "Истек",
+    "createSuccess": "Купон успешно создан",
+    "createError": "Ошибка создания купона",
+    "updateSuccess": "Купон успешно обновлен",
+    "updateError": "Ошибка обновления купона",
+    "fetchError": "Ошибка загрузки купонов",
+    "edit": "Редактировать купон",
+    "discountType": "Тип скидки"
   },
   "giftVouchers": {
     "title": "Подарочные сертификаты",
@@ -170,7 +185,13 @@
     "deleteConfirm": "Вы уверены, что хотите удалить этот подарочный сертификат?",
     "deleteConfirmDescription": "Это действие нельзя отменить",
     "pending": "Ожидание",
-    "expired": "Истек"
+    "expired": "Истек",
+    "createSuccess": "Подарочный сертификат успешно создан",
+    "createError": "Ошибка создания подарочного сертификата",
+    "updateSuccess": "Подарочный сертификат успешно обновлен",
+    "updateError": "Ошибка обновления подарочного сертификата",
+    "fetchError": "Ошибка загрузки подарочных сертификатов",
+    "edit": "Редактировать подарочный сертификат"
   },
   "partnerCoupons": {
     "title": "Купоны партнеров",
@@ -514,5 +535,19 @@
   "giftCertificates": {
     "title": "Подарочные сертификаты для участников",
     "description": "Просмотр доступных подарочных сертификатов"
+  },
+  "userSubscriptions": {
+    "title": "Подписки пользователей",
+    "description": "Управление подписками пользователей",
+    "filterAndSearch": "Фильтр и поиск",
+    "searchPlaceholder": "Поиск по email, имени или подписке...",
+    "allStatuses": "Все статусы",
+    "filterByStatus": "Фильтр по статусу",
+    "noUserSubscriptions": "Подписки пользователей не найдены",
+    "user": "Пользователь",
+    "subscription": "Подписка",
+    "remaining": "Осталось",
+    "expiryDate": "Дата истечения",
+    "status": "Статус"
   }
 }

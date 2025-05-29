@@ -29,7 +29,10 @@
     "duplicate": "Duplicate",
     "comingSoon": "Coming soon",
     "deleteConfirm": "Are you sure?",
-    "deleteConfirmDescription": "This action cannot be undone."
+    "deleteConfirmDescription": "This action cannot be undone.",
+    "reset": "Reset",
+    "searching": "Searching...",
+    "status": "Status"
   },
   "dashboard": {
     "sidebar": {
@@ -137,7 +140,10 @@
     "quantity": "Quantity",
     "bonus": "Bonus",
     "validity": "Validity",
-    "price": "Price"
+    "price": "Price",
+    "createError": "Error creating subscription",
+    "updateError": "Error updating subscription",
+    "fetchError": "Error fetching subscriptions"
   },
   "coupons": {
     "title": "Coupons",
@@ -157,8 +163,17 @@
       "discountValue": "Discount Value",
       "validFrom": "Valid From",
       "validUntil": "Valid Until",
-      "isActive": "Active"
-    }
+      "isActive": "Active",
+      "codePlaceholder": "Enter coupon code",
+      "discountPercentage": "Discount Percentage"
+    },
+    "createSuccess": "Coupon created successfully",
+    "createError": "Error creating coupon",
+    "updateSuccess": "Coupon updated successfully",
+    "updateError": "Error updating coupon",
+    "fetchError": "Error fetching coupons",
+    "edit": "Edit Coupon",
+    "discountType": "Discount Type"
   },
   "giftVouchers": {
     "title": "Gift Vouchers",
@@ -178,7 +193,13 @@
       "validFrom": "Valid From",
       "validUntil": "Valid Until",
       "isActive": "Active"
-    }
+    },
+    "createSuccess": "Gift voucher created successfully",
+    "createError": "Error creating gift voucher",
+    "updateSuccess": "Gift voucher updated successfully",
+    "updateError": "Error updating gift voucher",
+    "fetchError": "Error fetching gift vouchers",
+    "edit": "Edit Gift Voucher"
   },
   "partnerCoupons": {
     "title": "Partner Coupons",
@@ -512,5 +533,19 @@
     "minutes": "Minutes",
     "deleteConfirm": "Are you sure you want to delete this treatment?",
     "deleteConfirmDescription": "This action cannot be undone"
+  },
+  "userSubscriptions": {
+    "title": "User Subscriptions",
+    "description": "Manage user subscriptions",
+    "filterAndSearch": "Filter and Search",
+    "searchPlaceholder": "Search by user email, name or subscription...",
+    "allStatuses": "All Statuses",
+    "filterByStatus": "Filter by Status",
+    "noUserSubscriptions": "No user subscriptions found",
+    "user": "User",
+    "subscription": "Subscription",
+    "remaining": "Remaining",
+    "expiryDate": "Expiry Date",
+    "status": "Status"
   }
 }

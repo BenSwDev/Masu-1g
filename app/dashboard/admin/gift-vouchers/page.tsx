@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export default async function GiftVouchersPage() {
-  const result = await getGiftVouchers(1, "", true)
+  const result = await getGiftVouchers(1, "", true, "all", "all")
 
   if (!result.success || !result.giftVouchers || !result.pagination) {
     throw new Error(result.error || "Failed to load gift vouchers")
@@ -15,14 +15,11 @@ export default async function GiftVouchersPage() {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Gift Vouchers</h1>
-        <p className="text-gray-600">Manage your gift vouchers and their validity periods.</p>
+        <h1 className="text-2xl font-bold">שוברי מתנה</h1>
+        <p className="text-gray-600">נהל את שוברי המתנה ואת תקופות התוקף שלהם.</p>
       </div>
 
-      <GiftVouchersClient
-        initialVouchers={result.giftVouchers}
-        initialPagination={result.pagination}
-      />
+      <GiftVouchersClient initialVouchers={result.giftVouchers} initialPagination={result.pagination} />
     </div>
   )
 }

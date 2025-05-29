@@ -20,7 +20,7 @@ export interface GiftVoucherPlain {
   recipientName?: string
   recipientPhone?: string
   greetingMessage?: string
-  sendDate?: Date
+  sendDate?: Date // Changed to Date
   status:
     | "pending_payment"
     | "active"
@@ -34,8 +34,9 @@ export interface GiftVoucherPlain {
   validFrom: Date
   validUntil: Date
   paymentId?: string
-  usageHistory?: { date: Date; amountUsed: number; orderId?: string }[]
-  isActive: boolean // Kept for direct admin control, though status is primary
+  paymentMethodId?: string // Added
+  usageHistory?: { date: Date; amountUsed: number; orderId?: string; description?: string }[] // Added description
+  isActive: boolean
   createdAt?: Date
   updatedAt?: Date
 }
@@ -45,9 +46,9 @@ export interface IGiftVoucher extends Document {
   voucherType: "treatment" | "monetary"
   treatmentId?: mongoose.Types.ObjectId
   selectedDurationId?: mongoose.Types.ObjectId
-  monetaryValue?: number // If monetary, this is the value. If treatment, could store the price at time of purchase.
-  originalAmount?: number // For monetary vouchers
-  remainingAmount?: number // For monetary vouchers
+  monetaryValue?: number
+  originalAmount?: number
+  remainingAmount?: number
   purchaserUserId: mongoose.Types.ObjectId
   ownerUserId: mongoose.Types.ObjectId
   isGift: boolean
@@ -68,28 +69,29 @@ export interface IGiftVoucher extends Document {
   validFrom: Date
   validUntil: Date
   paymentId?: string
-  usageHistory: { date: Date; amountUsed: number; orderId?: mongoose.Types.ObjectId }[]
-  isActive: boolean // Admin override or general flag
+  paymentMethodId?: mongoose.Types.ObjectId // Added
+  usageHistory: { date: Date; amountUsed: number; orderId?: mongoose.Types.ObjectId; description?: string }[] // Added description
+  isActive: boolean
   createdAt: Date
   updatedAt: Date
 }
 
 const GiftVoucherSchema: Schema = new Schema(
   {
-    code: { type: String, required: true, unique: true }, // Removed index: true to avoid duplicate
+    code: { type: String, required: true, unique: true },
     voucherType: { type: String, enum: ["treatment", "monetary"], required: true },
     treatmentId: { type: Schema.Types.ObjectId, ref: "Treatment", sparse: true },
-    selectedDurationId: { type: Schema.Types.ObjectId, sparse: true }, // Assuming you have a Duration model or similar
+    selectedDurationId: { type: Schema.Types.ObjectId, sparse: true },
     monetaryValue: { type: Number, min: 0 },
-    originalAmount: { type: Number, min: 0 }, // For monetary type
-    remainingAmount: { type: Number, min: 0 }, // For monetary type
-    purchaserUserId: { type: Schema.Types.ObjectId, ref: "User", required: true }, // Removed index: true to avoid duplicate
+    originalAmount: { type: Number, min: 0 },
+    remainingAmount: { type: Number, min: 0 },
+    purchaserUserId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     isGift: { type: Boolean, default: false },
     recipientName: { type: String },
-    recipientPhone: { type: String }, // Consider validation for phone format
+    recipientPhone: { type: String },
     greetingMessage: { type: String, maxLength: 500 },
-    sendDate: { type: Date },
+    sendDate: { type: Date }, // Can be scheduled
     status: {
       type: String,
       enum: [
@@ -109,38 +111,30 @@ const GiftVoucherSchema: Schema = new Schema(
     validFrom: { type: Date, required: true },
     validUntil: { type: Date, required: true },
     paymentId: { type: String, sparse: true },
+    paymentMethodId: { type: Schema.Types.ObjectId, ref: "PaymentMethod", sparse: true }, // Added
     usageHistory: [
       {
         date: { type: Date, required: true },
         amountUsed: { type: Number, required: true },
-        orderId: { type: Schema.Types.ObjectId, ref: "Order" }, // Assuming an Order model
+        orderId: { type: Schema.Types.ObjectId, ref: "Order" },
+        description: { type: String }, // Added
       },
     ],
-    isActive: { type: Boolean, default: true }, // Can be used by admin to manually deactivate
+    isActive: { type: Boolean, default: true },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 )
 
-// Ensure voucher code is unique
+// ... (rest of the schema definition, indexes, virtuals, pre-save hooks)
 GiftVoucherSchema.index({ code: 1 }, { unique: true })
-
-// Index for querying by owner and status
 GiftVoucherSchema.index({ ownerUserId: 1, status: 1, validUntil: 1 })
-
-// Index for querying by purchaser
 GiftVoucherSchema.index({ purchaserUserId: 1 })
-
-// Index for scheduled sending
 GiftVoucherSchema.index({ status: 1, sendDate: 1, isGift: 1 })
 
-// Helper to determine if a voucher is expired based on validUntil and status
 GiftVoucherSchema.virtual("isExpired").get(function (this: IGiftVoucher) {
   return new Date() > this.validUntil && this.status !== "fully_used" && this.status !== "cancelled"
 })
 
-// Pre-save hook to update status to 'expired' if applicable
 GiftVoucherSchema.pre<IGiftVoucher>("save", function (next) {
   if (this.isExpired && this.status !== "expired" && this.status !== "fully_used" && this.status !== "cancelled") {
     this.status = "expired"
@@ -152,10 +146,15 @@ GiftVoucherSchema.pre<IGiftVoucher>("save", function (next) {
   ) {
     this.remainingAmount = this.originalAmount
   }
+  // Ensure isActive reflects current state based on status and validity
+  if (this.status === "active" || this.status === "partially_used" || this.status === "sent") {
+    this.isActive = new Date() >= this.validFrom && new Date() <= this.validUntil
+  } else {
+    this.isActive = false
+  }
   next()
 })
 
-// Use mongoose.models to check if the model already exists to prevent model overwrite warnings
 const GiftVoucher: Model<IGiftVoucher> =
   mongoose.models.GiftVoucher || mongoose.model<IGiftVoucher>("GiftVoucher", GiftVoucherSchema)
 

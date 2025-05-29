@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import GiftVoucher, {
   type IGiftVoucher,
-  type GiftVoucherPlain as IGiftVoucherPlainExternal,
+  type GiftVoucherPlain as IGiftVoucherPlain,
 } from "@/lib/db/models/gift-voucher"
 import User from "@/lib/db/models/user"
 import Treatment from "@/lib/db/models/treatment"
@@ -16,7 +16,7 @@ import type { FilterQuery } from "mongoose"
 import mongoose from "mongoose"
 
 // Extended GiftVoucherPlain for client-side use, including populated fields
-export interface GiftVoucherPlain extends IGiftVoucherPlainExternal {
+export interface GiftVoucherPlain extends IGiftVoucherPlain {
   _id: string
   code: string
   voucherType: "treatment" | "monetary"
@@ -35,7 +35,7 @@ export interface GiftVoucherPlain extends IGiftVoucherPlainExternal {
   recipientName?: string
   recipientPhone?: string
   greetingMessage?: string
-  sendDate?: Date | string // Allow string for form input, Date for internal
+  sendDate?: Date | string // Allow string for form input
   status:
     | "pending_payment"
     | "active"
@@ -49,7 +49,6 @@ export interface GiftVoucherPlain extends IGiftVoucherPlainExternal {
   validFrom: Date | string
   validUntil: Date | string
   paymentId?: string
-  paymentMethodId?: string // Added to track payment method used
   usageHistory?: { date: Date; amountUsed: number; orderId?: string; description?: string }[]
   isActive: boolean
   createdAt?: Date | string
@@ -87,7 +86,7 @@ async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<strin
       ownerName = owner?.name
     }
     if (voucher.voucherType === "treatment" && treatmentIdStr) {
-      const treatment = (await Treatment.findById(treatmentIdStr).select("name durations").lean()) as any
+      const treatment = (await Treatment.findById(treatmentIdStr).select("name durations price").lean()) as any // Added price here
       treatmentName = treatment?.name
       if (selectedDurationIdStr && treatment?.durations) {
         const duration = treatment.durations.find((d: any) => d._id?.toString() === selectedDurationIdStr)
@@ -95,7 +94,7 @@ async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<strin
       }
     }
 
-    const formatDateToISO = (date: any): string | undefined => (date ? new Date(date).toISOString() : undefined)
+    const formatDate = (date: any) => (date ? new Date(date).toISOString() : undefined)
 
     return {
       _id: String(voucher._id),
@@ -116,24 +115,23 @@ async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<strin
       recipientName: voucher.recipientName,
       recipientPhone: voucher.recipientPhone,
       greetingMessage: voucher.greetingMessage,
-      sendDate: formatDateToISO(voucher.sendDate),
+      sendDate: formatDate(voucher.sendDate),
       status: voucher.status,
-      purchaseDate: formatDateToISO(voucher.purchaseDate)!,
-      validFrom: formatDateToISO(voucher.validFrom)!,
-      validUntil: formatDateToISO(voucher.validUntil)!,
+      purchaseDate: formatDate(voucher.purchaseDate)!,
+      validFrom: formatDate(voucher.validFrom)!,
+      validUntil: formatDate(voucher.validUntil)!,
       paymentId: voucher.paymentId,
-      paymentMethodId: voucher.paymentMethodId?.toString(),
       usageHistory: voucher.usageHistory?.map((h: any) => ({
         ...h,
-        date: formatDateToISO(h.date)!,
+        date: formatDate(h.date)!,
         orderId: h.orderId?.toString(),
       })),
       isActive:
-        (voucher.status === "active" || voucher.status === "partially_used" || voucher.status === "sent") &&
+        (voucher.status === "active" || voucher.status === "partially_used" || voucher.status === "sent") && // Added 'sent'
         new Date(voucher.validUntil) >= new Date() &&
         new Date(voucher.validFrom) <= new Date(),
-      createdAt: formatDateToISO(voucher.createdAt),
-      updatedAt: formatDateToISO(voucher.updatedAt),
+      createdAt: formatDate(voucher.createdAt),
+      updatedAt: formatDate(voucher.updatedAt),
     }
   } catch (error) {
     logger.error("Error during population/transformation in toGiftVoucherPlain:", {
@@ -186,9 +184,9 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
     if (!session?.user?.roles.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
+
     await dbConnect()
 
-    // --- Input Validation ---
     if (!data.code || typeof data.code !== "string" || data.code.trim() === "") {
       return { success: false, error: "Code is required." }
     }
@@ -212,10 +210,37 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
       return { success: false, error: "'Valid from' date must be before 'valid until' date." }
     }
 
+    if (data.voucherType === "monetary") {
+      if (data.monetaryValue === undefined || data.monetaryValue === null || String(data.monetaryValue).trim() === "") {
+        return { success: false, error: "Monetary value is required for monetary voucher." }
+      }
+      const val = Number(data.monetaryValue)
+      if (isNaN(val) || val <= 0) {
+        return { success: false, error: "Invalid monetary value. Must be a positive number." }
+      }
+    } else if (data.voucherType === "treatment") {
+      if (
+        !data.treatmentId ||
+        typeof data.treatmentId !== "string" ||
+        !mongoose.Types.ObjectId.isValid(data.treatmentId)
+      ) {
+        return { success: false, error: "Valid Treatment ID is required for treatment voucher." }
+      }
+      if (
+        data.selectedDurationId &&
+        (typeof data.selectedDurationId !== "string" || !mongoose.Types.ObjectId.isValid(data.selectedDurationId))
+      ) {
+        return { success: false, error: "Valid Selected Duration ID is required if provided." }
+      }
+    }
+
     const { code, voucherType, treatmentId, selectedDurationId, monetaryValue, ownerUserId, validFrom, validUntil } =
       data
+
     const owner = await User.findById(ownerUserId).lean()
-    if (!owner) return { success: false, error: "Owner user not found." }
+    if (!owner) {
+      return { success: false, error: "Owner user not found." }
+    }
 
     const giftVoucherData: Partial<IGiftVoucher> = {
       code,
@@ -226,7 +251,7 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
       validUntil: new Date(validUntil),
       status: data.status,
       isActive: data.status === "active" || data.status === "partially_used" || data.status === "sent",
-      isGift: false, // Admin created vouchers are not gifts by default in this flow
+      isGift: false,
       purchaseDate: new Date(),
     }
 
@@ -238,13 +263,16 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
       giftVoucherData.remainingAmount = val
     } else if (voucherType === "treatment") {
       if (!treatmentId) return { success: false, error: "Treatment ID is required." }
-      const treatment = (await Treatment.findById(treatmentId).lean()) as any
+      const treatment = (await Treatment.findById(treatmentId).select("price durations").lean()) as any
       if (!treatment) return { success: false, error: "Treatment not found." }
+
       giftVoucherData.treatmentId = new mongoose.Types.ObjectId(treatmentId)
       let price = treatment.price || 0
       if (selectedDurationId && treatment.durations) {
         const duration = treatment.durations.find((d: any) => d._id.toString() === selectedDurationId)
-        if (duration && typeof duration.price === "number") price = duration.price
+        if (duration && typeof duration.price === "number") {
+          price = duration.price
+        }
         giftVoucherData.selectedDurationId = new mongoose.Types.ObjectId(selectedDurationId)
       }
       giftVoucherData.monetaryValue = price
@@ -252,15 +280,26 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
 
     const newVoucher = new GiftVoucher(giftVoucherData)
     await newVoucher.save()
+
     revalidatePath("/dashboard/admin/gift-vouchers")
     revalidatePath("/dashboard/member/gift-vouchers")
-    return { success: true, giftVoucher: await toGiftVoucherPlain(newVoucher) }
+
+    return {
+      success: true,
+      giftVoucher: await toGiftVoucherPlain(newVoucher),
+    }
   } catch (error) {
-    logger.error("Error creating gift voucher by admin:", error)
+    logger.error("Error creating gift voucher by admin:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     const errorMessage = error instanceof Error ? error.message : "Failed to create gift voucher"
-    if (error instanceof mongoose.Error.ValidationError) return { success: false, error: error.message }
+    if (error instanceof mongoose.Error.ValidationError) {
+      return { success: false, error: error.message }
+    }
     if ((error as any).code === 11000 && (error as any).keyPattern?.code) {
-      return { success: false, error: "Gift voucher code already exists." }
+      return { success: false, error: "Gift voucher code already exists. Please use a unique code." }
     }
     return { success: false, error: errorMessage }
   }
@@ -269,17 +308,39 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
 export async function updateGiftVoucherByAdmin(id: string, data: Partial<AdminGiftVoucherFormData>) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.roles.includes("admin")) return { success: false, error: "Unauthorized" }
-    if (!mongoose.Types.ObjectId.isValid(id)) return { success: false, error: "Invalid Gift Voucher ID." }
+    if (!session?.user?.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return { success: false, error: "Invalid Gift Voucher ID format." }
+    }
+
     await dbConnect()
 
-    // --- Input Validation for Update ---
-    // ... (similar to create, but check against existing if not provided)
+    if (data.validFrom && (typeof data.validFrom !== "string" || isNaN(new Date(data.validFrom).getTime()))) {
+      return { success: false, error: "Invalid 'valid from' date." }
+    }
+    if (data.validUntil && (typeof data.validUntil !== "string" || isNaN(new Date(data.validUntil).getTime()))) {
+      return { success: false, error: "Invalid 'valid until' date." }
+    }
+    if (data.ownerUserId && !mongoose.Types.ObjectId.isValid(data.ownerUserId)) {
+      return { success: false, error: "Invalid Owner User ID format." }
+    }
+    if (data.treatmentId && !mongoose.Types.ObjectId.isValid(data.treatmentId)) {
+      return { success: false, error: "Invalid Treatment ID format." }
+    }
+    if (data.selectedDurationId && !mongoose.Types.ObjectId.isValid(data.selectedDurationId)) {
+      return { success: false, error: "Invalid Selected Duration ID format." }
+    }
+
     const existingVoucher = await GiftVoucher.findById(id)
-    if (!existingVoucher) return { success: false, error: "Gift voucher not found" }
+    if (!existingVoucher) {
+      return { success: false, error: "Gift voucher not found" }
+    }
 
     const checkValidFrom = data.validFrom ? new Date(data.validFrom) : existingVoucher.validFrom
     const checkValidUntil = data.validUntil ? new Date(data.validUntil) : existingVoucher.validUntil
+
     if (checkValidFrom >= checkValidUntil) {
       return { success: false, error: "'Valid from' date must be before 'valid until' date." }
     }
@@ -301,8 +362,8 @@ export async function updateGiftVoucherByAdmin(id: string, data: Partial<AdminGi
     if (data.selectedDurationId) updateData.selectedDurationId = new mongoose.Types.ObjectId(data.selectedDurationId)
 
     const newVoucherType = data.voucherType || existingVoucher.voucherType
+
     if (newVoucherType === "monetary") {
-      // ... (logic as before, ensure originalAmount/remainingAmount are handled)
       if (data.monetaryValue !== undefined) {
         const val = Number(data.monetaryValue)
         if (String(data.monetaryValue).trim() === "" || isNaN(val) || val <= 0) {
@@ -318,17 +379,19 @@ export async function updateGiftVoucherByAdmin(id: string, data: Partial<AdminGi
         }
         updateData.treatmentId = null
         updateData.selectedDurationId = null
+      } else if (data.voucherType === "monetary" && existingVoucher.voucherType !== "monetary") {
+        return { success: false, error: "Monetary value is required when changing to monetary voucher type." }
       }
     } else if (newVoucherType === "treatment") {
-      // ... (logic as before, ensure monetaryValue is updated based on treatment/duration)
       if (data.treatmentId || (data.voucherType === "treatment" && !existingVoucher.treatmentId)) {
         if (!updateData.treatmentId && !existingVoucher.treatmentId) {
           return { success: false, error: "Treatment ID is required for treatment voucher." }
         }
-        const treatment = (await Treatment.findById(
-          updateData.treatmentId || existingVoucher.treatmentId,
-        ).lean()) as any
+        const treatment = (await Treatment.findById(updateData.treatmentId || existingVoucher.treatmentId)
+          .select("price durations")
+          .lean()) as any
         if (!treatment) return { success: false, error: "Treatment not found." }
+
         let price = treatment.price || 0
         const durationIdToUse = updateData.selectedDurationId || existingVoucher.selectedDurationId
         if (durationIdToUse && treatment.durations) {
@@ -340,6 +403,8 @@ export async function updateGiftVoucherByAdmin(id: string, data: Partial<AdminGi
           updateData.originalAmount = null
           updateData.remainingAmount = null
         }
+      } else if (data.voucherType === "treatment" && !updateData.treatmentId && !existingVoucher.treatmentId) {
+        return { success: false, error: "Treatment ID is required for treatment voucher type." }
       }
     }
 
@@ -348,16 +413,30 @@ export async function updateGiftVoucherByAdmin(id: string, data: Partial<AdminGi
       { $set: updateData },
       { new: true, runValidators: true },
     )
-    if (!updatedVoucher) return { success: false, error: "Gift voucher not found or update failed" }
+
+    if (!updatedVoucher) {
+      return { success: false, error: "Gift voucher not found or update failed" }
+    }
+
     revalidatePath("/dashboard/admin/gift-vouchers")
     revalidatePath("/dashboard/member/gift-vouchers")
-    return { success: true, giftVoucher: await toGiftVoucherPlain(updatedVoucher) }
+
+    return {
+      success: true,
+      giftVoucher: await toGiftVoucherPlain(updatedVoucher),
+    }
   } catch (error) {
-    logger.error("Error updating gift voucher by admin:", error)
+    logger.error("Error updating gift voucher by admin:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     const errorMessage = error instanceof Error ? error.message : "Failed to update gift voucher"
-    if (error instanceof mongoose.Error.ValidationError) return { success: false, error: error.message }
+    if (error instanceof mongoose.Error.ValidationError) {
+      return { success: false, error: error.message }
+    }
     if ((error as any).code === 11000 && (error as any).keyPattern?.code) {
-      return { success: false, error: "Gift voucher code already exists." }
+      return { success: false, error: "Gift voucher code already exists. Please use a unique code." }
     }
     return { success: false, error: errorMessage }
   }
@@ -407,34 +486,24 @@ export async function getGiftVouchers(
   try {
     await dbConnect()
     const query: FilterQuery<IGiftVoucher> = {}
-
     if (search) {
       const searchRegex = { $regex: search, $options: "i" }
-      // Attempt to find users by name/email and then search vouchers by their IDs
-      // This is a simplified version. A more robust solution might involve a separate search endpoint for users.
       const usersByName = await User.find({ name: searchRegex }).select("_id").lean()
       const userIds = usersByName.map((u) => u._id)
-
       query.$or = [
         { code: searchRegex },
         { purchaserUserId: { $in: userIds } },
         { ownerUserId: { $in: userIds } },
-        { recipientName: searchRegex }, // if searching by recipient name directly
+        { recipientName: searchRegex },
       ]
-      // If search could be an email for purchaser/owner
       const userByEmail = await User.findOne({ email: search }).select("_id").lean()
       if (userByEmail) {
         query.$or.push({ purchaserUserId: userByEmail._id })
         query.$or.push({ ownerUserId: userByEmail._id })
       }
     }
-
-    if (filters.voucherType) {
-      query.voucherType = filters.voucherType
-    }
-    if (filters.status) {
-      query.status = filters.status
-    }
+    if (filters.voucherType) query.voucherType = filters.voucherType
+    if (filters.status) query.status = filters.status
     if (filters.dateRange?.from && filters.dateRange?.to) {
       query.validUntil = { $gte: new Date(filters.dateRange.from), $lte: new Date(filters.dateRange.to) }
     } else if (filters.dateRange?.from) {
@@ -442,24 +511,28 @@ export async function getGiftVouchers(
     } else if (filters.dateRange?.to) {
       query.validUntil = { $lte: new Date(filters.dateRange.to) }
     }
-
     const skip = (page - 1) * limit
-
-    // Fetch Mongoose documents first to ensure toGiftVoucherPlain works as expected with population
-    const giftVoucherDocs = await GiftVoucher.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
+    const giftVoucherDocs = await GiftVoucher.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit)
     const total = await GiftVoucher.countDocuments(query)
     const giftVouchersPromises = giftVoucherDocs.map((doc) => toGiftVoucherPlain(doc))
-    const giftVouchers = await Promise.all(giftVouchersPromises)
+    const giftVouchers = await Promise.all(giftVouchersPromises).catch((error) => {
+      logger.error("Error transforming one or more gift vouchers in getGiftVouchers:", {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
+      return []
+    })
     return {
       success: true,
       giftVouchers,
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     }
   } catch (error) {
-    logger.error("Error fetching gift vouchers:", error)
+    logger.error("Error fetching gift vouchers:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return {
       success: false,
       error: "Failed to fetch gift vouchers",
@@ -478,7 +551,7 @@ export async function getTreatmentsForSelection() {
       treatments: treatments.map((t: any) => ({
         _id: t._id.toString(),
         name: t.name,
-        price: t.price,
+        price: t.price, // Ensure price is included
         durations:
           t.durations?.map((d: any) => ({
             _id: d._id.toString(),
@@ -488,7 +561,11 @@ export async function getTreatmentsForSelection() {
       })),
     }
   } catch (error) {
-    logger.error("Error fetching treatments for selection:", error)
+    logger.error("Error fetching treatments for selection:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to fetch treatments", treatments: [] }
   }
 }
@@ -509,12 +586,14 @@ export async function getUsersForAdminSelection() {
       })),
     }
   } catch (error) {
-    logger.error("Error fetching users for admin selection:", error)
+    logger.error("Error fetching users for admin selection:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to fetch users", users: [] }
   }
 }
-
-// --- Member facing actions ---
 
 export interface PurchaseInitiationData {
   voucherType: "treatment" | "monetary"
@@ -522,10 +601,13 @@ export interface PurchaseInitiationData {
   selectedDurationId?: string
   monetaryValue?: number
   isGift: boolean
-  recipientName?: string
-  recipientPhone?: string
+}
+
+export interface GiftDetailsPayload {
+  recipientName: string
+  recipientPhone: string
   greetingMessage?: string
-  sendDate?: Date | "immediate" // Use Date object or "immediate"
+  sendDate?: string // ISO string or "immediate"
 }
 
 export interface PaymentResultData {
@@ -533,28 +615,17 @@ export interface PaymentResultData {
   paymentId: string
   success: boolean
   amount: number
-  paymentMethodId: string // Added to store which payment method was used
 }
 
 export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user) return { success: false, error: "Unauthorized" }
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" }
+    }
     await dbConnect()
+    const { voucherType, treatmentId, selectedDurationId, monetaryValue, isGift } = data
 
-    const {
-      voucherType,
-      treatmentId,
-      selectedDurationId,
-      monetaryValue,
-      isGift,
-      recipientName,
-      recipientPhone,
-      greetingMessage,
-      sendDate,
-    } = data
-
-    // --- Input Validation ---
     if (!voucherType || (voucherType !== "monetary" && voucherType !== "treatment")) {
       return { success: false, error: "Valid voucher type is required." }
     }
@@ -564,47 +635,25 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
       }
     } else if (voucherType === "treatment") {
       if (!treatmentId || !mongoose.Types.ObjectId.isValid(treatmentId)) {
-        return { success: false, error: "Valid Treatment ID is required." }
+        return { success: false, error: "Valid Treatment ID is required for treatment voucher." }
       }
       if (selectedDurationId && !mongoose.Types.ObjectId.isValid(selectedDurationId)) {
-        return { success: false, error: "Valid Selected Duration ID." }
+        return { success: false, error: "Valid Selected Duration ID is required if provided." }
       }
     }
-    if (isGift) {
-      if (!recipientName || recipientName.trim() === "") return { success: false, error: "Recipient name is required." }
-      if (!recipientPhone || recipientPhone.trim() === "")
-        return { success: false, error: "Recipient phone is required." }
-      if (sendDate && sendDate !== "immediate" && !(sendDate instanceof Date && !isNaN(sendDate.getTime()))) {
-        return { success: false, error: "Invalid send date format." }
-      }
-    }
-    // --- End Input Validation ---
 
     const code = `GV-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
     const giftVoucherData: Partial<IGiftVoucher> = {
       code,
       voucherType,
       purchaserUserId: new mongoose.Types.ObjectId(session.user.id),
-      ownerUserId:
-        isGift && recipientName ? new mongoose.Types.ObjectId() : new mongoose.Types.ObjectId(session.user.id), // Placeholder or self
-      isGift,
+      ownerUserId: new mongoose.Types.ObjectId(session.user.id), // Owner is purchaser by default
+      isGift, // Will be updated later if gift details are provided
       status: "pending_payment",
       purchaseDate: new Date(),
       validFrom: new Date(),
       validUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       isActive: false,
-    }
-
-    if (isGift) {
-      giftVoucherData.recipientName = recipientName
-      giftVoucherData.recipientPhone = recipientPhone
-      giftVoucherData.greetingMessage = greetingMessage
-      // Actual sendDate (Date object) will be set here if not "immediate"
-      if (sendDate && sendDate !== "immediate") {
-        giftVoucherData.sendDate = sendDate
-      }
-      // Owner is still purchaser for simplicity, recipient details are for notification/delivery
-      giftVoucherData.ownerUserId = new mongoose.Types.ObjectId(session.user.id)
     }
 
     let calculatedPrice = 0
@@ -615,7 +664,7 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
       calculatedPrice = monetaryValue!
     } else if (voucherType === "treatment") {
       if (!treatmentId) return { success: false, error: "Treatment ID is required." }
-      const treatment = (await Treatment.findById(treatmentId).lean()) as any
+      const treatment = (await Treatment.findById(treatmentId).select("price durations").lean()) as any
       if (!treatment) return { success: false, error: "Treatment not found." }
       giftVoucherData.treatmentId = new mongoose.Types.ObjectId(treatmentId)
       let price = treatment.price || 0
@@ -637,68 +686,62 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
       amount: calculatedPrice,
     }
   } catch (error) {
-    logger.error("Error initiating gift voucher purchase:", error)
-    return { success: false, error: "Failed to initiate purchase." }
+    logger.error("Error initiating gift voucher purchase:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
+    return { success: false, error: "Failed to initiate purchase. Please try again." }
   }
 }
 
 export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user) return { success: false, error: "Unauthorized" }
-    if (!mongoose.Types.ObjectId.isValid(data.voucherId)) return { success: false, error: "Invalid Voucher ID." }
-    if (!mongoose.Types.ObjectId.isValid(data.paymentMethodId))
-      return { success: false, error: "Invalid Payment Method ID." }
-
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" }
+    }
+    if (!mongoose.Types.ObjectId.isValid(data.voucherId)) {
+      return { success: false, error: "Invalid Voucher ID format." }
+    }
     await dbConnect()
-    const { voucherId, paymentId, success: paymentSuccess, amount, paymentMethodId } = data
+    const { voucherId, paymentId, success: paymentSuccess, amount } = data
     const voucher = await GiftVoucher.findById(voucherId)
-    if (!voucher) return { success: false, error: "Voucher not found" }
-
-    if (voucher.purchaserUserId.toString() !== session.user.id)
+    if (!voucher) {
+      return { success: false, error: "Voucher not found" }
+    }
+    if (voucher.purchaserUserId.toString() !== session.user.id) {
       return { success: false, error: "Purchase record mismatch." }
-    if (voucher.status !== "pending_payment") return { success: false, error: "Voucher not awaiting payment." }
+    }
+    if (voucher.status !== "pending_payment") {
+      return { success: false, error: "Voucher not awaiting payment or already processed." }
+    }
 
     if (paymentSuccess) {
       voucher.paymentId = paymentId
-      voucher.paymentMethodId = new mongoose.Types.ObjectId(paymentMethodId)
-      voucher.isActive = true
+      // Status and isActive will be updated by setGiftDetails or directly if not a gift
+      // For non-gifts, or gifts sent immediately, status becomes 'active' or 'sent'
+      // For scheduled gifts, status becomes 'pending_send'
+      // isActive becomes true once payment is confirmed and it's not pending_send for a future date.
 
-      // Handle sendDate logic based on what was stored during initiation
-      const sendDateToUse = voucher.sendDate // This is already a Date object if set, or undefined
-      const isImmediateSend = !sendDateToUse || (voucher.isGift && !voucher.sendDate) // If sendDate was not set (implies immediate for gift)
-
-      if (voucher.isGift && voucher.recipientPhone) {
-        if (isImmediateSend || (sendDateToUse && sendDateToUse <= new Date())) {
-          voucher.status = "sent"
-          voucher.sendDate = new Date() // Mark as sent now
-          try {
-            await notificationManager.sendNotification(
-              "sms",
-              { value: voucher.recipientPhone, name: voucher.recipientName || "Recipient" },
-              {
-                type: "GIFT_VOUCHER_RECEIVED",
-                params: {
-                  /* ... params ... */
-                },
-              },
-            )
-            logger.info(`Gift voucher SMS sent to ${voucher.recipientPhone} for ${voucher.code}`)
-          } catch (e) {
-            logger.error("Failed to send gift SMS post-payment", e)
-          }
-        } else if (sendDateToUse && sendDateToUse > new Date()) {
-          voucher.status = "pending_send" // Scheduled
-        }
-      } else {
+      // If it's not a gift, or if it's a gift to be sent immediately (handled by setGiftDetails)
+      // we can tentatively set it to active here. setGiftDetails will refine.
+      if (!voucher.isGift) {
         voucher.status = "active"
+        voucher.isActive = true
       }
+      // If it IS a gift, setGiftDetails will handle status and isActive based on sendDate.
+      // For now, we just confirm payment.
+
       await voucher.save()
       revalidatePath("/dashboard/member/gift-vouchers")
       if (voucher.purchaserUserId.toString() !== voucher.ownerUserId.toString()) {
         revalidatePath(`/dashboard/user/${voucher.ownerUserId.toString()}/gift-vouchers`)
       }
-      return { success: true, voucher: await toGiftVoucherPlain(voucher) }
+      return {
+        success: true,
+        voucher: await toGiftVoucherPlain(voucher),
+      }
     } else {
       voucher.status = "cancelled"
       voucher.isActive = false
@@ -706,91 +749,127 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
       return { success: false, error: "Payment failed. Voucher not activated." }
     }
   } catch (error) {
-    logger.error("Error confirming gift voucher purchase:", error)
-    return { success: false, error: "Failed to confirm purchase." }
+    logger.error("Error confirming gift voucher purchase:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
+    return { success: false, error: "Failed to confirm purchase. Please contact support." }
   }
 }
 
-// This function is now primarily for admin or if user wants to update details AFTER purchase.
-// The main gift details are collected during the purchase flow.
-export interface GiftDetailsPayload {
-  recipientName: string
-  recipientPhone: string
-  greetingMessage?: string
-  sendDate?: Date | "immediate" // Date object or "immediate"
-}
 export async function setGiftDetails(voucherId: string, details: GiftDetailsPayload) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user) return { success: false, error: "Unauthorized" }
-    if (!mongoose.Types.ObjectId.isValid(voucherId)) return { success: false, error: "Invalid Voucher ID." }
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" }
+    }
+    if (!mongoose.Types.ObjectId.isValid(voucherId)) {
+      return { success: false, error: "Invalid Voucher ID format." }
+    }
     await dbConnect()
     const voucher = await GiftVoucher.findById(voucherId)
-    if (!voucher) return { success: false, error: "Voucher not found" }
-    if (voucher.purchaserUserId.toString() !== session.user.id) return { success: false, error: "Not authorized." }
-
-    // --- Input Validation ---
-    if (!details.recipientName || details.recipientName.trim() === "")
-      return { success: false, error: "Recipient name required." }
-    if (!details.recipientPhone || details.recipientPhone.trim() === "")
-      return { success: false, error: "Recipient phone required." }
-    if (
-      details.sendDate &&
-      details.sendDate !== "immediate" &&
-      !(details.sendDate instanceof Date && !isNaN(details.sendDate.getTime()))
-    ) {
+    if (!voucher) {
+      return { success: false, error: "Voucher not found" }
+    }
+    if (voucher.purchaserUserId.toString() !== session.user.id) {
+      return { success: false, error: "You are not authorized to modify this voucher." }
+    }
+    if (!details.recipientName || details.recipientName.trim() === "") {
+      return { success: false, error: "Recipient name is required." }
+    }
+    if (!details.recipientPhone || details.recipientPhone.trim() === "") {
+      return { success: false, error: "Recipient phone is required." }
+    }
+    if (details.sendDate && details.sendDate !== "immediate" && isNaN(new Date(details.sendDate).getTime())) {
       return { success: false, error: "Invalid send date format." }
     }
-    // --- End Input Validation ---
 
     voucher.isGift = true
     voucher.recipientName = details.recipientName
     voucher.recipientPhone = details.recipientPhone
-
-    voucher.recipientName = details.recipientName
-    voucher.recipientPhone = details.recipientPhone
     voucher.greetingMessage = details.greetingMessage
 
-    const sendDateToUse = details.sendDate
-    const isImmediateSend = !sendDateToUse || sendDateToUse === "immediate"
-
-    // Only adjust status and send notification if voucher is already paid and active/sent/pending_send"].includes(voucher.status)) {
-    if (["active", "partially_used", "sent"].includes(voucher.status)) {
-      if (isImmediateSend || (sendDateToUse instanceof Date && sendDateToUse <= new Date())) {
-        if (voucher.status !== "sent") {
-          // Avoid re-sending if already marked sent
-          voucher.sendDate = new Date()
-          voucher.status = "sent"
-          try {
-            await notificationManager.sendNotification(
-              "sms",
-              { value: voucher.recipientPhone, name: voucher.recipientName },
-              { type: "GIFT_VOUCHER_RECEIVED", params: {} },
-            )
-            logger.info(`Gift details updated, SMS sent for ${voucher.code}`)
-          } catch (e) {
-            logger.error("Failed to send SMS on gift details update", e)
-          }
-        }
-      } else if (sendDateToUse instanceof Date && sendDateToUse > new Date()) {
-        voucher.sendDate = sendDateToUse
-        voucher.status = "pending_send"
+    const now = new Date()
+    if (details.sendDate === "immediate" || !details.sendDate) {
+      voucher.sendDate = now
+      voucher.status = "sent"
+      voucher.isActive = true // Gift sent immediately is active
+      // Send notification immediately
+      try {
+        await notificationManager.sendNotification(
+          "sms",
+          { value: voucher.recipientPhone, name: voucher.recipientName },
+          {
+            type: "GIFT_VOUCHER_RECEIVED",
+            params: {
+              recipientName: voucher.recipientName || "there",
+              purchaserName: session.user.name || "Someone special",
+              voucherCode: voucher.code,
+              greetingMessage: voucher.greetingMessage || "",
+            },
+          },
+        )
+        logger.info(`Gift voucher SMS notification sent to ${voucher.recipientPhone} for voucher ${voucher.code}`)
+      } catch (notificationError) {
+        logger.error("Failed to send gift voucher SMS notification post-payment", {
+          error: notificationError,
+          voucherId: voucher._id.toString(),
+          recipientPhone: voucher.recipientPhone,
+        })
       }
-    } else if (voucher.status === "pending_payment") {
-      // If details are set before payment, just store them. confirmGiftVoucherPurchase handles sending.
-      if (sendDateToUse instanceof Date) {
-        voucher.sendDate = sendDateToUse
+    } else {
+      const scheduledSendDate = new Date(details.sendDate)
+      voucher.sendDate = scheduledSendDate
+      if (scheduledSendDate <= now) {
+        // If scheduled for past/now
+        voucher.status = "sent"
+        voucher.isActive = true
+        // Send notification immediately
+        try {
+          await notificationManager.sendNotification(
+            "sms",
+            { value: voucher.recipientPhone, name: voucher.recipientName },
+            {
+              type: "GIFT_VOUCHER_RECEIVED",
+              params: {
+                recipientName: voucher.recipientName || "there",
+                purchaserName: session.user.name || "Someone special",
+                voucherCode: voucher.code,
+                greetingMessage: voucher.greetingMessage || "",
+              },
+            },
+          )
+          logger.info(
+            `Scheduled gift voucher (past/now) SMS notification sent to ${voucher.recipientPhone} for voucher ${voucher.code}`,
+          )
+        } catch (notificationError) {
+          logger.error("Failed to send scheduled (past/now) gift voucher SMS notification", {
+            error: notificationError,
+            voucherId: voucher._id.toString(),
+            recipientPhone: voucher.recipientPhone,
+          })
+        }
       } else {
-        voucher.sendDate = undefined // For immediate send, confirmGiftVoucherPurchase will set it to new Date()
+        // Scheduled for future
+        voucher.status = "pending_send"
+        voucher.isActive = false // Not active until send date
       }
     }
 
     await voucher.save()
     revalidatePath("/dashboard/member/gift-vouchers")
-    return { success: true, voucher: await toGiftVoucherPlain(voucher) }
+    return {
+      success: true,
+      voucher: await toGiftVoucherPlain(voucher),
+    }
   } catch (error) {
-    logger.error("Error setting gift details:", error)
-    return { success: false, error: "Failed to set gift details." }
+    logger.error("Error setting gift details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
+    return { success: false, error: "Failed to set gift details. Please try again." }
   }
 }
 
@@ -804,10 +883,17 @@ export async function getMemberPurchasedVouchers() {
     const voucherDocs = await GiftVoucher.find({ purchaserUserId: new mongoose.Types.ObjectId(session.user.id) }).sort({
       purchaseDate: -1,
     })
-    const giftVouchers = await Promise.all(voucherDocs.map((doc) => toGiftVoucherPlain(doc)))
+    const giftVouchers = await Promise.all(voucherDocs.map((doc) => toGiftVoucherPlain(doc))).catch((err) => {
+      logger.error("Error transforming purchased vouchers in getMemberPurchasedVouchers", err)
+      return []
+    })
     return { success: true, giftVouchers }
   } catch (error) {
-    logger.error("Error fetching member purchased vouchers:", error)
+    logger.error("Error fetching member purchased vouchers:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to fetch purchased vouchers", giftVouchers: [] }
   }
 }
@@ -823,10 +909,17 @@ export async function getMemberOwnedVouchers() {
       validUntil: 1,
       purchaseDate: -1,
     })
-    const giftVouchers = await Promise.all(voucherDocs.map((doc) => toGiftVoucherPlain(doc)))
+    const giftVouchers = await Promise.all(voucherDocs.map((doc) => toGiftVoucherPlain(doc))).catch((err) => {
+      logger.error("Error transforming owned vouchers in getMemberOwnedVouchers", err)
+      return []
+    })
     return { success: true, giftVouchers }
   } catch (error) {
-    logger.error("Error fetching member owned vouchers:", error)
+    logger.error("Error fetching member owned vouchers:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to fetch owned vouchers", giftVouchers: [] }
   }
 }
@@ -840,23 +933,33 @@ export interface OrderDetailsForRedemption {
 export async function redeemGiftVoucher(code: string, orderDetails: OrderDetailsForRedemption) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user) return { success: false, error: "Unauthorized" }
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" }
+    }
     await dbConnect()
     const voucher = await GiftVoucher.findOne({ code: code.trim() })
-    if (!voucher) return { success: false, error: "Voucher not found." }
-    if (voucher.ownerUserId.toString() !== session.user.id)
-      return { success: false, error: "Voucher does not belong to you." }
-
+    if (!voucher) {
+      return { success: false, error: "Voucher not found." }
+    }
+    if (voucher.ownerUserId.toString() !== session.user.id) {
+      return { success: false, error: "This voucher does not belong to you or cannot be redeemed by you." }
+    }
     const currentDate = new Date()
-    if (voucher.validFrom > currentDate) return { success: false, error: "Voucher not yet valid." }
+    if (voucher.validFrom > currentDate) {
+      return { success: false, error: "Voucher is not yet valid." }
+    }
     if (voucher.validUntil < currentDate) {
       voucher.status = "expired"
       await voucher.save()
       return { success: false, error: "Voucher has expired." }
     }
-    if (!voucher.isActive) return { success: false, error: "Voucher is inactive." }
-    if (!["active", "partially_used", "sent"].includes(voucher.status))
-      return { success: false, error: "Voucher not available for use." }
+    if (!voucher.isActive) {
+      // This now correctly reflects if it's usable
+      return { success: false, error: "Voucher is currently inactive." }
+    }
+    if (!["active", "partially_used", "sent"].includes(voucher.status)) {
+      return { success: false, error: "Voucher is not available for use (e.g., pending, used, cancelled)." }
+    }
 
     let amountApplied = 0
     if (voucher.voucherType === "treatment") {
@@ -871,10 +974,14 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
         description: `Redeemed for treatment: ${orderDetails.items?.[0]?.name || "Treatment"}`,
       } as any)
     } else if (voucher.voucherType === "monetary") {
-      if ((voucher.remainingAmount || 0) <= 0) return { success: false, error: "Voucher has no remaining balance." }
+      if ((voucher.remainingAmount || 0) <= 0) {
+        return { success: false, error: "Voucher has no remaining balance." }
+      }
       const redemptionAmount = orderDetails.totalAmount
       amountApplied = Math.min(redemptionAmount, voucher.remainingAmount || 0)
-      if (amountApplied <= 0) return { success: false, error: "No amount could be applied." }
+      if (amountApplied <= 0) {
+        return { success: false, error: "No amount could be applied from voucher." }
+      }
       voucher.remainingAmount = (voucher.remainingAmount || 0) - amountApplied
       if (!voucher.usageHistory) voucher.usageHistory = []
       voucher.usageHistory.push({
@@ -883,8 +990,12 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
         orderId: orderDetails.orderId ? new mongoose.Types.ObjectId(orderDetails.orderId) : undefined,
         description: `Redeemed against order total: ${orderDetails.totalAmount}`,
       } as any)
-      voucher.status = (voucher.remainingAmount || 0) <= 0 ? "fully_used" : "partially_used"
-      if (voucher.remainingAmount && voucher.remainingAmount < 0) voucher.remainingAmount = 0
+      if (voucher.remainingAmount <= 0) {
+        voucher.status = "fully_used"
+        voucher.remainingAmount = 0
+      } else {
+        voucher.status = "partially_used"
+      }
     } else {
       return { success: false, error: "Unknown voucher type." }
     }
@@ -895,10 +1006,15 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
       success: true,
       updatedVoucher: await toGiftVoucherPlain(voucher),
       amountApplied,
-      message: `Voucher redeemed. Amount applied: ${amountApplied.toFixed(2)} ILS.`,
+      message: `Voucher redeemed successfully. Amount applied: ${amountApplied.toFixed(2)} ILS.`,
     }
   } catch (error) {
-    logger.error("Error redeeming gift voucher:", error)
-    return { success: false, error: "Failed to redeem voucher." }
+    logger.error("Error redeeming gift voucher:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      code: code,
+      details: error,
+    })
+    return { success: false, error: "Failed to redeem voucher. Please try again or contact support." }
   }
 }

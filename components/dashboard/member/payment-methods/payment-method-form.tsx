@@ -39,10 +39,9 @@ interface PaymentMethodFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   paymentMethod?: IPaymentMethod
-  onSuccess?: (newMethod: IPaymentMethod) => void // Add onSuccess callback
 }
 
-export function PaymentMethodForm({ open, onOpenChange, paymentMethod, onSuccess }: PaymentMethodFormProps) {
+export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: PaymentMethodFormProps) {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const isEditing = !!paymentMethod
@@ -104,10 +103,6 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod, onSuccess
 
       if (result.success) {
         toast.success(isEditing ? t("paymentMethods.updated") : t("paymentMethods.created"))
-        if (onSuccess && result.paymentMethod) {
-          // Call onSuccess if provided and method exists
-          onSuccess(result.paymentMethod as IPaymentMethod)
-        }
         onOpenChange(false)
         form.reset()
       } else {

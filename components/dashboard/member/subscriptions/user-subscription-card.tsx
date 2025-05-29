@@ -1,66 +1,48 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { Progress } from "@/components/common/ui/progress"
-import { formatDate } from "@/lib/utils/utils" // Assuming this utility exists or will be created
-import {
-  PackageIcon,
-  Palette,
-  CalendarDaysIcon,
-  HashIcon,
-  TagIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ClockIcon,
-  BanIcon,
-  PlayCircleIcon,
-} from "lucide-react"
-import type { UserSubscription } from "@/lib/db/models/user-subscription" // Import the type
+import { format } from "date-fns"
+import { he } from "date-fns/locale"
+import { Package, Calendar, CreditCard, Ban, Info, Tag, Clock } from "lucide-react"
+import type { IUserSubscription } from "@/lib/db/models/user-subscription" // Import the type
+import type { ISubscription } from "@/lib/db/models/subscription"
+import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 
 interface UserSubscriptionCardProps {
-  userSubscription: UserSubscription // Use the specific type
-  onCancel: (id: string) => void // Add type for onCancel
-  isCancelling: boolean // Add type for loading state
+  userSubscription: IUserSubscription & {
+    // Use the imported type
+    subscriptionId: ISubscription // Assuming populated
+    treatmentId: ITreatment // Assuming populated
+    paymentMethodId: any // Define if available
+    selectedDurationDetails?: ITreatmentDuration // Populated manually
+  }
+  onCancel: (subscriptionId: string) => void // Pass ID for cancellation
 }
 
-export default function UserSubscriptionCard({ userSubscription, onCancel, isCancelling }: UserSubscriptionCardProps) {
-  const { t } = useTranslation()
+export default function UserSubscriptionCard({ userSubscription, onCancel }: UserSubscriptionCardProps) {
+  const { t, i18n } = useTranslation()
+  const currentLocale = i18n.language === "he" ? he : undefined
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
         return (
-          <Badge className="bg-green-100 text-green-700 border-green-300">
-            <CheckCircleIcon className="h-3.5 w-3.5 mr-1.5" />
+          <Badge variant="default" className="bg-green-500 hover:bg-green-600">
             {t("common.active")}
           </Badge>
         )
       case "expired":
-        return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-300">
-            <ClockIcon className="h-3.5 w-3.5 mr-1.5" />
-            {t("subscriptions.status.expired")}
-          </Badge>
-        )
+        return <Badge variant="secondary">{t("subscriptions.status.expired")}</Badge>
       case "depleted":
-        return (
-          <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
-            <XCircleIcon className="h-3.5 w-3.5 mr-1.5" />
-            {t("subscriptions.status.depleted")}
-          </Badge>
-        )
+        return <Badge variant="outline">{t("subscriptions.status.depleted")}</Badge>
       case "cancelled":
-        return (
-          <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300">
-            <BanIcon className="h-3.5 w-3.5 mr-1.5" />
-            {t("subscriptions.status.cancelled")}
-          </Badge>
-        )
+        return <Badge variant="destructive">{t("subscriptions.status.cancelled")}</Badge>
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge>{status}</Badge>
     }
   }
 
@@ -72,108 +54,130 @@ export default function UserSubscriptionCard({ userSubscription, onCancel, isCan
         )
       : 0
 
-  // Safely access nested properties
-  const subscriptionName = userSubscription.subscriptionId?.name || t("subscriptions.unknownSubscription")
-  const treatmentName = userSubscription.treatmentId?.name || t("treatments.unknownTreatment")
-  const treatmentDuration = userSubscription.treatmentId?.duration
-  const treatmentCategory = userSubscription.treatmentId?.category
+  const maskCardNumber = (cardNumber?: string) => {
+    if (!cardNumber) return t("paymentMethods.unknown")
+    return `**** **** **** ${cardNumber.slice(-4)}`
+  }
+
+  const formatDate = (date: Date | string) => {
+    return format(new Date(date), "dd/MM/yyyy", { locale: currentLocale })
+  }
 
   return (
-    <Card className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl flex flex-col h-full">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">{subscriptionName}</CardTitle>
+    <Card className="overflow-hidden transition-all duration-200 hover:shadow-lg border rounded-lg">
+      <CardHeader className="bg-gray-50 dark:bg-gray-800 p-4 border-b">
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-xl font-semibold">
+            {userSubscription.subscriptionId?.name || t("subscriptions.unknownSubscription")}
+          </CardTitle>
           {getStatusBadge(userSubscription.status)}
         </div>
-        <CardDescription className="flex items-center text-sm text-gray-600 dark:text-gray-400 pt-1">
-          <Palette className="h-4 w-4 mr-1.5 text-primary" />
-          {treatmentName}
-          {treatmentDuration && ` (${treatmentDuration} ${t("common.minutes")})`}
-        </CardDescription>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t("subscriptions.purchasedOn")}: {formatDate(userSubscription.purchaseDate)}
+        </p>
       </CardHeader>
-      <CardContent className="space-y-3 text-sm flex-grow">
+      <CardContent className="p-6 space-y-4">
         <div className="space-y-1">
-          <div className="flex justify-between">
-            <span className="text-gray-500 dark:text-gray-400 flex items-center">
-              <HashIcon className="h-4 w-4 mr-1.5 text-sky-600" />
-              {t("subscriptions.remainingTreatments")}:
-            </span>
-            <span className="font-medium text-gray-700 dark:text-gray-200">
-              {userSubscription.remainingQuantity} / {userSubscription.totalQuantity}
-            </span>
-          </div>
-          <Progress
-            value={usagePercentage}
-            className="h-2 w-full [&>div]:bg-primary"
-            aria-label={`${usagePercentage}% ${t("subscriptions.used")}`}
-          />
+          <h4 className="text-md font-medium text-gray-700 dark:text-gray-300">{t("treatments.title")}</h4>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {userSubscription.treatmentId?.name || t("treatments.unknownTreatment")}
+            {userSubscription.selectedDurationDetails && (
+              <span className="ml-1">
+                ({userSubscription.selectedDurationDetails.minutes} {t("common.minutes")})
+              </span>
+            )}
+          </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-2">
-          <div className="text-gray-500 dark:text-gray-400 flex items-center">
-            <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-sky-600" />
-            {t("subscriptions.purchaseDate")}:
-          </div>
-          <div className="text-gray-700 dark:text-gray-200 text-right">{formatDate(userSubscription.purchaseDate)}</div>
-
-          <div className="text-gray-500 dark:text-gray-400 flex items-center">
-            <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-red-500" />
-            {t("subscriptions.expiryDate")}:
-          </div>
-          <div className="text-gray-700 dark:text-gray-200 text-right">{formatDate(userSubscription.expiryDate)}</div>
-
-          <div className="text-gray-500 dark:text-gray-400 flex items-center">
-            <TagIcon className="h-4 w-4 mr-1.5 text-sky-600" />
-            {t("common.pricePaid")}:
-          </div>
-          <div className="text-gray-700 dark:text-gray-200 font-semibold text-right">
-            {userSubscription.paymentAmount}₪
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center">
+            <Package className="mr-2 h-5 w-5 text-blue-500" />
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">{t("subscriptions.remaining")}:</span>
+              <span className="ml-1 text-gray-600 dark:text-gray-400">
+                {userSubscription.remainingQuantity} / {userSubscription.totalQuantity}
+              </span>
+            </div>
           </div>
 
-          {treatmentCategory && (
-            <>
-              <div className="text-gray-500 dark:text-gray-400 flex items-center">
-                <PackageIcon className="h-4 w-4 mr-1.5 text-sky-600" />
-                {t("treatments.fields.category")}:
+          <div className="flex items-center">
+            <Calendar className="mr-2 h-5 w-5 text-red-500" />
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">{t("subscriptions.expiry")}:</span>
+              <span className="ml-1 text-gray-600 dark:text-gray-400">{formatDate(userSubscription.expiryDate)}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center">
+            <CreditCard className="mr-2 h-5 w-5 text-green-500" />
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">{t("subscriptions.paymentMethod")}:</span>
+              <span className="ml-1 text-gray-600 dark:text-gray-400">
+                {userSubscription.paymentMethodId?.cardName || t("paymentMethods.card")}{" "}
+                {maskCardNumber(userSubscription.paymentMethodId?.cardNumber)}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center">
+            <Tag className="mr-2 h-5 w-5 text-purple-500" />
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">{t("subscriptions.pricePaid")}:</span>
+              <span className="ml-1 text-gray-600 dark:text-gray-400">
+                {userSubscription.paymentAmount?.toFixed(2)} ₪
+              </span>
+            </div>
+          </div>
+
+          {userSubscription.pricePerSession !== undefined && (
+            <div className="flex items-center">
+              <Info className="mr-2 h-5 w-5 text-yellow-500" />
+              <div>
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  {t("subscriptions.pricePerSession")}:
+                </span>
+                <span className="ml-1 text-gray-600 dark:text-gray-400">
+                  {userSubscription.pricePerSession?.toFixed(2)} ₪
+                </span>
               </div>
-              <div className="text-gray-700 dark:text-gray-200 text-right">
-                {t(`treatments.categories.${treatmentCategory.toLowerCase()}` as any, treatmentCategory)}
-              </div>
-            </>
+            </div>
           )}
         </div>
-      </CardContent>
-      <CardFooter className="pt-4 border-t dark:border-gray-700 mt-auto">
-        <div className="flex gap-2 w-full">
+
+        <div>
+          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <span>{t("subscriptions.usage")}</span>
+            <span>
+              {userSubscription.totalQuantity - userSubscription.remainingQuantity} {t("subscriptions.used")} /{" "}
+              {userSubscription.totalQuantity} {t("subscriptions.total")}
+            </span>
+          </div>
+          <Progress value={usagePercentage} className="h-2.5 w-full" />
+        </div>
+
+        <div className="mt-6 flex flex-col sm:flex-row gap-2">
           <Button
             variant="default"
             size="sm"
-            className="flex-1"
-            disabled={true} // As per requirement: "currently not supposed to be active"
-            aria-label={t("subscriptions.useTreatmentAria")}
+            className="w-full sm:w-auto"
+            disabled // As per requirement: "כפתור למימוש טיפול מתוך המנוי שכרגע לא אמור להיות פעיל"
           >
-            <PlayCircleIcon className="h-4 w-4 mr-1.5" />
+            <Clock className="mr-2 h-4 w-4" />
             {t("subscriptions.useTreatment")}
           </Button>
           {userSubscription.status === "active" && (
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-400 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
-              onClick={() => onCancel(String(userSubscription._id))}
-              disabled={isCancelling}
-              aria-label={t("common.cancelSubscriptionAria")}
+              className="w-full sm:w-auto text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-300 hover:border-red-500"
+              onClick={() => onCancel(userSubscription._id.toString())}
             >
-              {isCancelling ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-              ) : (
-                <BanIcon className="h-4 w-4 mr-1.5" />
-              )}
+              <Ban className="mr-2 h-4 w-4" />
               {t("common.cancel")}
             </Button>
           )}
         </div>
-      </CardFooter>
+      </CardContent>
     </Card>
   )
 }

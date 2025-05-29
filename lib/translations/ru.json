@@ -29,11 +29,19 @@
     "pickDate": "Выберите дату",
     "saving": "Сохранение...",
     "update": "Обновить",
-    "deleting": "deleting",
-    "expired": "expired",
-    "depleted": "depleted",
-    "cancelled": "cancelled",
-    "creating": "creating"
+    "deleting": "Удаление...",
+    "expired": "Истек срок",
+    "depleted": "Исчерпан",
+    "cancelled": "Отменен",
+    "creating": "Создание...",
+    "minutes": "минут",
+    "step": "Шаг",
+    "of": "из",
+    "applyFilters": "Применить фильтры",
+    "results": "результатов",
+    "unknownUser": "Неизвестный пользователь",
+    "thisUser": "этот пользователь",
+    "confirmCancel": "Подтвердить отмену"
   },
   "dashboard": {
     "sidebar": {
@@ -48,6 +56,7 @@
       "partners": "Партнеры",
       "treatments": "Процедуры",
       "subscriptions": "Подписки",
+      "userSubscriptions": "Подписки пользователей",
       "workingHours": "Рабочие часы",
       "addresses": "Управление адресами",
       "paymentMethods": "Способы оплаты",
@@ -86,11 +95,11 @@
       "name": "Название подписки",
       "description": "Описание",
       "isActive": "Активный",
-      "quantity": "Количество процедур",
+      "quantity": "Количество (оплачено)",
       "bonusQuantity": "Бонусное количество",
       "validityMonths": "Срок действия (месяцы)",
       "treatments": "Процедуры",
-      "price": "price"
+      "price": "Цена"
     },
     "activeDescription": "Активные подписки будут показаны клиентам",
     "quantityDescription": "Количество процедур, включенных в подписку",
@@ -112,7 +121,7 @@
       "noSubscriptions": "Подписки не найдены"
     },
     "status": {
-      "expired": "Истек",
+      "expired": "Истек срок",
       "depleted": "Исчерпан",
       "cancelled": "Отменен"
     },
@@ -125,13 +134,24 @@
     "used": "Использовано",
     "total": "Всего",
     "purchase": {
-      "title": "Покупка",
-      "description": "Купить подписку",
-      "noSubscriptions": "Нет доступных подписок для покупки"
+      "title": "Покупка подписки",
+      "description": "Выберите план подписки и процедуру, чтобы начать.",
+      "noSubscriptions": "В данный момент нет доступных подписок для покупки.",
+      "selectSubscription": "Выберите план подписки",
+      "selectSubscriptionDesc": "Выберите план, который наилучшим образом соответствует вашим потребностям.",
+      "selectSubscriptionPlaceholder": "Выберите подписку...",
+      "selectAllFields": "Пожалуйста, заполните все обязательные поля.",
+      "success": "Подписка успешно приобретена!",
+      "error": "Не удалось приобрести подписку. Пожалуйста, попробуйте еще раз.",
+      "summary": "Сводка покупки",
+      "confirm": "Подтвердить покупку",
+      "confirmAndPay": "Подтвердить и оплатить",
+      "selectSubscriptionError": "Пожалуйста, выберите план подписки."
     },
-    "cancelSuccess": "Подписка успешно отменена",
+    "cancelSuccess": "Подписка успешно отменена.",
     "cancelConfirm": "Вы уверены, что хотите отменить эту подписку?",
-    "cancelConfirmDescription": "Это действие нельзя отменить",
+    "cancelConfirmDescription": "Это действие нельзя отменить. Оставшиеся сеансы будут аннулированы.",
+    "cancelConfirmDescriptionAdmin": "Вы уверены, что хотите отменить эту подписку для {{userName}}? Это действие нельзя отменить.",
     "users": {
       "title": "Пользователи подписки",
       "description": "Управление пользователями подписки"
@@ -145,7 +165,12 @@
     "price": "Цена",
     "createError": "Ошибка создания подписки",
     "updateError": "Ошибка обновления подписки",
-    "fetchError": "Ошибка загрузки подписок"
+    "fetchError": "Ошибка загрузки подписок",
+    "totalQuantity": "Общее количество",
+    "paidQuantity": "Оплаченное количество",
+    "pricePaid": "Оплаченная цена",
+    "pricePerSession": "Цена за сеанс",
+    "useTreatment": "Использовать процедуру"
   },
   "coupons": {
     "title": "Купоны",
@@ -431,7 +456,7 @@
   "paymentMethods": {
     "title": "Способы оплаты",
     "addNew": "Добавить новый способ оплаты",
-    "noPaymentMethods": "Нет сохраненных способов оплаты",
+    "noPaymentMethods": "Нет сохраненных способов оплаты. Пожалуйста, добавьте один, чтобы продолжить.",
     "updated": "Обновлено",
     "created": "Создано",
     "updateError": "Ошибка обновления",
@@ -444,7 +469,7 @@
       "expiryYear": "Год окончания",
       "cvv": "CVV",
       "cardHolderName": "Имя владельца карты",
-      "cardName": "Название карты",
+      "cardName": "Название карты (например, Моя Visa)",
       "isDefault": "По умолчанию",
       "expiry": "Срок действия"
     },
@@ -455,7 +480,14 @@
     "setDefault": "Установить по умолчанию",
     "deleteConfirm": "Вы уверены, что хотите удалить этот способ оплаты?",
     "deleteConfirmDescription": "Это действие нельзя отменить",
-    "card": "Карта"
+    "card": "Карта",
+    "selectPaymentMethod": "Выберите способ оплаты",
+    "selectPaymentMethodDesc": "Выберите, как вы хотите оплатить.",
+    "selectPaymentMethodPlaceholder": "Выберите способ оплаты...",
+    "addNewLink": "Добавить новый способ оплаты",
+    "managePaymentMethods": "Управлять способами оплаты",
+    "selectPaymentMethodError": "Пожалуйста, выберите способ оплаты.",
+    "unknown": "Неизвестно"
   },
   "city": "city",
   "street": "street",
@@ -547,7 +579,8 @@
       "price": "Цена",
       "professionalPrice": "Цена для профессионалов",
       "durations": "Продолжительность",
-      "minutes": "минут"
+      "minutes": "минут",
+      "duration": "Продолжительность"
     },
     "selectCategory": "Выберите категорию",
     "categories": {
@@ -557,7 +590,7 @@
     "activeDescription": "Активные процедуры будут показаны",
     "pricing": "Ценообразование",
     "pricingTypes": {
-      "fixed": "Фиксированная",
+      "fixed": "Фиксированная цена",
       "durationBased": "По продолжительности"
     },
     "addDuration": "Добавить продолжительность",
@@ -572,7 +605,17 @@
     "price": "Цена",
     "minutes": "минут",
     "deleteConfirm": "Вы уверены, что хотите удалить эту процедуру?",
-    "deleteConfirmDescription": "Это действие нельзя отменить"
+    "deleteConfirmDescription": "Это действие нельзя отменить",
+    "selectTreatment": "Выберите процедуру",
+    "selectTreatmentDesc": "Выберите процедуру, которую вы хотите для своей подписки.",
+    "selectTreatmentPlaceholder": "Выберите процедуру...",
+    "selectDuration": "Выберите продолжительность",
+    "selectDurationDesc": "Выберите продолжительность для вашей процедуры.",
+    "selectDurationPlaceholder": "Выберите продолжительность...",
+    "unknownTreatment": "Неизвестная процедура",
+    "selectTreatmentError": "Пожалуйста, выберите процедуру.",
+    "selectDurationError": "Пожалуйста, выберите продолжительность для процедуры.",
+    "noActiveDurations": "Для этой процедуры нет активных вариантов продолжительности."
   },
   "giftCertificates": {
     "title": "Подарочные сертификаты для участников",
@@ -580,26 +623,36 @@
   },
   "userSubscriptions": {
     "title": "Подписки пользователей",
-    "description": "Управление подписками пользователей",
+    "description": "Управление всеми подписками пользователей в системе.",
     "filterAndSearch": "Фильтр и поиск",
-    "searchPlaceholder": "Поиск по email, имени или подписке...",
+    "searchPlaceholder": "Поиск по пользователю, подписке или процедуре...",
     "allStatuses": "Все статусы",
     "filterByStatus": "Фильтр по статусу",
-    "noUserSubscriptions": "Подписки пользователей не найдены",
+    "noUserSubscriptions": "Подписки пользователей, соответствующие вашим критериям, не найдены.",
     "user": "Пользователь",
     "subscription": "Подписка",
     "remaining": "Осталось",
     "expiryDate": "Дата истечения",
     "status": "Статус",
-    "deleteSuccess": "deleteSuccess",
-    "deleteError": "deleteError",
-    "totalQuantity": "totalQuantity",
-    "purchaseDate": "purchaseDate",
-    "deleteConfirmTitle": "deleteConfirmTitle",
-    "deleteConfirmDescription": "deleteConfirmDescription"
+    "deleteSuccess": "Подписка пользователя успешно удалена.",
+    "deleteError": "Ошибка удаления подписки пользователя.",
+    "totalQuantity": "Общ. кол-во",
+    "purchaseDate": "Дата покупки",
+    "deleteConfirmTitle": "Удалить подписку пользователя",
+    "deleteConfirmDescription": "Вы уверены, что хотите навсегда удалить запись о подписке этого пользователя? Это действие нельзя отменить.",
+    "deleteConfirmDescriptionAdmin": "Вы уверены, что хотите навсегда удалить запись о подписке для {{userName}}? Это действие нельзя отменить.",
+    "fetchErrorAdmin": "Не удалось загрузить подписки пользователей.",
+    "subscriptionDetails": "Детали подписки",
+    "treatmentDetails": "Детали процедуры",
+    "quantityAndUsage": "Кол-во и использование",
+    "dates": "Даты",
+    "payment": "Оплата",
+    "purchaseDateShort": "Куплено",
+    "expiryDateShort": "Истекает"
   },
   "Roles": {},
   "validFrom": "Действует с",
   "validUntil": "Действует до",
-  "T": "T"
+  "T": "T",
+  "common.totalPrice": "Итоговая цена"
 }

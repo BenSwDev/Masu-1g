@@ -2,41 +2,74 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
+import { Badge } from "@/components/common/ui/badge"
 import { useRouter } from "next/navigation"
-import { cancelSubscription } from "@/actions/user-subscription-actions" // Removed useSubscription as it's not implemented yet
+import { formatDate } from "@/lib/utils/utils"
+import { useSubscription, cancelSubscription } from "@/actions/user-subscription-actions"
 import { toast } from "sonner"
 import { AlertModal } from "@/components/common/modals/alert-modal"
-import UserSubscriptionCard from "./user-subscription-card" // Import the card
-import type { UserSubscription } from "@/lib/db/models/user-subscription" // Import the type
-import { PlusCircleIcon, InfoIcon } from "lucide-react"
-import { Card, CardContent } from "@/components/common/ui/card"
 
 interface UserSubscriptionsClientProps {
-  userSubscriptions?: UserSubscription[] // Use the specific type
+  userSubscriptions?: any[]
+  pagination?: any
 }
 
-export default function UserSubscriptionsClient({ userSubscriptions = [] }: UserSubscriptionsClientProps) {
+const UserSubscriptionsClient = ({ userSubscriptions = [], pagination }: UserSubscriptionsClientProps) => {
   const { t } = useTranslation()
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false) // General loading for actions
-  const [cancellingSubscriptionId, setCancellingSubscriptionId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [subscriptionToCancel, setSubscriptionToCancel] = useState<string | null>(null)
   const [showCancelModal, setShowCancelModal] = useState(false)
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge className="bg-green-500">{t("subscriptions.status.active")}</Badge>
+      case "expired":
+        return <Badge variant="secondary">{t("subscriptions.status.expired")}</Badge>
+      case "depleted":
+        return <Badge variant="outline">{t("subscriptions.status.depleted")}</Badge>
+      case "cancelled":
+        return <Badge variant="destructive">{t("subscriptions.status.cancelled")}</Badge>
+      default:
+        return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
+  const handleUseSubscription = async (id: string) => {
+    setIsLoading(true)
+    try {
+      const result = await useSubscription(id)
+      if (result.success) {
+        toast.success(t("subscriptions.useSuccess"))
+        router.refresh()
+      } else {
+        toast.error(result.error || t("subscriptions.useError"))
+      }
+    } catch (error) {
+      toast.error(t("subscriptions.useError"))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleCancelClick = (id: string) => {
-    setCancellingSubscriptionId(id)
+    setSubscriptionToCancel(id)
     setShowCancelModal(true)
   }
 
-  const handleConfirmCancelSubscription = async () => {
-    if (!cancellingSubscriptionId) return
+  const handleCancelSubscription = async () => {
+    if (!subscriptionToCancel) return
 
     setIsLoading(true)
     try {
-      const result = await cancelSubscription(cancellingSubscriptionId)
+      const result = await cancelSubscription(subscriptionToCancel)
       if (result.success) {
         toast.success(t("subscriptions.cancelSuccess"))
-        router.refresh() // Refresh data after cancellation
+        router.refresh()
+        setShowCancelModal(false)
       } else {
         toast.error(result.error || t("subscriptions.cancelError"))
       }
@@ -44,66 +77,100 @@ export default function UserSubscriptionsClient({ userSubscriptions = [] }: User
       toast.error(t("subscriptions.cancelError"))
     } finally {
       setIsLoading(false)
-      setShowCancelModal(false)
-      setCancellingSubscriptionId(null)
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
-            {t("subscriptions.my.title")}
-          </h1>
-          <p className="mt-1 text-lg text-gray-600 dark:text-gray-400">{t("subscriptions.my.description")}</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("subscriptions.my.title")}</h1>
+          <p className="text-gray-600">{t("subscriptions.my.description")}</p>
         </div>
-        <Button onClick={() => router.push("/dashboard/member/subscriptions/purchase")} className="w-full sm:w-auto">
-          <PlusCircleIcon className="mr-2 h-5 w-5" />
+        <Button onClick={() => router.push("/dashboard/member/subscriptions/purchase")}>
           {t("subscriptions.purchase.new")}
         </Button>
       </div>
 
       {userSubscriptions.length === 0 ? (
-        <Card className="shadow-sm">
-          <CardContent className="flex flex-col items-center justify-center h-60 p-6 text-center">
-            <InfoIcon className="h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {t("subscriptions.my.noSubscriptionsFoundTitle")}
-            </p>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">{t("subscriptions.my.noSubscriptionsFoundDesc")}</p>
-            <Button onClick={() => router.push("/dashboard/member/subscriptions/purchase")} size="lg">
-              <PlusCircleIcon className="mr-2 h-5 w-5" />
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center h-40 p-6">
+            <p className="text-gray-500 mb-4">{t("subscriptions.my.noSubscriptions")}</p>
+            <Button onClick={() => router.push("/dashboard/member/subscriptions/purchase")}>
               {t("subscriptions.purchase.new")}
             </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {userSubscriptions.map((subscription) => (
-            <UserSubscriptionCard
-              key={String(subscription._id)}
-              userSubscription={subscription}
-              onCancel={handleCancelClick}
-              isCancelling={isLoading && cancellingSubscriptionId === String(subscription._id)}
-            />
+            <Card key={subscription._id} className="overflow-hidden">
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-lg">{subscription.subscriptionId?.name}</CardTitle>
+                  {getStatusBadge(subscription.status)}
+                </div>
+                <CardDescription>
+                  {t("treatments.name")}: {subscription.treatmentId?.name}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">{t("subscriptions.remaining")}:</span>
+                    <span className="font-medium">
+                      {subscription.remainingQuantity} / {subscription.totalQuantity}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">{t("subscriptions.purchaseDate")}:</span>
+                    <span>{formatDate(subscription.purchaseDate)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">{t("subscriptions.expiryDate")}:</span>
+                    <span>{formatDate(subscription.expiryDate)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">{t("common.price")}:</span>
+                    <span>{subscription.paymentAmount} ₪</span>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="pt-2">
+                <div className="flex gap-2 w-full">
+                  <Button
+                    variant="default"
+                    className="flex-1"
+                    disabled={subscription.status !== "active" || subscription.remainingQuantity <= 0 || isLoading}
+                    onClick={() => handleUseSubscription(subscription._id)}
+                  >
+                    {t("subscriptions.use")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    disabled={subscription.status !== "active" || isLoading}
+                    onClick={() => handleCancelClick(subscription._id)}
+                  >
+                    {t("subscriptions.cancel")}
+                  </Button>
+                </div>
+              </CardFooter>
+            </Card>
           ))}
         </div>
       )}
 
       <AlertModal
         isOpen={showCancelModal}
-        onClose={() => {
-          setShowCancelModal(false)
-          setCancellingSubscriptionId(null)
-        }}
-        onConfirm={handleConfirmCancelSubscription}
-        loading={isLoading && !!cancellingSubscriptionId}
-        title={t("subscriptions.cancelConfirmTitle")}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancelSubscription}
+        loading={isLoading}
+        title={t("subscriptions.cancelConfirm")}
         description={t("subscriptions.cancelConfirmDescription")}
-        confirmText={t("common.confirmCancel")}
-        cancelText={t("common.goBack")}
       />
     </div>
   )
 }
+
+export default UserSubscriptionsClient

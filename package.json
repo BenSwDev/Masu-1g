@@ -65,6 +65,7 @@
     "next": "15.2.4",
     "next-auth": "latest",
     "next-i18next": "latest",
+    "next-intl": "latest",
     "next-themes": "latest",
     "nodemailer": "latest",
     "path": "latest",

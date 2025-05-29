@@ -302,3 +302,25 @@ export async function getActiveSubscriptions() {
     return { success: false, error: "Failed to fetch active subscriptions" }
   }
 }
+
+export async function getActiveSubscriptionsForPurchase() {
+  try {
+    await dbConnect()
+
+    const subscriptions = await Subscription.find({ isActive: true })
+      .select("_id name description quantity bonusQuantity validityMonths")
+      .sort({ createdAt: -1 })
+      .lean()
+
+    // Serialize the subscriptions to plain objects
+    const serializedSubscriptions = subscriptions.map((sub) => ({
+      ...sub,
+      _id: sub._id.toString(),
+    }))
+
+    return { success: true, subscriptions: serializedSubscriptions }
+  } catch (error) {
+    logger.error("Error fetching active subscriptions for purchase:", error)
+    return { success: false, error: "Failed to fetch active subscriptions" }
+  }
+}

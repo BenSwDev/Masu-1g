@@ -1,215 +1,215 @@
 "use server"
 
+import dbConnect from "@/lib/db/mongoose"
+import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
+import { logger } from "@/lib/logs/logger"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { connectDB } from "@/lib/db/mongodb"
-import Treatment, { type ITreatmentDuration } from "@/lib/db/models/treatment"
+import { revalidatePath } from "next/cache"
 
-export interface TreatmentFormData {
-  name: string
-  category: "massages" | "facial_treatments"
-  description?: string
-  isActive: boolean
-  pricingType: "fixed" | "duration_based"
-  fixedPrice?: number
-  fixedProfessionalPrice?: number
-  durations?: {
-    minutes: number
-    price: number
-    professionalPrice: number
-    isActive: boolean
-  }[]
-}
-
-export async function getTreatments() {
+// הפונקציה הזו כבר הייתה קיימת, נוודא שהיא מתאימה
+export async function getTreatments(
+  options: { page?: number; limit?: number; search?: string; category?: string; isActive?: boolean } = {},
+) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.activeRole !== "admin") {
-      throw new Error("Unauthorized")
+    await dbConnect()
+    const { page = 1, limit = 10, search, category, isActive } = options
+
+    const query: any = {}
+    if (search) {
+      query.name = { $regex: search, $options: "i" }
+    }
+    if (category) {
+      query.category = category
+    }
+    if (typeof isActive === "boolean") {
+      query.isActive = isActive
     }
 
-    await connectDB()
-    const treatments = await Treatment.find({}).sort({ category: 1, name: 1 }).lean()
+    const treatments = await Treatment.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean()
 
-    // Serialize the treatments to plain objects
-    const serializedTreatments = treatments.map(treatment => ({
+    const total = await Treatment.countDocuments(query)
+
+    return {
+      success: true,
+      treatments: treatments.map((treatment) => ({
+        ...treatment,
+        _id: treatment._id.toString(),
+        durations: treatment.durations?.map((d) => ({ ...d, _id: d._id?.toString() })) || [],
+      })) as ITreatment[],
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    }
+  } catch (error) {
+    logger.error("Error fetching treatments:", error)
+    return { success: false, error: "Failed to fetch treatments", treatments: [], pagination: null }
+  }
+}
+
+// פונקציה חדשה או מעודכנת במיוחד עבור טופס הרכישה - מחזירה את כל הטיפולים הפעילים
+export async function getActiveTreatmentsForPurchase(): Promise<{
+  success: boolean
+  treatments?: ITreatment[]
+  error?: string
+}> {
+  try {
+    await dbConnect()
+    const treatments = await Treatment.find({ isActive: true }).lean()
+
+    // המרת _id ו- _id של durations ל-string כדי למנוע בעיות serialization
+    const serializedTreatments = treatments.map((treatment) => ({
       ...treatment,
-      _id: treatment._id.toString()
-    }))
+      _id: treatment._id.toString(),
+      durations:
+        treatment.durations?.map((d) => ({
+          ...d,
+          _id: d._id?.toString(), // לוודא שגם _id פנימי הוא string
+        })) || [],
+    })) as ITreatment[]
 
-    return {
-      success: true,
-      treatments: serializedTreatments,
-    }
+    return { success: true, treatments: serializedTreatments }
   } catch (error) {
-    console.error("Error fetching treatments:", error)
-    return {
-      success: false,
-      error: "Failed to fetch treatments",
-    }
+    logger.error("Error fetching active treatments for purchase:", error)
+    return { success: false, error: "Failed to fetch active treatments" }
   }
 }
 
-export async function createTreatment(data: TreatmentFormData) {
+export async function createTreatment(data: Omit<ITreatment, "_id" | "createdAt" | "updatedAt">) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user.activeRole !== "admin") {
-      throw new Error("Unauthorized")
+    if (!session?.user?.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
     }
-
-    await connectDB()
-
-    // Validate data before creating
-    if (data.pricingType === "fixed") {
-      if (!data.fixedPrice || !data.fixedProfessionalPrice) {
-        throw new Error("Fixed pricing requires both price and professional price")
-      }
-      data.durations = undefined
-    } else if (data.pricingType === "duration_based") {
-      if (!data.durations || data.durations.length === 0) {
-        throw new Error("Duration-based pricing requires at least one duration")
-      }
-      data.fixedPrice = undefined
-      data.fixedProfessionalPrice = undefined
-    }
-
-    const treatment = new Treatment(data)
-    await treatment.save()
-
-    return {
-      success: true,
-      treatment: JSON.parse(JSON.stringify(treatment)),
-    }
-  } catch (error) {
-    console.error("Error creating treatment:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to create treatment",
-    }
+    await dbConnect()
+    const newTreatment = new Treatment(data)
+    await newTreatment.save()
+    revalidatePath("/dashboard/admin/treatments")
+    return { success: true, treatment: newTreatment }
+  } catch (error: any) {
+    logger.error("Error creating treatment:", error)
+    return { success: false, error: error.message || "Failed to create treatment" }
   }
 }
 
-export async function updateTreatment(id: string, data: TreatmentFormData) {
+export async function updateTreatment(id: string, data: Partial<ITreatment>) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user.activeRole !== "admin") {
-      throw new Error("Unauthorized")
+    if (!session?.user?.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
     }
-
-    await connectDB()
-
-    // Validate data before updating
-    if (data.pricingType === "fixed") {
-      if (!data.fixedPrice || !data.fixedProfessionalPrice) {
-        throw new Error("Fixed pricing requires both price and professional price")
-      }
-      data.durations = undefined
-    } else if (data.pricingType === "duration_based") {
-      if (!data.durations || data.durations.length === 0) {
-        throw new Error("Duration-based pricing requires at least one duration")
-      }
-      data.fixedPrice = undefined
-      data.fixedProfessionalPrice = undefined
-    }
-
-    const treatment = await Treatment.findByIdAndUpdate(id, data, { new: true, runValidators: true })
-
+    await dbConnect()
+    const treatment = await Treatment.findByIdAndUpdate(id, data, { new: true })
     if (!treatment) {
-      throw new Error("Treatment not found")
+      return { success: false, error: "Treatment not found" }
     }
-
-    return {
-      success: true,
-      treatment: JSON.parse(JSON.stringify(treatment)),
-    }
-  } catch (error) {
-    console.error("Error updating treatment:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to update treatment",
-    }
+    revalidatePath("/dashboard/admin/treatments")
+    revalidatePath("/dashboard/member/subscriptions/purchase") // אם שינוי טיפול משפיע על רכישה
+    return { success: true, treatment }
+  } catch (error: any) {
+    logger.error("Error updating treatment:", error)
+    return { success: false, error: error.message || "Failed to update treatment" }
   }
 }
 
 export async function deleteTreatment(id: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user.activeRole !== "admin") {
-      throw new Error("Unauthorized")
+    if (!session?.user?.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
     }
-
-    await connectDB()
-
+    await dbConnect()
     const treatment = await Treatment.findByIdAndDelete(id)
-
     if (!treatment) {
-      throw new Error("Treatment not found")
+      return { success: false, error: "Treatment not found" }
     }
-
-    return {
-      success: true,
-    }
+    revalidatePath("/dashboard/admin/treatments")
+    revalidatePath("/dashboard/member/subscriptions/purchase")
+    return { success: true }
   } catch (error) {
-    console.error("Error deleting treatment:", error)
-    return {
-      success: false,
-      error: "Failed to delete treatment",
+    logger.error("Error deleting treatment:", error)
+    return { success: false, error: "Failed to delete treatment" }
+  }
+}
+
+export async function getTreatmentById(
+  id: string,
+): Promise<{ success: boolean; treatment?: ITreatment; error?: string }> {
+  try {
+    await dbConnect()
+    const treatment = await Treatment.findById(id).lean()
+    if (!treatment) {
+      return { success: false, error: "Treatment not found" }
     }
+    const serializedTreatment = {
+      ...treatment,
+      _id: treatment._id.toString(),
+      durations: treatment.durations?.map((d) => ({ ...d, _id: d._id?.toString() })) || [],
+    } as ITreatment
+    return { success: true, treatment: serializedTreatment }
+  } catch (error) {
+    logger.error(`Error fetching treatment by ID ${id}:`, error)
+    return { success: false, error: "Failed to fetch treatment" }
   }
 }
 
 export async function toggleTreatmentStatus(id: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user.activeRole !== "admin") {
-      throw new Error("Unauthorized")
+    if (!session?.user?.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
     }
 
-    await connectDB()
+    await dbConnect()
 
     const treatment = await Treatment.findById(id)
     if (!treatment) {
-      throw new Error("Treatment not found")
+      return { success: false, error: "Treatment not found" }
     }
 
     treatment.isActive = !treatment.isActive
+    treatment.updatedAt = new Date()
     await treatment.save()
+
+    revalidatePath("/dashboard/admin/treatments")
+    revalidatePath("/dashboard/member/subscriptions/purchase")
 
     return {
       success: true,
-      treatment: JSON.parse(JSON.stringify(treatment)),
+      treatment: {
+        ...treatment.toObject(),
+        _id: treatment._id.toString(),
+        durations: treatment.durations?.map((d) => ({ ...d, _id: d._id?.toString() })) || [],
+      },
     }
   } catch (error) {
-    console.error("Error toggling treatment status:", error)
-    return {
-      success: false,
-      error: "Failed to toggle treatment status",
-    }
+    logger.error("Error toggling treatment status:", error)
+    return { success: false, error: "Failed to toggle treatment status" }
   }
 }
 
 export async function duplicateTreatment(id: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user.activeRole !== "admin") {
-      throw new Error("Unauthorized")
+    if (!session?.user?.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
     }
 
-    await connectDB()
+    await dbConnect()
 
     const originalTreatment = await Treatment.findById(id)
     if (!originalTreatment) {
-      throw new Error("Treatment not found")
+      return { success: false, error: "Treatment not found" }
     }
 
-    const treatmentData = originalTreatment.toObject() as {
-      _id?: string;
-      createdAt?: Date;
-      updatedAt?: Date;
-      name: string;
-      [key: string]: any;
-    }
-
+    const treatmentData = originalTreatment.toObject()
     delete treatmentData._id
     delete treatmentData.createdAt
     delete treatmentData.updatedAt
@@ -218,15 +218,18 @@ export async function duplicateTreatment(id: string) {
     const newTreatment = new Treatment(treatmentData)
     await newTreatment.save()
 
+    revalidatePath("/dashboard/admin/treatments")
+
     return {
       success: true,
-      treatment: JSON.parse(JSON.stringify(newTreatment)),
+      treatment: {
+        ...newTreatment.toObject(),
+        _id: newTreatment._id.toString(),
+        durations: newTreatment.durations?.map((d) => ({ ...d, _id: d._id?.toString() })) || [],
+      },
     }
   } catch (error) {
-    console.error("Error duplicating treatment:", error)
-    return {
-      success: false,
-      error: "Failed to duplicate treatment",
-    }
+    logger.error("Error duplicating treatment:", error)
+    return { success: false, error: "Failed to duplicate treatment" }
   }
 }

@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { PaymentMethod, type IPaymentMethod } from "@/lib/db/models/payment-method"
+import { PaymentMethod } from "@/lib/db/models/payment-method"
 import dbConnect from "@/lib/db/mongoose"
 
 export interface PaymentMethodFormData {
@@ -28,7 +28,7 @@ export async function getPaymentMethods() {
 
     return {
       success: true,
-      paymentMethods
+      paymentMethods,
     }
   } catch (error) {
     return { success: false, error: "Failed to fetch payment methods" }
@@ -170,5 +170,34 @@ export async function setDefaultPaymentMethod(id: string) {
   } catch (error) {
     console.error("Error setting default payment method:", error)
     return { success: false, error: "Failed to set default payment method" }
+  }
+}
+
+export async function getActivePaymentMethods() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const paymentMethods = await PaymentMethod.find({
+      userId: session.user.id,
+    })
+      .select("_id cardName cardNumber expiryMonth expiryYear cardHolderName isDefault")
+      .lean()
+
+    // Serialize the payment methods to plain objects and mask card numbers
+    const serializedPaymentMethods = paymentMethods.map((pm) => ({
+      ...pm,
+      _id: pm._id.toString(),
+      cardNumber: `****-****-****-${pm.cardNumber.slice(-4)}`, // Mask card number for security
+    }))
+
+    return { success: true, paymentMethods: serializedPaymentMethods }
+  } catch (error) {
+    console.error("Error fetching active payment methods:", error)
+    return { success: false, error: "Failed to fetch payment methods" }
   }
 }

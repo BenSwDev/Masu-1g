@@ -1,71 +1,46 @@
-import { Suspense } from "react"
-import { getActiveSubscriptions } from "@/actions/subscription-actions"
-import { getAllTreatments } from "@/actions/subscription-actions"
-import { getPaymentMethods } from "@/actions/payment-method-actions"
+import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
+import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
+import { getActivePaymentMethods } from "@/actions/payment-method-actions"
 import PurchaseSubscriptionClient from "@/components/dashboard/member/subscriptions/purchase-subscription-client"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { getTranslations } from "next-intl/server"
 
-// הגדרת הדף כדינמי
-export const dynamic = "force-dynamic"
+export default async function PurchaseSubscriptionPage() {
+  const t = await getTranslations("subscriptions.purchase") // Assuming you have a namespace for this
 
-// קומפוננטת טעינה
-function PurchaseLoading() {
-  return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-4 w-full mt-2" />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-4 w-full mt-2" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-24" />
-              <Skeleton className="h-4 w-full mt-4" />
-              <Skeleton className="h-10 w-full mt-4" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// קומפוננטת טעינת נתונים
-async function PurchaseData() {
-  const [subscriptionsResult, treatmentsResult, paymentMethodsResult] = await Promise.all([
-    getActiveSubscriptions(),
-    getAllTreatments(),
-    getPaymentMethods(),
+  const [subscriptionsData, treatmentsData, paymentMethodsData] = await Promise.all([
+    getActiveSubscriptionsForPurchase(),
+    getActiveTreatmentsForPurchase(),
+    getActivePaymentMethods(),
   ])
 
-  if (!subscriptionsResult.success || !treatmentsResult.success || !paymentMethodsResult.success) {
+  if (!subscriptionsData.success || !treatmentsData.success || !paymentMethodsData.success) {
+    // Handle error state more gracefully, maybe show a specific error message
+    // For now, logging and showing a generic error
+    console.error("Failed to load data for purchase page:", {
+      subscriptionsError: subscriptionsData.error,
+      treatmentsError: treatmentsData.error,
+      paymentMethodsError: paymentMethodsData.error,
+    })
     return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        Error: {subscriptionsResult.error || treatmentsResult.error || paymentMethodsResult.error || "Unknown error"}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("errorLoadingTitle")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{t("errorLoadingMessage")}</p>
+        </CardContent>
+      </Card>
     )
   }
 
+  // console.log("Treatments fetched in page.tsx:", treatmentsData.treatments); // For debugging
+
   return (
     <PurchaseSubscriptionClient
-      subscriptions={subscriptionsResult.subscriptions}
-      treatments={treatmentsResult.treatments}
-      paymentMethods={paymentMethodsResult.paymentMethods}
+      subscriptions={subscriptionsData.subscriptions}
+      treatments={treatmentsData.treatments}
+      paymentMethods={paymentMethodsData.paymentMethods}
     />
-  )
-}
-
-export default function PurchaseSubscriptionPage() {
-  return (
-    <Suspense fallback={<PurchaseLoading />}>
-      <PurchaseData />
-    </Suspense>
   )
 }

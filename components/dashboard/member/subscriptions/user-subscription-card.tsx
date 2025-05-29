@@ -1,111 +1,179 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { Progress } from "@/components/common/ui/progress"
-import { format } from "date-fns"
-import { Package, Calendar, CreditCard, Ban } from "lucide-react"
+import { formatDate } from "@/lib/utils/utils" // Assuming this utility exists or will be created
+import {
+  PackageIcon,
+  Palette,
+  CalendarDaysIcon,
+  HashIcon,
+  TagIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
+  BanIcon,
+  PlayCircleIcon,
+} from "lucide-react"
+import type { UserSubscription } from "@/lib/db/models/user-subscription" // Import the type
 
 interface UserSubscriptionCardProps {
-  userSubscription: any
-  onCancel: () => void
+  userSubscription: UserSubscription // Use the specific type
+  onCancel: (id: string) => void // Add type for onCancel
+  isCancelling: boolean // Add type for loading state
 }
 
-export default function UserSubscriptionCard({ userSubscription, onCancel }: UserSubscriptionCardProps) {
+export default function UserSubscriptionCard({ userSubscription, onCancel, isCancelling }: UserSubscriptionCardProps) {
   const { t } = useTranslation()
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
-        return <Badge variant="default">{t("common.active")}</Badge>
+        return (
+          <Badge className="bg-green-100 text-green-700 border-green-300">
+            <CheckCircleIcon className="h-3.5 w-3.5 mr-1.5" />
+            {t("common.active")}
+          </Badge>
+        )
       case "expired":
-        return <Badge variant="secondary">{t("subscriptions.status.expired")}</Badge>
+        return (
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-300">
+            <ClockIcon className="h-3.5 w-3.5 mr-1.5" />
+            {t("subscriptions.status.expired")}
+          </Badge>
+        )
       case "depleted":
-        return <Badge variant="outline">{t("subscriptions.status.depleted")}</Badge>
+        return (
+          <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+            <XCircleIcon className="h-3.5 w-3.5 mr-1.5" />
+            {t("subscriptions.status.depleted")}
+          </Badge>
+        )
       case "cancelled":
-        return <Badge variant="destructive">{t("subscriptions.status.cancelled")}</Badge>
+        return (
+          <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300">
+            <BanIcon className="h-3.5 w-3.5 mr-1.5" />
+            {t("subscriptions.status.cancelled")}
+          </Badge>
+        )
       default:
-        return <Badge>{status}</Badge>
+        return <Badge variant="outline">{status}</Badge>
     }
   }
 
-  // חישוב אחוז הניצול
-  const usagePercentage = Math.round(
-    ((userSubscription.totalQuantity - userSubscription.remainingQuantity) / userSubscription.totalQuantity) * 100,
-  )
+  const usagePercentage =
+    userSubscription.totalQuantity > 0
+      ? Math.round(
+          ((userSubscription.totalQuantity - userSubscription.remainingQuantity) / userSubscription.totalQuantity) *
+            100,
+        )
+      : 0
 
-  // פונקציה להצגת כרטיס אשראי מוסתר
-  const maskCardNumber = (cardNumber: string) => {
-    return `**** **** **** ${cardNumber.slice(-4)}`
-  }
+  // Safely access nested properties
+  const subscriptionName = userSubscription.subscriptionId?.name || t("subscriptions.unknownSubscription")
+  const treatmentName = userSubscription.treatmentId?.name || t("treatments.unknownTreatment")
+  const treatmentDuration = userSubscription.treatmentId?.duration
+  const treatmentCategory = userSubscription.treatmentId?.category
 
   return (
-    <Card className="overflow-hidden transition-all duration-200 hover:shadow-md">
-      <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row justify-between gap-4">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium">
-                {userSubscription.subscriptionId?.name || t("subscriptions.unknownSubscription")}
-              </h3>
-              <p className="text-sm text-gray-600">{userSubscription.subscriptionId?.description || ""}</p>
-            </div>
+    <Card className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl flex flex-col h-full">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start gap-2">
+          <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">{subscriptionName}</CardTitle>
+          {getStatusBadge(userSubscription.status)}
+        </div>
+        <CardDescription className="flex items-center text-sm text-gray-600 dark:text-gray-400 pt-1">
+          <Palette className="h-4 w-4 mr-1.5 text-primary" />
+          {treatmentName}
+          {treatmentDuration && ` (${treatmentDuration} ${t("common.minutes")})`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm flex-grow">
+        <div className="space-y-1">
+          <div className="flex justify-between">
+            <span className="text-gray-500 dark:text-gray-400 flex items-center">
+              <HashIcon className="h-4 w-4 mr-1.5 text-sky-600" />
+              {t("subscriptions.remainingTreatments")}:
+            </span>
+            <span className="font-medium text-gray-700 dark:text-gray-200">
+              {userSubscription.remainingQuantity} / {userSubscription.totalQuantity}
+            </span>
+          </div>
+          <Progress
+            value={usagePercentage}
+            className="h-2 w-full [&>div]:bg-primary"
+            aria-label={`${usagePercentage}% ${t("subscriptions.used")}`}
+          />
+        </div>
 
-            <div className="flex items-center gap-2">
-              {getStatusBadge(userSubscription.status)}
-              <span className="text-sm text-gray-500">
-                {t("subscriptions.purchasedOn")}: {format(new Date(userSubscription.purchaseDate), "dd/MM/yyyy")}
-              </span>
-            </div>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-2">
+          <div className="text-gray-500 dark:text-gray-400 flex items-center">
+            <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-sky-600" />
+            {t("subscriptions.purchaseDate")}:
+          </div>
+          <div className="text-gray-700 dark:text-gray-200 text-right">{formatDate(userSubscription.purchaseDate)}</div>
 
-            <div className="space-y-2">
-              <div className="flex items-center text-sm">
-                <Package className="mr-2 h-4 w-4 text-gray-500" />
-                <span className="font-medium">{t("subscriptions.remaining")}:</span>
-                <span className="ml-1">
-                  {userSubscription.remainingQuantity} / {userSubscription.totalQuantity}
-                </span>
-              </div>
+          <div className="text-gray-500 dark:text-gray-400 flex items-center">
+            <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-red-500" />
+            {t("subscriptions.expiryDate")}:
+          </div>
+          <div className="text-gray-700 dark:text-gray-200 text-right">{formatDate(userSubscription.expiryDate)}</div>
 
-              <div className="flex items-center text-sm">
-                <Calendar className="mr-2 h-4 w-4 text-gray-500" />
-                <span className="font-medium">{t("subscriptions.expiry")}:</span>
-                <span className="ml-1">{format(new Date(userSubscription.expiryDate), "dd/MM/yyyy")}</span>
-              </div>
-
-              <div className="flex items-center text-sm">
-                <CreditCard className="mr-2 h-4 w-4 text-gray-500" />
-                <span className="font-medium">{t("subscriptions.paymentMethod")}:</span>
-                <span className="ml-1">
-                  {userSubscription.paymentMethodId?.cardName ||
-                    `${t("paymentMethods.card")} ${userSubscription.paymentMethodId?.cardNumber.slice(-4)}`}{" "}
-                  -{maskCardNumber(userSubscription.paymentMethodId?.cardNumber || "****")}
-                </span>
-              </div>
-            </div>
+          <div className="text-gray-500 dark:text-gray-400 flex items-center">
+            <TagIcon className="h-4 w-4 mr-1.5 text-sky-600" />
+            {t("common.pricePaid")}:
+          </div>
+          <div className="text-gray-700 dark:text-gray-200 font-semibold text-right">
+            {userSubscription.paymentAmount}₪
           </div>
 
-          <div className="flex flex-col justify-between">
-            <div className="space-y-2">
-              <div className="text-sm font-medium">{t("subscriptions.usage")}</div>
-              <Progress value={usagePercentage} className="h-2 w-full" />
-              <div className="text-xs text-gray-500 text-center">
-                {userSubscription.totalQuantity - userSubscription.remainingQuantity} {t("subscriptions.used")} /{" "}
-                {userSubscription.totalQuantity} {t("subscriptions.total")}
+          {treatmentCategory && (
+            <>
+              <div className="text-gray-500 dark:text-gray-400 flex items-center">
+                <PackageIcon className="h-4 w-4 mr-1.5 text-sky-600" />
+                {t("treatments.fields.category")}:
               </div>
-            </div>
-
-            {userSubscription.status === "active" && (
-              <Button variant="outline" size="sm" className="text-red-600 mt-4" onClick={onCancel}>
-                <Ban className="h-4 w-4 mr-1" />
-                {t("common.cancel")}
-              </Button>
-            )}
-          </div>
+              <div className="text-gray-700 dark:text-gray-200 text-right">
+                {t(`treatments.categories.${treatmentCategory.toLowerCase()}` as any, treatmentCategory)}
+              </div>
+            </>
+          )}
         </div>
       </CardContent>
+      <CardFooter className="pt-4 border-t dark:border-gray-700 mt-auto">
+        <div className="flex gap-2 w-full">
+          <Button
+            variant="default"
+            size="sm"
+            className="flex-1"
+            disabled={true} // As per requirement: "currently not supposed to be active"
+            aria-label={t("subscriptions.useTreatmentAria")}
+          >
+            <PlayCircleIcon className="h-4 w-4 mr-1.5" />
+            {t("subscriptions.useTreatment")}
+          </Button>
+          {userSubscription.status === "active" && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-red-400 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
+              onClick={() => onCancel(String(userSubscription._id))}
+              disabled={isCancelling}
+              aria-label={t("common.cancelSubscriptionAria")}
+            >
+              {isCancelling ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+              ) : (
+                <BanIcon className="h-4 w-4 mr-1.5" />
+              )}
+              {t("common.cancel")}
+            </Button>
+          )}
+        </div>
+      </CardFooter>
     </Card>
   )
 }

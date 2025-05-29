@@ -4,12 +4,19 @@ import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
-import { AlertModal } from "@/components/common/modals/alert-modal"
 import { toast } from "sonner"
-import { format } from "date-fns"
-import { Eye, Ban, Trash2 } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import { cancelSubscription, deleteUserSubscription } from "@/actions/user-subscription-actions"
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog"
 
 interface UserSubscriptionRowProps {
   userSubscription: any
@@ -110,16 +117,22 @@ export default function UserSubscriptionRow({ userSubscription }: UserSubscripti
           </div>
         </td>
         <td className="py-4 px-4">
+          <div className="flex flex-col">
+            <span className="font-medium">
+              {userSubscription.treatmentId?.name || t("treatments.unknownTreatment")}
+            </span>
+            {userSubscription.treatmentId?.duration && (
+              <span className="text-sm text-gray-500">
+                {userSubscription.treatmentId.duration} {t("common.minutes")}
+              </span>
+            )}
+          </div>
+        </td>
+        <td className="py-4 px-4">
           <div className="flex items-center gap-2">
-            <span className="font-medium">{userSubscription.remainingQuantity}</span>
-            <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500"
-                style={{
-                  width: `${(userSubscription.remainingQuantity / userSubscription.totalQuantity) * 100}%`,
-                }}
-              />
-            </div>
+            <span className="font-medium">
+              {userSubscription.remainingQuantity} / {userSubscription.totalQuantity}
+            </span>
           </div>
         </td>
         <td className="py-4 px-4">
@@ -133,11 +146,14 @@ export default function UserSubscriptionRow({ userSubscription }: UserSubscripti
         <td className="py-4 px-4">
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-              userSubscription.status
+              userSubscription.status,
             )}`}
           >
             {t(`userSubscriptions.status.${userSubscription.status}`)}
           </span>
+        </td>
+        <td className="py-4 px-4">
+          <span className="font-medium">{userSubscription.paymentAmount}₪</span>
         </td>
         <td className="py-4 px-4">
           <div className="flex items-center gap-2">
@@ -161,11 +177,7 @@ export default function UserSubscriptionRow({ userSubscription }: UserSubscripti
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700"
-            >
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
               {isDeleting ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

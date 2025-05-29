@@ -40,7 +40,15 @@
     "expired": "expired",
     "depleted": "depleted",
     "cancelled": "cancelled",
-    "creating": "creating"
+    "creating": "creating",
+    "processing": "Processing...",
+    "perTreatment": "per treatment",
+    "treatments": "treatments",
+    "pricePaid": "Price Paid",
+    "confirmCancel": "Yes, Cancel Subscription",
+    "goBack": "Go Back",
+    "cancelSubscriptionAria": "Cancel this subscription",
+    "months": "months"
   },
   "dashboard": {
     "sidebar": {
@@ -135,25 +143,25 @@
     "purchase": {
       "title": "Purchase",
       "description": "Purchase a subscription",
-      "noSubscriptions": "No subscriptions available for purchase"
+      "noSubscriptions": "No subscriptions available for purchase",
+      "selectAllFieldsError": "Please select a subscription, treatment, and payment method.",
+      "selectSubscription": "Step 1: Select Subscription Package",
+      "selectSubscriptionDesc": "Choose the package that best suits your needs.",
+      "selectSubscriptionPlaceholder": "Choose a subscription package...",
+      "summaryNoSubscription": "Select a subscription package to see details.",
+      "summaryNoTreatment": "Select a treatment to see details.",
+      "confirmAndPay": "Confirm & Pay",
+      "new": "Purchase New Subscription",
+      "noSubscriptionsAvailable": "No subscription packages are currently available for purchase.",
+      "success": "Subscription purchased successfully!",
+      "error": "Failed to purchase subscription. Please try again."
     },
-    "cancelSuccess": "Cancel Success",
-    "cancelConfirm": "Cancel Confirm",
-    "cancelConfirmDescription": "Cancel Confirm Description",
-    "users": {
-      "title": "Users",
-      "description": "Manage users"
-    },
-    "description": "Description",
-    "create": "Create",
-    "selectValidity": "Select Validity",
-    "quantity": "Quantity",
-    "bonus": "Bonus",
-    "validity": "Validity",
-    "price": "Price",
-    "createError": "Error creating subscription",
-    "updateError": "Error updating subscription",
-    "fetchError": "Error fetching subscriptions"
+    "remainingTreatments": "Treatments Left",
+    "useTreatment": "Use Treatment",
+    "useTreatmentAria": "Use one treatment from this subscription",
+    "cancelConfirmTitle": "Confirm Cancellation",
+    "cancelError": "Failed to cancel subscription.",
+    "totalQuantityEffective": "Total Usable Treatments"
   },
   "coupons": {
     "title": "Coupons",
@@ -463,7 +471,12 @@
     "setDefault": "Set as Default",
     "deleteConfirm": "Are you sure you want to delete this payment method?",
     "deleteConfirmDescription": "This action cannot be undone",
-    "card": "Card"
+    "card": "Card",
+    "selectPaymentMethod": "Step 3: Select Payment Method",
+    "selectPaymentMethodDesc": "Choose how you'd like to pay.",
+    "selectPaymentMethodPlaceholder": "Choose a payment method...",
+    "pleaseAddPaymentMethod": "You have no saved payment methods.",
+    "noPaymentMethods": "No payment methods found. Please add one to proceed."
   },
   "city": "City",
   "street": "Street",
@@ -580,7 +593,12 @@
     "price": "Price",
     "minutes": "Minutes",
     "deleteConfirm": "Are you sure you want to delete this treatment?",
-    "deleteConfirmDescription": "This action cannot be undone"
+    "deleteConfirmDescription": "This action cannot be undone",
+    "selectTreatment": "Step 2: Select Treatment",
+    "selectTreatmentDescPurchase": "Choose the treatment you want this subscription to be for.",
+    "selectTreatmentPlaceholder": "Choose a treatment...",
+    "unknownTreatment": "Unknown Treatment",
+    "noTreatmentsAvailablePurchase": "No treatments are currently available to associate with a subscription."
   },
   "userSubscriptions": {
     "title": "User Subscriptions",
@@ -600,7 +618,9 @@
     "totalQuantity": "totalQuantity",
     "purchaseDate": "purchaseDate",
     "deleteConfirmTitle": "deleteConfirmTitle",
-    "deleteConfirmDescription": "deleteConfirmDescription"
+    "deleteConfirmDescription": "deleteConfirmDescription",
+    "treatment": "Treatment",
+    "amountPaid": "Amount Paid"
   },
   "validFrom": "Valid From",
   "validUntil": "Valid Until",

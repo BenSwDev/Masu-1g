@@ -54,7 +54,7 @@ export async function purchaseSubscription(subscriptionId: string, treatmentId: 
       remainingQuantity: subscription.quantity + subscription.bonusQuantity,
       status: "active",
       paymentMethodId: paymentMethod._id,
-      paymentAmount: treatment.price, // Use the treatment price as the payment amount
+      paymentAmount: treatment.price * subscription.quantity, // Price is treatment_price * base_subscription_quantity
     })
 
     await userSubscription.save()

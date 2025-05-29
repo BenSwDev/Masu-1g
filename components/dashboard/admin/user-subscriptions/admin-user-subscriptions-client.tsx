@@ -1,12 +1,11 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Card, CardContent } from "@/components/common/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Search } from "lucide-react"
 import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { useState } from "react"
-import { Pagination } from "@/components/common/ui/pagination"
 import UserSubscriptionRow from "./user-subscription-row"
 
 interface AdminUserSubscriptionsClientProps {
@@ -32,7 +31,8 @@ const AdminUserSubscriptionsClient = ({ userSubscriptions = [], pagination }: Ad
       !searchTerm ||
       subscription.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       subscription.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      subscription.subscriptionId?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      subscription.subscriptionId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      subscription.treatmentId?.name?.toLowerCase().includes(searchTerm.toLowerCase())
 
     const matchesStatus = statusFilter === "all" || subscription.status === statusFilter
 
@@ -109,10 +109,16 @@ const AdminUserSubscriptionsClient = ({ userSubscriptions = [], pagination }: Ad
                       {t("userSubscriptions.subscription")}
                     </th>
                     <th className="py-3 px-4 text-right font-medium text-gray-500">
+                      {t("userSubscriptions.treatment")}
+                    </th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500">
                       {t("userSubscriptions.remaining")}
                     </th>
                     <th className="py-3 px-4 text-right font-medium text-gray-500">
                       {t("userSubscriptions.expiryDate")}
+                    </th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500">
+                      {t("userSubscriptions.amountPaid")}
                     </th>
                     <th className="py-3 px-4 text-right font-medium text-gray-500">{t("userSubscriptions.status")}</th>
                     <th className="py-3 px-4 text-right font-medium text-gray-500">{t("common.actions")}</th>
@@ -139,7 +145,9 @@ const AdminUserSubscriptionsClient = ({ userSubscriptions = [], pagination }: Ad
             >
               {t("common.previous")}
             </button>
-            <span className="px-3 py-1">{currentPage} / {pagination.totalPages}</span>
+            <span className="px-3 py-1">
+              {currentPage} / {pagination.totalPages}
+            </span>
             <button
               className="px-3 py-1 border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
               disabled={currentPage === pagination.totalPages}

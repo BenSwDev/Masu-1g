@@ -40,7 +40,15 @@
     "expired": "מועד תפוגה",
     "depleted": "מספר שוברים נגזר",
     "cancelled": "ביטול",
-    "creating": "יצירה"
+    "creating": "יצירה",
+    "processing": "מעבד...",
+    "perTreatment": "לטיפול",
+    "treatments": "טיפולים",
+    "pricePaid": "מחיר ששולם",
+    "confirmCancel": "כן, בטל מנוי",
+    "goBack": "חזור אחורה",
+    "cancelSubscriptionAria": "בטל מנוי זה",
+    "months": "חודשים"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -271,7 +279,12 @@
     "defaultSet": "אמצעי תשלום ברירת מחדל עודכן",
     "created": "אמצעי התשלום נוצר",
     "updated": "אמצעי התשלום עודכן",
-    "card": "כרטיס"
+    "card": "כרטיס",
+    "selectPaymentMethod": "שלב 3: בחר אמצעי תשלום",
+    "selectPaymentMethodDesc": "בחר כיצד ברצונך לשלם.",
+    "selectPaymentMethodPlaceholder": "בחר אמצעי תשלום...",
+    "pleaseAddPaymentMethod": "אין לך אמצעי תשלום שמורים.",
+    "noPaymentMethods": "לא נמצאו אמצעי תשלום. אנא הוסף אחד כדי להמשיך."
   },
   "treatments": {
     "title": "ניהול טיפולים",
@@ -323,7 +336,12 @@
     },
     "updateError": "שגיאה בעדכון הטיפול",
     "createError": "שגיאה ביצירת הטיפול",
-    "basicInfo": "מידע בסיסי"
+    "basicInfo": "מידע בסיסי",
+    "selectTreatment": "שלב 2: בחר טיפול",
+    "selectTreatmentDescPurchase": "בחר את הטיפול שאליו ישויך המנוי.",
+    "selectTreatmentPlaceholder": "בחר טיפול...",
+    "unknownTreatment": "טיפול לא ידוע",
+    "noTreatmentsAvailablePurchase": "אין כרגע טיפולים זמינים לשיוך למנוי."
   },
   "bundles": {
     "title": "ניהול חבילות",
@@ -453,8 +471,25 @@
     "purchase": {
       "title": "רכישה",
       "description": "רכוש מנוי",
-      "noSubscriptions": "אין מנויים זמינים לרכישה"
+      "noSubscriptions": "אין מנויים זמינים לרכישה",
+      "selectAllFieldsError": "אנא בחר מנוי, טיפול ואמצעי תשלום.",
+      "selectSubscription": "שלב 1: בחר חבילת מנוי",
+      "selectSubscriptionDesc": "בחר את החבילה המתאימה ביותר לצרכים שלך.",
+      "selectSubscriptionPlaceholder": "בחר חבילת מנוי...",
+      "summaryNoSubscription": "בחר חבילת מנוי כדי לראות פרטים.",
+      "summaryNoTreatment": "בחר טיפול כדי לראות פרטים.",
+      "confirmAndPay": "אשר ושלם",
+      "new": "רכוש מנוי חדש",
+      "noSubscriptionsAvailable": "אין כרגע חבילות מנוי זמינות לרכישה.",
+      "success": "המנוי נרכש בהצלחה!",
+      "error": "רכישת המנוי נכשלה. אנא נסה שוב."
     },
+    "remainingTreatments": "טיפולים נותרו",
+    "useTreatment": "ממש טיפול",
+    "useTreatmentAria": "ממש טיפול אחד ממנוי זה",
+    "cancelConfirmTitle": "אישור ביטול מנוי",
+    "cancelError": "ביטול המנוי נכשל.",
+    "totalQuantityEffective": "סה״כ טיפולים למימוש",
     "title": "ניהול מנויים",
     "addNew": "הוסף מנוי חדש",
     "edit": "ערוך מנוי",
@@ -543,7 +578,9 @@
     "totalQuantity": "סה״כ",
     "purchaseDate": "נרכש ב",
     "deleteConfirmTitle": "מחיקת מנוי",
-    "deleteConfirmDescription": "האם אתה בטוח שברצונך למחוק מנוי זה?"
+    "deleteConfirmDescription": "האם אתה בטוח שברצונך למחוק מנוי זה?",
+    "treatment": "טיפול",
+    "amountPaid": "סכום ששולם"
   },
   "coupons": {
     "searchPlaceholder": "חפש קופונים לפי קוד...",
@@ -627,7 +664,7 @@
     "validFrom": "תקף מ",
     "validUntil": "תקף עד",
     "status": "סטטוס",
-    "editVoucher": "ערוך שובר מתנה",  
+    "editVoucher": "ערוך שובר מתנה",
     "deleteConfirmTitle": "מחיקת שובר מתנה"
   },
   "Roles": {

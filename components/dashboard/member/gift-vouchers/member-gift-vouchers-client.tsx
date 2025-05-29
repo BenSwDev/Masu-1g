@@ -59,7 +59,7 @@ export default function MemberGiftVouchersClient({
     if (initialOwnedVouchers.length === 0 && initialPurchasedVouchers.length === 0) {
       refreshVouchers()
     }
-  }, [])
+  }, [initialOwnedVouchers.length, initialPurchasedVouchers.length])
 
   const handleUseVoucher = (voucher: GiftVoucherPlain) => {
     // In a real implementation, this would navigate to a redemption flow

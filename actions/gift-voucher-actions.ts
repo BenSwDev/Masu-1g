@@ -58,60 +58,86 @@ export interface GiftVoucherPlain extends IGiftVoucherPlain {
 // Helper to convert Mongoose document to plain object for client
 // Now includes population for purchaser and owner names, and treatment details
 async function toGiftVoucherPlain(voucherDoc: IGiftVoucher): Promise<GiftVoucherPlain> {
-  const voucher = voucherDoc.toObject({ virtuals: true }) as any
+  try {
+    const voucher = voucherDoc.toObject({ virtuals: true }) as any
 
-  let purchaserName, ownerName, treatmentName, selectedDurationName
+    let purchaserName, ownerName, treatmentName, selectedDurationName
 
-  if (voucher.purchaserUserId) {
-    const purchaser = await User.findById(voucher.purchaserUserId).select("name").lean()
-    purchaserName = purchaser?.name
-  }
-  if (voucher.ownerUserId) {
-    const owner = await User.findById(voucher.ownerUserId).select("name").lean()
-    ownerName = owner?.name
-  }
-  if (voucher.voucherType === "treatment" && voucher.treatmentId) {
-    const treatment = (await Treatment.findById(voucher.treatmentId).select("name durations").lean()) as any
-    treatmentName = treatment?.name
-    if (voucher.selectedDurationId && treatment?.durations) {
-      const duration = treatment.durations.find((d: any) => d._id.toString() === voucher.selectedDurationId.toString())
-      selectedDurationName = duration?.name // Assuming duration object has a 'name' field
+    if (voucher.purchaserUserId) {
+      const purchaser = await User.findById(voucher.purchaserUserId).select("name").lean()
+      purchaserName = purchaser?.name
     }
-  }
+    if (voucher.ownerUserId) {
+      const owner = await User.findById(voucher.ownerUserId).select("name").lean()
+      ownerName = owner?.name
+    }
+    if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+      const treatment = (await Treatment.findById(voucher.treatmentId).select("name durations").lean()) as any
+      treatmentName = treatment?.name
+      if (voucher.selectedDurationId && treatment?.durations) {
+        const duration = treatment.durations.find(
+          (d: any) => d._id.toString() === voucher.selectedDurationId.toString(),
+        )
+        selectedDurationName = duration?.name // Assuming duration object has a 'name' field
+      }
+    }
 
-  return {
-    _id: String(voucher._id),
-    code: voucher.code,
-    voucherType: voucher.voucherType,
-    treatmentId: voucher.treatmentId?.toString(),
-    treatmentName,
-    selectedDurationId: voucher.selectedDurationId?.toString(),
-    selectedDurationName,
-    monetaryValue: voucher.monetaryValue,
-    originalAmount: voucher.originalAmount,
-    remainingAmount: voucher.remainingAmount,
-    purchaserUserId: voucher.purchaserUserId.toString(),
-    purchaserName,
-    ownerUserId: voucher.ownerUserId.toString(),
-    ownerName,
-    isGift: voucher.isGift,
-    recipientName: voucher.recipientName,
-    recipientPhone: voucher.recipientPhone,
-    greetingMessage: voucher.greetingMessage,
-    sendDate: voucher.sendDate ? new Date(voucher.sendDate).toISOString() : undefined,
-    status: voucher.status,
-    purchaseDate: new Date(voucher.purchaseDate).toISOString(),
-    validFrom: new Date(voucher.validFrom).toISOString(),
-    validUntil: new Date(voucher.validUntil).toISOString(),
-    paymentId: voucher.paymentId,
-    usageHistory: voucher.usageHistory?.map((h: any) => ({
-      ...h,
-      date: new Date(h.date).toISOString(),
-      orderId: h.orderId?.toString(),
-    })),
-    isActive: voucher.isActive,
-    createdAt: voucher.createdAt ? new Date(voucher.createdAt).toISOString() : undefined,
-    updatedAt: voucher.updatedAt ? new Date(voucher.updatedAt).toISOString() : undefined,
+    return {
+      _id: String(voucher._id),
+      code: voucher.code,
+      voucherType: voucher.voucherType,
+      treatmentId: voucher.treatmentId?.toString(),
+      treatmentName,
+      selectedDurationId: voucher.selectedDurationId?.toString(),
+      selectedDurationName,
+      monetaryValue: voucher.monetaryValue,
+      originalAmount: voucher.originalAmount,
+      remainingAmount: voucher.remainingAmount,
+      purchaserUserId: voucher.purchaserUserId.toString(),
+      purchaserName,
+      ownerUserId: voucher.ownerUserId.toString(),
+      ownerName,
+      isGift: voucher.isGift,
+      recipientName: voucher.recipientName,
+      recipientPhone: voucher.recipientPhone,
+      greetingMessage: voucher.greetingMessage,
+      sendDate: voucher.sendDate ? new Date(voucher.sendDate).toISOString() : undefined,
+      status: voucher.status,
+      purchaseDate: new Date(voucher.purchaseDate).toISOString(),
+      validFrom: new Date(voucher.validFrom).toISOString(),
+      validUntil: new Date(voucher.validUntil).toISOString(),
+      paymentId: voucher.paymentId,
+      usageHistory: voucher.usageHistory?.map((h: any) => ({
+        ...h,
+        date: new Date(h.date).toISOString(),
+        orderId: h.orderId?.toString(),
+      })),
+      isActive: voucher.isActive,
+      createdAt: voucher.createdAt ? new Date(voucher.createdAt).toISOString() : undefined,
+      updatedAt: voucher.updatedAt ? new Date(voucher.updatedAt).toISOString() : undefined,
+    }
+  } catch (error) {
+    logger.error("Error in toGiftVoucherPlain:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      voucherId: voucherDoc._id.toString(),
+    })
+    // Return a basic version if population fails
+    const voucher = voucherDoc.toObject({ virtuals: true }) as any
+    return {
+      _id: String(voucher._id),
+      code: voucher.code,
+      voucherType: voucher.voucherType,
+      treatmentId: voucher.treatmentId?.toString(),
+      purchaserUserId: voucher.purchaserUserId.toString(),
+      ownerUserId: voucher.ownerUserId.toString(),
+      isGift: voucher.isGift,
+      status: voucher.status,
+      purchaseDate: new Date(voucher.purchaseDate).toISOString(),
+      validFrom: new Date(voucher.validFrom).toISOString(),
+      validUntil: new Date(voucher.validUntil).toISOString(),
+      isActive: voucher.isActive,
+    } as GiftVoucherPlain
   }
 }
 
@@ -415,7 +441,15 @@ export async function getGiftVouchers(
 
     const total = await GiftVoucher.countDocuments(query)
 
-    const giftVouchers = await Promise.all(giftVoucherDocs.map((doc) => toGiftVoucherPlain(doc as any as IGiftVoucher)))
+    const giftVouchers = await Promise.all(
+      giftVoucherDocs.map((doc) => toGiftVoucherPlain(doc as any as IGiftVoucher)),
+    ).catch((error) => {
+      logger.error("Error transforming gift vouchers:", {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
+      return []
+    })
 
     return {
       success: true,
@@ -736,7 +770,15 @@ export async function getMemberPurchasedVouchers() {
       .sort({ createdAt: -1 })
       .lean()
 
-    const vouchersPlain = await Promise.all(vouchers.map((doc) => toGiftVoucherPlain(doc as any as IGiftVoucher)))
+    const vouchersPlain = await Promise.all(
+      vouchers.map((doc) => toGiftVoucherPlain(doc as any as IGiftVoucher)),
+    ).catch((error) => {
+      logger.error("Error transforming purchased vouchers:", {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
+      return []
+    })
 
     return {
       success: true,
@@ -772,7 +814,15 @@ export async function getMemberOwnedVouchers() {
       .sort({ validUntil: 1 })
       .lean()
 
-    const vouchersPlain = await Promise.all(vouchers.map((doc) => toGiftVoucherPlain(doc as any as IGiftVoucher)))
+    const vouchersPlain = await Promise.all(
+      vouchers.map((doc) => toGiftVoucherPlain(doc as any as IGiftVoucher)),
+    ).catch((error) => {
+      logger.error("Error transforming owned vouchers:", {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
+      return []
+    })
 
     return {
       success: true,

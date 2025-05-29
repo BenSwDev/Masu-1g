@@ -1,8 +1,6 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
 // Interface for GiftVoucherPlain to be used across client and server
-// We'll define it more robustly in actions or a dedicated types file later if needed
-// For now, this matches the existing structure.
 export interface GiftVoucherPlain {
   _id: string
   code: string
@@ -78,14 +76,14 @@ export interface IGiftVoucher extends Document {
 
 const GiftVoucherSchema: Schema = new Schema(
   {
-    code: { type: String, required: true, unique: true, index: true },
+    code: { type: String, required: true, unique: true }, // Removed index: true to avoid duplicate
     voucherType: { type: String, enum: ["treatment", "monetary"], required: true },
     treatmentId: { type: Schema.Types.ObjectId, ref: "Treatment", sparse: true },
     selectedDurationId: { type: Schema.Types.ObjectId, sparse: true }, // Assuming you have a Duration model or similar
     monetaryValue: { type: Number, min: 0 },
     originalAmount: { type: Number, min: 0 }, // For monetary type
     remainingAmount: { type: Number, min: 0 }, // For monetary type
-    purchaserUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    purchaserUserId: { type: Schema.Types.ObjectId, ref: "User", required: true }, // Removed index: true to avoid duplicate
     ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     isGift: { type: Boolean, default: false },
     recipientName: { type: String },
@@ -157,6 +155,7 @@ GiftVoucherSchema.pre<IGiftVoucher>("save", function (next) {
   next()
 })
 
+// Use mongoose.models to check if the model already exists to prevent model overwrite warnings
 const GiftVoucher: Model<IGiftVoucher> =
   mongoose.models.GiftVoucher || mongoose.model<IGiftVoucher>("GiftVoucher", GiftVoucherSchema)
 

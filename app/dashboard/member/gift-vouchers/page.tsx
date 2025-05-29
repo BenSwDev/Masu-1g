@@ -3,7 +3,6 @@ import { getMemberOwnedVouchers, getMemberPurchasedVouchers } from "@/actions/gi
 import MemberGiftVouchersClient from "@/components/dashboard/member/gift-vouchers/member-gift-vouchers-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent } from "@/components/common/ui/card"
-import { useTranslation } from "@/lib/translations/i18n"
 
 export const dynamic = "force-dynamic"
 
@@ -46,13 +45,12 @@ function MemberGiftVouchersLoading() {
 }
 
 async function MemberGiftVouchersData() {
-  const { t } = useTranslation()
   const [ownedResult, purchasedResult] = await Promise.all([getMemberOwnedVouchers(), getMemberPurchasedVouchers()])
 
   if (!ownedResult.success && !purchasedResult.success) {
     return (
       <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        {t("common.error")}: {ownedResult.error || purchasedResult.error || t("common.unknownError")}
+        Error: {ownedResult.error || purchasedResult.error || "Unknown error"}
       </div>
     )
   }

@@ -268,11 +268,12 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
 
       {vouchers.length > 0 && (
         <div className="rounded-md border bg-card">
-          <div className="hidden md:grid grid-cols-7 gap-4 p-4 font-semibold text-sm text-muted-foreground border-b">
+          <div className="hidden md:grid grid-cols-8 gap-4 p-4 font-semibold text-sm text-muted-foreground border-b">
             <div>{t("giftVouchers.fields.code")}</div>
             <div>{t("giftVouchers.fields.voucherType")}</div>
             <div>{t("giftVouchers.fields.owner")}</div>
-            <div>{t("giftVouchers.fields.validFrom")}</div>
+            <div>{t("giftVouchers.fields.purchaseDate")}</div>
+            <div>{t("giftVouchers.fields.validUntil")}</div>
             <div>{t("giftVouchers.fields.status")}</div>
             <div>{t("giftVouchers.purchase.sendAsGift")}</div>
             <div className="text-right">{t("common.actions")}</div>

@@ -416,7 +416,14 @@
   "memberGiftVouchers": {
     "title": "Подарочные сертификаты участника",
     "description": "Просмотр доступных подарочных сертификатов",
-    "noGiftVouchers": "Подарочные сертификаты не найдены"
+    "noGiftVouchers": "Подарочные сертификаты не найдены",
+    "myVouchers": "Мои сертификаты",
+    "purchasedVouchers": "Купленные сертификаты",
+    "activeVouchers": "Активные сертификаты",
+    "usedVouchers": "Использованные сертификаты",
+    "expiredVouchers": "Истекшие сертификаты",
+    "totalVouchers": "Всего сертификатов",
+    "purchaseVoucher": "Купить сертификат"
   },
   "errors": {
     "unknown": "unknown",
@@ -797,6 +804,38 @@
   "common.totalPrice": "Итоговая цена",
   "purchaseGiftVoucher": {
     "failedToLoadData": "Не удалось загрузить данные, необходимые для покупки",
-    "errorDetails": "Детали"
+    "errorDetails": "Детали",
+    "title": "Покупка подарочного сертификата",
+    "description": "Купите подарочный сертификат для себя или в подарок кому-то другому",
+    "selectType": "Выберите тип сертификата",
+    "monetaryVoucher": "Денежный сертификат",
+    "monetaryDescription": "Сертификат с денежной стоимостью, который можно использовать для любой услуги",
+    "treatmentVoucher": "Сертификат на процедуру",
+    "treatmentDescription": "Сертификат на конкретную процедуру",
+    "selectTreatment": "Выберите процедуру",
+    "chooseTreatment": "Выберите процедуру...",
+    "chooseDuration": "Выберите продолжительность...",
+    "amount": "Сумма",
+    "sendAsGift": "Отправить как подарок",
+    "proceedToPayment": "Перейти к оплате",
+    "giftDetails": "Детали подарка",
+    "giftDetailsDescription": "Введите данные получателя подарка",
+    "recipientName": "Имя получателя",
+    "recipientNamePlaceholder": "Введите имя получателя",
+    "recipientPhone": "Телефон получателя",
+    "phonePlaceholder": "Введите номер телефона",
+    "greetingMessage": "Поздравительное сообщение",
+    "greetingPlaceholder": "Введите личное сообщение (необязательно)",
+    "sendNow": "Отправить сейчас",
+    "pickDate": "Выберите дату",
+    "skipGiftDetails": "Пропустить детали подарка",
+    "setGiftDetails": "Установить детали подарка",
+    "purchaseSuccess": "Покупка успешна!",
+    "purchaseSuccessDescription": "Ваш подарочный сертификат успешно приобретен",
+    "giftSuccess": "Подарочный сертификат создан!",
+    "giftSuccessDescription": "Ваш подарочный сертификат создан и будет отправлен как указано",
+    "viewMyVouchers": "Посмотреть мои сертификаты",
+    "backToDashboard": "Назад к панели управления",
+    "total": "Итого"
   }
 }

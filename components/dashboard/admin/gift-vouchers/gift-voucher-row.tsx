@@ -1,6 +1,6 @@
 "use client"
 
-import { format, parseISO } from "date-fns"
+import { format, parseISO, differenceInDays } from "date-fns"
 import {
   Edit,
   Trash2,
@@ -14,38 +14,37 @@ import {
   Clock,
   Send,
 } from "lucide-react"
-import { Button } from "@/components/common/ui/button" // Corrected import path
-import { Badge } from "@/components/common/ui/badge" // Corrected import path
-import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions" // Corrected import path
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip" // Corrected import path
+import { Button } from "@/components/common/ui/button"
+import { Badge } from "@/components/common/ui/badge"
+import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface GiftVoucherRowProps {
   voucher: GiftVoucherPlain
   onEdit: (voucher: GiftVoucherPlain) => void
   onDelete: (id: string) => void
-  // onViewDetails?: (voucher: GiftVoucherPlain) => void; // Optional: for a detailed view modal
 }
 
 const getStatusBadgeVariant = (
   status: GiftVoucherPlain["status"],
   isActive: boolean,
-): "default" | "secondary" | "destructive" | "outline" | "warning" => {
-  if (!isActive) return "secondary" // Overriding status if not active by admin
+): "default" | "secondary" | "destructive" | "outline" => {
+  if (!isActive) return "secondary"
   switch (status) {
     case "active":
     case "sent":
-      return "default" // Green in many themes
+      return "default"
     case "partially_used":
-      return "default" // Could be a different color like blue
+      return "default"
     case "pending_payment":
     case "pending_send":
-      return "warning" // Yellow / Orange
+      return "outline"
     case "fully_used":
-      return "secondary" // Grey / Success variant
+      return "secondary"
     case "expired":
     case "cancelled":
-      return "destructive" // Red
+      return "destructive"
     default:
       return "outline"
   }
@@ -81,18 +80,21 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
   const validUntilDate = typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
   const purchaseDate = typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
 
-  const statusDisplay = voucher.status.charAt(0).toUpperCase() + voucher.status.slice(1).replace("_", " ")
+  const statusDisplay = t(`giftVouchers.statuses.${voucher.status}`)
+  const daysUntilExpiry = differenceInDays(validUntilDate, new Date())
 
   return (
     <TooltipProvider delayDuration={100}>
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-4 items-center p-4 border-b last:border-b-0 hover:bg-gray-50/50 transition-colors text-sm">
+      <div className="grid grid-cols-1 md:grid-cols-8 gap-4 items-center p-4 border-b last:border-b-0 hover:bg-gray-50/50 transition-colors text-sm">
         <div className="font-medium truncate">
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="cursor-default">{voucher.code}</span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{t("giftVouchers.fields.code")}: {voucher.code}</p>
+              <p>
+                {t("giftVouchers.fields.code")}: {voucher.code}
+              </p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -107,7 +109,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
                   <Tag className="h-4 w-4 mr-1 text-purple-600" />
                 )}
                 {voucher.voucherType === "monetary"
-                  ? `${voucher.monetaryValue?.toFixed(2)} ILS (Rem: ${voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)})`
+                  ? `${voucher.monetaryValue?.toFixed(2)} ${t("common.currency")} (${t("giftVouchers.fields.remainingAmount")}: ${voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)})`
                   : voucher.treatmentName || "N/A"}
                 {voucher.voucherType === "treatment" && voucher.selectedDurationName && (
                   <span className="text-xs text-gray-500 ml-1">({voucher.selectedDurationName})</span>
@@ -115,14 +117,29 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{t("giftVouchers.fields.voucherType")}: {voucher.voucherType}</p>
-              {voucher.voucherType === "monetary" && <p>{t("giftVouchers.fields.value")}: {voucher.monetaryValue?.toFixed(2)} ILS</p>}
+              <p>
+                {t("giftVouchers.fields.voucherType")}: {t(`giftVouchers.types.${voucher.voucherType}`)}
+              </p>
               {voucher.voucherType === "monetary" && (
-                <p>{t("giftVouchers.fields.remainingAmount")}: {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} ILS</p>
+                <p>
+                  {t("giftVouchers.fields.value")}: {voucher.monetaryValue?.toFixed(2)} {t("common.currency")}
+                </p>
               )}
-              {voucher.voucherType === "treatment" && <p>{t("giftVouchers.fields.treatment")}: {voucher.treatmentName || "N/A"}</p>}
+              {voucher.voucherType === "monetary" && (
+                <p>
+                  {t("giftVouchers.fields.remainingAmount")}:{" "}
+                  {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} {t("common.currency")}
+                </p>
+              )}
+              {voucher.voucherType === "treatment" && (
+                <p>
+                  {t("giftVouchers.fields.treatment")}: {voucher.treatmentName || "N/A"}
+                </p>
+              )}
               {voucher.voucherType === "treatment" && voucher.selectedDurationName && (
-                <p>{t("giftVouchers.fields.duration")}: {voucher.selectedDurationName}</p>
+                <p>
+                  {t("giftVouchers.fields.duration")}: {voucher.selectedDurationName}
+                </p>
               )}
             </TooltipContent>
           </Tooltip>
@@ -137,10 +154,38 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{t("giftVouchers.fields.owner")}: {voucher.ownerName || "N/A"}</p>
-              <p>{t("giftVouchers.fields.owner")}: {voucher.ownerUserId}</p>
-              {voucher.isGift && voucher.purchaserName && <p>{t("giftVouchers.fields.purchaser")}: {voucher.purchaserName}</p>}
-              {voucher.isGift && voucher.recipientName && <p>{t("giftVouchers.fields.recipientName")}: {voucher.recipientName}</p>}
+              <p>
+                {t("giftVouchers.fields.owner")}: {voucher.ownerName || "N/A"}
+              </p>
+              <p>
+                {t("giftVouchers.fields.owner")}: {voucher.ownerUserId}
+              </p>
+              {voucher.isGift && voucher.purchaserName && (
+                <p>
+                  {t("giftVouchers.fields.purchaser")}: {voucher.purchaserName}
+                </p>
+              )}
+              {voucher.isGift && voucher.recipientName && (
+                <p>
+                  {t("giftVouchers.fields.recipientName")}: {voucher.recipientName}
+                </p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="truncate">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center">
+                <CalendarDays className="h-4 w-4 mr-1 text-blue-600" />
+                {format(purchaseDate, "dd/MM/yy")}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {t("giftVouchers.fields.purchaseDate")}: {format(purchaseDate, "MMM d, yyyy")}
+              </p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -151,12 +196,21 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               <div className="flex items-center">
                 <CalendarDays className="h-4 w-4 mr-1 text-gray-600" />
                 {format(validFromDate, "dd/MM/yy")} - {format(validUntilDate, "dd/MM/yy")}
+                {daysUntilExpiry >= 0 && (
+                  <span className="text-xs text-gray-500 ml-1">
+                    ({daysUntilExpiry} {daysUntilExpiry === 1 ? "day" : "days"})
+                  </span>
+                )}
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{t("giftVouchers.fields.validFrom")}: {format(validFromDate, "MMM d, yyyy")}</p>
-              <p>{t("giftVouchers.fields.validUntil")}: {format(validUntilDate, "MMM d, yyyy")}</p>
-              <p>{t("giftVouchers.fields.purchaseDate")}: {format(purchaseDate, "MMM d, yyyy")}</p>
+              <p>
+                {t("giftVouchers.fields.validFrom")}: {format(validFromDate, "MMM d, yyyy")}
+              </p>
+              <p>
+                {t("giftVouchers.fields.validUntil")}: {format(validUntilDate, "MMM d, yyyy")}
+              </p>
+              <p>Days until expiry: {daysUntilExpiry}</p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -174,7 +228,9 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </Badge>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{t("giftVouchers.fields.status")}: {statusDisplay}</p>
+              <p>
+                {t("giftVouchers.fields.status")}: {statusDisplay}
+              </p>
               {voucher.isGift && voucher.sendDate && (
                 <p>
                   {t("giftVouchers.fields.sendDate")}:{" "}
@@ -184,7 +240,9 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
                   )}
                 </p>
               )}
-              <p>{t("giftVouchers.fields.isActive")}: {voucher.isActive ? "Yes" : "No"}</p>
+              <p>
+                {t("giftVouchers.fields.isActive")}: {voucher.isActive ? "Yes" : "No"}
+              </p>
             </TooltipContent>
           </Tooltip>
         </div>
@@ -199,8 +257,16 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               </TooltipTrigger>
               <TooltipContent>
                 <p>{t("giftVouchers.purchase.sendAsGift")}</p>
-                {voucher.recipientName && <p>{t("giftVouchers.myVouchers.giftedTo")}: {voucher.recipientName}</p>}
-                {voucher.greetingMessage && <p>{t("giftVouchers.fields.greetingMessage")}: {voucher.greetingMessage}</p>}
+                {voucher.recipientName && (
+                  <p>
+                    {t("giftVouchers.myVouchers.giftedTo")}: {voucher.recipientName}
+                  </p>
+                )}
+                {voucher.greetingMessage && (
+                  <p>
+                    {t("giftVouchers.fields.greetingMessage")}: {voucher.greetingMessage}
+                  </p>
+                )}
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -209,18 +275,6 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
         </div>
 
         <div className="flex justify-end space-x-1 md:space-x-2">
-          {/* Optional View Details Button 
-          {onViewDetails && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={() => onViewDetails(voucher)} title="View Details">
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent><p>View Details</p></TooltipContent>
-            </Tooltip>
-          )}
-          */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" onClick={() => onEdit(voucher)} title="Edit voucher">

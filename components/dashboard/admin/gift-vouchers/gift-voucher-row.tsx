@@ -1,120 +1,252 @@
 "use client"
 
-import { format } from "date-fns"
-import { Edit, Trash2, User, Gift, CreditCard } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import type { GiftVoucherPlain } from "./gift-voucher-form"
+import { format, parseISO } from "date-fns"
+import {
+  Edit,
+  Trash2,
+  UserCircle,
+  Tag,
+  CalendarDays,
+  CircleDollarSign,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Clock,
+  Send,
+} from "lucide-react"
+import { Button } from "@/components/common/ui/button" // Corrected import path
+import { Badge } from "@/components/common/ui/badge" // Corrected import path
+import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions" // Corrected import path
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip" // Corrected import path
 
 interface GiftVoucherRowProps {
   voucher: GiftVoucherPlain
   onEdit: (voucher: GiftVoucherPlain) => void
   onDelete: (id: string) => void
+  // onViewDetails?: (voucher: GiftVoucherPlain) => void; // Optional: for a detailed view modal
+}
+
+const getStatusBadgeVariant = (
+  status: GiftVoucherPlain["status"],
+  isActive: boolean,
+): "default" | "secondary" | "destructive" | "outline" | "warning" => {
+  if (!isActive) return "secondary" // Overriding status if not active by admin
+  switch (status) {
+    case "active":
+    case "sent":
+      return "default" // Green in many themes
+    case "partially_used":
+      return "default" // Could be a different color like blue
+    case "pending_payment":
+    case "pending_send":
+      return "warning" // Yellow / Orange
+    case "fully_used":
+      return "secondary" // Grey / Success variant
+    case "expired":
+    case "cancelled":
+      return "destructive" // Red
+    default:
+      return "outline"
+  }
+}
+
+const getStatusIcon = (status: GiftVoucherPlain["status"], isActive: boolean) => {
+  if (!isActive) return <XCircle className="h-4 w-4 text-gray-500" />
+  switch (status) {
+    case "active":
+      return <CheckCircle className="h-4 w-4 text-green-500" />
+    case "sent":
+      return <Send className="h-4 w-4 text-blue-500" />
+    case "partially_used":
+      return <CheckCircle className="h-4 w-4 text-blue-500" />
+    case "pending_payment":
+      return <Clock className="h-4 w-4 text-yellow-500" />
+    case "pending_send":
+      return <Clock className="h-4 w-4 text-orange-500" />
+    case "fully_used":
+      return <CheckCircle className="h-4 w-4 text-gray-700" />
+    case "expired":
+      return <AlertCircle className="h-4 w-4 text-red-500" />
+    case "cancelled":
+      return <XCircle className="h-4 w-4 text-red-500" />
+    default:
+      return <AlertCircle className="h-4 w-4 text-gray-400" />
+  }
 }
 
 export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProps) {
-  const now = new Date()
-  const validFrom = new Date(voucher.validFrom)
-  const validUntil = new Date(voucher.validUntil)
+  const validFromDate = typeof voucher.validFrom === "string" ? parseISO(voucher.validFrom) : voucher.validFrom
+  const validUntilDate = typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
+  const purchaseDate = typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate
 
-  let status = "פעיל"
-  let statusVariant: "default" | "secondary" | "destructive" | "outline" = "default"
-
-  if (!voucher.isActive) {
-    status = "לא פעיל"
-    statusVariant = "secondary"
-  } else if (voucher.status === "expired") {
-    status = "פג תוקף"
-    statusVariant = "destructive"
-  } else if (voucher.status === "fully_used") {
-    status = "נוצל במלואו"
-    statusVariant = "destructive"
-  } else if (voucher.status === "partially_used") {
-    status = "נוצל חלקית"
-    statusVariant = "outline"
-  } else if (voucher.status === "pending_payment") {
-    status = "ממתין לתשלום"
-    statusVariant = "outline"
-  } else if (voucher.status === "pending_send") {
-    status = "ממתין לשליחה"
-    statusVariant = "outline"
-  } else if (now < validFrom) {
-    status = "ממתין"
-    statusVariant = "outline"
-  } else if (now > validUntil) {
-    status = "פג תוקף"
-    statusVariant = "destructive"
-  }
-
-  const getVoucherTypeDisplay = () => {
-    if (voucher.voucherType === "monetary") {
-      return (
-        <div className="flex items-center gap-1">
-          <CreditCard className="h-4 w-4" />
-          <span>כספי</span>
-        </div>
-      )
-    } else {
-      return (
-        <div className="flex items-center gap-1">
-          <Gift className="h-4 w-4" />
-          <span>טיפול</span>
-        </div>
-      )
-    }
-  }
-
-  const getValueDisplay = () => {
-    if (voucher.voucherType === "monetary") {
-      return `₪${voucher.remainingAmount.toFixed(2)} / ₪${voucher.monetaryValue.toFixed(2)}`
-    } else {
-      return `₪${voucher.monetaryValue.toFixed(2)}`
-    }
-  }
+  const statusDisplay = voucher.status.charAt(0).toUpperCase() + voucher.status.slice(1).replace("_", " ")
 
   return (
-    <div className="grid grid-cols-9 gap-4 p-4 border-t items-center">
-      <div className="font-medium">{voucher.code}</div>
-      <div>{getVoucherTypeDisplay()}</div>
-      <div className="text-sm">{getValueDisplay()}</div>
-      <div className="text-sm">
-        {voucher.purchaserUserId ? (
-          <div className="flex items-center gap-1">
-            <User className="h-3 w-3" />
-            <span className="truncate">רוכש</span>
-          </div>
-        ) : (
-          "מנהל"
-        )}
-      </div>
-      <div className="text-sm">
-        <div className="flex items-center gap-1">
-          <User className="h-3 w-3" />
-          <span className="truncate">בעלים</span>
+    <TooltipProvider delayDuration={100}>
+      <div className="grid grid-cols-1 md:grid-cols-7 gap-4 items-center p-4 border-b last:border-b-0 hover:bg-gray-50/50 transition-colors text-sm">
+        <div className="font-medium truncate">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-default">{voucher.code}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Code: {voucher.code}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="truncate">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center">
+                {voucher.voucherType === "monetary" ? (
+                  <CircleDollarSign className="h-4 w-4 mr-1 text-green-600" />
+                ) : (
+                  <Tag className="h-4 w-4 mr-1 text-purple-600" />
+                )}
+                {voucher.voucherType === "monetary"
+                  ? `${voucher.monetaryValue?.toFixed(2)} ILS (Rem: ${voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)})`
+                  : voucher.treatmentName || "N/A"}
+                {voucher.voucherType === "treatment" && voucher.selectedDurationName && (
+                  <span className="text-xs text-gray-500 ml-1">({voucher.selectedDurationName})</span>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Type: {voucher.voucherType}</p>
+              {voucher.voucherType === "monetary" && <p>Value: {voucher.monetaryValue?.toFixed(2)} ILS</p>}
+              {voucher.voucherType === "monetary" && (
+                <p>Remaining: {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} ILS</p>
+              )}
+              {voucher.voucherType === "treatment" && <p>Treatment: {voucher.treatmentName || "N/A"}</p>}
+              {voucher.voucherType === "treatment" && voucher.selectedDurationName && (
+                <p>Duration: {voucher.selectedDurationName}</p>
+              )}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="truncate">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center">
+                <UserCircle className="h-4 w-4 mr-1 text-gray-600" />
+                {voucher.ownerName || voucher.ownerUserId}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Owner: {voucher.ownerName || "N/A"}</p>
+              <p>Owner ID: {voucher.ownerUserId}</p>
+              {voucher.isGift && voucher.purchaserName && <p>Purchased by: {voucher.purchaserName}</p>}
+              {voucher.isGift && voucher.recipientName && <p>Recipient: {voucher.recipientName}</p>}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="truncate">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center">
+                <CalendarDays className="h-4 w-4 mr-1 text-gray-600" />
+                {format(validFromDate, "dd/MM/yy")} - {format(validUntilDate, "dd/MM/yy")}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Valid From: {format(validFromDate, "MMM d, yyyy")}</p>
+              <p>Valid Until: {format(validUntilDate, "MMM d, yyyy")}</p>
+              <p>Purchased: {format(purchaseDate, "MMM d, yyyy")}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge
+                variant={getStatusBadgeVariant(voucher.status, voucher.isActive)}
+                className="cursor-default flex items-center gap-1"
+              >
+                {getStatusIcon(voucher.status, voucher.isActive)}
+                {statusDisplay}
+                {!voucher.isActive && <span className="text-xs">(Admin Disabled)</span>}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Status: {statusDisplay}</p>
+              {voucher.isGift && voucher.sendDate && (
+                <p>
+                  Send Date:{" "}
+                  {format(
+                    typeof voucher.sendDate === "string" ? parseISO(voucher.sendDate) : voucher.sendDate,
+                    "MMM d, yyyy",
+                  )}
+                </p>
+              )}
+              <p>Admin Active: {voucher.isActive ? "Yes" : "No"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        <div className="truncate">
+          {voucher.isGift ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="outline" className="cursor-default">
+                  Gift
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>This is a gift voucher.</p>
+                {voucher.recipientName && <p>To: {voucher.recipientName}</p>}
+                {voucher.greetingMessage && <p>Message: {voucher.greetingMessage}</p>}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <span className="text-xs text-gray-500">Personal</span>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-1 md:space-x-2">
+          {/* Optional View Details Button 
+          {onViewDetails && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => onViewDetails(voucher)} title="View Details">
+                  <Eye className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent><p>View Details</p></TooltipContent>
+            </Tooltip>
+          )}
+          */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" onClick={() => onEdit(voucher)} title="Edit voucher">
+                <Edit className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Edit Voucher</p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onDelete(voucher._id)}
+                title="Delete voucher"
+                className="text-red-500 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Delete Voucher</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
-      <div className="text-sm">
-        {voucher.isGift ? (
-          <div className="flex items-center gap-1">
-            <Gift className="h-3 w-3 text-pink-500" />
-            <span>{voucher.recipientName || "מתנה"}</span>
-          </div>
-        ) : (
-          "-"
-        )}
-      </div>
-      <div className="text-sm">{format(validFrom, "dd/MM/yyyy")}</div>
-      <div>
-        <Badge variant={statusVariant}>{status}</Badge>
-      </div>
-      <div className="flex justify-end space-x-2">
-        <Button variant="ghost" size="icon" onClick={() => onEdit(voucher)} title="ערוך שובר">
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={() => onDelete(voucher._id)} title="מחק שובר">
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
+    </TooltipProvider>
   )
 }

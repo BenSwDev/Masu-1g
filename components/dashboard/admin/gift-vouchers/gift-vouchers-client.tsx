@@ -1,27 +1,33 @@
 "use client"
 
-import { Card, CardContent } from "@/components/common/ui/card"
+import { useState, useEffect, useCallback } from "react"
+import { Plus, Filter, RotateCcw, Loader2, XCircle, Gift } from "lucide-react"
+import { format } from "date-fns"
+
 import { Button } from "@/components/common/ui/button"
-import { Plus, Gift, Check, X, CreditCard } from "lucide-react"
 import { Input } from "@/components/common/ui/input"
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
-import GiftVoucherForm, { type GiftVoucherPlain } from "./gift-voucher-form"
-import { deleteGiftVoucher, getGiftVouchers } from "@/actions/gift-voucher-actions"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Switch } from "@/components/common/ui/switch"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/common/ui/dialog"
 import {
   AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
+import { Pagination } from "@/components/common/ui/pagination" // Assuming this is your custom pagination or shadcn's
+import { useToast } from "@/components/common/ui/use-toast" // Corrected import path
+
+import { GiftVoucherForm } from "./gift-voucher-form"
 import { GiftVoucherRow } from "./gift-voucher-row"
-import { Switch } from "@/components/common/ui/switch"
-import { useToast } from "@/components/ui/use-toast"
+import { getGiftVouchers, deleteGiftVoucher, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
+import { Calendar } from "@/components/common/ui/calendar"
+import type { DateRange } from "react-day-picker"
 
 interface GiftVouchersClientProps {
   initialVouchers: GiftVoucherPlain[]
@@ -33,269 +39,337 @@ interface GiftVouchersClientProps {
   }
 }
 
+const VOUCHER_STATUSES: GiftVoucherPlain["status"][] = [
+  "pending_payment",
+  "active",
+  "partially_used",
+  "fully_used",
+  "expired",
+  "pending_send",
+  "sent",
+  "cancelled",
+]
+const VOUCHER_TYPES: GiftVoucherPlain["voucherType"][] = ["monetary", "treatment"]
+
 export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftVouchersClientProps) {
   const { toast } = useToast()
-  const [vouchers, setVouchers] = useState(initialVouchers)
+  const [vouchers, setVouchers] = useState<GiftVoucherPlain[]>(initialVouchers)
   const [pagination, setPagination] = useState(initialPagination)
   const [isLoading, setIsLoading] = useState(false)
-  const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState("all")
-  const [typeFilter, setTypeFilter] = useState("all")
-  const [showActiveOnly, setShowActiveOnly] = useState(true)
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingVoucher, setEditingVoucher] = useState<GiftVoucherPlain | null>(null)
-  const [deleteVoucherId, setDeleteVoucherId] = useState<string | null>(null)
 
-  async function loadVouchers(page = 1) {
-    try {
+  // Filters
+  const [search, setSearch] = useState("")
+  const [filterVoucherType, setFilterVoucherType] = useState<GiftVoucherPlain["voucherType"] | "all">("all")
+  const [filterStatus, setFilterStatus] = useState<GiftVoucherPlain["status"] | "all">("all")
+  const [filterIsActive, setFilterIsActive] = useState<"all" | "true" | "false">("all")
+  const [filterDateRange, setFilterDateRange] = useState<DateRange | undefined>(undefined)
+
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false)
+  const [editingVoucher, setEditingVoucher] = useState<GiftVoucherPlain | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [voucherToDeleteId, setVoucherToDeleteId] = useState<string | null>(null)
+
+  const loadVouchers = useCallback(
+    async (page = 1, newSearch = search, newFilters?: any) => {
       setIsLoading(true)
-      const result = await getGiftVouchers(page, search, showActiveOnly, statusFilter, typeFilter)
-      if (!result.success) {
-        throw new Error(result.error)
+      try {
+        const currentFilters = newFilters || {
+          voucherType: filterVoucherType === "all" ? undefined : filterVoucherType,
+          status: filterStatus === "all" ? undefined : filterStatus,
+          isActive: filterIsActive === "all" ? undefined : filterIsActive === "true",
+          dateRange: filterDateRange
+            ? {
+                from: filterDateRange.from ? format(filterDateRange.from, "yyyy-MM-dd") : undefined,
+                to: filterDateRange.to ? format(filterDateRange.to, "yyyy-MM-dd") : undefined,
+              }
+            : undefined,
+        }
+
+        const result = await getGiftVouchers(page, pagination.limit, newSearch, currentFilters)
+        if (result.success && result.giftVouchers && result.pagination) {
+          setVouchers(result.giftVouchers)
+          setPagination(result.pagination)
+        } else {
+          toast({ title: "Error", description: result.error || "Failed to load gift vouchers", variant: "destructive" })
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "An unexpected error occurred",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
       }
-      if (result.giftVouchers && result.pagination) {
-        setVouchers(result.giftVouchers)
-        setPagination(result.pagination)
-      }
-    } catch (error) {
-      toast({
-        title: "שגיאה",
-        description: error instanceof Error ? error.message : "נכשל בטעינת שוברי המתנה",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    },
+    [search, filterVoucherType, filterStatus, filterIsActive, filterDateRange, pagination.limit, toast],
+  )
 
   useEffect(() => {
-    loadVouchers(1)
-  }, [search, showActiveOnly, statusFilter, typeFilter])
+    // Debounce search or load on filter change
+    const timer = setTimeout(() => {
+      loadVouchers(1) // Reset to page 1 on filter change
+    }, 500) // Debounce search/filter changes
+    return () => clearTimeout(timer)
+  }, [search, filterVoucherType, filterStatus, filterIsActive, filterDateRange, loadVouchers])
 
-  async function handleDelete(id: string) {
+  const handleOpenFormModal = (voucher?: GiftVoucherPlain) => {
+    setEditingVoucher(voucher || null)
+    setIsFormModalOpen(true)
+  }
+
+  const handleFormSuccess = () => {
+    setIsFormModalOpen(false)
+    setEditingVoucher(null)
+    loadVouchers(pagination.page) // Reload current page or page 1
+  }
+
+  const handleOpenDeleteDialog = (id: string) => {
+    setVoucherToDeleteId(id)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!voucherToDeleteId) return
+    setIsLoading(true)
     try {
-      setIsLoading(true)
-      const result = await deleteGiftVoucher(id)
-      if (!result.success) {
-        throw new Error(result.error)
+      const result = await deleteGiftVoucher(voucherToDeleteId)
+      if (result.success) {
+        toast({ title: "Success", description: "Gift voucher deleted successfully." })
+        loadVouchers(pagination.page) // Reload current page
+      } else {
+        throw new Error(result.error || "Failed to delete gift voucher")
       }
-      setVouchers((prev) => prev.filter((v) => v._id !== id))
-      toast({
-        title: "הצלחה",
-        description: "שובר המתנה נמחק בהצלחה",
-      })
     } catch (error) {
       toast({
-        title: "שגיאה",
-        description: error instanceof Error ? error.message : "נכשל במחיקת שובר המתנה",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
-      setDeleteVoucherId(null)
+      setIsDeleteDialogOpen(false)
+      setVoucherToDeleteId(null)
     }
   }
 
-  function handleEdit(voucher: GiftVoucherPlain) {
-    setEditingVoucher(voucher)
-    setIsFormOpen(true)
-  }
-
-  function handleFormSuccess() {
-    setIsFormOpen(false)
-    setEditingVoucher(null)
-    loadVouchers(pagination.page)
-  }
-
-  const getStatsCards = () => {
-    const totalVouchers = vouchers.length
-    const activeVouchers = vouchers.filter((v) => v.status === "active").length
-    const usedVouchers = vouchers.filter((v) => v.status === "fully_used").length
-    const totalValue = vouchers.reduce((sum, v) => sum + v.monetaryValue, 0)
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">סה"כ שוברים</p>
-                <p className="text-2xl font-bold">{totalVouchers}</p>
-              </div>
-              <Gift className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">שוברים פעילים</p>
-                <p className="text-2xl font-bold">{activeVouchers}</p>
-              </div>
-              <Check className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">שוברים שנוצלו</p>
-                <p className="text-2xl font-bold">{usedVouchers}</p>
-              </div>
-              <X className="h-8 w-8 text-red-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">ערך כולל</p>
-                <p className="text-2xl font-bold">₪{totalValue.toFixed(2)}</p>
-              </div>
-              <CreditCard className="h-8 w-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  const resetFilters = () => {
+    setSearch("")
+    setFilterVoucherType("all")
+    setFilterStatus("all")
+    setFilterIsActive("all")
+    setFilterDateRange(undefined)
+    // loadVouchers will be called by useEffect
   }
 
   return (
-    <div className="space-y-4">
-      {getStatsCards()}
-
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4">
-          <Input
-            placeholder="חפש שוברים..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-[300px]"
-            disabled={isLoading}
-          />
-
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="סטטוס" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">כל הסטטוסים</SelectItem>
-              <SelectItem value="active">פעיל</SelectItem>
-              <SelectItem value="fully_used">נוצל במלואו</SelectItem>
-              <SelectItem value="partially_used">נוצל חלקית</SelectItem>
-              <SelectItem value="expired">פג תוקף</SelectItem>
-              <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="סוג שובר" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">כל הסוגים</SelectItem>
-              <SelectItem value="monetary">כספי</SelectItem>
-              <SelectItem value="treatment">טיפול</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center space-x-2">
-            <Switch checked={showActiveOnly} onCheckedChange={setShowActiveOnly} disabled={isLoading} />
-            <span className="text-sm">פעילים בלבד</span>
-          </div>
-        </div>
-
-        <Button onClick={() => setIsFormOpen(true)} disabled={isLoading}>
-          <Plus className="mr-2 h-4 w-4" />
-          שובר חדש
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold">Gift Voucher Management</h1>
+        <Button onClick={() => handleOpenFormModal()} disabled={isLoading}>
+          <Plus className="mr-2 h-4 w-4" /> New Voucher
         </Button>
       </div>
 
-      <div className="rounded-md border">
-        <div className="grid grid-cols-9 gap-4 p-4 font-medium bg-gray-50">
-          <div>קוד</div>
-          <div>סוג</div>
-          <div>ערך</div>
-          <div>רוכש</div>
-          <div>בעלים</div>
-          <div>מקבל</div>
-          <div>תאריך</div>
-          <div>סטטוס</div>
-          <div className="text-right">פעולות</div>
+      {/* Filters Section */}
+      <div className="p-4 border rounded-lg space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <Input
+            placeholder="Search by code..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="lg:col-span-2"
+            disabled={isLoading}
+          />
+          <Select
+            value={filterVoucherType}
+            onValueChange={(value) => setFilterVoucherType(value as any)}
+            disabled={isLoading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {VOUCHER_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)} disabled={isLoading}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {VOUCHER_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {status.charAt(0).toUpperCase() + status.slice(1).replace("_", " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant={"outline"} className="w-full justify-start text-left font-normal" disabled={isLoading}>
+                <Filter className="mr-2 h-4 w-4" />
+                {filterDateRange?.from ? (
+                  filterDateRange.to ? (
+                    <>
+                      {format(filterDateRange.from, "LLL dd, y")} - {format(filterDateRange.to, "LLL dd, y")}
+                    </>
+                  ) : (
+                    format(filterDateRange.from, "LLL dd, y")
+                  )
+                ) : (
+                  <span>Filter by Validity Date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={filterDateRange?.from}
+                selected={filterDateRange}
+                onSelect={setFilterDateRange}
+                numberOfMonths={2}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
-        {vouchers.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">לא נמצאו שוברי מתנה</div>
-        ) : (
-          vouchers.map((voucher) => (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="filter-is-active"
+              checked={filterIsActive === "true"}
+              onCheckedChange={(checked) => setFilterIsActive(checked ? "true" : "false")}
+              disabled={isLoading}
+            />
+            <label htmlFor="filter-is-active" className="text-sm font-medium">
+              {filterIsActive === "true"
+                ? "Admin Active Only"
+                : filterIsActive === "false"
+                  ? "Admin Inactive Only"
+                  : "Admin Active (All)"}
+            </label>
+            {filterIsActive !== "all" && (
+              <Button variant="ghost" size="sm" onClick={() => setFilterIsActive("all")}>
+                <XCircle className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          <Button variant="outline" onClick={resetFilters} disabled={isLoading}>
+            <RotateCcw className="mr-2 h-4 w-4" /> Reset Filters
+          </Button>
+        </div>
+      </div>
+
+      {isLoading && vouchers.length === 0 && (
+        <div className="flex justify-center items-center py-10">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="ml-2">Loading vouchers...</p>
+        </div>
+      )}
+
+      {!isLoading && vouchers.length === 0 && (
+        <div className="text-center py-10">
+          <Gift className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No gift vouchers found</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            No vouchers match your current filters, or no vouchers have been created yet.
+          </p>
+          <div className="mt-6">
+            <Button onClick={() => handleOpenFormModal()} disabled={isLoading}>
+              <Plus className="mr-2 h-4 w-4" /> Create New Voucher
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {vouchers.length > 0 && (
+        <div className="rounded-md border bg-card">
+          <div className="hidden md:grid grid-cols-7 gap-4 p-4 font-semibold text-sm text-muted-foreground border-b">
+            <div>Code</div>
+            <div>Type/Value</div>
+            <div>Owner</div>
+            <div>Validity</div>
+            <div>Status</div>
+            <div>Gift?</div>
+            <div className="text-right">Actions</div>
+          </div>
+          {vouchers.map((voucher) => (
             <GiftVoucherRow
               key={voucher._id}
               voucher={voucher}
-              onEdit={() => handleEdit(voucher)}
-              onDelete={() => setDeleteVoucherId(voucher._id)}
+              onEdit={() => handleOpenFormModal(voucher)}
+              onDelete={() => handleOpenDeleteDialog(voucher._id)}
             />
-          ))
-        )}
-      </div>
-
-      {pagination.totalPages > 1 && (
-        <div className="flex justify-center space-x-2">
-          <Button
-            variant="outline"
-            onClick={() => loadVouchers(pagination.page - 1)}
-            disabled={isLoading || pagination.page === 1}
-          >
-            הקודם
-          </Button>
-          <span className="flex items-center px-4">
-            עמוד {pagination.page} מתוך {pagination.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            onClick={() => loadVouchers(pagination.page + 1)}
-            disabled={isLoading || pagination.page === pagination.totalPages}
-          >
-            הבא
-          </Button>
+          ))}
         </div>
       )}
 
-      {isFormOpen && (
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{editingVoucher ? "ערוך שובר מתנה" : "שובר מתנה חדש"}</DialogTitle>
-            </DialogHeader>
-            <GiftVoucherForm
-              initialData={editingVoucher ?? undefined}
-              onSuccess={handleFormSuccess}
-              onCancel={() => {
-                setIsFormOpen(false)
-                setEditingVoucher(null)
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+      {pagination.totalPages > 1 && (
+        <Pagination
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          onPageChange={(newPage) => loadVouchers(newPage)}
+          isLoading={isLoading}
+        />
       )}
 
-      {deleteVoucherId && (
-        <AlertDialog open={!!deleteVoucherId} onOpenChange={() => setDeleteVoucherId(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>מחק שובר מתנה</AlertDialogTitle>
-              <AlertDialogDescription>
-                האם אתה בטוח שברצונך למחוק את שובר המתנה? פעולה זו לא ניתנת לביטול.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>ביטול</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleDelete(deleteVoucherId)}>מחק</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+      <Dialog
+        open={isFormModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingVoucher(null)
+          }
+          setIsFormModalOpen(open)
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingVoucher ? "Edit Gift Voucher" : "Create New Gift Voucher"}</DialogTitle>
+            <DialogDescription>
+              {editingVoucher
+                ? `Update details for voucher ${editingVoucher.code}.`
+                : "Fill in the details to create a new gift voucher."}
+            </DialogDescription>
+          </DialogHeader>
+          <GiftVoucherForm
+            initialData={editingVoucher ?? undefined}
+            onSuccess={handleFormSuccess}
+            onCancel={() => {
+              setIsFormModalOpen(false)
+              setEditingVoucher(null)
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the gift voucher.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isLoading}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

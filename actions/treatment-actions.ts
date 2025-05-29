@@ -233,33 +233,3 @@ export async function duplicateTreatment(id: string) {
     return { success: false, error: "Failed to duplicate treatment" }
   }
 }
-
-// פונקציה להחזרת כל הטיפולים ללא פילטרים או דפדוף
-export async function getAllTreatments(): Promise<{
-  success: boolean
-  treatments?: ITreatment[]
-  error?: string
-}> {
-  try {
-    await dbConnect()
-
-    // מחזיר רק טיפולים פעילים
-    const treatments = await Treatment.find({ isActive: true }).sort({ name: 1 }).lean()
-
-    // המרת _id ו- _id של durations ל-string כדי למנוע בעיות serialization
-    const serializedTreatments = treatments.map((treatment) => ({
-      ...treatment,
-      _id: treatment._id.toString(),
-      durations:
-        treatment.durations?.map((d) => ({
-          ...d,
-          _id: d._id?.toString(),
-        })) || [],
-    })) as ITreatment[]
-
-    return { success: true, treatments: serializedTreatments }
-  } catch (error) {
-    logger.error("Error fetching all treatments:", error)
-    return { success: false, error: "Failed to fetch treatments" }
-  }
-}

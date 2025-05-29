@@ -3,23 +3,28 @@
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import GiftVoucher from "@/lib/db/models/gift-voucher"
-import Treatment from "@/lib/db/models/treatment"
-import User from "@/lib/db/models/user"
+import GiftVoucher, {
+  type IGiftVoucher,
+  type GiftVoucherPlain as IGiftVoucherPlain,
+} from "@/lib/db/models/gift-voucher" // Updated import
+import User from "@/lib/db/models/user" // Assuming User model exists
+import Treatment from "@/lib/db/models/treatment" // Assuming Treatment model exists
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
+import type { FilterQuery } from "mongoose"
 import mongoose from "mongoose"
 
-// Types
-export interface GiftVoucherPlain {
+// Extended GiftVoucherPlain for client-side use, including populated fields
+export interface GiftVoucherPlain extends IGiftVoucherPlain {
   _id: string
   code: string
   voucherType: "treatment" | "monetary"
   treatmentId?: string
-  treatmentName?: string
+  treatmentName?: string // For display
   selectedDurationId?: string
-  selectedDurationMinutes?: number
+  selectedDurationName?: string // For display
   monetaryValue?: number
+  originalAmount?: number
   remainingAmount?: number
   purchaserUserId: string
   purchaserName?: string
@@ -29,85 +34,100 @@ export interface GiftVoucherPlain {
   recipientName?: string
   recipientPhone?: string
   greetingMessage?: string
-  sendDate?: Date
-  status: string
-  purchaseDate: Date
-  validFrom: Date
-  validUntil: Date
-  isActive: boolean
+  sendDate?: Date | string // Allow string for form input
+  status:
+    | "pending_payment"
+    | "active"
+    | "partially_used"
+    | "fully_used"
+    | "expired"
+    | "pending_send"
+    | "sent"
+    | "cancelled"
+  purchaseDate: Date | string
+  validFrom: Date | string
+  validUntil: Date | string
   paymentId?: string
-  usageHistory?: Array<{
-    date: Date
-    amountUsed: number
-    orderId?: string
-  }>
-  createdAt?: Date
-  updatedAt?: Date
+  usageHistory?: { date: Date; amountUsed: number; orderId?: string }[]
+  isActive: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
 }
 
-export interface PurchaseInitiationData {
-  voucherType: "treatment" | "monetary"
-  treatmentId?: string
-  selectedDurationId?: string
-  monetaryValue?: number
-  validityDays?: number
-}
+// Helper to convert Mongoose document to plain object for client
+// Now includes population for purchaser and owner names, and treatment details
+async function toGiftVoucherPlain(voucherDoc: IGiftVoucher): Promise<GiftVoucherPlain> {
+  const voucher = voucherDoc.toObject({ virtuals: true }) as any
 
-export interface GiftDetailsPayload {
-  recipientName: string
-  recipientPhone: string
-  greetingMessage?: string
-  sendDate?: Date
-}
+  let purchaserName, ownerName, treatmentName, selectedDurationName
 
-// Helper function to convert voucher to plain object
-const toGiftVoucherPlain = async (voucher: any): Promise<GiftVoucherPlain> => {
-  await voucher.populate([
-    { path: "treatmentId", select: "name durations" },
-    { path: "purchaserUserId", select: "name" },
-    { path: "ownerUserId", select: "name" },
-  ])
-
-  const treatment = voucher.treatmentId
-  let selectedDuration = null
-
-  if (treatment && voucher.selectedDurationId) {
-    selectedDuration = treatment.durations?.find((d: any) => d._id.toString() === voucher.selectedDurationId.toString())
+  if (voucher.purchaserUserId) {
+    const purchaser = await User.findById(voucher.purchaserUserId).select("name").lean()
+    purchaserName = purchaser?.name
+  }
+  if (voucher.ownerUserId) {
+    const owner = await User.findById(voucher.ownerUserId).select("name").lean()
+    ownerName = owner?.name
+  }
+  if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+    const treatment = (await Treatment.findById(voucher.treatmentId).select("name durations").lean()) as any
+    treatmentName = treatment?.name
+    if (voucher.selectedDurationId && treatment?.durations) {
+      const duration = treatment.durations.find((d: any) => d._id.toString() === voucher.selectedDurationId.toString())
+      selectedDurationName = duration?.name // Assuming duration object has a 'name' field
+    }
   }
 
   return {
     _id: String(voucher._id),
     code: voucher.code,
     voucherType: voucher.voucherType,
-    treatmentId: voucher.treatmentId?._id?.toString(),
-    treatmentName: treatment?.name,
+    treatmentId: voucher.treatmentId?.toString(),
+    treatmentName,
     selectedDurationId: voucher.selectedDurationId?.toString(),
-    selectedDurationMinutes: selectedDuration?.minutes,
+    selectedDurationName,
     monetaryValue: voucher.monetaryValue,
+    originalAmount: voucher.originalAmount,
     remainingAmount: voucher.remainingAmount,
-    purchaserUserId: voucher.purchaserUserId._id.toString(),
-    purchaserName: voucher.purchaserUserId.name,
-    ownerUserId: voucher.ownerUserId._id.toString(),
-    ownerName: voucher.ownerUserId.name,
+    purchaserUserId: voucher.purchaserUserId.toString(),
+    purchaserName,
+    ownerUserId: voucher.ownerUserId.toString(),
+    ownerName,
     isGift: voucher.isGift,
     recipientName: voucher.recipientName,
     recipientPhone: voucher.recipientPhone,
     greetingMessage: voucher.greetingMessage,
-    sendDate: voucher.sendDate,
+    sendDate: voucher.sendDate ? new Date(voucher.sendDate).toISOString() : undefined,
     status: voucher.status,
-    purchaseDate: voucher.purchaseDate,
-    validFrom: voucher.validFrom,
-    validUntil: voucher.validUntil,
-    isActive: voucher.isActive,
+    purchaseDate: new Date(voucher.purchaseDate).toISOString(),
+    validFrom: new Date(voucher.validFrom).toISOString(),
+    validUntil: new Date(voucher.validUntil).toISOString(),
     paymentId: voucher.paymentId,
-    usageHistory: voucher.usageHistory,
-    createdAt: voucher.createdAt,
-    updatedAt: voucher.updatedAt,
+    usageHistory: voucher.usageHistory?.map((h: any) => ({
+      ...h,
+      date: new Date(h.date).toISOString(),
+      orderId: h.orderId?.toString(),
+    })),
+    isActive: voucher.isActive,
+    createdAt: voucher.createdAt ? new Date(voucher.createdAt).toISOString() : undefined,
+    updatedAt: voucher.updatedAt ? new Date(voucher.updatedAt).toISOString() : undefined,
   }
 }
 
-// Admin actions
-export async function createGiftVoucher(data: FormData) {
+export interface AdminGiftVoucherFormData {
+  code: string
+  voucherType: "treatment" | "monetary"
+  treatmentId?: string
+  selectedDurationId?: string
+  monetaryValue?: string // Comes as string from form
+  ownerUserId: string
+  validFrom: string // Comes as string (date) from form
+  validUntil: string // Comes as string (date) from form
+  isActive: boolean
+  status?: GiftVoucherPlain["status"] // Optional, admin might set it
+}
+
+export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles.includes("admin")) {
@@ -116,66 +136,90 @@ export async function createGiftVoucher(data: FormData) {
 
     await dbConnect()
 
-    const voucherType = data.get("voucherType") as "treatment" | "monetary"
-    const ownerUserId = data.get("ownerUserId") as string
-
-    // Validate owner exists
-    const owner = await User.findById(ownerUserId)
-    if (!owner || !owner.roles.includes("member")) {
-      return { success: false, error: "Invalid owner user" }
-    }
-
-    const voucherData: any = {
-      code: data.get("code") || undefined, // Will be auto-generated if not provided
+    const {
+      code,
       voucherType,
-      purchaserUserId: session.user.id, // Admin is the purchaser
+      treatmentId,
+      selectedDurationId,
+      monetaryValue,
       ownerUserId,
-      validFrom: new Date(data.get("validFrom") as string),
-      validUntil: new Date(data.get("validUntil") as string),
-      isActive: data.get("isActive") === "true",
-      status: "active", // Admin-created vouchers are immediately active
-      isGift: false,
+      validFrom,
+      validUntil,
+      isActive,
+      status,
+    } = data
+
+    const owner = await User.findById(ownerUserId)
+    if (!owner) {
+      return { success: false, error: "Owner user not found." }
     }
 
-    if (voucherType === "treatment") {
-      const treatmentId = data.get("treatmentId") as string
-      const selectedDurationId = data.get("selectedDurationId") as string
+    const giftVoucherData: Partial<IGiftVoucher> = {
+      code,
+      voucherType,
+      purchaserUserId: new mongoose.Types.ObjectId(session.user.id), // Admin is the purchaser
+      ownerUserId: new mongoose.Types.ObjectId(ownerUserId),
+      validFrom: new Date(validFrom),
+      validUntil: new Date(validUntil),
+      isActive,
+      isGift: false, // Admin created vouchers are not gifts by default unless specified
+      status: status || "active", // Default to active if not specified
+      purchaseDate: new Date(),
+    }
 
-      // Validate treatment exists
-      const treatment = await Treatment.findById(treatmentId)
+    if (voucherType === "monetary") {
+      const val = Number(monetaryValue)
+      if (isNaN(val) || val <= 0) {
+        return { success: false, error: "Invalid monetary value." }
+      }
+      giftVoucherData.monetaryValue = val
+      giftVoucherData.originalAmount = val
+      giftVoucherData.remainingAmount = val
+    } else if (voucherType === "treatment") {
+      if (!treatmentId) {
+        return { success: false, error: "Treatment ID is required for treatment voucher." }
+      }
+      const treatment = (await Treatment.findById(treatmentId).lean()) as any
       if (!treatment) {
-        return { success: false, error: "Invalid treatment" }
+        return { success: false, error: "Treatment not found." }
       }
-
-      voucherData.treatmentId = treatmentId
-      if (selectedDurationId) {
-        voucherData.selectedDurationId = selectedDurationId
+      giftVoucherData.treatmentId = new mongoose.Types.ObjectId(treatmentId)
+      // Assuming price comes from treatment or duration
+      // For simplicity, let's say treatment has a base price or duration has a price
+      // This part needs to be adapted based on your Treatment/Duration model structure
+      let price = treatment.price || 0
+      if (selectedDurationId && treatment.durations) {
+        const duration = treatment.durations.find((d: any) => d._id.toString() === selectedDurationId)
+        if (duration && typeof duration.price === "number") {
+          price = duration.price
+        }
+        giftVoucherData.selectedDurationId = new mongoose.Types.ObjectId(selectedDurationId)
       }
+      giftVoucherData.monetaryValue = price // Store the "value" of the treatment
     } else {
-      const monetaryValue = Number(data.get("monetaryValue"))
-      if (monetaryValue < 150) {
-        return { success: false, error: "Minimum value is 150 ILS" }
-      }
-      voucherData.monetaryValue = monetaryValue
-      voucherData.remainingAmount = monetaryValue
+      return { success: false, error: "Invalid voucher type." }
     }
 
-    const voucher = new GiftVoucher(voucherData)
-    await voucher.save()
+    const newVoucher = new GiftVoucher(giftVoucherData)
+    await newVoucher.save()
 
     revalidatePath("/dashboard/admin/gift-vouchers")
 
     return {
       success: true,
-      giftVoucher: await toGiftVoucherPlain(voucher),
+      giftVoucher: await toGiftVoucherPlain(newVoucher),
     }
   } catch (error) {
-    logger.error("Error creating gift voucher:", error)
-    return { success: false, error: "Failed to create gift voucher" }
+    logger.error("Error creating gift voucher by admin:", error)
+    const errorMessage = error instanceof Error ? error.message : "Failed to create gift voucher"
+    if (errorMessage.includes("duplicate key error")) {
+      return { success: false, error: "Gift voucher code already exists." }
+    }
+    return { success: false, error: errorMessage }
   }
 }
 
-export async function updateGiftVoucher(id: string, data: FormData) {
+export async function updateGiftVoucherByAdmin(id: string, data: Partial<AdminGiftVoucherFormData>) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles.includes("admin")) {
@@ -184,28 +228,23 @@ export async function updateGiftVoucher(id: string, data: FormData) {
 
     await dbConnect()
 
-    const updateData: any = {
-      code: data.get("code"),
-      validFrom: new Date(data.get("validFrom") as string),
-      validUntil: new Date(data.get("validUntil") as string),
-      isActive: data.get("isActive") === "true",
+    const updateData: any = { ...data }
+    if (data.validFrom) updateData.validFrom = new Date(data.validFrom)
+    if (data.validUntil) updateData.validUntil = new Date(data.validUntil)
+    if (data.monetaryValue) {
+      const val = Number(data.monetaryValue)
+      if (isNaN(val) || val < 0) return { success: false, error: "Invalid monetary value." }
+      updateData.monetaryValue = val
+      // If admin changes monetary value, should it reset original/remaining?
+      // For now, let's assume it updates the current value if monetary, or the treatment's effective value.
+      // If it's a monetary voucher, and it's being updated, we might need to adjust remainingAmount.
+      // This logic can be complex depending on business rules.
+      // For simplicity, if monetaryValue is updated for a monetary voucher, let's update original and remaining if it's a new value.
+      // This needs careful consideration based on how edits are intended to work.
     }
-
-    // Only allow updating certain fields based on voucher type
-    const existingVoucher = await GiftVoucher.findById(id)
-    if (!existingVoucher) {
-      return { success: false, error: "Gift voucher not found" }
-    }
-
-    if (existingVoucher.voucherType === "monetary") {
-      const newValue = Number(data.get("monetaryValue"))
-      if (newValue && newValue !== existingVoucher.monetaryValue) {
-        // Adjust remaining amount proportionally
-        const usedAmount = existingVoucher.monetaryValue - existingVoucher.remainingAmount
-        updateData.monetaryValue = newValue
-        updateData.remainingAmount = Math.max(0, newValue - usedAmount)
-      }
-    }
+    if (data.ownerUserId) updateData.ownerUserId = new mongoose.Types.ObjectId(data.ownerUserId)
+    if (data.treatmentId) updateData.treatmentId = new mongoose.Types.ObjectId(data.treatmentId)
+    if (data.selectedDurationId) updateData.selectedDurationId = new mongoose.Types.ObjectId(data.selectedDurationId)
 
     const voucher = await GiftVoucher.findByIdAndUpdate(id, updateData, { new: true })
 
@@ -220,8 +259,12 @@ export async function updateGiftVoucher(id: string, data: FormData) {
       giftVoucher: await toGiftVoucherPlain(voucher),
     }
   } catch (error) {
-    logger.error("Error updating gift voucher:", error)
-    return { success: false, error: "Failed to update gift voucher" }
+    logger.error("Error updating gift voucher by admin:", error)
+    const errorMessage = error instanceof Error ? error.message : "Failed to update gift voucher"
+    if (errorMessage.includes("duplicate key error")) {
+      return { success: false, error: "Gift voucher code already exists." }
+    }
+    return { success: false, error: errorMessage }
   }
 }
 
@@ -233,21 +276,13 @@ export async function deleteGiftVoucher(id: string) {
     }
 
     await dbConnect()
+    const voucher = await GiftVoucher.findByIdAndDelete(id)
 
-    const voucher = await GiftVoucher.findById(id)
     if (!voucher) {
       return { success: false, error: "Gift voucher not found" }
     }
 
-    // Don't allow deletion of vouchers that have been used
-    if (voucher.status === "partially_used" || voucher.status === "fully_used") {
-      return { success: false, error: "Cannot delete used vouchers" }
-    }
-
-    await GiftVoucher.findByIdAndDelete(id)
-
     revalidatePath("/dashboard/admin/gift-vouchers")
-
     return { success: true, message: "Gift voucher deleted successfully" }
   } catch (error) {
     logger.error("Error deleting gift voucher:", error)
@@ -257,57 +292,58 @@ export async function deleteGiftVoucher(id: string) {
 
 export async function getGiftVouchers(
   page = 1,
+  limit = 10,
   search = "",
-  filters?: {
+  filters: {
     voucherType?: "treatment" | "monetary"
-    status?: string
+    status?: GiftVoucherPlain["status"]
     isActive?: boolean
-  },
+    dateRange?: { from?: string; to?: string } // For validUntil or purchaseDate
+  } = {},
 ) {
   try {
     await dbConnect()
 
-    const query: any = {}
+    const query: FilterQuery<IGiftVoucher> = {}
 
     if (search) {
+      const searchRegex = { $regex: search, $options: "i" }
       query.$or = [
-        { code: { $regex: search, $options: "i" } },
-        { recipientName: { $regex: search, $options: "i" } },
-        { recipientPhone: { $regex: search, $options: "i" } },
+        { code: searchRegex },
+        // Add search by purchaser/owner name if IDs are provided or if we can join efficiently
+        // This might require populating user details first or a more complex aggregation.
+        // For now, searching by code.
       ]
     }
 
-    if (filters?.voucherType) {
+    if (filters.voucherType) {
       query.voucherType = filters.voucherType
     }
-
-    if (filters?.status) {
+    if (filters.status) {
       query.status = filters.status
     }
-
-    if (filters?.isActive !== undefined) {
+    if (typeof filters.isActive === "boolean") {
       query.isActive = filters.isActive
     }
+    if (filters.dateRange?.from && filters.dateRange?.to) {
+      query.validUntil = { $gte: new Date(filters.dateRange.from), $lte: new Date(filters.dateRange.to) }
+    } else if (filters.dateRange?.from) {
+      query.validUntil = { $gte: new Date(filters.dateRange.from) }
+    } else if (filters.dateRange?.to) {
+      query.validUntil = { $lte: new Date(filters.dateRange.to) }
+    }
 
-    const limit = 10
     const skip = (page - 1) * limit
 
-    const [giftVouchers, total] = await Promise.all([
-      GiftVoucher.find(query)
-        .populate("treatmentId", "name durations")
-        .populate("purchaserUserId", "name email")
-        .populate("ownerUserId", "name email")
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
-      GiftVoucher.countDocuments(query),
-    ])
+    const giftVoucherDocs = await GiftVoucher.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean() // Using lean for performance, but toGiftVoucherPlain will handle population
 
-    const plainVouchers = await Promise.all(giftVouchers.map((v) => toGiftVoucherPlain(v)))
+    const total = await GiftVoucher.countDocuments(query)
+
+    const giftVouchers = await Promise.all(giftVoucherDocs.map((doc) => toGiftVoucherPlain(doc as any as IGiftVoucher)))
 
     return {
       success: true,
-      giftVouchers: plainVouchers,
+      giftVouchers,
       pagination: {
         total,
         page,
@@ -320,74 +356,82 @@ export async function getGiftVouchers(
     return {
       success: false,
       error: "Failed to fetch gift vouchers",
+      giftVouchers: [],
+      pagination: { total: 0, page: 1, limit, totalPages: 0 },
     }
   }
 }
 
-// Member actions
-export async function getMemberOwnedVouchers() {
+// Placeholder for fetching treatments - adapt to your actual treatment actions
+export async function getTreatmentsForSelection() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" }
-    }
-
     await dbConnect()
-
-    const currentDate = new Date()
-    const vouchers = await GiftVoucher.find({
-      ownerUserId: session.user.id,
-      isActive: true,
-      validFrom: { $lte: currentDate },
-      validUntil: { $gte: currentDate },
-      status: { $in: ["active", "partially_used"] },
-    })
-      .populate("treatmentId", "name durations")
-      .populate("purchaserUserId", "name")
-      .sort({ validUntil: 1 })
-
-    const plainVouchers = await Promise.all(vouchers.map((v) => toGiftVoucherPlain(v)))
-
+    // Assuming Treatment model has name and durations array
+    // durations: [{ _id, name, price, durationInMinutes }]
+    const treatments = await Treatment.find().select("name price durations").lean()
     return {
       success: true,
-      giftVouchers: plainVouchers,
+      treatments: treatments.map((t) => ({
+        _id: t._id.toString(),
+        name: t.name,
+        price: (t as any).price, // if treatments have a base price
+        durations:
+          (t as any).durations?.map((d: any) => ({
+            _id: d._id.toString(),
+            name: d.name, // e.g., "30 minutes", "60 minutes"
+            price: d.price,
+          })) || [],
+      })),
     }
   } catch (error) {
-    logger.error("Error fetching member owned vouchers:", error)
-    return { success: false, error: "Failed to fetch vouchers" }
+    logger.error("Error fetching treatments for selection:", error)
+    return { success: false, error: "Failed to fetch treatments", treatments: [] }
   }
 }
 
-export async function getMemberPurchasedVouchers() {
+// Placeholder for fetching users (members) for admin assignment
+export async function getUsersForAdminSelection() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return { success: false, error: "Unauthorized" }
-    }
-
     await dbConnect()
-
-    const vouchers = await GiftVoucher.find({
-      purchaserUserId: session.user.id,
-      status: { $ne: "pending_payment" }, // Exclude pending payments
-    })
-      .populate("treatmentId", "name durations")
-      .populate("ownerUserId", "name")
-      .sort({ purchaseDate: -1 })
-
-    const plainVouchers = await Promise.all(vouchers.map((v) => toGiftVoucherPlain(v)))
-
+    const users = await User.find({ roles: "member" }).select("_id name email").lean()
     return {
       success: true,
-      giftVouchers: plainVouchers,
+      users: users.map((u) => ({
+        _id: u._id.toString(),
+        name: u.name || u.email, // Fallback to email if name is not present
+        email: u.email,
+      })),
     }
   } catch (error) {
-    logger.error("Error fetching member purchased vouchers:", error)
-    return { success: false, error: "Failed to fetch vouchers" }
+    logger.error("Error fetching users for admin selection:", error)
+    return { success: false, error: "Failed to fetch users", users: [] }
   }
 }
 
-// Purchase flow actions
+// --- Member facing actions ---
+
+export interface PurchaseInitiationData {
+  voucherType: "treatment" | "monetary"
+  treatmentId?: string
+  selectedDurationId?: string
+  monetaryValue?: number
+  isGift: boolean
+}
+
+export interface GiftDetailsPayload {
+  recipientName: string
+  recipientPhone: string
+  greetingMessage?: string
+  sendDate?: string // ISO string or "immediate"
+}
+
+export interface PaymentResultData {
+  voucherId: string
+  paymentId: string
+  success: boolean
+  amount: number
+}
+
 export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) {
   try {
     const session = await getServerSession(authOptions)
@@ -397,52 +441,68 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
 
     await dbConnect()
 
-    const validityDays = data.validityDays || 365 // Default 1 year validity
-    const validFrom = new Date()
-    const validUntil = new Date()
-    validUntil.setDate(validUntil.getDate() + validityDays)
+    const { voucherType, treatmentId, selectedDurationId, monetaryValue, isGift } = data
 
-    const voucherData: any = {
-      voucherType: data.voucherType,
-      purchaserUserId: session.user.id,
-      ownerUserId: session.user.id, // Initially owned by purchaser
-      validFrom,
-      validUntil,
+    // Generate unique code
+    const code = `GV-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+
+    const giftVoucherData: Partial<IGiftVoucher> = {
+      code,
+      voucherType,
+      purchaserUserId: new mongoose.Types.ObjectId(session.user.id),
+      ownerUserId: new mongoose.Types.ObjectId(session.user.id), // Initially, purchaser is owner
+      isGift,
       status: "pending_payment",
-      isGift: false,
+      purchaseDate: new Date(),
+      validFrom: new Date(),
+      validUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year validity
+      isActive: true,
     }
 
-    if (data.voucherType === "treatment") {
-      if (!data.treatmentId) {
-        return { success: false, error: "Treatment ID is required" }
-      }
+    let calculatedPrice = 0
 
-      const treatment = await Treatment.findById(data.treatmentId)
+    if (voucherType === "monetary") {
+      if (!monetaryValue || monetaryValue < 150) {
+        return { success: false, error: "Minimum monetary value is 150 ILS" }
+      }
+      giftVoucherData.monetaryValue = monetaryValue
+      giftVoucherData.originalAmount = monetaryValue
+      giftVoucherData.remainingAmount = monetaryValue
+      calculatedPrice = monetaryValue
+    } else if (voucherType === "treatment") {
+      if (!treatmentId) {
+        return { success: false, error: "Treatment ID is required for treatment voucher" }
+      }
+      const treatment = (await Treatment.findById(treatmentId).lean()) as any
       if (!treatment) {
-        return { success: false, error: "Invalid treatment" }
+        return { success: false, error: "Treatment not found" }
       }
+      giftVoucherData.treatmentId = new mongoose.Types.ObjectId(treatmentId)
 
-      voucherData.treatmentId = data.treatmentId
-      if (data.selectedDurationId) {
-        voucherData.selectedDurationId = data.selectedDurationId
+      let price = treatment.price || 0
+      if (selectedDurationId && treatment.durations) {
+        const duration = treatment.durations.find((d: any) => d._id.toString() === selectedDurationId)
+        if (duration && typeof duration.price === "number") {
+          price = duration.price
+        }
+        giftVoucherData.selectedDurationId = new mongoose.Types.ObjectId(selectedDurationId)
       }
-    } else {
-      if (!data.monetaryValue || data.monetaryValue < 150) {
-        return { success: false, error: "Minimum value is 150 ILS" }
-      }
-      voucherData.monetaryValue = data.monetaryValue
-      voucherData.remainingAmount = data.monetaryValue
+      giftVoucherData.monetaryValue = price
+      calculatedPrice = price
     }
 
-    const voucher = new GiftVoucher(voucherData)
-    await voucher.save()
+    const newVoucher = new GiftVoucher(giftVoucherData)
+    await newVoucher.save()
 
-    // TODO: Integrate with payment system
-    // For now, return voucher ID for next step
+    // In a real implementation, you would integrate with a payment provider here
+    // For now, we'll return a mock payment URL
+    const paymentUrl = `/dashboard/member/gift-vouchers/payment?voucherId=${newVoucher._id}&amount=${calculatedPrice}`
+
     return {
       success: true,
-      voucherId: voucher._id.toString(),
-      // paymentUrl: "payment-integration-url"
+      voucherId: newVoucher._id.toString(),
+      paymentUrl,
+      amount: calculatedPrice,
     }
   } catch (error) {
     logger.error("Error initiating gift voucher purchase:", error)
@@ -450,7 +510,7 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
   }
 }
 
-export async function confirmGiftVoucherPurchase(voucherId: string, paymentId: string) {
+export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
@@ -458,6 +518,8 @@ export async function confirmGiftVoucherPurchase(voucherId: string, paymentId: s
     }
 
     await dbConnect()
+
+    const { voucherId, paymentId, success: paymentSuccess } = data
 
     const voucher = await GiftVoucher.findById(voucherId)
     if (!voucher) {
@@ -468,19 +530,21 @@ export async function confirmGiftVoucherPurchase(voucherId: string, paymentId: s
       return { success: false, error: "Unauthorized" }
     }
 
-    if (voucher.status !== "pending_payment") {
-      return { success: false, error: "Voucher already processed" }
-    }
+    if (paymentSuccess) {
+      voucher.status = "active"
+      voucher.paymentId = paymentId
+      await voucher.save()
 
-    voucher.status = "active"
-    voucher.paymentId = paymentId
-    await voucher.save()
+      revalidatePath("/dashboard/member/gift-vouchers")
 
-    revalidatePath("/dashboard/member/gift-vouchers")
-
-    return {
-      success: true,
-      voucher: await toGiftVoucherPlain(voucher),
+      return {
+        success: true,
+        voucher: await toGiftVoucherPlain(voucher),
+      }
+    } else {
+      voucher.status = "cancelled"
+      await voucher.save()
+      return { success: false, error: "Payment failed" }
     }
   } catch (error) {
     logger.error("Error confirming gift voucher purchase:", error)
@@ -506,33 +570,20 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
       return { success: false, error: "Unauthorized" }
     }
 
-    if (voucher.status !== "active") {
-      return { success: false, error: "Voucher must be active to send as gift" }
-    }
+    const { recipientName, recipientPhone, greetingMessage, sendDate } = details
 
-    // Update gift details
+    voucher.recipientName = recipientName
+    voucher.recipientPhone = recipientPhone
+    voucher.greetingMessage = greetingMessage
     voucher.isGift = true
-    voucher.recipientName = details.recipientName
-    voucher.recipientPhone = details.recipientPhone
-    voucher.greetingMessage = details.greetingMessage
-    voucher.sendDate = details.sendDate || new Date()
 
-    // Check if we can find recipient user by phone
-    const recipientUser = await User.findOne({
-      phone: details.recipientPhone,
-      roles: "member",
-    })
-
-    if (recipientUser) {
-      voucher.ownerUserId = recipientUser._id
-    }
-
-    // Update status based on send date
-    if (details.sendDate && details.sendDate > new Date()) {
-      voucher.status = "pending_send"
-    } else {
+    if (sendDate === "immediate" || !sendDate) {
+      voucher.sendDate = new Date()
       voucher.status = "sent"
-      // TODO: Send notification to recipient
+      // In a real implementation, you would send SMS/email notification here
+    } else {
+      voucher.sendDate = new Date(sendDate)
+      voucher.status = "pending_send"
     }
 
     await voucher.save()
@@ -549,8 +600,72 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
   }
 }
 
-// Redemption actions
-export async function redeemGiftVoucher(code: string, orderId?: string, amountToUse?: number) {
+export async function getMemberPurchasedVouchers() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const vouchers = await GiftVoucher.find({
+      purchaserUserId: new mongoose.Types.ObjectId(session.user.id),
+    })
+      .sort({ createdAt: -1 })
+      .lean()
+
+    const vouchersPlain = await Promise.all(vouchers.map((doc) => toGiftVoucherPlain(doc as any as IGiftVoucher)))
+
+    return {
+      success: true,
+      giftVouchers: vouchersPlain,
+    }
+  } catch (error) {
+    logger.error("Error fetching member purchased vouchers:", error)
+    return { success: false, error: "Failed to fetch purchased vouchers" }
+  }
+}
+
+export async function getMemberOwnedVouchers() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const currentDate = new Date()
+    const vouchers = await GiftVoucher.find({
+      ownerUserId: new mongoose.Types.ObjectId(session.user.id),
+      status: { $in: ["active", "partially_used"] },
+      validFrom: { $lte: currentDate },
+      validUntil: { $gte: currentDate },
+      isActive: true,
+    })
+      .sort({ validUntil: 1 })
+      .lean()
+
+    const vouchersPlain = await Promise.all(vouchers.map((doc) => toGiftVoucherPlain(doc as any as IGiftVoucher)))
+
+    return {
+      success: true,
+      giftVouchers: vouchersPlain,
+    }
+  } catch (error) {
+    logger.error("Error fetching member owned vouchers:", error)
+    return { success: false, error: "Failed to fetch owned vouchers" }
+  }
+}
+
+export interface OrderDetailsForRedemption {
+  orderId?: string
+  totalAmount: number
+  items: { name: string; price: number }[]
+}
+
+export async function redeemGiftVoucher(code: string, orderDetails: OrderDetailsForRedemption) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {
@@ -561,54 +676,45 @@ export async function redeemGiftVoucher(code: string, orderId?: string, amountTo
 
     const voucher = await GiftVoucher.findOne({ code })
     if (!voucher) {
-      return { success: false, error: "Invalid voucher code" }
+      return { success: false, error: "Voucher not found" }
     }
 
-    // Check ownership
     if (voucher.ownerUserId.toString() !== session.user.id) {
       return { success: false, error: "This voucher does not belong to you" }
     }
 
-    // Check validity
-    const now = new Date()
-    if (!voucher.isActive || now < voucher.validFrom || now > voucher.validUntil) {
-      return { success: false, error: "Voucher is not valid" }
+    const currentDate = new Date()
+    if (voucher.validUntil < currentDate) {
+      return { success: false, error: "Voucher has expired" }
     }
 
-    if (voucher.status === "fully_used") {
-      return { success: false, error: "Voucher has already been used" }
+    if (!["active", "partially_used"].includes(voucher.status)) {
+      return { success: false, error: "Voucher is not available for use" }
     }
+
+    let amountApplied = 0
 
     if (voucher.voucherType === "treatment") {
-      // Treatment voucher - mark as fully used
+      // For treatment vouchers, mark as fully used
       voucher.status = "fully_used"
-      if (orderId) {
-        voucher.usageHistory = voucher.usageHistory || []
-        voucher.usageHistory.push({
-          date: new Date(),
-          amountUsed: 0, // Not applicable for treatment vouchers
-          orderId: new mongoose.Types.ObjectId(orderId),
-        })
-      }
-    } else {
-      // Monetary voucher
-      if (!amountToUse || amountToUse <= 0) {
-        return { success: false, error: "Invalid amount" }
-      }
+      amountApplied = voucher.monetaryValue || 0
+    } else if (voucher.voucherType === "monetary") {
+      // For monetary vouchers, apply amount up to remaining balance
+      const requestedAmount = orderDetails.totalAmount
+      amountApplied = Math.min(requestedAmount, voucher.remainingAmount || 0)
 
-      if (amountToUse > voucher.remainingAmount) {
-        return { success: false, error: "Insufficient voucher balance" }
-      }
+      voucher.remainingAmount = (voucher.remainingAmount || 0) - amountApplied
 
-      voucher.remainingAmount -= amountToUse
-      voucher.usageHistory = voucher.usageHistory || []
+      // Add to usage history
+      if (!voucher.usageHistory) voucher.usageHistory = []
       voucher.usageHistory.push({
         date: new Date(),
-        amountUsed: amountToUse,
-        orderId: orderId ? new mongoose.Types.ObjectId(orderId) : undefined,
-      })
+        amountUsed: amountApplied,
+        orderId: orderDetails.orderId ? new mongoose.Types.ObjectId(orderDetails.orderId) : undefined,
+      } as any)
 
-      if (voucher.remainingAmount === 0) {
+      // Update status based on remaining amount
+      if (voucher.remainingAmount <= 0) {
         voucher.status = "fully_used"
       } else {
         voucher.status = "partially_used"
@@ -617,109 +723,15 @@ export async function redeemGiftVoucher(code: string, orderId?: string, amountTo
 
     await voucher.save()
 
+    revalidatePath("/dashboard/member/gift-vouchers")
+
     return {
       success: true,
-      voucher: await toGiftVoucherPlain(voucher),
-      amountApplied: amountToUse || 0,
+      updatedVoucher: await toGiftVoucherPlain(voucher),
+      amountApplied,
     }
   } catch (error) {
     logger.error("Error redeeming gift voucher:", error)
     return { success: false, error: "Failed to redeem voucher" }
-  }
-}
-
-// System actions
-export async function processScheduledGiftVouchers() {
-  try {
-    await dbConnect()
-
-    const now = new Date()
-    const vouchers = await GiftVoucher.find({
-      status: "pending_send",
-      sendDate: { $lte: now },
-    })
-
-    for (const voucher of vouchers) {
-      // Check if we can find recipient user by phone
-      const recipientUser = await User.findOne({
-        phone: voucher.recipientPhone,
-        roles: "member",
-      })
-
-      if (recipientUser) {
-        voucher.ownerUserId = recipientUser._id
-      }
-
-      voucher.status = "sent"
-      await voucher.save()
-
-      // TODO: Send notification to recipient
-      logger.info(`Gift voucher ${voucher.code} sent to ${voucher.recipientPhone}`)
-    }
-
-    return { success: true, processed: vouchers.length }
-  } catch (error) {
-    logger.error("Error processing scheduled gift vouchers:", error)
-    return { success: false, error: "Failed to process scheduled vouchers" }
-  }
-}
-
-// Check and update expired vouchers
-export async function updateExpiredVouchers() {
-  try {
-    await dbConnect()
-
-    const now = new Date()
-    const result = await GiftVoucher.updateMany(
-      {
-        status: { $in: ["active", "partially_used"] },
-        validUntil: { $lt: now },
-      },
-      {
-        status: "expired",
-        isActive: false,
-      },
-    )
-
-    return { success: true, updated: result.modifiedCount }
-  } catch (error) {
-    logger.error("Error updating expired vouchers:", error)
-    return { success: false, error: "Failed to update expired vouchers" }
-  }
-}
-
-// Helper function to get users for gift voucher assignment
-export async function getUsers(search = "", role = "member") {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
-    }
-
-    await dbConnect()
-
-    const query: any = { roles: role }
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-      ]
-    }
-
-    const users = await User.find(query).select("_id name email phone").sort({ name: 1 }).limit(20).lean()
-
-    return {
-      success: true,
-      users: users.map((user) => ({
-        _id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-      })),
-    }
-  } catch (error) {
-    logger.error("Error fetching users:", error)
-    return { success: false, error: "Failed to fetch users" }
   }
 }

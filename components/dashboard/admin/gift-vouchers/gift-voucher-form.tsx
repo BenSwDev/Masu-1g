@@ -1,48 +1,94 @@
 "use client"
-
-import { useState, useEffect } from "react"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/common/ui/form"
 import { Switch } from "@/components/common/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { createGiftVoucher, updateGiftVoucher, getUsers } from "@/actions/gift-voucher-actions"
-import { getTreatments } from "@/actions/treatment-actions"
-import { format } from "date-fns"
-import { useToast } from "@/components/ui/use-toast"
+import {
+  createGiftVoucherByAdmin,
+  updateGiftVoucherByAdmin,
+  type AdminGiftVoucherFormData,
+  type GiftVoucherPlain,
+  getTreatmentsForSelection,
+  getUsersForAdminSelection,
+} from "@/actions/gift-voucher-actions"
+import { format, parseISO } from "date-fns"
+import { useToast } from "@/components/common/ui/use-toast" // Corrected import path
+import { CalendarIcon, Loader2 } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
+import { Calendar } from "@/components/common/ui/calendar"
+import { cn } from "@/lib/utils/utils" // Assuming cn is in utils
 
-export interface GiftVoucherPlain {
-  _id: string
-  code: string
-  voucherType: "treatment" | "monetary"
-  treatmentId?: string
-  selectedDurationId?: string
-  monetaryValue: number
-  remainingAmount: number
-  purchaserUserId: string
-  ownerUserId: string
-  isGift: boolean
-  recipientName?: string
-  recipientPhone?: string
-  greetingMessage?: string
-  sendDate?: Date
-  status: string
-  purchaseDate: Date
-  validFrom: Date
-  validUntil: Date
-  isActive: boolean
-  paymentId?: string
-  usageHistory: Array<{
-    date: Date
-    amountUsed: number
-    orderId?: string
-  }>
-  createdAt?: Date
-  updatedAt?: Date
-}
+// Define Zod schema based on AdminGiftVoucherFormData
+const giftVoucherSchema = z
+  .object({
+    code: z.string().min(3, "Code must be at least 3 characters"),
+    voucherType: z.enum(["treatment", "monetary"]),
+    treatmentId: z.string().optional(),
+    selectedDurationId: z.string().optional(),
+    monetaryValue: z.string().optional(), // String because input type number can be tricky
+    ownerUserId: z.string().min(1, "Owner user is required"),
+    validFrom: z.date({ required_error: "Valid from date is required." }),
+    validUntil: z.date({ required_error: "Valid until date is required." }),
+    isActive: z.boolean().default(true),
+    status: z
+      .enum([
+        "pending_payment",
+        "active",
+        "partially_used",
+        "fully_used",
+        "expired",
+        "pending_send",
+        "sent",
+        "cancelled",
+      ])
+      .default("active"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.voucherType === "monetary") {
+      if (
+        !data.monetaryValue ||
+        isNaN(Number.parseFloat(data.monetaryValue)) ||
+        Number.parseFloat(data.monetaryValue) <= 0
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Monetary value must be a positive number",
+          path: ["monetaryValue"],
+        })
+      }
+    } else if (data.voucherType === "treatment") {
+      if (!data.treatmentId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Treatment is required for treatment voucher",
+          path: ["treatmentId"],
+        })
+      }
+      // Add duration validation if treatment requires it
+    }
+    if (data.validFrom && data.validUntil && data.validUntil < data.validFrom) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Valid until date must be after valid from date",
+        path: ["validUntil"],
+      })
+    }
+  })
+
+type GiftVoucherFormValues = z.infer<typeof giftVoucherSchema>
 
 interface GiftVoucherFormProps {
   initialData?: GiftVoucherPlain
@@ -50,133 +96,118 @@ interface GiftVoucherFormProps {
   onCancel?: () => void
 }
 
-const formSchema = z
-  .object({
-    code: z.string().min(1, "קוד נדרש"),
-    voucherType: z.enum(["treatment", "monetary"], {
-      required_error: "יש לבחור סוג שובר",
-    }),
-    treatmentId: z.string().optional(),
-    selectedDurationId: z.string().optional(),
-    monetaryValue: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-      message: "הערך חייב להיות מספר חיובי",
-    }),
-    ownerUserId: z.string().min(1, "יש לבחור משתמש"),
-    validFrom: z.string().min(1, "תאריך התחלה נדרש"),
-    validUntil: z.string().min(1, "תאריך סיום נדרש"),
-    isActive: z.boolean(),
-  })
-  .refine(
-    (data) => {
-      if (data.voucherType === "treatment" && !data.treatmentId) {
-        return false
-      }
-      return true
-    },
-    {
-      message: "יש לבחור טיפול עבור שובר טיפול",
-      path: ["treatmentId"],
-    },
-  )
+interface TreatmentOption {
+  _id: string
+  name: string
+  price?: number
+  durations: { _id: string; name: string; price: number }[]
+}
+interface UserOption {
+  _id: string
+  name: string
+  email: string
+}
 
 export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVoucherFormProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
-  const [treatments, setTreatments] = useState<any[]>([])
-  const [users, setUsers] = useState<any[]>([])
-  const [selectedTreatment, setSelectedTreatment] = useState<any>(null)
+  const [treatments, setTreatments] = useState<TreatmentOption[]>([])
+  const [users, setUsers] = useState<UserOption[]>([])
+  const [selectedTreatment, setSelectedTreatment] = useState<TreatmentOption | null>(null)
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<GiftVoucherFormValues>({
+    resolver: zodResolver(giftVoucherSchema),
     defaultValues: {
       code: initialData?.code ?? "",
       voucherType: initialData?.voucherType ?? "monetary",
-      treatmentId: initialData?.treatmentId ?? "",
-      selectedDurationId: initialData?.selectedDurationId ?? "",
+      treatmentId: initialData?.treatmentId ?? undefined,
+      selectedDurationId: initialData?.selectedDurationId ?? undefined,
       monetaryValue: initialData?.monetaryValue?.toString() ?? "",
       ownerUserId: initialData?.ownerUserId ?? "",
-      validFrom: initialData?.validFrom ? format(new Date(initialData.validFrom), "yyyy-MM-dd") : "",
-      validUntil: initialData?.validUntil ? format(new Date(initialData.validUntil), "yyyy-MM-dd") : "",
+      validFrom: initialData?.validFrom
+        ? typeof initialData.validFrom === "string"
+          ? parseISO(initialData.validFrom)
+          : initialData.validFrom
+        : new Date(),
+      validUntil: initialData?.validUntil
+        ? typeof initialData.validUntil === "string"
+          ? parseISO(initialData.validUntil)
+          : initialData.validUntil
+        : new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       isActive: initialData?.isActive ?? true,
+      status: initialData?.status ?? "active",
     },
   })
 
-  const watchVoucherType = form.watch("voucherType")
-  const watchTreatmentId = form.watch("treatmentId")
+  const voucherType = form.watch("voucherType")
 
   useEffect(() => {
-    loadTreatments()
-    loadUsers()
-  }, [])
+    async function fetchData() {
+      setIsLoading(true)
+      const [treatmentsRes, usersRes] = await Promise.all([getTreatmentsForSelection(), getUsersForAdminSelection()])
+      if (treatmentsRes.success && treatmentsRes.treatments) {
+        setTreatments(treatmentsRes.treatments)
+        if (initialData?.treatmentId) {
+          const foundTreatment = treatmentsRes.treatments.find((t) => t._id === initialData.treatmentId)
+          if (foundTreatment) setSelectedTreatment(foundTreatment)
+        }
+      } else {
+        toast({ title: "Error", description: "Failed to load treatments.", variant: "destructive" })
+      }
+      if (usersRes.success && usersRes.users) {
+        setUsers(usersRes.users)
+      } else {
+        toast({ title: "Error", description: "Failed to load users.", variant: "destructive" })
+      }
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [toast, initialData?.treatmentId])
 
   useEffect(() => {
-    if (watchTreatmentId) {
-      const treatment = treatments.find((t) => t._id === watchTreatmentId)
-      setSelectedTreatment(treatment)
+    if (voucherType === "monetary") {
+      form.setValue("treatmentId", undefined)
+      form.setValue("selectedDurationId", undefined)
+      setSelectedTreatment(null)
+    } else {
+      form.setValue("monetaryValue", undefined)
     }
-  }, [watchTreatmentId, treatments])
+  }, [voucherType, form])
 
-  async function loadTreatments() {
-    try {
-      const result = await getTreatments()
-      if (result.success && result.treatments) {
-        setTreatments(result.treatments)
-      }
-    } catch (error) {
-      console.error("Failed to load treatments:", error)
-    }
+  const handleTreatmentChange = (treatmentId: string) => {
+    const treatment = treatments.find((t) => t._id === treatmentId)
+    setSelectedTreatment(treatment || null)
+    form.setValue("treatmentId", treatmentId)
+    form.setValue("selectedDurationId", undefined) // Reset duration when treatment changes
   }
 
-  async function loadUsers() {
-    try {
-      const result = await getUsers()
-      if (result.success && result.users) {
-        setUsers(result.users.filter((user) => user.role === "member"))
-      }
-    } catch (error) {
-      console.error("Failed to load users:", error)
-    }
-  }
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: GiftVoucherFormValues) {
     try {
       setIsLoading(true)
-      const formData = new FormData()
-      formData.append("code", values.code)
-      formData.append("voucherType", values.voucherType)
-
-      if (values.voucherType === "treatment" && values.treatmentId) {
-        formData.append("treatmentId", values.treatmentId)
-        if (values.selectedDurationId) {
-          formData.append("selectedDurationId", values.selectedDurationId)
-        }
-      } else if (values.voucherType === "monetary") {
-        formData.append("monetaryValue", values.monetaryValue)
+      const formData: AdminGiftVoucherFormData = {
+        ...values,
+        monetaryValue: values.monetaryValue, // Keep as string for action
+        validFrom: format(values.validFrom, "yyyy-MM-dd"),
+        validUntil: format(values.validUntil, "yyyy-MM-dd"),
       }
 
-      formData.append("ownerUserId", values.ownerUserId)
-      formData.append("validFrom", values.validFrom)
-      formData.append("validUntil", values.validUntil)
-      formData.append("isActive", values.isActive.toString())
-
       const result = initialData
-        ? await updateGiftVoucher(initialData._id, formData)
-        : await createGiftVoucher(formData)
+        ? await updateGiftVoucherByAdmin(initialData._id, formData)
+        : await createGiftVoucherByAdmin(formData)
 
-      if (!result.success) {
-        throw new Error(result.error)
+      if (!result.success || !result.giftVoucher) {
+        throw new Error(result.error || "Operation failed")
       }
 
       toast({
-        title: initialData ? "שובר מתנה עודכן" : "שובר מתנה נוצר",
-        description: initialData ? "שובר המתנה עודכן בהצלחה." : "שובר המתנה נוצר בהצלחה.",
+        title: initialData ? "Gift voucher updated" : "Gift voucher created",
+        description: `Voucher ${result.giftVoucher.code} has been ${initialData ? "updated" : "created"} successfully.`,
       })
-
       onSuccess?.()
     } catch (error) {
       toast({
-        title: "שגיאה",
-        description: error instanceof Error ? error.message : "משהו השתבש",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Something went wrong",
         variant: "destructive",
       })
     } finally {
@@ -186,16 +217,45 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="code"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>קוד</FormLabel>
+              <FormLabel>Code</FormLabel>
               <FormControl>
-                <Input {...field} disabled={isLoading} />
+                <Input {...field} disabled={isLoading} placeholder="e.g., SUMMER2024" />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="ownerUserId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Assign to User (Owner)</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={isLoading || users.length === 0}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a user" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user._id} value={user._id}>
+                      {user.name} ({user.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -206,16 +266,16 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           name="voucherType"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>סוג שובר</FormLabel>
+              <FormLabel>Voucher Type</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="בחר סוג שובר" />
+                    <SelectValue placeholder="Select voucher type" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="monetary">שובר כספי</SelectItem>
-                  <SelectItem value="treatment">שובר טיפול</SelectItem>
+                  <SelectItem value="monetary">Monetary Value</SelectItem>
+                  <SelectItem value="treatment">Specific Treatment</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -223,18 +283,49 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           )}
         />
 
-        {watchVoucherType === "treatment" && (
+        {voucherType === "monetary" && (
+          <FormField
+            control={form.control}
+            name="monetaryValue"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Monetary Value (ILS)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    disabled={isLoading}
+                    placeholder="e.g., 150"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {voucherType === "treatment" && (
           <>
             <FormField
               control={form.control}
               name="treatmentId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>טיפול</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                  <FormLabel>Treatment</FormLabel>
+                  <Select
+                    onValueChange={(value) => {
+                      field.onChange(value)
+                      handleTreatmentChange(value)
+                    }}
+                    defaultValue={field.value}
+                    disabled={isLoading || treatments.length === 0}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="בחר טיפול" />
+                        <SelectValue placeholder="Select a treatment" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -249,24 +340,23 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
                 </FormItem>
               )}
             />
-
-            {selectedTreatment?.durations && selectedTreatment.durations.length > 0 && (
+            {selectedTreatment && selectedTreatment.durations && selectedTreatment.durations.length > 0 && (
               <FormField
                 control={form.control}
                 name="selectedDurationId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>משך זמן</FormLabel>
+                    <FormLabel>Duration</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="בחר משך זמן" />
+                          <SelectValue placeholder="Select duration (if applicable)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {selectedTreatment.durations.map((duration: any) => (
+                        {selectedTreatment.durations.map((duration) => (
                           <SelectItem key={duration._id} value={duration._id}>
-                            {duration.duration} דקות - ₪{duration.price}
+                            {duration.name} - {duration.price} ILS
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -279,38 +369,98 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           </>
         )}
 
-        {watchVoucherType === "monetary" && (
-          <FormField
-            control={form.control}
-            name="monetaryValue"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>ערך כספי (₪)</FormLabel>
-                <FormControl>
-                  <Input type="number" step="0.01" min="150" {...field} disabled={isLoading} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
+        <FormField
+          control={form.control}
+          name="validFrom"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Valid From</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                      disabled={isLoading}
+                    >
+                      {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0)) || isLoading}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <FormField
           control={form.control}
-          name="ownerUserId"
+          name="validUntil"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Valid Until</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant={"outline"}
+                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+                      disabled={isLoading}
+                    >
+                      {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    disabled={(date) => date < (form.getValues("validFrom") || new Date()) || isLoading}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>משתמש יעד</FormLabel>
+              <FormLabel>Status</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="בחר משתמש" />
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {users.map((user) => (
-                    <SelectItem key={user._id} value={user._id}>
-                      {user.firstName} {user.lastName} ({user.email})
+                  {[
+                    "active",
+                    "pending_payment",
+                    "pending_send",
+                    "partially_used",
+                    "fully_used",
+                    "expired",
+                    "cancelled",
+                  ].map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ")}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -322,39 +472,12 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
 
         <FormField
           control={form.control}
-          name="validFrom"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>תקף מתאריך</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} disabled={isLoading} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="validUntil"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>תקף עד תאריך</FormLabel>
-              <FormControl>
-                <Input type="date" {...field} disabled={isLoading} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="isActive"
           render={({ field }) => (
-            <FormItem className="flex items-center justify-between rounded-lg border p-4">
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
               <div className="space-y-0.5">
-                <FormLabel>פעיל</FormLabel>
+                <FormLabel>Is Active (Admin Override)</FormLabel>
+                <FormDescription>Manually activate or deactivate this voucher.</FormDescription>
               </div>
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} disabled={isLoading} />
@@ -363,14 +486,15 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
           )}
         />
 
-        <div className="flex justify-end space-x-2">
+        <div className="flex justify-end space-x-2 pt-4">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-              ביטול
+              Cancel
             </Button>
           )}
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "שומר..." : initialData ? "עדכן" : "צור"}
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isLoading ? "Saving..." : initialData ? "Update Voucher" : "Create Voucher"}
           </Button>
         </div>
       </form>

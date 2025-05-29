@@ -6,11 +6,12 @@ import { authOptions } from "@/lib/auth/auth"
 import GiftVoucher, {
   type IGiftVoucher,
   type GiftVoucherPlain as IGiftVoucherPlain,
-} from "@/lib/db/models/gift-voucher" // Updated import
-import User from "@/lib/db/models/user" // Assuming User model exists
-import Treatment from "@/lib/db/models/treatment" // Assuming Treatment model exists
+} from "@/lib/db/models/gift-voucher"
+import User from "@/lib/db/models/user"
+import Treatment from "@/lib/db/models/treatment"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
+import { notificationManager } from "@/lib/notifications/notification-manager"
 import type { FilterQuery } from "mongoose"
 import mongoose from "mongoose"
 
@@ -136,6 +137,41 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
 
     await dbConnect()
 
+    // --- Begin Input Validation ---
+    if (!data.code || typeof data.code !== "string" || data.code.trim() === "") {
+      return { success: false, error: "Code is required." }
+    }
+    if (!data.voucherType || (data.voucherType !== "monetary" && data.voucherType !== "treatment")) {
+      return { success: false, error: "Valid voucher type is required." }
+    }
+    if (!data.ownerUserId || typeof data.ownerUserId !== "string" || data.ownerUserId.trim() === "") {
+      return { success: false, error: "Owner User ID is required." }
+    }
+    if (!data.validFrom || typeof data.validFrom !== "string" || isNaN(new Date(data.validFrom).getTime())) {
+      return { success: false, error: "Valid 'valid from' date is required." }
+    }
+    if (!data.validUntil || typeof data.validUntil !== "string" || isNaN(new Date(data.validUntil).getTime())) {
+      return { success: false, error: "Valid 'valid until' date is required." }
+    }
+    if (new Date(data.validFrom) >= new Date(data.validUntil)) {
+      return { success: false, error: "'Valid from' date must be before 'valid until' date." }
+    }
+
+    if (data.voucherType === "monetary") {
+      if (data.monetaryValue === undefined || data.monetaryValue === null || data.monetaryValue.trim() === "") {
+        return { success: false, error: "Monetary value is required for monetary voucher." }
+      }
+      const val = Number(data.monetaryValue)
+      if (isNaN(val) || val <= 0) {
+        return { success: false, error: "Invalid monetary value. Must be a positive number." }
+      }
+    } else if (data.voucherType === "treatment") {
+      if (!data.treatmentId || typeof data.treatmentId !== "string" || data.treatmentId.trim() === "") {
+        return { success: false, error: "Treatment ID is required for treatment voucher." }
+      }
+    }
+    // --- End Input Validation ---
+
     const {
       code,
       voucherType,
@@ -210,7 +246,11 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
       giftVoucher: await toGiftVoucherPlain(newVoucher),
     }
   } catch (error) {
-    logger.error("Error creating gift voucher by admin:", error)
+    logger.error("Error creating gift voucher by admin:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     const errorMessage = error instanceof Error ? error.message : "Failed to create gift voucher"
     if (errorMessage.includes("duplicate key error")) {
       return { success: false, error: "Gift voucher code already exists." }
@@ -227,6 +267,34 @@ export async function updateGiftVoucherByAdmin(id: string, data: Partial<AdminGi
     }
 
     await dbConnect()
+
+    // --- Begin Input Validation for Update ---
+    if (data.validFrom && (typeof data.validFrom !== "string" || isNaN(new Date(data.validFrom).getTime()))) {
+      return { success: false, error: "Invalid 'valid from' date." }
+    }
+    if (data.validUntil && (typeof data.validUntil !== "string" || isNaN(new Date(data.validUntil).getTime()))) {
+      return { success: false, error: "Invalid 'valid until' date." }
+    }
+
+    const existingVoucher = await GiftVoucher.findById(id).lean() // Fetch existing to compare dates if one is not provided
+    if (!existingVoucher) {
+      return { success: false, error: "Gift voucher not found" }
+    }
+
+    const checkValidFrom = data.validFrom ? new Date(data.validFrom) : existingVoucher.validFrom
+    const checkValidUntil = data.validUntil ? new Date(data.validUntil) : existingVoucher.validUntil
+
+    if (checkValidFrom >= checkValidUntil) {
+      return { success: false, error: "'Valid from' date must be before 'valid until' date." }
+    }
+
+    if (data.monetaryValue !== undefined) {
+      const val = Number(data.monetaryValue)
+      if (String(data.monetaryValue).trim() === "" || isNaN(val) || val < 0) {
+        return { success: false, error: "Invalid monetary value. Must be a non-negative number." }
+      }
+    }
+    // --- End Input Validation for Update ---
 
     const updateData: any = { ...data }
     if (data.validFrom) updateData.validFrom = new Date(data.validFrom)
@@ -259,7 +327,11 @@ export async function updateGiftVoucherByAdmin(id: string, data: Partial<AdminGi
       giftVoucher: await toGiftVoucherPlain(voucher),
     }
   } catch (error) {
-    logger.error("Error updating gift voucher by admin:", error)
+    logger.error("Error updating gift voucher by admin:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     const errorMessage = error instanceof Error ? error.message : "Failed to update gift voucher"
     if (errorMessage.includes("duplicate key error")) {
       return { success: false, error: "Gift voucher code already exists." }
@@ -285,7 +357,11 @@ export async function deleteGiftVoucher(id: string) {
     revalidatePath("/dashboard/admin/gift-vouchers")
     return { success: true, message: "Gift voucher deleted successfully" }
   } catch (error) {
-    logger.error("Error deleting gift voucher:", error)
+    logger.error("Error deleting gift voucher:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to delete gift voucher" }
   }
 }
@@ -352,7 +428,11 @@ export async function getGiftVouchers(
       },
     }
   } catch (error) {
-    logger.error("Error fetching gift vouchers:", error)
+    logger.error("Error fetching gift vouchers:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return {
       success: false,
       error: "Failed to fetch gift vouchers",
@@ -384,7 +464,11 @@ export async function getTreatmentsForSelection() {
       })),
     }
   } catch (error) {
-    logger.error("Error fetching treatments for selection:", error)
+    logger.error("Error fetching treatments for selection:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to fetch treatments", treatments: [] }
   }
 }
@@ -403,7 +487,11 @@ export async function getUsersForAdminSelection() {
       })),
     }
   } catch (error) {
-    logger.error("Error fetching users for admin selection:", error)
+    logger.error("Error fetching users for admin selection:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to fetch users", users: [] }
   }
 }
@@ -505,7 +593,11 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
       amount: calculatedPrice,
     }
   } catch (error) {
-    logger.error("Error initiating gift voucher purchase:", error)
+    logger.error("Error initiating gift voucher purchase:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to initiate purchase" }
   }
 }
@@ -547,7 +639,11 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
       return { success: false, error: "Payment failed" }
     }
   } catch (error) {
-    logger.error("Error confirming gift voucher purchase:", error)
+    logger.error("Error confirming gift voucher purchase:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to confirm purchase" }
   }
 }
@@ -581,6 +677,27 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
       voucher.sendDate = new Date()
       voucher.status = "sent"
       // In a real implementation, you would send SMS/email notification here
+      try {
+        // Send notification to recipient
+        if (recipientPhone) {
+          await notificationManager.sendNotification(
+            "sms",
+            { value: recipientPhone, name: recipientName },
+            {
+              type: "custom",
+              message: `Hello ${recipientName}, you have received a gift voucher from ${session.user.name || "someone special"}! Your voucher code is: ${voucher.code}. ${greetingMessage || ""}`,
+            },
+          )
+          logger.info(`Gift voucher SMS notification sent to ${recipientPhone} for voucher ${voucher.code}`)
+        }
+      } catch (notificationError) {
+        logger.error("Failed to send gift voucher notification", {
+          error: notificationError,
+          voucherId: voucher._id.toString(),
+          recipientPhone,
+        })
+        // Continue with the process even if notification fails
+      }
     } else {
       voucher.sendDate = new Date(sendDate)
       voucher.status = "pending_send"
@@ -595,7 +712,11 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
       voucher: await toGiftVoucherPlain(voucher),
     }
   } catch (error) {
-    logger.error("Error setting gift details:", error)
+    logger.error("Error setting gift details:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to set gift details" }
   }
 }
@@ -622,7 +743,11 @@ export async function getMemberPurchasedVouchers() {
       giftVouchers: vouchersPlain,
     }
   } catch (error) {
-    logger.error("Error fetching member purchased vouchers:", error)
+    logger.error("Error fetching member purchased vouchers:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to fetch purchased vouchers" }
   }
 }
@@ -654,7 +779,11 @@ export async function getMemberOwnedVouchers() {
       giftVouchers: vouchersPlain,
     }
   } catch (error) {
-    logger.error("Error fetching member owned vouchers:", error)
+    logger.error("Error fetching member owned vouchers:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to fetch owned vouchers" }
   }
 }
@@ -731,7 +860,11 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
       amountApplied,
     }
   } catch (error) {
-    logger.error("Error redeeming gift voucher:", error)
+    logger.error("Error redeeming gift voucher:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
     return { success: false, error: "Failed to redeem voucher" }
   }
 }

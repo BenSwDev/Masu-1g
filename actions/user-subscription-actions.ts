@@ -10,8 +10,19 @@ import PaymentMethod from "@/lib/db/models/payment-method"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 
-// רכישת מנוי - גרסת דמה שתמיד מצליחה
-export async function purchaseSubscription(subscriptionId: string, treatmentId: string, paymentMethodId: string) {
+interface PurchaseSubscriptionParams {
+  subscriptionId: string
+  treatmentId: string
+  paymentMethodId: string
+  selectedDurationMinutes?: number // Optional: for duration-based treatments
+}
+
+export async function purchaseSubscription({
+  subscriptionId,
+  treatmentId,
+  paymentMethodId,
+  selectedDurationMinutes,
+}: PurchaseSubscriptionParams) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || !session.user) {
@@ -20,51 +31,89 @@ export async function purchaseSubscription(subscriptionId: string, treatmentId: 
 
     await dbConnect()
 
-    // שליפת המנוי
     const subscription = await Subscription.findById(subscriptionId)
     if (!subscription || !subscription.isActive) {
-      return { success: false, error: "Subscription not found or inactive" }
+      return { success: false, error: "Subscription package not found or inactive" }
     }
 
-    // שליפת הטיפול
-    const treatment = await Treatment.findById(treatmentId)
+    const treatment = await Treatment.findById(treatmentId).lean() // Use .lean() for plain JS object
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "Treatment not found or inactive" }
     }
 
-    // שליפת אמצעי התשלום
     const paymentMethod = await PaymentMethod.findById(paymentMethodId)
     if (!paymentMethod || paymentMethod.userId.toString() !== session.user.id) {
       return { success: false, error: "Payment method not found or not owned by user" }
     }
 
-    // חישוב תאריך תפוגה
+    let actualTreatmentSessionPrice: number
+    let durationToStore: number | undefined = undefined
+
+    if (treatment.pricingType === "fixed") {
+      if (typeof treatment.fixedPrice !== "number") {
+        return { success: false, error: "Treatment fixed price is not configured correctly." }
+      }
+      actualTreatmentSessionPrice = treatment.fixedPrice
+    } else if (treatment.pricingType === "duration_based") {
+      if (typeof selectedDurationMinutes !== "number") {
+        return { success: false, error: "A duration must be selected for this type of treatment." }
+      }
+      const durationOption = treatment.durations?.find((d) => d.minutes === selectedDurationMinutes && d.isActive)
+      if (!durationOption || typeof durationOption.price !== "number") {
+        return { success: false, error: "Selected duration is invalid, not active, or price is not configured." }
+      }
+      actualTreatmentSessionPrice = durationOption.price
+      durationToStore = selectedDurationMinutes
+    } else {
+      return { success: false, error: "Invalid treatment pricing type." }
+    }
+
+    const paidTreatmentsCount = Math.max(0, subscription.quantity - subscription.bonusQuantity)
+
+    // If paidTreatmentsCount is 0, the subscription might be entirely free or a misconfiguration.
+    // For now, if paidTreatmentsCount is 0, paymentAmount will be 0.
+    // Consider if a minimum paidTreatmentsCount > 0 should be enforced at subscription package creation.
+    if (paidTreatmentsCount === 0 && subscription.quantity > 0) {
+      logger.warn(
+        `Subscription ${subscription.name} (ID: ${subscription._id}) results in 0 paid treatments (quantity: ${subscription.quantity}, bonus: ${subscription.bonusQuantity}). Payment amount will be 0.`,
+      )
+    }
+
+    const paymentAmount = actualTreatmentSessionPrice * paidTreatmentsCount
+
     const purchaseDate = new Date()
     const expiryDate = new Date(purchaseDate)
     expiryDate.setMonth(expiryDate.getMonth() + subscription.validityMonths)
 
-    // יצירת רשומת מנוי למשתמש
-    const userSubscription = new UserSubscription({
+    const newUserSubscription = new UserSubscription({
       userId: session.user.id,
       subscriptionId: subscription._id,
       treatmentId: treatment._id,
+      selectedTreatmentDurationMinutes: durationToStore,
       purchaseDate,
       expiryDate,
-      totalQuantity: subscription.quantity + subscription.bonusQuantity,
-      remainingQuantity: subscription.quantity + subscription.bonusQuantity,
+      totalQuantity: subscription.quantity + subscription.bonusQuantity, // Total uses
+      remainingQuantity: subscription.quantity + subscription.bonusQuantity, // Initially, all uses are remaining
       status: "active",
       paymentMethodId: paymentMethod._id,
-      paymentAmount: treatment.price * subscription.quantity, // Price is treatment_price * base_subscription_quantity
+      paymentAmount: paymentAmount,
     })
 
-    await userSubscription.save()
+    await newUserSubscription.save()
 
     revalidatePath("/dashboard/member/subscriptions")
 
-    return { success: true, userSubscription }
+    return { success: true, userSubscription: newUserSubscription }
   } catch (error) {
-    logger.error("Error purchasing subscription:", error)
-    return { success: false, error: "Failed to purchase subscription" }
+    logger.error("Error purchasing subscription:", {
+      error,
+      subscriptionId,
+      treatmentId,
+      paymentMethodId,
+      selectedDurationMinutes,
+    })
+    const errorMessage = error instanceof Error ? error.message : "Failed to purchase subscription"
+    return { success: false, error: errorMessage }
   }
 }
 
@@ -79,9 +128,9 @@ export async function getUserSubscriptions() {
     await dbConnect()
 
     const userSubscriptions = await UserSubscription.find({ userId: session.user.id })
-      .populate("subscriptionId")
-      .populate("treatmentId")
-      .populate("paymentMethodId")
+      .populate({ path: "subscriptionId", model: Subscription })
+      .populate({ path: "treatmentId", model: Treatment })
+      .populate({ path: "paymentMethodId", model: PaymentMethod })
       .sort({ purchaseDate: -1 })
       .lean()
 
@@ -112,25 +161,22 @@ export async function getAllUserSubscriptions(
 
     await dbConnect()
 
-    // בניית שאילתה
     const query: any = {}
-
     if (options.userId) query.userId = options.userId
     if (options.subscriptionId) query.subscriptionId = options.subscriptionId
     if (options.treatmentId) query.treatmentId = options.treatmentId
     if (options.status) query.status = options.status
+    // Add search functionality later if needed for treatment name or user name
 
-    // עימוד
     const page = options.page || 1
     const limit = options.limit || 10
     const skip = (page - 1) * limit
 
-    // ביצוע השאילתה
     const userSubscriptions = await UserSubscription.find(query)
-      .populate("userId", "name email phone")
-      .populate("subscriptionId")
-      .populate("treatmentId")
-      .populate("paymentMethodId")
+      .populate({ path: "userId", select: "name email phone", model: "User" }) // Assuming 'User' is the model name
+      .populate({ path: "subscriptionId", model: Subscription })
+      .populate({ path: "treatmentId", model: Treatment })
+      .populate({ path: "paymentMethodId", model: PaymentMethod })
       .sort({ purchaseDate: -1 })
       .skip(skip)
       .limit(limit)
@@ -164,19 +210,16 @@ export async function useSubscription(userSubscriptionId: string, quantity = 1) 
 
     await dbConnect()
 
-    // שליפת המנוי
     const userSubscription = await UserSubscription.findById(userSubscriptionId)
 
     if (!userSubscription) {
       return { success: false, error: "Subscription not found" }
     }
 
-    // בדיקה שהמנוי שייך למשתמש או שהמשתמש הוא אדמין
     if (userSubscription.userId.toString() !== session.user.id && !session.user.roles.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
-    // בדיקת סטטוס ויתרה
     if (userSubscription.status !== "active") {
       return { success: false, error: "Subscription is not active" }
     }
@@ -185,18 +228,16 @@ export async function useSubscription(userSubscriptionId: string, quantity = 1) 
       return { success: false, error: "Insufficient remaining quantity" }
     }
 
-    // עדכון כמות נותרת
     userSubscription.remainingQuantity -= quantity
-
-    // עדכון סטטוס אם נגמרה הכמות
     if (userSubscription.remainingQuantity <= 0) {
       userSubscription.status = "depleted"
     }
 
     await userSubscription.save()
-
     revalidatePath("/dashboard/member/subscriptions")
-
+    if (session.user.roles.includes("admin")) {
+      revalidatePath("/dashboard/admin/user-subscriptions")
+    }
     return { success: true, userSubscription }
   } catch (error) {
     logger.error("Error using subscription:", error)
@@ -213,25 +254,23 @@ export async function cancelSubscription(userSubscriptionId: string) {
     }
 
     await dbConnect()
-
-    // שליפת המנוי
     const userSubscription = await UserSubscription.findById(userSubscriptionId)
 
     if (!userSubscription) {
       return { success: false, error: "Subscription not found" }
     }
 
-    // בדיקה שהמנוי שייך למשתמש או שהמשתמש הוא אדמין
     if (userSubscription.userId.toString() !== session.user.id && !session.user.roles.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
-    // עדכון סטטוס
     userSubscription.status = "cancelled"
     await userSubscription.save()
 
     revalidatePath("/dashboard/member/subscriptions")
-
+    if (session.user.roles.includes("admin")) {
+      revalidatePath("/dashboard/admin/user-subscriptions")
+    }
     return { success: true }
   } catch (error) {
     logger.error("Error cancelling subscription:", error)
@@ -241,11 +280,16 @@ export async function cancelSubscription(userSubscriptionId: string) {
 
 export async function deleteUserSubscription(id: string) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
     await dbConnect()
     await UserSubscription.findByIdAndDelete(id)
     revalidatePath("/dashboard/admin/user-subscriptions")
+    return { success: true }
   } catch (error) {
-    console.error("Error deleting user subscription:", error)
-    throw new Error("Failed to delete user subscription")
+    logger.error("Error deleting user subscription:", error)
+    return { success: false, error: "Failed to delete user subscription" }
   }
 }

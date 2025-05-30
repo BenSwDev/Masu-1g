@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { updateWeeklyHours } from "@/actions/working-hours-actions"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/common/ui/card"
@@ -12,84 +12,87 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Loader2, Info } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
-import type { IWorkingHours } from "@/lib/db/models/working-hours" // Ensure this type is correctly defined and imported
-
-type WeeklyHourConfig = IWorkingHours["weeklyHours"][0] & { _id?: string } // Allow _id for client-side keying if needed
 
 interface WeeklyHoursSectionProps {
-  weeklyHours: WeeklyHourConfig[]
+  weeklyHours: any[]
   onRefresh: () => void
 }
 
-const defaultWeeklyHoursTemplate: Omit<WeeklyHourConfig, "_id">[] = [
-  { day: 0, isActive: false, startTime: "09:00", endTime: "17:00" }, // Sunday
-  { day: 1, isActive: true, startTime: "09:00", endTime: "17:00" }, // Monday
-  { day: 2, isActive: true, startTime: "09:00", endTime: "17:00" }, // Tuesday
-  { day: 3, isActive: true, startTime: "09:00", endTime: "17:00" }, // Wednesday
-  { day: 4, isActive: true, startTime: "09:00", endTime: "17:00" }, // Thursday
-  { day: 5, isActive: true, startTime: "09:00", endTime: "14:00" }, // Friday
-  { day: 6, isActive: false, startTime: "09:00", endTime: "17:00" }, // Saturday
+interface HourConfig {
+  day: number
+  isActive: boolean
+  startTime: string
+  endTime: string
+  hasPriceAdjustment: boolean
+  priceAdjustment?: {
+    type: "percentage" | "fixed"
+    value: number
+    reason?: string
+  }
+}
+
+const defaultWeeklyHours: HourConfig[] = [
+  { day: 0, isActive: false, startTime: "09:00", endTime: "17:00", hasPriceAdjustment: false }, // Sunday
+  { day: 1, isActive: true, startTime: "09:00", endTime: "17:00", hasPriceAdjustment: false }, // Monday
+  { day: 2, isActive: true, startTime: "09:00", endTime: "17:00", hasPriceAdjustment: false }, // Tuesday
+  { day: 3, isActive: true, startTime: "09:00", endTime: "17:00", hasPriceAdjustment: false }, // Wednesday
+  { day: 4, isActive: true, startTime: "09:00", endTime: "17:00", hasPriceAdjustment: false }, // Thursday
+  { day: 5, isActive: true, startTime: "09:00", endTime: "14:00", hasPriceAdjustment: false }, // Friday
+  { day: 6, isActive: false, startTime: "09:00", endTime: "17:00", hasPriceAdjustment: false }, // Saturday
 ]
 
 export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectionProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [hours, setHours] = useState<WeeklyHourConfig[]>([])
+  const [hours, setHours] = useState<HourConfig[]>([])
 
   useEffect(() => {
     if (weeklyHours && weeklyHours.length > 0) {
-      const formattedHours = defaultWeeklyHoursTemplate.map((defaultHour) => {
+      const formattedHours = defaultWeeklyHours.map((defaultHour) => {
         const dbHour = weeklyHours.find((h) => h.day === defaultHour.day)
         if (dbHour) {
           return {
-            ...defaultHour,
+            ...defaultHour, // ensure all default fields are present
             ...dbHour,
-            // Ensure priceAdjustment is well-formed or undefined
+            _id: undefined, // remove _id if present from dbHour
+            hasPriceAdjustment: !!dbHour.priceAdjustment,
             priceAdjustment: dbHour.priceAdjustment
               ? {
                   type: dbHour.priceAdjustment.type || "fixed",
                   value: dbHour.priceAdjustment.value || 0,
                   reason: dbHour.priceAdjustment.reason || "",
                 }
-              : undefined, // Explicitly undefined if not present or incomplete
+              : { type: "fixed", value: 0, reason: "" }, // Default structure if toggled on
           }
         }
-        return { ...defaultHour, priceAdjustment: undefined } // Ensure priceAdjustment is defined for new entries
+        return defaultHour
       })
       setHours(formattedHours.sort((a, b) => a.day - b.day))
     } else {
-      setHours(
-        defaultWeeklyHoursTemplate.map((h) => ({ ...h, priceAdjustment: undefined })).sort((a, b) => a.day - b.day),
-      )
+      setHours(defaultWeeklyHours.sort((a, b) => a.day - b.day))
     }
   }, [weeklyHours])
 
   const handleToggleDay = (day: number, isActive: boolean) => {
-    setHours((prevHours) =>
-      prevHours.map((hour) =>
-        hour.day === day
-          ? {
-              ...hour,
-              isActive,
-              priceAdjustment: isActive ? hour.priceAdjustment : undefined, // Clear adjustment if day becomes inactive
-            }
-          : hour,
+    setHours(
+      hours.map((hour) =>
+        hour.day === day ? { ...hour, isActive, hasPriceAdjustment: isActive ? hour.hasPriceAdjustment : false } : hour,
       ),
     )
   }
 
   const handleTimeChange = (day: number, field: "startTime" | "endTime", value: string) => {
-    setHours((prevHours) => prevHours.map((hour) => (hour.day === day ? { ...hour, [field]: value } : hour)))
+    setHours(hours.map((hour) => (hour.day === day ? { ...hour, [field]: value } : hour)))
   }
 
   const handlePriceAdjustmentChange = (
     day: number,
-    field: keyof NonNullable<WeeklyHourConfig["priceAdjustment"]>,
+    field: keyof NonNullable<HourConfig["priceAdjustment"]>,
     value: string | number,
   ) => {
-    setHours((prevHours) =>
-      prevHours.map((hour) => {
+    setHours(
+      hours.map((hour) => {
         if (hour.day === day) {
           const currentAdjustment = hour.priceAdjustment || { type: "fixed", value: 0, reason: "" }
           return {
@@ -106,11 +109,12 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
   }
 
   const handleTogglePriceAdjustment = (day: number, checked: boolean) => {
-    setHours((prevHours) =>
-      prevHours.map((hour) => {
+    setHours(
+      hours.map((hour) => {
         if (hour.day === day) {
           return {
             ...hour,
+            hasPriceAdjustment: checked,
             priceAdjustment: checked ? hour.priceAdjustment || { type: "fixed", value: 0, reason: "" } : undefined,
           }
         }
@@ -122,31 +126,28 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
-      // Prepare data for submission, removing client-side _id if present
-      const hoursToSubmit = hours.map(({ _id, ...h }) => {
+      const hoursToSubmit = hours.map((h) => {
+        const { hasPriceAdjustment, ...rest } = h
         if (!h.isActive) {
-          return { ...h, priceAdjustment: undefined, isActive: false, startTime: "00:00", endTime: "00:00" } // Reset times for inactive
+          // If day is not active, ensure no price adjustment
+          return { ...rest, priceAdjustment: undefined, isActive: false }
         }
-        if (h.priceAdjustment && h.priceAdjustment.value > 0) {
-          return h
+        return {
+          ...rest,
+          priceAdjustment:
+            hasPriceAdjustment && h.priceAdjustment && h.priceAdjustment.value > 0 ? h.priceAdjustment : undefined,
         }
-        return { ...h, priceAdjustment: undefined }
       })
-
-      const result = await updateWeeklyHours(hoursToSubmit as IWorkingHours["weeklyHours"])
-      if (result.success) {
-        toast({
-          title: t("workingHours.updateSuccess"),
-          variant: "success",
-        })
-        onRefresh()
-      } else {
-        throw new Error(result.error || t("workingHours.updateError"))
-      }
+      await updateWeeklyHours(hoursToSubmit)
+      toast({
+        title: t("workingHours.updateSuccess"),
+        variant: "success",
+      })
+      onRefresh()
     } catch (error) {
       toast({
         title: t("common.error"),
-        description: error instanceof Error ? error.message : t("workingHours.updateError"),
+        description: t("workingHours.updateError"),
         variant: "destructive",
       })
     } finally {
@@ -154,20 +155,9 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
     }
   }
 
-  const timeOptions = useMemo(() => {
-    const options = []
-    for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const formattedHour = hour.toString().padStart(2, "0")
-        const formattedMinute = minute.toString().padStart(2, "0")
-        options.push(`${formattedHour}:${formattedMinute}`)
-      }
-    }
-    return options
-  }, [])
+  const timeOptions = generateTimeOptions()
 
-  if (hours.length === 0 && !weeklyHours) {
-    // Distinguish initial load from empty configured hours
+  if (hours.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
@@ -187,23 +177,11 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
       <CardContent className="p-6">
         <div className="space-y-6">
           {hours.map((hour) => (
-            <div key={hour.day} className="p-4 border rounded-md space-y-4 bg-muted/20 dark:bg-muted/30">
-              <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4">
-                <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                  <Switch
-                    checked={hour.isActive}
-                    onCheckedChange={(checked) => handleToggleDay(hour.day, checked)}
-                    id={`day-active-${hour.day}`}
-                    aria-label={`${t(`workingHours.days.${hour.day}`)} ${t("common.active")}`}
-                  />
-                  <label
-                    htmlFor={`day-active-${hour.day}`}
-                    className="text-md font-semibold cursor-pointer min-w-[80px]"
-                  >
-                    {t(`workingHours.days.${hour.day}`)}
-                  </label>
-                </div>
-                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mt-2 sm:mt-0 w-full sm:w-auto">
+            <div key={hour.day} className="p-4 border rounded-md space-y-4 bg-muted/20">
+              <div className="flex flex-col sm:flex-row-reverse sm:items-center sm:justify-between gap-4">
+                {/* Time Selectors Group - will appear on the left in RTL for sm screens */}
+                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mt-2 sm:mt-0">
+                  {/* Start Time Select */}
                   <Select
                     value={hour.startTime}
                     onValueChange={(value) => handleTimeChange(hour.day, "startTime", value)}
@@ -221,7 +199,10 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                       ))}
                     </SelectContent>
                   </Select>
+
                   <span className="text-sm self-center px-1">-</span>
+
+                  {/* End Time Select */}
                   <Select
                     value={hour.endTime}
                     onValueChange={(value) => handleTimeChange(hour.day, "endTime", value)}
@@ -233,7 +214,7 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                     </SelectTrigger>
                     <SelectContent>
                       {timeOptions
-                        .filter((time) => time > hour.startTime || time === "00:00") // Allow 00:00 for next day
+                        .filter((time) => time > hour.startTime)
                         .map((time) => (
                           <SelectItem key={`end-${hour.day}-${time}`} value={time}>
                             {time}
@@ -242,13 +223,29 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Switch and Day Name Group - will appear on the right in RTL for sm screens */}
+                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                  <Switch
+                    checked={hour.isActive}
+                    onCheckedChange={(checked) => handleToggleDay(hour.day, checked)}
+                    id={`day-active-${hour.day}`}
+                    aria-label={`${t(`workingHours.days.${hour.day}`)} ${t("common.active")}`}
+                  />
+                  <label
+                    htmlFor={`day-active-${hour.day}`}
+                    className="text-md font-semibold cursor-pointer min-w-[80px] text-right rtl:text-left"
+                  >
+                    {t(`workingHours.days.${hour.day}`)}
+                  </label>
+                </div>
               </div>
 
               {hour.isActive && (
-                <div className="space-y-3 pt-3 border-t dark:border-slate-700">
-                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                <div className="space-y-3 pt-3 border-t">
+                  <div className="flex items-center space-x-2">
                     <Switch
-                      checked={!!hour.priceAdjustment}
+                      checked={hour.hasPriceAdjustment}
                       onCheckedChange={(checked) => handleTogglePriceAdjustment(hour.day, checked)}
                       id={`price-adj-active-${hour.day}`}
                       aria-label={t("workingHours.priceAdjustment.toggleLabel")}
@@ -262,14 +259,14 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                           <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{t("workingHours.priceAdjustment.weeklyTooltipInfo")}</p>
+                          <p>{t("workingHours.priceAdjustment.tooltipInfo")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
 
-                  {hour.priceAdjustment && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 border rounded-md bg-background dark:bg-slate-800 dark:border-slate-700">
+                  {hour.hasPriceAdjustment && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 border rounded-md bg-background">
                       <div>
                         <label
                           htmlFor={`price-adj-type-${hour.day}`}
@@ -299,7 +296,7 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                           className="block text-sm font-medium text-muted-foreground mb-1"
                         >
                           {t("workingHours.priceAdjustment.value")} (
-                          {hour.priceAdjustment?.type === "percentage" ? "%" : t("common.currencySymbol")})
+                          {hour.priceAdjustment?.type === "percentage" ? "%" : t("common.currency")})
                         </label>
                         <Input
                           id={`price-adj-value-${hour.day}`}
@@ -315,7 +312,7 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                           htmlFor={`price-adj-reason-${hour.day}`}
                           className="block text-sm font-medium text-muted-foreground mb-1"
                         >
-                          {t("workingHours.priceAdjustment.reason")} ({t("common.optional")})
+                          {t("workingHours.priceAdjustment.reason")}
                         </label>
                         <Textarea
                           id={`price-adj-reason-${hour.day}`}
@@ -334,12 +331,24 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
 
           <div className="flex justify-end mt-6">
             <Button onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin rtl:ml-2 rtl:mr-0" />}
-              {t("common.saveChanges")}
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("common.save")}
             </Button>
           </div>
         </div>
       </CardContent>
     </Card>
   )
+}
+
+function generateTimeOptions() {
+  const options = []
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      const formattedHour = hour.toString().padStart(2, "0")
+      const formattedMinute = minute.toString().padStart(2, "0")
+      options.push(`${formattedHour}:${formattedMinute}`)
+    }
+  }
+  return options
 }

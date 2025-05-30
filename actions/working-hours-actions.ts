@@ -3,237 +3,198 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { dbConnect } from "@/lib/db/mongoose"
-import { WorkingHours, type IWorkingHours } from "@/lib/db/models/working-hours"
+import WorkingHoursModel, { type IWorkingHours } from "@/lib/db/models/working-hours" // Corrected import for default export
 import { UserRole } from "@/lib/db/models/user"
 
-// קבלת שעות הפעילות
-export async function getWorkingHours() {
+// Type alias for consistency within this file, matching IWorkingHours
+type WorkingHoursType = IWorkingHours
+
+export async function getWorkingHours(): Promise<{
+  success: boolean
+  data: WorkingHoursType | null
+  error?: string
+}> {
   try {
     await dbConnect()
-
-    const workingHours = await WorkingHours.find().lean()
-
-    // Serialize the data
-    const serializedData = {
-      weeklyHours: workingHours.map((hour) => ({
-        ...hour,
-        _id: hour._id.toString(),
-      })),
-      specialDates: workingHours
-        .filter((hour) => hour.isSpecialDate)
-        .map((date) => ({
-          ...date,
-          _id: date._id.toString(),
-          startTime: date.startTime ? date.startTime.toString() : null,
-          endTime: date.endTime ? date.endTime.toString() : null,
-        })),
-    }
-
-    return { success: true, data: serializedData }
+    const workingHours = await WorkingHoursModel.findOne().lean()
+    return { success: true, data: workingHours as WorkingHoursType | null }
   } catch (error) {
     console.error("Error fetching working hours:", error)
-    return { success: false, error: "Failed to fetch working hours" }
+    return { success: false, data: null, error: "Failed to fetch working hours" }
   }
 }
 
-// עדכון שעות פעילות שבועיות
-export async function updateWeeklyHours(weeklyHours: IWorkingHours["weeklyHours"]) {
+export async function updateWeeklyHours(weeklyHours: IWorkingHours["weeklyHours"]): Promise<{
+  success: boolean
+  data: WorkingHoursType | null
+  error?: string
+}> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
-      throw new Error("Unauthorized")
+      return { success: false, data: null, error: "Unauthorized" }
     }
 
     await dbConnect()
-
-    const workingHours = await WorkingHours.findOneAndUpdate({}, { weeklyHours }, { upsert: true, new: true })
-
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(workingHours)),
-    }
+    const updatedDoc = await WorkingHoursModel.findOneAndUpdate({}, { weeklyHours }, { upsert: true, new: true }).lean()
+    return { success: true, data: updatedDoc as WorkingHoursType | null }
   } catch (error) {
     console.error("Error updating weekly hours:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to update weekly hours",
-    }
+    const errorMessage = error instanceof Error ? error.message : "Failed to update weekly hours"
+    return { success: false, data: null, error: errorMessage }
   }
 }
 
-// הוספת תאריך מיוחד
-export async function addSpecialDate(specialDate: Omit<IWorkingHours["specialDates"][0], "_id">) {
+export async function addSpecialDate(specialDate: Omit<IWorkingHours["specialDates"][0], "_id">): Promise<{
+  success: boolean
+  data: WorkingHoursType | null
+  error?: string
+}> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
-      throw new Error("Unauthorized")
+      return { success: false, data: null, error: "Unauthorized" }
     }
 
     await dbConnect()
-
     const updatePayload: any = { ...specialDate }
-    if (!specialDate.startTime) delete updatePayload.startTime
-    if (!specialDate.endTime) delete updatePayload.endTime
+    // Mongoose handles undefined fields correctly by not setting them if not in schema or no default
 
-    const workingHours = await WorkingHours.findOneAndUpdate(
+    const updatedDoc = await WorkingHoursModel.findOneAndUpdate(
       {},
       { $push: { specialDates: updatePayload } },
       { upsert: true, new: true },
-    )
-
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(workingHours)),
-    }
+    ).lean()
+    return { success: true, data: updatedDoc as WorkingHoursType | null }
   } catch (error) {
     console.error("Error adding special date:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to add special date",
-    }
+    const errorMessage = error instanceof Error ? error.message : "Failed to add special date"
+    return { success: false, data: null, error: errorMessage }
   }
 }
 
-// עדכון תאריך מיוחד
-export async function updateSpecialDate(dateId: string, specialDate: Partial<IWorkingHours["specialDates"][0]>) {
+export async function updateSpecialDate(
+  dateId: string,
+  specialDateData: Partial<IWorkingHours["specialDates"][0]>,
+): Promise<{
+  success: boolean
+  data: WorkingHoursType | null
+  error?: string
+}> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
-      throw new Error("Unauthorized")
+      return { success: false, data: null, error: "Unauthorized" }
     }
 
     await dbConnect()
-
-    // In updateSpecialDate
-    const updatePayload: any = { ...specialDate, _id: dateId } // Ensure _id is preserved for matching
-
-    // If startTime/endTime are explicitly passed as empty or null, treat as unset
-    if (specialDate.startTime === "" || specialDate.startTime === null) {
-      updatePayload.startTime = undefined
-    }
-    if (specialDate.endTime === "" || specialDate.endTime === null) {
-      updatePayload.endTime = undefined
-    }
-
-    // Remove fields that are undefined to avoid setting them as null in MongoDB
-    Object.keys(updatePayload).forEach((key) => {
-      // @ts-ignore
-      if (updatePayload[key] === undefined) {
-        // @ts-ignore
-        delete updatePayload[key]
-      }
-    })
+    const updatePayload: any = { ...specialDateData }
+    delete updatePayload._id // _id is used for query, not in $set
 
     const setOperation: any = {}
+    const unsetOperation: any = {}
+
     for (const key in updatePayload) {
-      if (key !== "_id") {
-        // Don't try to set _id within the subdocument via $
-        setOperation[`specialDates.$.${key}`] = updatePayload[key]
+      if (Object.prototype.hasOwnProperty.call(updatePayload, key)) {
+        // @ts-ignore
+        if (updatePayload[key] === undefined) {
+          // @ts-ignore
+          unsetOperation[`specialDates.$.${key}`] = ""
+        } else {
+          // @ts-ignore
+          setOperation[`specialDates.$.${key}`] = updatePayload[key]
+        }
       }
     }
 
-    // If a field was marked for unsetting (e.g. startTime: undefined)
-    // we need to explicitly $unset it if it exists.
-    const unsetOperation: any = {}
-    if (updatePayload.startTime === undefined) {
-      unsetOperation["specialDates.$.startTime"] = ""
+    const finalUpdateOp: any = {}
+    if (Object.keys(setOperation).length > 0) {
+      finalUpdateOp.$set = setOperation
     }
-    if (updatePayload.endTime === undefined) {
-      unsetOperation["specialDates.$.endTime"] = ""
-    }
-
-    let finalUpdateOp: any = { $set: setOperation }
     if (Object.keys(unsetOperation).length > 0) {
-      finalUpdateOp = { ...finalUpdateOp, $unset: unsetOperation }
+      finalUpdateOp.$unset = unsetOperation
     }
 
-    const workingHours = await WorkingHours.findOneAndUpdate({ "specialDates._id": dateId }, finalUpdateOp, {
+    if (Object.keys(finalUpdateOp).length === 0) {
+      const currentDoc = await WorkingHoursModel.findOne({ "specialDates._id": dateId }).lean()
+      return { success: true, data: currentDoc as WorkingHoursType | null }
+    }
+
+    const updatedDoc = await WorkingHoursModel.findOneAndUpdate({ "specialDates._id": dateId }, finalUpdateOp, {
       new: true,
-    })
+    }).lean()
 
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(workingHours)),
+    if (!updatedDoc) {
+      return { success: false, data: null, error: "Special date not found for update" }
     }
+    return { success: true, data: updatedDoc as WorkingHoursType | null }
   } catch (error) {
     console.error("Error updating special date:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to update special date",
-    }
+    const errorMessage = error instanceof Error ? error.message : "Failed to update special date"
+    return { success: false, data: null, error: errorMessage }
   }
 }
 
-// מחיקת תאריך מיוחד
-export async function deleteSpecialDate(dateId: string) {
+export async function deleteSpecialDate(dateId: string): Promise<{
+  success: boolean
+  data: WorkingHoursType | null
+  error?: string
+}> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
-      throw new Error("Unauthorized")
+      return { success: false, data: null, error: "Unauthorized" }
     }
 
     await dbConnect()
-
-    const workingHours = await WorkingHours.findOneAndUpdate(
+    const updatedDoc = await WorkingHoursModel.findOneAndUpdate(
       {},
       { $pull: { specialDates: { _id: dateId } } },
       { new: true },
-    )
-
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(workingHours)),
-    }
+    ).lean()
+    return { success: true, data: updatedDoc as WorkingHoursType | null }
   } catch (error) {
     console.error("Error deleting special date:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to delete special date",
-    }
+    const errorMessage = error instanceof Error ? error.message : "Failed to delete special date"
+    return { success: false, data: null, error: errorMessage }
   }
 }
 
-// שינוי סטטוס פעילות של תאריך מיוחד
-export async function toggleSpecialDateStatus(dateId: string) {
+export async function toggleSpecialDateStatus(dateId: string): Promise<{
+  success: boolean
+  data: WorkingHoursType | null
+  isActive?: boolean
+  error?: string
+}> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
-      throw new Error("Unauthorized")
+      return { success: false, data: null, error: "Unauthorized" }
     }
 
     await dbConnect()
-
-    // מצא את התאריך המיוחד הנוכחי כדי לקבל את הסטטוס הנוכחי
-    const currentWorkingHours = await WorkingHours.findOne({ "specialDates._id": dateId })
+    const currentWorkingHours = await WorkingHoursModel.findOne({ "specialDates._id": dateId }) // Not lean, need to save
     if (!currentWorkingHours) {
-      throw new Error("Special date not found")
+      return { success: false, data: null, error: "Special date not found" }
     }
 
-    const specialDate = currentWorkingHours.specialDates.find((date) => date._id.toString() === dateId)
+    const specialDate = currentWorkingHours.specialDates.find((date) => date._id?.toString() === dateId)
     if (!specialDate) {
-      throw new Error("Special date not found")
+      return { success: false, data: null, error: "Special date not found in document" }
     }
 
-    // הפוך את הסטטוס
     const newIsActive = !specialDate.isActive
 
-    // עדכן את הסטטוס
-    const workingHours = await WorkingHours.findOneAndUpdate(
+    const updatedDoc = await WorkingHoursModel.findOneAndUpdate(
       { "specialDates._id": dateId },
       { $set: { "specialDates.$.isActive": newIsActive } },
       { new: true },
-    )
+    ).lean()
 
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(workingHours)),
-      isActive: newIsActive,
-    }
+    return { success: true, data: updatedDoc as WorkingHoursType | null, isActive: newIsActive }
   } catch (error) {
     console.error("Error toggling special date status:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to toggle special date status",
-    }
+    const errorMessage = error instanceof Error ? error.message : "Failed to toggle special date status"
+    return { success: false, data: null, error: errorMessage }
   }
 }

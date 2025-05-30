@@ -70,5 +70,6 @@ const WorkingHoursSchema = new Schema<IWorkingHours>(
 
 WorkingHoursSchema.index({ "specialDates.date": 1 })
 
-export const WorkingHours =
+const WorkingHoursModel =
   mongoose.models.WorkingHours || mongoose.model<IWorkingHours>("WorkingHours", WorkingHoursSchema)
+export default WorkingHoursModel

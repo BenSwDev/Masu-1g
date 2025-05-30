@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { addSpecialDate, updateSpecialDate } from "@/actions/working-hours-actions"
 import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/common/ui/card"
 import {
   Form,
   FormControl,
@@ -34,6 +34,8 @@ interface SpecialDateFormProps {
   onCancel: () => void
 }
 
+const USE_DEFAULT_HOURS_VALUE = "--use-default--" // Unique value for "Use default day hours"
+
 export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDateFormProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
@@ -47,9 +49,8 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
       name: z.string().min(2, { message: t("workingHours.specialDate.errors.nameRequired") }),
       description: z.string().optional(),
       isActive: z.boolean().default(true),
-      // Make startTime and endTime optional
-      startTime: z.string().optional(),
-      endTime: z.string().optional(),
+      startTime: z.string().optional(), // Can be USE_DEFAULT_HOURS_VALUE or actual time
+      endTime: z.string().optional(), // Can be USE_DEFAULT_HOURS_VALUE or actual time
       hasPriceAdjustment: z.boolean().default(false),
       priceAdjustmentType: z.enum(["percentage", "fixed"]).optional(),
       priceAdjustmentValue: z.coerce.number().optional(),
@@ -57,7 +58,6 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
     })
     .superRefine((data, ctx) => {
       if (data.hasPriceAdjustment && data.isActive) {
-        // Only validate price adjustment if active
         if (!data.priceAdjustmentType) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -79,22 +79,24 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
           })
         }
       }
-      // If startTime is provided, endTime is required and must be after startTime
-      if (data.startTime && !data.endTime) {
+
+      const actualStartTime = data.startTime && data.startTime !== USE_DEFAULT_HOURS_VALUE ? data.startTime : undefined
+      const actualEndTime = data.endTime && data.endTime !== USE_DEFAULT_HOURS_VALUE ? data.endTime : undefined
+
+      if (actualStartTime && !actualEndTime) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["endTime"],
           message: t("workingHours.specialDate.errors.endTimeRequiredIfStart"),
         })
-      } else if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+      } else if (actualStartTime && actualEndTime && actualStartTime >= actualEndTime) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["endTime"],
           message: t("workingHours.specialDate.errors.endTimeAfterStart"),
         })
       }
-      // If endTime is provided, startTime is required
-      if (data.endTime && !data.startTime) {
+      if (actualEndTime && !actualStartTime) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["startTime"],
@@ -112,9 +114,9 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
       name: specialDate?.name || "",
       description: specialDate?.description || "",
       isActive: specialDate?.isActive ?? true,
-      startTime: specialDate?.startTime || "", // Default to empty string
-      endTime: specialDate?.endTime || "", // Default to empty string
-      hasPriceAdjustment: !!specialDate?.priceAdjustment && specialDate?.isActive, // Check isActive
+      startTime: specialDate?.startTime || USE_DEFAULT_HOURS_VALUE,
+      endTime: specialDate?.endTime || USE_DEFAULT_HOURS_VALUE,
+      hasPriceAdjustment: !!specialDate?.priceAdjustment && (specialDate?.isActive ?? true),
       priceAdjustmentType: specialDate?.priceAdjustment?.type || "fixed",
       priceAdjustmentValue: specialDate?.priceAdjustment?.value || 0,
       priceAdjustmentReason: specialDate?.priceAdjustment?.reason || "",
@@ -124,6 +126,7 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
   const startTimeValue = form.watch("startTime")
   const hasPriceAdjustmentValue = form.watch("hasPriceAdjustment")
   const priceAdjustmentTypeValue = form.watch("priceAdjustmentType")
+  const isActiveValue = form.watch("isActive")
 
   const onSubmit = async (values: SpecialDateFormValues) => {
     try {
@@ -133,10 +136,12 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
 
       const payload: any = {
         ...coreValues,
-        startTime: coreValues.startTime || undefined,
-        endTime: coreValues.endTime || undefined,
+        startTime: coreValues.startTime === USE_DEFAULT_HOURS_VALUE ? undefined : coreValues.startTime,
+        endTime: coreValues.endTime === USE_DEFAULT_HOURS_VALUE ? undefined : coreValues.endTime,
       }
+
       if (
+        isActiveValue && // Only consider price adjustment if the event is active
         hasPriceAdjustment &&
         priceAdjustmentType &&
         priceAdjustmentValue !== undefined &&
@@ -148,13 +153,13 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
           reason: priceAdjustmentReason,
         }
       } else {
-        payload.priceAdjustment = undefined
+        payload.priceAdjustment = undefined // Clear price adjustment if not active or not configured
       }
 
-      if (!values.isActive) {
+      if (!isActiveValue) {
+        // If not active, ensure price adjustment is cleared, and optionally times
         payload.priceAdjustment = undefined
-        // Optionally, also clear times if not active, though backend might handle this
-        // payload.startTime = undefined;
+        // payload.startTime = undefined; // Backend handles this by not setting if undefined
         // payload.endTime = undefined;
       }
 
@@ -189,9 +194,10 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
   const timeOptions = generateTimeOptions()
 
   return (
-    <Card>
+    <Card className="max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle>{specialDate ? t("workingHours.specialDate.edit") : t("workingHours.specialDate.addNew")}</CardTitle>
+        <CardDescription>{t("workingHours.specialDate.formDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="p-6">
         <Form {...form}>
@@ -223,7 +229,7 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0)) && !specialDate} // Allow past dates for editing
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0)) && !specialDate}
                         initialFocus
                         dir={t("common.dir") as "ltr" | "rtl" | undefined}
                       />
@@ -271,7 +277,7 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                     <FormLabel>{t("workingHours.specialDate.fields.startTime")}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value || ""}
+                      value={field.value || USE_DEFAULT_HOURS_VALUE}
                       dir={t("common.dir") as "ltr" | "rtl" | undefined}
                     >
                       <FormControl>
@@ -280,7 +286,9 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">{t("workingHours.specialDate.useDefaultDayHours")}</SelectItem>
+                        <SelectItem value={USE_DEFAULT_HOURS_VALUE}>
+                          {t("workingHours.specialDate.useDefaultDayHours")}
+                        </SelectItem>
                         {timeOptions.map((time) => (
                           <SelectItem key={`start-${time}`} value={time}>
                             {time}
@@ -301,7 +309,7 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                     <FormLabel>{t("workingHours.specialDate.fields.endTime")}</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      value={field.value || ""}
+                      value={field.value || USE_DEFAULT_HOURS_VALUE}
                       dir={t("common.dir") as "ltr" | "rtl" | undefined}
                     >
                       <FormControl>
@@ -310,9 +318,14 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">{t("workingHours.specialDate.useDefaultDayHours")}</SelectItem>
+                        <SelectItem value={USE_DEFAULT_HOURS_VALUE}>
+                          {t("workingHours.specialDate.useDefaultDayHours")}
+                        </SelectItem>
                         {timeOptions
-                          .filter((time) => !startTimeValue || time > startTimeValue) // Allow all if startTime is not set
+                          .filter(
+                            (time) =>
+                              !startTimeValue || startTimeValue === USE_DEFAULT_HOURS_VALUE || time > startTimeValue,
+                          )
                           .map((time) => (
                             <SelectItem key={`end-${time}`} value={time}>
                               {time}
@@ -342,34 +355,40 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
               )}
             />
 
-            {form.watch("isActive") && (
-              <div className="space-y-4 rounded-lg border p-4">
-                <FormField
-                  control={form.control}
-                  name="hasPriceAdjustment"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3">
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} id="hasPriceAdjustmentSwitch" />
-                      </FormControl>
-                      <FormLabel htmlFor="hasPriceAdjustmentSwitch" className="font-medium">
-                        {t("workingHours.priceAdjustment.toggleLabel")}
-                      </FormLabel>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{t("workingHours.priceAdjustment.tooltipInfo")}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </FormItem>
-                  )}
-                />
+            {isActiveValue && (
+              <Card className="p-4 pt-0 border-dashed">
+                <CardHeader className="px-0 pt-4 pb-2">
+                  <FormField
+                    control={form.control}
+                    name="hasPriceAdjustment"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            id="hasPriceAdjustmentSwitch"
+                          />
+                        </FormControl>
+                        <FormLabel htmlFor="hasPriceAdjustmentSwitch" className="font-medium cursor-pointer">
+                          {t("workingHours.priceAdjustment.toggleLabel")}
+                        </FormLabel>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{t("workingHours.priceAdjustment.tooltipInfo")}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </FormItem>
+                    )}
+                  />
+                </CardHeader>
                 {hasPriceAdjustmentValue && (
-                  <>
+                  <CardContent className="p-0 space-y-4">
                     <FormField
                       control={form.control}
                       name="priceAdjustmentType"
@@ -410,9 +429,10 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                             <Input
                               type="number"
                               {...field}
-                              onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
+                              onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
                               placeholder={t("workingHours.priceAdjustment.valuePlaceholder")}
                               min="0"
+                              step="any"
                             />
                           </FormControl>
                           <FormMessage />
@@ -436,17 +456,17 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                         </FormItem>
                       )}
                     />
-                  </>
+                  </CardContent>
                 )}
-              </div>
+              </Card>
             )}
 
-            <div className="flex justify-end space-x-2 pt-4">
+            <div className="flex justify-end space-x-2 rtl:space-x-reverse pt-4">
               <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting && <Loader2 className="mr-2 rtl:ml-2 h-4 w-4 animate-spin" />}
                 {specialDate ? t("common.save") : t("common.create")}
               </Button>
             </div>

@@ -15,16 +15,18 @@ export async function getWorkingHours() {
 
     // Serialize the data
     const serializedData = {
-      weeklyHours: workingHours.map(hour => ({
+      weeklyHours: workingHours.map((hour) => ({
         ...hour,
-        _id: hour._id.toString()
+        _id: hour._id.toString(),
       })),
       specialDates: workingHours
-        .filter(hour => hour.isSpecialDate)
-        .map(date => ({
+        .filter((hour) => hour.isSpecialDate)
+        .map((date) => ({
           ...date,
-          _id: date._id.toString()
-        }))
+          _id: date._id.toString(),
+          startTime: date.startTime ? date.startTime.toString() : null,
+          endTime: date.endTime ? date.endTime.toString() : null,
+        })),
     }
 
     return { success: true, data: serializedData }
@@ -69,9 +71,13 @@ export async function addSpecialDate(specialDate: Omit<IWorkingHours["specialDat
 
     await dbConnect()
 
+    const updatePayload: any = { ...specialDate }
+    if (!specialDate.startTime) delete updatePayload.startTime
+    if (!specialDate.endTime) delete updatePayload.endTime
+
     const workingHours = await WorkingHours.findOneAndUpdate(
       {},
-      { $push: { specialDates: specialDate } },
+      { $push: { specialDates: updatePayload } },
       { upsert: true, new: true },
     )
 
@@ -98,11 +104,52 @@ export async function updateSpecialDate(dateId: string, specialDate: Partial<IWo
 
     await dbConnect()
 
-    const workingHours = await WorkingHours.findOneAndUpdate(
-      { "specialDates._id": dateId },
-      { $set: { "specialDates.$": { ...specialDate, _id: dateId } } },
-      { new: true },
-    )
+    // In updateSpecialDate
+    const updatePayload: any = { ...specialDate, _id: dateId } // Ensure _id is preserved for matching
+
+    // If startTime/endTime are explicitly passed as empty or null, treat as unset
+    if (specialDate.startTime === "" || specialDate.startTime === null) {
+      updatePayload.startTime = undefined
+    }
+    if (specialDate.endTime === "" || specialDate.endTime === null) {
+      updatePayload.endTime = undefined
+    }
+
+    // Remove fields that are undefined to avoid setting them as null in MongoDB
+    Object.keys(updatePayload).forEach((key) => {
+      // @ts-ignore
+      if (updatePayload[key] === undefined) {
+        // @ts-ignore
+        delete updatePayload[key]
+      }
+    })
+
+    const setOperation: any = {}
+    for (const key in updatePayload) {
+      if (key !== "_id") {
+        // Don't try to set _id within the subdocument via $
+        setOperation[`specialDates.$.${key}`] = updatePayload[key]
+      }
+    }
+
+    // If a field was marked for unsetting (e.g. startTime: undefined)
+    // we need to explicitly $unset it if it exists.
+    const unsetOperation: any = {}
+    if (updatePayload.startTime === undefined) {
+      unsetOperation["specialDates.$.startTime"] = ""
+    }
+    if (updatePayload.endTime === undefined) {
+      unsetOperation["specialDates.$.endTime"] = ""
+    }
+
+    let finalUpdateOp: any = { $set: setOperation }
+    if (Object.keys(unsetOperation).length > 0) {
+      finalUpdateOp = { ...finalUpdateOp, $unset: unsetOperation }
+    }
+
+    const workingHours = await WorkingHours.findOneAndUpdate({ "specialDates._id": dateId }, finalUpdateOp, {
+      new: true,
+    })
 
     return {
       success: true,

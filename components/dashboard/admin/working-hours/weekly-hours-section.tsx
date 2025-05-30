@@ -178,26 +178,17 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
         <div className="space-y-6">
           {hours.map((hour) => (
             <div key={hour.day} className="p-4 border rounded-md space-y-4 bg-muted/20">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center space-x-4">
-                  <Switch
-                    checked={hour.isActive}
-                    onCheckedChange={(checked) => handleToggleDay(hour.day, checked)}
-                    id={`day-active-${hour.day}`}
-                    aria-label={`${t(`workingHours.days.${hour.day}`)} ${t("common.active")}`}
-                  />
-                  <label htmlFor={`day-active-${hour.day}`} className="text-md font-semibold cursor-pointer">
-                    {t(`workingHours.days.${hour.day}`)}
-                  </label>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <div className="flex flex-col sm:flex-row-reverse sm:items-center sm:justify-between gap-4">
+                {/* Time Selectors Group - will appear on the left in RTL for sm screens */}
+                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mt-2 sm:mt-0">
+                  {/* Start Time Select */}
                   <Select
                     value={hour.startTime}
                     onValueChange={(value) => handleTimeChange(hour.day, "startTime", value)}
                     disabled={!hour.isActive}
+                    dir={t("common.dir") as "ltr" | "rtl" | undefined}
                   >
-                    <SelectTrigger className="w-full sm:w-36">
+                    <SelectTrigger className="w-full sm:w-[120px] md:w-36">
                       <SelectValue placeholder={t("workingHours.selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -209,14 +200,16 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                     </SelectContent>
                   </Select>
 
-                  <span className="hidden sm:block text-sm self-center">-</span>
+                  <span className="text-sm self-center px-1">-</span>
 
+                  {/* End Time Select */}
                   <Select
                     value={hour.endTime}
                     onValueChange={(value) => handleTimeChange(hour.day, "endTime", value)}
                     disabled={!hour.isActive}
+                    dir={t("common.dir") as "ltr" | "rtl" | undefined}
                   >
-                    <SelectTrigger className="w-full sm:w-36">
+                    <SelectTrigger className="w-full sm:w-[120px] md:w-36">
                       <SelectValue placeholder={t("workingHours.selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -229,6 +222,22 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                         ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Switch and Day Name Group - will appear on the right in RTL for sm screens */}
+                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                  <Switch
+                    checked={hour.isActive}
+                    onCheckedChange={(checked) => handleToggleDay(hour.day, checked)}
+                    id={`day-active-${hour.day}`}
+                    aria-label={`${t(`workingHours.days.${hour.day}`)} ${t("common.active")}`}
+                  />
+                  <label
+                    htmlFor={`day-active-${hour.day}`}
+                    className="text-md font-semibold cursor-pointer min-w-[80px] text-right rtl:text-left"
+                  >
+                    {t(`workingHours.days.${hour.day}`)}
+                  </label>
                 </div>
               </div>
 
@@ -268,6 +277,7 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                         <Select
                           value={hour.priceAdjustment?.type || "fixed"}
                           onValueChange={(value) => handlePriceAdjustmentChange(hour.day, "type", value)}
+                          dir={t("common.dir") as "ltr" | "rtl" | undefined}
                         >
                           <SelectTrigger id={`price-adj-type-${hour.day}`}>
                             <SelectValue placeholder={t("workingHours.priceAdjustment.selectTypePlaceholder")} />

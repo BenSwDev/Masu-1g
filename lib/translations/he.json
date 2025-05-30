@@ -56,6 +56,7 @@
     "processing": "מעבד...",
     "unknownError": "אירעה שגיאה לא ידועה.",
     "failedToLoadTreatments": "שגיאה בטעינת טיפולים.",
+    "dir": "rtl",
     "locale": "he-IL",
     "notSet": "לא הוגדר"
   },
@@ -457,7 +458,7 @@
       }
     },
     "specialDate": {
-      "sectionDescription": "הגדר תאריכים ספציפיים עם שעות פעילות ייחודיות או סגירות, כמו חגים או אירועים מיוחדים. אלו יחליפו את השעות השבועיות הרגילות.",
+      "sectionDescription": "הגדר תאריכים ספציפיים עם שעות פעילות ייחודיות או סגירות (למשל חגים). אם יוגדרו שעות, הן יחליפו את שעות היום הרגילות. אם לא, יחולו שעות היום הרגילות עם התאמת המחיר.",
       "addNew": "הוסף תאריך מיוחד",
       "edit": "ערוך תאריך מיוחד",
       "calendarTitle": "תצוגת לוח שנה",
@@ -488,15 +489,21 @@
       "descriptionPlaceholder": "לדוגמה: סגור לרגל החג, שעות מורחבות לאירוע",
       "selectDate": "בחר תאריך",
       "activeDescription": "אם פעיל, שעות/הגדרות אלו יחולו בתאריך זה.",
+      "updateError": "שגיאה בעדכון תאריך מיוחד",
+      "createError": "שגיאה ביצירת תאריך מיוחד",
+      "selectStartTimeOptional": "שעת התחלה (אופציונלי, לפי יום)",
+      "selectEndTimeOptional": "שעת סיום (אופציונלי, לפי יום)",
+      "useDefaultDayHours": "השתמש בשעות ברירת מחדל של היום",
+      "defaultHoursIndicator": "נעשה שימוש בשעות ברירת המחדל של יום זה בשבוע.",
       "errors": {
         "dateRequired": "תאריך נדרש",
         "nameRequired": "שם האירוע נדרש",
-        "startTimeRequired": "שעת התחלה נדרשת",
-        "endTimeRequired": "שעת סיום נדרשת",
-        "endTimeAfterStart": "שעת הסיום חייבת להיות אחרי שעת ההתחלה"
-      },
-      "updateError": "שגיאה בעדכון תאריך מיוחד",
-      "createError": "שגיאה ביצירת תאריך מיוחד"
+        "startTimeRequired": "שעת התחלה נדרשת אם הוגדרה שעת סיום",
+        "endTimeRequired": "שעת סיום נדרשת אם הוגדרה שעת התחלה",
+        "endTimeAfterStart": "שעת הסיום חייבת להיות אחרי שעת ההתחלה",
+        "endTimeRequiredIfStart": "שעת סיום נדרשת אם הוגדרה שעת התחלה",
+        "startTimeRequiredIfEnd": "שעת התחלה נדרשת אם הוגדרה שעת סיום"
+      }
     }
   },
   "subscriptions": {

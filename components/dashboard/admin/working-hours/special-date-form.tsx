@@ -47,15 +47,17 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
       name: z.string().min(2, { message: t("workingHours.specialDate.errors.nameRequired") }),
       description: z.string().optional(),
       isActive: z.boolean().default(true),
-      startTime: z.string().min(1, { message: t("workingHours.specialDate.errors.startTimeRequired") }),
-      endTime: z.string().min(1, { message: t("workingHours.specialDate.errors.endTimeRequired") }),
+      // Make startTime and endTime optional
+      startTime: z.string().optional(),
+      endTime: z.string().optional(),
       hasPriceAdjustment: z.boolean().default(false),
       priceAdjustmentType: z.enum(["percentage", "fixed"]).optional(),
-      priceAdjustmentValue: z.coerce.number().optional(), // coerce to number
+      priceAdjustmentValue: z.coerce.number().optional(),
       priceAdjustmentReason: z.string().optional(),
     })
     .superRefine((data, ctx) => {
-      if (data.hasPriceAdjustment) {
+      if (data.hasPriceAdjustment && data.isActive) {
+        // Only validate price adjustment if active
         if (!data.priceAdjustmentType) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -77,11 +79,26 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
           })
         }
       }
-      if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+      // If startTime is provided, endTime is required and must be after startTime
+      if (data.startTime && !data.endTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["endTime"],
+          message: t("workingHours.specialDate.errors.endTimeRequiredIfStart"),
+        })
+      } else if (data.startTime && data.endTime && data.startTime >= data.endTime) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["endTime"],
           message: t("workingHours.specialDate.errors.endTimeAfterStart"),
+        })
+      }
+      // If endTime is provided, startTime is required
+      if (data.endTime && !data.startTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["startTime"],
+          message: t("workingHours.specialDate.errors.startTimeRequiredIfEnd"),
         })
       }
     })
@@ -95,9 +112,9 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
       name: specialDate?.name || "",
       description: specialDate?.description || "",
       isActive: specialDate?.isActive ?? true,
-      startTime: specialDate?.startTime || "09:00",
-      endTime: specialDate?.endTime || "17:00",
-      hasPriceAdjustment: !!specialDate?.priceAdjustment,
+      startTime: specialDate?.startTime || "", // Default to empty string
+      endTime: specialDate?.endTime || "", // Default to empty string
+      hasPriceAdjustment: !!specialDate?.priceAdjustment && specialDate?.isActive, // Check isActive
       priceAdjustmentType: specialDate?.priceAdjustment?.type || "fixed",
       priceAdjustmentValue: specialDate?.priceAdjustment?.value || 0,
       priceAdjustmentReason: specialDate?.priceAdjustment?.reason || "",
@@ -114,7 +131,11 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
       const { hasPriceAdjustment, priceAdjustmentType, priceAdjustmentValue, priceAdjustmentReason, ...coreValues } =
         values
 
-      const payload: any = { ...coreValues }
+      const payload: any = {
+        ...coreValues,
+        startTime: coreValues.startTime || undefined,
+        endTime: coreValues.endTime || undefined,
+      }
       if (
         hasPriceAdjustment &&
         priceAdjustmentType &&
@@ -131,8 +152,10 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
       }
 
       if (!values.isActive) {
-        // If not active, ensure no price adjustment
         payload.priceAdjustment = undefined
+        // Optionally, also clear times if not active, though backend might handle this
+        // payload.startTime = undefined;
+        // payload.endTime = undefined;
       }
 
       if (specialDate) {
@@ -202,6 +225,7 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                         onSelect={field.onChange}
                         disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0)) && !specialDate} // Allow past dates for editing
                         initialFocus
+                        dir={t("common.dir") as "ltr" | "rtl" | undefined}
                       />
                     </PopoverContent>
                   </Popover>
@@ -245,13 +269,18 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("workingHours.specialDate.fields.startTime")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                      dir={t("common.dir") as "ltr" | "rtl" | undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t("workingHours.selectTime")} />
+                          <SelectValue placeholder={t("workingHours.specialDate.selectStartTimeOptional")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="">{t("workingHours.specialDate.useDefaultDayHours")}</SelectItem>
                         {timeOptions.map((time) => (
                           <SelectItem key={`start-${time}`} value={time}>
                             {time}
@@ -270,15 +299,20 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("workingHours.specialDate.fields.endTime")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                      dir={t("common.dir") as "ltr" | "rtl" | undefined}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t("workingHours.selectTime")} />
+                          <SelectValue placeholder={t("workingHours.specialDate.selectEndTimeOptional")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="">{t("workingHours.specialDate.useDefaultDayHours")}</SelectItem>
                         {timeOptions
-                          .filter((time) => time > startTimeValue)
+                          .filter((time) => !startTimeValue || time > startTimeValue) // Allow all if startTime is not set
                           .map((time) => (
                             <SelectItem key={`end-${time}`} value={time}>
                               {time}
@@ -342,7 +376,11 @@ export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDat
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t("workingHours.priceAdjustment.type")}</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            dir={t("common.dir") as "ltr" | "rtl" | undefined}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder={t("workingHours.priceAdjustment.selectTypePlaceholder")} />

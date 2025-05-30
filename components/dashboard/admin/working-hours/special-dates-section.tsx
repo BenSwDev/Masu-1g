@@ -33,10 +33,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 interface SpecialDatesSectionProps {
   specialDates: any[]
+  weeklyHours: any[] // Add this prop
   onRefresh: () => void
 }
 
-export function SpecialDatesSection({ specialDates, onRefresh }: SpecialDatesSectionProps) {
+export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: SpecialDatesSectionProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const [isAddingDate, setIsAddingDate] = useState(false)
@@ -216,90 +217,123 @@ export function SpecialDatesSection({ specialDates, onRefresh }: SpecialDatesSec
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredDates.map((specialDate) => (
-                <Card key={specialDate._id} className="flex flex-col">
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{specialDate.name}</CardTitle>
-                      <Badge variant={specialDate.isActive ? "default" : "outline"}>
-                        {specialDate.isActive ? t("common.active") : t("common.inactive")}
-                      </Badge>
-                    </div>
-                    <CardDescription>{formatDateDisplay(specialDate.date)}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pb-3 space-y-2 flex-grow">
-                    {specialDate.description && (
-                      <p className="text-sm text-muted-foreground">{specialDate.description}</p>
-                    )}
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <ClockIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-                      <span>
-                        {formatTime(specialDate.startTime)} - {formatTime(specialDate.endTime)}
-                      </span>
-                    </div>
-                    {specialDate.priceAdjustment && (
-                      <div className="text-sm text-muted-foreground border-t pt-2 mt-2">
-                        <p className="font-medium text-foreground mb-1">{t("workingHours.priceAdjustment.title")}:</p>
-                        <div className="flex items-center">
-                          {specialDate.priceAdjustment.type === "percentage" ? (
-                            <PercentIcon className="h-4 w-4 mr-2 flex-shrink-0 text-primary" />
-                          ) : (
-                            <TagIcon className="h-4 w-4 mr-2 flex-shrink-0 text-primary" />
-                          )}
-                          <span>
-                            {specialDate.priceAdjustment.value}
-                            {specialDate.priceAdjustment.type === "percentage" ? "%" : ` ${t("common.currency")}`}
-                            {` (${t(`workingHours.priceAdjustment.types.${specialDate.priceAdjustment.type}`)})`}
-                          </span>
-                        </div>
-                        {specialDate.priceAdjustment.reason && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-start mt-1">
-                                  <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-blue-500" />
-                                  <p className="truncate italic">{specialDate.priceAdjustment.reason}</p>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="bottom" align="start">
-                                <p className="max-w-xs">{specialDate.priceAdjustment.reason}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
+              {filteredDates.map((specialDate) => {
+                const dayOfWeek = new Date(specialDate.date).getDay()
+                const weeklyDaySetting = weeklyHours.find((wh) => wh.day === dayOfWeek)
+
+                const displayStartTime =
+                  specialDate.startTime ||
+                  (weeklyDaySetting && weeklyDaySetting.isActive ? weeklyDaySetting.startTime : "")
+                const displayEndTime =
+                  specialDate.endTime || (weeklyDaySetting && weeklyDaySetting.isActive ? weeklyDaySetting.endTime : "")
+                const areHoursInherited =
+                  !specialDate.startTime && !specialDate.endTime && weeklyDaySetting && weeklyDaySetting.isActive
+                const isTimeNotSet = !displayStartTime && !displayEndTime
+
+                return (
+                  <Card key={specialDate._id} className="flex flex-col">
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg">{specialDate.name}</CardTitle>
+                        <Badge variant={specialDate.isActive ? "default" : "outline"}>
+                          {specialDate.isActive ? t("common.active") : t("common.inactive")}
+                        </Badge>
                       </div>
-                    )}
-                  </CardContent>
-                  <CardFooter className="flex justify-end space-x-2 border-t pt-3 mt-auto">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          {t("common.actions")}
-                          <ChevronDownIcon className="h-4 w-4 ml-1" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setEditingDate(specialDate)}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          {t("common.edit")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleToggleStatus(specialDate._id, specialDate.isActive)}>
-                          <Power className="h-4 w-4 mr-2" />
-                          {specialDate.isActive ? t("common.deactivate") : t("common.activate")}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => setDateToDelete(specialDate._id)}
-                          className="text-red-500 hover:!text-red-500 focus:!text-red-500"
-                        >
-                          <Trash className="h-4 w-4 mr-2" />
-                          {t("common.delete")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </CardFooter>
-                </Card>
-              ))}
+                      <CardDescription>{formatDateDisplay(specialDate.date)}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-3 space-y-2 flex-grow">
+                      {specialDate.description && (
+                        <p className="text-sm text-muted-foreground">{specialDate.description}</p>
+                      )}
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <ClockIcon className="h-4 w-4 me-2 flex-shrink-0" />
+                        <span>
+                          {isTimeNotSet ? (
+                            t("common.notSet")
+                          ) : (
+                            <>
+                              {formatTime(displayStartTime)} - {formatTime(displayEndTime)}
+                              {areHoursInherited &&
+                                specialDate.isActive && ( // Show indicator only if active and inherited
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Info className="h-3 w-3 ms-1 text-muted-foreground inline-block cursor-help" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>{t("workingHours.specialDate.defaultHoursIndicator")}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                            </>
+                          )}
+                        </span>
+                      </div>
+                      {specialDate.priceAdjustment && (
+                        <div className="text-sm text-muted-foreground border-t pt-2 mt-2">
+                          <p className="font-medium text-foreground mb-1">{t("workingHours.priceAdjustment.title")}:</p>
+                          <div className="flex items-center">
+                            {specialDate.priceAdjustment.type === "percentage" ? (
+                              <PercentIcon className="h-4 w-4 mr-2 flex-shrink-0 text-primary" />
+                            ) : (
+                              <TagIcon className="h-4 w-4 mr-2 flex-shrink-0 text-primary" />
+                            )}
+                            <span>
+                              {specialDate.priceAdjustment.value}
+                              {specialDate.priceAdjustment.type === "percentage" ? "%" : ` ${t("common.currency")}`}
+                              {` (${t(`workingHours.priceAdjustment.types.${specialDate.priceAdjustment.type}`)})`}
+                            </span>
+                          </div>
+                          {specialDate.priceAdjustment.reason && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <div className="flex items-start mt-1">
+                                    <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-blue-500" />
+                                    <p className="truncate italic">{specialDate.priceAdjustment.reason}</p>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom" align="start">
+                                  <p className="max-w-xs">{specialDate.priceAdjustment.reason}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="flex justify-end space-x-2 border-t pt-3 mt-auto">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            {t("common.actions")}
+                            <ChevronDownIcon className="h-4 w-4 ml-1" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditingDate(specialDate)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            {t("common.edit")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleStatus(specialDate._id, specialDate.isActive)}>
+                            <Power className="h-4 w-4 mr-2" />
+                            {specialDate.isActive ? t("common.deactivate") : t("common.activate")}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setDateToDelete(specialDate._id)}
+                            className="text-red-500 hover:!text-red-500 focus:!text-red-500"
+                          >
+                            <Trash className="h-4 w-4 mr-2" />
+                            {t("common.delete")}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </CardFooter>
+                  </Card>
+                )
+              })}
             </div>
           )}
         </div>

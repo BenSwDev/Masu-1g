@@ -56,6 +56,7 @@
     "processing": "Processing...",
     "unknownError": "An unknown error occurred.",
     "failedToLoadTreatments": "Failed to load treatments.",
+    "dir": "ltr",
     "locale": "en-US",
     "notSet": "Not set"
   },
@@ -747,7 +748,7 @@
       }
     },
     "specialDate": {
-      "sectionDescription": "Define specific dates with unique working hours or closures, like holidays or special events. These will override the standard weekly hours.",
+      "sectionDescription": "Define specific dates with unique working hours or closures, like holidays or special events. These will override the standard weekly hours if times are set, or apply price adjustments using default day hours.",
       "addNew": "Add Special Date",
       "edit": "Edit Special Date",
       "calendarTitle": "Calendar View",
@@ -778,15 +779,21 @@
       "descriptionPlaceholder": "e.g., Closed for holiday, Extended hours for event",
       "selectDate": "Select a date",
       "activeDescription": "If active, these hours/settings will apply on this date.",
+      "updateError": "Failed to update special date",
+      "createError": "Failed to create special date",
+      "selectStartTimeOptional": "Start Time (optional, uses day default)",
+      "selectEndTimeOptional": "End Time (optional, uses day default)",
+      "useDefaultDayHours": "Use default day hours",
+      "defaultHoursIndicator": "Using default hours for this day of the week.",
       "errors": {
         "dateRequired": "Date is required",
         "nameRequired": "Event name is required",
-        "startTimeRequired": "Start time is required",
-        "endTimeRequired": "End time is required",
-        "endTimeAfterStart": "End time must be after start time"
-      },
-      "updateError": "Failed to update special date",
-      "createError": "Failed to create special date"
+        "startTimeRequired": "Start time is required if end time is set",
+        "endTimeRequired": "End time is required if start time is set",
+        "endTimeAfterStart": "End time must be after start time",
+        "endTimeRequiredIfStart": "End time is required if start time is set",
+        "startTimeRequiredIfEnd": "Start time is required if end time is set"
+      }
     }
   },
   ":": ":",

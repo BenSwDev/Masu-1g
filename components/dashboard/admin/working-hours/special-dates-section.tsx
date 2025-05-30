@@ -1,11 +1,10 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { deleteSpecialDate, toggleSpecialDateStatus } from "@/actions/working-hours-actions"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { deleteSpecialDate, toggleSpecialDateActiveStatus } from "@/actions/working-hours-actions"
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
-import { Calendar } from "@/components/common/ui/calendar"
 import { SpecialDateForm } from "./special-date-form"
 import { useToast } from "@/components/common/ui/use-toast"
 import {
@@ -18,17 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
-import {
-  PlusIcon,
-  ClockIcon,
-  Edit,
-  Trash,
-  Power,
-  TagIcon,
-  PercentIcon,
-  Info,
-  ChevronDownIcon as LucideChevronDownIcon,
-} from "lucide-react" // Using Lucide's ChevronDown
+import { PlusIcon, EditIcon, TrashIcon, PowerIcon, MoreHorizontalIcon, CalendarDaysIcon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,88 +25,94 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
-import type { ClientSpecialDateConfig, ClientWeeklyHourConfig } from "./types"
-import { Loader2 } from "lucide-react"
+import { DataTable } from "@/components/common/ui/data-table" // Assuming you have a generic DataTable
+import type { ColumnDef } from "@tanstack/react-table"
+import { format } from "date-fns"
+import { he } from "date-fns/locale" // For Hebrew date formatting
+import { ru } from "date-fns/locale" // For Russian date formatting
+import type { ClientWorkingHours } from "@/lib/db/models/working-hours"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 
-/**
- * @interface SpecialDatesSectionProps
- * @description Props for the SpecialDatesSection component.
- * @property {ClientSpecialDateConfig[]} specialDates - Array of current special date configurations.
- * @property {ClientWeeklyHourConfig[]} weeklyHours - Array of weekly hours, used to determine default times if special date times are not set.
- * @property {() => void} onRefresh - Callback function to refresh working hours data.
- */
+type SpecialDateClient = ClientWorkingHours["specialDates"][0]
+type WeeklyHourItemClient = ClientWorkingHours["weeklyHours"][0]
+
 interface SpecialDatesSectionProps {
-  specialDates: ClientSpecialDateConfig[]
-  weeklyHours: ClientWeeklyHourConfig[]
+  specialDates: SpecialDateClient[]
+  weeklyHours: WeeklyHourItemClient[]
   onRefresh: () => void
 }
 
-/**
- * @component SpecialDatesSection
- * @description Component for managing special dates (holidays, events).
- * Allows viewing dates on a calendar, adding, editing, deleting, and toggling status of special dates.
- */
 export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: SpecialDatesSectionProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { toast } = useToast()
-  const [isAddingDate, setIsAddingDate] = useState(false)
-  const [editingDate, setEditingDate] = useState<ClientSpecialDateConfig | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingDate, setEditingDate] = useState<SpecialDateClient | undefined>(undefined)
   const [dateToDelete, setDateToDelete] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false) // General loading state for actions
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  const [isLoadingAction, setIsLoadingAction] = useState(false)
+  const [monthFilter, setMonthFilter] = useState<string>("all")
 
-  const handleAddSuccess = () => {
-    setIsAddingDate(false)
-    onRefresh()
-    // Toast is now shown from the form on successful action call
+  const getDateLocale = () => {
+    switch (i18n.language) {
+      case "he":
+        return he
+      case "ru":
+        return ru
+      default:
+        return undefined // For English or other languages date-fns handles by default
+    }
   }
 
-  const handleEditSuccess = () => {
-    setEditingDate(null)
-    onRefresh()
-    // Toast is now shown from the form
+  const formatDateDisplay = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      return format(date, "PPP", { locale: getDateLocale() })
+    } catch (e) {
+      return dateString // fallback
+    }
   }
 
-  const handleCancelForm = () => {
-    setIsAddingDate(false)
-    setEditingDate(null)
+  const formatTime = (timeString?: string) => {
+    if (!timeString || !timeString.includes(":")) return ""
+    return timeString // Already HH:mm
+  }
+
+  const handleFormSuccess = () => {
+    onRefresh()
+    setIsFormOpen(false)
+    setEditingDate(undefined)
+    // Toast is handled within the form itself
   }
 
   const handleToggleStatus = async (id: string, currentIsActive: boolean) => {
-    setIsLoading(true)
+    setIsLoadingAction(true)
     try {
-      const result = await toggleSpecialDateStatus(id)
+      const result = await toggleSpecialDateActiveStatus(id)
       if (result.success) {
         onRefresh()
         toast({
           title: t("common.success"),
-          description: currentIsActive
-            ? t("workingHours.specialDate.deactivateSuccess")
-            : t("workingHours.specialDate.activateSuccess"),
+          description: t(
+            currentIsActive ? "workingHours.specialDate.deactivateSuccess" : "workingHours.specialDate.activateSuccess",
+          ),
           variant: "success",
         })
       } else {
-        toast({
-          title: t("common.error"),
-          description: result.error || t("workingHours.specialDate.statusUpdateError"),
-          variant: "destructive",
-        })
+        throw new Error(result.error)
       }
     } catch (error) {
       toast({
         title: t("common.error"),
-        description: t("workingHours.specialDate.statusUpdateError"),
+        description: error instanceof Error ? error.message : t("workingHours.specialDate.statusUpdateError"),
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setIsLoadingAction(false)
     }
   }
 
-  const handleDelete = async () => {
+  const handleDeleteConfirm = async () => {
     if (!dateToDelete) return
-    setIsLoading(true)
+    setIsLoadingAction(true)
     try {
       const result = await deleteSpecialDate(dateToDelete)
       if (result.success) {
@@ -128,263 +123,187 @@ export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: Sp
           variant: "success",
         })
       } else {
-        toast({
-          title: t("common.error"),
-          description: result.error || t("workingHours.specialDate.deleteError"),
-          variant: "destructive",
-        })
+        throw new Error(result.error)
       }
     } catch (error) {
       toast({
         title: t("common.error"),
-        description: t("workingHours.specialDate.deleteError"),
+        description: error instanceof Error ? error.message : t("workingHours.specialDate.deleteError"),
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setIsLoadingAction(false)
       setDateToDelete(null)
     }
   }
 
-  const formatDateDisplay = (dateString: string): string => {
-    const date = new Date(dateString) // dateString is ISO string
-    return new Intl.DateTimeFormat((t("common.locale") as string) || "en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }).format(date)
+  const getHoursDisplay = (specialDate: SpecialDateClient): string => {
+    if (specialDate.isClosed) {
+      return t("workingHours.weekly.closed")
+    }
+    if (specialDate.startTime && specialDate.endTime) {
+      return `${formatTime(specialDate.startTime)} - ${formatTime(specialDate.endTime)}`
+    }
+    // Try to get default from weekly hours
+    const dayOfWeek = new Date(specialDate.date).getDay()
+    const weeklyDay = weeklyHours.find((wh) => wh.day === dayOfWeek)
+    if (weeklyDay?.isActive && weeklyDay.startTime && weeklyDay.endTime) {
+      return `${formatTime(weeklyDay.startTime)} - ${formatTime(weeklyDay.endTime)} (${t("workingHours.specialDate.usesWeeklyDefaultShort")})`
+    }
+    return t("common.notSet")
   }
 
-  const formatTime = (timeString?: string): string => {
-    if (!timeString || !timeString.includes(":")) return t("common.notSet")
-    const [hours, minutes] = timeString.split(":")
-    return `${hours}:${minutes}`
+  const getPriceAdjustmentDisplay = (specialDate: SpecialDateClient): string => {
+    if (!specialDate.isActive || !specialDate.priceAdjustment) {
+      return t("workingHours.priceAdjustment.noAdjustment")
+    }
+    const { type, value } = specialDate.priceAdjustment
+    const symbol = type === "percentage" ? "%" : ` ${t("common.currency")}`
+    return `${t(`workingHours.priceAdjustment.types.${type}`)}: ${value}${symbol}`
   }
 
-  const filteredDates = selectedDate
-    ? specialDates.filter((sd) => {
-        const specialDateObj = new Date(sd.date) // sd.date is ISO string
-        return (
-          specialDateObj.getUTCDate() === selectedDate.getUTCDate() &&
-          specialDateObj.getUTCMonth() === selectedDate.getUTCMonth() &&
-          specialDateObj.getUTCFullYear() === selectedDate.getUTCFullYear()
-        )
-      })
-    : specialDates
+  const columns: ColumnDef<SpecialDateClient>[] = useMemo(
+    () => [
+      {
+        accessorKey: "date",
+        header: t("workingHours.specialDate.dateColumn"),
+        cell: ({ row }) => formatDateDisplay(row.original.date),
+      },
+      { accessorKey: "name", header: t("workingHours.specialDate.nameColumn") },
+      {
+        accessorKey: "isActive",
+        header: t("workingHours.specialDate.statusColumn"),
+        cell: ({ row }) => (
+          <Badge variant={row.original.isActive ? "success" : "outline"}>
+            {row.original.isActive ? t("common.active") : t("common.inactive")}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "hours",
+        header: t("workingHours.specialDate.hoursColumn"),
+        cell: ({ row }) => getHoursDisplay(row.original),
+      },
+      {
+        accessorKey: "priceAdjustment",
+        header: t("workingHours.specialDate.priceAdjColumn"),
+        cell: ({ row }) => getPriceAdjustmentDisplay(row.original),
+      },
+      {
+        id: "actions",
+        header: () => <div className="text-right">{t("common.actions")}</div>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" disabled={isLoadingAction}>
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setEditingDate(row.original)
+                    setIsFormOpen(true)
+                  }}
+                  disabled={isLoadingAction}
+                >
+                  <EditIcon className="mr-2 h-4 w-4" />
+                  {t("common.edit")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleToggleStatus(row.original._id!, row.original.isActive)}
+                  disabled={isLoadingAction}
+                >
+                  <PowerIcon className="mr-2 h-4 w-4" />
+                  {row.original.isActive ? t("common.deactivate") : t("common.activate")}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setDateToDelete(row.original._id!)}
+                  className="text-red-600 focus:text-red-600"
+                  disabled={isLoadingAction}
+                >
+                  <TrashIcon className="mr-2 h-4 w-4" />
+                  {t("common.delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ),
+      },
+    ],
+    [t, isLoadingAction, weeklyHours, i18n.language],
+  ) // Add weeklyHours and language to dependencies
 
-  const specialDatesForCalendar = specialDates.map((sd) => new Date(sd.date)) // Convert ISO strings to Date objects
+  const monthOptions = useMemo(() => {
+    const months = new Set<string>()
+    specialDates.forEach((sd) => {
+      const monthYear = format(new Date(sd.date), "yyyy-MM")
+      months.add(monthYear)
+    })
+    return Array.from(months)
+      .sort()
+      .map((my) => ({
+        value: my,
+        label: format(new Date(my + "-01"), "MMMM yyyy", { locale: getDateLocale() }),
+      }))
+  }, [specialDates, i18n.language])
 
-  if (isAddingDate || editingDate) {
-    return (
-      <SpecialDateForm
-        specialDate={editingDate || undefined} // Pass undefined if adding
-        onSuccess={editingDate ? handleEditSuccess : handleAddSuccess}
-        onCancel={handleCancelForm}
-      />
-    )
-  }
+  const filteredSpecialDates = useMemo(() => {
+    if (monthFilter === "all") return specialDates
+    return specialDates.filter((sd) => format(new Date(sd.date), "yyyy-MM") === monthFilter)
+  }, [specialDates, monthFilter])
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <CardTitle>{t("workingHours.specialDates")}</CardTitle>
-        <Button onClick={() => setIsAddingDate(true)} disabled={isLoading}>
-          <PlusIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+        <div className="w-full sm:w-auto">
+          <Select value={monthFilter} onValueChange={setMonthFilter}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder={t("workingHours.specialDate.filterByMonth")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("workingHours.specialDate.allMonths")}</SelectItem>
+              {monthOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button
+          onClick={() => {
+            setEditingDate(undefined)
+            setIsFormOpen(true)
+          }}
+        >
+          <PlusIcon className="mr-2 h-4 w-4" />
           {t("workingHours.specialDate.addNew")}
         </Button>
       </div>
-      <p className="text-sm text-muted-foreground">{t("workingHours.specialDate.sectionDescription")}</p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>{t("workingHours.specialDate.calendarTitle")}</CardTitle>
-            <CardDescription>{t("workingHours.specialDate.calendarDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              className="rounded-md border"
-              dir={t("common.dir") as "ltr" | "rtl" | undefined}
-              modifiers={{
-                special: specialDatesForCalendar,
-              }}
-              modifiersStyles={{
-                special: {
-                  fontWeight: "bold",
-                  backgroundColor: "hsl(var(--primary) / 0.1)",
-                  color: "hsl(var(--primary))",
-                  borderRadius: "var(--radius)",
-                },
-              }}
-            />
-          </CardContent>
-          {selectedDate && (
-            <CardFooter>
-              <Button variant="outline" onClick={() => setSelectedDate(undefined)} className="w-full">
-                {t("workingHours.specialDate.clearSelection")}
-              </Button>
-            </CardFooter>
-          )}
-        </Card>
-
-        <div className="lg:col-span-2 space-y-4">
-          <h3 className="text-lg font-medium">
-            {selectedDate
-              ? `${t("workingHours.specialDate.eventsFor")}: ${formatDateDisplay(selectedDate.toISOString())}`
-              : t("workingHours.specialDate.allEvents")}
-          </h3>
-
-          {filteredDates.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground">
-                  {selectedDate
-                    ? t("workingHours.specialDate.noEventsForSelection")
-                    : t("workingHours.specialDate.noEventsInList")}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredDates.map((specialDateItem) => {
-                const dayOfWeek = new Date(specialDateItem.date).getDay() // specialDateItem.date is ISO string
-                const weeklyDaySetting = weeklyHours.find((wh) => wh.day === dayOfWeek)
-
-                const displayStartTime =
-                  specialDateItem.startTime ||
-                  (weeklyDaySetting && weeklyDaySetting.isActive ? weeklyDaySetting.startTime : undefined)
-                const displayEndTime =
-                  specialDateItem.endTime ||
-                  (weeklyDaySetting && weeklyDaySetting.isActive ? weeklyDaySetting.endTime : undefined)
-
-                const areHoursInherited =
-                  !specialDateItem.startTime &&
-                  !specialDateItem.endTime &&
-                  weeklyDaySetting &&
-                  weeklyDaySetting.isActive
-                const isTimeNotSet = !displayStartTime && !displayEndTime
-
-                return (
-                  <Card key={specialDateItem._id} className="flex flex-col">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">{specialDateItem.name}</CardTitle>
-                        <Badge variant={specialDateItem.isActive ? "default" : "outline"}>
-                          {specialDateItem.isActive ? t("common.active") : t("common.inactive")}
-                        </Badge>
-                      </div>
-                      <CardDescription>{formatDateDisplay(specialDateItem.date)}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-3 space-y-2 flex-grow">
-                      {specialDateItem.description && (
-                        <p className="text-sm text-muted-foreground">{specialDateItem.description}</p>
-                      )}
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <ClockIcon className="h-4 w-4 me-2 rtl:ms-2 rtl:me-0 flex-shrink-0" />
-                        <span>
-                          {isTimeNotSet && !specialDateItem.isActive ? ( // If inactive and no times, show "Not Set" or "Closed"
-                            t("common.inactive") // Or a specific "Closed" message
-                          ) : isTimeNotSet && specialDateItem.isActive ? (
-                            t("common.notSet") // Active but no specific times, implies using default or error
-                          ) : (
-                            <>
-                              {formatTime(displayStartTime)} - {formatTime(displayEndTime)}
-                              {areHoursInherited && specialDateItem.isActive && (
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Info className="h-3 w-3 ms-1 rtl:mr-1 rtl:ms-0 text-muted-foreground inline-block cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>{t("workingHours.specialDate.defaultHoursIndicator")}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              )}
-                            </>
-                          )}
-                        </span>
-                      </div>
-                      {specialDateItem.isActive &&
-                        specialDateItem.priceAdjustment && ( // Only show if active and has adjustment
-                          <div className="text-sm text-muted-foreground border-t pt-2 mt-2">
-                            <p className="font-medium text-foreground mb-1">
-                              {t("workingHours.priceAdjustment.title")}:
-                            </p>
-                            <div className="flex items-center">
-                              {specialDateItem.priceAdjustment.type === "percentage" ? (
-                                <PercentIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 flex-shrink-0 text-primary" />
-                              ) : (
-                                <TagIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 flex-shrink-0 text-primary" />
-                              )}
-                              <span>
-                                {specialDateItem.priceAdjustment.value}
-                                {specialDateItem.priceAdjustment.type === "percentage"
-                                  ? "%"
-                                  : ` ${t("common.currency")}`}
-                                {` (${t(`workingHours.priceAdjustment.types.${specialDateItem.priceAdjustment.type}`)})`}
-                              </span>
-                            </div>
-                            {specialDateItem.priceAdjustment.reason && (
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="flex items-start mt-1">
-                                      <Info className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 mt-0.5 flex-shrink-0 text-blue-500" />
-                                      <p className="truncate italic">{specialDateItem.priceAdjustment.reason}</p>
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="bottom" align="start">
-                                    <p className="max-w-xs">{specialDateItem.priceAdjustment.reason}</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            )}
-                          </div>
-                        )}
-                    </CardContent>
-                    <CardFooter className="flex justify-end space-x-2 rtl:space-x-reverse border-t pt-3 mt-auto">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" disabled={isLoading}>
-                            {t("common.actions")}
-                            <LucideChevronDownIcon className="h-4 w-4 ml-1 rtl:mr-1 rtl:ml-0" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditingDate(specialDateItem)} disabled={isLoading}>
-                            <Edit className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
-                            {t("common.edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleToggleStatus(specialDateItem._id, specialDateItem.isActive)}
-                            disabled={isLoading}
-                          >
-                            <Power className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
-                            {specialDateItem.isActive ? t("common.deactivate") : t("common.activate")}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setDateToDelete(specialDateItem._id)}
-                            className="text-red-500 hover:!text-red-500 focus:!text-red-500"
-                            disabled={isLoading}
-                          >
-                            <Trash className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
-                            {t("common.delete")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </CardFooter>
-                  </Card>
-                )
-              })}
-            </div>
-          )}
+      {filteredSpecialDates.length > 0 ? (
+        <DataTable columns={columns} data={filteredSpecialDates} />
+      ) : (
+        <div className="flex flex-col items-center justify-center rounded-md border border-dashed p-10 text-center">
+          <CalendarDaysIcon className="h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-semibold">{t("workingHours.specialDate.noSpecialDatesHeader")}</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {monthFilter === "all"
+              ? t("workingHours.specialDate.noSpecialDatesYet")
+              : t("workingHours.specialDate.noSpecialDatesForMonth")}
+          </p>
         </div>
-      </div>
+      )}
+
+      <SpecialDateForm
+        isOpen={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        specialDate={editingDate}
+        onSuccess={handleFormSuccess}
+      />
 
       <AlertDialog open={!!dateToDelete} onOpenChange={(open) => !open && setDateToDelete(null)}>
         <AlertDialogContent>
@@ -393,9 +312,14 @@ export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: Sp
             <AlertDialogDescription>{t("workingHours.specialDate.deleteConfirmDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isLoading} className="bg-red-600 hover:bg-red-700">
-              {isLoading ? <Loader2 className="mr-2 rtl:ml-2 h-4 w-4 animate-spin" /> : t("common.delete")}
+            <AlertDialogCancel disabled={isLoadingAction}>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isLoadingAction}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isLoadingAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

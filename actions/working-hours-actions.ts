@@ -3,96 +3,64 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { dbConnect } from "@/lib/db/mongoose"
-import {
-  WorkingHours,
-  type IWorkingHours,
-  type SpecialDateConfig,
-  type WeeklyHourConfig,
-} from "@/lib/db/models/working-hours"
+import { WorkingHours, type IWorkingHours } from "@/lib/db/models/working-hours"
 import { UserRole } from "@/lib/db/models/user"
-import type { SerializedWorkingHoursData } from "@/components/dashboard/admin/working-hours/types" // Import client types for return structure
 
-/**
- * @function getWorkingHours
- * @description Fetches the working hours configuration from the database.
- * Assumes a single document stores all working hours settings.
- * @returns {Promise<{success: boolean, data?: SerializedWorkingHoursData, error?: string}>}
- *          An object indicating success or failure, with data or an error message.
- */
-export async function getWorkingHours(): Promise<{
-  success: boolean
-  data?: SerializedWorkingHoursData
-  error?: string
-}> {
+// Helper to serialize Mongoose document to plain object, converting ObjectId to string
+const serializeDocument = (doc: IWorkingHours | null) => {
+  if (!doc) return null
+  const plainObject = doc.toObject({
+    getters: true, // Apply getters (e.g., virtuals)
+    transform: (doc, ret) => {
+      ret._id = ret._id.toString()
+      if (ret.weeklyHours) {
+        ret.weeklyHours = ret.weeklyHours.map((wh: any) => ({
+          ...wh,
+          _id: wh._id?.toString(),
+        }))
+      }
+      if (ret.specialDates) {
+        ret.specialDates = ret.specialDates.map((sd: any) => ({
+          ...sd,
+          _id: sd._id?.toString(),
+          date: sd.date?.toISOString(), // Ensure date is ISO string
+        }))
+      }
+      if (ret.createdAt) ret.createdAt = ret.createdAt.toISOString()
+      if (ret.updatedAt) ret.updatedAt = ret.updatedAt.toISOString()
+      return ret
+    },
+  })
+  return plainObject
+}
+
+// Get or create working hours document
+async function getOrCreateWorkingHoursDoc(): Promise<IWorkingHours> {
+  await dbConnect()
+  let workingHoursDoc = await WorkingHours.findOne()
+  if (!workingHoursDoc) {
+    workingHoursDoc = new WorkingHours({}) // Default weekly hours will be added by pre-save hook
+    await workingHoursDoc.save()
+  }
+  return workingHoursDoc
+}
+
+// Get all working hours
+export async function getWorkingHoursData() {
   try {
     await dbConnect()
-    const workingHoursDoc = await WorkingHours.findOne().lean<IWorkingHours | null>()
-
-    if (!workingHoursDoc) {
-      // No working hours configured yet, return empty arrays.
-      // Client-side will use its defaults if necessary.
-      return {
-        success: true,
-        data: {
-          weeklyHours: [],
-          specialDates: [],
-        },
-      }
-    }
-
-    const serializedData: SerializedWorkingHoursData = {
-      weeklyHours: workingHoursDoc.weeklyHours.map((hour) => ({
-        _id: hour._id?.toString(),
-        day: hour.day,
-        isActive: hour.isActive,
-        startTime: hour.startTime,
-        endTime: hour.endTime,
-        hasPriceAdjustment: !!hour.priceAdjustment,
-        priceAdjustment: hour.priceAdjustment
-          ? {
-              type: hour.priceAdjustment.type,
-              value: hour.priceAdjustment.value,
-              reason: hour.priceAdjustment.reason,
-            }
-          : undefined,
-      })),
-      specialDates: workingHoursDoc.specialDates.map((date) => ({
-        _id: date._id!.toString(), // Sub-documents in DB should have _id
-        date: date.date.toISOString(),
-        name: date.name,
-        description: date.description,
-        isActive: date.isActive,
-        startTime: date.startTime,
-        endTime: date.endTime,
-        hasPriceAdjustment: !!date.priceAdjustment,
-        priceAdjustment: date.priceAdjustment
-          ? {
-              type: date.priceAdjustment.type,
-              value: date.priceAdjustment.value,
-              reason: date.priceAdjustment.reason,
-            }
-          : undefined,
-      })),
-    }
-
-    return { success: true, data: serializedData }
+    const workingHoursDoc = await getOrCreateWorkingHoursDoc()
+    return { success: true, data: serializeDocument(workingHoursDoc) }
   } catch (error) {
     console.error("Error fetching working hours:", error)
     return { success: false, error: "Failed to fetch working hours" }
   }
 }
 
-/**
- * @function updateWeeklyHours
- * @description Updates the weekly working hours.
- * @param {Omit<ClientWeeklyHourConfig, '_id' | 'hasPriceAdjustment'>[]} weeklyHours - Array of weekly hour configurations from the client.
- *        We expect the raw data structure that can be saved to DB.
- * @returns {Promise<{success: boolean, data?: IWorkingHours, error?: string}>}
- *          Result of the operation.
- */
+// Update weekly hours
 export async function updateWeeklyHours(
-  weeklyHours: Array<Omit<WeeklyHourConfig, "_id">>, // Expecting data structure closer to DB model
-): Promise<{ success: boolean; data?: IWorkingHours; error?: string }> {
+  weeklyHoursUpdates: IWorkingHours["weeklyHours"],
+): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
@@ -100,47 +68,38 @@ export async function updateWeeklyHours(
     }
 
     await dbConnect()
+    const workingHoursDoc = await getOrCreateWorkingHoursDoc()
 
-    // Ensure _id is not passed for subdocuments if they are being replaced entirely
-    const sanitizedWeeklyHours = weeklyHours.map(({ _id, ...rest }) => rest)
+    // Update existing days or add new ones if somehow missing (though pre-save should handle defaults)
+    weeklyHoursUpdates.forEach((updatedDay) => {
+      const dayIndex = workingHoursDoc.weeklyHours.findIndex((d) => d.day === updatedDay.day)
+      if (dayIndex > -1) {
+        workingHoursDoc.weeklyHours[dayIndex] = {
+          ...workingHoursDoc.weeklyHours[dayIndex],
+          ...updatedDay,
+          // Ensure priceAdjustment is explicitly set or unset
+          priceAdjustment: updatedDay.priceAdjustment ? updatedDay.priceAdjustment : undefined,
+        }
+      } else {
+        // This case should ideally not happen if defaults are set
+        workingHoursDoc.weeklyHours.push(updatedDay)
+      }
+    })
+    workingHoursDoc.weeklyHours.sort((a, b) => a.day - b.day) // Ensure order
 
-    const workingHoursDoc = await WorkingHours.findOneAndUpdate(
-      {},
-      { weeklyHours: sanitizedWeeklyHours },
-      { upsert: true, new: true },
-    )
-
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(workingHoursDoc)), // Serialize for client
-    }
+    await workingHoursDoc.save()
+    return { success: true, data: serializeDocument(workingHoursDoc) }
   } catch (error) {
     console.error("Error updating weekly hours:", error)
-    const errorMessage = error instanceof Error ? error.message : "Failed to update weekly hours"
-    return {
-      success: false,
-      error: errorMessage,
-    }
+    const message = error instanceof Error ? error.message : "Failed to update weekly hours"
+    return { success: false, error: message }
   }
 }
 
-/**
- * @typedef SpecialDatePayload
- * @description Payload for adding a new special date. `_id` is omitted as it's generated by DB.
- */
-type SpecialDatePayload = Omit<SpecialDateConfig, "_id" | "date"> & { date: Date | string }
-
-/**
- * @function addSpecialDate
- * @description Adds a new special date to the working hours configuration.
- * @param {SpecialDatePayload} specialDate - The special date data.
- *        `startTime` and `endTime` should be `undefined` if not set, not empty strings.
- *        `priceAdjustment` should be `undefined` if not set.
- * @returns {Promise<{success: boolean, data?: IWorkingHours, error?: string}>} Result.
- */
+// Add a special date
 export async function addSpecialDate(
-  specialDate: SpecialDatePayload,
-): Promise<{ success: boolean; data?: IWorkingHours; error?: string }> {
+  specialDate: Omit<IWorkingHours["specialDates"][0], "_id" | "date"> & { date: string },
+): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
@@ -148,53 +107,31 @@ export async function addSpecialDate(
     }
 
     await dbConnect()
+    const workingHoursDoc = await getOrCreateWorkingHoursDoc()
 
-    // Convert date string to Date object if necessary
-    const payloadForDb: Omit<SpecialDateConfig, "_id"> = {
+    const newSpecialDate = {
       ...specialDate,
       date: new Date(specialDate.date),
-      // startTime, endTime, priceAdjustment are passed as is (can be undefined)
+      startTime: specialDate.startTime || undefined,
+      endTime: specialDate.endTime || undefined,
+      priceAdjustment: specialDate.priceAdjustment ? specialDate.priceAdjustment : undefined,
     }
 
-    const workingHoursDoc = await WorkingHours.findOneAndUpdate(
-      {},
-      { $push: { specialDates: payloadForDb } },
-      { upsert: true, new: true },
-    )
-
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(workingHoursDoc)),
-    }
+    workingHoursDoc.specialDates.push(newSpecialDate as any) // Cast because _id will be added by Mongoose
+    await workingHoursDoc.save()
+    return { success: true, data: serializeDocument(workingHoursDoc) }
   } catch (error) {
     console.error("Error adding special date:", error)
-    const errorMessage = error instanceof Error ? error.message : "Failed to add special date"
-    return {
-      success: false,
-      error: errorMessage,
-    }
+    const message = error instanceof Error ? error.message : "Failed to add special date"
+    return { success: false, error: message }
   }
 }
 
-/**
- * @typedef UpdateSpecialDatePayload
- * @description Payload for updating an existing special date. All fields are partial.
- *              `_id` is used for matching, not for updating the `_id` field itself.
- */
-type UpdateSpecialDatePayload = Partial<Omit<SpecialDateConfig, "_id" | "date">> & { date?: Date | string }
-
-/**
- * @function updateSpecialDate
- * @description Updates an existing special date.
- * @param {string} dateId - The MongoDB _id (as string) of the special date to update.
- * @param {UpdateSpecialDatePayload} specialDateUpdate - The fields to update.
- *        `startTime`/`endTime` as empty string or null will be treated as unsetting the field.
- * @returns {Promise<{success: boolean, data?: IWorkingHours, error?: string}>} Result.
- */
+// Update a special date
 export async function updateSpecialDate(
   dateId: string,
-  specialDateUpdate: UpdateSpecialDatePayload,
-): Promise<{ success: boolean; data?: IWorkingHours; error?: string }> {
+  specialDateUpdate: Partial<Omit<IWorkingHours["specialDates"][0], "_id" | "date"> & { date: string }>,
+): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
@@ -202,154 +139,94 @@ export async function updateSpecialDate(
     }
 
     await dbConnect()
+    const workingHoursDoc = await getOrCreateWorkingHoursDoc()
 
-    const updateFields: Record<string, any> = {}
-    const unsetFields: Record<string, any> = {}
-
-    // Prepare $set and $unset operations
-    for (const key in specialDateUpdate) {
-      if (Object.prototype.hasOwnProperty.call(specialDateUpdate, key)) {
-        const typedKey = key as keyof UpdateSpecialDatePayload
-        let value = specialDateUpdate[typedKey]
-
-        if (typedKey === "date" && value) {
-          value = new Date(value as string | Date)
-        }
-
-        // Handle unsetting optional time fields
-        if ((typedKey === "startTime" || typedKey === "endTime") && (value === "" || value === null)) {
-          unsetFields[`specialDates.$.${typedKey}`] = "" // Value for $unset doesn't matter, "" is conventional
-        } else if (value === undefined) {
-          // If explicitly passed as undefined (e.g. priceAdjustment: undefined)
-          if (typedKey === "priceAdjustment") {
-            unsetFields[`specialDates.$.${typedKey}`] = ""
-          }
-          // Other undefined fields are simply skipped for $set
-        } else {
-          updateFields[`specialDates.$.${typedKey}`] = value
-        }
-      }
-    }
-
-    const finalUpdateOp: any = {}
-    if (Object.keys(updateFields).length > 0) {
-      finalUpdateOp.$set = updateFields
-    }
-    if (Object.keys(unsetFields).length > 0) {
-      finalUpdateOp.$unset = unsetFields
-    }
-
-    if (Object.keys(finalUpdateOp).length === 0) {
-      // Nothing to update
-      const currentDoc = await WorkingHours.findOne({ "specialDates._id": dateId })
-      return { success: true, data: JSON.parse(JSON.stringify(currentDoc)) }
-    }
-
-    const workingHoursDoc = await WorkingHours.findOneAndUpdate({ "specialDates._id": dateId }, finalUpdateOp, {
-      new: true,
-    })
-
-    if (!workingHoursDoc) {
-      return { success: false, error: "Special date not found or update failed" }
-    }
-
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(workingHoursDoc)),
-    }
-  } catch (error) {
-    console.error("Error updating special date:", error)
-    const errorMessage = error instanceof Error ? error.message : "Failed to update special date"
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
-}
-
-/**
- * @function deleteSpecialDate
- * @description Deletes a special date by its ID.
- * @param {string} dateId - The _id (string) of the special date to delete.
- * @returns {Promise<{success: boolean, data?: IWorkingHours, error?: string}>} Result.
- */
-export async function deleteSpecialDate(
-  dateId: string,
-): Promise<{ success: boolean; data?: IWorkingHours; error?: string }> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
-      return { success: false, error: "Unauthorized" }
-    }
-
-    await dbConnect()
-
-    const workingHoursDoc = await WorkingHours.findOneAndUpdate(
-      {}, // Assumes one global working hours document
-      { $pull: { specialDates: { _id: dateId } } },
-      { new: true },
-    )
-
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(workingHoursDoc)),
-    }
-  } catch (error) {
-    console.error("Error deleting special date:", error)
-    const errorMessage = error instanceof Error ? error.message : "Failed to delete special date"
-    return {
-      success: false,
-      error: errorMessage,
-    }
-  }
-}
-
-/**
- * @function toggleSpecialDateStatus
- * @description Toggles the isActive status of a special date.
- * @param {string} dateId - The _id (string) of the special date.
- * @returns {Promise<{success: boolean, data?: IWorkingHours, isActive?: boolean, error?: string}>} Result, including the new isActive state.
- */
-export async function toggleSpecialDateStatus(
-  dateId: string,
-): Promise<{ success: boolean; data?: IWorkingHours; isActive?: boolean; error?: string }> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
-      return { success: false, error: "Unauthorized" }
-    }
-
-    await dbConnect()
-
-    const currentWorkingHours = await WorkingHours.findOne({ "specialDates._id": dateId })
-    if (!currentWorkingHours) {
+    const dateIndex = workingHoursDoc.specialDates.findIndex((sd) => sd._id?.toString() === dateId)
+    if (dateIndex === -1) {
       return { success: false, error: "Special date not found" }
     }
 
-    const specialDate = currentWorkingHours.specialDates.find((date) => date._id!.toString() === dateId)
+    const currentSpecialDate = workingHoursDoc.specialDates[dateIndex]
+
+    // Prepare update, ensuring undefined fields are handled correctly
+    const updatePayload: any = { ...specialDateUpdate }
+    if (specialDateUpdate.date) updatePayload.date = new Date(specialDateUpdate.date)
+
+    // Handle optional fields: if passed as empty string or null, treat as unset (undefined)
+    if (updatePayload.startTime === "" || updatePayload.startTime === null) updatePayload.startTime = undefined
+    if (updatePayload.endTime === "" || updatePayload.endTime === null) updatePayload.endTime = undefined
+
+    // If isClosed is true, ensure times are cleared
+    if (updatePayload.isClosed === true) {
+      updatePayload.startTime = undefined
+      updatePayload.endTime = undefined
+    }
+
+    // Merge updates
+    Object.assign(currentSpecialDate, updatePayload)
+
+    // Ensure priceAdjustment is explicitly set or unset
+    currentSpecialDate.priceAdjustment = updatePayload.priceAdjustment ? updatePayload.priceAdjustment : undefined
+
+    workingHoursDoc.markModified("specialDates") // Important when modifying array elements directly
+    await workingHoursDoc.save()
+    return { success: true, data: serializeDocument(workingHoursDoc) }
+  } catch (error) {
+    console.error("Error updating special date:", error)
+    const message = error instanceof Error ? error.message : "Failed to update special date"
+    return { success: false, error: message }
+  }
+}
+
+// Delete a special date
+export async function deleteSpecialDate(dateId: string): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+    const workingHoursDoc = await getOrCreateWorkingHoursDoc()
+
+    workingHoursDoc.specialDates = workingHoursDoc.specialDates.filter((sd) => sd._id?.toString() !== dateId)
+
+    workingHoursDoc.markModified("specialDates")
+    await workingHoursDoc.save()
+    return { success: true, data: serializeDocument(workingHoursDoc) }
+  } catch (error) {
+    console.error("Error deleting special date:", error)
+    const message = error instanceof Error ? error.message : "Failed to delete special date"
+    return { success: false, error: message }
+  }
+}
+
+// Toggle active status of a special date
+export async function toggleSpecialDateActiveStatus(
+  dateId: string,
+): Promise<{ success: boolean; data?: any; error?: string; isActive?: boolean }> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes(UserRole.ADMIN)) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+    const workingHoursDoc = await getOrCreateWorkingHoursDoc()
+
+    const specialDate = workingHoursDoc.specialDates.find((sd) => sd._id?.toString() === dateId)
     if (!specialDate) {
-      return { success: false, error: "Special date not found in document" }
+      return { success: false, error: "Special date not found" }
     }
 
-    const newIsActive = !specialDate.isActive
+    specialDate.isActive = !specialDate.isActive
 
-    const updatedWorkingHours = await WorkingHours.findOneAndUpdate(
-      { "specialDates._id": dateId },
-      { $set: { "specialDates.$.isActive": newIsActive } },
-      { new: true },
-    )
-
-    return {
-      success: true,
-      data: JSON.parse(JSON.stringify(updatedWorkingHours)),
-      isActive: newIsActive,
-    }
+    workingHoursDoc.markModified("specialDates")
+    await workingHoursDoc.save()
+    return { success: true, data: serializeDocument(workingHoursDoc), isActive: specialDate.isActive }
   } catch (error) {
     console.error("Error toggling special date status:", error)
-    const errorMessage = error instanceof Error ? error.message : "Failed to toggle special date status"
-    return {
-      success: false,
-      error: errorMessage,
-    }
+    const message = error instanceof Error ? error.message : "Failed to toggle special date status"
+    return { success: false, error: message }
   }
 }

@@ -1,73 +1,36 @@
 import mongoose, { Schema, type Document, type Types } from "mongoose"
 
-/**
- * @interface PriceAdjustment
- * @description Defines the structure for price adjustments.
- * @property {('percentage' | 'fixed')} type - The type of adjustment (percentage or fixed amount).
- * @property {number} value - The value of the adjustment. Must be non-negative.
- * @property {string} [reason] - An optional reason for the adjustment.
- */
-export interface PriceAdjustment {
+interface PriceAdjustment {
   type: "percentage" | "fixed"
   value: number
   reason?: string
 }
 
-/**
- * @interface WeeklyHourConfig
- * @description Defines the structure for a single day's weekly working hours configuration within the database.
- * @property {Types.ObjectId} [_id] - Optional MongoDB ObjectId, usually auto-generated for subdocuments.
- * @property {number} day - The day of the week (0 for Sunday, 6 for Saturday).
- * @property {boolean} isActive - Whether the business is open on this day.
- * @property {string} startTime - The opening time (e.g., "09:00").
- * @property {string} endTime - The closing time (e.g., "17:00").
- * @property {PriceAdjustment} [priceAdjustment] - Optional price adjustment for this day.
- */
-export interface WeeklyHourConfig {
+interface WeeklyHourItem {
   _id?: Types.ObjectId
-  day: number
+  day: number // 0 (Sunday) to 6 (Saturday)
   isActive: boolean
-  startTime: string
-  endTime: string
+  startTime: string // HH:mm format
+  endTime: string // HH:mm format
   priceAdjustment?: PriceAdjustment
 }
 
-/**
- * @interface SpecialDateConfig
- * @description Defines the structure for a special date configuration (e.g., holidays, events) within the database.
- * @property {Types.ObjectId} [_id] - Optional MongoDB ObjectId, usually auto-generated for subdocuments.
- * @property {Date} date - The specific date.
- * @property {string} name - The name of the special date/event.
- * @property {string} [description] - An optional description.
- * @property {boolean} isActive - Whether these special settings are active.
- * @property {string} [startTime] - Optional specific start time for this date.
- * @property {string} [endTime] - Optional specific end time for this date.
- * @property {PriceAdjustment} [priceAdjustment] - Optional price adjustment for this special date.
- */
-export interface SpecialDateConfig {
+interface SpecialDateItem {
   _id?: Types.ObjectId
   date: Date
   name: string
   description?: string
   isActive: boolean
-  startTime?: string
-  endTime?: string
+  isClosed?: boolean // New field to explicitly mark as closed, overriding times
+  startTime?: string // HH:mm format, optional
+  endTime?: string // HH:mm format, optional
   priceAdjustment?: PriceAdjustment
 }
 
-/**
- * @interface IWorkingHours
- * @extends Document
- * @description Mongoose document interface for storing working hours configurations.
- *              The `_id` for the document itself is provided by `mongoose.Document`.
- * @property {WeeklyHourConfig[]} weeklyHours - An array of weekly hour configurations for each day.
- * @property {SpecialDateConfig[]} specialDates - An array of special date configurations.
- * @property {Date} createdAt - Timestamp of creation.
- * @property {Date} updatedAt - Timestamp of last update.
- */
 export interface IWorkingHours extends Document {
-  weeklyHours: WeeklyHourConfig[]
-  specialDates: SpecialDateConfig[]
+  _id: Types.ObjectId // Mongoose _id is Types.ObjectId
+  weeklyHours: WeeklyHourItem[]
+  specialDates: SpecialDateItem[]
   createdAt: Date
   updatedAt: Date
 }
@@ -81,28 +44,35 @@ const PriceAdjustmentSchema = new Schema<PriceAdjustment>(
   { _id: false },
 )
 
-const WeeklyHourConfigSchema = new Schema<WeeklyHourConfig>({
-  day: { type: Number, required: true, min: 0, max: 6 },
-  isActive: { type: Boolean, required: true, default: true },
-  startTime: { type: String, required: true },
-  endTime: { type: String, required: true },
-  priceAdjustment: PriceAdjustmentSchema,
-})
+const WeeklyHourItemSchema = new Schema<WeeklyHourItem>(
+  {
+    day: { type: Number, required: true, min: 0, max: 6 },
+    isActive: { type: Boolean, required: true, default: true },
+    startTime: { type: String, required: true, match: /^([01]\d|2[0-3]):([0-5]\d)$/ },
+    endTime: { type: String, required: true, match: /^([01]\d|2[0-3]):([0-5]\d)$/ },
+    priceAdjustment: PriceAdjustmentSchema,
+  },
+  { _id: true },
+) // _id: true will auto-generate ObjectId for subdocuments if not provided
 
-const SpecialDateConfigSchema = new Schema<SpecialDateConfig>({
-  date: { type: Date, required: true },
-  name: { type: String, required: true },
-  description: String,
-  isActive: { type: Boolean, required: true, default: true },
-  startTime: String,
-  endTime: String,
-  priceAdjustment: PriceAdjustmentSchema,
-})
+const SpecialDateItemSchema = new Schema<SpecialDateItem>(
+  {
+    date: { type: Date, required: true },
+    name: { type: String, required: true, trim: true },
+    description: { type: String, trim: true },
+    isActive: { type: Boolean, required: true, default: true },
+    isClosed: { type: Boolean, default: false },
+    startTime: { type: String, match: /^([01]\d|2[0-3]):([0-5]\d)$/ },
+    endTime: { type: String, match: /^([01]\d|2[0-3]):([0-5]\d)$/ },
+    priceAdjustment: PriceAdjustmentSchema,
+  },
+  { _id: true },
+) // _id: true will auto-generate ObjectId for subdocuments
 
 const WorkingHoursSchema = new Schema<IWorkingHours>(
   {
-    weeklyHours: [WeeklyHourConfigSchema],
-    specialDates: [SpecialDateConfigSchema],
+    weeklyHours: [WeeklyHourItemSchema],
+    specialDates: [SpecialDateItemSchema],
   },
   {
     timestamps: true,
@@ -111,5 +81,36 @@ const WorkingHoursSchema = new Schema<IWorkingHours>(
 
 WorkingHoursSchema.index({ "specialDates.date": 1 })
 
+// Ensure weeklyHours always has 7 days, one for each day of the week
+WorkingHoursSchema.pre("save", function (next) {
+  if (this.isNew && this.weeklyHours.length === 0) {
+    const defaultWeeklyHours: WeeklyHourItem[] = [
+      { day: 0, isActive: false, startTime: "09:00", endTime: "17:00" }, // Sunday
+      { day: 1, isActive: true, startTime: "09:00", endTime: "17:00" }, // Monday
+      { day: 2, isActive: true, startTime: "09:00", endTime: "17:00" }, // Tuesday
+      { day: 3, isActive: true, startTime: "09:00", endTime: "17:00" }, // Wednesday
+      { day: 4, isActive: true, startTime: "09:00", endTime: "17:00" }, // Thursday
+      { day: 5, isActive: true, startTime: "09:00", endTime: "14:00" }, // Friday
+      { day: 6, isActive: false, startTime: "09:00", endTime: "17:00" }, // Saturday
+    ]
+    this.weeklyHours = defaultWeeklyHours
+  }
+  // Sort weeklyHours by day to ensure consistent order
+  this.weeklyHours.sort((a, b) => a.day - b.day)
+  next()
+})
+
 export const WorkingHours =
   mongoose.models.WorkingHours || mongoose.model<IWorkingHours>("WorkingHours", WorkingHoursSchema)
+
+// Helper type for client-side data, converting ObjectId to string
+export type ClientWorkingHours = Omit<
+  IWorkingHours,
+  "_id" | "weeklyHours" | "specialDates" | "createdAt" | "updatedAt"
+> & {
+  _id: string
+  weeklyHours: (Omit<WeeklyHourItem, "_id"> & { _id?: string })[]
+  specialDates: (Omit<SpecialDateItem, "_id" | "date"> & { _id?: string; date: string })[]
+  createdAt: string
+  updatedAt: string
+}

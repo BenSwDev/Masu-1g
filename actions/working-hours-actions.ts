@@ -135,14 +135,11 @@ export async function updateSpecialDate(dateId: string, specialDate: Partial<IWo
     // If a field was marked for unsetting (e.g. startTime: undefined)
     // we need to explicitly $unset it if it exists.
     const unsetOperation: any = {}
-    if (specialDate.startTime === undefined) {
+    if (updatePayload.startTime === undefined) {
       unsetOperation["specialDates.$.startTime"] = ""
     }
-    if (specialDate.endTime === undefined) {
+    if (updatePayload.endTime === undefined) {
       unsetOperation["specialDates.$.endTime"] = ""
-    }
-    if (specialDate.priceAdjustment === undefined) {
-      unsetOperation["specialDates.$.priceAdjustment"] = ""
     }
 
     let finalUpdateOp: any = { $set: setOperation }

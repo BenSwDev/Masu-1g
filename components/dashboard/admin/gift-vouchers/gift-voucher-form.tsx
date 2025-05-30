@@ -45,7 +45,7 @@ const giftVoucherSchema = z
     ownerUserId: z.string().min(1, "Owner user is required"),
     validFrom: z.date({ required_error: "Valid from date is required." }),
     validUntil: z.date({ required_error: "Valid until date is required." }),
-    status: z.enum(giftVoucherStatuses).default("active"),
+    status: z.enum(giftVoucherStatuses),
   })
   .superRefine((data, ctx) => {
     if (data.voucherType === "monetary") {
@@ -201,10 +201,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
 
       toast({
         title: initialData ? t("giftVouchers.updateSuccess") : t("giftVouchers.createSuccess"),
-        description: t("giftVouchers.operationSuccessMessage", {
-          code: result.giftVoucher.code,
-          operation: initialData ? t("common.updated") : t("common.created"),
-        }),
+        description: t(`giftVouchers.operationSuccessMessage.${result.giftVoucher.code}.${initialData ? 'updated' : 'created'}`),
       })
       onSuccess?.()
     } catch (error) {

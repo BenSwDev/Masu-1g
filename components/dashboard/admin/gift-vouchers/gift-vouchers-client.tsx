@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
-import { Pagination } from "@/components/common/ui/pagination" // Assuming this is your custom pagination or shadcn's
+import { CustomPagination as Pagination } from "@/components/common/ui/pagination"
 import { useToast } from "@/components/common/ui/use-toast" // Corrected import path
 
 import { GiftVoucherForm } from "./gift-voucher-form"

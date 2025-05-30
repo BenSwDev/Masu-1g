@@ -30,7 +30,7 @@ interface GiftVoucherRowProps {
 const getStatusBadgeVariant = (
   status: GiftVoucherPlain["status"],
   isActive: boolean,
-): "default" | "secondary" | "destructive" | "outline" | "warning" => {
+): "default" | "secondary" | "destructive" | "outline" => {
   if (!isActive) return "secondary" // Overriding status if not active by admin
   switch (status) {
     case "active":
@@ -40,7 +40,7 @@ const getStatusBadgeVariant = (
       return "default" // Could be a different color like blue
     case "pending_payment":
     case "pending_send":
-      return "warning" // Yellow / Orange
+      return "default" // Changed from warning to default
     case "fully_used":
       return "secondary" // Grey / Success variant
     case "expired":
@@ -206,15 +206,15 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
                   if (daysLeft === 0) {
                     return (
                       <span className="text-xs text-orange-500 ml-1">
-                        ({t("giftVouchers.fields.expiresToday", { count: daysLeft })})
+                        ({t(`giftVouchers.fields.expiresToday.${daysLeft}`)})
                       </span>
-                    ) // Add 'expiresToday' key
+                    )
                   }
                   return (
                     <span className="text-xs text-gray-500 ml-1">
-                      ({t("giftVouchers.fields.daysRemainingShortCount", { count: daysLeft })})
+                      ({t(`giftVouchers.fields.daysRemainingShortCount.${daysLeft}`)})
                     </span>
-                  ) // Add 'daysRemainingShortCount' key
+                  )
                 })()}
               </div>
             </TooltipTrigger>

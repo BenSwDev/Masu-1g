@@ -8,11 +8,10 @@ import { Button } from "@/components/common/ui/button"
 import { Switch } from "@/components/common/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Input } from "@/components/common/ui/input"
-import { Textarea } from "@/components/common/ui/textarea"
 import { useToast } from "@/components/common/ui/use-toast"
-import { Loader2, Info, ClockIcon } from "lucide-react"
+import { Loader2, Info } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
-import { cn } from "@/lib/utils/utils"
+import { Separator } from "@/components/common/ui/separator"
 
 interface WeeklyHoursSectionProps {
   weeklyHours: any[]
@@ -100,7 +99,7 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
             ...hour,
             priceAdjustment: {
               ...currentAdjustment,
-              [field]: field === "value" ? Number.parseFloat(String(value)) || 0 : value,
+              [field]: field === "value" ? (value === "" ? null : Number(value)) : value,
             },
           }
         }
@@ -135,7 +134,9 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
         return {
           ...rest,
           priceAdjustment:
-            hasPriceAdjustment && h.priceAdjustment && h.priceAdjustment.value > 0 ? h.priceAdjustment : undefined,
+            hasPriceAdjustment && h.priceAdjustment && h.priceAdjustment.value != null && h.priceAdjustment.value >= 0
+              ? h.priceAdjustment
+              : undefined,
         }
       })
       await updateWeeklyHours(hoursToSubmit)
@@ -161,6 +162,10 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
   if (hours.length === 0) {
     return (
       <Card>
+        <CardHeader>
+          <CardTitle>{t("workingHours.weeklyHours")}</CardTitle>
+          <CardDescription>{t("workingHours.weeklyDescription")}</CardDescription>
+        </CardHeader>
         <CardContent className="p-6 text-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           <p className="text-sm text-muted-foreground mt-2">{t("common.loading")}</p>
@@ -176,13 +181,10 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
         <CardDescription>{t("workingHours.weeklyDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="space-y-6">
+        <div className="space-y-8">
           {hours.map((hour) => (
-            <Card
-              key={hour.day}
-              className={cn("p-4 transition-all", hour.isActive ? "bg-card" : "bg-muted/50 opacity-70")}
-            >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <Card key={hour.day} className="p-6 shadow-sm">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                 <div className="flex items-center space-x-3 rtl:space-x-reverse">
                   <Switch
                     checked={hour.isActive}
@@ -192,26 +194,20 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                   />
                   <label
                     htmlFor={`day-active-${hour.day}`}
-                    className="text-lg font-semibold cursor-pointer min-w-[80px]"
+                    className="text-lg font-semibold cursor-pointer min-w-[100px]"
                   >
                     {t(`workingHours.days.${hour.day}`)}
                   </label>
                 </div>
 
-                <div
-                  className={cn(
-                    "flex flex-col sm:flex-row items-center gap-2 sm:gap-4 transition-opacity",
-                    !hour.isActive && "opacity-50 pointer-events-none",
-                  )}
-                >
-                  <ClockIcon className="h-5 w-5 text-muted-foreground hidden sm:block" />
+                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
                   <Select
                     value={hour.startTime}
                     onValueChange={(value) => handleTimeChange(hour.day, "startTime", value)}
                     disabled={!hour.isActive}
                     dir={t("common.dir") as "ltr" | "rtl" | undefined}
                   >
-                    <SelectTrigger className="w-full sm:w-32">
+                    <SelectTrigger className="w-full sm:w-[130px]">
                       <SelectValue placeholder={t("workingHours.selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -223,7 +219,7 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                     </SelectContent>
                   </Select>
 
-                  <span className="text-muted-foreground">-</span>
+                  <span className="text-muted-foreground self-center px-1">–</span>
 
                   <Select
                     value={hour.endTime}
@@ -231,7 +227,7 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
                     disabled={!hour.isActive}
                     dir={t("common.dir") as "ltr" | "rtl" | undefined}
                   >
-                    <SelectTrigger className="w-full sm:w-32">
+                    <SelectTrigger className="w-full sm:w-[130px]">
                       <SelectValue placeholder={t("workingHours.selectTime")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -248,97 +244,99 @@ export function WeeklyHoursSection({ weeklyHours, onRefresh }: WeeklyHoursSectio
               </div>
 
               {hour.isActive && (
-                <div className="mt-4 pt-4 border-t border-dashed space-y-3">
-                  <div className="flex items-center space-x-2 rtl:space-x-reverse">
-                    <Switch
-                      checked={hour.hasPriceAdjustment}
-                      onCheckedChange={(checked) => handleTogglePriceAdjustment(hour.day, checked)}
-                      id={`price-adj-active-${hour.day}`}
-                      aria-label={t("workingHours.priceAdjustment.toggleLabel")}
-                    />
-                    <label htmlFor={`price-adj-active-${hour.day}`} className="text-sm font-medium cursor-pointer">
-                      {t("workingHours.priceAdjustment.toggleLabel")}
-                    </label>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{t("workingHours.priceAdjustment.tooltipInfo")}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-
-                  {hour.hasPriceAdjustment && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 border rounded-md bg-background shadow-sm">
-                      <div>
-                        <label
-                          htmlFor={`price-adj-type-${hour.day}`}
-                          className="block text-xs font-medium text-muted-foreground mb-1"
-                        >
-                          {t("workingHours.priceAdjustment.type")}
-                        </label>
-                        <Select
-                          value={hour.priceAdjustment?.type || "fixed"}
-                          onValueChange={(value) => handlePriceAdjustmentChange(hour.day, "type", value)}
-                          dir={t("common.dir") as "ltr" | "rtl" | undefined}
-                        >
-                          <SelectTrigger id={`price-adj-type-${hour.day}`}>
-                            <SelectValue placeholder={t("workingHours.priceAdjustment.selectTypePlaceholder")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="fixed">{t("workingHours.priceAdjustment.types.fixed")}</SelectItem>
-                            <SelectItem value="percentage">
-                              {t("workingHours.priceAdjustment.types.percentage")}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label
-                          htmlFor={`price-adj-value-${hour.day}`}
-                          className="block text-xs font-medium text-muted-foreground mb-1"
-                        >
-                          {t("workingHours.priceAdjustment.value")} (
-                          {hour.priceAdjustment?.type === "percentage" ? "%" : t("common.currency")})
-                        </label>
-                        <Input
-                          id={`price-adj-value-${hour.day}`}
-                          type="number"
-                          value={hour.priceAdjustment?.value || 0}
-                          onChange={(e) => handlePriceAdjustmentChange(hour.day, "value", e.target.value)}
-                          placeholder={t("workingHours.priceAdjustment.valuePlaceholder")}
-                          min="0"
-                          step="any"
-                        />
-                      </div>
-                      <div className="md:col-span-3">
-                        <label
-                          htmlFor={`price-adj-reason-${hour.day}`}
-                          className="block text-xs font-medium text-muted-foreground mb-1"
-                        >
-                          {t("workingHours.priceAdjustment.reason")}
-                        </label>
-                        <Textarea
-                          id={`price-adj-reason-${hour.day}`}
-                          value={hour.priceAdjustment?.reason || ""}
-                          onChange={(e) => handlePriceAdjustmentChange(hour.day, "reason", e.target.value)}
-                          placeholder={t("workingHours.priceAdjustment.reasonPlaceholder")}
-                          rows={2}
-                        />
-                      </div>
+                <>
+                  <Separator className="my-4" />
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                      <Switch
+                        checked={hour.hasPriceAdjustment}
+                        onCheckedChange={(checked) => handleTogglePriceAdjustment(hour.day, checked)}
+                        id={`price-adj-active-${hour.day}`}
+                        aria-label={t("workingHours.priceAdjustment.toggleLabel")}
+                      />
+                      <label htmlFor={`price-adj-active-${hour.day}`} className="text-sm font-medium">
+                        {t("workingHours.priceAdjustment.toggleLabel")}
+                      </label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{t("workingHours.priceAdjustment.tooltipInfo")}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
-                  )}
-                </div>
+
+                    {hour.hasPriceAdjustment && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border rounded-md bg-muted/30">
+                        <div>
+                          <label
+                            htmlFor={`price-adj-type-${hour.day}`}
+                            className="block text-xs font-medium text-muted-foreground mb-1"
+                          >
+                            {t("workingHours.priceAdjustment.type")}
+                          </label>
+                          <Select
+                            value={hour.priceAdjustment?.type || "fixed"}
+                            onValueChange={(value) => handlePriceAdjustmentChange(hour.day, "type", value)}
+                            dir={t("common.dir") as "ltr" | "rtl" | undefined}
+                          >
+                            <SelectTrigger id={`price-adj-type-${hour.day}`}>
+                              <SelectValue placeholder={t("workingHours.priceAdjustment.selectTypePlaceholder")} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="fixed">{t("workingHours.priceAdjustment.types.fixed")}</SelectItem>
+                              <SelectItem value="percentage">
+                                {t("workingHours.priceAdjustment.types.percentage")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label
+                            htmlFor={`price-adj-value-${hour.day}`}
+                            className="block text-xs font-medium text-muted-foreground mb-1"
+                          >
+                            {t("workingHours.priceAdjustment.value")} (
+                            {hour.priceAdjustment?.type === "percentage" ? "%" : t("common.currency")})
+                          </label>
+                          <Input
+                            id={`price-adj-value-${hour.day}`}
+                            type="number"
+                            value={hour.priceAdjustment?.value ?? ""}
+                            onChange={(e) => handlePriceAdjustmentChange(hour.day, "value", e.target.value)}
+                            placeholder={t("workingHours.priceAdjustment.valuePlaceholder")}
+                            min="0"
+                            step="any"
+                          />
+                        </div>
+                        <div className="md:col-span-2 lg:col-span-1">
+                          <label
+                            htmlFor={`price-adj-reason-${hour.day}`}
+                            className="block text-xs font-medium text-muted-foreground mb-1"
+                          >
+                            {t("workingHours.priceAdjustment.reason")}
+                          </label>
+                          <Input
+                            id={`price-adj-reason-${hour.day}`}
+                            value={hour.priceAdjustment?.reason || ""}
+                            onChange={(e) => handlePriceAdjustmentChange(hour.day, "reason", e.target.value)}
+                            placeholder={t("workingHours.priceAdjustment.reasonPlaceholder")}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </Card>
           ))}
 
           <div className="flex justify-end mt-8">
             <Button onClick={handleSubmit} disabled={isSubmitting} size="lg">
-              {isSubmitting && <Loader2 className="mr-2 rtl:ml-2 h-4 w-4 animate-spin" />}
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin rtl:ml-2 rtl:mr-0" />}
               {t("common.save")}
             </Button>
           </div>

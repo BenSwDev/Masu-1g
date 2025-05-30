@@ -1,8 +1,92 @@
 {
   "workingHours": {
+    "title": "Manage Working Hours",
+    "description": "Configure your business's standard operating times and special day adjustments.",
+    "weeklyHours": "Weekly Hours",
+    "specialDates": "Special Dates",
+    "updateSuccess": "Working hours updated successfully",
+    "updateError": "Failed to update working hours",
+    "fetchError": "Failed to load working hours data. Please try again.",
+    "weeklyDescription": "Set your standard weekly working hours. These hours will be used for client bookings unless overridden by a special date.",
+    "selectTime": "Select Time",
+    "days": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    },
+    "priceAdjustment": {
+      "title": "Price Adjustment",
+      "type": "Adjustment Type",
+      "value": "Adjustment Value",
+      "reason": "Reason (Optional)",
+      "selectTypePlaceholder": "Select type",
+      "types": {
+        "percentage": "Percentage",
+        "fixed": "Fixed Amount"
+      },
+      "reasonPlaceholder": "e.g., Holiday surcharge, Weekend premium",
+      "valuePlaceholder": "Enter value",
+      "noAdjustment": "No price adjustment",
+      "toggleLabel": "Apply Price Adjustment",
+      "tooltipInfo": "Apply a price modification (increase or decrease) for this specific day or date. This can be a percentage of the original price or a fixed amount.",
+      "errors": {
+        "valueNegative": "Value cannot be negative",
+        "typeRequired": "Adjustment type is required if applying adjustment",
+        "valueRequired": "Adjustment value is required if applying adjustment"
+      }
+    },
     "specialDate": {
-      "formDescription": "Configure specific dates with custom hours, closures, or price adjustments.",
-      "closedAllDay": "Closed all day"
+      "sectionDescription": "Define specific dates with unique working hours or closures, like holidays or special events. These will override standard weekly hours if times are set, or apply price adjustments using default day hours if times are not set.",
+      "formDescription": "Fill in the details for the special date. If specific start/end times are not set, the default hours for that day of the week will be used for availability, along with any price adjustments.",
+      "addNew": "Add Special Date",
+      "edit": "Edit Special Date",
+      "calendarTitle": "Calendar View",
+      "calendarDescription": "Select a date to view or manage special events. Dates with events are highlighted.",
+      "clearSelection": "Clear Date Selection",
+      "eventsFor": "Events for",
+      "allEvents": "All Special Dates",
+      "noEventsForSelection": "No special events scheduled for this date.",
+      "noEventsInList": "No special dates have been added yet.",
+      "createSuccess": "Special date created successfully.",
+      "updateSuccess": "Special date updated successfully.",
+      "deactivateSuccess": "Special date deactivated successfully.",
+      "activateSuccess": "Special date activated successfully.",
+      "statusUpdateError": "Failed to update special date status.",
+      "deleteSuccess": "Special date deleted successfully.",
+      "deleteError": "Failed to delete special date.",
+      "deleteConfirmTitle": "Delete Special Date?",
+      "deleteConfirmDescription": "Are you sure you want to delete this special date? This action cannot be undone.",
+      "fields": {
+        "date": "Date",
+        "name": "Event Name",
+        "description": "Description (Optional)",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "isActive": "Active Event"
+      },
+      "namePlaceholder": "e.g., Public Holiday, Special Event",
+      "descriptionPlaceholder": "e.g., Closed for holiday, Extended hours for event",
+      "selectDate": "Select a date",
+      "activeDescription": "If active, these hours/settings will apply on this date.",
+      "updateError": "Failed to update special date.",
+      "createError": "Failed to create special date.",
+      "selectStartTimeOptional": "Start Time (optional, uses day default)",
+      "selectEndTimeOptional": "End Time (optional, uses day default)",
+      "useDefaultDayHours": "Use default day hours",
+      "defaultHoursIndicator": "Using default hours for this day of the week.",
+      "errors": {
+        "dateRequired": "Date is required.",
+        "nameRequired": "Event name is required (min. 2 characters).",
+        "startTimeRequired": "Start time is required if end time is set.",
+        "endTimeRequired": "End time is required if start time is set.",
+        "endTimeAfterStart": "End time must be after start time.",
+        "endTimeRequiredIfStart": "End time is required if a start time is specified.",
+        "startTimeRequiredIfEnd": "Start time is required if an end time is specified."
+      }
     }
   }
 }

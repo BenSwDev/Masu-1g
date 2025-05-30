@@ -1,5 +1,5 @@
 "use client"
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { deleteSpecialDate, toggleSpecialDateStatus } from "@/actions/working-hours-actions"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -18,18 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
-import {
-  PlusIcon,
-  ClockIcon,
-  Edit,
-  Trash,
-  Power,
-  TagIcon,
-  PercentIcon,
-  Info,
-  MoreVertical,
-  CalendarDays,
-} from "lucide-react"
+import { PlusIcon, ClockIcon, Edit, Trash, Power, TagIcon, PercentIcon, Info, MoreVertical } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
-import { format, parseISO } from "date-fns" // Import parseISO
+import { Separator } from "@/components/common/ui/separator"
 
 interface SpecialDatesSectionProps {
   specialDates: any[]
@@ -47,38 +36,24 @@ interface SpecialDatesSectionProps {
 }
 
 export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: SpecialDatesSectionProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { toast } = useToast()
-  const [isAddingDate, setIsAddingDate] = useState(false)
-  const [editingDate, setEditingDate] = useState<any>(null)
+  const [isAddingOrEditing, setIsAddingOrEditing] = useState<null | "add" | "edit">(null)
+  const [currentDate, setCurrentDate] = useState<any>(null)
   const [dateToDelete, setDateToDelete] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(undefined)
 
-  const localeForDateFns = useMemo(() => {
-    // Basic mapping, expand as needed
-    const lang = i18n.language.split("-")[0]
-    if (lang === "he") return import("date-fns/locale/he").then((mod) => mod.default)
-    if (lang === "ru") return import("date-fns/locale/ru").then((mod) => mod.default)
-    return import("date-fns/locale/en-US").then((mod) => mod.default)
-  }, [i18n.language])
-
-  const [dateFnsLocale, setDateFnsLocale] = useState<any>(null)
-  localeForDateFns.then(setDateFnsLocale)
-
-  const handleAddSuccess = () => {
-    setIsAddingDate(false)
+  const handleFormSuccess = () => {
+    setIsAddingOrEditing(null)
+    setCurrentDate(null)
     onRefresh()
+    // Toast messages are handled within the form itself or can be generic here
   }
 
-  const handleEditSuccess = () => {
-    setEditingDate(null)
-    onRefresh()
-  }
-
-  const handleCancel = () => {
-    setIsAddingDate(false)
-    setEditingDate(null)
+  const handleCancelForm = () => {
+    setIsAddingOrEditing(null)
+    setCurrentDate(null)
   }
 
   const handleToggleStatus = async (id: string, currentIsActive: boolean) => {
@@ -87,7 +62,8 @@ export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: Sp
       await toggleSpecialDateStatus(id)
       onRefresh()
       toast({
-        title: currentIsActive
+        title: t("common.success"),
+        description: currentIsActive
           ? t("workingHours.specialDate.deactivateSuccess")
           : t("workingHours.specialDate.activateSuccess"),
         variant: "success",
@@ -105,13 +81,13 @@ export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: Sp
 
   const handleDelete = async () => {
     if (!dateToDelete) return
-
     try {
       setIsLoading(true)
       await deleteSpecialDate(dateToDelete)
       onRefresh()
       toast({
-        title: t("workingHours.specialDate.deleteSuccess"),
+        title: t("common.success"),
+        description: t("workingHours.specialDate.deleteSuccess"),
         variant: "success",
       })
     } catch (error) {
@@ -127,140 +103,149 @@ export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: Sp
   }
 
   const formatDateDisplay = (dateString: string) => {
-    if (!dateFnsLocale) return dateString // Fallback if locale not loaded
-    const date = parseISO(dateString) // Use parseISO for robust parsing
-    return format(date, "PPP", { locale: dateFnsLocale })
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat((t("common.locale") as string) || "en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date)
   }
 
-  const formatTime = (timeString: string) => {
+  const formatTime = (timeString: string | undefined | null) => {
     if (!timeString || !timeString.includes(":")) return t("common.notSet")
     const [hours, minutes] = timeString.split(":")
     return `${hours}:${minutes}`
   }
 
-  const filteredDates = useMemo(() => {
-    const sorted = [...specialDates].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    if (!selectedDate) return sorted
-    return sorted.filter((date) => {
-      const specialDateObj = new Date(date.date)
-      return (
-        specialDateObj.getDate() === selectedDate.getDate() &&
-        specialDateObj.getMonth() === selectedDate.getMonth() &&
-        specialDateObj.getFullYear() === selectedDate.getFullYear()
-      )
-    })
-  }, [specialDates, selectedDate])
+  const filteredDates = selectedCalendarDate
+    ? specialDates.filter((date) => {
+        const specialDateObj = new Date(date.date)
+        return (
+          specialDateObj.getDate() === selectedCalendarDate.getDate() &&
+          specialDateObj.getMonth() === selectedCalendarDate.getMonth() &&
+          specialDateObj.getFullYear() === selectedCalendarDate.getFullYear()
+        )
+      })
+    : specialDates.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
-  const specialDatesForCalendar = useMemo(() => specialDates.map((date) => new Date(date.date)), [specialDates])
+  const specialDatesForCalendar = specialDates.map((date) => new Date(date.date))
 
-  if (isAddingDate || editingDate) {
+  if (isAddingOrEditing) {
     return (
       <SpecialDateForm
-        specialDate={editingDate}
-        onSuccess={editingDate ? handleEditSuccess : handleAddSuccess}
-        onCancel={handleCancel}
+        specialDate={isAddingOrEditing === "edit" ? currentDate : null}
+        onSuccess={handleFormSuccess}
+        onCancel={handleCancelForm}
       />
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <CardTitle>{t("workingHours.specialDates")}</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">{t("workingHours.specialDate.sectionDescription")}</p>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("workingHours.specialDates")}</h2>
+          <p className="text-sm text-muted-foreground">{t("workingHours.specialDate.sectionDescription")}</p>
         </div>
-        <Button onClick={() => setIsAddingDate(true)} className="w-full sm:w-auto">
-          <PlusIcon className="h-4 w-4 mr-2 rtl:ml-2" />
+        <Button
+          onClick={() => {
+            setIsAddingOrEditing("add")
+            setCurrentDate(null)
+          }}
+        >
+          <PlusIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
           {t("workingHours.specialDate.addNew")}
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-1 h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>{t("workingHours.specialDate.calendarTitle")}</CardTitle>
             <CardDescription>{t("workingHours.specialDate.calendarDescription")}</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex justify-center">
             <Calendar
               mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              className="rounded-md border p-0"
+              selected={selectedCalendarDate}
+              onSelect={setSelectedCalendarDate}
+              className="rounded-md border shadow-sm"
               modifiers={{
                 special: specialDatesForCalendar,
               }}
-              modifiersClassNames={{
-                special: "font-bold bg-primary/10 text-primary rounded-md",
+              modifiersStyles={{
+                special: {
+                  fontWeight: "bold",
+                  backgroundColor: "hsl(var(--primary) / 0.1)",
+                  color: "hsl(var(--primary))",
+                  borderRadius: "var(--radius)",
+                },
               }}
               dir={t("common.dir") as "ltr" | "rtl" | undefined}
-              locale={dateFnsLocale}
             />
           </CardContent>
-          {selectedDate && (
+          {selectedCalendarDate && (
             <CardFooter>
-              <Button variant="outline" onClick={() => setSelectedDate(undefined)} className="w-full">
+              <Button variant="outline" onClick={() => setSelectedCalendarDate(undefined)} className="w-full">
                 {t("workingHours.specialDate.clearSelection")}
               </Button>
             </CardFooter>
           )}
         </Card>
 
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-6">
           <h3 className="text-xl font-semibold">
-            {selectedDate
-              ? `${t("workingHours.specialDate.eventsFor")}: ${formatDateDisplay(selectedDate.toISOString())}`
+            {selectedCalendarDate
+              ? `${t("workingHours.specialDate.eventsFor")}: ${formatDateDisplay(selectedCalendarDate.toISOString())}`
               : t("workingHours.specialDate.allEvents")}
           </h3>
 
           {filteredDates.length === 0 ? (
             <Card>
-              <CardContent className="p-6 text-center text-muted-foreground">
-                <CalendarDays className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p>
-                  {selectedDate
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">
+                  {selectedCalendarDate
                     ? t("workingHours.specialDate.noEventsForSelection")
                     : t("workingHours.specialDate.noEventsInList")}
                 </p>
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               {filteredDates.map((specialDate) => {
                 const dayOfWeek = new Date(specialDate.date).getDay()
                 const weeklyDaySetting = weeklyHours.find((wh) => wh.day === dayOfWeek)
 
                 const displayStartTime =
                   specialDate.startTime ||
-                  (weeklyDaySetting && weeklyDaySetting.isActive ? weeklyDaySetting.startTime : "")
+                  (weeklyDaySetting && weeklyDaySetting.isActive ? weeklyDaySetting.startTime : undefined)
                 const displayEndTime =
-                  specialDate.endTime || (weeklyDaySetting && weeklyDaySetting.isActive ? weeklyDaySetting.endTime : "")
+                  specialDate.endTime ||
+                  (weeklyDaySetting && weeklyDaySetting.isActive ? weeklyDaySetting.endTime : undefined)
+
                 const areHoursInherited =
                   !specialDate.startTime && !specialDate.endTime && weeklyDaySetting && weeklyDaySetting.isActive
                 const isTimeNotSet = !displayStartTime && !displayEndTime
 
                 return (
-                  <Card key={specialDate._id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
+                  <Card key={specialDate._id} className="shadow-sm">
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start">
                         <CardTitle className="text-lg">{specialDate.name}</CardTitle>
-                        <Badge variant={specialDate.isActive ? "success" : "outline"}>
+                        <Badge variant={specialDate.isActive ? "default" : "outline"} className="text-xs">
                           {specialDate.isActive ? t("common.active") : t("common.inactive")}
                         </Badge>
                       </div>
                       <CardDescription>{formatDateDisplay(specialDate.date)}</CardDescription>
                     </CardHeader>
-                    <CardContent className="pb-3 space-y-2 flex-grow">
+                    <CardContent className="pb-4 space-y-3">
                       {specialDate.description && (
-                        <p className="text-sm text-muted-foreground italic">{specialDate.description}</p>
+                        <p className="text-sm text-muted-foreground">{specialDate.description}</p>
                       )}
                       <div className="flex items-center text-sm text-muted-foreground">
-                        <ClockIcon className="h-4 w-4 mr-2 rtl:ml-2 flex-shrink-0" />
+                        <ClockIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 flex-shrink-0" />
                         <span>
-                          {isTimeNotSet && specialDate.isActive ? (
-                            t("workingHours.specialDate.closedAllDay")
-                          ) : isTimeNotSet && !specialDate.isActive ? (
+                          {isTimeNotSet ? (
                             t("common.notSet")
                           ) : (
                             <>
@@ -269,7 +254,7 @@ export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: Sp
                                 <TooltipProvider>
                                   <Tooltip>
                                     <TooltipTrigger asChild>
-                                      <Info className="h-3 w-3 ml-1 rtl:mr-1 text-muted-foreground inline-block cursor-help" />
+                                      <Info className="h-3 w-3 ml-1 rtl:mr-1 rtl:ml-0 text-muted-foreground inline-block cursor-help" />
                                     </TooltipTrigger>
                                     <TooltipContent>
                                       <p>{t("workingHours.specialDate.defaultHoursIndicator")}</p>
@@ -282,61 +267,75 @@ export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: Sp
                         </span>
                       </div>
                       {specialDate.priceAdjustment && specialDate.isActive && (
-                        <div className="text-sm text-muted-foreground border-t pt-2 mt-2">
-                          <p className="font-medium text-foreground mb-1">{t("workingHours.priceAdjustment.title")}:</p>
-                          <div className="flex items-center">
-                            {specialDate.priceAdjustment.type === "percentage" ? (
-                              <PercentIcon className="h-4 w-4 mr-2 rtl:ml-2 flex-shrink-0 text-primary" />
-                            ) : (
-                              <TagIcon className="h-4 w-4 mr-2 rtl:ml-2 flex-shrink-0 text-primary" />
+                        <>
+                          <Separator />
+                          <div className="text-sm">
+                            <p className="font-medium text-foreground mb-1">
+                              {t("workingHours.priceAdjustment.title")}:
+                            </p>
+                            <div className="flex items-center text-muted-foreground">
+                              {specialDate.priceAdjustment.type === "percentage" ? (
+                                <PercentIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 flex-shrink-0 text-primary" />
+                              ) : (
+                                <TagIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 flex-shrink-0 text-primary" />
+                              )}
+                              <span>
+                                {specialDate.priceAdjustment.value}
+                                {specialDate.priceAdjustment.type === "percentage" ? "%" : ` ${t("common.currency")}`}
+                                {` (${t(`workingHours.priceAdjustment.types.${specialDate.priceAdjustment.type}`)})`}
+                              </span>
+                            </div>
+                            {specialDate.priceAdjustment.reason && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex items-start mt-1 text-muted-foreground">
+                                      <Info className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 mt-0.5 flex-shrink-0 text-blue-500" />
+                                      <p className="truncate italic text-xs">{specialDate.priceAdjustment.reason}</p>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="bottom" align="start">
+                                    <p className="max-w-xs text-sm">{specialDate.priceAdjustment.reason}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             )}
-                            <span>
-                              {specialDate.priceAdjustment.value}
-                              {specialDate.priceAdjustment.type === "percentage" ? "%" : ` ${t("common.currency")}`}
-                              {` (${t(`workingHours.priceAdjustment.types.${specialDate.priceAdjustment.type}`)})`}
-                            </span>
                           </div>
-                          {specialDate.priceAdjustment.reason && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <div className="flex items-start mt-1">
-                                    <Info className="h-4 w-4 mr-2 rtl:ml-2 mt-0.5 flex-shrink-0 text-blue-500" />
-                                    <p className="truncate italic text-xs">{specialDate.priceAdjustment.reason}</p>
-                                  </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom" align="start">
-                                  <p className="max-w-xs">{specialDate.priceAdjustment.reason}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
+                        </>
                       )}
                     </CardContent>
-                    <CardFooter className="flex justify-end space-x-2 rtl:space-x-reverse border-t pt-3 mt-auto">
-                      <DropdownMenu>
+                    <CardFooter className="flex justify-end space-x-2 rtl:space-x-reverse border-t pt-4">
+                      <DropdownMenu dir={t("common.dir") as "ltr" | "rtl" | undefined}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <MoreVertical className="h-4 w-4" />
                             <span className="sr-only">{t("common.actions")}</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setEditingDate(specialDate)}>
-                            <Edit className="h-4 w-4 mr-2 rtl:ml-2" />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setIsAddingOrEditing("edit")
+                              setCurrentDate(specialDate)
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
                             {t("common.edit")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleToggleStatus(specialDate._id, specialDate.isActive)}>
-                            <Power className="h-4 w-4 mr-2 rtl:ml-2" />
+                          <DropdownMenuItem
+                            onClick={() => handleToggleStatus(specialDate._id, specialDate.isActive)}
+                            disabled={isLoading}
+                          >
+                            <Power className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
                             {specialDate.isActive ? t("common.deactivate") : t("common.activate")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => setDateToDelete(specialDate._id)}
-                            className="text-red-600 hover:!text-red-600 focus:!text-red-600 dark:text-red-500 dark:hover:!text-red-500 dark:focus:!text-red-500"
+                            className="text-red-600 hover:!text-red-600 focus:!text-red-600"
+                            disabled={isLoading}
                           >
-                            <Trash className="h-4 w-4 mr-2 rtl:ml-2" />
+                            <Trash className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
                             {t("common.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -351,15 +350,20 @@ export function SpecialDatesSection({ specialDates, weeklyHours, onRefresh }: Sp
       </div>
 
       <AlertDialog open={!!dateToDelete} onOpenChange={(open) => !open && setDateToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent dir={t("common.dir") as "ltr" | "rtl" | undefined}>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("workingHours.specialDate.deleteConfirmTitle")}</AlertDialogTitle>
             <AlertDialogDescription>{t("workingHours.specialDate.deleteConfirmDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isLoading} variant="destructive">
-              {isLoading ? t("common.deleting") : t("common.delete")}
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isLoading}
+              className="bg-red-600 hover:bg-red-700 focus:bg-red-700"
+            >
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-2 rtl:ml-2 rtl:mr-0" />}
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

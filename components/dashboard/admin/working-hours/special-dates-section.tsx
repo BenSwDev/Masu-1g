@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import type React from "react"
+
+import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { deleteSpecialDate, toggleSpecialDateStatus } from "@/actions/working-hours-actions"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -19,17 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
-import {
-  PlusIcon,
-  ClockIcon,
-  EditIcon,
-  TrashIcon,
-  PowerIcon,
-  CalendarDaysIcon,
-  ListChecksIcon,
-  XCircleIcon,
-  Loader2,
-} from "lucide-react" // Updated icons
+import { PlusIcon, ClockIcon, Edit, Trash, Power, TagIcon, PercentIcon, Info } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,8 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
-import { format, isSameDay } from "date-fns"
-import { enUS, he, ru } from "date-fns/locale" // Import locales
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
 
 interface SpecialDatesSectionProps {
   specialDates: any[]
@@ -46,43 +37,35 @@ interface SpecialDatesSectionProps {
 }
 
 export function SpecialDatesSection({ specialDates, onRefresh }: SpecialDatesSectionProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const { toast } = useToast()
-  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isAddingDate, setIsAddingDate] = useState(false)
   const [editingDate, setEditingDate] = useState<any>(null)
   const [dateToDelete, setDateToDelete] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Date | undefined>(undefined)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
 
-  const dateFnsLocale = useMemo(() => {
-    if (i18n.language.startsWith("he")) return he
-    if (i18n.language.startsWith("ru")) return ru
-    return enUS
-  }, [i18n.language])
-
-  const handleFormSuccess = () => {
-    setIsFormOpen(false)
-    setEditingDate(null)
+  const handleAddSuccess = () => {
+    setIsAddingDate(false)
     onRefresh()
     toast({
-      title: editingDate ? t("workingHours.specialDate.updateSuccess") : t("workingHours.specialDate.createSuccess"),
+      title: t("workingHours.specialDate.createSuccess"),
       variant: "success",
     })
   }
 
-  const handleCancelForm = () => {
-    setIsFormOpen(false)
+  const handleEditSuccess = () => {
     setEditingDate(null)
+    onRefresh()
+    toast({
+      title: t("workingHours.specialDate.updateSuccess"),
+      variant: "success",
+    })
   }
 
-  const handleAddNew = () => {
+  const handleCancel = () => {
+    setIsAddingDate(false)
     setEditingDate(null)
-    setIsFormOpen(true)
-  }
-
-  const handleEdit = (specialDate: any) => {
-    setEditingDate(specialDate)
-    setIsFormOpen(true)
   }
 
   const handleToggleStatus = async (id: string, currentIsActive: boolean) => {
@@ -131,218 +114,222 @@ export function SpecialDatesSection({ specialDates, onRefresh }: SpecialDatesSec
   }
 
   const formatDateDisplay = (dateString: string) => {
-    return format(new Date(dateString), "PPP", { locale: dateFnsLocale })
+    const date = new Date(dateString)
+    return new Intl.DateTimeFormat((t("common.locale") as string) || "en-US", {
+      // Use locale from translations
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date)
   }
 
-  const formatTimeDisplay = (timeString: string) => {
-    if (!timeString || !/^\d{2}:\d{2}$/.test(timeString)) return t("common.notSet") // Handle invalid or missing time
+  const formatTime = (timeString: string) => {
+    if (!timeString || !timeString.includes(":")) return t("common.notSet")
     const [hours, minutes] = timeString.split(":")
-    return format(new Date(0, 0, 0, Number.parseInt(hours), Number.parseInt(minutes)), "p", { locale: dateFnsLocale })
+    return `${hours}:${minutes}`
   }
 
-  const filteredDates = useMemo(() => {
-    const dates = [...specialDates].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    if (selectedCalendarDate) {
-      return dates.filter((date) => isSameDay(new Date(date.date), selectedCalendarDate))
-    }
-    return dates
-  }, [specialDates, selectedCalendarDate])
+  const filteredDates = selectedDate
+    ? specialDates.filter((date) => {
+        const specialDateObj = new Date(date.date)
+        return (
+          specialDateObj.getDate() === selectedDate.getDate() &&
+          specialDateObj.getMonth() === selectedDate.getMonth() &&
+          specialDateObj.getFullYear() === selectedDate.getFullYear()
+        )
+      })
+    : specialDates
 
-  const calendarEventDates = useMemo(() => specialDates.map((date) => new Date(date.date)), [specialDates])
+  const specialDatesForCalendar = specialDates.map((date) => new Date(date.date))
 
-  if (isFormOpen) {
+  if (isAddingDate || editingDate) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {editingDate ? t("workingHours.specialDate.formTitleEdit") : t("workingHours.specialDate.formTitleCreate")}
-          </CardTitle>
-          <CardDescription>
-            {editingDate
-              ? t("workingHours.specialDate.formDescriptionEdit")
-              : t("workingHours.specialDate.formDescriptionCreate")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SpecialDateForm specialDate={editingDate} onSuccess={handleFormSuccess} onCancel={handleCancelForm} />
-        </CardContent>
-      </Card>
+      <SpecialDateForm
+        specialDate={editingDate}
+        onSuccess={editingDate ? handleEditSuccess : handleAddSuccess}
+        onCancel={handleCancel}
+      />
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <CardTitle>{t("workingHours.specialDatesManagement")}</CardTitle>
-            <CardDescription>{t("workingHours.specialDate.description")}</CardDescription>
-          </div>
-          <Button onClick={handleAddNew}>
-            <PlusIcon className="h-4 w-4 mr-2" />
-            {t("workingHours.specialDate.addNew")}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <Card className="lg:sticky lg:top-20">
-            {" "}
-            {/* Make calendar sticky */}
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center">
-                <CalendarDaysIcon className="h-5 w-5 mr-2 text-primary" />
-                {t("workingHours.specialDate.filterByDate")}
-              </CardTitle>
-              <CardDescription>{t("workingHours.specialDate.calendarDescription")}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <Calendar
-                mode="single"
-                selected={selectedCalendarDate}
-                onSelect={setSelectedCalendarDate}
-                className="rounded-md border shadow-sm"
-                locale={dateFnsLocale}
-                modifiers={{
-                  event: calendarEventDates,
-                }}
-                modifiersStyles={{
-                  event: {
-                    fontWeight: "bold",
-                    color: "var(--primary-foreground)",
-                    backgroundColor: "var(--primary)",
-                    borderRadius: "9999px",
-                  },
-                }}
-                footer={
-                  selectedCalendarDate && (
-                    <Button variant="ghost" onClick={() => setSelectedCalendarDate(undefined)} className="w-full mt-2">
-                      <XCircleIcon className="h-4 w-4 mr-2" />
-                      {t("workingHours.specialDate.clearSelection")}
-                    </Button>
-                  )
-                }
-              />
-            </CardContent>
-          </Card>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <CardTitle>{t("workingHours.specialDates")}</CardTitle>
+        <Button onClick={() => setIsAddingDate(true)}>
+          <PlusIcon className="h-4 w-4 mr-2" />
+          {t("workingHours.specialDate.addNew")}
+        </Button>
+      </div>
+      <p className="text-sm text-muted-foreground">{t("workingHours.specialDate.sectionDescription")}</p>
 
-          <div className="lg:col-span-2 space-y-6">
-            <CardHeader className="p-0">
-              <CardTitle className="text-lg flex items-center">
-                <ListChecksIcon className="h-5 w-5 mr-2 text-primary" />
-                {selectedCalendarDate
-                  ? `${t("workingHours.specialDate.eventsForDate")}: ${format(selectedCalendarDate, "PPP", { locale: dateFnsLocale })}`
-                  : t("workingHours.specialDate.allUpcomingEvents")}
-              </CardTitle>
-            </CardHeader>
-            {filteredDates.length === 0 ? (
-              <Card className="shadow-sm">
-                <CardContent className="p-6 text-center">
-                  <CalendarDaysIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium text-muted-foreground">
-                    {selectedCalendarDate
-                      ? t("workingHours.specialDate.noSpecialDatesForSelection")
-                      : t("workingHours.specialDate.noSpecialDates")}
-                  </p>
-                  <Button variant="outline" onClick={handleAddNew} className="mt-4">
-                    <PlusIcon className="h-4 w-4 mr-2" />
-                    {t("workingHours.specialDate.addNewFromEmpty")}
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredDates.map((specialDate) => (
-                  <Card key={specialDate._id} className="shadow-sm hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">{specialDate.name}</CardTitle>
-                        <Badge variant={specialDate.isActive ? "success" : "outline"}>
-                          {" "}
-                          {/* Use success badge */}
-                          {specialDate.isActive ? t("common.active") : t("common.inactive")}
-                        </Badge>
-                      </div>
-                      <CardDescription>{formatDateDisplay(specialDate.date)}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-3 space-y-2">
-                      {specialDate.description && (
-                        <p className="text-sm text-muted-foreground">{specialDate.description}</p>
-                      )}
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <ClockIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span>
-                          {specialDate.startTime ? formatTimeDisplay(specialDate.startTime) : t("common.notSet")} -{" "}
-                          {specialDate.endTime ? formatTimeDisplay(specialDate.endTime) : t("common.notSet")}
-                        </span>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-end pt-0 pb-3 px-4">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <span className="sr-only">{t("common.actions")}</span>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-4 w-4"
-                            >
-                              <circle cx="12" cy="12" r="1"></circle>
-                              <circle cx="19" cy="12" r="1"></circle>
-                              <circle cx="5" cy="12" r="1"></circle>
-                            </svg>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(specialDate)}>
-                            <EditIcon className="h-4 w-4 mr-2" />
-                            {t("common.edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleToggleStatus(specialDate._id, specialDate.isActive)}>
-                            <PowerIcon className="h-4 w-4 mr-2" />
-                            {specialDate.isActive ? t("common.deactivate") : t("common.activate")}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setDateToDelete(specialDate._id)}
-                            className="text-red-500 hover:!text-red-500 focus:!text-red-500"
-                          >
-                            <TrashIcon className="h-4 w-4 mr-2" />
-                            {t("common.delete")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle>{t("workingHours.specialDate.calendarTitle")}</CardTitle>
+            <CardDescription>{t("workingHours.specialDate.calendarDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              className="rounded-md border"
+              modifiers={{
+                special: specialDatesForCalendar,
+              }}
+              modifiersStyles={{
+                special: {
+                  fontWeight: "bold",
+                  backgroundColor: "hsl(var(--primary) / 0.1)",
+                  color: "hsl(var(--primary))",
+                  borderRadius: "var(--radius)",
+                },
+              }}
+            />
+          </CardContent>
+          {selectedDate && (
+            <CardFooter>
+              <Button variant="outline" onClick={() => setSelectedDate(undefined)} className="w-full">
+                {t("workingHours.specialDate.clearSelection")}
+              </Button>
+            </CardFooter>
+          )}
+        </Card>
 
-        <AlertDialog open={!!dateToDelete} onOpenChange={(open) => !open && setDateToDelete(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("workingHours.specialDate.deleteConfirm")}</AlertDialogTitle>
-              <AlertDialogDescription>{t("workingHours.specialDate.deleteConfirmDescription")}</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} disabled={isLoading} variant="destructive">
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <TrashIcon className="h-4 w-4 mr-2" />}
-                {isLoading ? t("common.deleting") : t("common.delete")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </CardContent>
-    </Card>
+        <div className="lg:col-span-2 space-y-4">
+          <h3 className="text-lg font-medium">
+            {selectedDate
+              ? `${t("workingHours.specialDate.eventsFor")}: ${formatDateDisplay(selectedDate.toISOString())}`
+              : t("workingHours.specialDate.allEvents")}
+          </h3>
+
+          {filteredDates.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">
+                  {selectedDate
+                    ? t("workingHours.specialDate.noEventsForSelection")
+                    : t("workingHours.specialDate.noEventsInList")}
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredDates.map((specialDate) => (
+                <Card key={specialDate._id} className="flex flex-col">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{specialDate.name}</CardTitle>
+                      <Badge variant={specialDate.isActive ? "default" : "outline"}>
+                        {specialDate.isActive ? t("common.active") : t("common.inactive")}
+                      </Badge>
+                    </div>
+                    <CardDescription>{formatDateDisplay(specialDate.date)}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pb-3 space-y-2 flex-grow">
+                    {specialDate.description && (
+                      <p className="text-sm text-muted-foreground">{specialDate.description}</p>
+                    )}
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <ClockIcon className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <span>
+                        {formatTime(specialDate.startTime)} - {formatTime(specialDate.endTime)}
+                      </span>
+                    </div>
+                    {specialDate.priceAdjustment && (
+                      <div className="text-sm text-muted-foreground border-t pt-2 mt-2">
+                        <p className="font-medium text-foreground mb-1">{t("workingHours.priceAdjustment.title")}:</p>
+                        <div className="flex items-center">
+                          {specialDate.priceAdjustment.type === "percentage" ? (
+                            <PercentIcon className="h-4 w-4 mr-2 flex-shrink-0 text-primary" />
+                          ) : (
+                            <TagIcon className="h-4 w-4 mr-2 flex-shrink-0 text-primary" />
+                          )}
+                          <span>
+                            {specialDate.priceAdjustment.value}
+                            {specialDate.priceAdjustment.type === "percentage" ? "%" : ` ${t("common.currency")}`}
+                            {` (${t(`workingHours.priceAdjustment.types.${specialDate.priceAdjustment.type}`)})`}
+                          </span>
+                        </div>
+                        {specialDate.priceAdjustment.reason && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="flex items-start mt-1">
+                                  <Info className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-blue-500" />
+                                  <p className="truncate italic">{specialDate.priceAdjustment.reason}</p>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="bottom" align="start">
+                                <p className="max-w-xs">{specialDate.priceAdjustment.reason}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="flex justify-end space-x-2 border-t pt-3 mt-auto">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          {t("common.actions")}
+                          <ChevronDownIcon className="h-4 w-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setEditingDate(specialDate)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          {t("common.edit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleToggleStatus(specialDate._id, specialDate.isActive)}>
+                          <Power className="h-4 w-4 mr-2" />
+                          {specialDate.isActive ? t("common.deactivate") : t("common.activate")}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => setDateToDelete(specialDate._id)}
+                          className="text-red-500 hover:!text-red-500 focus:!text-red-500"
+                        >
+                          <Trash className="h-4 w-4 mr-2" />
+                          {t("common.delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <AlertDialog open={!!dateToDelete} onOpenChange={(open) => !open && setDateToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("workingHours.specialDate.deleteConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("workingHours.specialDate.deleteConfirmDescription")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isLoading} className="bg-red-600 hover:bg-red-700">
+              {isLoading ? t("common.loading") : t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 }
+
+// Helper icon, you might want to put this in a shared icons file
+const ChevronDownIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" {...props}>
+    <path
+      fillRule="evenodd"
+      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+      clipRule="evenodd"
+    />
+  </svg>
+)

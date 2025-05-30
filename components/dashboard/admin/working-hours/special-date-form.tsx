@@ -1,21 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { addSpecialDate, updateSpecialDate } from "@/actions/working-hours-actions"
 import { Button } from "@/components/common/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-  DialogClose,
-} from "@/components/common/ui/dialog"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import {
   Form,
   FormControl,
@@ -32,54 +24,62 @@ import { Calendar } from "@/components/common/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { useToast } from "@/components/common/ui/use-toast"
-import { CalendarIcon, Info, Loader2, SaveIcon, XIcon } from "lucide-react"
+import { CalendarIcon, Info, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
-import type { ClientWorkingHours } from "@/lib/db/models/working-hours"
-
-type SpecialDateClient = ClientWorkingHours["specialDates"][0]
 
 interface SpecialDateFormProps {
-  isOpen: boolean
-  onOpenChange: (isOpen: boolean) => void
-  specialDate?: SpecialDateClient
+  specialDate?: any
   onSuccess: () => void
+  onCancel: () => void
 }
 
-export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }: SpecialDateFormProps) {
+export function SpecialDateForm({ specialDate, onSuccess, onCancel }: SpecialDateFormProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const specialDateFormSchema = z
     .object({
-      date: z.date({ required_error: t("workingHours.specialDate.errors.dateRequired") }),
-      name: z
-        .string()
-        .min(2, { message: t("workingHours.specialDate.errors.nameMinLength") })
-        .max(100, { message: t("workingHours.specialDate.errors.nameMaxLength") }),
-      description: z
-        .string()
-        .max(500, { message: t("workingHours.specialDate.errors.descriptionMaxLength") })
-        .optional(),
+      date: z.date({
+        required_error: t("workingHours.specialDate.errors.dateRequired"),
+      }),
+      name: z.string().min(2, { message: t("workingHours.specialDate.errors.nameRequired") }),
+      description: z.string().optional(),
       isActive: z.boolean().default(true),
-      isClosed: z.boolean().default(false), // New field
+      // Make startTime and endTime optional
       startTime: z.string().optional(),
       endTime: z.string().optional(),
-      priceAdjustment: z
-        .object({
-          type: z.enum(["percentage", "fixed"]),
-          value: z.coerce.number().min(0, { message: t("workingHours.priceAdjustment.errors.valueNegative") }),
-          reason: z
-            .string()
-            .max(200, { message: t("workingHours.priceAdjustment.errors.reasonMaxLength") })
-            .optional(),
-        })
-        .optional(),
+      hasPriceAdjustment: z.boolean().default(false),
+      priceAdjustmentType: z.enum(["percentage", "fixed"]).optional(),
+      priceAdjustmentValue: z.coerce.number().optional(),
+      priceAdjustmentReason: z.string().optional(),
     })
     .superRefine((data, ctx) => {
-      if (data.isClosed) return // If closed, no need to validate times
-
+      if (data.hasPriceAdjustment && data.isActive) {
+        // Only validate price adjustment if active
+        if (!data.priceAdjustmentType) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["priceAdjustmentType"],
+            message: t("workingHours.priceAdjustment.errors.typeRequired"),
+          })
+        }
+        if (data.priceAdjustmentValue === undefined || data.priceAdjustmentValue === null) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["priceAdjustmentValue"],
+            message: t("workingHours.priceAdjustment.errors.valueRequired"),
+          })
+        } else if (data.priceAdjustmentValue < 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["priceAdjustmentValue"],
+            message: t("workingHours.priceAdjustment.errors.valueNegative"),
+          })
+        }
+      }
+      // If startTime is provided, endTime is required and must be after startTime
       if (data.startTime && !data.endTime) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -93,19 +93,12 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
           message: t("workingHours.specialDate.errors.endTimeAfterStart"),
         })
       }
+      // If endTime is provided, startTime is required
       if (data.endTime && !data.startTime) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["startTime"],
           message: t("workingHours.specialDate.errors.startTimeRequiredIfEnd"),
-        })
-      }
-
-      if (data.priceAdjustment && data.priceAdjustment.value < 0) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["priceAdjustment.value"],
-          message: t("workingHours.priceAdjustment.errors.valueNegative"),
         })
       }
     })
@@ -115,77 +108,77 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
   const form = useForm<SpecialDateFormValues>({
     resolver: zodResolver(specialDateFormSchema),
     defaultValues: {
-      date: specialDate?.date ? new Date(specialDate.date) : new Date(),
+      date: specialDate ? new Date(specialDate.date) : new Date(),
       name: specialDate?.name || "",
       description: specialDate?.description || "",
       isActive: specialDate?.isActive ?? true,
-      isClosed: specialDate?.isClosed ?? false,
-      startTime: specialDate?.startTime || "",
-      endTime: specialDate?.endTime || "",
-      priceAdjustment: specialDate?.priceAdjustment || undefined,
+      startTime: specialDate?.startTime || "", // Default to empty string
+      endTime: specialDate?.endTime || "", // Default to empty string
+      hasPriceAdjustment: !!specialDate?.priceAdjustment && specialDate?.isActive, // Check isActive
+      priceAdjustmentType: specialDate?.priceAdjustment?.type || "fixed",
+      priceAdjustmentValue: specialDate?.priceAdjustment?.value || 0,
+      priceAdjustmentReason: specialDate?.priceAdjustment?.reason || "",
     },
   })
 
-  useEffect(() => {
-    form.reset({
-      date: specialDate?.date ? new Date(specialDate.date) : new Date(),
-      name: specialDate?.name || "",
-      description: specialDate?.description || "",
-      isActive: specialDate?.isActive ?? true,
-      isClosed: specialDate?.isClosed ?? false,
-      startTime: specialDate?.startTime || "",
-      endTime: specialDate?.endTime || "",
-      priceAdjustment: specialDate?.priceAdjustment || undefined,
-    })
-  }, [specialDate, form, isOpen])
-
-  const watchIsClosed = form.watch("isClosed")
-  const watchHasPriceAdjustment = form.watch("priceAdjustment") !== undefined
+  const startTimeValue = form.watch("startTime")
+  const hasPriceAdjustmentValue = form.watch("hasPriceAdjustment")
+  const priceAdjustmentTypeValue = form.watch("priceAdjustmentType")
 
   const onSubmit = async (values: SpecialDateFormValues) => {
-    setIsSubmitting(true)
     try {
-      const payload: any = {
-        ...values,
-        date: values.date.toISOString(), // Ensure date is ISO string for server
-        startTime: values.isClosed ? undefined : values.startTime || undefined,
-        endTime: values.isClosed ? undefined : values.endTime || undefined,
-        priceAdjustment:
-          values.priceAdjustment && values.priceAdjustment.value > 0 ? values.priceAdjustment : undefined,
-      }
+      setIsSubmitting(true)
+      const { hasPriceAdjustment, priceAdjustmentType, priceAdjustmentValue, priceAdjustmentReason, ...coreValues } =
+        values
 
-      if (!values.isActive) {
-        // If not active, no price adjustment should apply
+      const payload: any = {
+        ...coreValues,
+        startTime: coreValues.startTime || undefined,
+        endTime: coreValues.endTime || undefined,
+      }
+      if (
+        hasPriceAdjustment &&
+        priceAdjustmentType &&
+        priceAdjustmentValue !== undefined &&
+        priceAdjustmentValue !== null
+      ) {
+        payload.priceAdjustment = {
+          type: priceAdjustmentType,
+          value: priceAdjustmentValue,
+          reason: priceAdjustmentReason,
+        }
+      } else {
         payload.priceAdjustment = undefined
       }
 
-      let result
-      if (specialDate?._id) {
-        result = await updateSpecialDate(specialDate._id, payload)
-      } else {
-        result = await addSpecialDate(payload)
+      if (!values.isActive) {
+        payload.priceAdjustment = undefined
+        // Optionally, also clear times if not active, though backend might handle this
+        // payload.startTime = undefined;
+        // payload.endTime = undefined;
       }
 
-      if (result.success) {
-        toast({
-          title: t("common.success"),
-          description: t(
-            specialDate ? "workingHours.specialDate.updateSuccess" : "workingHours.specialDate.createSuccess",
-          ),
-          variant: "success",
-        })
-        onSuccess()
-        onOpenChange(false)
+      if (specialDate) {
+        await updateSpecialDate(specialDate._id, payload)
       } else {
-        throw new Error(result.error || t("common.unknownError"))
+        await addSpecialDate(payload)
       }
+
+      toast({
+        title: t("common.success"),
+        description: specialDate
+          ? t("workingHours.specialDate.updateSuccess")
+          : t("workingHours.specialDate.createSuccess"),
+        variant: "success",
+      })
+      onSuccess()
     } catch (error) {
+      console.error("Error submitting special date form:", error)
       toast({
         title: t("common.error"),
-        description:
-          error instanceof Error
-            ? error.message
-            : t(specialDate ? "workingHours.specialDate.updateError" : "workingHours.specialDate.createError"),
+        description: specialDate
+          ? t("workingHours.specialDate.updateError")
+          : t("workingHours.specialDate.createError"),
         variant: "destructive",
       })
     } finally {
@@ -196,16 +189,13 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
   const timeOptions = generateTimeOptions()
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            {specialDate ? t("workingHours.specialDate.form.title.edit") : t("workingHours.specialDate.form.title.add")}
-          </DialogTitle>
-          <DialogDescription>{t("workingHours.specialDate.form.description")}</DialogDescription>
-        </DialogHeader>
+    <Card>
+      <CardHeader>
+        <CardTitle>{specialDate ? t("workingHours.specialDate.edit") : t("workingHours.specialDate.addNew")}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4 max-h-[70vh] overflow-y-auto px-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="date"
@@ -216,10 +206,14 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant="outline"
+                          variant={"outline"}
                           className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
                         >
-                          {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>{t("workingHours.specialDate.selectDate")}</span>
+                          )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                       </FormControl>
@@ -229,6 +223,7 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0)) && !specialDate} // Allow past dates for editing
                         initialFocus
                         dir={t("common.dir") as "ltr" | "rtl" | undefined}
                       />
@@ -260,36 +255,85 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
                 <FormItem>
                   <FormLabel>{t("workingHours.specialDate.fields.description")}</FormLabel>
                   <FormControl>
-                    <Textarea {...field} rows={2} placeholder={t("workingHours.specialDate.descriptionPlaceholder")} />
+                    <Textarea {...field} rows={3} placeholder={t("workingHours.specialDate.descriptionPlaceholder")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("workingHours.specialDate.fields.startTime")}</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                      dir={t("common.dir") as "ltr" | "rtl" | undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("workingHours.specialDate.selectStartTimeOptional")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">{t("workingHours.specialDate.useDefaultDayHours")}</SelectItem>
+                        {timeOptions.map((time) => (
+                          <SelectItem key={`start-${time}`} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="endTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("workingHours.specialDate.fields.endTime")}</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                      dir={t("common.dir") as "ltr" | "rtl" | undefined}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("workingHours.specialDate.selectEndTimeOptional")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">{t("workingHours.specialDate.useDefaultDayHours")}</SelectItem>
+                        {timeOptions
+                          .filter((time) => !startTimeValue || time > startTimeValue) // Allow all if startTime is not set
+                          .map((time) => (
+                            <SelectItem key={`end-${time}`} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="isActive"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <FormLabel className="text-sm">{t("workingHours.specialDate.fields.isActiveEvent")}</FormLabel>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="isClosed"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
-                    <FormLabel className="text-sm">{t("workingHours.specialDate.fields.isClosed")}</FormLabel>
-                    <FormDescription className="text-xs">
-                      {t("workingHours.specialDate.isClosedDescription")}
-                    </FormDescription>
+                    <FormLabel className="text-base">{t("workingHours.specialDate.fields.isActive")}</FormLabel>
+                    <FormDescription>{t("workingHours.specialDate.activeDescription")}</FormDescription>
                   </div>
                   <FormControl>
                     <Switch checked={field.value} onCheckedChange={field.onChange} />
@@ -298,86 +342,15 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
               )}
             />
 
-            {!watchIsClosed && (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="startTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("workingHours.specialDate.fields.startTime")}</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ""}
-                        dir={t("common.dir") as "ltr" | "rtl" | undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("workingHours.specialDate.selectStartTimeOptional")} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">{t("workingHours.specialDate.useDefaultDayHours")}</SelectItem>
-                          {timeOptions.map((time) => (
-                            <SelectItem key={`start-${time}`} value={time}>
-                              {time}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="endTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("workingHours.specialDate.fields.endTime")}</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ""}
-                        dir={t("common.dir") as "ltr" | "rtl" | undefined}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("workingHours.specialDate.selectEndTimeOptional")} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">{t("workingHours.specialDate.useDefaultDayHours")}</SelectItem>
-                          {timeOptions
-                            .filter((time) => !form.getValues("startTime") || time > form.getValues("startTime")!)
-                            .map((time) => (
-                              <SelectItem key={`end-${time}`} value={time}>
-                                {time}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {form.getValues("isActive") && (
+            {form.watch("isActive") && (
               <div className="space-y-4 rounded-lg border p-4">
                 <FormField
                   control={form.control}
-                  name="priceAdjustment"
+                  name="hasPriceAdjustment"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse">
+                    <FormItem className="flex flex-row items-center space-x-3">
                       <FormControl>
-                        <Switch
-                          checked={!!field.value}
-                          onCheckedChange={(checked) =>
-                            field.onChange(checked ? { type: "fixed", value: 0, reason: "" } : undefined)
-                          }
-                          id="hasPriceAdjustmentSwitch"
-                        />
+                        <Switch checked={field.value} onCheckedChange={field.onChange} id="hasPriceAdjustmentSwitch" />
                       </FormControl>
                       <FormLabel htmlFor="hasPriceAdjustmentSwitch" className="font-medium">
                         {t("workingHours.priceAdjustment.toggleLabel")}
@@ -395,11 +368,11 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
                     </FormItem>
                   )}
                 />
-                {watchHasPriceAdjustment && form.getValues("priceAdjustment") && (
+                {hasPriceAdjustmentValue && (
                   <>
                     <FormField
                       control={form.control}
-                      name="priceAdjustment.type"
+                      name="priceAdjustmentType"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t("workingHours.priceAdjustment.type")}</FormLabel>
@@ -426,17 +399,18 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
                     />
                     <FormField
                       control={form.control}
-                      name="priceAdjustment.value"
+                      name="priceAdjustmentValue"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
                             {t("workingHours.priceAdjustment.value")} (
-                            {form.getValues("priceAdjustment.type") === "percentage" ? "%" : t("common.currency")})
+                            {priceAdjustmentTypeValue === "percentage" ? "%" : t("common.currency")})
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="number"
                               {...field}
+                              onChange={(e) => field.onChange(Number.parseFloat(e.target.value))}
                               placeholder={t("workingHours.priceAdjustment.valuePlaceholder")}
                               min="0"
                             />
@@ -447,7 +421,7 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
                     />
                     <FormField
                       control={form.control}
-                      name="priceAdjustment.reason"
+                      name="priceAdjustmentReason"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t("workingHours.priceAdjustment.reason")}</FormLabel>
@@ -466,32 +440,30 @@ export function SpecialDateForm({ isOpen, onOpenChange, specialDate, onSuccess }
                 )}
               </div>
             )}
-            <DialogFooter className="pt-4">
-              <DialogClose asChild>
-                <Button type="button" variant="outline" disabled={isSubmitting}>
-                  <XIcon className="mr-2 h-4 w-4" />
-                  {t("common.cancel")}
-                </Button>
-              </DialogClose>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+                {t("common.cancel")}
+              </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <SaveIcon className="mr-2 h-4 w-4" />
                 {specialDate ? t("common.save") : t("common.create")}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   )
 }
 
 function generateTimeOptions() {
   const options = []
   for (let hour = 0; hour < 24; hour++) {
-    for (let minute = 0; minute < 60; minute += 15) {
-      // 15-minute intervals
-      options.push(`${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`)
+    for (let minute = 0; minute < 60; minute += 30) {
+      const formattedHour = hour.toString().padStart(2, "0")
+      const formattedMinute = minute.toString().padStart(2, "0")
+      options.push(`${formattedHour}:${formattedMinute}`)
     }
   }
   return options

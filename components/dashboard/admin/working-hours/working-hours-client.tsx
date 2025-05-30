@@ -1,131 +1,105 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "@/lib/translations/i18n"
-import { getWorkingHoursData } from "@/actions/working-hours-actions"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { getWorkingHours } from "@/actions/working-hours-actions" // Corrected: Server action
+import { Card, CardContent } from "@/components/common/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
-import { WeeklyHoursSection } from "./weekly-hours-section"
-import { SpecialDatesSection } from "./special-dates-section"
+import { WeeklyHoursSection } from "./weekly-hours-section" // Named import
+import { SpecialDatesSection } from "./special-dates-section" // Named import
 import { Skeleton } from "@/components/common/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
-import { AlertTriangleIcon } from "lucide-react"
-import type { ClientWorkingHours } from "@/lib/db/models/working-hours"
+import type { IWorkingHours } from "@/lib/db/models/working-hours"
 
-interface WorkingHoursClientProps {
-  initialWorkingHours: ClientWorkingHours | null
-  initialError?: string | null
+// Define a client-side type for the data structure after serialization
+type ClientWorkingHoursData = {
+  weeklyHours: (IWorkingHours["weeklyHours"][0] & { _id?: string })[]
+  specialDates: (Omit<IWorkingHours["specialDates"][0], "date"> & { _id: string; date: string })[]
 }
 
-export function WorkingHoursClient({ initialWorkingHours, initialError }: WorkingHoursClientProps) {
+export function WorkingHoursClient() {
+  // Changed to named export
   const { t } = useTranslation()
-  const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState("weekly")
 
   const {
-    data: workingHoursData,
+    data: workingHoursResponse, // Rename to avoid conflict if 'data' is destructured
     isLoading,
     isError,
-    error,
     refetch,
-  } = useQuery<
-    { success: boolean; data?: ClientWorkingHours | null; error?: string },
-    Error,
-    ClientWorkingHours | null
-  >({
-    queryKey: ["workingHours"],
+  } = useQuery({
+    queryKey: ["workingHoursAdmin"], // Changed queryKey to be more specific
     queryFn: async () => {
-      const result = await getWorkingHoursData()
-      if (!result.success || !result.data) {
-        throw new Error(result.error || t("workingHours.fetchError"))
+      const result = await getWorkingHours()
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch working hours")
       }
-      return result.data
+      // Ensure the data structure matches ClientWorkingHoursData, especially date serialization
+      return result as { success: boolean; data: ClientWorkingHoursData; error?: string }
     },
-    initialData: initialWorkingHours, // Use server-fetched data as initial data
-    enabled: !initialWorkingHours, // Only fetch if initialData is not provided
   })
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["workingHours"] })
+  const workingHours = workingHoursResponse?.data || {
+    weeklyHours: [],
+    specialDates: [],
   }
 
-  const currentError = initialError || (isError ? (error as Error)?.message || t("workingHours.fetchError") : null)
-
-  if (isLoading && !initialWorkingHours) {
-    return (
-      <div className="container mx-auto p-4 space-y-6">
-        <Skeleton className="h-10 w-1/3 mb-6" />
-        <Skeleton className="h-12 w-1/4 mb-6" />
-        <Card>
-          <CardContent className="p-6">
-            <Skeleton className="h-8 w-full mb-4" />
-            <Skeleton className="h-40 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  if (currentError && !workingHoursData) {
-    return (
-      <div className="container mx-auto p-4">
-        <Alert variant="destructive">
-          <AlertTriangleIcon className="h-4 w-4" />
-          <AlertTitle>{t("common.error")}</AlertTitle>
-          <AlertDescription>{currentError}</AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
-
-  const dataToUse = workingHoursData || initialWorkingHours
+  const renderSkeletons = (count: number) => (
+    <Card>
+      <CardContent className="p-6">
+        <Skeleton className="h-8 w-64 mb-6" />
+        <div className="space-y-4">
+          {[...Array(count)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between p-4 border rounded-md">
+              <Skeleton className="h-6 w-1/4" />
+              <div className="flex space-x-4 rtl:space-x-reverse">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+              </div>
+              <Skeleton className="h-8 w-8" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-2">{t("workingHours.title")}</h1>
-      <p className="text-muted-foreground mb-6">{t("workingHours.description")}</p>
+      <h1 className="text-2xl font-bold mb-6">{t("workingHours.title")}</h1>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-6 grid w-full grid-cols-2 md:w-1/2">
+        <TabsList className="mb-6 grid w-full grid-cols-2">
           <TabsTrigger value="weekly">{t("workingHours.weeklyHours")}</TabsTrigger>
           <TabsTrigger value="special">{t("workingHours.specialDates")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="weekly" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("workingHours.weeklyHours")}</CardTitle>
-              <CardDescription>{t("workingHours.tabs.weeklyHours.description")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {dataToUse ? (
-                <WeeklyHoursSection weeklyHours={dataToUse.weeklyHours || []} onRefresh={handleRefresh} />
-              ) : (
-                <p>{t("common.loading")}</p>
-              )}
-            </CardContent>
-          </Card>
+          {isLoading ? (
+            renderSkeletons(7)
+          ) : isError ? (
+            <Card>
+              <CardContent className="p-6 text-center text-destructive">{t("common.errorLoadingData")}</CardContent>
+            </Card>
+          ) : (
+            <WeeklyHoursSection weeklyHours={workingHours.weeklyHours} onRefresh={refetch} />
+          )}
         </TabsContent>
 
         <TabsContent value="special" className="mt-0">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("workingHours.specialDates")}</CardTitle>
-              <CardDescription>{t("workingHours.tabs.specialDates.description")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {dataToUse ? (
-                <SpecialDatesSection
-                  specialDates={dataToUse.specialDates || []}
-                  weeklyHours={dataToUse.weeklyHours || []} // Pass weeklyHours for default time display
-                  onRefresh={handleRefresh}
-                />
-              ) : (
-                <p>{t("common.loading")}</p>
-              )}
-            </CardContent>
-          </Card>
+          {isLoading ? (
+            renderSkeletons(3)
+          ) : isError ? (
+            <Card>
+              <CardContent className="p-6 text-center text-destructive">{t("common.errorLoadingData")}</CardContent>
+            </Card>
+          ) : (
+            <SpecialDatesSection
+              specialDates={workingHours.specialDates}
+              weeklyHours={workingHours.weeklyHours} // Pass weeklyHours for context
+              onRefresh={refetch}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>

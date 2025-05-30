@@ -1,133 +1,117 @@
 "use client"
 
-import { Button } from "@/components/common/ui/button" // Corrected path
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { useTranslation } from "@/lib/translations/i18n"
 import { getWorkingHours } from "@/actions/working-hours-actions"
+import { Card, CardContent } from "@/components/common/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { WeeklyHoursSection } from "./weekly-hours-section"
 import { SpecialDatesSection } from "./special-dates-section"
-// SpecialDateForm is now typically managed within SpecialDatesSection or as a separate modal triggered by it.
-// If WorkingHoursClient needs to manage it directly, ensure named import:
-// import { SpecialDateForm } from "./special-date-form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { useTranslation } from "@/lib/translations/i18n"
-import { Loader2 } from "lucide-react"
-import type { IWorkingHours } from "@/lib/db/models/working-hours" // ISpecialDate added
+import { Skeleton } from "@/components/common/ui/skeleton"
+import type { SerializedWorkingHoursData } from "./types"
 
-// Changed to named export
+/**
+ * @component WorkingHoursClient
+ * @description Main client component for managing working hours.
+ * It uses tabs to switch between weekly hours and special dates management.
+ * Fetches working hours data using React Query.
+ */
 export function WorkingHoursClient() {
   const { t } = useTranslation()
-  // State for managing SpecialDateForm if it were handled here.
-  // const [isSpecialDateFormOpen, setIsSpecialDateFormOpen] = useState(false);
-  // const [editingSpecialDate, setEditingSpecialDate] = useState<ISpecialDate | null>(null);
+  const [activeTab, setActiveTab] = useState("weekly")
 
   const {
-    data: workingHoursData,
+    data: queryResult, // Renamed to avoid conflict with workingHours variable
     isLoading,
-    error,
+    isError,
     refetch,
-  } = useQuery<IWorkingHours, Error>({
+  } = useQuery<{ success: boolean; data?: SerializedWorkingHoursData; error?: string }>({
     queryKey: ["workingHours"],
     queryFn: async () => {
       const result = await getWorkingHours()
-      if (!result.success || !result.data) {
-        throw new Error(result.error || "Failed to fetch working hours")
-      }
-      return result.data
+      // No need to throw error here, let React Query handle it based on result.success
+      return result
     },
   })
 
-  // Handlers for SpecialDateForm if managed here
-  /*
-  const handleOpenNewSpecialDateForm = () => {
-    setEditingSpecialDate(null);
-    setIsSpecialDateFormOpen(true);
-  };
+  // Handle cases where queryResult or queryResult.data might be undefined
+  const workingHours: SerializedWorkingHoursData =
+    queryResult?.success && queryResult?.data ? queryResult.data : { weeklyHours: [], specialDates: [] }
 
-  const handleEditSpecialDate = (date: ISpecialDate) => {
-    setEditingSpecialDate(date);
-    setIsSpecialDateFormOpen(true);
-  };
-
-  const handleSpecialDateFormClose = () => {
-    setIsSpecialDateFormOpen(false);
-    setEditingSpecialDate(null);
-    refetch(); 
-  };
-  */
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="sr-only">{t("common.loading")}</span>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle className="text-destructive">{t("common.error")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>{t("workingHours.fetchError")}</p>
-          <pre className="mt-2 text-sm text-muted-foreground bg-muted p-2 rounded">{error.message}</pre>
-          <Button onClick={() => refetch()} className="mt-4">
-            {t("common.retry")}
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!workingHoursData) {
-    return (
-      <Card className="mt-4">
-        <CardHeader>
-          <CardTitle>{t("common.noData")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>{t("workingHours.noData")}</p>
-          <Button onClick={() => refetch()} className="mt-4">
-            {t("common.retry")}
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  /*
-  // If SpecialDateForm is to be rendered here instead of inside SpecialDatesSection
-  if (isSpecialDateFormOpen) {
-    return (
-      <SpecialDateForm
-        specialDate={editingSpecialDate || undefined} // Ensure ISpecialDate matches the prop type
-        weeklyHours={workingHoursData.weeklyHours}
-        onSuccess={handleSpecialDateFormClose}
-        onCancel={handleSpecialDateFormClose}
-      />
-    );
-  }
-  */
+  const showLoadingSkeleton = isLoading
+  const showErrorState = isError || (queryResult && !queryResult.success)
 
   return (
-    <Tabs defaultValue="weekly" className="space-y-4">
-      <TabsList>
-        <TabsTrigger value="weekly">{t("workingHours.weeklyHours")}</TabsTrigger>
-        <TabsTrigger value="special">{t("workingHours.specialDates")}</TabsTrigger>
-      </TabsList>
-      <TabsContent value="weekly">
-        <WeeklyHoursSection weeklyHours={workingHoursData.weeklyHours} onRefresh={refetch} />
-      </TabsContent>
-      <TabsContent value="special">
-        <SpecialDatesSection
-          specialDates={workingHoursData.specialDates}
-          weeklyHours={workingHoursData.weeklyHours}
-          onRefresh={refetch}
-        />
-      </TabsContent>
-    </Tabs>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">{t("workingHours.title")}</h1>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="weekly">{t("workingHours.weeklyHours")}</TabsTrigger>
+          <TabsTrigger value="special">{t("workingHours.specialDates")}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="weekly" className="mt-0">
+          {showLoadingSkeleton ? (
+            <Card>
+              <CardContent className="p-6">
+                <Skeleton className="h-8 w-64 mb-6" />
+                <div className="space-y-4">
+                  {[...Array(7)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border rounded-md">
+                      <Skeleton className="h-6 w-24" />
+                      <div className="flex items-center gap-2 sm:gap-4">
+                        <Skeleton className="h-10 w-full sm:w-[120px] md:w-36" />
+                        <Skeleton className="h-10 w-full sm:w-[120px] md:w-36" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : showErrorState ? (
+            <Card>
+              <CardContent className="p-6 text-center text-red-500">
+                <p>{queryResult?.error || t("common.error")}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <WeeklyHoursSection weeklyHours={workingHours.weeklyHours} onRefresh={refetch} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="special" className="mt-0">
+          {showLoadingSkeleton ? (
+            <Card>
+              <CardContent className="p-6">
+                <Skeleton className="h-8 w-64 mb-6" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <Skeleton className="lg:col-span-1 h-[400px]" />
+                  <div className="lg:col-span-2 space-y-4">
+                    <Skeleton className="h-6 w-48 mb-4" />
+                    {[...Array(2)].map((_, i) => (
+                      <Skeleton key={i} className="h-[200px] w-full rounded-md" />
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : showErrorState ? (
+            <Card>
+              <CardContent className="p-6 text-center text-red-500">
+                <p>{queryResult?.error || t("common.error")}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <SpecialDatesSection
+              specialDates={workingHours.specialDates}
+              weeklyHours={workingHours.weeklyHours} // Pass weeklyHours here
+              onRefresh={refetch}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }

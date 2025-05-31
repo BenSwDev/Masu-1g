@@ -295,12 +295,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           isActive: pathname === "/dashboard/member/subscriptions",
         },
         {
-          title: t("dashboard.sidebar.coupons"),
-          icon: CreditCard,
-          href: "/dashboard/member/coupons",
-          isActive: pathname === "/dashboard/member/coupons",
-        },
-        {
           title: t("dashboard.sidebar.giftVouchers"),
           icon: Gift,
           href: "/dashboard/member/gift-vouchers",
@@ -345,8 +339,8 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         {
           title: t("dashboard.sidebar.coupons"),
           icon: CreditCard,
-          href: "/dashboard/partner/coupons",
-          isActive: pathname === "/dashboard/partner/coupons",
+          href: "/dashboard/partner/assigned-coupons",
+          isActive: pathname === "/dashboard/partner/assigned-coupons",
         }
       )
     }

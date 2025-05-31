@@ -1,7 +1,7 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import { MoreHorizontal, CheckCircle, XCircle, Edit, Trash2 } from "lucide-react"
+import { MoreHorizontal, CheckCircle, Edit, Trash2, Clock, AlertTriangle, PowerOff } from "lucide-react"
 import { Button } from "@/components/common/ui/button"
 import {
   DropdownMenu,
@@ -12,22 +12,56 @@ import {
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
 import { Badge } from "@/components/common/ui/badge"
-import type { ICoupon } from "@/lib/db/models/coupon" // Ensure this path is correct
-import { formatDate, formatCurrency } from "@/lib/utils/utils" // Assuming you have these utils
+import type { ICoupon } from "@/lib/db/models/coupon"
+import { formatDate, formatCurrency } from "@/lib/utils/utils"
 
 interface CouponColumnsProps {
-  onEdit: (coupon: ICoupon) => void
+  onEdit: (coupon: ICoupon & { effectiveStatus: string }) => void
   onDelete: (couponId: string) => void
 }
 
 // Helper to get populated partner name
 const getPartnerName = (partner: any): string => {
   if (!partner) return "N/A"
-  if (typeof partner === "string") return "Loading..." // Or fetch if only ID
+  if (typeof partner === "string") return "Loading..."
   return partner.name || partner.email || "Unnamed Partner"
 }
 
-export const columns = ({ onEdit, onDelete }: CouponColumnsProps): ColumnDef<ICoupon>[] => [
+const StatusBadge = ({ status }: { status: string }) => {
+  switch (status) {
+    case "active":
+      return (
+        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+          <CheckCircle className="mr-1 h-3 w-3" /> Active
+        </Badge>
+      )
+    case "scheduled":
+      return (
+        <Badge variant="outline" className="border-blue-500 text-blue-700">
+          <Clock className="mr-1 h-3 w-3" /> Scheduled
+        </Badge>
+      )
+    case "expired":
+      return (
+        <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-600">
+          <AlertTriangle className="mr-1 h-3 w-3" /> Expired
+        </Badge>
+      )
+    case "inactive_manual":
+      return (
+        <Badge variant="secondary">
+          <PowerOff className="mr-1 h-3 w-3" /> Inactive
+        </Badge>
+      )
+    default:
+      return <Badge variant="outline">{status}</Badge>
+  }
+}
+
+export const columns = ({
+  onEdit,
+  onDelete,
+}: CouponColumnsProps): ColumnDef<ICoupon & { effectiveStatus: string }>[] => [
   {
     accessorKey: "code",
     header: "Code",
@@ -43,7 +77,7 @@ export const columns = ({ onEdit, onDelete }: CouponColumnsProps): ColumnDef<ICo
     header: "Discount",
     cell: ({ row }) => {
       const coupon = row.original
-      return coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue) // Assuming currency is default or from settings
+      return coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue)
     },
   },
   {
@@ -57,23 +91,16 @@ export const columns = ({ onEdit, onDelete }: CouponColumnsProps): ColumnDef<ICo
     cell: ({ row }) => formatDate(row.original.validUntil),
   },
   {
-    accessorKey: "isActive",
+    accessorKey: "effectiveStatus", // Changed from isActive
     header: "Status",
-    cell: ({ row }) =>
-      row.original.isActive ? (
-        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-          <CheckCircle className="mr-1 h-3 w-3" /> Active
-        </Badge>
-      ) : (
-        <Badge variant="destructive">
-          <XCircle className="mr-1 h-3 w-3" /> Inactive
-        </Badge>
-      ),
+    cell: ({ row }) => <StatusBadge status={row.original.effectiveStatus} />,
   },
   {
     accessorKey: "usageLimit",
     header: "Usage",
-    cell: ({ row }) => `${row.original.timesUsed} / ${row.original.usageLimit === 0 ? "∞" : row.original.usageLimit}`,
+    // Ensuring usageLimit is treated as a number for comparison
+    cell: ({ row }) =>
+      `${row.original.timesUsed} / ${Number(row.original.usageLimit) === 0 ? "∞" : row.original.usageLimit}`,
   },
   {
     accessorKey: "assignedPartnerId",

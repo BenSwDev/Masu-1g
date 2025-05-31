@@ -3,13 +3,48 @@
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
-import { formatDate, formatCurrency } from "@/lib/utils/utils" // Assuming you have these utils
-import { CheckCircle, XCircle, Info, Copy } from "lucide-react"
+import { formatDate, formatCurrency } from "@/lib/utils/utils"
+import { CheckCircle, Info, Copy, Clock, AlertTriangle, PowerOff } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Button } from "@/components/common/ui/button"
 
 interface AssignedCouponCardProps {
-  coupon: ICoupon
+  coupon: ICoupon & { effectiveStatus: string } // Added effectiveStatus
+}
+
+const StatusBadge = ({ status }: { status: string }) => {
+  switch (status) {
+    case "active":
+      return (
+        <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-xs">
+          <CheckCircle className="mr-1 h-3 w-3" /> Active
+        </Badge>
+      )
+    case "scheduled":
+      return (
+        <Badge variant="outline" className="border-blue-500 text-blue-700 text-xs">
+          <Clock className="mr-1 h-3 w-3" /> Scheduled
+        </Badge>
+      )
+    case "expired":
+      return (
+        <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-600 text-xs">
+          <AlertTriangle className="mr-1 h-3 w-3" /> Expired
+        </Badge>
+      )
+    case "inactive_manual": // Manually set to inactive by admin
+      return (
+        <Badge variant="secondary" className="text-xs">
+          <PowerOff className="mr-1 h-3 w-3" /> Inactive
+        </Badge>
+      )
+    default:
+      return (
+        <Badge variant="outline" className="text-xs">
+          {status}
+        </Badge>
+      )
+  }
 }
 
 export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) {
@@ -21,15 +56,10 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
       .then(() => {
         toast({ title: "Copied!", description: `Coupon code "${coupon.code}" copied to clipboard.` })
       })
-      .catch((err) => {
+      .catch((_err) => {
         toast({ title: "Error", description: "Failed to copy code.", variant: "destructive" })
       })
   }
-
-  // Determine if coupon is currently valid based on dates and isActive flag
-  const now = new Date()
-  const isDateValid = coupon.validFrom <= now && coupon.validUntil >= now
-  const isEffectivelyActive = coupon.isActive && isDateValid
 
   return (
     <Card className="flex flex-col">
@@ -57,26 +87,19 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
         </div>
         <div className="flex justify-between items-center">
           <span>Status:</span>
-          {isEffectivelyActive ? (
-            <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-xs">
-              <CheckCircle className="mr-1 h-3 w-3" /> Active
-            </Badge>
-          ) : (
-            <Badge variant="destructive" className="text-xs">
-              <XCircle className="mr-1 h-3 w-3" /> Inactive/Expired
-            </Badge>
-          )}
+          <StatusBadge status={coupon.effectiveStatus} />
         </div>
         <div className="flex justify-between">
           <span>Total Uses:</span>
           <span className="font-semibold">
-            {coupon.timesUsed} / {coupon.usageLimit === 0 ? "Unlimited" : coupon.usageLimit}
+            {/* Ensuring usageLimit is treated as a number for comparison */}
+            {coupon.timesUsed} / {Number(coupon.usageLimit) === 0 ? "Unlimited" : coupon.usageLimit}
           </span>
         </div>
         <div className="flex justify-between">
           <span>Uses Per Customer:</span>
           <span className="font-semibold">
-            {coupon.usageLimitPerUser === 0 ? "Unlimited" : coupon.usageLimitPerUser}
+            {Number(coupon.usageLimitPerUser) === 0 ? "Unlimited" : coupon.usageLimitPerUser}
           </span>
         </div>
         {coupon.notesForPartner && (

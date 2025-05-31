@@ -1,11 +1,11 @@
 "use server"
+
 import { revalidatePath } from "next/cache"
 import Coupon, { type ICoupon } from "@/lib/db/models/coupon"
 import User from "@/lib/db/models/user"
 import { connectDB } from "@/lib/db/mongoose"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth/auth"
-// Removed uuidv4 import as it's not used in this version of couponId generation (Mongoose ObjectId is default)
 import {
   CreateCouponSchema,
   UpdateCouponSchema,
@@ -16,6 +16,31 @@ import {
 // Helper functions to check roles
 const isAdminUser = (user: { roles?: string[] } | null | undefined): boolean => !!user?.roles?.includes("admin")
 const isPartnerUser = (user: { roles?: string[] } | null | undefined): boolean => !!user?.roles?.includes("partner")
+
+// Function to calculate effective status
+function calculateEffectiveStatus(coupon: ICoupon): "active" | "expired" | "scheduled" | "inactive_manual" {
+  const now = new Date()
+  const validFrom = new Date(coupon.validFrom)
+  const validUntil = new Date(coupon.validUntil)
+
+  if (!coupon.isActive) {
+    return "inactive_manual" // Manually set to inactive
+  }
+  if (validFrom > now) {
+    return "scheduled" // Not yet started
+  }
+  // To make validUntil inclusive for the whole day, we compare 'now' with the start of the next day.
+  const endOfValidUntilDay = new Date(validUntil)
+  endOfValidUntilDay.setDate(endOfValidUntilDay.getDate() + 1)
+  // Or, for more precision to include the entire day:
+  // const endOfValidUntilDay = new Date(validUntil.getFullYear(), validUntil.getMonth(), validUntil.getDate(), 23, 59, 59, 999);
+
+  if (endOfValidUntilDay <= now) {
+    return "expired" // Ended
+  }
+  // At this point, it's active and within the date range
+  return "active"
+}
 
 // Admin Actions
 export async function createCoupon(payload: CreateCouponPayload) {
@@ -33,7 +58,7 @@ export async function createCoupon(payload: CreateCouponPayload) {
     await connectDB()
     const newCoupon = new Coupon({
       ...validatedFields.data,
-      createdBy: session.user.id, // Mongoose ObjectId from session user
+      createdBy: session.user.id,
       assignedPartnerId: validatedFields.data.assignedPartnerId || null,
     })
     await newCoupon.save()
@@ -111,32 +136,50 @@ export async function deleteCoupon(couponId: string) {
 export async function getAdminCoupons(
   page = 1,
   limit = 10,
-  filters: { code?: string; isActive?: boolean; partnerId?: string } = {},
-): Promise<{ coupons: ICoupon[]; totalPages: number; currentPage: number; totalCoupons: number }> {
+  filters: { code?: string; isActive?: boolean; partnerId?: string; effectiveStatus?: string } = {},
+): Promise<{
+  coupons: (ICoupon & { effectiveStatus: string })[]
+  totalPages: number
+  currentPage: number
+  totalCoupons: number
+}> {
   const session = await getServerSession(authOptions)
   if (!session || !isAdminUser(session.user)) {
-    // Consider throwing an error or returning a structured error response
-    // For now, throwing to align with typical data fetching patterns in Server Components
     throw new Error("Unauthorized: Admin access required.")
   }
 
   await connectDB()
   const query: any = {}
   if (filters.code) query.code = { $regex: filters.code, $options: "i" }
+  // isActive filter might need to be adjusted if we primarily use effectiveStatus
   if (typeof filters.isActive === "boolean") query.isActive = filters.isActive
   if (filters.partnerId) query.assignedPartnerId = filters.partnerId
 
-  const totalCoupons = await Coupon.countDocuments(query)
-  const couponsData = await Coupon.find(query)
+  // We fetch all coupons matching basic filters first, then filter by effectiveStatus in code if provided
+  // This is because effectiveStatus is a derived field.
+  // For more complex filtering by effectiveStatus, a more advanced query or aggregation might be needed.
+
+  const allMatchingCoupons = await Coupon.find(query)
     .populate("createdBy", "name email")
     .populate("assignedPartnerId", "name email")
     .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
     .lean()
 
+  const couponsWithEffectiveStatus = allMatchingCoupons.map((coupon) => ({
+    ...coupon,
+    effectiveStatus: calculateEffectiveStatus(coupon as ICoupon), // Cast needed as .lean() returns plain objects
+  }))
+
+  let filteredByEffectiveStatus = couponsWithEffectiveStatus
+  if (filters.effectiveStatus) {
+    filteredByEffectiveStatus = couponsWithEffectiveStatus.filter((c) => c.effectiveStatus === filters.effectiveStatus)
+  }
+
+  const totalCoupons = filteredByEffectiveStatus.length
+  const paginatedCoupons = filteredByEffectiveStatus.slice((page - 1) * limit, page * limit)
+
   return {
-    coupons: JSON.parse(JSON.stringify(couponsData)), // Ensure data is serializable
+    coupons: JSON.parse(JSON.stringify(paginatedCoupons)),
     totalPages: Math.ceil(totalCoupons / limit),
     currentPage: page,
     totalCoupons,
@@ -150,11 +193,9 @@ export async function getPartnersForSelection(): Promise<{ value: string; label:
   }
   try {
     await connectDB()
-    // Ensure 'role' field exists and is correctly named in your User model
     const partners = await User.find({ roles: "partner" }).select("_id name").lean()
     return partners.map((partner) => ({
       value: partner._id.toString(),
-      // Fallback for name if it can be missing
       label: (partner as any).name || `Partner ID: ${partner._id.toString()}`,
     }))
   } catch (error) {
@@ -167,8 +208,13 @@ export async function getPartnersForSelection(): Promise<{ value: string; label:
 export async function getAssignedPartnerCoupons(
   page = 1,
   limit = 10,
-  filters: { code?: string; isActive?: boolean } = {},
-): Promise<{ coupons: ICoupon[]; totalPages: number; currentPage: number; totalCoupons: number }> {
+  filters: { code?: string; isActive?: boolean } = {}, // isActive filter might be less relevant now
+): Promise<{
+  coupons: (ICoupon & { effectiveStatus: string })[]
+  totalPages: number
+  currentPage: number
+  totalCoupons: number
+}> {
   const session = await getServerSession(authOptions)
   if (!session || !isPartnerUser(session.user) || !session.user.id) {
     throw new Error("Unauthorized: Partner access required.")
@@ -179,15 +225,19 @@ export async function getAssignedPartnerCoupons(
   if (filters.code) query.code = { $regex: filters.code, $options: "i" }
   if (typeof filters.isActive === "boolean") query.isActive = filters.isActive
 
-  const totalCoupons = await Coupon.countDocuments(query)
-  const couponsData = await Coupon.find(query)
-    .sort({ validUntil: 1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .lean()
+  const couponsData = await Coupon.find(query).sort({ validUntil: 1 }).lean()
+
+  const couponsWithEffectiveStatus = couponsData.map((coupon) => ({
+    ...coupon,
+    effectiveStatus: calculateEffectiveStatus(coupon as ICoupon),
+  }))
+
+  // Apply pagination after calculating effective status
+  const totalCoupons = couponsWithEffectiveStatus.length
+  const paginatedCoupons = couponsWithEffectiveStatus.slice((page - 1) * limit, page * limit)
 
   return {
-    coupons: JSON.parse(JSON.stringify(couponsData)),
+    coupons: JSON.parse(JSON.stringify(paginatedCoupons)),
     totalPages: Math.ceil(totalCoupons / limit),
     currentPage: page,
     totalCoupons,

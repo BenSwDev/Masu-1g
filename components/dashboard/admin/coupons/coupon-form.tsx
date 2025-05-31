@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils/utils" // Assuming cn utility
 import { formatDate } from "@/lib/utils/utils" // Assuming formatDate utility
 import type { ICoupon } from "@/lib/db/models/coupon"
 
+const NO_PARTNER_SELECTED_VALUE = "__no-partner__" // Unique non-empty string
+
 // Schema for form validation (client-side)
 // Must align with server-side Zod schema in actions
 const formSchema = z
@@ -220,15 +222,19 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
           control={form.control}
           render={({ field }) => (
             <Select
-              onValueChange={field.onChange}
-              defaultValue={field.value || undefined}
+              onValueChange={(value) => {
+                field.onChange(value === NO_PARTNER_SELECTED_VALUE ? null : value)
+              }}
+              value={
+                field.value === null || field.value === undefined ? NO_PARTNER_SELECTED_VALUE : field.value.toString()
+              }
               disabled={loading || partnersForSelect.length === 0}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a partner (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None</SelectItem>
+                <SelectItem value={NO_PARTNER_SELECTED_VALUE}>None</SelectItem>
                 {partnersForSelect.map((partner) => (
                   <SelectItem key={partner.value} value={partner.value}>
                     {partner.label}

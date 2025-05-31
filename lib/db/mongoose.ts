@@ -78,3 +78,5 @@ if (process.env.NODE_ENV === "development") {
 // Export both as default and named export
 export default dbConnect
 export { dbConnect }
+// Add the missing connectDB export as an alias
+export { dbConnect as connectDB }

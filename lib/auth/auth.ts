@@ -1,14 +1,22 @@
 import { compare, hash } from "bcryptjs"
-import type { NextAuthOptions } from "next-auth"
+import type { NextAuthOptions, User as NextAuthUser } from "next-auth" // Import User as NextAuthUser
+import { getServerSession } from "next-auth/next" // Import getServerSession
 import CredentialsProvider from "next-auth/providers/credentials"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "@/lib/db/mongodb"
 import dbConnect from "@/lib/db/mongoose"
-import User from "@/lib/db/models/user"
+import User from "@/lib/db/models/user" // This is your Mongoose User model
 import { logger } from "@/lib/logs/logger"
 
-// Add interface for our custom user type
-interface CustomUser {
+// Add interface for our custom user type from the session/token
+interface SessionUser extends NextAuthUser {
+  id: string
+  roles?: string[]
+  activeRole?: string
+}
+
+// Interface for the Mongoose User model (if different or for clarity)
+interface CustomMongooseUser {
   _id: any
   email: string
   name?: string | null
@@ -127,7 +135,7 @@ export const authOptions: NextAuthOptions = {
         } else {
           throw new Error("Invalid email or phone format")
         }
-        const user = await User.findOne(query).select("+password email name image roles") as CustomUser
+        const user = (await User.findOne(query).select("+password email name image roles")) as CustomMongooseUser
         if (!user) {
           throw new Error("No user found with this identifier")
         }
@@ -146,7 +154,7 @@ export const authOptions: NextAuthOptions = {
           image: user.image,
           roles: userRoles,
         }
-      }
+      },
     }),
     CredentialsProvider({
       id: "otp",
@@ -159,7 +167,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Missing userId in OTP credentials")
         }
         await dbConnect()
-        const user = await User.findById(credentials.userId) as CustomUser
+        const user = (await User.findById(credentials.userId)) as CustomMongooseUser
         if (!user) {
           throw new Error("User not found")
         }
@@ -180,65 +188,66 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account, trigger, session }) {
-      await dbConnect();
+      await dbConnect()
       // On first login
       if (user) {
-        token.id = user.id;
-        const customUser = user as unknown as CustomUser;
-        token.roles = customUser.roles && customUser.roles.length > 0 ? customUser.roles : ["member"];
-        // Always pull from DB for activeRole
-        const dbUser = await User.findById(token.id).select("roles activeRole");
-        let activeRole = dbUser?.activeRole;
-        if (!activeRole || !dbUser.roles.includes(activeRole)) {
-          // Fallback to default and update DB if needed
-          activeRole = getDefaultActiveRole(dbUser.roles);
+        token.id = user.id
+        const customUserFromProvider = user as unknown as { roles?: string[] } // User from provider
+        token.roles =
+          customUserFromProvider.roles && customUserFromProvider.roles.length > 0
+            ? customUserFromProvider.roles
+            : ["member"]
+
+        const dbUser = (await User.findById(token.id).select("roles activeRole")) as CustomMongooseUser | null
+        let activeRole = dbUser?.activeRole
+        if (!activeRole || (dbUser && !dbUser.roles?.includes(activeRole))) {
+          activeRole = getDefaultActiveRole(dbUser?.roles || token.roles)
           if (dbUser) {
-            dbUser.activeRole = activeRole;
-            await dbUser.save();
+            dbUser.activeRole = activeRole
+            await User.findByIdAndUpdate(dbUser._id, { activeRole: activeRole })
           }
         }
-        token.activeRole = activeRole;
-        return token;
+        token.activeRole = activeRole
+        return token
       }
       // On session update (role switch)
-      if (trigger === "update" && session && session.activeRole) {
-        const dbUser = await User.findById(token.id).select("roles activeRole");
+      if (trigger === "update" && session && (session as { activeRole?: string }).activeRole) {
+        const dbUser = (await User.findById(token.id).select("roles activeRole")) as CustomMongooseUser | null
         if (dbUser) {
-          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"];
-          let activeRole = session.activeRole;
-          if (!dbUser.roles.includes(activeRole)) {
-            activeRole = getDefaultActiveRole(dbUser.roles);
-            dbUser.activeRole = activeRole;
-            await dbUser.save();
+          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
+          let activeRole = (session as { activeRole: string }).activeRole
+          if (!dbUser.roles?.includes(activeRole)) {
+            activeRole = getDefaultActiveRole(dbUser.roles)
           }
-          token.activeRole = activeRole;
+          // Update activeRole in DB
+          await User.findByIdAndUpdate(dbUser._id, { activeRole: activeRole })
+          token.activeRole = activeRole
         }
-        return token;
+        return token
       }
       // On every other call, always sync from DB
       if (token.id) {
-        const dbUser = await User.findById(token.id).select("roles activeRole");
+        const dbUser = (await User.findById(token.id).select("roles activeRole")) as CustomMongooseUser | null
         if (dbUser) {
-          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"];
-          let activeRole = dbUser.activeRole;
-          if (!activeRole || !dbUser.roles.includes(activeRole)) {
-            activeRole = getDefaultActiveRole(dbUser.roles);
-            dbUser.activeRole = activeRole;
-            await dbUser.save();
+          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
+          let activeRole = dbUser.activeRole
+          if (!activeRole || !dbUser.roles?.includes(activeRole)) {
+            activeRole = getDefaultActiveRole(dbUser.roles)
+            await User.findByIdAndUpdate(dbUser._id, { activeRole: activeRole })
           }
-          token.activeRole = activeRole;
+          token.activeRole = activeRole
         }
       }
       if (account) {
-        token.accessToken = account.access_token;
+        token.accessToken = account.access_token
       }
-      return token;
+      return token
     },
     async session({ session, token }) {
       if (session.user && token) {
-        session.user.id = token.id as string
-        session.user.roles = token.roles as string[]
-        session.user.activeRole = token.activeRole as string
+        ;(session.user as SessionUser).id = token.id as string
+        ;(session.user as SessionUser).roles = token.roles as string[]
+        ;(session.user as SessionUser).activeRole = token.activeRole as string
       }
       return session
     },
@@ -269,4 +278,25 @@ export const authOptions: NextAuthOptions = {
 // Helper function to check if user has a specific role
 export function hasRole(roles: string[] | undefined, role: string): boolean {
   return roles?.includes(role) || false
+}
+
+/**
+ * Retrieves the current authenticated user's session.
+ * This function is intended for use in Server Components and Route Handlers.
+ * @returns {Promise<SessionUser | null>} The user object from the session, or null if not authenticated.
+ */
+export async function getCurrentUser(): Promise<SessionUser | null> {
+  const session = await getServerSession(authOptions)
+  if (!session || !session.user) {
+    return null
+  }
+  // Ensure the user object conforms to SessionUser, especially the id, roles, and activeRole
+  return {
+    id: (session.user as any).id || "", // Make sure id is present
+    name: session.user.name,
+    email: session.user.email,
+    image: session.user.image,
+    roles: (session.user as any).roles,
+    activeRole: (session.user as any).activeRole,
+  } as SessionUser
 }

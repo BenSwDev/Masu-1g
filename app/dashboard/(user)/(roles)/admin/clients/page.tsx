@@ -1,11 +1,17 @@
+"use client"
+
+// This file should contain the original client management logic.
+// For now, I'll restore it to a basic placeholder similar to other admin pages.
+// You can replace this with the actual client management implementation.
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
-import { getUsers } from "@/actions/user-actions"
-import { UsersClient } from "@/components/dashboard/admin/users/users-client"
+import { Heading } from "@/components/common/ui/heading"
+import { useTranslations } from "next-intl"
 
 export default async function AdminClientsPage() {
   const session = await getServerSession(authOptions)
+  const t = useTranslations("Dashboard.Admin.Clients") // Assuming you'll add these keys
 
   if (!session) {
     redirect("/auth/login")
@@ -15,12 +21,13 @@ export default async function AdminClientsPage() {
     redirect("/dashboard")
   }
 
-  // Fetch initial users data
-  const result = await getUsers(1, 20)
-
-  if (!result.success) {
-    throw new Error(result.error || "Failed to fetch users")
-  }
-
-  return <UsersClient initialData={result.data} />
+  return (
+    <div className="space-y-6 p-4 md:p-6">
+      <Heading title={t("title")} description={t("description")} />
+      {/* Placeholder for actual client management content */}
+      <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+        <p>{t("contentPlaceholder")}</p>
+      </div>
+    </div>
+  )
 }

@@ -1,6 +1,8 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+import { getUsers } from "@/actions/user-actions"
+import { UsersClient } from "@/components/dashboard/admin/users/users-client"
 
 export default async function AdminClientsPage() {
   const session = await getServerSession(authOptions)
@@ -13,12 +15,12 @@ export default async function AdminClientsPage() {
     redirect("/dashboard")
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 text-right">ניהול לקוחות</h1>
-        <p className="text-gray-600 text-right">ניהול וצפייה ברשימת הלקוחות במערכת.</p>
-      </div>
-    </div>
-  )
+  // Fetch initial users data
+  const result = await getUsers(1, 20)
+
+  if (!result.success) {
+    throw new Error(result.error || "Failed to fetch users")
+  }
+
+  return <UsersClient initialData={result.data} />
 }

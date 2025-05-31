@@ -855,5 +855,108 @@
   "roomNumber": "מספר חדר",
   "instructions": "הוראות",
   "T": "T",
-  "common.totalPrice": "מחיר כולל"
+  "common.totalPrice": "מחיר כולל",
+  "users": {
+    "title": "ניהול משתמשים",
+    "description": "ניהול וצפייה ברשימת המשתמשים במערכת",
+    "addUser": "הוסף משתמש",
+    "editUser": "ערוך משתמש",
+    "viewUser": "צפה במשתמש",
+    "deleteUser": "מחק משתמש",
+    "deleteUsers": "מחק משתמשים",
+    "searchPlaceholder": "חפש משתמשים לפי שם, מייל או טלפון...",
+    "noUsers": "לא נמצאו משתמשים",
+    "totalUsers": "סה״כ משתמשים",
+    "verifiedUsers": "משתמשים מאומתים",
+    "unverifiedUsers": "משתמשים לא מאומתים",
+    "selectedUsers": "משתמשים נבחרים",
+    "deleteSelected": "מחק נבחרים",
+    "selectAll": "בחר הכל",
+    "userDetails": "פרטי משתמש",
+    "personalInfo": "מידע אישי",
+    "accountInfo": "מידע חשבון",
+    "rolesInfo": "תפקידים",
+    "systemInfo": "מידע מערכת",
+    "fields": {
+      "name": "שם מלא",
+      "email": "כתובת מייל",
+      "phone": "מספר טלפון",
+      "gender": "מין",
+      "dateOfBirth": "תאריך לידה",
+      "roles": "תפקידים",
+      "activeRole": "תפקיד פעיל",
+      "isEmailVerified": "מייל מאומת",
+      "isPhoneVerified": "טלפון מאומת",
+      "createdAt": "תאריך הצטרפות",
+      "updatedAt": "עדכון אחרון",
+      "password": "סיסמה",
+      "confirmPassword": "אימות סיסמה",
+      "avatar": "תמונת פרופיל"
+    },
+    "genders": {
+      "male": "זכר",
+      "female": "נקבה",
+      "other": "אחר"
+    },
+    "roles": {
+      "member": "חבר",
+      "professional": "מטפל",
+      "partner": "שותף",
+      "admin": "מנהל"
+    },
+    "placeholders": {
+      "name": "הזן שם מלא",
+      "email": "הזן כתובת מייל",
+      "phone": "הזן מספר טלפון",
+      "password": "הזן סיסמה",
+      "confirmPassword": "אמת את הסיסמה"
+    },
+    "messages": {
+      "createSuccess": "המשתמש נוצר בהצלחה",
+      "createError": "שגיאה ביצירת המשתמש",
+      "updateSuccess": "המשתמש עודכן בהצלחה",
+      "updateError": "שגיאה בעדכון המשתמש",
+      "deleteSuccess": "המשתמש נמחק בהצלחה",
+      "deleteError": "שגיאה במחיקת המשתמש",
+      "deleteMultipleSuccess": "{{count}} משתמשים נמחקו בהצלחה",
+      "deleteMultipleError": "שגיאה במחיקת המשתמשים",
+      "fetchError": "שגיאה בטעינת המשתמשים",
+      "cannotDeleteSelf": "לא ניתן למחוק את עצמך",
+      "emailExists": "כתובת המייל כבר קיימת במערכת",
+      "phoneExists": "מספר הטלפון כבר קיים במערכת",
+      "activeRoleRequired": "יש לבחור תפקיד פעיל מהתפקידים הנבחרים"
+    },
+    "confirmations": {
+      "deleteTitle": "מחיקת משתמש",
+      "deleteDescription": "האם אתה בטוח שברצונך למחוק את המשתמש {{name}}? פעולה זו אינה ניתנת לביטול.",
+      "deleteMultipleTitle": "מחיקת משתמשים",
+      "deleteMultipleDescription": "האם אתה בטוח שברצונך למחוק {{count}} משתמשים? פעולה זו אינה ניתנת לביטול."
+    },
+    "validation": {
+      "nameRequired": "שם מלא נדרש",
+      "emailRequired": "כתובת מייל נדרשת",
+      "emailInvalid": "כתובת מייל לא תקינה",
+      "phoneRequired": "מספר טלפון נדרש",
+      "phoneInvalid": "מספר טלפון לא תקין",
+      "passwordRequired": "סיסמה נדרשת",
+      "passwordMinLength": "הסיסמה חייבת להכיל לפחות 8 תווים",
+      "passwordMismatch": "הסיסמאות אינן תואמות",
+      "genderRequired": "יש לבחור מין",
+      "dateOfBirthRequired": "תאריך לידה נדרש",
+      "rolesRequired": "יש לבחור לפחות תפקיד אחד",
+      "activeRoleRequired": "יש לבחור תפקיד פעיל"
+    },
+    "tabs": {
+      "personal": "מידע אישי",
+      "account": "חשבון",
+      "roles": "תפקידים",
+      "system": "מערכת"
+    },
+    "status": {
+      "verified": "מאומת",
+      "unverified": "לא מאומת",
+      "active": "פעיל",
+      "inactive": "לא פעיל"
+    }
+  }
 }

@@ -1,6 +1,5 @@
 import { compare, hash } from "bcryptjs"
 import type { NextAuthOptions } from "next-auth"
-import { getServerSession, type Session } from "next-auth" // Add Session type
 import CredentialsProvider from "next-auth/providers/credentials"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "@/lib/db/mongodb"
@@ -61,6 +60,8 @@ export function validatePhone(phone: string): boolean {
       cleaned = "+972" + cleaned
     } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
       cleaned = "+" + cleaned
+    } else if (cleaned.length === 10 && /^[5-9]/.test(cleaned)) {
+      cleaned = "+972" + cleaned
     } else {
       cleaned = "+972" + cleaned
     }
@@ -86,11 +87,6 @@ function getDefaultActiveRole(roles: string[]): string {
   if (roles.includes("partner")) return "partner"
   if (roles.includes("member")) return "member"
   return roles[0] || "member"
-}
-
-// Add the getSession function
-export async function getSession(): Promise<Session | null> {
-  return await getServerSession(authOptions)
 }
 
 export const authOptions: NextAuthOptions = {
@@ -131,7 +127,7 @@ export const authOptions: NextAuthOptions = {
         } else {
           throw new Error("Invalid email or phone format")
         }
-        const user = (await User.findOne(query).select("+password email name image roles")) as CustomUser
+        const user = await User.findOne(query).select("+password email name image roles") as CustomUser
         if (!user) {
           throw new Error("No user found with this identifier")
         }
@@ -150,7 +146,7 @@ export const authOptions: NextAuthOptions = {
           image: user.image,
           roles: userRoles,
         }
-      },
+      }
     }),
     CredentialsProvider({
       id: "otp",
@@ -163,7 +159,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Missing userId in OTP credentials")
         }
         await dbConnect()
-        const user = (await User.findById(credentials.userId)) as CustomUser
+        const user = await User.findById(credentials.userId) as CustomUser
         if (!user) {
           throw new Error("User not found")
         }
@@ -184,59 +180,59 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account, trigger, session }) {
-      await dbConnect()
+      await dbConnect();
       // On first login
       if (user) {
-        token.id = user.id
-        const customUser = user as unknown as CustomUser
-        token.roles = customUser.roles && customUser.roles.length > 0 ? customUser.roles : ["member"]
+        token.id = user.id;
+        const customUser = user as unknown as CustomUser;
+        token.roles = customUser.roles && customUser.roles.length > 0 ? customUser.roles : ["member"];
         // Always pull from DB for activeRole
-        const dbUser = await User.findById(token.id).select("roles activeRole")
-        let activeRole = dbUser?.activeRole
+        const dbUser = await User.findById(token.id).select("roles activeRole");
+        let activeRole = dbUser?.activeRole;
         if (!activeRole || !dbUser.roles.includes(activeRole)) {
           // Fallback to default and update DB if needed
-          activeRole = getDefaultActiveRole(dbUser.roles)
+          activeRole = getDefaultActiveRole(dbUser.roles);
           if (dbUser) {
-            dbUser.activeRole = activeRole
-            await dbUser.save()
+            dbUser.activeRole = activeRole;
+            await dbUser.save();
           }
         }
-        token.activeRole = activeRole
-        return token
+        token.activeRole = activeRole;
+        return token;
       }
       // On session update (role switch)
       if (trigger === "update" && session && session.activeRole) {
-        const dbUser = await User.findById(token.id).select("roles activeRole")
+        const dbUser = await User.findById(token.id).select("roles activeRole");
         if (dbUser) {
-          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
-          let activeRole = session.activeRole
+          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"];
+          let activeRole = session.activeRole;
           if (!dbUser.roles.includes(activeRole)) {
-            activeRole = getDefaultActiveRole(dbUser.roles)
-            dbUser.activeRole = activeRole
-            await dbUser.save()
+            activeRole = getDefaultActiveRole(dbUser.roles);
+            dbUser.activeRole = activeRole;
+            await dbUser.save();
           }
-          token.activeRole = activeRole
+          token.activeRole = activeRole;
         }
-        return token
+        return token;
       }
       // On every other call, always sync from DB
       if (token.id) {
-        const dbUser = await User.findById(token.id).select("roles activeRole")
+        const dbUser = await User.findById(token.id).select("roles activeRole");
         if (dbUser) {
-          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
-          let activeRole = dbUser.activeRole
+          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"];
+          let activeRole = dbUser.activeRole;
           if (!activeRole || !dbUser.roles.includes(activeRole)) {
-            activeRole = getDefaultActiveRole(dbUser.roles)
-            dbUser.activeRole = activeRole
-            await dbUser.save()
+            activeRole = getDefaultActiveRole(dbUser.roles);
+            dbUser.activeRole = activeRole;
+            await dbUser.save();
           }
-          token.activeRole = activeRole
+          token.activeRole = activeRole;
         }
       }
       if (account) {
-        token.accessToken = account.access_token
+        token.accessToken = account.access_token;
       }
-      return token
+      return token;
     },
     async session({ session, token }) {
       if (session.user && token) {

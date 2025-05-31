@@ -21,15 +21,26 @@ export function formatDate(date: Date | string): string {
   })
 }
 
-export function formatCurrency(amount: number | undefined | null, currency = "ILS", locale = "he-IL"): string {
-  if (amount === undefined || amount === null || isNaN(amount)) {
-    return "" // Or a default like "₪0.00" or "-"
+export function formatCurrency(amount: number, currency = "ILS"): string {
+  // Determine locale based on currency or use a generic one
+  let locale = "he-IL" // Default for ILS
+  if (currency === "USD") {
+    locale = "en-US"
+  } else if (currency === "EUR") {
+    locale = "de-DE" // Example for Euro, can be any Eurozone country
   }
+  // Add more currency/locale mappings as needed
 
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount)
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount)
+  } catch (error) {
+    console.error("Error formatting currency:", error)
+    // Fallback for unsupported currencies or errors
+    return `${amount.toFixed(2)} ${currency}`
+  }
 }

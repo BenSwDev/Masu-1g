@@ -1,645 +1,688 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useForm, useFieldArray, Controller, type SubmitHandler } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useTranslation } from "@/lib/translations/i18n"
+import { DialogDescription } from "@/components/common/ui/dialog"
+import { DialogTitle } from "@/components/common/ui/dialog"
+import { DialogHeader } from "@/components/common/ui/dialog"
+import { DialogContent } from "@/components/common/ui/dialog"
+import { Dialog } from "@/components/common/ui/dialog"
+
 import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
+import { Card } from "@/components/common/ui/card"
 import { Checkbox } from "@/components/common/ui/checkbox"
-import { Label } from "@/components/common/ui/label"
-import { Textarea } from "@/components/common/ui/textarea"
+import type { ColumnDef } from "@tanstack/react-table"
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/common/ui/form"
+import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/common/ui/dialog"
-import { Calendar } from "@/components/common/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
-import { toast } from "@/components/common/ui/use-toast"
-import { getWorkingHoursSettings, updateWorkingHoursSettings } from "@/actions/working-hours-actions"
-import type { IWorkingHoursSettings } from "@/lib/db/models/working-hours"
-import { CalendarIcon, PlusCircle, Trash2, Edit, Save } from "lucide-react"
-import { format, parseISO } from "date-fns"
-import { cn } from "@/lib/utils/utils"
+import { Textarea } from "@/components/common/ui/textarea"
+import { useFieldArray, useForm } from "react-hook-form"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useToast } from "@/components/common/ui/use-toast"
+import { useTranslation } from "react-i18next"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/common/ui/dropdown-menu"
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { DataTable } from "@/components/common/ui/data-table"
+import { formatDate } from "@/lib/utils/utils" // Corrected path for formatDate
+import React from "react"
+import { useMobile } from "@/components/common/ui/use-mobile"
 
-// Zod Schemas for validation
-const timeRegex = /^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/
+const dayMapping = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
 
-const fixedWorkingDaySchema = z
-  .object({
-    dayOfWeek: z.number().min(0).max(6),
-    isActive: z.boolean(),
-    startTime: z
-      .string()
-      .optional()
-      .refine((val) => !val || timeRegex.test(val), { message: "Invalid start time format (HH:mm)" }),
-    endTime: z
-      .string()
-      .optional()
-      .refine((val) => !val || timeRegex.test(val), { message: "Invalid end time format (HH:mm)" }),
-    hasSurcharge: z.boolean(),
-    surchargeType: z.enum(["fixed", "percentage"]).optional(),
-    surchargeAmount: z.number().min(0).optional(),
-    notes: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.isActive) {
-        return (
-          data.startTime &&
-          data.endTime &&
-          timeRegex.test(data.startTime) &&
-          timeRegex.test(data.endTime) &&
-          data.startTime < data.endTime
-        )
-      }
-      return true
-    },
-    {
-      message: "If active, start and end times are required, and start time must be before end time.",
-      path: ["startTime"],
-    },
-  )
-  .refine((data) => !data.hasSurcharge || (data.surchargeType && data.surchargeAmount !== undefined), {
-    message: "If surcharge is enabled, type and amount are required.",
-    path: ["surchargeType"],
-  })
-
-const specialDateWorkingHoursSchema = z
-  .object({
-    _id: z.string().optional(), // Mongoose ObjectId as string
-    date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }), // Date as string YYYY-MM-DD
-    description: z.string().optional(),
-    isActive: z.boolean(),
-    startTime: z
-      .string()
-      .optional()
-      .refine((val) => !val || timeRegex.test(val), { message: "Invalid start time format (HH:mm)" }),
-    endTime: z
-      .string()
-      .optional()
-      .refine((val) => !val || timeRegex.test(val), { message: "Invalid end time format (HH:mm)" }),
-    hasSurcharge: z.boolean(),
-    surchargeType: z.enum(["fixed", "percentage"]).optional(),
-    surchargeAmount: z.number().min(0).optional(),
-    notes: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.isActive) {
-        return (
-          data.startTime &&
-          data.endTime &&
-          timeRegex.test(data.startTime) &&
-          timeRegex.test(data.endTime) &&
-          data.startTime < data.endTime
-        )
-      }
-      return true
-    },
-    {
-      message: "If active, start and end times are required, and start time must be before end time.",
-      path: ["startTime"],
-    },
-  )
-  .refine((data) => !data.hasSurcharge || (data.surchargeType && data.surchargeAmount !== undefined), {
-    message: "If surcharge is enabled, type and amount are required.",
-    path: ["surchargeType"],
-  })
-
-const workingHoursSettingsSchema = z.object({
-  fixedHours: z.array(fixedWorkingDaySchema).length(7),
-  specialDates: z.array(specialDateWorkingHoursSchema),
+const fixedHoursSchema = z.object({
+  isActive: z.boolean().default(false),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  hasPriceOverride: z.boolean().default(false),
+  priceOverrideType: z.enum(["amount", "percentage"]).optional(),
+  priceOverrideAmount: z.number().optional(),
+  priceOverridePercentage: z.number().optional(),
+  notes: z.string().optional(),
 })
 
-type WorkingHoursFormData = z.infer<typeof workingHoursSettingsSchema>
+const specialDateSchema = z.object({
+  id: z.string().optional(),
+  date: z.date(),
+  isActive: z.boolean().default(false),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  hasPriceOverride: z.boolean().default(false),
+  priceOverrideType: z.enum(["amount", "percentage"]).optional(),
+  priceOverrideAmount: z.number().optional(),
+  priceOverridePercentage: z.number().optional(),
+})
 
-const dayOfWeekMapping: Record<number, string> = {
-  0: "sunday",
-  1: "monday",
-  2: "tuesday",
-  3: "wednesday",
-  4: "thursday",
-  5: "friday",
-  6: "saturday",
+type FixedHoursSchemaType = z.infer<typeof fixedHoursSchema>
+type SpecialDateSchemaType = z.infer<typeof specialDateSchema>
+
+interface WorkingHoursClientProps {
+  initialValues: {
+    fixedHours: FixedHoursSchemaType[]
+    specialDates: SpecialDateSchemaType[]
+  }
+  onSubmit: (values: { fixedHours: FixedHoursSchemaType[]; specialDates: SpecialDateSchemaType[] }) => void
 }
 
-export function WorkingHoursClient() {
-  const { t, dir } = useTranslation()
-  const queryClient = useQueryClient()
-  const [isSpecialDateDialogOpen, setIsSpecialDateDialogOpen] = useState(false)
-  const [editingSpecialDateIndex, setEditingSpecialDateIndex] = useState<number | null>(null)
+const WorkingHoursClient: React.FC<WorkingHoursClientProps> = ({ initialValues, onSubmit }) => {
+  const { t, i18n } = useTranslation()
+  const currentLang = i18n.language
+  const { toast } = useToast()
+  const [openSpecialDateDialog, setOpenSpecialDateDialog] = React.useState(false)
+  const [editingSpecialDateIndex, setEditingSpecialDateIndex] = React.useState<number | null>(null)
+  const [editingSpecialDate, setEditingSpecialDate] = React.useState<SpecialDateSchemaType | null>(null)
 
-  const {
-    data: settings,
-    isLoading,
-    error: fetchError,
-  } = useQuery<IWorkingHoursSettings, Error>({
-    queryKey: ["workingHoursSettings"],
-    queryFn: async () => {
-      const result = await getWorkingHoursSettings()
-      if (!result.success || !result.settings) {
-        throw new Error(result.error || t("workingHours.errorFetching"))
-      }
-      // Ensure fixedHours is sorted and has 7 days
-      const sortedFixedHours = result.settings.fixedHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
-      const completeFixedHours = Array.from({ length: 7 }, (_, i) => {
-        const day = sortedFixedHours.find((d) => d.dayOfWeek === i)
-        return day || { dayOfWeek: i, isActive: false, hasSurcharge: false, startTime: "09:00", endTime: "17:00" }
-      })
-      return { ...result.settings, fixedHours: completeFixedHours }
-    },
+  const form = useForm({
+    resolver: zodResolver(
+      z.object({
+        fixedHours: z.array(fixedHoursSchema),
+        specialDates: z.array(specialDateSchema),
+      }),
+    ),
+    defaultValues: initialValues,
+    mode: "onChange",
   })
 
-  const {
+  const { control, handleSubmit, watch } = form
+
+  const { fields } = useFieldArray({
+    // Renamed from 'fields' to avoid conflict if another useFieldArray is named 'fields'
     control,
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    setValue,
-    formState: { errors, isDirty, isValid },
-  } = useForm<WorkingHoursFormData>({
-    resolver: zodResolver(workingHoursSettingsSchema),
-    defaultValues: {
-      fixedHours: Array.from({ length: 7 }, (_, i) => ({
-        dayOfWeek: i,
-        isActive: false,
-        hasSurcharge: false,
-        startTime: "09:00",
-        endTime: "17:00",
-        notes: "",
-        surchargeAmount: 0,
-        surchargeType: "fixed",
-      })),
-      specialDates: [],
-    },
+    name: "fixedHours",
   })
 
   const {
-    fields: specialDateFields,
-    append: appendSpecialDate,
-    remove: removeSpecialDate,
-    update: updateSpecialDate,
+    fields: specialDateFieldsArray,
+    append,
+    update,
+    remove,
   } = useFieldArray({
+    // Destructure with rename
     control,
     name: "specialDates",
   })
 
-  useEffect(() => {
-    if (settings) {
-      const transformedSettings = {
-        ...settings,
-        fixedHours: settings.fixedHours.map((fh) => ({
-          ...fh,
-          startTime: fh.startTime || "",
-          endTime: fh.endTime || "",
-          surchargeAmount: fh.surchargeAmount === undefined ? undefined : Number(fh.surchargeAmount),
-          notes: fh.notes || "",
-        })),
-        specialDates: settings.specialDates.map((sd) => ({
-          ...sd,
-          _id: sd._id?.toString(),
-          date: sd.date ? format(parseISO(sd.date as unknown as string), "yyyy-MM-dd") : "",
-          startTime: sd.startTime || "",
-          endTime: sd.endTime || "",
-          surchargeAmount: sd.surchargeAmount === undefined ? undefined : Number(sd.surchargeAmount),
-          notes: sd.notes || "",
-          description: sd.description || "",
-        })),
-      }
-      reset(transformedSettings)
-    }
-  }, [settings, reset])
+  const sortedSpecialDates = React.useMemo(() => {
+    const watchedDates = watch("specialDates") || []
+    const validDates = [...watchedDates].filter(Boolean)
+    return validDates.sort((a, b) => {
+      const dateA = a && a.date ? new Date(a.date).getTime() : 0
+      const dateB = b && b.date ? new Date(b.date).getTime() : 0
 
-  const mutation = useMutation({
-    mutationFn: updateWorkingHoursSettings,
-    onSuccess: (data) => {
-      if (data.success && data.settings) {
-        queryClient.setQueryData(["workingHoursSettings"], data.settings)
-        toast({ title: t("workingHours.changesSaved"), variant: "default" })
-        reset(data.settings) // Reset form with new data to clear dirty state
-      } else {
-        toast({ title: t("workingHours.errorSaving"), description: data.error, variant: "destructive" })
-      }
-    },
-    onError: (error: Error) => {
-      toast({ title: t("workingHours.errorSaving"), description: error.message, variant: "destructive" })
+      if (isNaN(dateA) && isNaN(dateB)) return 0
+      if (isNaN(dateA)) return 1
+      if (isNaN(dateB)) return -1
+      return dateA - dateB
+    })
+  }, [watch("specialDates")])
+
+  const specialDateForm = useForm<SpecialDateSchemaType>({
+    resolver: zodResolver(specialDateSchema),
+    defaultValues: {
+      date: new Date(),
+      isActive: false,
+      startTime: "08:00",
+      endTime: "17:00",
+      hasPriceOverride: false,
+      priceOverrideType: "amount",
+      priceOverrideAmount: 0,
+      priceOverridePercentage: 0,
     },
   })
 
-  const onSubmit: SubmitHandler<WorkingHoursFormData> = (data) => {
-    const dataToSubmit = {
-      ...data,
-      specialDates: data.specialDates.map((sd) => ({
-        ...sd,
-        surchargeAmount: sd.surchargeAmount !== undefined ? Number(sd.surchargeAmount) : undefined,
-      })),
-      fixedHours: data.fixedHours.map((fh) => ({
-        ...fh,
-        surchargeAmount: fh.surchargeAmount !== undefined ? Number(fh.surchargeAmount) : undefined,
-      })),
+  const handleOpenSpecialDateDialog = (date?: SpecialDateSchemaType, index?: number) => {
+    if (date) {
+      setEditingSpecialDate(date)
+      setEditingSpecialDateIndex(index !== undefined ? index : null)
+      // Ensure date is a Date object for the form
+      specialDateForm.reset({ ...date, date: date.date ? new Date(date.date) : new Date() })
+    } else {
+      setEditingSpecialDate(null)
+      setEditingSpecialDateIndex(null)
+      specialDateForm.reset({
+        date: new Date(),
+        isActive: false,
+        startTime: "08:00",
+        endTime: "17:00",
+        hasPriceOverride: false,
+        priceOverrideType: "amount",
+        priceOverrideAmount: 0,
+        priceOverridePercentage: 0,
+      })
     }
-    mutation.mutate(dataToSubmit)
+    setOpenSpecialDateDialog(true)
   }
 
-  const handleAddSpecialDate = () => {
+  const handleCloseSpecialDateDialog = () => {
+    setOpenSpecialDateDialog(false)
+    setEditingSpecialDate(null)
     setEditingSpecialDateIndex(null)
-    appendSpecialDate({
-      date: format(new Date(), "yyyy-MM-dd"),
-      description: "",
-      isActive: true,
-      startTime: "09:00",
-      endTime: "17:00",
-      hasSurcharge: false,
-      notes: "",
+    specialDateForm.reset()
+  }
+
+  const onSubmitSpecialDate = (data: SpecialDateSchemaType) => {
+    let dateToSave = data.date
+    if (!(data.date instanceof Date)) {
+      dateToSave = new Date(data.date)
+    }
+
+    if (isNaN(dateToSave.getTime())) {
+      specialDateForm.setError("date", { type: "manual", message: t("invalidDate") })
+      return
+    }
+
+    const finalData = { ...data, date: dateToSave, id: data.id || Math.random().toString(36).substring(7) }
+
+    if (
+      editingSpecialDateIndex !== null &&
+      editingSpecialDateIndex >= 0 &&
+      editingSpecialDateIndex < specialDateFieldsArray.length
+    ) {
+      update(editingSpecialDateIndex, finalData)
+    } else {
+      append(finalData)
+    }
+    handleCloseSpecialDateDialog()
+    toast({
+      title: t("success"),
+      description: t("specialDateSaved"),
     })
-    setIsSpecialDateDialogOpen(true)
-    setEditingSpecialDateIndex(specialDateFields.length) // New item will be at the end
   }
 
-  const handleEditSpecialDate = (index: number) => {
-    setEditingSpecialDateIndex(index)
-    setIsSpecialDateDialogOpen(true)
+  const onSubmitForm = (values: { fixedHours: FixedHoursSchemaType[]; specialDates: SpecialDateSchemaType[] }) => {
+    onSubmit(values)
   }
 
-  const handleSaveSpecialDate = () => {
-    // Validation for the specific special date being edited can be done here if needed
-    // For now, relying on the main form validation
-    setIsSpecialDateDialogOpen(false)
-    setEditingSpecialDateIndex(null)
-  }
+  const isMobile = useMobile()
 
-  if (isLoading) return <p>{t("common.loading")}</p>
-  if (fetchError)
-    return (
-      <p>
-        {t("workingHours.errorFetching")}: {fetchError.message}
-      </p>
-    )
+  const columnsSpecial = React.useMemo((): ColumnDef<SpecialDateSchemaType>[] => {
+    const getSpecialDatesColumns = (mobile: boolean): ColumnDef<SpecialDateSchemaType>[] => {
+      const baseColumns: ColumnDef<SpecialDateSchemaType>[] = [
+        {
+          accessorKey: "date",
+          header: t("date"),
+          cell: ({ row }) => {
+            const dateValue = row.original?.date
+            try {
+              return dateValue
+                ? formatDate(
+                    new Date(dateValue),
+                    currentLang,
+                    mobile ? { day: "2-digit", month: "2-digit", year: "numeric" } : undefined,
+                  )
+                : t("invalidDate")
+            } catch (error) {
+              return t("invalidDate")
+            }
+          },
+        },
+        {
+          accessorKey: "isActive",
+          header: t("active"),
+          cell: ({ row }) => (
+            <Checkbox checked={row.original.isActive} disabled className={mobile ? "ml-auto mr-auto" : ""} />
+          ),
+        },
+      ]
+
+      const desktopOnlyColumns: ColumnDef<SpecialDateSchemaType>[] = [
+        { accessorKey: "startTime", header: t("startTime") },
+        { accessorKey: "endTime", header: t("endTime") },
+        {
+          accessorKey: "hasPriceOverride",
+          header: t("priceOverrideShort"),
+          cell: ({ row }) => <Checkbox checked={row.original.hasPriceOverride} disabled />,
+        },
+      ]
+
+      const actionColumn: ColumnDef<SpecialDateSchemaType> = {
+        id: "actions",
+        cell: ({ row }) => {
+          const originalIndex = specialDateFieldsArray.findIndex((sd) => sd.id === row.original.id)
+          if (mobile) {
+            return (
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleOpenSpecialDateDialog(row.original, originalIndex)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              </div>
+            )
+          }
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">{t("openMenu")}</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleOpenSpecialDateDialog(row.original, originalIndex)}>
+                  <Pencil className="mr-2 h-4 w-4" /> {t("edit")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (originalIndex !== -1) {
+                      remove(originalIndex)
+                    }
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> {t("delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
+        },
+      }
+
+      return mobile ? [...baseColumns, actionColumn] : [...baseColumns, ...desktopOnlyColumns, actionColumn]
+    }
+    return getSpecialDatesColumns(isMobile)
+  }, [isMobile, t, currentLang, specialDateFieldsArray, append, update, remove])
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("workingHours.fixedHoursTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("workingHours.day")}</TableHead>
-                <TableHead>{t("workingHours.active")}</TableHead>
-                <TableHead>{t("workingHours.startTime")}</TableHead>
-                <TableHead>{t("workingHours.endTime")}</TableHead>
-                <TableHead>{t("workingHours.priceSurcharge")}</TableHead>
-                <TableHead>{t("workingHours.surchargeType")}</TableHead>
-                <TableHead>{t("workingHours.surchargeAmount")}</TableHead>
-                <TableHead>{t("workingHours.notes")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {watch("fixedHours")?.map((day, index) => (
-                <TableRow key={day.dayOfWeek}>
-                  <TableCell>{t(`workingHours.${dayOfWeekMapping[day.dayOfWeek]}`)}</TableCell>
-                  <TableCell>
-                    <Controller
-                      name={`fixedHours.${index}.isActive`}
-                      control={control}
-                      render={({ field }) => <Checkbox checked={field.value} onCheckedChange={field.onChange} />}
-                    />
-                  </TableCell>
-                  {watch(`fixedHours.${index}.isActive`) && (
-                    <>
-                      <TableCell>
-                        <Input type="time" {...register(`fixedHours.${index}.startTime`)} className="w-32" />
-                        {errors.fixedHours?.[index]?.startTime && (
-                          <p className="text-red-500 text-xs">{errors.fixedHours[index]?.startTime?.message}</p>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Input type="time" {...register(`fixedHours.${index}.endTime`)} className="w-32" />
-                        {errors.fixedHours?.[index]?.endTime && (
-                          <p className="text-red-500 text-xs">{errors.fixedHours[index]?.endTime?.message}</p>
-                        )}
-                        {errors.fixedHours?.[index]?.startTime?.message?.includes("before end time") && (
-                          <p className="text-red-500 text-xs">{errors.fixedHours[index]?.startTime?.message}</p>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Controller
-                          name={`fixedHours.${index}.hasSurcharge`}
-                          control={control}
-                          render={({ field }) => <Checkbox checked={field.value} onCheckedChange={field.onChange} />}
-                        />
-                      </TableCell>
-                      {watch(`fixedHours.${index}.hasSurcharge`) && (
-                        <>
-                          <TableCell>
-                            <Controller
-                              name={`fixedHours.${index}.surchargeType`}
-                              control={control}
-                              render={({ field }) => (
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <SelectTrigger className="w-[150px]">
-                                    <SelectValue placeholder={t("workingHours.surchargeType")} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="fixed">{t("workingHours.fixedAmount")}</SelectItem>
-                                    <SelectItem value="percentage">{t("workingHours.percentage")}</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              {...register(`fixedHours.${index}.surchargeAmount`, { valueAsNumber: true })}
-                              className="w-24"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Textarea {...register(`fixedHours.${index}.notes`)} className="min-w-[150px]" />
-                          </TableCell>
-                        </>
-                      )}
-                      {/* Placeholders for empty cells if surcharge not active */}
-                      {!watch(`fixedHours.${index}.hasSurcharge`) && (
-                        <>
-                          <TableCell />
-                          <TableCell />
-                          <TableCell />
-                        </>
-                      )}
-                    </>
-                  )}
-                  {/* Placeholders for empty cells if day not active */}
-                  {!watch(`fixedHours.${index}.isActive`) && (
-                    <>
-                      <TableCell />
-                      <TableCell />
-                      <TableCell />
-                      <TableCell />
-                      <TableCell />
-                      <TableCell />
-                    </>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {errors.fixedHours && errors.fixedHours.root && (
-            <p className="text-red-500 text-sm mt-2">{errors.fixedHours.root.message}</p>
-          )}
-        </CardContent>
-      </Card>
+    <Form {...form}>
+      <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-8">
+        {/* Fixed Working Hours */}
+        <div>
+          <h3 className="text-lg font-medium">{t("fixedWorkingHours")}</h3>
+          <p className="text-sm text-muted-foreground">{t("fixedWorkingHoursDescription")}</p>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("workingHours.specialDatesTitle")}</CardTitle>
-          <Button type="button" onClick={handleAddSpecialDate} size="sm">
-            <PlusCircle className="mr-2 h-4 w-4" /> {t("workingHours.addSpecialDate")}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {specialDateFields.length === 0 ? (
-            <p>{t("common.noResults", { results: t("workingHours.specialDatesTitle").toLowerCase() })}</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("workingHours.date")}</TableHead>
-                  <TableHead>{t("workingHours.description")}</TableHead>
-                  <TableHead>{t("workingHours.active")}</TableHead>
-                  <TableHead>{t("workingHours.startTime")}</TableHead>
-                  <TableHead>{t("workingHours.endTime")}</TableHead>
-                  <TableHead>{t("common.actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {specialDateFields.map((field, index) => (
-                  <TableRow key={field.id}>
-                    <TableCell>{field.date ? format(parseISO(field.date), "dd/MM/yyyy") : ""}</TableCell>
-                    <TableCell>{field.description}</TableCell>
-                    <TableCell>
-                      <Checkbox checked={field.isActive} disabled />
-                    </TableCell>
-                    <TableCell>{field.isActive ? field.startTime : "-"}</TableCell>
-                    <TableCell>{field.isActive ? field.endTime : "-"}</TableCell>
-                    <TableCell className="space-x-2 flex">
-                      <Button type="button" variant="outline" size="icon" onClick={() => handleEditSpecialDate(index)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button type="button" variant="destructive" size="icon" onClick={() => removeSpecialDate(index)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          <div className="space-y-6">
+            {fields.map((fieldItem, index) => {
+              // Renamed 'field' to 'fieldItem' to avoid conflict
+              const dayIsActive = watch(`fixedHours.${index}.isActive`)
+              const hasPriceOverride = watch(`fixedHours.${index}.hasPriceOverride`)
+              return (
+                <Card key={fieldItem.id} className="p-4">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="flex items-center justify-between md:justify-start md:w-1/4">
+                      <span className="font-medium">{t(`days.${dayMapping[index]}`)}</span>
+                      <FormField
+                        control={control}
+                        name={`fixedHours.${index}.isActive`}
+                        render={({ field: checkboxField }) => (
+                          <FormItem className="flex items-center space-x-2 ml-4 md:ml-0">
+                            <FormControl>
+                              <Checkbox checked={checkboxField.value} onCheckedChange={checkboxField.onChange} />
+                            </FormControl>
+                            <FormLabel className="text-sm md:hidden">{t("active")}</FormLabel>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-      <Dialog
-        open={isSpecialDateDialogOpen}
-        onOpenChange={(open) => {
-          setIsSpecialDateDialogOpen(open)
-          if (!open) setEditingSpecialDateIndex(null)
-        }}
-      >
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editingSpecialDateIndex !== null && specialDateFields[editingSpecialDateIndex]
-                ? t("workingHours.editSpecialDate")
-                : t("workingHours.addSpecialDate")}
-            </DialogTitle>
-          </DialogHeader>
-          {editingSpecialDateIndex !== null && specialDateFields[editingSpecialDateIndex] && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor={`specialDates.${editingSpecialDateIndex}.date`}>{t("workingHours.date")}</Label>
-                  <Controller
-                    name={`specialDates.${editingSpecialDateIndex}.date`}
-                    control={control}
-                    render={({ field }) => (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground",
+                    {dayIsActive && (
+                      <>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 md:flex md:flex-row md:gap-2 md:items-center flex-1">
+                          <FormField
+                            control={control}
+                            name={`fixedHours.${index}.startTime`}
+                            render={({ field: timeField }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs text-muted-foreground">{t("startTime")}</FormLabel>
+                                <FormControl>
+                                  <Input type="time" {...timeField} className="w-full" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
                             )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value ? (
-                              format(parseISO(field.value), "PPP", {
-                                locale:
-                                  dir === "rtl" ? require("date-fns/locale/he") : require("date-fns/locale/en-US"),
-                              })
-                            ) : (
-                              <span>{t("common.pickDate")}</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={field.value ? parseISO(field.value) : undefined}
-                            onSelect={(date) => field.onChange(date ? format(date, "yyyy-MM-dd") : "")}
-                            initialFocus
                           />
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                  />
-                  {errors.specialDates?.[editingSpecialDateIndex]?.date && (
-                    <p className="text-red-500 text-xs">
-                      {errors.specialDates[editingSpecialDateIndex]?.date?.message}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <Label htmlFor={`specialDates.${editingSpecialDateIndex}.description`}>
-                    {t("workingHours.description")}
-                  </Label>
-                  <Input {...register(`specialDates.${editingSpecialDateIndex}.description`)} />
-                </div>
-              </div>
+                          <FormField
+                            control={control}
+                            name={`fixedHours.${index}.endTime`}
+                            render={({ field: timeField }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs text-muted-foreground">{t("endTime")}</FormLabel>
+                                <FormControl>
+                                  <Input type="time" {...timeField} className="w-full" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
 
-              <div className="flex items-center space-x-2">
-                <Controller
-                  name={`specialDates.${editingSpecialDateIndex}.isActive`}
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      id={`specialDates.${editingSpecialDateIndex}.isActive`}
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  )}
-                />
-                <Label htmlFor={`specialDates.${editingSpecialDateIndex}.isActive`}>{t("workingHours.active")}</Label>
-              </div>
-
-              {watch(`specialDates.${editingSpecialDateIndex}.isActive`) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-md">
-                  <div>
-                    <Label htmlFor={`specialDates.${editingSpecialDateIndex}.startTime`}>
-                      {t("workingHours.startTime")}
-                    </Label>
-                    <Input type="time" {...register(`specialDates.${editingSpecialDateIndex}.startTime`)} />
-                    {errors.specialDates?.[editingSpecialDateIndex]?.startTime && (
-                      <p className="text-red-500 text-xs">
-                        {errors.specialDates[editingSpecialDateIndex]?.startTime?.message}
-                      </p>
+                        <div className="grid grid-cols-1 md:flex md:flex-row md:gap-2 md:items-center md:w-auto mt-2 md:mt-0">
+                          <FormField
+                            control={control}
+                            name={`fixedHours.${index}.hasPriceOverride`}
+                            render={({ field: checkboxField }) => (
+                              <FormItem className="flex flex-row items-center space-x-2 space-y-0 py-2">
+                                <FormControl>
+                                  <Checkbox checked={checkboxField.value} onCheckedChange={checkboxField.onChange} />
+                                </FormControl>
+                                <FormLabel className="text-sm">{t("priceOverride")}</FormLabel>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </>
                     )}
                   </div>
-                  <div>
-                    <Label htmlFor={`specialDates.${editingSpecialDateIndex}.endTime`}>
-                      {t("workingHours.endTime")}
-                    </Label>
-                    <Input type="time" {...register(`specialDates.${editingSpecialDateIndex}.endTime`)} />
-                    {errors.specialDates?.[editingSpecialDateIndex]?.endTime && (
-                      <p className="text-red-500 text-xs">
-                        {errors.specialDates[editingSpecialDateIndex]?.endTime?.message}
-                      </p>
-                    )}
-                    {errors.specialDates?.[editingSpecialDateIndex]?.startTime?.message?.includes(
-                      "before end time",
-                    ) && (
-                      <p className="text-red-500 text-xs">
-                        {errors.specialDates[editingSpecialDateIndex]?.startTime?.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
 
-              <div className="flex items-center space-x-2 pt-2">
-                <Controller
-                  name={`specialDates.${editingSpecialDateIndex}.hasSurcharge`}
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      id={`specialDates.${editingSpecialDateIndex}.hasSurcharge`}
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
+                  {dayIsActive && hasPriceOverride && (
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4">
+                      <FormField
+                        control={control}
+                        name={`fixedHours.${index}.priceOverrideType`}
+                        render={({ field: selectField }) => (
+                          <FormItem>
+                            <FormLabel>{t("priceOverrideType")}</FormLabel>
+                            <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t("selectPriceOverrideType")} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="amount">{t("amountInNIS")}</SelectItem>
+                                <SelectItem value="percentage">{t("percentageAmount")}</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      {watch(`fixedHours.${index}.priceOverrideType`) === "amount" ? (
+                        <FormField
+                          control={control}
+                          name={`fixedHours.${index}.priceOverrideAmount`}
+                          render={({ field: inputField }) => (
+                            <FormItem>
+                              <FormLabel>{t("priceOverrideAmount")}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...inputField}
+                                  value={inputField.value ?? ""}
+                                  onChange={(e) =>
+                                    inputField.onChange(
+                                      e.target.value === "" ? undefined : Number.parseFloat(e.target.value),
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ) : (
+                        <FormField
+                          control={control}
+                          name={`fixedHours.${index}.priceOverridePercentage`}
+                          render={({ field: inputField }) => (
+                            <FormItem>
+                              <FormLabel>{t("priceOverridePercentage")}</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...inputField}
+                                  value={inputField.value ?? ""}
+                                  onChange={(e) =>
+                                    inputField.onChange(
+                                      e.target.value === "" ? undefined : Number.parseFloat(e.target.value),
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+                    </div>
                   )}
-                />
-                <Label htmlFor={`specialDates.${editingSpecialDateIndex}.hasSurcharge`}>
-                  {t("workingHours.priceSurcharge")}
-                </Label>
-              </div>
-
-              {watch(`specialDates.${editingSpecialDateIndex}.hasSurcharge`) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-md">
-                  <div>
-                    <Label htmlFor={`specialDates.${editingSpecialDateIndex}.surchargeType`}>
-                      {t("workingHours.surchargeType")}
-                    </Label>
-                    <Controller
-                      name={`specialDates.${editingSpecialDateIndex}.surchargeType`}
+                  {dayIsActive && (
+                    <FormField
                       control={control}
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("workingHours.surchargeType")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="fixed">{t("workingHours.fixedAmount")}</SelectItem>
-                            <SelectItem value="percentage">{t("workingHours.percentage")}</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      name={`fixedHours.${index}.notes`}
+                      render={(
+                        { field: inputField }, // Renamed 'field' to 'inputField'
+                      ) => (
+                        <FormItem className="mt-4 border-t pt-4">
+                          <FormLabel>{t("notes")}</FormLabel>
+                          <FormControl>
+                            <Textarea {...inputField} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Special Dates */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-medium">{t("specialDates")}</h3>
+              <p className="text-sm text-muted-foreground">{t("specialDatesDescription")}</p>
+            </div>
+            <Button type="button" onClick={() => handleOpenSpecialDateDialog()}>
+              {t("addSpecialDate")}
+            </Button>
+          </div>
+          <DataTable columns={columnsSpecial} data={sortedSpecialDates} />
+        </div>
+
+        <Button type="submit">{t("save")}</Button>
+      </form>
+
+      {/* Special Date Dialog */}
+      {openSpecialDateDialog && (
+        <Dialog
+          open={openSpecialDateDialog}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) handleCloseSpecialDateDialog()
+            else setOpenSpecialDateDialog(true)
+          }}
+        >
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>{editingSpecialDate ? t("editSpecialDate") : t("addSpecialDate")}</DialogTitle>
+              <DialogDescription>{t("addEditSpecialDateDescription")}</DialogDescription>
+            </DialogHeader>
+            <Form {...specialDateForm}>
+              <form onSubmit={specialDateForm.handleSubmit(onSubmitSpecialDate)} className="space-y-4">
+                <FormField
+                  control={specialDateForm.control}
+                  name="date"
+                  render={(
+                    { field: dateField }, // Renamed 'field' to 'dateField'
+                  ) => (
+                    <FormItem>
+                      <FormLabel>{t("date")}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...dateField}
+                          value={dateField.value ? formatDate(new Date(dateField.value), "en-CA") : ""} // 'en-CA' gives YYYY-MM-DD
+                          onChange={(e) => dateField.onChange(e.target.value ? new Date(e.target.value) : null)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={specialDateForm.control}
+                  name="isActive"
+                  render={(
+                    { field: checkboxField }, // Renamed 'field' to 'checkboxField'
+                  ) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox checked={checkboxField.value} onCheckedChange={checkboxField.onChange} />
+                      </FormControl>
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-semibold">{t("active")}</FormLabel>
+                        <FormDescription>{t("activeDescription")}</FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                {specialDateForm.watch("isActive") && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={specialDateForm.control}
+                      name="startTime"
+                      render={(
+                        { field: timeField }, // Renamed 'field' to 'timeField'
+                      ) => (
+                        <FormItem>
+                          <FormLabel>{t("startTime")}</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...timeField} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={specialDateForm.control}
+                      name="endTime"
+                      render={(
+                        { field: timeField }, // Renamed 'field' to 'timeField'
+                      ) => (
+                        <FormItem>
+                          <FormLabel>{t("endTime")}</FormLabel>
+                          <FormControl>
+                            <Input type="time" {...timeField} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
                     />
                   </div>
-                  <div>
-                    <Label htmlFor={`specialDates.${editingSpecialDateIndex}.surchargeAmount`}>
-                      {t("workingHours.surchargeAmount")}
-                    </Label>
-                    <Input
-                      type="number"
-                      {...register(`specialDates.${editingSpecialDateIndex}.surchargeAmount`, { valueAsNumber: true })}
+                )}
+                <FormField
+                  control={specialDateForm.control}
+                  name="hasPriceOverride"
+                  render={(
+                    { field: checkboxField }, // Renamed 'field' to 'checkboxField'
+                  ) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox checked={checkboxField.value} onCheckedChange={checkboxField.onChange} />
+                      </FormControl>
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base font-semibold">{t("priceOverride")}</FormLabel>
+                        <FormDescription>{t("priceOverrideDescription")}</FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                {specialDateForm.watch("hasPriceOverride") && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={specialDateForm.control}
+                      name="priceOverrideType"
+                      render={(
+                        { field: selectField }, // Renamed 'field' to 'selectField'
+                      ) => (
+                        <FormItem>
+                          <FormLabel>{t("priceOverrideType")}</FormLabel>
+                          <Select onValueChange={selectField.onChange} defaultValue={selectField.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t("selectPriceOverrideType")} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="amount">{t("amountInNIS")}</SelectItem>
+                              <SelectItem value="percentage">{t("percentageAmount")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
+                    {specialDateForm.watch("priceOverrideType") === "amount" ? (
+                      <FormField
+                        control={specialDateForm.control}
+                        name="priceOverrideAmount"
+                        render={(
+                          { field: inputField }, // Renamed 'field' to 'inputField'
+                        ) => (
+                          <FormItem>
+                            <FormLabel>{t("priceOverrideAmount")}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                {...inputField}
+                                value={inputField.value ?? ""}
+                                onChange={(e) =>
+                                  inputField.onChange(
+                                    e.target.value === "" ? undefined : Number.parseFloat(e.target.value),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    ) : (
+                      <FormField
+                        control={specialDateForm.control}
+                        name="priceOverridePercentage"
+                        render={(
+                          { field: inputField }, // Renamed 'field' to 'inputField'
+                        ) => (
+                          <FormItem>
+                            <FormLabel>{t("priceOverridePercentage")}</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                {...inputField}
+                                value={inputField.value ?? ""}
+                                onChange={(e) =>
+                                  inputField.onChange(
+                                    e.target.value === "" ? undefined : Number.parseFloat(e.target.value),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </div>
-                  <div className="md:col-span-2">
-                    <Label htmlFor={`specialDates.${editingSpecialDateIndex}.notes`}>{t("workingHours.notes")}</Label>
-                    <Textarea {...register(`specialDates.${editingSpecialDateIndex}.notes`)} />
-                  </div>
+                )}
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button type="button" variant="outline" onClick={handleCloseSpecialDateDialog}>
+                    {t("cancel")}
+                  </Button>
+                  <Button type="submit">{t("save")}</Button>
                 </div>
-              )}
-              {errors.specialDates?.[editingSpecialDateIndex]?.surchargeType && (
-                <p className="text-red-500 text-xs">
-                  {errors.specialDates[editingSpecialDateIndex]?.surchargeType?.message}
-                </p>
-              )}
-            </div>
-          )}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsSpecialDateDialogOpen(false)}>
-              {t("common.cancel")}
-            </Button>
-            <Button type="button" onClick={handleSaveSpecialDate}>
-              {t("common.save")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <div className="flex justify-end pt-4">
-        <Button type="submit" disabled={mutation.isPending || !isDirty || !isValid}>
-          {mutation.isPending ? t("common.saving") : t("workingHours.saveChanges")} <Save className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
-    </form>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      )}
+    </Form>
   )
 }
+
+export default WorkingHoursClient

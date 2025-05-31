@@ -24,6 +24,7 @@ import {
   MapPin,
   CreditCard,
   FileText,
+  Package,
   Gift,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
@@ -271,7 +272,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: Gift,
           href: "/dashboard/admin/gift-vouchers",
           isActive: pathname === "/dashboard/admin/gift-vouchers",
-        },
+        }
       )
     } else if (activeRole === "member") {
       baseItems.push(
@@ -304,7 +305,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: Gift,
           href: "/dashboard/member/gift-vouchers",
           isActive: pathname === "/dashboard/member/gift-vouchers",
-        },
+        }
       )
     } else if (activeRole === "professional") {
       baseItems.push(
@@ -331,7 +332,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: FileText,
           href: "/dashboard/professional/documents",
           isActive: pathname === "/dashboard/professional/documents",
-        },
+        }
       )
     } else if (activeRole === "partner") {
       baseItems.push(
@@ -346,7 +347,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: CreditCard,
           href: "/dashboard/partner/coupons",
           isActive: pathname === "/dashboard/partner/coupons",
-        },
+        }
       )
     }
 

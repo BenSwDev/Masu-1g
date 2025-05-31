@@ -58,8 +58,7 @@
     "failedToLoadTreatments": "שגיאה בטעינת טיפולים.",
     "dir": "rtl",
     "locale": "he-IL",
-    "notSet": "לא הוגדר",
-    "noResults": "לא נמצאו {{results}}"
+    "notSet": "לא הוגדר"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -856,37 +855,5 @@
   "roomNumber": "מספר חדר",
   "instructions": "הוראות",
   "T": "T",
-  "common.totalPrice": "מחיר כולל",
-  "workingHours": {
-    "title": "ניהול שעות פעילות",
-    "fixedHoursTitle": "שעות פעילות קבועות",
-    "specialDatesTitle": "תאריכים מיוחדים",
-    "day": "יום",
-    "sunday": "יום ראשון",
-    "monday": "יום שני",
-    "tuesday": "יום שלישי",
-    "wednesday": "יום רביעי",
-    "thursday": "יום חמישי",
-    "friday": "יום שישי",
-    "saturday": "שבת",
-    "active": "פעיל",
-    "startTime": "שעת התחלה",
-    "endTime": "שעת סיום",
-    "priceSurcharge": "תוספת מחיר",
-    "surchargeAmount": "סכום תוספת",
-    "surchargeType": "סוג תוספת",
-    "fixedAmount": "סכום קבוע (ש״ח)",
-    "percentage": "אחוז (%)",
-    "notes": "הערות",
-    "date": "תאריך",
-    "description": "תיאור (למשל, ערב חג)",
-    "addSpecialDate": "הוסף תאריך מיוחד",
-    "editSpecialDate": "ערוך תאריך מיוחד",
-    "saveChanges": "שמור שינויים",
-    "changesSaved": "שעות הפעילות נשמרו בהצלחה.",
-    "errorSaving": "שגיאה בשמירת שעות הפעילות.",
-    "errorFetching": "שגיאה בטעינת שעות הפעילות.",
-    "confirmDeleteSpecialDateTitle": "מחק תאריך מיוחד",
-    "confirmDeleteSpecialDateMessage": "האם אתה בטוח שברצונך למחוק תאריך מיוחד זה? לא ניתן לבטל פעולה זו."
-  }
+  "common.totalPrice": "מחיר כולל"
 }

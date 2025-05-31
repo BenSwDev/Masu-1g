@@ -1,6 +1,4 @@
 "use server"
-
-import { z } from "zod"
 import { revalidatePath } from "next/cache"
 import Coupon, { type ICoupon } from "@/lib/db/models/coupon"
 import User from "@/lib/db/models/user"
@@ -8,34 +6,12 @@ import { connectDB } from "@/lib/db/mongoose"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth/auth"
 // Removed uuidv4 import as it's not used in this version of couponId generation (Mongoose ObjectId is default)
-
-// Schemas for validation (assuming these are defined as in previous correct versions)
-const CouponBaseSchema = z
-  .object({
-    code: z.string().min(3, "Code must be at least 3 characters").trim(),
-    description: z.string().optional(),
-    discountType: z.enum(["percentage", "fixedAmount"]),
-    discountValue: z.number().min(0, "Discount value must be non-negative"),
-    validFrom: z.date(),
-    validUntil: z.date(),
-    usageLimit: z.number().min(0, "Usage limit must be non-negative").default(1),
-    usageLimitPerUser: z.number().min(0, "Usage limit per user must be non-negative").default(1),
-    isActive: z.boolean().default(true),
-    assignedPartnerId: z.string().optional().nullable(),
-    notesForPartner: z.string().optional(),
-  })
-  .refine((data) => data.validUntil >= data.validFrom, {
-    message: "Expiration date must be after or same as start date",
-    path: ["validUntil"],
-  })
-
-const CreateCouponSchema = CouponBaseSchema
-const UpdateCouponSchema = CouponBaseSchema.extend({
-  id: z.string(),
-})
-
-export type CreateCouponPayload = z.infer<typeof CreateCouponSchema>
-export type UpdateCouponPayload = z.infer<typeof UpdateCouponSchema>
+import {
+  CreateCouponSchema,
+  UpdateCouponSchema,
+  type CreateCouponPayload,
+  type UpdateCouponPayload,
+} from "@/lib/validation/coupon-schemas"
 
 // Helper functions to check roles
 const isAdminUser = (user: { roles?: string[] } | null | undefined): boolean => !!user?.roles?.includes("admin")

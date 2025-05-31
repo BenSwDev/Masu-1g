@@ -20,3 +20,16 @@ export function formatDate(date: Date | string): string {
     year: "numeric",
   })
 }
+
+export function formatCurrency(amount: number | undefined | null, currency = "ILS", locale = "he-IL"): string {
+  if (amount === undefined || amount === null || isNaN(amount)) {
+    return "" // Or a default like "₪0.00" or "-"
+  }
+
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount)
+}

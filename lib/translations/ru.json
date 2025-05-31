@@ -51,7 +51,8 @@
     "failedToLoadTreatments": "Ошибка загрузки процедур.",
     "dir": "ltr",
     "locale": "ru-RU",
-    "notSet": "Не установлено"
+    "notSet": "Не установлено",
+    "noResults": "{{results}} не найдены"
   },
   "dashboard": {
     "sidebar": {
@@ -754,5 +755,37 @@
   "purchaseGiftVoucher": {
     "failedToLoadData": "Не удалось загрузить данные, необходимые для покупки",
     "errorDetails": "Детали"
+  },
+  "workingHours": {
+    "title": "Управление рабочими часами",
+    "fixedHoursTitle": "Фиксированные рабочие часы",
+    "specialDatesTitle": "Особые даты",
+    "day": "День",
+    "sunday": "Воскресенье",
+    "monday": "Понедельник",
+    "tuesday": "Вторник",
+    "wednesday": "Среда",
+    "thursday": "Четверг",
+    "friday": "Пятница",
+    "saturday": "Суббота",
+    "active": "Активно",
+    "startTime": "Время начала",
+    "endTime": "Время окончания",
+    "priceSurcharge": "Доплата",
+    "surchargeAmount": "Сумма доплаты",
+    "surchargeType": "Тип доплаты",
+    "fixedAmount": "Фиксированная сумма (ILS)",
+    "percentage": "Процент (%)",
+    "notes": "Примечания",
+    "date": "Дата",
+    "description": "Описание (например, Предпраздничный день)",
+    "addSpecialDate": "Добавить особую дату",
+    "editSpecialDate": "Редактировать особую дату",
+    "saveChanges": "Сохранить изменения",
+    "changesSaved": "Рабочие часы успешно сохранены.",
+    "errorSaving": "Ошибка сохранения рабочих часов.",
+    "errorFetching": "Ошибка загрузки рабочих часов.",
+    "confirmDeleteSpecialDateTitle": "Удалить особую дату",
+    "confirmDeleteSpecialDateMessage": "Вы уверены, что хотите удалить эту особую дату? Это действие нельзя отменить."
   }
 }

@@ -58,7 +58,8 @@
     "failedToLoadTreatments": "Failed to load treatments.",
     "dir": "ltr",
     "locale": "en-US",
-    "notSet": "Not set"
+    "notSet": "Not set",
+    "noResults": "No {{results}} found"
   },
   "dashboard": {
     "sidebar": {
@@ -762,5 +763,37 @@
   "purchaseGiftVoucher": {
     "failedToLoadData": "Failed to load data required for purchase",
     "errorDetails": "Details"
+  },
+  "workingHours": {
+    "title": "Manage Working Hours",
+    "fixedHoursTitle": "Fixed Working Hours",
+    "specialDatesTitle": "Special Dates",
+    "day": "Day",
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "active": "Active",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "priceSurcharge": "Price Surcharge",
+    "surchargeAmount": "Surcharge Amount",
+    "surchargeType": "Surcharge Type",
+    "fixedAmount": "Fixed Amount (ILS)",
+    "percentage": "Percentage (%)",
+    "notes": "Notes",
+    "date": "Date",
+    "description": "Description (e.g., Holiday Eve)",
+    "addSpecialDate": "Add Special Date",
+    "editSpecialDate": "Edit Special Date",
+    "saveChanges": "Save Changes",
+    "changesSaved": "Working hours saved successfully.",
+    "errorSaving": "Error saving working hours.",
+    "errorFetching": "Error fetching working hours.",
+    "confirmDeleteSpecialDateTitle": "Delete Special Date",
+    "confirmDeleteSpecialDateMessage": "Are you sure you want to delete this special date? This action cannot be undone."
   }
 }

@@ -1,5 +1,7 @@
 "use client"
 
+import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -33,7 +35,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/common/ui/dropdown-menu"
 import { toast } from "@/components/common/ui/use-toast"
 import { setActiveRole } from "@/actions/role-actions"
@@ -406,323 +408,221 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     </div>
   )
 
-  // User account section for desktop - enhanced design
-  const renderDesktopUserAccount = () => (
-    <div className="p-4 bg-gradient-to-b from-gray-50 to-white border-b border-gray-200">
-      {!isCollapsed ? (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 ring-2 ring-turquoise-200 shadow-md">
-            <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-bold text-sm">
-              {getUserInitials(session?.user?.name, session?.user?.email)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-sm font-semibold text-gray-900 truncate">
+  const renderDesktopUserSectionWithDropdown = () => (
+    <div className={cn("border-b border-gray-200", isCollapsed ? "py-3" : "p-3")}>
+      {" "}
+      {/* Adjusted padding */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className={cn(
+              "w-full h-auto relative rounded-lg",
+              isCollapsed ? "px-0 justify-center py-2" : "p-0 text-left hover:bg-gray-100",
+            )}
+            aria-label="User menu options"
+          >
+            {!isCollapsed ? (
+              <div className="flex items-center gap-3 w-full p-2">
+                <Avatar className="h-10 w-10 ring-1 ring-turquoise-100 shadow-sm">
+                  <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-semibold text-sm">
+                    {getUserInitials(session?.user?.name, session?.user?.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">
+                    {session?.user?.name || session?.user?.email}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
+                </div>
+                <ChevronDown className="h-4 w-4 text-gray-400 ml-1 opacity-90 flex-shrink-0" />
+              </div>
+            ) : (
+              <Avatar className="h-9 w-9 ring-1 ring-turquoise-100 shadow-sm">
+                <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-semibold text-xs">
+                  {getUserInitials(session?.user?.name, session?.user?.email)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-60"
+          align={isCollapsed ? "end" : "start"}
+          side={isCollapsed ? "right" : "bottom"}
+          sideOffset={isCollapsed ? 12 : 8}
+        >
+          <DropdownMenuItem onClick={() => navigateTo("/dashboard/profile")} className="cursor-pointer group">
+            <User className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600" />
+            <span className="group-hover:text-turquoise-600">{t("dashboard.sidebar.profile")}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigateTo("/dashboard/account")} className="cursor-pointer group">
+            <Settings className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600" />
+            <span className="group-hover:text-turquoise-600">{t("dashboard.sidebar.account")}</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={handleSignOut}
+            className="text-red-600 hover:!bg-red-50 hover:!text-red-700 focus:bg-red-50 focus:text-red-700 cursor-pointer group"
+          >
+            <LogOut className="mr-2 h-4 w-4 text-red-600 group-hover:text-red-700" />
+            <span className="group-hover:text-red-700">{t("dashboard.sidebar.signOut")}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+
+  const renderMobileUserSectionWithDropdown = () => (
+    <div className="p-4 bg-gradient-to-r from-turquoise-50 to-turquoise-100 border-b">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="w-full h-auto p-0 hover:bg-transparent flex items-center gap-3 text-left rounded-lg"
+            aria-label="User menu options"
+          >
+            <Avatar className="h-12 w-12 ring-1 ring-white shadow-md flex-shrink-0">
+              <AvatarFallback className="bg-turquoise-500 text-white font-bold text-base">
+                {getUserInitials(session?.user?.name, session?.user?.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-semibold text-gray-800 truncate">
                 {session?.user?.name || session?.user?.email}
-              </p>
+              </h3>
+              <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
             </div>
-            <p className="text-xs text-gray-600 truncate bg-gray-100 px-2 py-1 rounded-full">{session?.user?.email}</p>
-          </div>
-        </div>
-      ) : (
-        <div className="flex justify-center">
-          <Avatar className="h-10 w-10 ring-2 ring-turquoise-200 shadow-md">
-            <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-bold text-xs">
-              {getUserInitials(session?.user?.name, session?.user?.email)}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-      )}
-    </div>
-  )
-
-  // User account section for mobile - enhanced design
-  const renderMobileUserAccount = () => (
-    <div className="p-6 bg-gradient-to-r from-turquoise-50 to-turquoise-100 border-b">
-      <div className="flex items-center gap-4">
-        <Avatar className="h-16 w-16 ring-2 ring-white shadow-lg">
-          <AvatarFallback className="bg-turquoise-500 text-white font-bold text-lg">
-            {getUserInitials(session?.user?.name, session?.user?.email)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-lg font-semibold text-gray-900 truncate">
-              {session?.user?.name || session?.user?.email}
-            </h3>
-          </div>
-          <p className="text-sm text-gray-600 truncate">{session?.user?.email}</p>
-        </div>
-      </div>
-    </div>
-  )
-
-  // Profile and Account buttons for desktop
-  const renderDesktopProfileButtons = () => (
-    <div className="p-4 space-y-2">
-      {!isCollapsed ? (
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigateTo("/dashboard/profile")}
-            className={cn(
-              "w-full justify-start transition-all duration-200 font-medium border border-turquoise-200 hover:border-turquoise-300 shadow-sm hover:shadow-md",
-              pathname === "/dashboard/profile"
-                ? "bg-turquoise-50 text-turquoise-700"
-                : "hover:bg-turquoise-50 hover:text-turquoise-700",
-            )}
-          >
-            <User className="h-4 w-4 mr-2" />
-            {t("dashboard.sidebar.profile")}
+            <ChevronDown className="h-5 w-5 text-gray-500 opacity-90 flex-shrink-0" />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigateTo("/dashboard/account")}
-            className={cn(
-              "w-full justify-start transition-all duration-200 font-medium border border-turquoise-200 hover:border-turquoise-300 shadow-sm hover:shadow-md",
-              pathname === "/dashboard/account"
-                ? "bg-turquoise-50 text-turquoise-700"
-                : "hover:bg-turquoise-50 hover:text-turquoise-700",
-            )}
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            {t("dashboard.sidebar.account")}
-          </Button>
-        </>
-      ) : (
-        <>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigateTo("/dashboard/profile")}
-            className={cn(
-              "w-full transition-all duration-200 border border-turquoise-200 hover:border-turquoise-300 shadow-sm hover:shadow-md",
-              pathname === "/dashboard/profile"
-                ? "bg-turquoise-50 text-turquoise-700"
-                : "hover:bg-turquoise-50 hover:text-turquoise-700",
-            )}
-          >
-            <User className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigateTo("/dashboard/account")}
-            className={cn(
-              "w-full transition-all duration-200 border border-turquoise-200 hover:border-turquoise-300 shadow-sm hover:shadow-md",
-              pathname === "/dashboard/account"
-                ? "bg-turquoise-50 text-turquoise-700"
-                : "hover:bg-turquoise-50 hover:text-turquoise-700",
-            )}
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        </>
-      )}
-    </div>
-  )
-
-  // Profile and Account buttons for mobile
-  const renderMobileProfileButtons = () => (
-    <div className="px-6 py-2 space-y-2">
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={() => {
-          navigateTo("/dashboard/profile")
-          onMobileOpenChange(false)
-        }}
-        className={cn(
-          "w-full justify-start rounded-xl h-12 font-medium transition-all duration-200 shadow-sm hover:shadow-md",
-          pathname === "/dashboard/profile"
-            ? "bg-turquoise-50 text-turquoise-700"
-            : "hover:bg-turquoise-50 hover:text-turquoise-700",
-        )}
-      >
-        <User className="h-5 w-5 mr-3" />
-        <span className="text-base">{t("dashboard.sidebar.profile")}</span>
-      </Button>
-      <Button
-        variant="outline"
-        size="lg"
-        onClick={() => {
-          navigateTo("/dashboard/account")
-          onMobileOpenChange(false)
-        }}
-        className={cn(
-          "w-full justify-start rounded-xl h-12 font-medium transition-all duration-200 shadow-sm hover:shadow-md",
-          pathname === "/dashboard/account"
-            ? "bg-turquoise-50 text-turquoise-700"
-            : "hover:bg-turquoise-50 hover:text-turquoise-700",
-        )}
-      >
-        <Settings className="h-5 w-5 mr-3" />
-        <span className="text-base">{t("dashboard.sidebar.account")}</span>
-      </Button>
-    </div>
-  )
-
-  // Enhanced Sign Out button for desktop
-  const renderDesktopSignOut = () => (
-    <div className="p-4 border-t border-gray-200 mt-auto bg-gradient-to-t from-gray-50 to-white">
-      {!isCollapsed ? (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSignOut}
-          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 font-medium border border-red-200 hover:border-red-300 shadow-sm hover:shadow-md"
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-[calc(100vw-5rem)] max-w-[280px]" // Adjusted max-width
+          side="bottom"
+          align="center"
+          sideOffset={10}
         >
-          <LogOut className="h-4 w-4 mr-2" />
-          {t("dashboard.sidebar.signOut")}
-        </Button>
-      ) : (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleSignOut}
-          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 border border-red-200 hover:border-red-300 shadow-sm hover:shadow-md"
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
-      )}
+          <DropdownMenuItem
+            onClick={() => {
+              navigateTo("/dashboard/profile")
+              onMobileOpenChange(false)
+            }}
+            className="cursor-pointer py-2.5 px-3 text-sm group"
+          >
+            <User className="mr-2.5 h-4 w-4 text-gray-500 group-hover:text-turquoise-600" />
+            <span className="group-hover:text-turquoise-600">{t("dashboard.sidebar.profile")}</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              navigateTo("/dashboard/account")
+              onMobileOpenChange(false)
+            }}
+            className="cursor-pointer py-2.5 px-3 text-sm group"
+          >
+            <Settings className="mr-2.5 h-4 w-4 text-gray-500 group-hover:text-turquoise-600" />
+            <span className="group-hover:text-turquoise-600">{t("dashboard.sidebar.account")}</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              handleSignOut()
+              onMobileOpenChange(false)
+            }}
+            className="text-red-600 hover:!bg-red-50 hover:!text-red-700 focus:bg-red-50 focus:text-red-700 cursor-pointer py-2.5 px-3 text-sm group"
+          >
+            <LogOut className="mr-2.5 h-4 w-4 text-red-600 group-hover:text-red-700" />
+            <span className="group-hover:text-red-700">{t("dashboard.sidebar.signOut")}</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 
-  // Enhanced Sign Out button for mobile
-  const renderMobileSignOut = () => (
-    <div className="p-6 border-t mt-auto bg-gray-50">
-      <Button
-        variant="ghost"
-        size="lg"
-        onClick={handleSignOut}
-        className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl h-14 font-medium transition-all duration-200 shadow-sm hover:shadow-md"
-      >
-        <LogOut className="h-5 w-5 mr-3" />
-        <span className="text-base">{t("dashboard.sidebar.signOut")}</span>
-      </Button>
-    </div>
-  )
-
-  // Quick action buttons for member desktop
   const renderMemberQuickActionsDesktop = () => {
     const quickActions = getMemberQuickActions()
-    if (quickActions.length === 0) return null
+
+    if (!quickActions || quickActions.length === 0) {
+      return null
+    }
 
     return (
-      <div className="px-2 py-4 border-b border-gray-200">
-        <div className="space-y-2">
-          {quickActions.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 font-medium",
-                action.variant === "default"
-                  ? "bg-gradient-to-r from-turquoise-500 to-turquoise-600 text-white shadow-md hover:shadow-lg"
-                  : "border border-turquoise-200 hover:border-turquoise-300 text-turquoise-700 hover:bg-turquoise-50",
-                isCollapsed && "justify-center px-0 mx-1",
-              )}
-            >
-              <action.icon className="h-4 w-4" />
-              {!isCollapsed && <span>{action.title}</span>}
-            </Link>
-          ))}
-        </div>
+      <div className="p-2 space-y-2">
+        {quickActions.map((action) => (
+          <Link key={action.title} href={action.href} passHref>
+            <Button variant={action.variant} className="w-full justify-start">
+              <action.icon className="h-4 w-4 mr-2" />
+              {action.title}
+            </Button>
+          </Link>
+        ))}
       </div>
     )
   }
 
-  // Quick action buttons for member mobile
+  const renderDesktopMenuItems = (menuItems: any[]) => {
+    return (
+      <div className="space-y-1">
+        {menuItems.map((item) => (
+          <Link key={item.title} href={item.href} passHref>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                item.isActive ? "bg-turquoise-50 text-turquoise-700 font-medium" : "hover:bg-gray-100",
+                isCollapsed ? "px-0 justify-center" : "pl-4",
+              )}
+            >
+              <item.icon className="h-4 w-4 mr-2" />
+              {!isCollapsed && <span>{item.title}</span>}
+            </Button>
+          </Link>
+        ))}
+      </div>
+    )
+  }
+
   const renderMemberQuickActionsMobile = () => {
     const quickActions = getMemberQuickActions()
-    if (quickActions.length === 0) return null
+
+    if (!quickActions || quickActions.length === 0) {
+      return null
+    }
 
     return (
-      <div className="px-4 py-4 border-b border-gray-200">
-        <div className="space-y-2">
-          {quickActions.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
+      <div className="p-4 space-y-3 border-b">
+        {quickActions.map((action) => (
+          <Link key={action.title} href={action.href} passHref>
+            <Button variant={action.variant} className="w-full justify-center">
+              <action.icon className="h-5 w-5 mr-2" />
+              {action.title}
+            </Button>
+          </Link>
+        ))}
+      </div>
+    )
+  }
+
+  const renderMobileMenuItems = (menuItems: any[]) => {
+    return (
+      <div className="space-y-2 px-4">
+        {menuItems.map((item) => (
+          <Link key={item.title} href={item.href} passHref>
+            <Button
+              variant="ghost"
               className={cn(
-                "flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                action.variant === "default"
-                  ? "bg-turquoise-500 text-white shadow-lg shadow-turquoise-500/25"
-                  : "border border-turquoise-200 text-turquoise-700 hover:bg-turquoise-50",
+                "w-full justify-start",
+                item.isActive ? "bg-turquoise-50 text-turquoise-700 font-medium" : "hover:bg-gray-100",
               )}
               onClick={() => onMobileOpenChange(false)}
             >
-              <action.icon className="h-5 w-5" />
-              <span>{action.title}</span>
-            </Link>
-          ))}
-        </div>
+              <item.icon className="h-5 w-5 mr-2" />
+              {item.title}
+            </Button>
+          </Link>
+        ))}
       </div>
     )
   }
-
-  // Desktop menu items renderer - enhanced
-  const renderDesktopMenuItems = (items: any[]) => (
-    <div className="mb-6">
-      {/* Main Menu Title */}
-      <div className="px-3 mb-3">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          {!isCollapsed && t("dashboard.sidebar.mainMenu")}
-        </h3>
-      </div>
-      <nav className="flex flex-col gap-1">
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition-all duration-200 mx-1",
-              item.isActive
-                ? "bg-gradient-to-r from-turquoise-500 to-turquoise-600 text-white font-semibold shadow-lg shadow-turquoise-500/25"
-                : "text-gray-700 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 hover:text-gray-900 border border-transparent hover:border-gray-200",
-              isCollapsed && "justify-center px-0 mx-2",
-            )}
-          >
-            <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-gray-500")} />
-            {!isCollapsed && <span>{item.title}</span>}
-          </Link>
-        ))}
-      </nav>
-    </div>
-  )
-
-  // Mobile menu items renderer
-  const renderMobileMenuItems = (items: any[]) => (
-    <div className="mb-8">
-      {/* Main Menu Title */}
-      <div className="px-4 mb-4">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-          {t("dashboard.sidebar.mainMenu")}
-        </h3>
-      </div>
-      <nav className="space-y-2 px-4">
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-              item.isActive
-                ? "bg-turquoise-500 text-white shadow-lg shadow-turquoise-500/25"
-                : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
-            )}
-            onClick={() => onMobileOpenChange(false)}
-          >
-            <item.icon className={cn("h-5 w-5", item.isActive ? "text-white" : "text-gray-500")} />
-            <span>{item.title}</span>
-          </Link>
-        ))}
-      </nav>
-    </div>
-  )
 
   // Desktop sidebar - enhanced design
   const DesktopSidebar = (
@@ -737,7 +637,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       {renderDesktopHeader()}
 
       {/* User Account Section */}
-      {renderDesktopUserAccount()}
+      {renderDesktopUserSectionWithDropdown()}
 
       {/* Member Quick Actions */}
       {renderMemberQuickActionsDesktop()}
@@ -750,12 +650,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
 
       {/* Role Switcher */}
       <RoleSwitcher isCollapsed={isCollapsed} />
-
-      {/* Profile and Account Buttons */}
-      {renderDesktopProfileButtons()}
-
-      {/* Sign Out Button */}
-      {renderDesktopSignOut()}
     </div>
   )
 
@@ -764,7 +658,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     <Sheet open={isMobileOpen} onOpenChange={onMobileOpenChange}>
       <SheetContent side={dir === "rtl" ? "right" : "left"} className="p-0 w-80 bg-gray-50 flex flex-col">
         {/* User Account Section - Enhanced */}
-        {renderMobileUserAccount()}
+        {renderMobileUserSectionWithDropdown()}
 
         {/* Member Quick Actions */}
         {renderMemberQuickActionsMobile()}
@@ -779,12 +673,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         <div className="px-6 py-2">
           <RoleSwitcher />
         </div>
-
-        {/* Profile and Account Buttons */}
-        {renderMobileProfileButtons()}
-
-        {/* Sign Out Button */}
-        {renderMobileSignOut()}
       </SheetContent>
     </Sheet>
   )

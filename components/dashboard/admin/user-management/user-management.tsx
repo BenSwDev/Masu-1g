@@ -1,6 +1,6 @@
 "use client"
 
-import { cn } from "@/lib/utils"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 
 import type React from "react"
 
@@ -11,15 +11,7 @@ import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/common/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
 import { Badge } from "@/components/common/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/common/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/common/ui/dropdown-menu"
+import { Avatar, AvatarFallback } from "@/components/common/ui/avatar"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +23,6 @@ import {
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
 import { Input } from "@/components/common/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import {
   Pagination,
   PaginationContent,
@@ -52,16 +43,23 @@ import {
   Trash2,
   KeyRound,
   Edit,
-  Search,
+  X,
+  Check,
   Filter,
-  SortAsc,
-  SortDesc,
-  Calendar,
-  Mail,
-  Phone,
 } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
+// 1. Add import for UserFormDialog
 import { UserFormDialog } from "./user-form-dialog"
+
+// Add these imports for the filter component
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/common/ui/dropdown-menu"
 
 // Define UserData interface locally as requested
 export interface UserData {
@@ -83,18 +81,19 @@ export interface RoleCounts {
   partners: number
 }
 
+// Update the UserManagementProps interface to include initialRoleFilter
 interface UserManagementProps {
   initialUsers: UserData[]
   totalPages: number
   currentPage: number
   initialSearchTerm?: string
-  initialRoleFilter?: string[]
+  initialRoleFilter?: string[] // Add this line back
   initialSortField: string
   initialSortDirection: "asc" | "desc"
   roleCounts: RoleCounts
 }
 
-// Helper function to calculate age
+// Helper function to calculate age (can be moved to lib/utils if used elsewhere)
 const calculateAge = (dateOfBirth?: string | null): number | null => {
   if (!dateOfBirth) return null
   const birthDate = new Date(dateOfBirth)
@@ -107,7 +106,7 @@ const calculateAge = (dateOfBirth?: string | null): number | null => {
   return age
 }
 
-// Helper function to format date
+// Helper function to format date (can be moved to lib/utils)
 const formatDate = (dateString?: string | null, locale = "en-GB"): string => {
   if (!dateString) return "-"
   try {
@@ -121,22 +120,7 @@ const formatDate = (dateString?: string | null, locale = "en-GB"): string => {
   }
 }
 
-// Helper function to get user initials with enhanced styling
-const getUserInitials = (name: string | null | undefined, email: string | null | undefined) => {
-  if (name) {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2)
-  }
-  if (email) {
-    return email.slice(0, 2).toUpperCase()
-  }
-  return "U"
-}
-
+// In the UserManagement function parameters, uncomment initialRoleFilter
 export function UserManagement({
   initialUsers,
   totalPages: initialTotalPages,
@@ -157,6 +141,7 @@ export function UserManagement({
   const [currentPage, setCurrentPage] = useState(initialCurrentPage)
   const [totalPages, setTotalPages] = useState(initialTotalPages)
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "")
+  // Add roleFilter state back
   const [roleFilter, setRoleFilter] = useState<string[]>(initialRoleFilter || [])
   const [sortField, setSortField] = useState<string>(initialSortField)
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">(initialSortDirection)
@@ -170,7 +155,7 @@ export function UserManagement({
   const [isChangePasswordDialogOpen, setIsChangePasswordDialogOpen] = useState(false)
   const [userForPasswordChange, setUserForPasswordChange] = useState<UserData | null>(null)
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false) // General loading state for table actions
 
   // Update URL when filters, sort, or page change
   useEffect(() => {
@@ -184,48 +169,40 @@ export function UserManagement({
     if (roleFilter.length > 0) params.set("roles", roleFilter.join(","))
     else params.delete("roles")
 
-    if (sortField !== "name") params.set("sortField", sortField)
+    if (sortField !== "name")
+      params.set("sortField", sortField) // Assuming 'name' is default
     else params.delete("sortField")
 
-    if (sortDirection !== "asc") params.set("sortDirection", sortDirection)
+    if (sortDirection !== "asc")
+      params.set("sortDirection", sortDirection) // Assuming 'asc' is default
     else params.delete("sortDirection")
 
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }, [currentPage, searchTerm, roleFilter, sortField, sortDirection, pathname, router, searchParams])
 
-  // Effect to update local state when initial props change
+  // Effect to update local state when initial props change (e.g., after server-side filtering)
   useEffect(() => {
     setUsers(initialUsers)
     setTotalPages(initialTotalPages)
     setCurrentPage(initialCurrentPage)
+    // No need to set search, sort here as they are driven by URL now
   }, [initialUsers, initialTotalPages, initialCurrentPage])
 
   const handleSort = (field: string) => {
     const newDirection = sortField === field && sortDirection === "asc" ? "desc" : "asc"
     setSortField(field)
     setSortDirection(newDirection)
-    setCurrentPage(1)
+    setCurrentPage(1) // Reset to first page on sort
   }
 
-  // Enhanced role display with colors
+  // Display all roles for a user
   const getRolesDisplay = (roles: string[]): React.ReactNode => {
     if (roles.length === 0) return <Badge variant="outline">{t("common.notApplicable")}</Badge>
-
-    const roleColors = {
-      member: "bg-emerald-100 text-emerald-800 border-emerald-200",
-      professional: "bg-blue-100 text-blue-800 border-blue-200",
-      partner: "bg-purple-100 text-purple-800 border-purple-200",
-      admin: "bg-orange-100 text-orange-800 border-orange-200",
-    }
 
     return (
       <div className="flex flex-wrap gap-1">
         {roles.map((role) => (
-          <Badge
-            key={role}
-            variant="outline"
-            className={cn("text-xs font-medium", roleColors[role as keyof typeof roleColors])}
-          >
+          <Badge key={role} variant="outline">
             {t(`roles.${role.toLowerCase()}`, role)}
           </Badge>
         ))}
@@ -249,6 +226,9 @@ export function UserManagement({
   }
 
   const handleUserFormSuccess = () => {
+    // This function will be called from UserFormDialog on successful submission
+    // It should trigger a re-fetch or update of the user list.
+    // For now, we can force a router refresh to re-run the server component's data fetching.
     router.refresh()
     toast({
       title: t("common.success"),
@@ -263,7 +243,8 @@ export function UserManagement({
       const result = await deleteUserByAdmin(userToDelete.id)
       if (result.success) {
         toast({ title: t("common.success"), description: result.message || t("admin.users.userDeletedToast") })
-        setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userToDelete.id))
+        setUsers((prevUsers) => prevUsers.filter((u) => u.id !== userToDelete.id)) // Optimistic update
+        // Or router.refresh() for server-side refetch
       } else {
         toast({
           title: t("common.error"),
@@ -306,22 +287,35 @@ export function UserManagement({
     }
   }
 
+  // Add a function to handle role filter changes
+  const handleRoleFilterChange = (role: string) => {
+    setRoleFilter((current) => {
+      if (current.includes(role)) {
+        return current.filter((r) => r !== role)
+      } else {
+        return [...current, role]
+      }
+    })
+    setCurrentPage(1) // Reset to first page on filter change
+  }
+
+  // Add a function to clear all filters
+  const clearFilters = () => {
+    setSearchTerm("")
+    setRoleFilter([])
+    setCurrentPage(1)
+  }
+
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       setSearchTerm(value)
-      setCurrentPage(1)
+      setCurrentPage(1) // Reset to first page on new search
     }, 500),
     [],
   )
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     debouncedSearch(event.target.value)
-  }
-
-  const handleRoleFilterChange = (role: string) => {
-    const newRoleFilter = roleFilter.includes(role) ? roleFilter.filter((r) => r !== role) : [...roleFilter, role]
-    setRoleFilter(newRoleFilter)
-    setCurrentPage(1)
   }
 
   // Debounce function
@@ -339,7 +333,7 @@ export function UserManagement({
   const renderPagination = () => {
     if (totalPages <= 1) return null
     const pageNumbers = []
-    const maxPagesToShow = 5
+    const maxPagesToShow = 5 // Example: show 5 page numbers at a time
     let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2))
     const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
 
@@ -352,7 +346,7 @@ export function UserManagement({
     }
 
     return (
-      <Pagination className="mt-8">
+      <Pagination className="mt-6">
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious
@@ -361,10 +355,7 @@ export function UserManagement({
                 e.preventDefault()
                 if (currentPage > 1) setCurrentPage(currentPage - 1)
               }}
-              className={cn(
-                "transition-all duration-200",
-                currentPage === 1 ? "pointer-events-none opacity-50" : "hover:bg-turquoise-50 hover:text-turquoise-700",
-              )}
+              className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
             />
           </PaginationItem>
           {startPage > 1 && (
@@ -376,7 +367,6 @@ export function UserManagement({
                     e.preventDefault()
                     setCurrentPage(1)
                   }}
-                  className="hover:bg-turquoise-50 hover:text-turquoise-700"
                 >
                   1
                 </PaginationLink>
@@ -397,12 +387,6 @@ export function UserManagement({
                   setCurrentPage(page)
                 }}
                 isActive={currentPage === page}
-                className={cn(
-                  "transition-all duration-200",
-                  currentPage === page
-                    ? "bg-turquoise-500 text-white hover:bg-turquoise-600"
-                    : "hover:bg-turquoise-50 hover:text-turquoise-700",
-                )}
               >
                 {page}
               </PaginationLink>
@@ -422,7 +406,6 @@ export function UserManagement({
                     e.preventDefault()
                     setCurrentPage(totalPages)
                   }}
-                  className="hover:bg-turquoise-50 hover:text-turquoise-700"
                 >
                   {totalPages}
                 </PaginationLink>
@@ -436,12 +419,7 @@ export function UserManagement({
                 e.preventDefault()
                 if (currentPage < totalPages) setCurrentPage(currentPage + 1)
               }}
-              className={cn(
-                "transition-all duration-200",
-                currentPage === totalPages
-                  ? "pointer-events-none opacity-50"
-                  : "hover:bg-turquoise-50 hover:text-turquoise-700",
-              )}
+              className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
             />
           </PaginationItem>
         </PaginationContent>
@@ -450,227 +428,187 @@ export function UserManagement({
   }
 
   return (
-    <div className="space-y-8 bg-gradient-to-br from-slate-50 to-blue-50/30 min-h-screen p-6">
-      {/* Enhanced Statistics Cards */}
-      <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-slate-50/50">
-        <CardHeader className="flex flex-col space-y-4 pb-6 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+    <div className="space-y-6">
+      {/* Statistics and Add User Button */}
+      <Card>
+        <CardHeader className="flex flex-col space-y-4 pb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
-            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-              {t("admin.users.statisticsTitle")}
-            </CardTitle>
-            <CardDescription className="text-slate-600 mt-2">{t("admin.users.statisticsDescription")}</CardDescription>
+            <CardTitle>{t("admin.users.statisticsTitle")}</CardTitle>
+            <CardDescription>{t("admin.users.statisticsDescription")}</CardDescription>
           </div>
-          <Button
-            onClick={handleOpenCreateUserForm}
-            className="flex items-center gap-2 w-full sm:w-auto bg-gradient-to-r from-turquoise-500 to-cyan-500 hover:from-turquoise-600 hover:to-cyan-600 text-white shadow-lg hover:shadow-xl transition-all duration-200"
-          >
+          <Button onClick={handleOpenCreateUserForm} className="flex items-center gap-2 w-full sm:w-auto">
             <UserPlus size={18} />
             {t("admin.users.addUser")}
           </Button>
         </CardHeader>
-        <CardContent className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-emerald-100/50 hover:shadow-xl transition-all duration-200">
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-emerald-800">
-                {t("roles.memberPlural", "Members")}
-              </CardTitle>
-              <div className="p-2 bg-emerald-200 rounded-lg">
-                <Users className="h-5 w-5 text-emerald-700" />
-              </div>
+              <CardTitle className="text-sm font-medium">{t("roles.memberPlural", "Members")}</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-emerald-800">{roleCounts.members}</div>
-              <p className="text-xs text-emerald-600 mt-1">Active members</p>
+              <div className="text-2xl font-bold">{roleCounts.members}</div>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50 hover:shadow-xl transition-all duration-200">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-blue-800">
-                {t("roles.professionalPlural", "Professionals")}
-              </CardTitle>
-              <div className="p-2 bg-blue-200 rounded-lg">
-                <Briefcase className="h-5 w-5 text-blue-700" />
-              </div>
+              <CardTitle className="text-sm font-medium">{t("roles.professionalPlural", "Professionals")}</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-800">{roleCounts.professionals}</div>
-              <p className="text-xs text-blue-600 mt-1">Verified professionals</p>
+              <div className="text-2xl font-bold">{roleCounts.professionals}</div>
             </CardContent>
           </Card>
-          <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100/50 hover:shadow-xl transition-all duration-200">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-purple-800">
-                {t("roles.partnerPlural", "Partners")}
-              </CardTitle>
-              <div className="p-2 bg-purple-200 rounded-lg">
-                <Handshake className="h-5 w-5 text-purple-700" />
-              </div>
+              <CardTitle className="text-sm font-medium">{t("roles.partnerPlural", "Partners")}</CardTitle>
+              <Handshake className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-purple-800">{roleCounts.partners}</div>
-              <p className="text-xs text-purple-600 mt-1">Business partners</p>
+              <div className="text-2xl font-bold">{roleCounts.partners}</div>
             </CardContent>
           </Card>
         </CardContent>
       </Card>
 
-      {/* Enhanced User Table */}
-      <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-slate-50/50">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50/30 border-b border-slate-200">
-          <CardTitle className="text-xl font-bold text-slate-800">{t("admin.users.userListTitle")}</CardTitle>
-
-          {/* Enhanced Filters */}
-          <div className="mt-6 space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Search Input */}
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-                <Input
-                  placeholder={t("admin.users.searchPlaceholder")}
-                  defaultValue={searchTerm}
-                  onChange={handleSearchChange}
-                  className="pl-10 border-slate-200 focus:border-turquoise-400 focus:ring-turquoise-400/20 bg-white"
-                />
-              </div>
-
-              {/* Sort Field Select */}
-              <Select
-                value={sortField}
-                onValueChange={(value) => {
-                  setSortField(value)
-                  setCurrentPage(1)
-                }}
-              >
-                <SelectTrigger className="w-full sm:w-48 border-slate-200 focus:border-turquoise-400 bg-white">
-                  <SortAsc className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Sort by..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      {t("admin.users.name")}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="email">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      {t("admin.users.email")}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="createdAt">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      {t("admin.users.createdDate")}
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Sort Direction Button */}
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSortDirection(sortDirection === "asc" ? "desc" : "asc")
-                  setCurrentPage(1)
-                }}
-                className="border-slate-200 hover:bg-turquoise-50 hover:border-turquoise-300"
-              >
-                {sortDirection === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
-              </Button>
-            </div>
-
-            {/* Role Filter Buttons */}
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Filter by role:
-              </span>
-              {["member", "professional", "partner", "admin"].map((role) => {
-                const isActive = roleFilter.includes(role)
-                const roleColors = {
-                  member: isActive
-                    ? "bg-emerald-500 text-white"
-                    : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200",
-                  professional: isActive ? "bg-blue-500 text-white" : "bg-blue-100 text-blue-700 hover:bg-blue-200",
-                  partner: isActive ? "bg-purple-500 text-white" : "bg-purple-100 text-purple-700 hover:bg-purple-200",
-                  admin: isActive ? "bg-orange-500 text-white" : "bg-orange-100 text-orange-700 hover:bg-orange-200",
-                }
-
-                return (
-                  <Button
-                    key={role}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRoleFilterChange(role)}
-                    className={cn("border-0 transition-all duration-200", roleColors[role as keyof typeof roleColors])}
-                  >
-                    {t(`roles.${role.toLowerCase()}`, role)}
-                  </Button>
-                )
-              })}
-              {roleFilter.length > 0 && (
+      {/* User Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("admin.users.userListTitle")}</CardTitle>
+          {/* Replace the search input in CardHeader with: */}
+          <div className="mt-4 flex flex-col sm:flex-row gap-3 items-start">
+            <div className="relative w-full sm:max-w-sm">
+              <Input
+                placeholder={t("admin.users.searchPlaceholder")}
+                defaultValue={searchTerm}
+                onChange={handleSearchChange}
+                className="pr-10"
+              />
+              {searchTerm && (
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="absolute right-0 top-0 h-full px-3"
                   onClick={() => {
-                    setRoleFilter([])
-                    setCurrentPage(1)
+                    setSearchTerm("")
+                    const input = document.querySelector('input[type="search"]') as HTMLInputElement
+                    if (input) input.value = ""
                   }}
-                  className="text-slate-500 hover:text-slate-700"
                 >
-                  Clear filters
+                  <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
-          </div>
-        </CardHeader>
 
-        <CardContent className="p-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  {t("admin.users.filter")}
+                  {roleFilter.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 rounded-full px-1 py-0 text-xs">
+                      {roleFilter.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>{t("admin.users.filterByRole")}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {["member", "professional", "partner", "admin"].map((role) => (
+                  <DropdownMenuCheckboxItem
+                    key={role}
+                    checked={roleFilter.includes(role)}
+                    onCheckedChange={() => handleRoleFilterChange(role)}
+                  >
+                    {t(`roles.${role.toLowerCase()}`, role)}
+                    {roleFilter.includes(role) && <Check className="ml-auto h-4 w-4" />}
+                  </DropdownMenuCheckboxItem>
+                ))}
+                <DropdownMenuSeparator />
+                <div className="p-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={clearFilters}
+                    disabled={searchTerm === "" && roleFilter.length === 0}
+                  >
+                    {t("admin.users.clearFilters")}
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          {(searchTerm || roleFilter.length > 0) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">{t("admin.users.activeFilters")}:</span>
+              {searchTerm && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {t("admin.users.search")}: {searchTerm}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 p-0 ml-1"
+                    onClick={() => {
+                      setSearchTerm("")
+                      const input = document.querySelector('input[type="search"]') as HTMLInputElement
+                      if (input) input.value = ""
+                    }}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              )}
+              {roleFilter.map((role) => (
+                <Badge key={role} variant="secondary" className="flex items-center gap-1">
+                  {t(`roles.${role.toLowerCase()}`, role)}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 p-0 ml-1"
+                    onClick={() => handleRoleFilterChange(role)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </Badge>
+              ))}
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={clearFilters}>
+                {t("admin.users.clearAll")}
+              </Button>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent>
           {/* Mobile Card View */}
-          <div className="block md:hidden space-y-4 p-6">
+          <div className="block md:hidden space-y-4">
             {users.length > 0 ? (
               users.map((user) => (
-                <Card
-                  key={user.id}
-                  className="p-4 border-0 shadow-md hover:shadow-lg transition-all duration-200 bg-gradient-to-r from-white to-slate-50/30"
-                >
+                <Card key={user.id} className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <Avatar className="h-14 w-14 ring-2 ring-turquoise-200 shadow-md">
-                        <AvatarImage src={user.image || undefined} alt={user.name || "User Avatar"} />
-                        <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-bold text-sm">
-                          {getUserInitials(user.name, user.email)}
+                      {/* For mobile view, replace the Avatar component with: */}
+                      <Avatar className="h-12 w-12 bg-primary/10">
+                        <AvatarFallback className="text-primary font-medium">
+                          {user.name ? user.name.substring(0, 2).toUpperCase() : "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-800 truncate">{user.name || t("common.notSet")}</p>
-                        <p className="text-sm text-slate-600 truncate flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {user.email || t("common.notSet")}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-2">{getRolesDisplay(user.roles)}</div>
+                        <p className="font-medium text-sm truncate">{user.name || t("common.notSet")}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email || t("common.notSet")}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">{getRolesDisplay(user.roles)}</div>
                       </div>
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={isLoading}
-                          className="h-8 w-8 hover:bg-turquoise-50"
-                        >
+                        <Button variant="ghost" size="icon" disabled={isLoading} className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="sr-only">{t("admin.users.userActions")}</span>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuLabel className="text-slate-600">Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleOpenEditUserForm(user)}
-                          className="hover:bg-turquoise-50"
-                        >
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleOpenEditUserForm(user)}>
                           <Edit className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.edit")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -678,50 +616,45 @@ export function UserManagement({
                             setUserForPasswordChange(user)
                             setIsChangePasswordDialogOpen(true)
                           }}
-                          className="hover:bg-blue-50"
                         >
                           <KeyRound className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("admin.users.changePassword")}
                         </DropdownMenuItem>
                         {session?.user?.id !== user.id && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setUserToDelete(user)
-                                setIsDeleteDialogOpen(true)
-                              }}
-                              className="text-red-600 hover:bg-red-50 focus:text-red-600 focus:bg-red-50"
-                            >
-                              <Trash2 className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.delete")}
-                            </DropdownMenuItem>
-                          </>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setUserToDelete(user)
+                              setIsDeleteDialogOpen(true)
+                            }}
+                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                          >
+                            <Trash2 className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.delete")}
+                          </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <Phone className="h-3 w-3" />
-                      <span className="font-medium">Phone:</span> {user.phone || t("common.notSet")}
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                    <div>
+                      <span className="font-medium">{t("admin.users.phone")}:</span> {user.phone || t("common.notSet")}
                     </div>
-                    <div className="flex items-center gap-2 text-slate-600">
-                      <span className="font-medium">Gender:</span> {getGenderDisplay(user.gender)}
+                    <div>
+                      <span className="font-medium">{t("admin.users.gender")}:</span> {getGenderDisplay(user.gender)}
                     </div>
-                    <div className="col-span-2 flex items-center gap-2 text-slate-600">
-                      <Calendar className="h-3 w-3" />
-                      <span className="font-medium">Born:</span>{" "}
+                    <div className="col-span-2">
+                      <span className="font-medium">{t("admin.users.dobAndAge")}:</span>{" "}
                       {user.dateOfBirth
                         ? `${formatDate(user.dateOfBirth, language)} (${calculateAge(user.dateOfBirth)})`
                         : t("common.notSet")}
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">{t("admin.users.createdDate")}:</span>{" "}
+                      {formatDate(user.createdAt, language)}
                     </div>
                   </div>
                 </Card>
               ))
             ) : (
-              <div className="text-center py-12 text-slate-500">
-                <Users className="h-12 w-12 mx-auto mb-4 text-slate-300" />
-                {t("admin.users.noUsersFound")}
-              </div>
+              <div className="text-center py-8 text-muted-foreground">{t("admin.users.noUsersFound")}</div>
             )}
           </div>
 
@@ -729,86 +662,67 @@ export function UserManagement({
           <div className="hidden md:block overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-slate-50/50 hover:bg-slate-50">
-                  <TableHead className="w-[80px] font-semibold text-slate-700">{t("admin.users.avatar")}</TableHead>
+                <TableRow>
+                  <TableHead className="w-[80px]">{t("admin.users.avatar")}</TableHead>
                   <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("name")}
-                      className="px-0 hover:bg-transparent font-semibold text-slate-700"
-                    >
+                    <Button variant="ghost" onClick={() => handleSort("name")} className="px-0 hover:bg-transparent">
                       {t("admin.users.name")} <ArrowUpDown className="ms-2 h-4 w-4 rtl:me-2 rtl:ms-0" />
                     </Button>
                   </TableHead>
-                  <TableHead className="font-semibold text-slate-700">{t("admin.users.phone")}</TableHead>
+                  <TableHead>{t("admin.users.phone")}</TableHead>
                   <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort("email")}
-                      className="px-0 hover:bg-transparent font-semibold text-slate-700"
-                    >
+                    <Button variant="ghost" onClick={() => handleSort("email")} className="px-0 hover:bg-transparent">
                       {t("admin.users.email")} <ArrowUpDown className="ms-2 h-4 w-4 rtl:me-2 rtl:ms-0" />
                     </Button>
                   </TableHead>
-                  <TableHead className="font-semibold text-slate-700">{t("admin.users.role")}</TableHead>
-                  <TableHead className="font-semibold text-slate-700">{t("admin.users.dobAndAge")}</TableHead>
-                  <TableHead className="font-semibold text-slate-700">{t("admin.users.gender")}</TableHead>
+                  <TableHead>{t("admin.users.role")}</TableHead>
+                  <TableHead>{t("admin.users.dobAndAge")}</TableHead>
+                  <TableHead>{t("admin.users.gender")}</TableHead>
                   <TableHead>
                     <Button
                       variant="ghost"
                       onClick={() => handleSort("createdAt")}
-                      className="px-0 hover:bg-transparent font-semibold text-slate-700"
+                      className="px-0 hover:bg-transparent"
                     >
                       {t("admin.users.createdDate")} <ArrowUpDown className="ms-2 h-4 w-4 rtl:me-2 rtl:ms-0" />
                     </Button>
                   </TableHead>
-                  <TableHead className="text-end font-semibold text-slate-700">{t("admin.users.actions")}</TableHead>
+                  <TableHead className="text-end">{t("admin.users.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.length > 0 ? (
-                  users.map((user, index) => (
-                    <TableRow
-                      key={user.id}
-                      className={cn(
-                        "hover:bg-gradient-to-r hover:from-turquoise-50/30 hover:to-blue-50/30 transition-all duration-200",
-                        index % 2 === 0 ? "bg-white" : "bg-slate-50/30",
-                      )}
-                    >
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      {/* For desktop view, replace the Avatar component with: */}
                       <TableCell>
-                        <Avatar className="h-12 w-12 ring-2 ring-turquoise-200 shadow-sm">
-                          <AvatarImage src={user.image || undefined} alt={user.name || "User Avatar"} />
-                          <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-bold">
-                            {getUserInitials(user.name, user.email)}
+                        <Avatar className="h-10 w-10 bg-primary/10">
+                          <AvatarFallback className="text-primary font-medium">
+                            {user.name ? user.name.substring(0, 2).toUpperCase() : "U"}
                           </AvatarFallback>
                         </Avatar>
                       </TableCell>
-                      <TableCell className="font-semibold text-slate-800">{user.name || t("common.notSet")}</TableCell>
-                      <TableCell className="text-slate-600">{user.phone || t("common.notSet")}</TableCell>
-                      <TableCell className="text-slate-600">{user.email || t("common.notSet")}</TableCell>
+                      <TableCell className="font-medium">{user.name || t("common.notSet")}</TableCell>
+                      <TableCell>{user.phone || t("common.notSet")}</TableCell>
+                      <TableCell>{user.email || t("common.notSet")}</TableCell>
                       <TableCell>{getRolesDisplay(user.roles)}</TableCell>
-                      <TableCell className="text-slate-600">
+                      <TableCell>
                         {user.dateOfBirth
                           ? `${formatDate(user.dateOfBirth, language)} (${calculateAge(user.dateOfBirth)})`
                           : t("common.notSet")}
                       </TableCell>
-                      <TableCell className="text-slate-600">{getGenderDisplay(user.gender)}</TableCell>
-                      <TableCell className="text-slate-600">{formatDate(user.createdAt, language)}</TableCell>
+                      <TableCell>{getGenderDisplay(user.gender)}</TableCell>
+                      <TableCell>{formatDate(user.createdAt, language)}</TableCell>
                       <TableCell className="text-end">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={isLoading} className="hover:bg-turquoise-50">
+                            <Button variant="ghost" size="icon" disabled={isLoading}>
                               <MoreHorizontal className="h-5 w-5" />
                               <span className="sr-only">{t("admin.users.userActions")}</span>
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel className="text-slate-600">Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => handleOpenEditUserForm(user)}
-                              className="hover:bg-turquoise-50"
-                            >
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleOpenEditUserForm(user)}>
                               <Edit className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.edit")}
                             </DropdownMenuItem>
                             <DropdownMenuItem
@@ -816,23 +730,19 @@ export function UserManagement({
                                 setUserForPasswordChange(user)
                                 setIsChangePasswordDialogOpen(true)
                               }}
-                              className="hover:bg-blue-50"
                             >
                               <KeyRound className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("admin.users.changePassword")}
                             </DropdownMenuItem>
-                            {session?.user?.id !== user.id && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setUserToDelete(user)
-                                    setIsDeleteDialogOpen(true)
-                                  }}
-                                  className="text-red-600 hover:bg-red-50 focus:text-red-600 focus:bg-red-50"
-                                >
-                                  <Trash2 className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.delete")}
-                                </DropdownMenuItem>
-                              </>
+                            {session?.user?.id !== user.id && ( // Prevent admin from deleting self
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setUserToDelete(user)
+                                  setIsDeleteDialogOpen(true)
+                                }}
+                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              >
+                                <Trash2 className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.delete")}
+                              </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -841,11 +751,8 @@ export function UserManagement({
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="h-32 text-center">
-                      <div className="flex flex-col items-center justify-center text-slate-500">
-                        <Users className="h-12 w-12 mb-4 text-slate-300" />
-                        {t("admin.users.noUsersFound")}
-                      </div>
+                    <TableCell colSpan={9} className="h-24 text-center">
+                      {t("admin.users.noUsersFound")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -866,18 +773,18 @@ export function UserManagement({
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="bg-gradient-to-br from-white to-red-50/30">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-red-800">{t("admin.users.confirmDeleteTitle")}</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-600">
+            <AlertDialogTitle>{t("admin.users.confirmDeleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
               {t("admin.users.confirmDeleteMessage", { userName: userToDelete?.name || t("admin.users.thisUser") })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-slate-300 hover:bg-slate-50">{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteUser}
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {t("common.delete")}
             </AlertDialogAction>
@@ -887,23 +794,18 @@ export function UserManagement({
 
       {/* Change Password Confirmation Dialog */}
       <AlertDialog open={isChangePasswordDialogOpen} onOpenChange={setIsChangePasswordDialogOpen}>
-        <AlertDialogContent className="bg-gradient-to-br from-white to-blue-50/30">
+        <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-800">{t("admin.users.confirmChangePasswordTitle")}</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-600">
+            <AlertDialogTitle>{t("admin.users.confirmChangePasswordTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
               {userForPasswordChange?.email
                 ? t("admin.users.confirmChangePasswordMessage", { userEmail: userForPasswordChange.email })
                 : t("admin.users.confirmChangePasswordMessage", { userEmail: t("admin.users.thisUser") })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-slate-300 hover:bg-slate-50">{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleChangePassword}
-              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white"
-            >
-              {t("admin.users.sendResetLink")}
-            </AlertDialogAction>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleChangePassword}>{t("admin.users.sendResetLink")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

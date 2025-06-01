@@ -114,6 +114,7 @@ export async function getUserStatistics() {
   }
 }
 
+// Update the createUserByAdmin function to remove image handling
 export async function createUserByAdmin(formData: FormData) {
   try {
     const session = await getServerSession(authOptions)
@@ -130,7 +131,6 @@ export async function createUserByAdmin(formData: FormData) {
     const roles = formData.getAll("roles[]") as string[]
     const dateOfBirthStr = formData.get("dateOfBirth") as string | null
     const gender = formData.get("gender") as string
-    const image = formData.get("image") as string | null
 
     if (!name || !email || !phone || !password || !roles.length || !gender) {
       return { success: false, message: "missingFields" }
@@ -163,7 +163,6 @@ export async function createUserByAdmin(formData: FormData) {
       activeRole: roles[0], // Set first role as active role
       dateOfBirth,
       gender,
-      image: image || undefined,
       emailVerified: new Date(),
       phoneVerified: new Date(),
     })
@@ -181,6 +180,7 @@ export async function createUserByAdmin(formData: FormData) {
   }
 }
 
+// Update the updateUserByAdmin function to remove image handling
 export async function updateUserByAdmin(userId: string, formData: FormData) {
   try {
     const session = await getServerSession(authOptions)
@@ -196,7 +196,6 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
     const roles = formData.getAll("roles[]") as string[]
     const dateOfBirthStr = formData.get("dateOfBirth") as string | null
     const gender = formData.get("gender") as string
-    const image = formData.get("image") as string // Can be empty string
 
     if (!name || !email || !phone || !roles.length || !gender) {
       return { success: false, message: "missingFields" }
@@ -227,7 +226,6 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
     }
 
     userToUpdate.gender = gender as "male" | "female" | "other"
-    userToUpdate.image = image || undefined
 
     const dateOfBirth = dateOfBirthStr ? new Date(dateOfBirthStr) : null // Allow clearing date
     if (dateOfBirthStr && dateOfBirth && isNaN(dateOfBirth.getTime())) {

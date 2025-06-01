@@ -72,7 +72,17 @@
     "loadingData": "Загрузка данных...",
     "unlimited": "Безлимитно",
     "none": "Нет",
-    "price": "Цена"
+    "price": "Цена",
+    "id": "ID",
+    "viewDetails": "Посмотреть детали",
+    "featureComingSoon": "Эта функция скоро появится!",
+    "cancelling": "Отмена...",
+    "card": "Карта",
+    "notAvailable": "Н/Д",
+    "pagination": {
+      "pageInfo": "Страница {{page}} из {{totalPages}} ({{totalResults}} результатов)",
+      "showPerPage": "Показать {{count}}"
+    }
   },
   "dashboard": {
     "sidebar": {
@@ -158,7 +168,8 @@
     "status": {
       "expired": "Истек срок",
       "depleted": "Исчерпан",
-      "cancelled": "Отменен"
+      "cancelled": "Отменен",
+      "all": "Все статусы"
     },
     "unknownSubscription": "Неизвестная подписка",
     "purchasedOn": "Куплено",
@@ -947,11 +958,18 @@
   "userSubscriptions": {
     "title": "Подписки пользователей",
     "description": "Управление всеми подписками пользователей в системе.",
+    "pageTitle": "Управление подписками пользователей",
+    "pageDescription": "Обзор и управление всеми записями подписок пользователей на платформе.",
     "filterAndSearch": "Фильтр и поиск",
     "searchPlaceholder": "Поиск по пользователю, подписке или процедуре...",
     "allStatuses": "Все статусы",
     "filterByStatus": "Фильтр по статусу",
+    "selectStatusPlaceholder": "Выберите статус для фильтрации",
+    "applyFilters": "Применить фильтры",
     "noUserSubscriptions": "Подписки пользователей, соответствующие вашим критериям, не найдены.",
+    "noSubscriptionsFoundTitle": "Подписки не найдены",
+    "noSubscriptionsFoundFiltered": "Нет подписок, соответствующих текущим фильтрам.",
+    "noSubscriptionsFound": "В настоящее время в системе нет подписок пользователей.",
     "user": "Пользователь",
     "subscription": "Подписка",
     "remaining": "Осталось",
@@ -971,7 +989,67 @@
     "dates": "Даты",
     "payment": "Оплата",
     "purchaseDateShort": "Куплено",
-    "expiryDateShort": "Истекает"
+    "expiryDateShort": "Истекает",
+    "usage": "Использование",
+    "perSession": "за сеанс",
+    "usageTooltip": "Осталось {{remaining}} из {{total}} сеансов",
+    "purchased": "Куплено",
+    "expires": "Истекает",
+    "pricePerSession": "Цена за сеанс",
+    "paymentAmount": "Сумма платежа",
+    "paymentMethod": "Способ оплаты",
+    "paymentDate": "Дата платежа",
+    "transactionId": "ID транзакции",
+    "cancellationDate": "Дата отмены",
+    "remainingQuantity": "Оставшееся количество",
+    "usedQuantity": "Использованное количество",
+    "stats": {
+      "total": "Всего подписок",
+      "active": "Активные подписки",
+      "expired": "Истекшие подписки",
+      "revenue": "Общий доход"
+    },
+    "tableHeaders": {
+      "user": "Пользователь",
+      "subscriptionDetails": "Подписка",
+      "treatmentDetails": "Процедура",
+      "quantityUsage": "Использование",
+      "dates": "Даты",
+      "payment": "Оплата",
+      "status": "Статус",
+      "actions": "Действия"
+    },
+    "actions": {
+      "cancel": "Отменить подписку",
+      "delete": "Удалить подписку",
+      "cancelSubscription": "Подтвердить отмену",
+      "deleteSubscription": "Подтвердить удаление"
+    },
+    "cancelDialog": {
+      "title": "Отменить подписку пользователя",
+      "description": "Вы уверены, что хотите отменить подписку для {{userName}}? Это пометит подписку как отмененную и предотвратит дальнейшее использование."
+    },
+    "deleteDialog": {
+      "title": "Удалить подписку пользователя",
+      "description": "Вы уверены, что хотите навсегда удалить подписку для {{userName}}? Это действие нельзя отменить, и все связанные данные будут удалены."
+    },
+    "notifications": {
+      "dataRefreshed": "Данные подписок успешно обновлены.",
+      "dataLoadError": "Не удалось загрузить данные подписок.",
+      "cancelSuccess": "Подписка успешно отменена.",
+      "cancelError": "Не удалось отменить подписку.",
+      "deleteSuccess": "Подписка успешно удалена.",
+      "deleteError": "Не удалось удалить подписку."
+    },
+    "detailsModal": {
+      "title": "Детали подписки пользователя",
+      "description": "Подробная информация о подписке {{userName}}.",
+      "userSectionTitle": "Информация о пользователе",
+      "subscriptionSectionTitle": "Информация о подписке",
+      "treatmentSectionTitle": "Информация о процедуре",
+      "usageSectionTitle": "Детали использования",
+      "paymentSectionTitle": "Информация об оплате"
+    }
   },
   "Roles": {},
   "validFrom": "Действует с",

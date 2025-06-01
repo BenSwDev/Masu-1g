@@ -2,10 +2,10 @@
 
 import { Card, CardContent } from "@/components/common/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Search, Filter, Download, RefreshCw, Users, TrendingUp, Calendar, CreditCard } from "lucide-react"
+import { Search, Filter, Download, RefreshCw, Users, TrendingUp, CalendarIcon, CreditCard, List } from "lucide-react" // Renamed Calendar to CalendarIcon
 import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button" // Corrected path
 import { Badge } from "@/components/common/ui/badge"
 import { useState, useEffect } from "react"
 import UserSubscriptionRow from "./user-subscription-row"
@@ -16,6 +16,9 @@ import type { User } from "next-auth"
 import { getAllUserSubscriptions } from "@/actions/user-subscription-actions"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/common/ui/skeleton"
+import { useIsMobile } from "@/components/common/ui/use-mobile" // Corrected import
+import UserSubscriptionAdminCard from "./user-subscription-admin-card"
+import UserSubscriptionAdminCardSkeleton from "./user-subscription-admin-card-skeleton"
 
 interface PopulatedUserSubscription extends IUserSubscription {
   userId: Pick<User, "name" | "email"> & { _id: string }
@@ -40,8 +43,8 @@ const AdminUserSubscriptionsClient = ({
   initialPagination,
 }: AdminUserSubscriptionsClientProps) => {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
 
-  // State management
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(initialPagination?.page || 1)
@@ -52,7 +55,6 @@ const AdminUserSubscriptionsClient = ({
   const [userSubscriptions, setUserSubscriptions] = useState<PopulatedUserSubscription[]>(initialUserSubscriptions)
   const [pagination, setPagination] = useState(initialPagination)
 
-  // Statistics calculation
   const stats = {
     total: pagination?.total || 0,
     active: userSubscriptions.filter((sub) => sub.status === "active").length,
@@ -82,13 +84,13 @@ const AdminUserSubscriptionsClient = ({
         setUserSubscriptions(result.userSubscriptions as PopulatedUserSubscription[])
         setPagination(result.pagination)
         if (showRefreshToast) {
-          toast.success("הנתונים עודכנו בהצלחה")
+          toast.success(t("userSubscriptions.notifications.dataRefreshed"))
         }
       } else {
-        toast.error(result.error || "שגיאה בטעינת הנתונים")
+        toast.error(result.error || t("userSubscriptions.notifications.dataLoadError"))
       }
     } catch (error) {
-      toast.error("שגיאה בטעינת הנתונים")
+      toast.error(t("userSubscriptions.notifications.dataLoadError"))
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
@@ -103,13 +105,14 @@ const AdminUserSubscriptionsClient = ({
       statusFilter === "all" &&
       limit === initialPagination?.limit
     ) {
+      // Initial data is already loaded, no need to fetch again unless parameters change
       return
     }
     fetchData(currentPage, limit, searchTerm, statusFilter)
-  }, [currentPage, limit])
+  }, [currentPage, limit]) // Removed initialUserSubscriptions, initialPagination, searchTerm, statusFilter from deps to avoid re-fetch on initial load if data is present
 
   const handleSearchAndFilter = () => {
-    setCurrentPage(1)
+    setCurrentPage(1) // Reset to first page on new search/filter
     fetchData(1, limit, searchTerm, statusFilter)
   }
 
@@ -124,23 +127,7 @@ const AdminUserSubscriptionsClient = ({
   }
 
   const handleExport = () => {
-    // TODO: Implement export functionality
-    toast.info("פונקציית ייצוא תתווסף בקרוב")
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-      case "expired":
-        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
-      case "depleted":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
-      case "cancelled":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
-    }
+    toast.info(t("common.featureComingSoon"))
   }
 
   const TableSkeleton = () => (
@@ -181,33 +168,43 @@ const AdminUserSubscriptionsClient = ({
     </Card>
   )
 
+  const CardListSkeleton = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {Array(limit)
+        .fill(0)
+        .map((_, i) => (
+          <UserSubscriptionAdminCardSkeleton key={i} />
+        ))}
+    </div>
+  )
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">מנויי משתמשים</h1>
-          <p className="text-gray-600 dark:text-gray-300">ניהול וצפייה במנויים של כל המשתמשים במערכת</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t("userSubscriptions.pageTitle")}</h1>
+          <p className="text-gray-600 dark:text-gray-300">{t("userSubscriptions.pageDescription")}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="gap-2">
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-            רענן
+            {t("common.refresh")}
           </Button>
           <Button variant="outline" size="sm" onClick={handleExport} className="gap-2">
             <Download className="h-4 w-4" />
-            ייצא
+            {t("common.export")}
           </Button>
         </div>
       </div>
 
-      {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">סה"כ מנויים</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {t("userSubscriptions.stats.total")}
+                </p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
               </div>
               <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
@@ -216,12 +213,13 @@ const AdminUserSubscriptionsClient = ({
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">מנויים פעילים</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {t("userSubscriptions.stats.active")}
+                </p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</p>
               </div>
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
@@ -230,26 +228,28 @@ const AdminUserSubscriptionsClient = ({
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">מנויים שפגו</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {t("userSubscriptions.stats.expired")}
+                </p>
                 <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.expired}</p>
               </div>
               <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <CalendarIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
             </div>
           </CardContent>
         </Card>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">סה"כ הכנסות</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {t("userSubscriptions.stats.revenue")}
+                </p>
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">₪{stats.revenue.toFixed(2)}</p>
               </div>
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
@@ -260,18 +260,17 @@ const AdminUserSubscriptionsClient = ({
         </Card>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
             <div className="relative md:col-span-2">
               <label htmlFor="search-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                חיפוש
+                {t("common.search")}
               </label>
               <Search className="absolute rtl:right-2.5 ltr:left-2.5 top-9 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 id="search-input"
-                placeholder="חפש לפי שם משתמש, אימייל או שם מנוי..."
+                placeholder={t("userSubscriptions.searchPlaceholder")}
                 className="rtl:pr-8 ltr:pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -283,85 +282,111 @@ const AdminUserSubscriptionsClient = ({
                 htmlFor="status-filter"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
-                סינון לפי סטטוס
+                {t("userSubscriptions.filterByStatus")}
               </label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger id="status-filter">
-                  <SelectValue placeholder="בחר סטטוס" />
+                  <SelectValue placeholder={t("userSubscriptions.selectStatusPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">כל הסטטוסים</SelectItem>
-                  <SelectItem value="active">פעיל</SelectItem>
-                  <SelectItem value="expired">פג תוקף</SelectItem>
-                  <SelectItem value="depleted">מוצה</SelectItem>
-                  <SelectItem value="cancelled">מבוטל</SelectItem>
+                  <SelectItem value="all">{t("subscriptions.status.all")}</SelectItem>
+                  <SelectItem value="active">{t("subscriptions.status.active")}</SelectItem>
+                  <SelectItem value="expired">{t("subscriptions.status.expired")}</SelectItem>
+                  <SelectItem value="depleted">{t("subscriptions.status.depleted")}</SelectItem>
+                  <SelectItem value="cancelled">{t("subscriptions.status.cancelled")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="mt-4 flex justify-between items-center">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {statusFilter !== "all" && (
                 <Badge variant="secondary" className="gap-1">
                   <Filter className="h-3 w-3" />
-                  סטטוס:{" "}
-                  {statusFilter === "active"
-                    ? "פעיל"
-                    : statusFilter === "expired"
-                      ? "פג תוקף"
-                      : statusFilter === "depleted"
-                        ? "מוצה"
-                        : "מבוטל"}
+                  {t("common.status")}: {t(`subscriptions.status.${statusFilter}`)}
                 </Badge>
               )}
               {searchTerm && (
                 <Badge variant="secondary" className="gap-1">
                   <Search className="h-3 w-3" />
-                  חיפוש: {searchTerm}
+                  {t("common.search")}: {searchTerm}
                 </Badge>
               )}
             </div>
             <Button onClick={handleSearchAndFilter} disabled={isLoading}>
-              {isLoading ? "מחפש..." : "החל מסננים"}
+              {isLoading ? t("common.searching") : t("userSubscriptions.applyFilters")}
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Table */}
       {isLoading ? (
-        <TableSkeleton />
+        isMobile ? (
+          <CardListSkeleton />
+        ) : (
+          <TableSkeleton />
+        )
       ) : userSubscriptions.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center h-40 p-6">
             <div className="text-center space-y-2">
               <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Users className="h-6 w-6 text-gray-400" />
+                <List className="h-6 w-6 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">אין מנויים להצגה</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                {t("userSubscriptions.noSubscriptionsFoundTitle")}
+              </h3>
               <p className="text-gray-500 dark:text-gray-400">
                 {searchTerm || statusFilter !== "all"
-                  ? "לא נמצאו מנויים התואמים לקריטריונים שנבחרו"
-                  : "עדיין לא נרכשו מנויים במערכת"}
+                  ? t("userSubscriptions.noSubscriptionsFoundFiltered")
+                  : t("userSubscriptions.noSubscriptionsFound")}
               </p>
             </div>
           </CardContent>
         </Card>
+      ) : isMobile ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {userSubscriptions.map((subscription) => (
+            <UserSubscriptionAdminCard
+              key={String(subscription._id)}
+              userSubscription={subscription}
+              onSubscriptionUpdate={() => fetchData(currentPage, limit, searchTerm, statusFilter)}
+            />
+          ))}
+        </div>
       ) : (
         <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
+              <table className="w-full min-w-[1000px]">
+                {" "}
+                {/* Adjusted min-width */}
                 <thead>
                   <tr className="border-b bg-gray-50 dark:bg-gray-800">
-                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">משתמש</th>
-                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">פרטי מנוי</th>
-                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">פרטי טיפול</th>
-                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">כמות וניצול</th>
-                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">תאריכים</th>
-                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">תשלום</th>
-                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">סטטוס</th>
-                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">פעולות</th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
+                      {t("userSubscriptions.tableHeaders.user")}
+                    </th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
+                      {t("userSubscriptions.tableHeaders.subscriptionDetails")}
+                    </th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
+                      {t("userSubscriptions.tableHeaders.treatmentDetails")}
+                    </th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
+                      {t("userSubscriptions.tableHeaders.quantityUsage")}
+                    </th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
+                      {t("userSubscriptions.tableHeaders.dates")}
+                    </th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
+                      {t("userSubscriptions.tableHeaders.payment")}
+                    </th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
+                      {t("userSubscriptions.tableHeaders.status")}
+                    </th>
+                    <th className="py-3 px-4 text-right font-medium text-gray-500 dark:text-gray-400">
+                      {t("userSubscriptions.tableHeaders.actions")}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -379,11 +404,14 @@ const AdminUserSubscriptionsClient = ({
         </Card>
       )}
 
-      {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            עמוד {pagination.page} מתוך {pagination.totalPages} ({pagination.total} תוצאות)
+            {t("common.pagination.pageInfo", {
+              page: pagination.page,
+              totalPages: pagination.totalPages,
+              totalResults: pagination.total,
+            })}
           </div>
           <div className="flex gap-2 items-center">
             <Button
@@ -392,40 +420,29 @@ const AdminUserSubscriptionsClient = ({
               disabled={currentPage === 1 || isLoading}
               onClick={() => handlePageChange(currentPage - 1)}
             >
-              הקודם
+              {t("common.previous")}
             </Button>
 
-            <div className="flex gap-1">
-              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                const pageNum = i + 1
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={currentPage === pageNum ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handlePageChange(pageNum)}
-                    className="w-8 h-8 p-0"
-                  >
-                    {pageNum}
-                  </Button>
-                )
-              })}
-            </div>
+            {/* Simplified pagination numbers for brevity, can be expanded */}
+            <span className="text-sm p-2">
+              {currentPage} / {pagination.totalPages}
+            </span>
 
             <Select
               value={limit.toString()}
               onValueChange={(value) => {
                 setLimit(Number.parseInt(value))
-                setCurrentPage(1)
+                setCurrentPage(1) // Reset to page 1 when limit changes
+                fetchData(1, Number.parseInt(value), searchTerm, statusFilter)
               }}
             >
-              <SelectTrigger className="w-20">
+              <SelectTrigger className="w-24">
                 <SelectValue placeholder={limit.toString()} />
               </SelectTrigger>
               <SelectContent>
                 {[5, 10, 20, 50].map((l) => (
                   <SelectItem key={l} value={l.toString()}>
-                    {l}
+                    {t("common.pagination.showPerPage", { count: l })}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -437,7 +454,7 @@ const AdminUserSubscriptionsClient = ({
               disabled={currentPage === pagination.totalPages || isLoading}
               onClick={() => handlePageChange(currentPage + 1)}
             >
-              הבא
+              {t("common.next")}
             </Button>
           </div>
         </div>

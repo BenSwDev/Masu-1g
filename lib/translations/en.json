@@ -75,7 +75,17 @@
     "birthYear": "Birth Year",
     "unlimited": "Unlimited",
     "none": "None",
-    "price": "Price"
+    "price": "Price",
+    "id": "ID",
+    "viewDetails": "View Details",
+    "featureComingSoon": "This feature is coming soon!",
+    "cancelling": "Cancelling...",
+    "card": "Card",
+    "notAvailable": "N/A",
+    "pagination": {
+      "pageInfo": "Page {{page}} of {{totalPages}} ({{totalResults}} results)",
+      "showPerPage": "Show {{count}}"
+    }
   },
   "dashboard": {
     "sidebar": {
@@ -161,7 +171,8 @@
     "status": {
       "expired": "Expired",
       "depleted": "Depleted",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "all": "All Statuses"
     },
     "unknownSubscription": "Unknown Subscription",
     "purchasedOn": "Purchased On",
@@ -949,11 +960,18 @@
   "userSubscriptions": {
     "title": "User Subscriptions",
     "description": "Manage all user subscriptions in the system.",
+    "pageTitle": "User Subscriptions Management",
+    "pageDescription": "Oversee and manage all user subscription records within the platform.",
     "filterAndSearch": "Filter and Search",
     "searchPlaceholder": "Search by user, subscription, or treatment...",
     "allStatuses": "All Statuses",
     "filterByStatus": "Filter by Status",
+    "selectStatusPlaceholder": "Select a status to filter by",
+    "applyFilters": "Apply Filters",
     "noUserSubscriptions": "No user subscriptions found matching your criteria.",
+    "noSubscriptionsFoundTitle": "No Subscriptions Found",
+    "noSubscriptionsFoundFiltered": "No subscriptions match the current filters.",
+    "noSubscriptionsFound": "There are currently no user subscriptions in the system.",
     "user": "User",
     "subscription": "Subscription",
     "remaining": "Remaining",
@@ -973,7 +991,67 @@
     "dates": "Dates",
     "payment": "Payment",
     "purchaseDateShort": "Purchased",
-    "expiryDateShort": "Expires"
+    "expiryDateShort": "Expires",
+    "usage": "Usage",
+    "perSession": "per session",
+    "usageTooltip": "{{remaining}} out of {{total}} sessions remaining",
+    "purchased": "Purchased",
+    "expires": "Expires",
+    "pricePerSession": "Price Per Session",
+    "paymentAmount": "Payment Amount",
+    "paymentMethod": "Payment Method",
+    "paymentDate": "Payment Date",
+    "transactionId": "Transaction ID",
+    "cancellationDate": "Cancellation Date",
+    "remainingQuantity": "Remaining Quantity",
+    "usedQuantity": "Used Quantity",
+    "stats": {
+      "total": "Total Subscriptions",
+      "active": "Active Subscriptions",
+      "expired": "Expired Subscriptions",
+      "revenue": "Total Revenue"
+    },
+    "tableHeaders": {
+      "user": "User",
+      "subscriptionDetails": "Subscription",
+      "treatmentDetails": "Treatment",
+      "quantityUsage": "Usage",
+      "dates": "Dates",
+      "payment": "Payment",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "cancel": "Cancel Subscription",
+      "delete": "Delete Subscription",
+      "cancelSubscription": "Confirm Cancellation",
+      "deleteSubscription": "Confirm Deletion"
+    },
+    "cancelDialog": {
+      "title": "Cancel User Subscription",
+      "description": "Are you sure you want to cancel the subscription for {{userName}}? This will mark the subscription as cancelled and prevent further use."
+    },
+    "deleteDialog": {
+      "title": "Delete User Subscription",
+      "description": "Are you sure you want to permanently delete the subscription for {{userName}}? This action cannot be undone and all related data will be removed."
+    },
+    "notifications": {
+      "dataRefreshed": "Subscription data refreshed successfully.",
+      "dataLoadError": "Failed to load subscription data.",
+      "cancelSuccess": "Subscription cancelled successfully.",
+      "cancelError": "Failed to cancel subscription.",
+      "deleteSuccess": "Subscription deleted successfully.",
+      "deleteError": "Failed to delete subscription."
+    },
+    "detailsModal": {
+      "title": "User Subscription Details",
+      "description": "Detailed information for {{userName}}'s subscription.",
+      "userSectionTitle": "User Information",
+      "subscriptionSectionTitle": "Subscription Information",
+      "treatmentSectionTitle": "Treatment Information",
+      "usageSectionTitle": "Usage Details",
+      "paymentSectionTitle": "Payment Information"
+    }
   },
   "validFrom": "Valid From",
   "validUntil": "Valid Until",

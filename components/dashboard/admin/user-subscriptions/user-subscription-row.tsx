@@ -18,12 +18,14 @@ import { Progress } from "@/components/common/ui/progress"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
-import { Trash2, Ban, Loader2, Eye, Calendar, CreditCard, User, Package } from "lucide-react"
+import { Trash2, Ban, Loader2, Eye, Calendar, CreditCard, User, Package, Edit } from "lucide-react" // Added Edit
 import { cancelSubscription, deleteUserSubscription } from "@/actions/user-subscription-actions"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { User as NextAuthUser } from "next-auth"
+import { useTranslation } from "@/lib/translations/i18n"
+import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 
 interface PopulatedUserSubscription extends IUserSubscription {
   userId: Pick<NextAuthUser, "name" | "email"> & { _id: string }
@@ -39,9 +41,10 @@ interface UserSubscriptionRowProps {
 }
 
 export default function UserSubscriptionRow({ userSubscription, onSubscriptionUpdate }: UserSubscriptionRowProps) {
+  const { t } = useTranslation()
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+  const [showDetailsModal, setShowDetailsModal] = useState(false) // Changed from showDetailsDialog
   const [isCancelling, setIsCancelling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -50,13 +53,13 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
     try {
       const result = await cancelSubscription(userSubscription._id.toString())
       if (result.success) {
-        toast.success("המנוי בוטל בהצלחה")
+        toast.success(t("userSubscriptions.notifications.cancelSuccess"))
         onSubscriptionUpdate()
       } else {
-        toast.error(result.error || "שגיאה בביטול המנוי")
+        toast.error(result.error || t("userSubscriptions.notifications.cancelError"))
       }
     } catch (error) {
-      toast.error("שגיאה בביטול המנוי")
+      toast.error(t("userSubscriptions.notifications.cancelError"))
     } finally {
       setIsCancelling(false)
       setShowCancelDialog(false)
@@ -68,28 +71,41 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
     try {
       const result = await deleteUserSubscription(userSubscription._id.toString())
       if (result.success) {
-        toast.success("המנוי נמחק בהצלחה")
+        toast.success(t("userSubscriptions.notifications.deleteSuccess"))
         onSubscriptionUpdate()
       } else {
-        toast.error(result.error || "שגיאה במחיקת המנוי")
+        toast.error(result.error || t("userSubscriptions.notifications.deleteError"))
       }
     } catch (error) {
-      toast.error("שגיאה במחיקת המנוי")
+      toast.error(t("userSubscriptions.notifications.deleteError"))
     } finally {
       setIsDeleting(false)
       setShowDeleteDialog(false)
     }
   }
 
+  const handleEdit = () => {
+    toast.info(t("common.featureComingSoon"))
+  }
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      active: { label: "פעיל", className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" },
-      expired: { label: "פג תוקף", className: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400" },
+      active: {
+        label: t("subscriptions.status.active"),
+        className: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+      },
+      expired: {
+        label: t("subscriptions.status.expired"),
+        className: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
+      },
       depleted: {
-        label: "מוצה",
+        label: t("subscriptions.status.depleted"),
         className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
       },
-      cancelled: { label: "מבוטל", className: "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400" },
+      cancelled: {
+        label: t("subscriptions.status.cancelled"),
+        className: "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
+      },
     }
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.cancelled
@@ -101,12 +117,8 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
     return format(new Date(date), "dd/MM/yyyy", { locale: he })
   }
 
-  const formatDateTime = (date: Date | string) => {
-    return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: he })
-  }
-
   const maskCardNumber = (cardNumber?: string) => {
-    if (!cardNumber) return "לא ידוע"
+    if (!cardNumber) return t("common.unknown")
     return `**** ${cardNumber.slice(-4)}`
   }
 
@@ -123,7 +135,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
             </div>
             <div className="flex flex-col">
               <span className="font-medium text-gray-900 dark:text-gray-100">
-                {userSubscription.userId?.name || "משתמש לא ידוע"}
+                {userSubscription.userId?.name || t("common.unknownUser")}
               </span>
               <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.userId?.email}</span>
             </div>
@@ -151,12 +163,12 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
             <span className="font-medium text-gray-900 dark:text-gray-100">{userSubscription.treatmentId?.name}</span>
             {userSubscription.selectedDurationDetails && (
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {userSubscription.selectedDurationDetails.minutes} דקות
+                {userSubscription.selectedDurationDetails.minutes} {t("common.minutes")}
               </span>
             )}
             {userSubscription.pricePerSession && (
               <span className="text-xs text-green-600 dark:text-green-400">
-                ₪{userSubscription.pricePerSession} למפגש
+                ₪{userSubscription.pricePerSession.toFixed(2)} {t("userSubscriptions.perSession")}
               </span>
             )}
           </div>
@@ -164,8 +176,8 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
 
         {/* Quantity and Usage */}
         <td className="py-4 px-4">
-          <div className="flex flex-col items-center space-y-2">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center space-y-1">
+            <div className="flex items-center gap-1 text-sm">
               <span className="font-medium text-gray-900 dark:text-gray-100">{userSubscription.remainingQuantity}</span>
               <span className="text-gray-500 dark:text-gray-400">/</span>
               <span className="text-gray-700 dark:text-gray-300">{userSubscription.totalQuantity}</span>
@@ -173,16 +185,21 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="w-full">
-                  <Progress value={usagePercentage} className="h-2 w-20" />
+                  <Progress value={usagePercentage} className="h-1.5 w-20" />
                 </div>
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  נותרו {userSubscription.remainingQuantity} מתוך {userSubscription.totalQuantity} טיפולים
+                  {t("userSubscriptions.usageTooltip", {
+                    remaining: userSubscription.remainingQuantity,
+                    total: userSubscription.totalQuantity,
+                  })}
                 </p>
               </TooltipContent>
             </Tooltip>
-            <span className="text-xs text-gray-500 dark:text-gray-400">{usagePercentage.toFixed(0)}% נותר</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {usagePercentage.toFixed(0)}% {t("userSubscriptions.remaining")}
+            </span>
           </div>
         </td>
 
@@ -192,12 +209,14 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3 text-gray-400" />
               <span className="text-gray-700 dark:text-gray-300">
-                נרכש: {formatDate(userSubscription.purchaseDate)}
+                {t("userSubscriptions.purchased")}: {formatDate(userSubscription.purchaseDate)}
               </span>
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3 text-gray-400" />
-              <span className="text-gray-500 dark:text-gray-400">פג: {formatDate(userSubscription.expiryDate)}</span>
+              <span className="text-gray-500 dark:text-gray-400">
+                {t("userSubscriptions.expires")}: {formatDate(userSubscription.expiryDate)}
+              </span>
             </div>
           </div>
         </td>
@@ -211,7 +230,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                 ₪{userSubscription.paymentAmount?.toFixed(2) || "0.00"}
               </span>
               <span className="text-gray-500 dark:text-gray-400">
-                {userSubscription.paymentMethodId?.cardName || "כרטיס"}{" "}
+                {userSubscription.paymentMethodId?.cardName || t("common.card")}{" "}
                 {maskCardNumber(userSubscription.paymentMethodId?.cardNumber)}
               </span>
             </div>
@@ -229,14 +248,29 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setShowDetailsDialog(true)}
+                  onClick={() => setShowDetailsModal(true)}
                   className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-500"
                 >
                   <Eye className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>צפה בפרטים</p>
+                <p>{t("common.viewDetails")}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleEdit}
+                  className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-500"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t("common.edit")}</p>
               </TooltipContent>
             </Tooltip>
 
@@ -253,7 +287,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>בטל מנוי</p>
+                  <p>{t("userSubscriptions.actions.cancel")}</p>
                 </TooltipContent>
               </Tooltip>
             )}
@@ -270,25 +304,31 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>מחק מנוי</p>
+                <p>{t("userSubscriptions.actions.delete")}</p>
               </TooltipContent>
             </Tooltip>
           </div>
         </td>
       </tr>
 
-      {/* Cancel Dialog */}
+      <UserSubscriptionDetailsModal
+        isOpen={showDetailsModal}
+        onOpenChange={setShowDetailsModal}
+        userSubscription={userSubscription}
+      />
+
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>ביטול מנוי</AlertDialogTitle>
+            <AlertDialogTitle>{t("userSubscriptions.cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              האם אתה בטוח שברצונך לבטל את המנוי של {userSubscription.userId?.name || "המשתמש"}? פעולה זו תמנע מהמשתמש
-              להשתמש בטיפולים הנותרים.
+              {t("userSubscriptions.cancelDialog.description", {
+                userName: userSubscription.userId?.name || t("common.thisUser"),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isCancelling}>ביטול</AlertDialogCancel>
+            <AlertDialogCancel disabled={isCancelling}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancel}
               disabled={isCancelling}
@@ -296,37 +336,37 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
             >
               {isCancelling ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  מבטל...
+                  <Loader2 className="rtl:ml-2 ltr:mr-2 h-4 w-4 animate-spin" />
+                  {t("common.cancelling")}
                 </>
               ) : (
-                "בטל מנוי"
+                t("userSubscriptions.actions.cancelSubscription")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>מחיקת מנוי</AlertDialogTitle>
+            <AlertDialogTitle>{t("userSubscriptions.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              האם אתה בטוח שברצונך למחוק את המנוי של {userSubscription.userId?.name || "המשתמש"}? פעולה זו בלתי הפיכה
-              ותמחק את כל הנתונים הקשורים למנוי.
+              {t("userSubscriptions.deleteDialog.description", {
+                userName: userSubscription.userId?.name || t("common.thisUser"),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>ביטול</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700">
               {isDeleting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  מוחק...
+                  <Loader2 className="rtl:ml-2 ltr:mr-2 h-4 w-4 animate-spin" />
+                  {t("common.deleting")}
                 </>
               ) : (
-                "מחק מנוי"
+                t("userSubscriptions.actions.deleteSubscription")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

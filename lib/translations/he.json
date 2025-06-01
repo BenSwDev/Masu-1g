@@ -79,7 +79,17 @@
     "birthYear": "שנת לידה",
     "unlimited": "ללא הגבלה",
     "none": "ללא",
-    "price": "מחיר"
+    "price": "מחיר",
+    "id": "מזהה",
+    "viewDetails": "צפה בפרטים",
+    "featureComingSoon": "תכונה זו תהיה זמינה בקרוב!",
+    "cancelling": "מבטל...",
+    "card": "כרטיס",
+    "notAvailable": "לא זמין",
+    "pagination": {
+      "pageInfo": "עמוד {{page}} מתוך {{totalPages}} ({{totalResults}} תוצאות)",
+      "showPerPage": "הצג {{count}}"
+    }
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -515,7 +525,8 @@
     "status": {
       "expired": "פג תוקף",
       "depleted": "נוצל במלואו",
-      "cancelled": "בוטל"
+      "cancelled": "בוטל",
+      "all": "כל הסטטוסים"
     },
     "unknownSubscription": "מנוי לא ידוע",
     "purchasedOn": "נרכש ב",
@@ -555,11 +566,18 @@
   "userSubscriptions": {
     "title": "מנויי משתמשים",
     "description": "נהל את כל מנויי המשתמשים במערכת.",
+    "pageTitle": "ניהול מנויי משתמשים",
+    "pageDescription": "סקירה וניהול של כל רשומות מנויי המשתמשים בפלטפורמה.",
     "filterAndSearch": "סינון וחיפוש",
     "searchPlaceholder": "חפש לפי משתמש, מנוי או טיפול...",
     "allStatuses": "כל הסטטוסים",
     "filterByStatus": "סנן לפי סטטוס",
+    "selectStatusPlaceholder": "בחר סטטוס לסינון",
+    "applyFilters": "החל מסננים",
     "noUserSubscriptions": "לא נמצאו מנויי משתמשים התואמים את החיפוש.",
+    "noSubscriptionsFoundTitle": "לא נמצאו מנויים",
+    "noSubscriptionsFoundFiltered": "לא נמצאו מנויים התואמים לסינונים הנוכחיים.",
+    "noSubscriptionsFound": "אין כרגע מנויי משתמשים במערכת.",
     "user": "משתמש",
     "subscription": "מנוי",
     "remaining": "נותרו",
@@ -579,7 +597,67 @@
     "dates": "תאריכים",
     "payment": "תשלום",
     "purchaseDateShort": "נרכש",
-    "expiryDateShort": "פג תוקף"
+    "expiryDateShort": "פג תוקף",
+    "usage": "ניצול",
+    "perSession": "למפגש",
+    "usageTooltip": "נותרו {{remaining}} מתוך {{total}} מפגשים",
+    "purchased": "נרכש",
+    "expires": "פג תוקף",
+    "pricePerSession": "מחיר למפגש",
+    "paymentAmount": "סכום תשלום",
+    "paymentMethod": "אמצעי תשלום",
+    "paymentDate": "תאריך תשלום",
+    "transactionId": "מזהה עסקה",
+    "cancellationDate": "תאריך ביטול",
+    "remainingQuantity": "כמות נותרת",
+    "usedQuantity": "כמות מנוצלת",
+    "stats": {
+      "total": "סה\"כ מנויים",
+      "active": "מנויים פעילים",
+      "expired": "מנויים שפגו",
+      "revenue": "סה\"כ הכנסות"
+    },
+    "tableHeaders": {
+      "user": "משתמש",
+      "subscriptionDetails": "מנוי",
+      "treatmentDetails": "טיפול",
+      "quantityUsage": "ניצול",
+      "dates": "תאריכים",
+      "payment": "תשלום",
+      "status": "סטטוס",
+      "actions": "פעולות"
+    },
+    "actions": {
+      "cancel": "ביטול מנוי",
+      "delete": "מחיקת מנוי",
+      "cancelSubscription": "אשר ביטול",
+      "deleteSubscription": "אשר מחיקה"
+    },
+    "cancelDialog": {
+      "title": "ביטול מנוי משתמש",
+      "description": "האם אתה בטוח שברצונך לבטל את המנוי עבור {{userName}}? פעולה זו תסמן את המנוי כמבוטל ותמנע שימוש עתידי."
+    },
+    "deleteDialog": {
+      "title": "מחיקת מנוי משתמש",
+      "description": "האם אתה בטוח שברצונך למחוק לצמיתות את המנוי עבור {{userName}}? לא ניתן לבטל פעולה זו וכל הנתונים הקשורים יימחקו."
+    },
+    "notifications": {
+      "dataRefreshed": "נתוני המנויים רועננו בהצלחה.",
+      "dataLoadError": "שגיאה בטעינת נתוני המנויים.",
+      "cancelSuccess": "המנוי בוטל בהצלחה.",
+      "cancelError": "שגיאה בביטול המנוי.",
+      "deleteSuccess": "המנוי נמחק בהצלחה.",
+      "deleteError": "שגיאה במחיקת המנוי."
+    },
+    "detailsModal": {
+      "title": "פרטי מנוי משתמש",
+      "description": "מידע מפורט עבור המנוי של {{userName}}.",
+      "userSectionTitle": "פרטי משתמש",
+      "subscriptionSectionTitle": "פרטי מנוי",
+      "treatmentSectionTitle": "פרטי טיפול",
+      "usageSectionTitle": "פרטי ניצול",
+      "paymentSectionTitle": "פרטי תשלום"
+    }
   },
   "giftVouchers": {
     "searchPlaceholder": "חפש שוברי מתנה לפי קוד...",

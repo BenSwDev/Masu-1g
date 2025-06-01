@@ -147,7 +147,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
         t,
         dir,
       }),
-    [handleEdit, handleDeleteRequest, t, dir],
+    [t, dir],
   )
 
   return (

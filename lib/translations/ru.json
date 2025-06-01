@@ -71,7 +71,9 @@
     "optional": "Необязательно",
     "loadingData": "Загрузка данных...",
     "unlimited": "Безлимитно",
-    "none": "Нет"
+    "none": "Нет",
+    "columns": "Столбцы",
+    "noResults": "Нет результатов."
   },
   "dashboard": {
     "sidebar": {
@@ -764,8 +766,8 @@
       "noPartner": "Без назначенного партнера"
     },
     "pagination": {
-      "previous": "Предыдущий",
-      "next": "Следующий",
+      "previous": "Назад",
+      "next": "Вперед",
       "pageInfo": "Страница {{currentPage}} из {{totalPages}}",
       "rowsSelected": "Выбрано {{count}} из {{total}} строк"
     }

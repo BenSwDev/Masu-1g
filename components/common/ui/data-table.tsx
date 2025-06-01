@@ -23,6 +23,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
+import { useTranslation } from "@/lib/translations/i18n" // Adjust path if needed
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -35,6 +36,8 @@ export function DataTable<TData, TValue>({ columns, data, searchKey }: DataTable
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
+
+  const { t, dir } = useTranslation()
 
   const table = useReactTable({
     data,
@@ -68,8 +71,8 @@ export function DataTable<TData, TValue>({ columns, data, searchKey }: DataTable
         )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns
+            <Button variant="outline" className={dir === "rtl" ? "mr-auto" : "ml-auto"}>
+              {t("common.columns")}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -91,7 +94,7 @@ export function DataTable<TData, TValue>({ columns, data, searchKey }: DataTable
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -118,7 +121,7 @@ export function DataTable<TData, TValue>({ columns, data, searchKey }: DataTable
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  {t("common.noResults")}
                 </TableCell>
               </TableRow>
             )}
@@ -127,8 +130,10 @@ export function DataTable<TData, TValue>({ columns, data, searchKey }: DataTable
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-          selected.
+          {t("adminCoupons.pagination.rowsSelected", {
+            count: table.getFilteredSelectedRowModel().rows.length,
+            total: table.getFilteredRowModel().rows.length,
+          })}
         </div>
         <div className="space-x-2">
           <Button
@@ -137,10 +142,10 @@ export function DataTable<TData, TValue>({ columns, data, searchKey }: DataTable
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Previous
+            {t("adminCoupons.pagination.previous")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-            Next
+            {t("adminCoupons.pagination.next")}
           </Button>
         </div>
       </div>

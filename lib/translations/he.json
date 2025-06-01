@@ -78,7 +78,9 @@
     "today": "היום",
     "birthYear": "שנת לידה",
     "unlimited": "ללא הגבלה",
-    "none": "ללא"
+    "none": "ללא",
+    "columns": "עמודות",
+    "noResults": "אין תוצאות."
   },
   "login": {
     "welcome": "ברוכים השבים",

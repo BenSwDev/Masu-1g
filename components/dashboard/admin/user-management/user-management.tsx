@@ -120,6 +120,40 @@ const formatDate = (dateString?: string | null, locale = "en-GB"): string => {
   }
 }
 
+// Helper function to get avatar gradient based on name
+const getAvatarGradient = (name?: string | null): string => {
+  if (!name) return "from-gray-400 to-gray-600"
+
+  const gradients = [
+    "from-blue-400 to-blue-600",
+    "from-green-400 to-green-600",
+    "from-purple-400 to-purple-600",
+    "from-pink-400 to-pink-600",
+    "from-indigo-400 to-indigo-600",
+    "from-orange-400 to-orange-600",
+    "from-teal-400 to-teal-600",
+    "from-red-400 to-red-600",
+  ]
+
+  const index = name.charCodeAt(0) % gradients.length
+  return gradients[index]
+}
+
+// Helper function to get role badge styling
+const getRoleBadgeStyle = (role: string): string => {
+  const styles = {
+    admin:
+      "bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    professional:
+      "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    member:
+      "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    partner:
+      "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800",
+  }
+  return styles[role] || "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+}
+
 // In the UserManagement function parameters, uncomment initialRoleFilter
 export function UserManagement({
   initialUsers,
@@ -202,7 +236,7 @@ export function UserManagement({
     return (
       <div className="flex flex-wrap gap-1">
         {roles.map((role) => (
-          <Badge key={role} variant="outline">
+          <Badge key={role} className={`${getRoleBadgeStyle(role)} transition-all duration-200 font-medium border`}>
             {t(`roles.${role.toLowerCase()}`, role)}
           </Badge>
         ))}
@@ -442,31 +476,50 @@ export function UserManagement({
           </Button>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("roles.memberPlural", "Members")}</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+          <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-blue-950/20" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                {t("roles.memberPlural", "Members")}
+              </CardTitle>
+              <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors dark:bg-blue-900 dark:group-hover:bg-blue-800">
+                <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{roleCounts.members}</div>
+            <CardContent className="relative z-10">
+              <div className="text-2xl font-bold group-hover:scale-105 transition-transform">{roleCounts.members}</div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("roles.professionalPlural", "Professionals")}</CardTitle>
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
+
+          <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-green-950/20" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                {t("roles.professionalPlural", "Professionals")}
+              </CardTitle>
+              <div className="p-2 bg-green-100 rounded-full group-hover:bg-green-200 transition-colors dark:bg-green-900 dark:group-hover:bg-green-800">
+                <Briefcase className="h-4 w-4 text-green-600 dark:text-green-400" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{roleCounts.professionals}</div>
+            <CardContent className="relative z-10">
+              <div className="text-2xl font-bold group-hover:scale-105 transition-transform">
+                {roleCounts.professionals}
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("roles.partnerPlural", "Partners")}</CardTitle>
-              <Handshake className="h-4 w-4 text-muted-foreground" />
+
+          <Card className="relative overflow-hidden group hover:shadow-lg transition-all duration-300 border-l-4 border-l-purple-500">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-purple-950/20" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
+              <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
+                {t("roles.partnerPlural", "Partners")}
+              </CardTitle>
+              <div className="p-2 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors dark:bg-purple-900 dark:group-hover:bg-purple-800">
+                <Handshake className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{roleCounts.partners}</div>
+            <CardContent className="relative z-10">
+              <div className="text-2xl font-bold group-hover:scale-105 transition-transform">{roleCounts.partners}</div>
             </CardContent>
           </Card>
         </CardContent>
@@ -478,18 +531,18 @@ export function UserManagement({
           <CardTitle>{t("admin.users.userListTitle")}</CardTitle>
           {/* Replace the search input in CardHeader with: */}
           <div className="mt-4 flex flex-col sm:flex-row gap-3 items-start">
-            <div className="relative w-full sm:max-w-sm">
+            <div className="relative w-full sm:max-w-sm group">
               <Input
                 placeholder={t("admin.users.searchPlaceholder")}
                 defaultValue={searchTerm}
                 onChange={handleSearchChange}
-                className="pr-10"
+                className="pr-10 transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               />
               {searchTerm && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-full px-3"
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-destructive/10 hover:text-destructive transition-colors"
                   onClick={() => {
                     setSearchTerm("")
                     const input = document.querySelector('input[type="search"]') as HTMLInputElement
@@ -503,11 +556,17 @@ export function UserManagement({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 hover:bg-primary/5 transition-all duration-200"
+                >
                   <Filter className="h-4 w-4" />
                   {t("admin.users.filter")}
                   {roleFilter.length > 0 && (
-                    <Badge variant="secondary" className="ml-1 rounded-full px-1 py-0 text-xs">
+                    <Badge
+                      variant="secondary"
+                      className="ml-1 rounded-full px-2 py-0 text-xs bg-primary/20 text-primary"
+                    >
                       {roleFilter.length}
                     </Badge>
                   )}
@@ -521,9 +580,10 @@ export function UserManagement({
                     key={role}
                     checked={roleFilter.includes(role)}
                     onCheckedChange={() => handleRoleFilterChange(role)}
+                    className="transition-colors duration-200"
                   >
                     {t(`roles.${role.toLowerCase()}`, role)}
-                    {roleFilter.includes(role) && <Check className="ml-auto h-4 w-4" />}
+                    {roleFilter.includes(role) && <Check className="ml-auto h-4 w-4 text-primary" />}
                   </DropdownMenuCheckboxItem>
                 ))}
                 <DropdownMenuSeparator />
@@ -531,7 +591,7 @@ export function UserManagement({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full"
+                    className="w-full hover:bg-muted transition-colors"
                     onClick={clearFilters}
                     disabled={searchTerm === "" && roleFilter.length === 0}
                   >
@@ -585,12 +645,17 @@ export function UserManagement({
           <div className="block md:hidden space-y-4">
             {users.length > 0 ? (
               users.map((user) => (
-                <Card key={user.id} className="p-4">
+                <Card
+                  key={user.id}
+                  className="p-4 hover:shadow-md transition-all duration-200 border-l-4 border-l-primary/30 hover:border-l-primary"
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       {/* For mobile view, replace the Avatar component with: */}
-                      <Avatar className="h-12 w-12 bg-primary/10">
-                        <AvatarFallback className="text-primary font-medium">
+                      <Avatar
+                        className={`h-12 w-12 bg-gradient-to-br ${getAvatarGradient(user.name)} shadow-lg ring-2 ring-white dark:ring-gray-800`}
+                      >
+                        <AvatarFallback className="text-white font-semibold bg-transparent">
                           {user.name ? user.name.substring(0, 2).toUpperCase() : "U"}
                         </AvatarFallback>
                       </Avatar>
@@ -693,11 +758,16 @@ export function UserManagement({
               <TableBody>
                 {users.length > 0 ? (
                   users.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow
+                      key={user.id}
+                      className="group hover:bg-muted/50 transition-all duration-200 border-b border-border/50"
+                    >
                       {/* For desktop view, replace the Avatar component with: */}
                       <TableCell>
-                        <Avatar className="h-10 w-10 bg-primary/10">
-                          <AvatarFallback className="text-primary font-medium">
+                        <Avatar
+                          className={`h-10 w-10 bg-gradient-to-br ${getAvatarGradient(user.name)} shadow-md ring-1 ring-white dark:ring-gray-800`}
+                        >
+                          <AvatarFallback className="text-white font-medium bg-transparent">
                             {user.name ? user.name.substring(0, 2).toUpperCase() : "U"}
                           </AvatarFallback>
                         </Avatar>
@@ -716,7 +786,12 @@ export function UserManagement({
                       <TableCell className="text-end">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={isLoading}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              disabled={isLoading}
+                              className="opacity-60 hover:opacity-100 hover:bg-primary/10 transition-all duration-200"
+                            >
                               <MoreHorizontal className="h-5 w-5" />
                               <span className="sr-only">{t("admin.users.userActions")}</span>
                             </Button>

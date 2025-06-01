@@ -183,11 +183,19 @@ export function UserManagement({
     setCurrentPage(1) // Reset to first page on sort
   }
 
-  const getPrimaryRoleDisplay = (roles: string[]): string => {
-    // Simple logic: display the first role, or 'N/A' if none.
-    // This can be enhanced if there's an `activeRole` field or more complex logic.
-    if (roles.length === 0) return t("common.notApplicable")
-    return t(`roles.${roles[0].toLowerCase()}`, roles[0]) // Fallback to role name if translation missing
+  // Display all roles for a user
+  const getRolesDisplay = (roles: string[]): React.ReactNode => {
+    if (roles.length === 0) return <Badge variant="outline">{t("common.notApplicable")}</Badge>
+
+    return (
+      <div className="flex flex-wrap gap-1">
+        {roles.map((role) => (
+          <Badge key={role} variant="outline">
+            {t(`roles.${role.toLowerCase()}`, role)}
+          </Badge>
+        ))}
+      </div>
+    )
   }
 
   const getGenderDisplay = (gender?: string | null): string => {
@@ -462,11 +470,7 @@ export function UserManagement({
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{user.name || t("common.notSet")}</p>
                         <p className="text-xs text-muted-foreground truncate">{user.email || t("common.notSet")}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {getPrimaryRoleDisplay(user.roles)}
-                          </Badge>
-                        </div>
+                        <div className="flex flex-wrap gap-1 mt-1">{getRolesDisplay(user.roles)}</div>
                       </div>
                     </div>
                     <DropdownMenu>
@@ -512,7 +516,7 @@ export function UserManagement({
                     <div className="col-span-2">
                       <span className="font-medium">{t("admin.users.dobAndAge")}:</span>{" "}
                       {user.dateOfBirth
-                        ? `${formatDate(user.dateOfBirth, language)} (${t("admin.users.agePrefix")}${calculateAge(user.dateOfBirth)}${t("admin.users.ageSuffix")})`
+                        ? `${formatDate(user.dateOfBirth, language)} (${calculateAge(user.dateOfBirth)})`
                         : t("common.notSet")}
                     </div>
                     <div className="col-span-2">
@@ -572,9 +576,7 @@ export function UserManagement({
                       <TableCell className="font-medium">{user.name || t("common.notSet")}</TableCell>
                       <TableCell>{user.phone || t("common.notSet")}</TableCell>
                       <TableCell>{user.email || t("common.notSet")}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{getPrimaryRoleDisplay(user.roles)}</Badge>
-                      </TableCell>
+                      <TableCell>{getRolesDisplay(user.roles)}</TableCell>
                       <TableCell>
                         {user.dateOfBirth
                           ? `${formatDate(user.dateOfBirth, language)} (${calculateAge(user.dateOfBirth)})`

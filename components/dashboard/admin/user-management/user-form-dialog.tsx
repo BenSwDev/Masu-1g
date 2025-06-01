@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils/utils" // Assuming cn is in utils
 import { toast } from "@/components/common/ui/use-toast"
 import { createUserByAdmin, updateUserByAdmin } from "@/actions/admin-actions"
 import { useTranslation } from "@/lib/translations/i18n"
+import { Checkbox } from "@/components/common/ui/checkbox"
 import type { UserData } from "./user-management" // Import UserData type
 
 // Define Zod schema for form validation
@@ -42,7 +43,7 @@ const userFormSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
   phone: z.string().regex(phoneRegex, { message: "Invalid phone number." }),
   password: z.string().optional(), // Optional for schema, required conditionally in form
-  role: z.string().min(1, { message: "Role is required." }),
+  roles: z.array(z.string()).min(1, { message: "At least one role is required." }),
   gender: z.string().min(1, { message: "Gender is required." }),
   dateOfBirth: z.date().optional().nullable(),
   image: z.string().url({ message: "Invalid URL." }).optional().or(z.literal("")),
@@ -76,7 +77,7 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       email: "",
       phone: "",
       password: "",
-      role: "member", // Default role
+      roles: ["member"], // Default role
       gender: "",
       dateOfBirth: null,
       image: "",
@@ -90,7 +91,7 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
         email: initialData.email || "",
         phone: initialData.phone || "",
         password: "", // Password is not edited here
-        role: initialData.roles?.[0] || "member", // Assuming first role is primary
+        roles: initialData.roles || ["member"], // Use all roles
         gender: initialData.gender || "",
         dateOfBirth: initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : null,
         image: initialData.image || "",
@@ -102,7 +103,7 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
         email: "",
         phone: "",
         password: "",
-        role: "member",
+        roles: ["member"],
         gender: "",
         dateOfBirth: null,
         image: "",
@@ -116,7 +117,12 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
     formData.append("name", values.name)
     formData.append("email", values.email)
     formData.append("phone", values.phone)
-    formData.append("role", values.role)
+
+    // Append each role separately
+    values.roles.forEach((role) => {
+      formData.append("roles[]", role)
+    })
+
     formData.append("gender", values.gender)
     if (values.dateOfBirth) {
       formData.append("dateOfBirth", values.dateOfBirth.toISOString())
@@ -230,56 +236,90 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                   )}
                 />
               )}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("admin.users.form.role")}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("admin.users.form.rolePlaceholder")} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableRoles.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {t(`roles.${role.toLowerCase()}`, role)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("admin.users.form.gender")}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("admin.users.form.genderPlaceholder")} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableGenders.map((gender) => (
-                            <SelectItem key={gender} value={gender}>
-                              {t(`gender.${gender.toLowerCase()}`, gender)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+
+              {/* Roles checkboxes */}
+              <FormField
+                control={form.control}
+                name="roles"
+                render={() => (
+                  <FormItem>
+                    <div className="mb-4">
+                      <FormLabel className="text-base">{t("admin.users.form.roles")}</FormLabel>
+                      <FormDescription>{t("admin.users.form.rolesDescription")}</FormDescription>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {availableRoles.map((role) => (
+                        <FormField
+                          key={role}
+                          control={form.control}
+                          name="roles"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={role}
+                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(role)}
+                                    onCheckedChange={(checked) => {
+                                      const updatedRoles = checked
+                                        ? [...field.value, role]
+                                        : field.value?.filter((r) => r !== role)
+
+                                      // Ensure at least one role is selected
+                                      if (updatedRoles.length === 0) {
+                                        toast({
+                                          title: t("common.error"),
+                                          description: t("admin.users.form.atLeastOneRole"),
+                                          variant: "destructive",
+                                        })
+                                        return
+                                      }
+
+                                      field.onChange(updatedRoles)
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal cursor-pointer">
+                                  {t(`roles.${role.toLowerCase()}`, role)}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="gender"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.users.form.gender")}</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("admin.users.form.genderPlaceholder")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableGenders.map((gender) => (
+                          <SelectItem key={gender} value={gender}>
+                            {t(`gender.${gender.toLowerCase()}`, gender)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name="dateOfBirth"

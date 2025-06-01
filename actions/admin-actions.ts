@@ -127,12 +127,12 @@ export async function createUserByAdmin(formData: FormData) {
     const email = formData.get("email") as string
     const phone = formData.get("phone") as string
     const password = formData.get("password") as string
-    const role = formData.get("role") as string
+    const roles = formData.getAll("roles[]") as string[]
     const dateOfBirthStr = formData.get("dateOfBirth") as string | null
     const gender = formData.get("gender") as string
     const image = formData.get("image") as string | null
 
-    if (!name || !email || !phone || !password || !role || !gender) {
+    if (!name || !email || !phone || !password || !roles.length || !gender) {
       return { success: false, message: "missingFields" }
     }
     if (password.length < 6) {
@@ -159,8 +159,8 @@ export async function createUserByAdmin(formData: FormData) {
       email: email.toLowerCase(),
       phone,
       password: hashedPassword,
-      roles: [role],
-      activeRole: role,
+      roles: roles,
+      activeRole: roles[0], // Set first role as active role
       dateOfBirth,
       gender,
       image: image || undefined,
@@ -193,12 +193,12 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
     const name = formData.get("name") as string
     const email = formData.get("email") as string
     const phone = formData.get("phone") as string
-    const role = formData.get("role") as string
+    const roles = formData.getAll("roles[]") as string[]
     const dateOfBirthStr = formData.get("dateOfBirth") as string | null
     const gender = formData.get("gender") as string
     const image = formData.get("image") as string // Can be empty string
 
-    if (!name || !email || !phone || !role || !gender) {
+    if (!name || !email || !phone || !roles.length || !gender) {
       return { success: false, message: "missingFields" }
     }
 
@@ -219,8 +219,13 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
     }
 
     userToUpdate.name = name
-    userToUpdate.roles = [role]
-    userToUpdate.activeRole = role
+    userToUpdate.roles = roles
+
+    // Update activeRole if it's not in the roles array anymore
+    if (!roles.includes(userToUpdate.activeRole)) {
+      userToUpdate.activeRole = roles[0]
+    }
+
     userToUpdate.gender = gender as "male" | "female" | "other"
     userToUpdate.image = image || undefined
 

@@ -1,429 +1,319 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import { Button } from "@/components/common/ui/button"
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/common/ui/form"
-import { Input } from "@/components/common/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Checkbox } from "@/components/common/ui/checkbox"
-import { Calendar } from "@/components/common/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
-import { PhoneInput } from "@/components/common/phone-input"
-import { CalendarIcon, Eye, EyeOff } from "lucide-react"
-import { cn } from "@/lib/utils/utils"
-import { format } from "date-fns"
-import { createUser, updateUser } from "@/actions/user-actions"
-import {
-  CreateUserSchema,
-  type CreateUserSchemaType,
-  UpdateUserFormSchema,
-  type UpdateUserFormSchemaType,
-} from "@/lib/validation/user-schemas"
-import type { IUser, UserRole } from "@/lib/db/models/user"
 import { useState, useEffect } from "react"
-import { useTranslation } from "@/lib/translations/i18n" // Changed from useI18n
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Button } from "@/components/common/ui/button"
+import { Input } from "@/components/common/ui/input"
+import { Label } from "@/components/common/ui/label"
+import { Checkbox } from "@/components/common/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Separator } from "@/components/common/ui/separator"
+import { useTranslation } from "@/lib/translations/i18n"
+import { UserRole } from "@/lib/db/models/user"
+import { createUser, updateUser, type UserFormData } from "@/actions/user-management-actions"
 import { toast } from "sonner"
+import { Eye, EyeOff } from "lucide-react"
+
+const userFormSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(10, "Phone must be at least 10 characters"),
+  password: z.string().optional(),
+  gender: z.enum(["male", "female", "other"]),
+  dateOfBirth: z.string().optional(),
+  roles: z.array(z.string()).min(1, "At least one role is required"),
+  activeRole: z.string().optional(),
+})
 
 interface UserFormProps {
-  initialData: IUser | null
+  user?: any
   onSuccess: () => void
   onCancel: () => void
 }
 
-const availableRoles = ["admin", "member", "professional", "partner"] as const
-
-export function UserForm({ initialData, onSuccess, onCancel }: UserFormProps) {
-  const { t } = useTranslation() // Changed from useI18n
+export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const isEditing = !!user
 
-  const formSchema = initialData ? UpdateUserFormSchema : CreateUserSchema
-
-  const form = useForm<CreateUserSchemaType | UpdateUserFormSchemaType>({
-    resolver: zodResolver(formSchema),
-    defaultValues: initialData
-      ? {
-          name: initialData.name || "",
-          email: initialData.email || "",
-          phone: initialData.phone || "",
-          gender: initialData.gender || undefined,
-          dateOfBirth: initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined,
-          roles: initialData.roles || [],
-          currentPassword: "",
-          newPassword: "",
-          confirmNewPassword: "",
-        }
-      : {
-          name: "",
-          email: "",
-          phone: "",
-          password: "",
-          confirmPassword: "",
-          gender: undefined,
-          dateOfBirth: undefined,
-          roles: [],
-        },
+  const form = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      password: "",
+      gender: user?.gender || "male",
+      dateOfBirth: user?.dateOfBirth || "",
+      roles: user?.roles || [UserRole.MEMBER],
+      activeRole: user?.activeRole || UserRole.MEMBER,
+    },
   })
 
-  useEffect(() => {
-    if (initialData) {
-      form.reset({
-        name: initialData.name || "",
-        email: initialData.email || "",
-        phone: initialData.phone || "",
-        gender: initialData.gender || undefined,
-        dateOfBirth: initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : undefined,
-        roles: initialData.roles || [],
-        currentPassword: "",
-        newPassword: "",
-        confirmNewPassword: "",
-      })
-    } else {
-      form.reset({
-        name: "",
-        email: "",
-        phone: "",
-        password: "",
-        confirmPassword: "",
-        gender: undefined,
-        dateOfBirth: undefined,
-        roles: [],
-      })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData])
+  const watchedRoles = form.watch("roles")
+  const watchedActiveRole = form.watch("activeRole")
 
-  const onSubmit = async (values: CreateUserSchemaType | UpdateUserFormSchemaType) => {
+  // Update active role when roles change
+  useEffect(() => {
+    if (watchedRoles.length > 0 && !watchedRoles.includes(watchedActiveRole || "")) {
+      form.setValue("activeRole", watchedRoles[0])
+    }
+  }, [watchedRoles, watchedActiveRole, form])
+
+  const onSubmit = async (data: UserFormData) => {
     setIsLoading(true)
     try {
-      let result
-      if (initialData) {
-        result = await updateUser(initialData._id, values as UpdateUserFormSchemaType)
-      } else {
-        result = await createUser(values as CreateUserSchemaType)
-      }
+      const result = isEditing ? await updateUser(user._id, data) : await createUser(data)
 
       if (result.success) {
-        toast.success(
-          t(
-            result.message ||
-              (initialData ? "admin.users.notifications.updateSuccess" : "admin.users.notifications.createSuccess"),
-          ),
-        )
+        toast.success(t(isEditing ? "admin.users.messages.updated" : "admin.users.messages.created"))
         onSuccess()
       } else {
-        toast.error(
-          t(
-            result.message ||
-              (initialData ? "admin.users.notifications.updateError" : "admin.users.notifications.createError"),
-          ),
-        )
+        toast.error(t(result.error || "common.errors.something_went_wrong"))
       }
     } catch (error) {
-      toast.error(t("common.error.unexpected"))
+      toast.error(t("common.errors.something_went_wrong"))
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleRoleChange = (role: string, checked: boolean) => {
+    const currentRoles = form.getValues("roles")
+    if (checked) {
+      form.setValue("roles", [...currentRoles, role])
+    } else {
+      const newRoles = currentRoles.filter((r) => r !== role)
+      if (newRoles.length === 0) {
+        newRoles.push(UserRole.MEMBER)
+      }
+      form.setValue("roles", newRoles)
+    }
+  }
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("admin.users.form.nameLabel")}</FormLabel>
-              <FormControl>
-                <Input placeholder={t("admin.users.form.namePlaceholder")} {...field} disabled={isLoading} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("admin.users.form.emailLabel")}</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder={t("admin.users.form.emailPlaceholder")}
-                  {...field}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("admin.users.form.phoneLabel")}</FormLabel>
-              <FormControl>
-                <PhoneInput
-                  value={field.value || ""}
-                  onChange={field.onChange}
-                  placeholder={t("admin.users.form.phonePlaceholder")}
-                  disabled={isLoading}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold">
+          {isEditing ? t("admin.users.form.edit_title") : t("admin.users.form.create_title")}
+        </h2>
+        <p className="text-muted-foreground">
+          {isEditing ? t("admin.users.form.edit_description") : t("admin.users.form.create_description")}
+        </p>
+      </div>
 
-        {!initialData && (
-          <>
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.form.passwordLabel")}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder={t("admin.users.form.passwordPlaceholder")}
-                        {...field}
-                        disabled={isLoading}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.form.confirmPasswordLabel")}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder={t("admin.users.form.confirmPasswordPlaceholder")}
-                        {...field}
-                        disabled={isLoading}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </>
-        )}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Profile Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("admin.users.form.profile_section")}</CardTitle>
+              <CardDescription>{t("admin.users.form.profile_description")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.users.form.name")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("admin.users.form.name_placeholder")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        {initialData && (
-          <>
-            <FormDescription>{t("admin.users.form.passwordEditDescription")}</FormDescription>
-            <FormField
-              control={form.control}
-              name="newPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.form.newPasswordLabel")}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder={t("admin.users.form.newPasswordPlaceholder")}
-                        {...field}
-                        disabled={isLoading}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmNewPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.form.confirmNewPasswordLabel")}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder={t("admin.users.form.confirmNewPasswordPlaceholder")}
-                        {...field}
-                        disabled={isLoading}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </>
-        )}
-
-        <FormField
-          control={form.control}
-          name="gender"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("admin.users.form.genderLabel")}</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("admin.users.form.genderPlaceholder")} />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="male">{t("gender.male")}</SelectItem>
-                  <SelectItem value="female">{t("gender.female")}</SelectItem>
-                  <SelectItem value="other">{t("gender.other")}</SelectItem>
-                  <SelectItem value="prefer_not_to_say">{t("gender.prefer_not_to_say")}</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="dateOfBirth"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>{t("admin.users.form.dateOfBirthLabel")}</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={"outline"}
-                      className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                      disabled={isLoading}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>{t("admin.users.form.dateOfBirthPlaceholder")}</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) => date > new Date() || date < new Date("1900-01-01") || isLoading}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="roles"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("admin.users.form.rolesLabel")}</FormLabel>
-              <FormDescription>{t("admin.users.form.rolesDescription")}</FormDescription>
-              {availableRoles.map((role) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
-                  key={role}
                   control={form.control}
-                  name="roles"
-                  render={({ field: roleField }) => {
-                    return (
-                      <FormItem key={role} className="flex flex-row items-start space-x-3 space-y-0">
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("admin.users.form.gender")}</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <Checkbox
-                            checked={roleField.value?.includes(role as UserRole)}
-                            onCheckedChange={(checked) => {
-                              return checked
-                                ? roleField.onChange([...(roleField.value || []), role as UserRole])
-                                : roleField.onChange((roleField.value || []).filter((value) => value !== role))
-                            }}
-                            disabled={isLoading}
-                          />
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("admin.users.form.gender_placeholder")} />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormLabel className="font-normal">{t(`roles.${role}`)}</FormLabel>
-                      </FormItem>
-                    )
-                  }}
+                        <SelectContent>
+                          <SelectItem value="male">{t("common.gender.male")}</SelectItem>
+                          <SelectItem value="female">{t("common.gender.female")}</SelectItem>
+                          <SelectItem value="other">{t("common.gender.other")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              ))}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
-        <div className="flex justify-end space-x-2 pt-6">
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-            {t("common.actions.cancel")}
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? t("common.actions.saving") : t("common.actions.save")}
-          </Button>
-        </div>
-      </form>
-    </Form>
+                <FormField
+                  control={form.control}
+                  name="dateOfBirth"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("admin.users.form.date_of_birth")}</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Account Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("admin.users.form.account_section")}</CardTitle>
+              <CardDescription>{t("admin.users.form.account_description")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("admin.users.form.email")}</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder={t("admin.users.form.email_placeholder")} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("admin.users.form.phone")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t("admin.users.form.phone_placeholder")} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      {isEditing ? t("admin.users.form.new_password") : t("admin.users.form.password")}
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder={
+                            isEditing
+                              ? t("admin.users.form.new_password_placeholder")
+                              : t("admin.users.form.password_placeholder")
+                          }
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Roles */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("admin.users.form.roles_section")}</CardTitle>
+              <CardDescription>{t("admin.users.form.roles_description")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.values(UserRole).map((role) => (
+                  <div key={role} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={role}
+                      checked={watchedRoles.includes(role)}
+                      onCheckedChange={(checked) => handleRoleChange(role, checked as boolean)}
+                    />
+                    <Label
+                      htmlFor={role}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      {t(`common.roles.${role}`)}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+
+              <Separator />
+
+              <FormField
+                control={form.control}
+                name="activeRole"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.users.form.active_role")}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("admin.users.form.active_role_placeholder")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {watchedRoles.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {t(`common.roles.${role}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 space-y-2 space-y-reverse sm:space-y-0">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {t("common.actions.cancel")}
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading
+                ? t("common.actions.saving")
+                : isEditing
+                  ? t("common.actions.update")
+                  : t("common.actions.create")}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   )
 }

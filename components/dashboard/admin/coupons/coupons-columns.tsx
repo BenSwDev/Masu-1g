@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, CheckCircle, Edit, Trash2, Clock, AlertTriangle, PowerOff } from "lucide-react"
 import { Button } from "@/components/common/ui/button"
@@ -16,94 +14,53 @@ import {
 import { Badge } from "@/components/common/ui/badge"
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { formatDate, formatCurrency } from "@/lib/utils/utils"
-// import type { TFunction } from "i18next" // Or the correct type from next-intl
+import type { TFunction } from "i18next" // Or the type from your i18n setup
 
 interface CouponColumnsProps {
   onEdit: (coupon: ICoupon & { effectiveStatus: string }) => void
   onDelete: (couponId: string) => void
-  t: (key: string) => string // Or the specific type from next-intl
+  t: TFunction // Or (key: string, options?: any) => string;
   dir: "ltr" | "rtl"
 }
 
 // Helper to get populated partner name
-const getPartnerName = (partner: any, t: (key: string) => string): string => {
-  if (!partner) return t("common.notApplicable")
-  if (typeof partner === "string") return t("common.loading")
-  return partner.name || partner.email || "Unnamed Partner"
+const getPartnerName = (partner: any, t: TFunction): string => {
+  if (!partner) return t("adminCoupons.columns.partnerNotAssigned")
+  if (typeof partner === "string") return t("adminCoupons.columns.partnerLoading") // Assuming string ID means loading
+  return partner.name || partner.email || t("adminCoupons.columns.partnerUnnamed")
 }
 
-const StatusBadge = ({ status, t, dir }: { status: string; t: (key: string) => string; dir: "ltr" | "rtl" }) => {
-  let statusConfig: {
-    textKey: string
-    icon: React.ElementType
-    badgeVariant: React.ComponentProps<typeof Badge>["variant"]
-    badgeClassName?: string
-  } | null = null
-
+const StatusBadge = ({ status, t, dir }: { status: string; t: TFunction; dir: "ltr" | "rtl" }) => {
   switch (status) {
     case "active":
-      statusConfig = {
-        textKey: "coupons.status.active",
-        icon: CheckCircle,
-        badgeVariant: "default",
-        badgeClassName: "bg-green-500 hover:bg-green-600",
-      }
-      break
-    case "scheduled":
-      statusConfig = {
-        textKey: "coupons.status.scheduled",
-        icon: Clock,
-        badgeVariant: "outline",
-        badgeClassName: "border-blue-500 text-blue-700",
-      }
-      break
-    case "expired":
-      statusConfig = {
-        textKey: "coupons.status.expired",
-        icon: AlertTriangle,
-        badgeVariant: "destructive",
-        badgeClassName: "bg-orange-500 hover:bg-orange-600",
-      }
-      break
-    case "inactive_manual":
-      statusConfig = {
-        textKey: "coupons.status.inactiveManual",
-        icon: PowerOff,
-        badgeVariant: "secondary",
-        badgeClassName: "", // No specific class override, default secondary
-      }
-      break
-  }
-
-  if (statusConfig) {
-    const IconComponent = statusConfig.icon
-    let displayText = status // Default to the raw status key
-
-    // Attempt to get the translation
-    const translatedValue = t(statusConfig.textKey)
-
-    if (typeof translatedValue === "string" && translatedValue !== statusConfig.textKey) {
-      // Use translation if it's a string and not the key itself (i.e., translation found)
-      displayText = translatedValue
-    } else if (typeof translatedValue !== "string") {
-      // Log a warning if translation returned an object or unexpected type
-      console.warn(
-        `[StatusBadge] Translation for key "${statusConfig.textKey}" returned type "${typeof translatedValue}" instead of string. Falling back to raw status key. Value:`,
-        translatedValue,
+      return (
+        <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+          <CheckCircle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("adminCoupons.status.active")}
+        </Badge>
       )
-      // displayText remains the raw status key as set initially
-    }
-    // If translatedValue is the key itself, it means translation was not found, so we also fallback to raw status key.
-
-    return (
-      <Badge variant={statusConfig.badgeVariant} className={statusConfig.badgeClassName}>
-        <IconComponent className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {displayText}
-      </Badge>
-    )
+    case "scheduled":
+      return (
+        <Badge variant="outline" className="border-blue-500 text-blue-700">
+          <Clock className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("adminCoupons.status.scheduled")}
+        </Badge>
+      )
+    case "expired":
+      return (
+        <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-600">
+          <AlertTriangle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} />{" "}
+          {t("adminCoupons.status.expired")}
+        </Badge>
+      )
+    case "inactive_manual":
+      return (
+        <Badge variant="secondary">
+          <PowerOff className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} />{" "}
+          {t("adminCoupons.status.inactiveManual")}
+        </Badge>
+      )
+    default:
+      return <Badge variant="outline">{t(status) || status}</Badge> // Fallback for unknown status
   }
-
-  // Fallback for unknown statuses
-  return <Badge variant="outline">{status}</Badge>
 }
 
 export const columns = ({
@@ -114,17 +71,17 @@ export const columns = ({
 }: CouponColumnsProps): ColumnDef<ICoupon & { effectiveStatus: string }>[] => [
   {
     accessorKey: "code",
-    header: t("coupons.code"),
+    header: t("adminCoupons.columns.code"),
     cell: ({ row }) => <Badge variant="outline">{row.original.code}</Badge>,
   },
   {
     accessorKey: "description",
-    header: t("coupons.description"),
+    header: t("adminCoupons.columns.description"),
     cell: ({ row }) => <span className="truncate block max-w-xs">{row.original.description || "-"}</span>,
   },
   {
     accessorKey: "discountValue",
-    header: t("coupons.discount"),
+    header: t("adminCoupons.columns.discount"),
     cell: ({ row }) => {
       const coupon = row.original
       return coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue)
@@ -132,29 +89,29 @@ export const columns = ({
   },
   {
     accessorKey: "validFrom",
-    header: t("coupons.validFrom"),
+    header: t("adminCoupons.columns.validFrom"),
     cell: ({ row }) => formatDate(row.original.validFrom),
   },
   {
     accessorKey: "validUntil",
-    header: t("coupons.validUntil"),
+    header: t("adminCoupons.columns.validUntil"),
     cell: ({ row }) => formatDate(row.original.validUntil),
   },
   {
     accessorKey: "effectiveStatus", // Changed from isActive
-    header: t("coupons.status"),
+    header: t("adminCoupons.columns.status"),
     cell: ({ row }) => <StatusBadge status={row.original.effectiveStatus} t={t} dir={dir} />,
   },
   {
     accessorKey: "usageLimit",
-    header: t("coupons.usage"),
+    header: t("adminCoupons.columns.usage"),
     // Ensuring usageLimit is treated as a number for comparison
     cell: ({ row }) =>
-      `${row.original.timesUsed} / ${Number(row.original.usageLimit) === 0 ? t("common.unlimited") : row.original.usageLimit}`,
+      `${row.original.timesUsed} / ${Number(row.original.usageLimit) === 0 ? "∞" : row.original.usageLimit}`,
   },
   {
     accessorKey: "assignedPartnerId",
-    header: t("coupons.assignedPartner"),
+    header: t("adminCoupons.columns.assignedPartner"),
     cell: ({ row }) => getPartnerName(row.original.assignedPartnerId, t),
   },
   {
@@ -172,14 +129,14 @@ export const columns = ({
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{t("common.actions")}</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => onEdit(coupon)}>
-              <Edit className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("coupons.actions.edit")}
+              <Edit className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("common.edit")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete(coupon._id.toString())}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
-              <Trash2 className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("coupons.actions.delete")}
+              <Trash2 className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("common.delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

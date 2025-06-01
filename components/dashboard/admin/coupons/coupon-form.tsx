@@ -53,7 +53,6 @@ interface CouponFormProps {
 
 export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel, loading }: CouponFormProps) {
   const { t, dir } = useTranslation()
-  // Assuming default namespace or specify one e.g. useTranslation('coupons')
 
   const defaultValues = React.useMemo(
     () => ({
@@ -91,25 +90,29 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="code">{t("coupons.form.codeLabel")}</Label>
+          <Label htmlFor="code">{t("adminCoupons.form.codeLabel")}</Label>
           <Input id="code" {...form.register("code")} disabled={loading} />
           {form.formState.errors.code && (
-            <p className="text-sm text-red-500 mt-1">{form.formState.errors.code.message}</p>
+            <p className="text-sm text-red-500 mt-1">
+              {form.formState.errors.code.message === "Code must be at least 3 characters"
+                ? t("adminCoupons.form.codeErrorMin")
+                : form.formState.errors.code.message}
+            </p>
           )}
         </div>
         <div>
-          <Label htmlFor="discountType">{t("coupons.form.discountTypeLabel")}</Label>
+          <Label htmlFor="discountType">{t("adminCoupons.form.discountTypeLabel")}</Label>
           <Controller
             name="discountType"
             control={form.control}
             render={({ field }) => (
               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("coupons.form.selectDiscountTypePlaceholder")} />
+                  <SelectValue placeholder={t("adminCoupons.form.discountTypePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="percentage">{t("coupons.form.percentage")}</SelectItem>
-                  <SelectItem value="fixedAmount">{t("coupons.form.fixedAmount")}</SelectItem>
+                  <SelectItem value="percentage">{t("adminCoupons.form.discountTypePercentage")}</SelectItem>
+                  <SelectItem value="fixedAmount">{t("adminCoupons.form.discountTypeFixedAmount")}</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -121,21 +124,25 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
       </div>
 
       <div>
-        <Label htmlFor="discountValue">{t("coupons.form.discountValueLabel")}</Label>
+        <Label htmlFor="discountValue">{t("adminCoupons.form.discountValueLabel")}</Label>
         <Input id="discountValue" type="number" step="0.01" {...form.register("discountValue")} disabled={loading} />
         {form.formState.errors.discountValue && (
-          <p className="text-sm text-red-500 mt-1">{form.formState.errors.discountValue.message}</p>
+          <p className="text-sm text-red-500 mt-1">
+            {form.formState.errors.discountValue.message === "Discount value must be non-negative"
+              ? t("adminCoupons.form.discountValueErrorMin")
+              : form.formState.errors.discountValue.message}
+          </p>
         )}
       </div>
 
       <div>
-        <Label htmlFor="description">{t("coupons.form.descriptionLabel")} (Optional)</Label>
+        <Label htmlFor="description">{t("adminCoupons.form.descriptionLabel")}</Label>
         <Textarea id="description" {...form.register("description")} disabled={loading} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="validFrom">{t("coupons.form.validFromLabel")}</Label>
+          <Label htmlFor="validFrom">{t("adminCoupons.form.validFromLabel")}</Label>
           <Controller
             name="validFrom"
             control={form.control}
@@ -150,7 +157,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                     )}
                     disabled={loading}
                   >
-                    <CalendarIcon className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
+                    <CalendarIcon className={cn(dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4")} />
                     {field.value ? formatDate(field.value) : <span>{t("common.pickDate")}</span>}
                   </Button>
                 </PopoverTrigger>
@@ -161,11 +168,15 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
             )}
           />
           {form.formState.errors.validFrom && (
-            <p className="text-sm text-red-500 mt-1">{form.formState.errors.validFrom.message}</p>
+            <p className="text-sm text-red-500 mt-1">
+              {form.formState.errors.validFrom.message === "Start date is required."
+                ? t("adminCoupons.form.validFromError")
+                : form.formState.errors.validFrom.message}
+            </p>
           )}
         </div>
         <div>
-          <Label htmlFor="validUntil">{t("coupons.form.validUntilLabel")}</Label>
+          <Label htmlFor="validUntil">{t("adminCoupons.form.validUntilLabel")}</Label>
           <Controller
             name="validUntil"
             control={form.control}
@@ -180,7 +191,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                     )}
                     disabled={loading}
                   >
-                    <CalendarIcon className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
+                    <CalendarIcon className={cn(dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4")} />
                     {field.value ? formatDate(field.value) : <span>{t("common.pickDate")}</span>}
                   </Button>
                 </PopoverTrigger>
@@ -197,30 +208,44 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
             )}
           />
           {form.formState.errors.validUntil && (
-            <p className="text-sm text-red-500 mt-1">{form.formState.errors.validUntil.message}</p>
+            <p className="text-sm text-red-500 mt-1">
+              {form.formState.errors.validUntil.message === "Expiration date is required."
+                ? t("adminCoupons.form.validUntilError")
+                : form.formState.errors.validUntil.message === "Expiration date must be after or same as start date"
+                  ? t("adminCoupons.form.validUntilAfterValidFromError")
+                  : form.formState.errors.validUntil.message}
+            </p>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="usageLimit">{t("coupons.form.totalUsageLimitLabel")} (0 for unlimited)</Label>
+          <Label htmlFor="usageLimit">{t("adminCoupons.form.usageLimitLabel")}</Label>
           <Input id="usageLimit" type="number" {...form.register("usageLimit")} disabled={loading} />
           {form.formState.errors.usageLimit && (
-            <p className="text-sm text-red-500 mt-1">{form.formState.errors.usageLimit.message}</p>
+            <p className="text-sm text-red-500 mt-1">
+              {form.formState.errors.usageLimit.message === "Usage limit must be non-negative"
+                ? t("adminCoupons.form.usageLimitErrorMin")
+                : form.formState.errors.usageLimit.message}
+            </p>
           )}
         </div>
         <div>
-          <Label htmlFor="usageLimitPerUser">{t("coupons.form.usageLimitPerUserLabel")} (0 for unlimited)</Label>
+          <Label htmlFor="usageLimitPerUser">{t("adminCoupons.form.usageLimitPerUserLabel")}</Label>
           <Input id="usageLimitPerUser" type="number" {...form.register("usageLimitPerUser")} disabled={loading} />
           {form.formState.errors.usageLimitPerUser && (
-            <p className="text-sm text-red-500 mt-1">{form.formState.errors.usageLimitPerUser.message}</p>
+            <p className="text-sm text-red-500 mt-1">
+              {form.formState.errors.usageLimitPerUser.message === "Usage limit per user must be non-negative"
+                ? t("adminCoupons.form.usageLimitPerUserErrorMin")
+                : form.formState.errors.usageLimitPerUser.message}
+            </p>
           )}
         </div>
       </div>
 
       <div>
-        <Label htmlFor="assignedPartnerId">{t("coupons.form.assignToPartnerLabel")} (Optional)</Label>
+        <Label htmlFor="assignedPartnerId">{t("adminCoupons.form.assignedPartnerLabel")}</Label>
         <Controller
           name="assignedPartnerId"
           control={form.control}
@@ -235,7 +260,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
               disabled={loading || partnersForSelect.length === 0}
             >
               <SelectTrigger>
-                <SelectValue placeholder={t("coupons.form.selectPartnerPlaceholder")} />
+                <SelectValue placeholder={t("adminCoupons.form.assignedPartnerPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={NO_PARTNER_SELECTED_VALUE}>{t("common.none")}</SelectItem>
@@ -251,7 +276,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
       </div>
 
       <div>
-        <Label htmlFor="notesForPartner">{t("coupons.form.notesForPartnerLabel")} (Optional)</Label>
+        <Label htmlFor="notesForPartner">{t("adminCoupons.form.notesForPartnerLabel")}</Label>
         <Textarea id="notesForPartner" {...form.register("notesForPartner")} disabled={loading} />
       </div>
 
@@ -267,7 +292,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
           htmlFor="isActive"
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
-          {t("coupons.form.couponIsActiveLabel")}
+          {t("adminCoupons.form.isActiveLabel")}
         </Label>
       </div>
 
@@ -279,7 +304,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
         </Button>
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className={dir === "rtl" ? "ml-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4 animate-spin"} />}
-          {initialData ? t("common.saveChanges") : t("common.createCoupon")}
+          {initialData ? t("adminCoupons.form.saveChanges") : t("adminCoupons.form.createCoupon")}
         </Button>
       </div>
     </form>

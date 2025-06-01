@@ -7,123 +7,125 @@ import { formatDate, formatCurrency } from "@/lib/utils/utils"
 import { CheckCircle, Info, Copy, Clock, AlertTriangle, PowerOff } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Button } from "@/components/common/ui/button"
-import { useTranslation } from "@/lib/translations/i18n" // Corrected import
-import type React from "react"
+import { useTranslation } from "@/lib/translations/i18n"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
 
 interface AssignedCouponCardProps {
-  coupon: ICoupon & { effectiveStatus: string }
+  coupon: ICoupon & { effectiveStatus: string } // Added effectiveStatus
 }
 
-// Extracted StatusBadge to its own component for clarity and reusability if needed elsewhere
-const CouponStatusBadge = ({ statusKey }: { statusKey: string }) => {
+const StatusBadge = ({ status }: { status: string }) => {
   const { t, dir } = useTranslation()
-  let text = statusKey
-  let badgeVariant: "default" | "outline" | "destructive" | "secondary" = "outline"
-  let IconComponent: React.ElementType | null = null
-  let className = "text-xs" // Base class
 
-  switch (statusKey) {
+  switch (status) {
     case "active":
-      text = t("coupons.status.active")
-      badgeVariant = "default"
-      IconComponent = CheckCircle
-      className = "bg-green-500 hover:bg-green-600 text-xs"
-      break
+      return (
+        <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-xs">
+          <CheckCircle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("adminCoupons.status.active")}
+        </Badge>
+      )
     case "scheduled":
-      text = t("coupons.status.scheduled")
-      badgeVariant = "outline"
-      IconComponent = Clock
-      className = "border-blue-500 text-blue-700 text-xs"
-      break
+      return (
+        <Badge variant="outline" className="border-blue-500 text-blue-700 text-xs">
+          <Clock className="mr-1 h-3 w-3" /> {t("adminCoupons.status.scheduled")}
+        </Badge>
+      )
     case "expired":
-      text = t("coupons.status.expired")
-      badgeVariant = "destructive"
-      IconComponent = AlertTriangle
-      className = "bg-orange-500 hover:bg-orange-600 text-xs"
-      break
+      return (
+        <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-600 text-xs">
+          <AlertTriangle className="mr-1 h-3 w-3" /> {t("adminCoupons.status.expired")}
+        </Badge>
+      )
     case "inactive_manual": // Manually set to inactive by admin
-      text = t("coupons.status.inactiveManual")
-      badgeVariant = "secondary"
-      IconComponent = PowerOff
-      className = "text-xs"
-      break
+      return (
+        <Badge variant="secondary" className="text-xs">
+          <PowerOff className="mr-1 h-3 w-3" /> {t("adminCoupons.status.inactive")}
+        </Badge>
+      )
     default:
-      text = statusKey // Fallback for unknown statuses
-      break
+      return (
+        <Badge variant="outline" className="text-xs">
+          {status}
+        </Badge>
+      )
   }
-
-  const iconMarginClass = dir === "rtl" ? "ml-1" : "mr-1"
-
-  return (
-    <Badge variant={badgeVariant} className={className}>
-      {IconComponent && <IconComponent className={`h-3 w-3 ${iconMarginClass}`} />}
-      {text}
-    </Badge>
-  )
 }
 
 export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) {
   const { toast } = useToast()
-  const { t, dir } = useTranslation() // Using custom hook
+  const { t, dir } = useTranslation()
 
   const handleCopyCode = () => {
     navigator.clipboard
       .writeText(coupon.code)
       .then(() => {
         toast({
-          title: t("common.copied"),
-          description: t("coupons.notifications.codeCopiedToClipboard", { code: coupon.code }),
+          title: t("partnerAssignedCoupons.toast.copySuccessTitle"),
+          description: t("partnerAssignedCoupons.toast.copySuccessDescription", { code: coupon.code }),
         })
       })
       .catch((_err) => {
-        // Consider translating this generic error too if needed
-        toast({ title: "Error", description: "Failed to copy code.", variant: "destructive" })
+        toast({
+          title: t("common.error"),
+          description: t("partnerAssignedCoupons.toast.copyErrorDescription"),
+          variant: "destructive",
+        })
       })
   }
-
-  const infoIconMarginClass = dir === "rtl" ? "ml-1" : "mr-1"
 
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg">{coupon.code}</CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopyCode}
-            aria-label={t("coupons.copyCodeAriaLabel") || "Copy coupon code"}
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyCode}
+                  aria-label={t("partnerAssignedCoupons.card.copyCodeTooltip")}
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{t("partnerAssignedCoupons.card.copyCodeTooltip")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
-        <CardDescription className="text-xs">{coupon.description || t("common.noDescription")}</CardDescription>
+        <CardDescription className="text-xs">
+          {coupon.description || t("partnerAssignedCoupons.card.noDescription")}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-3 text-sm">
         <div className="flex justify-between">
-          <span>{t("coupons.discount")}:</span>
+          <span>{t("partnerAssignedCoupons.card.discountLabel")}</span>
           <span className="font-semibold">
             {coupon.discountType === "percentage" ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue)}
           </span>
         </div>
         <div className="flex justify-between">
-          <span>{t("coupons.validity")}:</span>
+          <span>{t("partnerAssignedCoupons.card.validLabel")}</span>
           <span className="font-semibold">
             {formatDate(coupon.validFrom)} - {formatDate(coupon.validUntil)}
           </span>
         </div>
         <div className="flex justify-between items-center">
-          <span>{t("coupons.status.label")}:</span>
-          <CouponStatusBadge statusKey={coupon.effectiveStatus} />
+          <span>{t("partnerAssignedCoupons.card.statusLabel")}</span>
+          <StatusBadge status={coupon.effectiveStatus} />
         </div>
         <div className="flex justify-between">
-          <span>{t("coupons.totalUses")}:</span>
+          <span>{t("partnerAssignedCoupons.card.totalUsesLabel")}</span>
           <span className="font-semibold">
+            {/* Ensuring usageLimit is treated as a number for comparison */}
             {coupon.timesUsed} / {Number(coupon.usageLimit) === 0 ? t("common.unlimited") : coupon.usageLimit}
           </span>
         </div>
         <div className="flex justify-between">
-          <span>{t("coupons.usesPerCustomer")}:</span>
+          <span>{t("partnerAssignedCoupons.card.usesPerCustomerLabel")}</span>
           <span className="font-semibold">
             {Number(coupon.usageLimitPerUser) === 0 ? t("common.unlimited") : coupon.usageLimitPerUser}
           </span>
@@ -131,7 +133,8 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
         {coupon.notesForPartner && (
           <div className="pt-2">
             <p className="text-xs font-semibold text-muted-foreground flex items-center">
-              <Info className={`h-3 w-3 ${infoIconMarginClass} text-sky-600`} /> {t("partnerCoupons.adminNote")}:
+              <Info className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} />{" "}
+              {t("partnerAssignedCoupons.card.adminNoteLabel")}
             </p>
             <p className="text-xs text-muted-foreground pl-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-md">
               {coupon.notesForPartner}
@@ -140,7 +143,7 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
         )}
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground">
-        {t("common.createdAt")}: {formatDate(coupon.createdAt as Date)}
+        {t("partnerAssignedCoupons.card.createdLabel", { date: formatDate(coupon.createdAt as Date) })}
       </CardFooter>
     </Card>
   )

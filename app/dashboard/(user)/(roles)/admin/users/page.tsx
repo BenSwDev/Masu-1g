@@ -1,24 +1,15 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/auth"
-import { redirect } from "next/navigation"
+import { RoleProtectedRoute } from "@/components/auth/role-protected-route"
+import { UserRole } from "@/lib/db/models/user"
 
-export default async function AdminClientsPage() {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect("/auth/login")
-  }
-
-  if (session.user.activeRole !== "admin") {
-    redirect("/dashboard")
-  }
-
+const AdminUsersPage = () => {
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2 text-right">ניהול לקוחות</h1>
-        <p className="text-gray-600 text-right">ניהול וצפייה ברשימת הלקוחות במערכת.</p>
+    <RoleProtectedRoute requiredRole={UserRole.ADMIN}>
+      <div>
+        <h1>Admin Users Page</h1>
+        {/* Add content for the admin users page here */}
       </div>
-    </div>
+    </RoleProtectedRoute>
   )
 }
+
+export default AdminUsersPage

@@ -78,6 +78,10 @@
     "sidebar": {
       "title": "Dashboard",
       "dashboard": "Dashboard",
+      "mainMenu": "Main Menu",
+      "bookTreatment": "Book Treatment",
+      "purchaseSubscription": "Purchase Subscription",
+      "purchaseGiftVoucher": "Purchase Gift Voucher",
       "profile": "Profile",
       "account": "Account",
       "signOut": "Sign Out",

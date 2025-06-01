@@ -1,94 +1,125 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import { format } from "date-fns"
-
+import { MoreHorizontal, ArrowUpDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { User } from "@/types"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge"
+import type { IUser } from "@/types"
 import { useTranslation } from "@/lib/translations/i18n"
 
-export const columns: ColumnDef<User>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={table.getIsAllPageRowsSelected()}
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      const { t } = useTranslation()
-      return t("Name")
-    },
-  },
-  {
-    accessorKey: "email",
-    header: ({ column }) => {
-      const { t } = useTranslation()
-      return t("Email")
-    },
-  },
-  {
-    accessorKey: "createdAt",
-    header: ({ column }) => {
-      const { t } = useTranslation()
-      return t("Created At")
-    },
-    cell: ({ row }) => {
-      const date = new Date(row.getValue("createdAt"))
-      const formattedDate = format(date, "PPP")
-      return formattedDate
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const { t } = useTranslation()
-      const user = row.original
+// Define a type for the user data expected by the columns.
+export type UserColumn = Pick<IUser, "_id" | "name" | "email" | "phone" | "roles" | "createdAt" | "isActive"> & {
+  // Add any transformed fields if necessary
+}
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(user.email)}>
-              {t("Copy email")}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>{t("View profile")}</DropdownMenuItem>
-            <DropdownMenuItem>{t("Edit profile")}</DropdownMenuItem>
-            <DropdownMenuItem>{t("Delete")}</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    },
-  },
-]
+interface UsersColumnsProps {
+  onEdit: (user: UserColumn) => void
+  onDelete: (user: UserColumn) => void
+}
 
-import { MoreHorizontal } from "lucide-react"
+export const getUsersTableColumns = ({ onEdit, onDelete }: UsersColumnsProps): ColumnDef<UserColumn>[] => {
+  const { t } = useTranslation() // Changed from useI18n
+
+  return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label={t("common.table.selectAll")}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label={t("common.table.selectRow")}
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return (
+          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+            {t("admin.users.table.name")}
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        )
+      },
+      cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
+    },
+    {
+      accessorKey: "email",
+      header: t("admin.users.table.email"),
+    },
+    {
+      accessorKey: "phone",
+      header: t("admin.users.table.phone"),
+      cell: ({ row }) => row.original.phone || "-",
+    },
+    {
+      accessorKey: "roles",
+      header: t("admin.users.table.roles"),
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-1">
+          {row.original.roles.map((role) => (
+            <Badge key={role} variant="outline">
+              {t(`roles.${role}`)}
+            </Badge>
+          ))}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: t("admin.users.table.createdAt"),
+      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
+    },
+    {
+      accessorKey: "isActive",
+      header: t("admin.users.table.status"),
+      cell: ({ row }) => (
+        <Badge variant={row.original.isActive ? "default" : "destructive"}>
+          {row.original.isActive ? t("common.status.active") : t("common.status.inactive")}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const user = row.original
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">{t("common.actions.openMenu")}</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>{t("common.actions.title")}</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => onEdit(user)}>{t("common.actions.edit")}</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onDelete(user)} className="text-red-600">
+                {t("common.actions.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
+      },
+    },
+  ]
+}

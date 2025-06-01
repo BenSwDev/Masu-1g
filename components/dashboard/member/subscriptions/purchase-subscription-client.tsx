@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { purchaseSubscription } from "@/actions/user-management-actions"
+import { purchaseSubscription } from "@/actions/user-subscription-actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 import type { ITreatment } from "@/lib/db/models/treatment" // Assuming ISubscription is also needed

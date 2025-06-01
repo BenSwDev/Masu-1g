@@ -180,8 +180,6 @@
     "phoneExists": "קיים כבר חשבון עם מספר טלפון זה",
     "weakPassword": "הסיסמה חלשה מדי",
     "registrationFailed": "ההרשמה נכשלה",
-    "invalidOTP": "אנא הזן קוד בן 6 ספרות  "הסיסמה חלשה מדי",
-    "registrationFailed": "ההרשמה נכשלה",
     "invalidOTP": "אנא הזן קוד בן 6 ספרות תקין",
     "authFailed": "האימות נכשל",
     "missingFields": "אנא מלא את כל השדות הנדרשים",
@@ -229,7 +227,7 @@
       "switchRole": "החלף תפקיד"
     }
   },
-  "addresses": {\
+  "addresses": {
     "title": "ניהול כתובות",
     "addNew": "הוסף כתובת חדשה",
     "edit": "ערוך כתובת",

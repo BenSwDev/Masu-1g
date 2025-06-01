@@ -21,7 +21,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
-import { useTranslation } from "next-intl"
+import { useTranslation } from "@/lib/translations/i18n"
+import { Heading } from "@/components/common/ui/heading"
 
 interface CouponsClientProps {
   initialData: Awaited<ReturnType<typeof getAdminCoupons>>
@@ -32,8 +33,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
-  const { t, i18n } = useTranslation() // Assuming default namespace or specify one e.g. useTranslation('coupons')
-  const dir = i18n.dir()
+  const { t, dir } = useTranslation() // Assuming default namespace or specify one e.g. useTranslation('coupons')
 
   const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData.coupons)
   const [pagination, setPagination] = React.useState({
@@ -72,7 +72,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
     try {
       const result = await deleteCoupon(couponToDelete)
       if (result.success) {
-        toast({ title: t("common.success"), description: t(result.message) })
+        toast({ title: t("common.success"), description: t(result.message as string) })
         // Refetch or update local state
         // For now, just filter out:
         setCoupons((prev) => prev.filter((c) => c._id !== couponToDelete))
@@ -100,7 +100,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
       }
 
       if (result.success) {
-        toast({ title: t("common.success"), description: result.message })
+        toast({ title: t("common.success"), description: t(result.message as string) })
         setIsFormOpen(false)
         setEditingCoupon(null)
         // TODO: Refetch data or update local state more robustly
@@ -139,7 +139,8 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4">
+      <Heading title={t("coupons.manageHeading")} description={t("coupons.manageDescription")} />
+      <div className="flex items-center justify-between mb-4 mt-4">
         {/* Add Filters here if needed */}
         <Button onClick={handleCreateNew} disabled={loading}>
           <PlusCircle className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("common.createCoupon")}

@@ -14,46 +14,46 @@ import {
 import { Badge } from "@/components/common/ui/badge"
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { formatDate, formatCurrency } from "@/lib/utils/utils"
-import type { TFunction } from "i18next" // Or the correct type from next-intl
+// import type { TFunction } from "i18next" // Or the correct type from next-intl
 
 interface CouponColumnsProps {
   onEdit: (coupon: ICoupon & { effectiveStatus: string }) => void
   onDelete: (couponId: string) => void
-  t: TFunction // Or the specific type from next-intl
+  t: (key: string) => string // Or the specific type from next-intl
   dir: "ltr" | "rtl"
 }
 
 // Helper to get populated partner name
-const getPartnerName = (partner: any, t: TFunction): string => {
+const getPartnerName = (partner: any, t: (key: string) => string): string => {
   if (!partner) return t("common.notApplicable")
   if (typeof partner === "string") return t("common.loading")
   return partner.name || partner.email || "Unnamed Partner"
 }
 
-const StatusBadge = ({ status, t }: { status: string; t: TFunction }) => {
+const StatusBadge = ({ status, t, dir }: { status: string; t: (key: string) => string; dir: "ltr" | "rtl" }) => {
   switch (status) {
     case "active":
       return (
         <Badge variant="default" className="bg-green-500 hover:bg-green-600">
-          <CheckCircle className="mr-1 h-3 w-3" /> {t("coupons.status.active")}
+          <CheckCircle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("coupons.status.active")}
         </Badge>
       )
     case "scheduled":
       return (
         <Badge variant="outline" className="border-blue-500 text-blue-700">
-          <Clock className="mr-1 h-3 w-3" /> {t("coupons.status.scheduled")}
+          <Clock className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("coupons.status.scheduled")}
         </Badge>
       )
     case "expired":
       return (
         <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-600">
-          <AlertTriangle className="mr-1 h-3 w-3" /> {t("coupons.status.expired")}
+          <AlertTriangle className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("coupons.status.expired")}
         </Badge>
       )
     case "inactive_manual":
       return (
         <Badge variant="secondary">
-          <PowerOff className="mr-1 h-3 w-3" /> {t("coupons.status.inactive")}
+          <PowerOff className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("coupons.status.inactive")}
         </Badge>
       )
     default:
@@ -98,7 +98,7 @@ export const columns = ({
   {
     accessorKey: "effectiveStatus", // Changed from isActive
     header: t("coupons.status"),
-    cell: ({ row }) => <StatusBadge status={row.original.effectiveStatus} t={t} />,
+    cell: ({ row }) => <StatusBadge status={row.original.effectiveStatus} t={t} dir={dir} />,
   },
   {
     accessorKey: "usageLimit",

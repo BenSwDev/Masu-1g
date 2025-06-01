@@ -16,7 +16,7 @@ import { CalendarIcon, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils/utils" // Assuming cn utility
 import { formatDate } from "@/lib/utils/utils" // Assuming formatDate utility
 import type { ICoupon } from "@/lib/db/models/coupon"
-import { useTranslation } from "next-intl"
+import { useTranslation } from "@/lib/translations/i18n"
 
 const NO_PARTNER_SELECTED_VALUE = "__no-partner__" // Unique non-empty string
 
@@ -52,8 +52,8 @@ interface CouponFormProps {
 }
 
 export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel, loading }: CouponFormProps) {
-  const { t, i18n } = useTranslation() // Assuming default namespace or specify one e.g. useTranslation('coupons')
-  const dir = i18n.dir()
+  const { t, dir } = useTranslation()
+  // Assuming default namespace or specify one e.g. useTranslation('coupons')
 
   const defaultValues = React.useMemo(
     () => ({

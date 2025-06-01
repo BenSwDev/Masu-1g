@@ -1,14 +1,12 @@
 import { Suspense } from "react"
 import { getAdminCoupons, getPartnersForSelection } from "@/actions/coupon-actions"
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
-import { Heading } from "@/components/common/ui/heading"
 import { Skeleton } from "@/components/common/ui/skeleton" // Assuming you have Skeleton
-import { getTranslations } from "next-intl/server"
 
 export async function generateMetadata() {
-  const t = await getTranslations({ locale: "en", namespace: "coupons" }) // Replace 'en' with actual locale logic if needed
+  // const t = await getTranslations({ locale: "en", namespace: "coupons" }) // Removed
   return {
-    title: t("manageTitle"),
+    title: "Manage Coupons", // Reverted to static or a simple key
   }
 }
 
@@ -36,11 +34,11 @@ export default async function AdminCouponsPage({ searchParams }: AdminCouponsPag
   const couponsDataPromise = getAdminCoupons(page, limit, filters)
   const partnersPromise = getPartnersForSelection()
 
-  const t = await getTranslations({ locale: "en", namespace: "coupons" }) // Replace 'en' with actual locale logic
+  // const t = await getTranslations({ locale: "en", namespace: "coupons" }) // Replace 'en' with actual locale logic
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <Heading title={t("manageHeading")} description={t("manageDescription")} />
+      {/* Heading will be rendered by CouponsClient */}
       <Suspense fallback={<CouponsLoadingSkeleton />}>
         <CouponsDataWrapper couponsDataPromise={couponsDataPromise} partnersPromise={partnersPromise} />
       </Suspense>

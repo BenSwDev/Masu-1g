@@ -3,9 +3,13 @@ import { getAssignedPartnerCoupons } from "@/actions/coupon-actions"
 import AssignedCouponsClient from "@/components/dashboard/partner/coupons/assigned-coupons-client"
 import { Heading } from "@/components/common/ui/heading"
 import { Skeleton } from "@/components/common/ui/skeleton"
+import { getTranslations } from "next-intl/server"
 
-export const metadata = {
-  title: "My Assigned Coupons", // Placeholder for translation
+export async function generateMetadata() {
+  const t = await getTranslations({ locale: "en", namespace: "coupons" }) // Replace 'en' with actual locale logic
+  return {
+    title: t("myAssignedTitle"),
+  }
 }
 
 interface PartnerAssignedCouponsPageProps {
@@ -27,10 +31,11 @@ export default async function PartnerAssignedCouponsPage({ searchParams }: Partn
 
   // Fetch initial data on the server
   const couponsDataPromise = getAssignedPartnerCoupons(page, limit, filters)
+  const t = await getTranslations({ locale: "en", namespace: "coupons" }) // Replace 'en' with actual locale logic
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <Heading title="My Assigned Coupons" description="View coupons assigned to you for distribution." />
+      <Heading title={t("myAssignedHeading")} description={t("myAssignedDescription")} />
       <Suspense fallback={<AssignedCouponsLoadingSkeleton />}>
         <AssignedCouponsDataWrapper couponsDataPromise={couponsDataPromise} />
       </Suspense>

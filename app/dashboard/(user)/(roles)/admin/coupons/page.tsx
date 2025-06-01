@@ -3,9 +3,13 @@ import { getAdminCoupons, getPartnersForSelection } from "@/actions/coupon-actio
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
 import { Heading } from "@/components/common/ui/heading"
 import { Skeleton } from "@/components/common/ui/skeleton" // Assuming you have Skeleton
+import { getTranslations } from "next-intl/server"
 
-export const metadata = {
-  title: "Manage Coupons", // Placeholder for translation
+export async function generateMetadata() {
+  const t = await getTranslations({ locale: "en", namespace: "coupons" }) // Replace 'en' with actual locale logic if needed
+  return {
+    title: t("manageTitle"),
+  }
 }
 
 // Define a type for searchParams for clarity
@@ -32,9 +36,11 @@ export default async function AdminCouponsPage({ searchParams }: AdminCouponsPag
   const couponsDataPromise = getAdminCoupons(page, limit, filters)
   const partnersPromise = getPartnersForSelection()
 
+  const t = await getTranslations({ locale: "en", namespace: "coupons" }) // Replace 'en' with actual locale logic
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <Heading title="Coupons Management" description="Create and manage coupons for your platform." />
+      <Heading title={t("manageHeading")} description={t("manageDescription")} />
       <Suspense fallback={<CouponsLoadingSkeleton />}>
         <CouponsDataWrapper couponsDataPromise={couponsDataPromise} partnersPromise={partnersPromise} />
       </Suspense>

@@ -76,7 +76,21 @@
     "loadingData": "טוען נתונים...",
     "quickNavigation": "ניווט מהיר",
     "today": "היום",
-    "birthYear": "שנת לידה"
+    "birthYear": "שנת לידה",
+    "unlimited": "ללא הגבלה",
+    "noDescription": "אין תיאור",
+    "copied": "הועתק!",
+    "copyFailed": "שגיאה בהעתקה.",
+    "previousPage": "הקודם",
+    "nextPage": "הבא",
+    "pageOutOf": "עמוד {{currentPage}} מתוך {{totalPages}}",
+    "totalCoupons": "סה\"כ קופונים: {{count}}",
+    "createCoupon": "צור קופון",
+    "confirmDeleteTitle": "האם אתה בטוח?",
+    "confirmDeleteCouponDescription": "לא ניתן לבטל פעולה זו. פעולה זו תמחק את הקופון לצמיתות.",
+    "deleting": "מוחק...",
+    "saveChanges": "שמור שינויים",
+    "adminNote": "הערת מנהל:"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -808,7 +822,10 @@
   "partnerCoupons": {
     "title": "קופוני שותפים",
     "description": "ניהול קופוני שותפים",
-    "noCoupons": "לא נמצאו קופוני שותפים"
+    "noCoupons": "לא נמצאו קופוני שותפים",
+    "loading": "טוען קופונים...",
+    "noneAssigned": "עדיין לא הוקצו לך קופונים.",
+    "totalAssigned": "סה\"כ קופונים שהוקצו: {{count}}"
   },
   "memberCoupons": {
     "title": "קופוני חבר",
@@ -989,6 +1006,59 @@
       "thursday": "חמישי",
       "friday": "שישי",
       "saturday": "שבת"
+    }
+  },
+  "coupons": {
+    "manageTitle": "ניהול קופונים",
+    "manageHeading": "ניהול קופונים",
+    "manageDescription": "צור ונהל קופונים עבור הפלטפורמה שלך.",
+    "myAssignedTitle": "הקופונים שהוקצו לי",
+    "myAssignedHeading": "הקופונים שהוקצו לי",
+    "myAssignedDescription": "צפה בקופונים שהוקצו לך להפצה.",
+    "code": "קוד",
+    "description": "תיאור",
+    "discount": "הנחה",
+    "validFrom": "תקף מ",
+    "validUntil": "תקף עד",
+    "usage": "שימוש",
+    "assignedPartner": "שותף משויך",
+    "form": {
+      "createTitle": "צור קופון חדש",
+      "createDescription": "מלא את הפרטים ליצירת קופון חדש.",
+      "editTitle": "ערוך קופון",
+      "editDescription": "עדכן את פרטי הקופון.",
+      "codeLabel": "קוד קופון",
+      "discountTypeLabel": "סוג הנחה",
+      "selectDiscountTypePlaceholder": "בחר סוג הנחה",
+      "percentage": "אחוז",
+      "fixedAmount": "סכום קבוע",
+      "discountValueLabel": "ערך הנחה",
+      "descriptionOptionalLabel": "תיאור (אופציונלי)",
+      "validFromLabel": "תקף מ",
+      "validUntilLabel": "תקף עד",
+      "pickADate": "בחר תאריך",
+      "totalUsageLimitLabel": "מגבלת שימוש כוללת (0 ללא הגבלה)",
+      "usageLimitPerUserLabel": "מגבלת שימוש למשתמש (0 ללא הגבלה)",
+      "assignToPartnerOptionalLabel": "שייך לשותף (אופציונלי)",
+      "selectPartnerOptionalPlaceholder": "בחר שותף (אופציונלי)",
+      "noPartnerSelected": "ללא",
+      "notesForPartnerOptionalLabel": "הערות לשותף (אופציונלי)",
+      "couponIsActiveLabel": "הקופון פעיל"
+    },
+    "status": {
+      "active": "פעיל",
+      "scheduled": "מתוזמן",
+      "expired": "פג תוקף",
+      "inactiveManual": "לא פעיל"
+    },
+    "actions": {
+      "edit": "ערוך קופון",
+      "delete": "מחק קופון"
+    },
+    "notifications": {
+      "copied": "הועתק!",
+      "copyFailed": "שגיאה בהעתקת הקוד.",
+      "codeCopiedToClipboard": "קוד קופון \"{{code}}\" הועתק ללוח."
     }
   }
 }

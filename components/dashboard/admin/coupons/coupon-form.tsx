@@ -16,6 +16,7 @@ import { CalendarIcon, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils/utils" // Assuming cn utility
 import { formatDate } from "@/lib/utils/utils" // Assuming formatDate utility
 import type { ICoupon } from "@/lib/db/models/coupon"
+import { useTranslation } from "next-intl"
 
 const NO_PARTNER_SELECTED_VALUE = "__no-partner__" // Unique non-empty string
 
@@ -51,6 +52,9 @@ interface CouponFormProps {
 }
 
 export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel, loading }: CouponFormProps) {
+  const { t, i18n } = useTranslation() // Assuming default namespace or specify one e.g. useTranslation('coupons')
+  const dir = i18n.dir()
+
   const defaultValues = React.useMemo(
     () => ({
       code: initialData?.code || "",
@@ -87,25 +91,25 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="code">Coupon Code</Label>
+          <Label htmlFor="code">{t("coupons.form.codeLabel")}</Label>
           <Input id="code" {...form.register("code")} disabled={loading} />
           {form.formState.errors.code && (
             <p className="text-sm text-red-500 mt-1">{form.formState.errors.code.message}</p>
           )}
         </div>
         <div>
-          <Label htmlFor="discountType">Discount Type</Label>
+          <Label htmlFor="discountType">{t("coupons.form.discountTypeLabel")}</Label>
           <Controller
             name="discountType"
             control={form.control}
             render={({ field }) => (
               <Select onValueChange={field.onChange} defaultValue={field.value} disabled={loading}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select discount type" />
+                  <SelectValue placeholder={t("coupons.form.selectDiscountTypePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="percentage">Percentage</SelectItem>
-                  <SelectItem value="fixedAmount">Fixed Amount</SelectItem>
+                  <SelectItem value="percentage">{t("coupons.form.percentage")}</SelectItem>
+                  <SelectItem value="fixedAmount">{t("coupons.form.fixedAmount")}</SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -117,7 +121,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
       </div>
 
       <div>
-        <Label htmlFor="discountValue">Discount Value</Label>
+        <Label htmlFor="discountValue">{t("coupons.form.discountValueLabel")}</Label>
         <Input id="discountValue" type="number" step="0.01" {...form.register("discountValue")} disabled={loading} />
         {form.formState.errors.discountValue && (
           <p className="text-sm text-red-500 mt-1">{form.formState.errors.discountValue.message}</p>
@@ -125,13 +129,13 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
       </div>
 
       <div>
-        <Label htmlFor="description">Description (Optional)</Label>
+        <Label htmlFor="description">{t("coupons.form.descriptionLabel")} (Optional)</Label>
         <Textarea id="description" {...form.register("description")} disabled={loading} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="validFrom">Valid From</Label>
+          <Label htmlFor="validFrom">{t("coupons.form.validFromLabel")}</Label>
           <Controller
             name="validFrom"
             control={form.control}
@@ -146,8 +150,8 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                     )}
                     disabled={loading}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {field.value ? formatDate(field.value) : <span>Pick a date</span>}
+                    <CalendarIcon className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
+                    {field.value ? formatDate(field.value) : <span>{t("common.pickDate")}</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -161,7 +165,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
           )}
         </div>
         <div>
-          <Label htmlFor="validUntil">Valid Until</Label>
+          <Label htmlFor="validUntil">{t("coupons.form.validUntilLabel")}</Label>
           <Controller
             name="validUntil"
             control={form.control}
@@ -176,8 +180,8 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                     )}
                     disabled={loading}
                   >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {field.value ? formatDate(field.value) : <span>Pick a date</span>}
+                    <CalendarIcon className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} />
+                    {field.value ? formatDate(field.value) : <span>{t("common.pickDate")}</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -200,14 +204,14 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="usageLimit">Total Usage Limit (0 for unlimited)</Label>
+          <Label htmlFor="usageLimit">{t("coupons.form.totalUsageLimitLabel")} (0 for unlimited)</Label>
           <Input id="usageLimit" type="number" {...form.register("usageLimit")} disabled={loading} />
           {form.formState.errors.usageLimit && (
             <p className="text-sm text-red-500 mt-1">{form.formState.errors.usageLimit.message}</p>
           )}
         </div>
         <div>
-          <Label htmlFor="usageLimitPerUser">Usage Limit Per User (0 for unlimited)</Label>
+          <Label htmlFor="usageLimitPerUser">{t("coupons.form.usageLimitPerUserLabel")} (0 for unlimited)</Label>
           <Input id="usageLimitPerUser" type="number" {...form.register("usageLimitPerUser")} disabled={loading} />
           {form.formState.errors.usageLimitPerUser && (
             <p className="text-sm text-red-500 mt-1">{form.formState.errors.usageLimitPerUser.message}</p>
@@ -216,7 +220,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
       </div>
 
       <div>
-        <Label htmlFor="assignedPartnerId">Assign to Partner (Optional)</Label>
+        <Label htmlFor="assignedPartnerId">{t("coupons.form.assignToPartnerLabel")} (Optional)</Label>
         <Controller
           name="assignedPartnerId"
           control={form.control}
@@ -231,10 +235,10 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
               disabled={loading || partnersForSelect.length === 0}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a partner (optional)" />
+                <SelectValue placeholder={t("coupons.form.selectPartnerPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={NO_PARTNER_SELECTED_VALUE}>None</SelectItem>
+                <SelectItem value={NO_PARTNER_SELECTED_VALUE}>{t("common.none")}</SelectItem>
                 {partnersForSelect.map((partner) => (
                   <SelectItem key={partner.value} value={partner.value}>
                     {partner.label}
@@ -247,7 +251,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
       </div>
 
       <div>
-        <Label htmlFor="notesForPartner">Notes for Partner (Optional)</Label>
+        <Label htmlFor="notesForPartner">{t("coupons.form.notesForPartnerLabel")} (Optional)</Label>
         <Textarea id="notesForPartner" {...form.register("notesForPartner")} disabled={loading} />
       </div>
 
@@ -263,7 +267,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
           htmlFor="isActive"
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
-          Coupon is Active
+          {t("coupons.form.couponIsActiveLabel")}
         </Label>
       </div>
 
@@ -271,11 +275,11 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
 
       <div className="flex justify-end space-x-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button type="submit" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {initialData ? "Save Changes" : "Create Coupon"}
+          {loading && <Loader2 className={dir === "rtl" ? "ml-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4 animate-spin"} />}
+          {initialData ? t("common.saveChanges") : t("common.createCoupon")}
         </Button>
       </div>
     </form>

@@ -72,7 +72,32 @@
     "loadingData": "Loading data...",
     "quickNavigation": "Quick Navigation",
     "today": "Today",
-    "birthYear": "Birth Year"
+    "birthYear": "Birth Year",
+    "unlimited": "Unlimited",
+    "noDescription": "No description",
+    "code": "Code",
+    "description": "Description",
+    "discount": "Discount",
+    "validFrom": "Valid From",
+    "validUntil": "Valid Until",
+    "usage": "Usage",
+    "assignedPartner": "Assigned Partner",
+    "statusScheduled": "Scheduled",
+    "statusExpired": "Expired",
+    "statusInactiveManual": "Inactive",
+    "copied": "Copied!",
+    "copyFailed": "Failed to copy code.",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOutOf": "Page {{currentPage}} of {{totalPages}}",
+    "totalCoupons": "Total Coupons: {{count}}",
+    "createCoupon": "Create Coupon",
+    "editCoupon": "Edit Coupon",
+    "deleteCoupon": "Delete Coupon",
+    "confirmDeleteTitle": "Are you sure?",
+    "deleting": "Deleting...",
+    "pickADate": "Pick a date",
+    "saveChanges": "Save Changes"
   },
   "dashboard": {
     "sidebar": {
@@ -896,5 +921,55 @@
       "friday": "Friday",
       "saturday": "Saturday"
     }
+  },
+  "coupons": {
+    "manageTitle": "Manage Coupons",
+    "manageHeading": "Coupons Management",
+    "manageDescription": "Create and manage coupons for your platform.",
+    "myAssignedTitle": "My Assigned Coupons",
+    "myAssignedHeading": "My Assigned Coupons",
+    "myAssignedDescription": "View coupons assigned to you for distribution.",
+    "code": "Code",
+    "description": "Description",
+    "discount": "Discount",
+    "form": {
+      "createTitle": "Create New Coupon",
+      "createDescription": "Fill in the details to create a new coupon.",
+      "editTitle": "Edit Coupon",
+      "editDescription": "Update the details of this coupon.",
+      "codeLabel": "Coupon Code",
+      "discountTypeLabel": "Discount Type",
+      "discountValueLabel": "Discount Value",
+      "descriptionOptionalLabel": "Description (Optional)",
+      "validFromLabel": "Valid From",
+      "validUntilLabel": "Valid Until",
+      "totalUsageLimitLabel": "Total Usage Limit (0 for unlimited)",
+      "usageLimitPerUserLabel": "Usage Limit Per User (0 for unlimited)",
+      "assignToPartnerOptionalLabel": "Assign to Partner (Optional)",
+      "selectPartnerOptionalPlaceholder": "Select a partner (optional)",
+      "noPartnerSelected": "None",
+      "notesForPartnerOptionalLabel": "Notes for Partner (Optional)",
+      "couponIsActiveLabel": "Coupon is Active"
+    },
+    "status": {
+      "active": "Active",
+      "scheduled": "Scheduled",
+      "expired": "Expired",
+      "inactiveManual": "Inactive"
+    },
+    "actions": {
+      "edit": "Edit Coupon",
+      "delete": "Delete Coupon"
+    },
+    "notifications": {
+      "copied": "Copied!",
+      "copyFailed": "Failed to copy code.",
+      "codeCopiedToClipboard": "Coupon code \"{{code}}\" copied to clipboard."
+    }
+  },
+  "partnerCoupons": {
+    "loading": "Loading coupons...",
+    "noneAssigned": "No coupons have been assigned to you yet.",
+    "totalAssigned": "Total Assigned Coupons: {{count}}"
   }
 }

@@ -69,7 +69,21 @@
     "locale": "ru-RU",
     "selectPlaceholder": "Выберите...",
     "optional": "Необязательно",
-    "loadingData": "Загрузка данных..."
+    "loadingData": "Загрузка данных...",
+    "unlimited": "Безлимитный",
+    "noDescription": "Нет описания",
+    "copied": "Скопировано!",
+    "copyFailed": "Ошибка копирования.",
+    "previousPage": "Назад",
+    "nextPage": "Вперед",
+    "pageOutOf": "Страница {{currentPage}} из {{totalPages}}",
+    "totalCoupons": "Всего купонов: {{count}}",
+    "createCoupon": "Создать купон",
+    "confirmDeleteTitle": "Вы уверены?",
+    "confirmDeleteCouponDescription": "Это действие нельзя отменить. Это приведет к необратимому удалению купона.",
+    "deleting": "Удаление...",
+    "saveChanges": "Сохранить изменения",
+    "adminNote": "Примечание администратора:"
   },
   "dashboard": {
     "sidebar": {
@@ -425,7 +439,10 @@
   "partnerCoupons": {
     "title": "Купоны партнера",
     "description": "Управление купонами партнера",
-    "noCoupons": "Купоны партнера не найдены"
+    "noCoupons": "Купоны партнера не найдены",
+    "loading": "Загрузка купонов...",
+    "noneAssigned": "Вам еще не назначено ни одного купона.",
+    "totalAssigned": "Всего назначенных купонов: {{count}}"
   },
   "memberCoupons": {
     "title": "Купоны участника",
@@ -893,6 +910,59 @@
       "thursday": "Четверг",
       "friday": "Пятница",
       "saturday": "Суббота"
+    }
+  },
+  "coupons": {
+    "manageTitle": "Управление купонами",
+    "manageHeading": "Управление купонами",
+    "manageDescription": "Создавайте и управляйте купонами для вашей платформы.",
+    "myAssignedTitle": "Мои назначенные купоны",
+    "myAssignedHeading": "Мои назначенные купоны",
+    "myAssignedDescription": "Просмотр купонов, назначенных вам для распространения.",
+    "code": "Код",
+    "description": "Описание",
+    "discount": "Скидка",
+    "validFrom": "Действителен с",
+    "validUntil": "Действителен до",
+    "usage": "Использование",
+    "assignedPartner": "Назначенный партнер",
+    "form": {
+      "createTitle": "Создать новый купон",
+      "createDescription": "Заполните детали для создания нового купона.",
+      "editTitle": "Редактировать купон",
+      "editDescription": "Обновите детали этого купона.",
+      "codeLabel": "Код купона",
+      "discountTypeLabel": "Тип скидки",
+      "selectDiscountTypePlaceholder": "Выберите тип скидки",
+      "percentage": "Процент",
+      "fixedAmount": "Фиксированная сумма",
+      "discountValueLabel": "Размер скидки",
+      "descriptionOptionalLabel": "Описание (необязательно)",
+      "validFromLabel": "Действителен с",
+      "validUntilLabel": "Действителен до",
+      "pickADate": "Выберите дату",
+      "totalUsageLimitLabel": "Общий лимит использования (0 для безлимитного)",
+      "usageLimitPerUserLabel": "Лимит использования на пользователя (0 для безлимитного)",
+      "assignToPartnerOptionalLabel": "Назначить партнеру (необязательно)",
+      "selectPartnerOptionalPlaceholder": "Выберите партнера (необязательно)",
+      "noPartnerSelected": "Нет",
+      "notesForPartnerOptionalLabel": "Примечания для партнера (необязательно)",
+      "couponIsActiveLabel": "Купон активен"
+    },
+    "status": {
+      "active": "Активен",
+      "scheduled": "Запланирован",
+      "expired": "Истек",
+      "inactiveManual": "Неактивен"
+    },
+    "actions": {
+      "edit": "Редактировать купон",
+      "delete": "Удалить купон"
+    },
+    "notifications": {
+      "copied": "Скопировано!",
+      "copyFailed": "Не удалось скопировать код.",
+      "codeCopiedToClipboard": "Код купона \"{{code}}\" скопирован в буфер обмена."
     }
   }
 }

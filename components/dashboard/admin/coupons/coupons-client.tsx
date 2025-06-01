@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
+import { useTranslation } from "next-intl"
 
 interface CouponsClientProps {
   initialData: Awaited<ReturnType<typeof getAdminCoupons>>
@@ -31,6 +32,8 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const { t, i18n } = useTranslation() // Assuming default namespace or specify one e.g. useTranslation('coupons')
+  const dir = i18n.dir()
 
   const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData.coupons)
   const [pagination, setPagination] = React.useState({
@@ -69,7 +72,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
     try {
       const result = await deleteCoupon(couponToDelete)
       if (result.success) {
-        toast({ title: "Success", description: result.message })
+        toast({ title: t("common.success"), description: t(result.message) })
         // Refetch or update local state
         // For now, just filter out:
         setCoupons((prev) => prev.filter((c) => c._id !== couponToDelete))
@@ -97,7 +100,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
       }
 
       if (result.success) {
-        toast({ title: "Success", description: result.message })
+        toast({ title: t("common.success"), description: result.message })
         setIsFormOpen(false)
         setEditingCoupon(null)
         // TODO: Refetch data or update local state more robustly
@@ -113,9 +116,25 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
     }
   }
 
+  const onEdit = React.useCallback(
+    (coupon: ICoupon) => {
+      setEditingCoupon(coupon)
+      setIsFormOpen(true)
+    },
+    [setEditingCoupon, setIsFormOpen],
+  )
+
+  const onDeleteRequest = React.useCallback(
+    (couponId: string) => {
+      setCouponToDelete(couponId)
+      setIsDeleteDialogOpen(true)
+    },
+    [setCouponToDelete, setIsDeleteDialogOpen],
+  )
+
   const columns = React.useMemo(
-    () => couponColumns({ onEdit: handleEdit, onDelete: handleDeleteRequest }),
-    [handleEdit, handleDeleteRequest],
+    () => couponColumns({ onEdit: onEdit, onDelete: onDeleteRequest, t, dir }),
+    [onEdit, onDeleteRequest, t, dir],
   )
 
   return (
@@ -123,7 +142,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
       <div className="flex items-center justify-between mb-4">
         {/* Add Filters here if needed */}
         <Button onClick={handleCreateNew} disabled={loading}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Create Coupon
+          <PlusCircle className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("common.createCoupon")}
         </Button>
       </div>
 
@@ -137,7 +156,9 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
         // onPageChange={(page) => router.push(`/dashboard/admin/coupons?page=${page}`)}
         // loading={loading}
       />
-      <p className="text-sm text-muted-foreground mt-2">Total Coupons: {pagination.totalCoupons}</p>
+      <p className="text-sm text-muted-foreground mt-2">
+        {t("common.totalCoupons", { count: pagination.totalCoupons })}
+      </p>
 
       <Dialog
         open={isFormOpen}
@@ -150,7 +171,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
       >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>{editingCoupon ? "Edit Coupon" : "Create New Coupon"}</DialogTitle>
+            <DialogTitle>{editingCoupon ? t("coupons.form.editTitle") : t("coupons.form.createTitle")}</DialogTitle>
             <DialogDescription>
               {editingCoupon ? "Update the details of this coupon." : "Fill in the details to create a new coupon."}
             </DialogDescription>
@@ -168,19 +189,17 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the coupon.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("common.confirmDeleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("common.confirmDeleteCouponDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading}>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={loading}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {loading ? "Deleting..." : "Delete"}
+              {loading ? t("common.deleting") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

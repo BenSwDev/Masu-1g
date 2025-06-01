@@ -44,29 +44,3 @@ export function formatCurrency(amount: number, currency = "ILS"): string {
     return `${amount.toFixed(2)} ${currency}`
   }
 }
-
-interface ActionResponse<T = any> {
-  success: boolean
-  message?: string
-  data?: T
-  error?: string | Record<string, string[]> | { _errors?: string[] } // Adjusted for Zod-like errors
-}
-
-export function sendSuccess<T>(message: string, data?: T): ActionResponse<T> {
-  return {
-    success: true,
-    message,
-    data,
-  }
-}
-
-export function sendError(
-  message: string,
-  errorDetails?: string | Record<string, string[]> | { _errors?: string[] },
-): ActionResponse<null> {
-  return {
-    success: false,
-    message,
-    error: errorDetails || message,
-  }
-}

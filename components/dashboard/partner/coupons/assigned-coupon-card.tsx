@@ -7,68 +7,64 @@ import { formatDate, formatCurrency } from "@/lib/utils/utils"
 import { CheckCircle, Info, Copy, Clock, AlertTriangle, PowerOff } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Button } from "@/components/common/ui/button"
-import { useTranslation, type UseTranslation } from "next-intl"
-import React from "react"
+import { useTranslation } from "@/lib/translations/i18n" // Corrected import
+import type React from "react"
 
 interface AssignedCouponCardProps {
-  coupon: ICoupon & { effectiveStatus: string } // Added effectiveStatus
+  coupon: ICoupon & { effectiveStatus: string }
 }
 
-const StatusBadge = ({ status, t }: { status: string; t: UseTranslation["t"] }) => {
-  const { i18n } = useTranslation()
-  let text = status
+// Extracted StatusBadge to its own component for clarity and reusability if needed elsewhere
+const CouponStatusBadge = ({ statusKey }: { statusKey: string }) => {
+  const { t, dir } = useTranslation()
+  let text = statusKey
   let badgeVariant: "default" | "outline" | "destructive" | "secondary" = "outline"
-  let icon = null
-  let className = ""
+  let IconComponent: React.ElementType | null = null
+  let className = "text-xs" // Base class
 
-  switch (status) {
+  switch (statusKey) {
     case "active":
       text = t("coupons.status.active")
       badgeVariant = "default"
-      icon = <CheckCircle className="mr-1 h-3 w-3" /> // Adjust margin with dir later
+      IconComponent = CheckCircle
       className = "bg-green-500 hover:bg-green-600 text-xs"
       break
     case "scheduled":
       text = t("coupons.status.scheduled")
       badgeVariant = "outline"
-      icon = <Clock className="mr-1 h-3 w-3" />
+      IconComponent = Clock
       className = "border-blue-500 text-blue-700 text-xs"
       break
     case "expired":
       text = t("coupons.status.expired")
       badgeVariant = "destructive"
-      icon = <AlertTriangle className="mr-1 h-3 w-3" />
+      IconComponent = AlertTriangle
       className = "bg-orange-500 hover:bg-orange-600 text-xs"
       break
-    case "inactive_manual":
+    case "inactive_manual": // Manually set to inactive by admin
       text = t("coupons.status.inactiveManual")
       badgeVariant = "secondary"
-      icon = <PowerOff className="mr-1 h-3 w-3" />
+      IconComponent = PowerOff
       className = "text-xs"
       break
     default:
-      text = status // Fallback for unknown statuses
+      text = statusKey // Fallback for unknown statuses
       break
   }
-  // Adjust icon margin based on dir
-  const iconMarginClass = i18n.dir() === "rtl" ? "ml-1" : "mr-1"
-  if (icon && icon.props.className) {
-    icon = React.cloneElement(icon, {
-      className: `${icon.props.className.replace(/mr-1|ml-1/, "")} ${iconMarginClass}`,
-    })
-  }
+
+  const iconMarginClass = dir === "rtl" ? "ml-1" : "mr-1"
 
   return (
     <Badge variant={badgeVariant} className={className}>
-      {icon} {text}
+      {IconComponent && <IconComponent className={`h-3 w-3 ${iconMarginClass}`} />}
+      {text}
     </Badge>
   )
 }
 
 export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) {
   const { toast } = useToast()
-  const { t, i18n } = useTranslation()
-  const dir = i18n.dir()
+  const { t, dir } = useTranslation() // Using custom hook
 
   const handleCopyCode = () => {
     navigator.clipboard
@@ -80,16 +76,24 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
         })
       })
       .catch((_err) => {
+        // Consider translating this generic error too if needed
         toast({ title: "Error", description: "Failed to copy code.", variant: "destructive" })
       })
   }
+
+  const infoIconMarginClass = dir === "rtl" ? "ml-1" : "mr-1"
 
   return (
     <Card className="flex flex-col">
       <CardHeader>
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg">{coupon.code}</CardTitle>
-          <Button variant="ghost" size="sm" onClick={handleCopyCode} aria-label="Copy coupon code">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopyCode}
+            aria-label={t("coupons.copyCodeAriaLabel") || "Copy coupon code"}
+          >
             <Copy className="h-4 w-4" />
           </Button>
         </div>
@@ -110,12 +114,11 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
         </div>
         <div className="flex justify-between items-center">
           <span>{t("coupons.status.label")}:</span>
-          <StatusBadge status={coupon.effectiveStatus} t={t} />
+          <CouponStatusBadge statusKey={coupon.effectiveStatus} />
         </div>
         <div className="flex justify-between">
           <span>{t("coupons.totalUses")}:</span>
           <span className="font-semibold">
-            {/* Ensuring usageLimit is treated as a number for comparison */}
             {coupon.timesUsed} / {Number(coupon.usageLimit) === 0 ? t("common.unlimited") : coupon.usageLimit}
           </span>
         </div>
@@ -128,7 +131,7 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
         {coupon.notesForPartner && (
           <div className="pt-2">
             <p className="text-xs font-semibold text-muted-foreground flex items-center">
-              <Info className={dir === "rtl" ? "ml-1 h-3 w-3" : "mr-1 h-3 w-3"} /> {t("coupons.adminNote")}
+              <Info className={`h-3 w-3 ${infoIconMarginClass} text-sky-600`} /> {t("partnerCoupons.adminNote")}:
             </p>
             <p className="text-xs text-muted-foreground pl-1 bg-slate-50 dark:bg-slate-800 p-2 rounded-md">
               {coupon.notesForPartner}

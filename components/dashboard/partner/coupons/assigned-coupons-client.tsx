@@ -1,13 +1,13 @@
 "use client"
 
 import * as React from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation" // Removed useSearchParams as it's not used
 import type { ICoupon } from "@/lib/db/models/coupon"
 import type { getAssignedPartnerCoupons } from "@/actions/coupon-actions"
 import AssignedCouponCard from "./assigned-coupon-card"
-import { Button } from "@/components/common/ui/button" // For pagination if needed
-// import { Input } from '@/components/common/ui/input'; // For filters if needed
-import { useTranslation } from "next-intl"
+import { Button } from "@/components/common/ui/button"
+import { useTranslation } from "@/lib/translations/i18n" // Corrected import
+import { Heading } from "@/components/common/ui/heading" // Added Heading import
 
 interface AssignedCouponsClientProps {
   initialData: Awaited<ReturnType<typeof getAssignedPartnerCoupons>>
@@ -15,7 +15,7 @@ interface AssignedCouponsClientProps {
 
 export default function AssignedCouponsClient({ initialData }: AssignedCouponsClientProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
+  // const searchParams = useSearchParams(); // Not used in the current logic
 
   const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData.coupons)
   const [pagination, setPagination] = React.useState({
@@ -23,31 +23,38 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
     currentPage: initialData.currentPage,
     totalCoupons: initialData.totalCoupons,
   })
-  const [loading, setLoading] = React.useState(false)
+  const [loading, setLoading] = React.useState(false) // Keep for potential future use (e.g., client-side filtering)
 
-  const { t, i18n } = useTranslation() // Assuming default namespace or specify one e.g. useTranslation('partnerCoupons')
-  const dir = i18n.dir()
+  const { t, dir } = useTranslation() // Using custom hook
 
-  // Add filtering or pagination logic here if needed, similar to admin client
+  // Update document title dynamically on the client
+  React.useEffect(() => {
+    if (t) {
+      document.title = t("partnerCoupons.myAssignedTitle")
+    }
+  }, [t])
 
   if (loading && coupons.length === 0) {
-    // Could show a more specific loading state for the list
     return <p>{t("partnerCoupons.loading")}</p>
   }
 
-  if (!loading && coupons.length === 0) {
-    return <p>{t("partnerCoupons.noneAssigned")}</p>
-  }
-
   return (
-    <div>
-      {/* Add Filters here if needed */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {coupons.map((coupon) => (
-          <AssignedCouponCard key={coupon._id.toString()} coupon={coupon} t={t} dir={dir} />
-        ))}
-      </div>
-      {/* Add Pagination controls here if totalPages > 1 */}
+    <>
+      <Heading
+        title={t("partnerCoupons.myAssignedHeading")}
+        description={t("partnerCoupons.myAssignedDescription")}
+        dir={dir}
+      />
+      {coupons.length === 0 && !loading && <p>{t("partnerCoupons.noneAssigned")}</p>}
+
+      {coupons.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+          {coupons.map((coupon) => (
+            <AssignedCouponCard key={coupon._id.toString()} coupon={coupon} />
+          ))}
+        </div>
+      )}
+
       {pagination.totalPages > 1 && (
         <div className="mt-8 flex justify-center space-x-2">
           <Button
@@ -70,6 +77,6 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
       <p className="text-sm text-muted-foreground mt-4 text-center">
         {t("partnerCoupons.totalAssigned", { count: pagination.totalCoupons })}
       </p>
-    </div>
+    </>
   )
 }

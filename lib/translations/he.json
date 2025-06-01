@@ -1,65 +1,36 @@
 {
+  "partnerCoupons": {
+    "myAssignedTitle": "הקופונים שהוקצו לי",
+    "myAssignedHeading": "הקופונים שהוקצו לי",
+    "myAssignedDescription": "צפה בקופונים שהוקצו לך להפצה.",
+    "loading": "טוען קופונים...",
+    "noneAssigned": "עדיין לא הוקצו לך קופונים.",
+    "totalAssigned": "סה\"כ קופונים שהוקצו: {count}",
+    "adminNote": "הערת מנהל"
+  },
   "coupons": {
-    "manageTitle": "ניהול קופונים",
-    "manageHeading": "ניהול קופונים",
-    "manageDescription": "צור ונהל קופונים עבור הפלטפורמה שלך.",
-    "deleteSuccessMessage": "הקופון נמחק בהצלחה.",
-    "form": {
-      "editTitle": "ערוך קופון",
-      "createTitle": "צור קופון חדש",
-      "editDescription": "עדכן את פרטי הקופון.",
-      "createDescription": "מלא את הפרטים ליצירת קופון חדש.",
-      "codeLabel": "קוד קופון",
-      "discountTypeLabel": "סוג הנחה",
-      "selectDiscountTypePlaceholder": "בחר סוג הנחה",
-      "percentage": "אחוזים",
-      "fixedAmount": "סכום קבוע",
-      "discountValueLabel": "ערך הנחה",
-      "descriptionLabel": "תיאור",
-      "validFromLabel": "בתוקף מ-",
-      "validUntilLabel": "בתוקף עד-",
-      "totalUsageLimitLabel": "מגבלת שימוש כוללת",
-      "usageLimitPerUserLabel": "מגבלת שימוש למשתמש",
-      "assignToPartnerLabel": "הקצה לשותף",
-      "selectPartnerPlaceholder": "בחר שותף (אופציונלי)",
-      "notesForPartnerLabel": "הערות לשותף",
-      "couponIsActiveLabel": "הקופון פעיל"
-    },
     "status": {
       "active": "פעיל",
       "scheduled": "מתוזמן",
       "expired": "פג תוקף",
-      "inactive": "לא פעיל"
+      "inactiveManual": "לא פעיל",
+      "label": "סטטוס"
     },
-    "code": "קוד",
-    "description": "תיאור",
     "discount": "הנחה",
-    "validFrom": "בתוקף מ-",
-    "validUntil": "בתוקף עד-",
-    "statusHeader": "סטטוס",
-    "usage": "שימוש",
-    "assignedPartner": "שותף משויך",
-    "actions": {
-      "edit": "עריכה",
-      "delete": "מחיקה"
+    "validity": "בתוקף",
+    "totalUses": "סה\"כ שימושים",
+    "usesPerCustomer": "שימושים ללקוח",
+    "notifications": {
+      "codeCopiedToClipboard": "קוד קופון \"{code}\" הועתק ללוח."
     }
   },
   "common": {
-    "success": "הצלחה",
-    "error": "שגיאה",
-    "loading": "טוען...",
-    "pickDate": "בחר תאריך",
-    "none": "ללא",
-    "cancel": "ביטול",
-    "delete": "מחק",
-    "deleting": "מוחק...",
-    "saveChanges": "שמור שינויים",
-    "createCoupon": "צור קופון",
-    "totalCoupons": "סה\"כ קופונים: {count}",
-    "confirmDeleteTitle": "האם אתה בטוח?",
-    "confirmDeleteCouponDescription": "פעולה זו אינה ניתנת לשחזור. פעולה זו תמחק את הקופון לצמיתות.",
-    "notApplicable": "לא זמין",
-    "unlimited": "∞",
-    "actions": "פעולות"
+    "previousPage": "הקודם",
+    "nextPage": "הבא",
+    "pageOutOf": "עמוד {currentPage} מתוך {totalPages}",
+    "copied": "הועתק!",
+    "noDescription": "אין תיאור",
+    "unlimited": "ללא הגבלה",
+    "createdAt": "נוצר ב"
   }
 }

@@ -1,65 +1,36 @@
 {
+  "partnerCoupons": {
+    "myAssignedTitle": "Мои назначенные купоны",
+    "myAssignedHeading": "Мои назначенные купоны",
+    "myAssignedDescription": "Просмотр купонов, назначенных вам для распространения.",
+    "loading": "Загрузка купонов...",
+    "noneAssigned": "Вам еще не назначено ни одного купона.",
+    "totalAssigned": "Всего назначенных купонов: {count}",
+    "adminNote": "Примечание администратора"
+  },
   "coupons": {
-    "manageTitle": "Управление купонами",
-    "manageHeading": "Управление купонами",
-    "manageDescription": "Создавайте и управляйте купонами для вашей платформы.",
-    "deleteSuccessMessage": "Купон успешно удален.",
-    "form": {
-      "editTitle": "Редактировать купон",
-      "createTitle": "Создать новый купон",
-      "editDescription": "Обновите детали этого купона.",
-      "createDescription": "Заполните детали для создания нового купона.",
-      "codeLabel": "Код купона",
-      "discountTypeLabel": "Тип скидки",
-      "selectDiscountTypePlaceholder": "Выберите тип скидки",
-      "percentage": "Процент",
-      "fixedAmount": "Фиксированная сумма",
-      "discountValueLabel": "Размер скидки",
-      "descriptionLabel": "Описание",
-      "validFromLabel": "Действителен с",
-      "validUntilLabel": "Действителен до",
-      "totalUsageLimitLabel": "Общий лимит использования",
-      "usageLimitPerUserLabel": "Лимит использования на пользователя",
-      "assignToPartnerLabel": "Назначить партнеру",
-      "selectPartnerPlaceholder": "Выберите партнера (необязательно)",
-      "notesForPartnerLabel": "Примечания для партнера",
-      "couponIsActiveLabel": "Купон активен"
-    },
     "status": {
       "active": "Активен",
       "scheduled": "Запланирован",
       "expired": "Истек",
-      "inactive": "Неактивен"
+      "inactiveManual": "Неактивен",
+      "label": "Статус"
     },
-    "code": "Код",
-    "description": "Описание",
     "discount": "Скидка",
-    "validFrom": "Действ. с",
-    "validUntil": "Действ. до",
-    "statusHeader": "Статус",
-    "usage": "Исп.",
-    "assignedPartner": "Назначенный партнер",
-    "actions": {
-      "edit": "Редакт.",
-      "delete": "Удалить"
+    "validity": "Действителен",
+    "totalUses": "Всего использований",
+    "usesPerCustomer": "Использований на клиента",
+    "notifications": {
+      "codeCopiedToClipboard": "Код купона \"{code}\" скопирован в буфер обмена."
     }
   },
   "common": {
-    "success": "Успех",
-    "error": "Ошибка",
-    "loading": "Загрузка...",
-    "pickDate": "Выберите дату",
-    "none": "Нет",
-    "cancel": "Отмена",
-    "delete": "Удалить",
-    "deleting": "Удаление...",
-    "saveChanges": "Сохранить изменения",
-    "createCoupon": "Создать купон",
-    "totalCoupons": "Всего купонов: {count}",
-    "confirmDeleteTitle": "Вы уверены?",
-    "confirmDeleteCouponDescription": "Это действие нельзя отменить. Купон будет удален навсегда.",
-    "notApplicable": "Н/Д",
-    "unlimited": "∞",
-    "actions": "Действия"
+    "previousPage": "Предыдущая",
+    "nextPage": "Следующая",
+    "pageOutOf": "Страница {currentPage} из {totalPages}",
+    "copied": "Скопировано!",
+    "noDescription": "Нет описания",
+    "unlimited": "Неограниченно",
+    "createdAt": "Создано"
   }
 }

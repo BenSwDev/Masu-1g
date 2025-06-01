@@ -1,65 +1,36 @@
 {
+  "partnerCoupons": {
+    "myAssignedTitle": "My Assigned Coupons",
+    "myAssignedHeading": "My Assigned Coupons",
+    "myAssignedDescription": "View coupons assigned to you for distribution.",
+    "loading": "Loading coupons...",
+    "noneAssigned": "No coupons have been assigned to you yet.",
+    "totalAssigned": "Total Assigned Coupons: {count}",
+    "adminNote": "Admin Note"
+  },
   "coupons": {
-    "manageTitle": "Manage Coupons",
-    "manageHeading": "Coupons Management",
-    "manageDescription": "Create and manage coupons for your platform.",
-    "deleteSuccessMessage": "Coupon deleted successfully.",
-    "form": {
-      "editTitle": "Edit Coupon",
-      "createTitle": "Create New Coupon",
-      "editDescription": "Update the details of this coupon.",
-      "createDescription": "Fill in the details to create a new coupon.",
-      "codeLabel": "Coupon Code",
-      "discountTypeLabel": "Discount Type",
-      "selectDiscountTypePlaceholder": "Select discount type",
-      "percentage": "Percentage",
-      "fixedAmount": "Fixed Amount",
-      "discountValueLabel": "Discount Value",
-      "descriptionLabel": "Description",
-      "validFromLabel": "Valid From",
-      "validUntilLabel": "Valid Until",
-      "totalUsageLimitLabel": "Total Usage Limit",
-      "usageLimitPerUserLabel": "Usage Limit Per User",
-      "assignToPartnerLabel": "Assign to Partner",
-      "selectPartnerPlaceholder": "Select a partner (optional)",
-      "notesForPartnerLabel": "Notes for Partner",
-      "couponIsActiveLabel": "Coupon is Active"
-    },
     "status": {
       "active": "Active",
       "scheduled": "Scheduled",
       "expired": "Expired",
-      "inactive": "Inactive"
+      "inactiveManual": "Inactive",
+      "label": "Status"
     },
-    "code": "Code",
-    "description": "Description",
     "discount": "Discount",
-    "validFrom": "Valid From",
-    "validUntil": "Valid Until",
-    "statusHeader": "Status",
-    "usage": "Usage",
-    "assignedPartner": "Assigned Partner",
-    "actions": {
-      "edit": "Edit",
-      "delete": "Delete"
+    "validity": "Valid",
+    "totalUses": "Total Uses",
+    "usesPerCustomer": "Uses Per Customer",
+    "notifications": {
+      "codeCopiedToClipboard": "Coupon code \"{code}\" copied to clipboard."
     }
   },
   "common": {
-    "success": "Success",
-    "error": "Error",
-    "loading": "Loading...",
-    "pickDate": "Pick a date",
-    "none": "None",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "deleting": "Deleting...",
-    "saveChanges": "Save Changes",
-    "createCoupon": "Create Coupon",
-    "totalCoupons": "Total Coupons: {count}",
-    "confirmDeleteTitle": "Are you sure?",
-    "confirmDeleteCouponDescription": "This action cannot be undone. This will permanently delete the coupon.",
-    "notApplicable": "N/A",
-    "unlimited": "∞",
-    "actions": "Actions"
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pageOutOf": "Page {currentPage} of {totalPages}",
+    "copied": "Copied!",
+    "noDescription": "No description",
+    "unlimited": "Unlimited",
+    "createdAt": "Created"
   }
 }

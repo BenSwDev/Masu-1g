@@ -33,6 +33,14 @@ interface PopulatedUserSubscription extends IUserSubscription {
   treatmentId: ITreatment
   selectedDurationDetails?: ITreatmentDuration
   paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+  // Add other optional fields from the modal if they might be accessed,
+  // or ensure the base IUserSubscription is accurate.
+  // For this specific fix, only purchaseDate and expiryDate are formatted here.
+  // These are required in the schema, but defensive coding in formatDate is still good.
+  cancellationDate?: Date | string | null
+  paymentDate?: Date | string | null
+  transactionId?: string | null
+  usedQuantity?: number
 }
 
 interface UserSubscriptionRowProps {
@@ -113,8 +121,17 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
     return <Badge className={`${config.className} font-medium`}>{config.label}</Badge>
   }
 
-  const formatDate = (date: Date | string) => {
-    return format(new Date(date), "dd/MM/yyyy", { locale: he })
+  const formatDate = (dateInput?: Date | string | null): string => {
+    if (!dateInput) {
+      // Assuming purchaseDate and expiryDate are always present as per schema,
+      // but this makes it robust.
+      return t("common.notAvailable")
+    }
+    const date = new Date(dateInput)
+    if (isNaN(date.getTime())) {
+      return t("common.notAvailable")
+    }
+    return format(date, "dd/MM/yyyy", { locale: he })
   }
 
   const maskCardNumber = (cardNumber?: string) => {

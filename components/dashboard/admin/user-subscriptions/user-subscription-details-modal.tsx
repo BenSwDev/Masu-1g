@@ -28,6 +28,10 @@ interface PopulatedUserSubscription extends IUserSubscription {
   treatmentId: ITreatment
   selectedDurationDetails?: ITreatmentDuration
   paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+  cancellationDate?: Date | string | null // Make optional
+  paymentDate?: Date | string | null // Make optional
+  transactionId?: string | null // Make optional
+  usedQuantity?: number // Make optional
 }
 
 interface UserSubscriptionDetailsModalProps {
@@ -45,8 +49,27 @@ export default function UserSubscriptionDetailsModal({
 
   if (!userSubscription) return null
 
-  const formatDate = (date: Date | string) => format(new Date(date), "dd/MM/yyyy", { locale: he })
-  const formatDateTime = (date: Date | string) => format(new Date(date), "dd/MM/yyyy HH:mm", { locale: he })
+  const formatDate = (dateInput?: Date | string | null): string => {
+    if (!dateInput) {
+      return t("common.notAvailable")
+    }
+    const date = new Date(dateInput)
+    if (isNaN(date.getTime())) {
+      return t("common.notAvailable")
+    }
+    return format(date, "dd/MM/yyyy", { locale: he })
+  }
+  const formatDateTime = (dateInput?: Date | string | null): string => {
+    if (!dateInput) {
+      return t("common.notAvailable")
+    }
+    const date = new Date(dateInput)
+    if (isNaN(date.getTime())) {
+      return t("common.notAvailable")
+    }
+    return format(date, "dd/MM/yyyy HH:mm", { locale: he })
+  }
+
   const maskCardNumber = (cardNumber?: string) => (cardNumber ? `**** ${cardNumber.slice(-4)}` : t("common.unknown"))
 
   const getStatusInfo = (status: string) => {

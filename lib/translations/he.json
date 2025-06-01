@@ -33,7 +33,6 @@
     "confirm": "אישור",
     "back": "חזרה",
     "next": "הבא",
-    "previous": "הקודם",
     "submit": "שלח",
     "all": "הכל",
     "deactivate": "השבת",
@@ -805,81 +804,6 @@
     "partner": "שותף",
     "professional": "מקצועי",
     "guest": "אורח"
-  },
-  "adminCoupons": {
-    "meta": {
-      "title": "ניהול קופונים"
-    },
-    "page": {
-      "title": "ניהול קופונים",
-      "description": "צור ונהל קופונים עבור הפלטפורמה שלך."
-    },
-    "client": {
-      "createCouponButton": "צור קופון",
-      "totalCouponsLabel": "סה״כ קופונים",
-      "editCouponTitle": "ערוך קופון",
-      "createCouponTitle": "צור קופון חדש",
-      "editCouponDescription": "עדכן את פרטי הקופון.",
-      "createCouponDescription": "מלא את הפרטים ליצירת קופון חדש.",
-      "deleteConfirmDescription": "לא ניתן לבטל פעולה זו. פעולה זו תמחק את הקופון לצמיתות.",
-      "deleteSuccessToast": "הקופון נמחק בהצלחה.",
-      "deleteErrorToast": "שגיאה במחיקת הקופון.",
-      "operationSuccessToast": "הפעולה הושלמה בהצלחה.",
-      "operationErrorToast": "הפעולה נכשלה."
-    },
-    "columns": {
-      "code": "קוד",
-      "description": "תיאור",
-      "discount": "הנחה",
-      "validFrom": "תקף מ",
-      "validUntil": "תקף עד",
-      "status": "סטטוס",
-      "usage": "שימוש",
-      "assignedPartner": "שותף משויך",
-      "unnamedPartner": "שותף ללא שם"
-    },
-    "status": {
-      "active": "פעיל",
-      "scheduled": "מתוזמן",
-      "expired": "פג תוקף",
-      "inactiveManual": "לא פעיל"
-    }
-  },
-  "partnerCoupons": {
-    "meta": {
-      "title": "הקופונים המשויכים שלי"
-    },
-    "page": {
-      "title": "הקופונים המשויכים שלי",
-      "description": "צפה בקופונים ששויכו אליך להפצה."
-    },
-    "card": {
-      "copiedToastTitle": "הועתק!",
-      "copiedToastDescription": "קוד קופון \"{{code}}\" הועתק ללוח.",
-      "copyErrorToastDescription": "שגיאה בהעתקת הקוד.",
-      "noDescription": "אין תיאור",
-      "discountLabel": "הנחה:",
-      "validLabel": "תקף:",
-      "statusLabel": "סטטוס:",
-      "totalUsesLabel": "סה״כ שימושים:",
-      "unlimitedUses": "ללא הגבלה",
-      "usesPerCustomerLabel": "שימושים ללקוח:",
-      "unlimitedUsesPerCustomer": "ללא הגבלה",
-      "adminNoteLabel": "הערת מנהל:",
-      "createdLabel": "נוצר:"
-    },
-    "client": {
-      "loadingCoupons": "טוען קופונים...",
-      "noCouponsAssigned": "לא שויכו אליך קופונים עדיין.",
-      "paginationPageInfo": "עמוד {{currentPage}} מתוך {{totalPages}}",
-      "totalAssignedCouponsLabel": "סה״כ קופונים משויכים:"
-    },
-    "status": {
-      "active": "פעיל",
-      "scheduled": "מתוזמן",
-      "expired": "פג תוקף",
-      "inactiveManual": "לא פעיל"
-    }
   },
   "partnerCoupons": {
     "title": "קופוני שותפים",

@@ -33,7 +33,6 @@
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
-    "previous": "Previous",
     "submit": "Submit",
     "all": "All",
     "deactivate": "Deactivate",
@@ -65,7 +64,7 @@
     "refresh": "Refresh",
     "processing": "Processing...",
     "unknownError": "An unknown error occurred.",
-    "failedToLoadTreatments": "Failed toload treatments.",
+    "failedToLoadTreatments": "Failed to load treatments.",
     "dir": "ltr",
     "locale": "en-US",
     "selectPlaceholder": "Select...",
@@ -429,41 +428,7 @@
   "partnerCoupons": {
     "title": "Partner Coupons",
     "description": "Manage partner coupons",
-    "noCoupons": "No partner coupons found",
-    "meta": {
-      "title": "My Assigned Coupons"
-    },
-    "page": {
-      "title": "My Assigned Coupons",
-      "description": "View coupons assigned to you for distribution."
-    },
-    "card": {
-      "copiedToastTitle": "Copied!",
-      "copiedToastDescription": "Coupon code \"{{code}}\" copied to clipboard.",
-      "copyErrorToastDescription": "Failed to copy code.",
-      "noDescription": "No description",
-      "discountLabel": "Discount:",
-      "validLabel": "Valid:",
-      "statusLabel": "Status:",
-      "totalUsesLabel": "Total Uses:",
-      "unlimitedUses": "Unlimited",
-      "usesPerCustomerLabel": "Uses Per Customer:",
-      "unlimitedUsesPerCustomer": "Unlimited",
-      "adminNoteLabel": "Admin Note:",
-      "createdLabel": "Created:"
-    },
-    "client": {
-      "loadingCoupons": "Loading coupons...",
-      "noCouponsAssigned": "No coupons have been assigned to you yet.",
-      "paginationPageInfo": "Page {{currentPage}} of {{totalPages}}",
-      "totalAssignedCouponsLabel": "Total Assigned Coupons:"
-    },
-    "status": {
-      "active": "Active",
-      "scheduled": "Scheduled",
-      "expired": "Expired",
-      "inactiveManual": "Inactive"
-    }
+    "noCoupons": "No partner coupons found"
   },
   "memberCoupons": {
     "title": "Member Coupons",
@@ -930,45 +895,6 @@
       "thursday": "Thursday",
       "friday": "Friday",
       "saturday": "Saturday"
-    }
-  },
-  "adminCoupons": {
-    "meta": {
-      "title": "Manage Coupons"
-    },
-    "page": {
-      "title": "Coupons Management",
-      "description": "Create and manage coupons for your platform."
-    },
-    "client": {
-      "createCouponButton": "Create Coupon",
-      "totalCouponsLabel": "Total Coupons",
-      "editCouponTitle": "Edit Coupon",
-      "createCouponTitle": "Create New Coupon",
-      "editCouponDescription": "Update the details of this coupon.",
-      "createCouponDescription": "Fill in the details to create a new coupon.",
-      "deleteConfirmDescription": "This action cannot be undone. This will permanently delete the coupon.",
-      "deleteSuccessToast": "Coupon deleted successfully.",
-      "deleteErrorToast": "Failed to delete coupon.",
-      "operationSuccessToast": "Operation successful.",
-      "operationErrorToast": "Operation failed."
-    },
-    "columns": {
-      "code": "Code",
-      "description": "Description",
-      "discount": "Discount",
-      "validFrom": "Valid From",
-      "validUntil": "Valid Until",
-      "status": "Status",
-      "usage": "Usage",
-      "assignedPartner": "Assigned Partner",
-      "unnamedPartner": "Unnamed Partner"
-    },
-    "status": {
-      "active": "Active",
-      "scheduled": "Scheduled",
-      "expired": "Expired",
-      "inactiveManual": "Inactive"
     }
   }
 }

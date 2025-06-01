@@ -34,15 +34,9 @@
     "back": "Back",
     "next": "Next",
     "submit": "Submit",
-    "previous": "Previous",
-    "page": "Page",
-    "roles": "Roles",
-    "sortField": "Sort by",
-    "sortDirection": "Sort direction",
     "all": "All",
     "deactivate": "Deactivate",
     "activate": "Activate",
-    "created": "Created",
     "view": "View",
     "duplicate": "Duplicate",
     "comingSoon": "Coming soon",
@@ -51,7 +45,6 @@
     "reset": "Reset",
     "searching": "Searching...",
     "pickDate": "Pick a date",
-    "update": "Update",
     "deleting": "Deleting...",
     "expired": "Expired",
     "depleted": "Depleted",
@@ -76,7 +69,10 @@
     "locale": "en-US",
     "selectPlaceholder": "Select...",
     "optional": "Optional",
-    "loadingData": "Loading data..."
+    "loadingData": "Loading data...",
+    "quickNavigation": "Quick Navigation",
+    "today": "Today",
+    "birthYear": "Birth Year"
   },
   "dashboard": {
     "sidebar": {

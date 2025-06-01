@@ -805,10 +805,102 @@
     "professional": "מקצועי",
     "guest": "אורח"
   },
-  "partnerCoupons": {
-    "title": "קופוני שותפים",
-    "description": "ניהול קופוני שותפים",
-    "noCoupons": "לא נמצאו קופוני שותפים"
+  "adminCoupons": {
+    "title": "ניהול קופונים",
+    "description": "צור, ערוך ונהל את כל הקופונים במערכת.",
+    "createNew": "צור קופון חדש",
+    "editCoupon": "ערוך קופון",
+    "createCoupon": "צור קופון חדש",
+    "formDescriptionEdit": "עדכן את פרטי הקופון.",
+    "formDescriptionCreate": "מלא את הפרטים ליצירת קופון חדש.",
+    "deleteConfirmTitle": "האם אתה בטוח?",
+    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו. פעולה זו תמחק את הקופון לצמיתות.",
+    "deleting": "מוחק...",
+    "totalCoupons": "סה\"כ קופונים: {{count}}",
+    "successCreate": "הקופון נוצר בהצלחה.",
+    "successUpdate": "הקופון עודכן בהצלחה.",
+    "successDelete": "הקופון נמחק בהצלחה.",
+    "errorCreate": "שגיאה ביצירת הקופון.",
+    "errorUpdate": "שגיאה בעדכון הקופון.",
+    "errorDelete": "שגיאה במחיקת הקופון.",
+    "errorFetchPartners": "שגיאה בטעינת שותפים לבחירה.",
+    "columns": {
+      "code": "קוד",
+      "description": "תיאור",
+      "discount": "הנחה",
+      "validFrom": "תקף מ-",
+      "validUntil": "תקף עד",
+      "status": "סטטוס",
+      "usage": "שימוש",
+      "assignedPartner": "שותף משויך"
+    },
+    "statusBadges": {
+      "active": "פעיל",
+      "scheduled": "מתוזמן",
+      "expired": "פג תוקף",
+      "inactive_manual": "לא פעיל"
+    },
+    "partnerSelectPlaceholder": "בחר שותף (אופציונלי)",
+    "noPartnersFound": "לא נמצאו שותפים",
+    "unlimited": "ללא הגבלה",
+    "notesForPartner": "הערות לשותף (אופציונלי)",
+    "notesForPartnerPlaceholder": "הערות אלו יהיו גלויות לשותף המשויך.",
+    "fields": {
+      "code": "קוד קופון",
+      "description": "תיאור (אופציונלי)",
+      "discountType": "סוג הנחה",
+      "discountValue": "ערך הנחה",
+      "validFrom": "תקף מ-",
+      "validUntil": "תקף עד",
+      "usageLimit": "הגבלת שימוש (0 ללא הגבלה)",
+      "usageLimitPerUser": "הגבלת שימוש למשתמש (0 ללא הגבלה)",
+      "assignedPartnerId": "שייך לשותף (אופציונלי)",
+      "isActive": "האם פעיל",
+      "notesForPartner": "הערות לשותף (אופציונלי)"
+    },
+    "discountTypes": {
+      "percentage": "אחוז",
+      "fixed_amount": "סכום קבוע"
+    },
+    "errors": {
+      "codeRequired": "קוד קופון נדרש.",
+      "codeMinLength": "קוד קופון חייב להכיל לפחות 3 תווים.",
+      "discountValueRequired": "ערך הנחה נדרש.",
+      "discountValuePositive": "ערך הנחה חייב להיות חיובי.",
+      "percentageMax": "הנחת אחוז לא יכולה לעלות על 100.",
+      "validFromRequired": "תאריך תחילת תוקף נדרש.",
+      "validUntilRequired": "תאריך סיום תוקף נדרש.",
+      "validUntilAfterFrom": "תאריך סיום תוקף חייב להיות אחרי תאריך תחילת תוקף.",
+      "usageLimitInteger": "הגבלת שימוש חייבת להיות מספר שלם.",
+      "usageLimitMin": "הגבלת שימוש חייבת להיות 0 או יותר.",
+      "usageLimitPerUserInteger": "הגבלת שימוש למשתמש חייבת להיות מספר שלם.",
+      "usageLimitPerUserMin": "הגבלת שימוש למשתמש חייבת להיות 0 או יותר."
+    }
+  },
+  "partnerAssignedCoupons": {
+    "title": "קופונים שהוקצו לי",
+    "description": "צפה בקופונים שהוקצו לך על ידי המנהל.",
+    "noCoupons": "עדיין לא הוקצו לך קופונים.",
+    "loading": "טוען קופונים...",
+    "totalAssignedCoupons": "סה\"כ קופונים שהוקצו: {{count}}",
+    "card": {
+      "discount": "הנחה:",
+      "validPeriod": "תקף:",
+      "status": "סטטוס:",
+      "totalUses": "סה\"כ שימושים:",
+      "usesPerCustomer": "שימושים ללקוח:",
+      "adminNote": "הערת מנהל:",
+      "created": "נוצר:",
+      "copyCodeLabel": "העתק קוד קופון",
+      "copiedSuccess": "הועתק!",
+      "copiedMessage": "קוד קופון \"{{code}}\" הועתק ללוח.",
+      "copyError": "שגיאה בהעתקת הקוד."
+    },
+    "pagination": {
+      "previous": "הקודם",
+      "next": "הבא",
+      "pageInfo": "עמוד {{currentPage}} מתוך {{totalPages}}"
+    }
   },
   "memberCoupons": {
     "title": "קופוני חבר",

@@ -63,7 +63,7 @@ interface UserFormDialogProps {
 }
 
 export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }: UserFormDialogProps) {
-  const { t, i18n } = useTranslation()
+  const { t, language } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const isEditing = !!initialData
 
@@ -164,188 +164,192 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] md:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[425px] md:max-w-lg max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{isEditing ? t("admin.users.editUserTitle") : t("admin.users.createUserTitle")}</DialogTitle>
           <DialogDescription>
             {isEditing ? t("admin.users.editUserDescription") : t("admin.users.createUserDescription")}
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.form.name")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t("admin.users.form.namePlaceholder")} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.form.email")}</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder={t("admin.users.form.emailPlaceholder")} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.form.phone")}</FormLabel>
-                  <FormControl>
-                    {/* Consider using a dedicated PhoneInput component if available */}
-                    <Input type="tel" placeholder={t("admin.users.form.phonePlaceholder")} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {!isEditing && (
+
+        <div className="flex-1 overflow-y-auto px-1">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
               <FormField
                 control={form.control}
-                name="password"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.users.form.password")}</FormLabel>
+                    <FormLabel>{t("admin.users.form.name")}</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder={t("admin.users.form.passwordPlaceholder")} {...field} />
+                      <Input placeholder={t("admin.users.form.namePlaceholder")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
-                name="role"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.users.form.role")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("admin.users.form.rolePlaceholder")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableRoles.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {t(`roles.${role.toLowerCase()}`, role)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>{t("admin.users.form.email")}</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder={t("admin.users.form.emailPlaceholder")} {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 control={form.control}
-                name="gender"
+                name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.users.form.gender")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("admin.users.form.genderPlaceholder")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableGenders.map((gender) => (
-                          <SelectItem key={gender} value={gender}>
-                            {t(`gender.${gender.toLowerCase()}`, gender)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>{t("admin.users.form.phone")}</FormLabel>
+                    <FormControl>
+                      {/* Consider using a dedicated PhoneInput component if available */}
+                      <Input type="tel" placeholder={t("admin.users.form.phonePlaceholder")} {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-            <FormField
-              control={form.control}
-              name="dateOfBirth"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>{t("admin.users.form.dateOfBirth")}</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
+              {!isEditing && (
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("admin.users.form.password")}</FormLabel>
                       <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-start font-normal",
-                            !field.value && "text-muted-foreground",
-                          )}
-                        >
-                          <CalendarIcon className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" />
-                          {field.value ? (
-                            new Date(field.value).toLocaleDateString(i18n.language)
-                          ) : (
-                            <span>{t("admin.users.form.dateOfBirthPlaceholder")}</span>
-                          )}
-                        </Button>
+                        <Input type="password" placeholder={t("admin.users.form.passwordPlaceholder")} {...field} />
                       </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value || undefined}
-                        onSelect={field.onChange}
-                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
-                        initialFocus
-                        captionLayout="dropdown-buttons"
-                        fromYear={1900}
-                        toYear={new Date().getFullYear()}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
-            />
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.form.imageURL")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t("admin.users.form.imageURLPlaceholder")} {...field} />
-                  </FormControl>
-                  <FormDescription>{t("admin.users.form.imageURLDescription")}</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter className="pt-4">
-              <DialogClose asChild>
-                <Button type="button" variant="outline" disabled={isLoading}>
-                  {t("common.cancel")}
-                </Button>
-              </DialogClose>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? t("common.saving") : isEditing ? t("common.saveChanges") : t("common.createUser")}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("admin.users.form.role")}</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("admin.users.form.rolePlaceholder")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableRoles.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {t(`roles.${role.toLowerCase()}`, role)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("admin.users.form.gender")}</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("admin.users.form.genderPlaceholder")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableGenders.map((gender) => (
+                            <SelectItem key={gender} value={gender}>
+                              {t(`gender.${gender.toLowerCase()}`, gender)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="dateOfBirth"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>{t("admin.users.form.dateOfBirth")}</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-start font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            <CalendarIcon className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" />
+                            {field.value ? (
+                              new Date(field.value).toLocaleDateString(language)
+                            ) : (
+                              <span>{t("admin.users.form.dateOfBirthPlaceholder")}</span>
+                            )}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value || undefined}
+                          onSelect={field.onChange}
+                          disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                          initialFocus
+                          captionLayout="dropdown-buttons"
+                          fromYear={1900}
+                          toYear={new Date().getFullYear()}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="image"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.users.form.imageURL")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("admin.users.form.imageURLPlaceholder")} {...field} />
+                    </FormControl>
+                    <FormDescription>{t("admin.users.form.imageURLDescription")}</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+        </div>
+
+        <DialogFooter className="flex-shrink-0 pt-4">
+          <DialogClose asChild>
+            <Button type="button" variant="outline" disabled={isLoading}>
+              {t("common.cancel")}
+            </Button>
+          </DialogClose>
+          <Button type="submit" disabled={isLoading} onClick={form.handleSubmit(onSubmit)}>
+            {isLoading ? t("common.saving") : isEditing ? t("common.saveChanges") : t("common.createUser")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

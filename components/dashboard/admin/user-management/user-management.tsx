@@ -392,12 +392,12 @@ export function UserManagement({
     <div className="space-y-6">
       {/* Statistics and Add User Button */}
       <Card>
-        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 pb-4">
+        <CardHeader className="flex flex-col space-y-4 pb-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
           <div>
             <CardTitle>{t("admin.users.statisticsTitle")}</CardTitle>
             <CardDescription>{t("admin.users.statisticsDescription")}</CardDescription>
           </div>
-          <Button onClick={handleOpenCreateUserForm} className="flex items-center gap-2">
+          <Button onClick={handleOpenCreateUserForm} className="flex items-center gap-2 w-full sm:w-auto">
             <UserPlus size={18} />
             {t("admin.users.addUser")}
           </Button>
@@ -447,106 +447,192 @@ export function UserManagement({
             {/* Role filter select can be added here if needed */}
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">{t("admin.users.avatar")}</TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort("name")} className="px-0 hover:bg-transparent">
-                    {t("admin.users.name")} <ArrowUpDown className="ms-2 h-4 w-4 rtl:me-2 rtl:ms-0" />
-                  </Button>
-                </TableHead>
-                <TableHead>{t("admin.users.phone")}</TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort("email")} className="px-0 hover:bg-transparent">
-                    {t("admin.users.email")} <ArrowUpDown className="ms-2 h-4 w-4 rtl:me-2 rtl:ms-0" />
-                  </Button>
-                </TableHead>
-                <TableHead>{t("admin.users.role")}</TableHead>
-                <TableHead>{t("admin.users.dobAndAge")}</TableHead>
-                <TableHead>{t("admin.users.gender")}</TableHead>
-                <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort("createdAt")} className="px-0 hover:bg-transparent">
-                    {t("admin.users.createdDate")} <ArrowUpDown className="ms-2 h-4 w-4 rtl:me-2 rtl:ms-0" />
-                  </Button>
-                </TableHead>
-                <TableHead className="text-end">{t("admin.users.actions")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.length > 0 ? (
-                users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <Avatar className="h-10 w-10">
+        <CardContent>
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-4">
+            {users.length > 0 ? (
+              users.map((user) => (
+                <Card key={user.id} className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-12 w-12">
                         <AvatarImage src={user.image || undefined} alt={user.name || "User Avatar"} />
                         <AvatarFallback>{user.name ? user.name.substring(0, 2).toUpperCase() : "U"}</AvatarFallback>
                       </Avatar>
-                    </TableCell>
-                    <TableCell className="font-medium">{user.name || t("common.notSet")}</TableCell>
-                    <TableCell>{user.phone || t("common.notSet")}</TableCell>
-                    <TableCell>{user.email || t("common.notSet")}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{getPrimaryRoleDisplay(user.roles)}</Badge>
-                    </TableCell>
-                    <TableCell>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{user.name || t("common.notSet")}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email || t("common.notSet")}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {getPrimaryRoleDisplay(user.roles)}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" disabled={isLoading} className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">{t("admin.users.userActions")}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleOpenEditUserForm(user)}>
+                          <Edit className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.edit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setUserForPasswordChange(user)
+                            setIsChangePasswordDialogOpen(true)
+                          }}
+                        >
+                          <KeyRound className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("admin.users.changePassword")}
+                        </DropdownMenuItem>
+                        {session?.user?.id !== user.id && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setUserToDelete(user)
+                              setIsDeleteDialogOpen(true)
+                            }}
+                            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                          >
+                            <Trash2 className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.delete")}
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                    <div>
+                      <span className="font-medium">{t("admin.users.phone")}:</span> {user.phone || t("common.notSet")}
+                    </div>
+                    <div>
+                      <span className="font-medium">{t("admin.users.gender")}:</span> {getGenderDisplay(user.gender)}
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">{t("admin.users.dobAndAge")}:</span>{" "}
                       {user.dateOfBirth
                         ? `${formatDate(user.dateOfBirth, language)} (${t("admin.users.agePrefix")}${calculateAge(user.dateOfBirth)}${t("admin.users.ageSuffix")})`
                         : t("common.notSet")}
-                    </TableCell>
-                    <TableCell>{getGenderDisplay(user.gender)}</TableCell>
-                    <TableCell>{formatDate(user.createdAt, language)}</TableCell>
-                    <TableCell className="text-end">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" disabled={isLoading}>
-                            <MoreHorizontal className="h-5 w-5" />
-                            <span className="sr-only">{t("admin.users.userActions")}</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleOpenEditUserForm(user)}>
-                            <Edit className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setUserForPasswordChange(user)
-                              setIsChangePasswordDialogOpen(true)
-                            }}
-                          >
-                            <KeyRound className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("admin.users.changePassword")}
-                          </DropdownMenuItem>
-                          {session?.user?.id !== user.id && ( // Prevent admin from deleting self
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-medium">{t("admin.users.createdDate")}:</span>{" "}
+                      {formatDate(user.createdAt, language)}
+                    </div>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">{t("admin.users.noUsersFound")}</div>
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">{t("admin.users.avatar")}</TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort("name")} className="px-0 hover:bg-transparent">
+                      {t("admin.users.name")} <ArrowUpDown className="ms-2 h-4 w-4 rtl:me-2 rtl:ms-0" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>{t("admin.users.phone")}</TableHead>
+                  <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort("email")} className="px-0 hover:bg-transparent">
+                      {t("admin.users.email")} <ArrowUpDown className="ms-2 h-4 w-4 rtl:me-2 rtl:ms-0" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>{t("admin.users.role")}</TableHead>
+                  <TableHead>{t("admin.users.dobAndAge")}</TableHead>
+                  <TableHead>{t("admin.users.gender")}</TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort("createdAt")}
+                      className="px-0 hover:bg-transparent"
+                    >
+                      {t("admin.users.createdDate")} <ArrowUpDown className="ms-2 h-4 w-4 rtl:me-2 rtl:ms-0" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="text-end">{t("admin.users.actions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.image || undefined} alt={user.name || "User Avatar"} />
+                          <AvatarFallback>{user.name ? user.name.substring(0, 2).toUpperCase() : "U"}</AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell className="font-medium">{user.name || t("common.notSet")}</TableCell>
+                      <TableCell>{user.phone || t("common.notSet")}</TableCell>
+                      <TableCell>{user.email || t("common.notSet")}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{getPrimaryRoleDisplay(user.roles)}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {user.dateOfBirth
+                          ? `${formatDate(user.dateOfBirth, language)} (${calculateAge(user.dateOfBirth)})`
+                          : t("common.notSet")}
+                      </TableCell>
+                      <TableCell>{getGenderDisplay(user.gender)}</TableCell>
+                      <TableCell>{formatDate(user.createdAt, language)}</TableCell>
+                      <TableCell className="text-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" disabled={isLoading}>
+                              <MoreHorizontal className="h-5 w-5" />
+                              <span className="sr-only">{t("admin.users.userActions")}</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleOpenEditUserForm(user)}>
+                              <Edit className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.edit")}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => {
-                                setUserToDelete(user)
-                                setIsDeleteDialogOpen(true)
+                                setUserForPasswordChange(user)
+                                setIsChangePasswordDialogOpen(true)
                               }}
-                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
                             >
-                              <Trash2 className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.delete")}
+                              <KeyRound className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("admin.users.changePassword")}
                             </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            {session?.user?.id !== user.id && ( // Prevent admin from deleting self
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setUserToDelete(user)
+                                  setIsDeleteDialogOpen(true)
+                                }}
+                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                              >
+                                <Trash2 className="me-2 h-4 w-4 rtl:ms-2 rtl:me-0" /> {t("common.delete")}
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9} className="h-24 text-center">
+                      {t("admin.users.noUsersFound")}
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={9} className="h-24 text-center">
-                    {t("admin.users.noUsersFound")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
           {renderPagination()}
         </CardContent>
       </Card>
 
-      {/* User Form Dialog - Placeholder for now, will be a separate component */}
+      {/* User Form Dialog */}
       <UserFormDialog
         isOpen={isUserFormOpen}
         onOpenChange={setIsUserFormOpen}
@@ -581,9 +667,9 @@ export function UserManagement({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("admin.users.confirmChangePasswordTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("admin.users.confirmChangePasswordMessage", {
-                userName: userForPasswordChange?.name || t("admin.users.thisUser"),
-              })}
+              {userForPasswordChange?.email
+                ? t("admin.users.confirmChangePasswordMessage", { userEmail: userForPasswordChange.email })
+                : t("admin.users.confirmChangePasswordMessage", { userEmail: t("admin.users.thisUser") })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -447,6 +447,29 @@
     "totalVouchers": "Total Vouchers",
     "purchaseVoucher": "Purchase Voucher"
   },
+  "memberSubscriptions": {
+    "title": "My Subscriptions",
+    "description": "View and manage your active and past subscriptions.",
+    "noSubscriptions": "You do not have any subscriptions yet.",
+    "purchaseNewSubscription": "Purchase New Subscription",
+    "viewDetails": "View Details",
+    "cancelSubscription": "Cancel Subscription",
+    "subscriptionName": "Subscription Name",
+    "remainingSessions": "Remaining Sessions",
+    "expiryDate": "Expiry Date",
+    "purchaseDate": "Purchase Date",
+    "filterByStatus": "Filter by Status",
+    "sortBy": "Sort By",
+    "errorLoading": "Error loading your subscriptions. Please try refreshing.",
+    "detailsModalTitle": "Subscription Details",
+    "usageHistory": "Usage History",
+    "noUsageHistory": "No usage history for this subscription.",
+    "usedOnDate": "Used on {{date}}",
+    "sessionsUsed": "{{count}} sessions used",
+    "pricePaid": "Price Paid",
+    "paymentMethod": "Payment Method",
+    "treatmentName": "Treatment"
+  },
   "errors": {
     "unknown": "An unknown error occurred",
     "passwordMismatch": "Passwords do not match",
@@ -795,6 +818,10 @@
     "unknownTreatment": "Unknown Treatment",
     "selectTreatmentError": "Please select a treatment.",
     "selectDurationError": "Please select a duration for the treatment.",
+    "selectDurationPlaceholder": "Choose a duration...",
+    "unknownTreatment": "Unknown Treatment",
+    "selectTreatmentError": "Please select a treatment.",
+    "selectDurationError": "Please select a duration for the treatment.",
     "noActiveDurations": "No active durations available for this treatment."
   },
   "userSubscriptions": {
@@ -838,5 +865,36 @@
     "male": "Male",
     "female": "Female",
     "other": "Other"
+  },
+  "workingHours": {
+    "updateSuccess": "Working hours updated successfully",
+    "updateSuccessDescription": "Working hours settings have been saved",
+    "updateError": "Error updating working hours",
+    "updateErrorDescription": "Failed to update working hours settings",
+    "fixedHours": "Fixed Hours",
+    "specialDates": "Special Dates",
+    "day": "Day",
+    "active": "Active",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "priceAddition": "Price Addition",
+    "notes": "Notes",
+    "addSpecialDate": "Add Special Date",
+    "editSpecialDate": "Edit Special Date",
+    "date": "Date",
+    "selectDate": "Select Date",
+    "amount": "Amount",
+    "type": "Type",
+    "notesPlaceholder": "Add notes...",
+    "hours": "Hours",
+    "days": {
+      "sunday": "Sunday",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday"
+    }
   }
 }

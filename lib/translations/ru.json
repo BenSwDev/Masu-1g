@@ -444,6 +444,29 @@
     "totalVouchers": "Всего сертификатов",
     "purchaseVoucher": "Купить сертификат"
   },
+  "memberSubscriptions": {
+    "title": "Мои подписки",
+    "description": "Просмотр и управление вашими активными и прошлыми подписками.",
+    "noSubscriptions": "У вас пока нет подписок.",
+    "purchaseNewSubscription": "Купить новую подписку",
+    "viewDetails": "Посмотреть детали",
+    "cancelSubscription": "Отменить подписку",
+    "subscriptionName": "Название подписки",
+    "remainingSessions": "Оставшиеся сеансы",
+    "expiryDate": "Дата окончания",
+    "purchaseDate": "Дата покупки",
+    "filterByStatus": "Фильтровать по статусу",
+    "sortBy": "Сортировать по",
+    "errorLoading": "Ошибка загрузки ваших подписок. Пожалуйста, попробуйте обновить.",
+    "detailsModalTitle": "Детали подписки",
+    "usageHistory": "История использования",
+    "noUsageHistory": "Нет истории использования для этой подписки.",
+    "usedOnDate": "Использовано {{date}}",
+    "sessionsUsed": "{{count}} сеансов использовано",
+    "pricePaid": "Уплаченная цена",
+    "paymentMethod": "Способ оплаты",
+    "treatmentName": "Процедура"
+  },
   "errors": {
     "unknown": "unknown",
     "passwordMismatch": "passwordMismatch",
@@ -840,5 +863,36 @@
     "male": "Мужской",
     "female": "Женский",
     "other": "Другой"
+  },
+  "workingHours": {
+    "updateSuccess": "Рабочие часы успешно обновлены",
+    "updateSuccessDescription": "Настройки рабочих часов сохранены",
+    "updateError": "Ошибка обновления рабочих часов",
+    "updateErrorDescription": "Не удалось обновить настройки рабочих часов",
+    "fixedHours": "Фиксированные часы",
+    "specialDates": "Особые даты",
+    "day": "День",
+    "active": "Активный",
+    "startTime": "Время начала",
+    "endTime": "Время окончания",
+    "priceAddition": "Надбавка к цене",
+    "notes": "Заметки",
+    "addSpecialDate": "Добавить особую дату",
+    "editSpecialDate": "Редактировать особую дату",
+    "date": "Дата",
+    "selectDate": "Выберите дату",
+    "amount": "Сумма",
+    "type": "Тип",
+    "notesPlaceholder": "Добавить заметки...",
+    "hours": "Часы",
+    "days": {
+      "sunday": "Воскресенье",
+      "monday": "Понедельник",
+      "tuesday": "Вторник",
+      "wednesday": "Среда",
+      "thursday": "Четверг",
+      "friday": "Пятница",
+      "saturday": "Суббота"
+    }
   }
 }

@@ -74,9 +74,7 @@
     "today": "Today",
     "birthYear": "Birth Year",
     "unlimited": "Unlimited",
-    "none": "None",
-    "columns": "Columns",
-    "noResults": "No results."
+    "none": "None"
   },
   "dashboard": {
     "sidebar": {

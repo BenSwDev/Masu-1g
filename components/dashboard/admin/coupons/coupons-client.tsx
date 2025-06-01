@@ -2,14 +2,14 @@
 
 import * as React from "react"
 import { PlusCircle } from "lucide-react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation" // Removed useSearchParams as it's not used
 import { Button } from "@/components/common/ui/button"
-import { DataTable } from "@/components/common/ui/data-table" // Assuming DataTable exists
+import { DataTable } from "@/components/common/ui/data-table" // Corrected path
 import { useToast } from "@/components/common/ui/use-toast"
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { CouponForm, type CouponFormValues } from "./coupon-form"
 import { type getAdminCoupons, createCoupon, updateCoupon, deleteCoupon } from "@/actions/coupon-actions"
-import { columns as couponColumns } from "./coupons-columns" // We'll define this next
+import { columns as couponColumnsDefinition } from "./coupons-columns" // Corrected import and aliased
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import {
   AlertDialog,
@@ -21,10 +21,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
-
-// Import useTranslation:
 import { useTranslation } from "@/lib/translations/i18n"
-// Import other necessary icons if they are used for RTL adjustments (e.g. ArrowLeft, ArrowRight for pagination if custom)
+import { useIsMobile } from "@/components/common/ui/use-mobile" // Corrected import name
+import { CouponCard } from "./coupon-card"
 
 interface CouponsClientProps {
   initialData: Awaited<ReturnType<typeof getAdminCoupons>>
@@ -33,34 +32,31 @@ interface CouponsClientProps {
 
 export default function CouponsClient({ initialData, partnersForSelect }: CouponsClientProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { toast } = useToast()
 
-  const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData.coupons)
+  // Ensure initialData.coupons is an array, default to empty array if undefined
+  const [coupons, setCoupons] = React.useState<Array<ICoupon & { effectiveStatus: string }>>(
+    (initialData?.coupons as Array<ICoupon & { effectiveStatus: string }>) || [],
+  )
   const [pagination, setPagination] = React.useState({
-    totalPages: initialData.totalPages,
-    currentPage: initialData.currentPage,
-    totalCoupons: initialData.totalCoupons,
+    totalPages: initialData?.totalPages || 1,
+    currentPage: initialData?.currentPage || 1,
+    totalCoupons: initialData?.totalCoupons || 0,
   })
   const [loading, setLoading] = React.useState(false)
   const [isFormOpen, setIsFormOpen] = React.useState(false)
-  const [editingCoupon, setEditingCoupon] = React.useState<ICoupon | null>(null)
+  const [editingCoupon, setEditingCoupon] = React.useState<(ICoupon & { effectiveStatus: string }) | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [couponToDelete, setCouponToDelete] = React.useState<string | null>(null)
 
-  // Inside the CouponsClient component:
   const { t, dir } = useTranslation()
-
-  // Effect to refetch data if searchParams change (e.g. pagination from DataTable)
-  // This might be handled by DataTable's own pagination logic if it updates URL
-  // For simplicity, we'll assume DataTable calls onPaginationChange which updates URL or state.
 
   const handleCreateNew = () => {
     setEditingCoupon(null)
     setIsFormOpen(true)
   }
 
-  const handleEdit = (coupon: ICoupon) => {
+  const handleEdit = (coupon: ICoupon & { effectiveStatus: string }) => {
     setEditingCoupon(coupon)
     setIsFormOpen(true)
   }
@@ -77,10 +73,8 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
       const result = await deleteCoupon(couponToDelete)
       if (result.success) {
         toast({ title: t("common.success"), description: t("adminCoupons.toast.deleteSuccess") })
-        // Refetch or update local state
-        // For now, just filter out:
-        setCoupons((prev) => prev.filter((c) => c._id !== couponToDelete))
-        // Ideally, refetch current page data
+        setCoupons((prev) => prev.filter((c) => c._id.toString() !== couponToDelete))
+        setPagination((prev) => ({ ...prev, totalCoupons: prev.totalCoupons - 1 }))
       } else {
         toast({
           title: t("common.error"),
@@ -107,16 +101,27 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
         result = await createCoupon(values)
       }
 
-      if (result.success) {
+      if (result.success && result.data) {
         toast({
           title: t("common.success"),
           description: editingCoupon ? t("adminCoupons.toast.updateSuccess") : t("adminCoupons.toast.createSuccess"),
         })
         setIsFormOpen(false)
         setEditingCoupon(null)
-        // TODO: Refetch data or update local state more robustly
-        // For now, a simple router.refresh() might work if server component re-fetches
-        router.refresh()
+        // Instead of router.refresh(), update state directly for better UX
+        if (editingCoupon) {
+          setCoupons((prev) =>
+            prev.map((c) =>
+              c._id.toString() === result.data?._id.toString()
+                ? (result.data as ICoupon & { effectiveStatus: string })
+                : c,
+            ),
+          )
+        } else {
+          setCoupons((prev) => [...prev, result.data as ICoupon & { effectiveStatus: string }])
+          setPagination((prev) => ({ ...prev, totalCoupons: prev.totalCoupons + 1 }))
+        }
+        // router.refresh() // Can be used if server-side data consistency is critical after mutations
       } else {
         toast({
           title: t("common.error"),
@@ -131,48 +136,83 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
     }
   }
 
-  const handleEditRef = React.useRef(handleEdit)
-  const handleDeleteRequestRef = React.useRef(handleDeleteRequest)
+  // Using refs for handlers passed to memoized columns or child components
+  // to prevent re-creation of columns/child components on every render of CouponsClient
+  const onEditRef = React.useRef(handleEdit)
+  const onDeleteRef = React.useRef(handleDeleteRequest)
 
+  // Update refs if handlers change (though in this case they don't depend on props/state that change them)
   React.useEffect(() => {
-    handleEditRef.current = handleEdit
-    handleDeleteRequestRef.current = handleDeleteRequest
-  }, [handleEdit, handleDeleteRequest])
+    onEditRef.current = handleEdit
+    onDeleteRef.current = handleDeleteRequest
+  })
 
-  const columns = React.useMemo(
+  const memoizedColumns = React.useMemo(
     () =>
-      couponColumns({
-        onEdit: (coupon) => handleEditRef.current(coupon),
-        onDelete: (couponId) => handleDeleteRequestRef.current(couponId),
+      couponColumnsDefinition({
+        onEdit: (coupon) => onEditRef.current(coupon),
+        onDelete: (couponId) => onDeleteRef.current(couponId),
         t,
         dir,
       }),
     [t, dir],
   )
 
+  const isMobile = useIsMobile()
+
+  // Effect to update coupons if initialData changes (e.g., after router.refresh() or navigation)
+  React.useEffect(() => {
+    setCoupons((initialData?.coupons as Array<ICoupon & { effectiveStatus: string }>) || [])
+    setPagination({
+      totalPages: initialData?.totalPages || 1,
+      currentPage: initialData?.currentPage || 1,
+      totalCoupons: initialData?.totalCoupons || 0,
+    })
+  }, [initialData])
+
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        {/* Add Filters here if needed */}
         <Button onClick={handleCreateNew} disabled={loading}>
           <PlusCircle className={dir === "rtl" ? "ml-2 h-4 w-4" : "mr-2 h-4 w-4"} /> {t("adminCoupons.createNew")}
         </Button>
       </div>
 
-      <DataTable
-        columns={columns}
-        data={coupons}
-        className="overflow-x-auto w-full"
-        // pagination (pass pagination state and handlers to DataTable if it supports server-side pagination)
-        // For now, assuming DataTable handles its own client-side pagination or you implement server-side pagination controls
-        // totalPages={pagination.totalPages}
-        // currentPage={pagination.currentPage}
-        // onPageChange={(page) => router.push(`/dashboard/admin/coupons?page=${page}`)}
-        // loading={loading}
-      />
-      <p className="text-sm text-muted-foreground mt-2">
-        {t("adminCoupons.totalCoupons", { count: pagination.totalCoupons })}
-      </p>
+      {isMobile ? (
+        <div className="space-y-4">
+          {coupons.map((coupon) => (
+            <CouponCard
+              key={coupon._id.toString()}
+              coupon={coupon}
+              onEdit={onEditRef.current}
+              onDelete={onDeleteRef.current}
+              t={t}
+              dir={dir}
+            />
+          ))}
+          {coupons.length === 0 && !loading && (
+            <p className="text-center text-muted-foreground py-4">
+              {t("adminCoupons.noCouponsFound", "No coupons found.")}
+            </p>
+          )}
+        </div>
+      ) : (
+        <>
+          <DataTable
+            columns={memoizedColumns}
+            data={coupons}
+            // DataTable does not accept className directly. Styling is via its internal structure or a wrapper.
+            // For server-side pagination, you'd pass props like:
+            // pageCount={pagination.totalPages}
+            // onPageChange={(pageIndex) => router.push(`/dashboard/admin/coupons?page=${pageIndex + 1}`)}
+            // manualPagination={true}
+            // state={{ pagination: { pageIndex: pagination.currentPage - 1, pageSize: 10 /* or your page size */ } }}
+          />
+          <p className="text-sm text-muted-foreground mt-2">
+            {t("adminCoupons.totalCoupons", { count: pagination.totalCoupons })}
+          </p>
+        </>
+      )}
 
       <Dialog
         open={isFormOpen}

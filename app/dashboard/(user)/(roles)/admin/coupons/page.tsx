@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { getAdminCoupons, getPartnersForSelection } from "@/actions/coupon-actions"
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
 import { Heading } from "@/components/common/ui/heading"
-import { Skeleton } from "@/components/common/ui/skeleton" // Assuming you have Skeleton
+import { ClientAwareCouponsLoadingSkeleton } from "@/components/dashboard/admin/coupons/client-aware-coupons-loading-skeleton"
 
 // For metadata, it's often done by fetching translations in a server component or using a dedicated i18n setup for metadata.
 // Assuming a simple approach for now:
@@ -46,7 +46,7 @@ export default async function AdminCouponsPage({ searchParams }: AdminCouponsPag
   return (
     <div className="flex-1 space-y-4 p-2 sm:p-4 md:p-8 pt-4 sm:pt-6">
       <Heading titleKey="adminCoupons.title" descriptionKey="adminCoupons.description" />
-      <Suspense fallback={<CouponsLoadingSkeleton />}>
+      <Suspense fallback={<ClientAwareCouponsLoadingSkeleton />}>
         <CouponsDataWrapper couponsDataPromise={couponsDataPromise} partnersPromise={partnersPromise} />
       </Suspense>
     </div>
@@ -62,18 +62,4 @@ async function CouponsDataWrapper({
 }) {
   const [couponsData, partnersForSelect] = await Promise.all([couponsDataPromise, partnersPromise])
   return <CouponsClient initialData={couponsData} partnersForSelect={partnersForSelect} />
-}
-
-function CouponsLoadingSkeleton() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-10 w-1/4" />
-      <Skeleton className="h-12 w-full" />
-      <div className="space-y-2">
-        {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full" />
-        ))}
-      </div>
-    </div>
-  )
 }

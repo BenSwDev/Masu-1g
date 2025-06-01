@@ -39,24 +39,19 @@ const UserSchema: Schema = new Schema(
     },
     phone: {
       type: String,
-      required: false,
+      required: [true, "Phone is required"],
       unique: true,
       trim: true,
-      sparse: true,
     },
     password: {
       type: String,
-      required: function (this: IUser) {
-        // Password is required for new users or if it's being explicitly set.
-        // For existing users, it's not required during an update unless provided.
-        return this.isNew || (this.isModified("password") && this.password != null)
-      },
+      required: true,
       select: false, // Don't include password by default in queries
     },
     gender: {
       type: String,
       enum: ["male", "female", "other"],
-      required: false,
+      required: true,
     },
     dateOfBirth: {
       type: Date,

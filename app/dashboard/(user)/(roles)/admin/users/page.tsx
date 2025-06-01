@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { getAllUsers } from "@/actions/admin-actions"
 import { UserManagement } from "@/components/dashboard/admin/user-management/user-management"
 
-export const dynamic = "force-dynamic"
+export const dynamic = 'force-dynamic'
 
 interface PageProps {
   searchParams: Promise<{
@@ -30,7 +30,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
 
   // Await and parse search params
   const params = await searchParams
-  const page = Number.parseInt(params.page || "1")
+  const page = parseInt(params.page || "1")
   const search = params.search
   const roles = params.roles ? params.roles.split(",") : undefined
   const sortField = params.sortField || "name"
@@ -47,8 +47,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         <p className="text-gray-600">Manage users and their roles.</p>
       </div>
 
-      <UserManagement
-        users={users}
+      <UserManagement 
+        users={users} 
         totalPages={result.totalPages || 1}
         currentPage={page}
         searchTerm={search}

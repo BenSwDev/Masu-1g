@@ -814,47 +814,15 @@
   "confirmPassword": "אימות סיסמה",
   "newEmail": "דוא״ל חדש",
   "admin": {
-"users": {
-      "addUser": "הוסף משתמש",
-      "editUser": "ערוך משתמש",
-      "deleteUser": "מחק משתמש",
-      "editRoles": "ערוך תפקידים",
-      "addUserTitle": "הוסף משתמש חדש",
-      "editUserTitle": "ערוך פרטי משתמש",
-      "deleteConfirmTitle": "אישור מחיקה",
-      "deleteConfirmDescription": "האם אתה בטוח שברצונך למחוק את המשתמש {{userName}}?",
-      "thisUser": "משתמש זה",
-      "deleteConfirmWarning": "לא ניתן לבטל פעולה זו.",
-      "success": "הצלחה",
-      "error": "שגיאה"
-      // Note: "searchPlaceholder", "filterByRole", "allRoles", "name", "email", "roles", "created", "actions"
-      // were already in your snippet under admin.users, so I'm not repeating them here.
-      // If my versions were different and you prefer them, you can merge.
-    },
-    "userForm": {
-      "profileDetails": "פרטי פרופיל",
-      "accountDetails": "פרטי חשבון",
-      "password": "סיסמה",
-      "setNewPassword": "הגדר סיסמה חדשה",
-      "cancelSetPassword": "בטל הגדרת סיסמה",
+    "users": {
+      "searchPlaceholder": "חפש משתמשים...",
+      "filterByRole": "סנן לפי תפקיד",
+      "allRoles": "כל התפקידים",
+      "name": "שם",
+      "email": "דוא״ל",
       "roles": "תפקידים",
-      "name": "שם מלא",
-      "namePlaceholder": "הזן שם מלא",
-      "gender": "מגדר",
-      "genderPlaceholder": "בחר מגדר",
-      "male": "זכר",
-      "female": "נקבה",
-      "other": "אחר",
-      "dateOfBirth": "תאריך לידה",
-      "dateOfBirthPlaceholder": "בחר תאריך",
-      "email": "כתובת אימייל",
-      "emailPlaceholder": "user@example.com",
-      "phone": "מספר טלפון",
-      "phonePlaceholder": "הזן מספר טלפון",
-      "confirmPassword": "אימות סיסמה",
-      "assignRoles": "הקצה תפקידים",
-      "assignRolesDescription": "בחר תפקיד אחד או יותר עבור המשתמש.",
-      "createUser": "צור משתמש"
+      "created": "נוצר",
+      "actions": "פעולות"
     }
   },
   "roles": {
@@ -863,17 +831,6 @@
     "partner": "שותף",
     "professional": "מקצועי",
     "guest": "אורח"
-  },
-  "messages": { // New section for general success/info messages related to actions
-    "userCreated": "המשתמש נוצר בהצלחה.",
-    "userUpdated": "פרטי המשתמש עודכנו בהצלחה.",
-    "passwordSet": "סיסמת המשתמש הוגדרה בהצלחה.",
-    "userDeleted": "המשתמש נמחק בהצלחה.",
-    "noChanges": "לא זוהו שינויים.",
-    "notAuthorized": "אינך מורשה לבצע פעולה זו.",
-    "userNotFound": "המשתמש לא נמצא.",
-    "invalidRoles": "אחד או יותר מהתפקידים שנבחרו אינם תקינים.",
-    "cannotDeleteSelf": "אינך יכול למחוק את החשבון שלך."
   },
   "name": "שם",
   "email": "דוא״ל",

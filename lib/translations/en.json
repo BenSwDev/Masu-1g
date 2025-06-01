@@ -33,6 +33,7 @@
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
+    "previous": "Previous",
     "submit": "Submit",
     "all": "All",
     "deactivate": "Deactivate",
@@ -64,7 +65,7 @@
     "refresh": "Refresh",
     "processing": "Processing...",
     "unknownError": "An unknown error occurred.",
-    "failedToLoadTreatments": "Failed to load treatments.",
+    "failedToLoadTreatments": "Failed toload treatments.",
     "dir": "ltr",
     "locale": "en-US",
     "selectPlaceholder": "Select...",
@@ -73,78 +74,6 @@
     "quickNavigation": "Quick Navigation",
     "today": "Today",
     "birthYear": "Birth Year"
-  },
-  "adminCoupons": {
-    "title": "Manage Coupons",
-    "description": "Create, edit, and manage all coupons in the system.",
-    "createNew": "Create Coupon",
-    "editCoupon": "Edit Coupon",
-    "createCoupon": "Create New Coupon",
-    "formDescriptionEdit": "Update the details of this coupon.",
-    "formDescriptionCreate": "Fill in the details to create a new coupon.",
-    "deleteConfirmTitle": "Are you sure?",
-    "deleteConfirmDescription": "This action cannot be undone. This will permanently delete the coupon.",
-    "deleting": "Deleting...",
-    "totalCoupons": "Total Coupons: {{count}}",
-    "successCreate": "Coupon created successfully.",
-    "successUpdate": "Coupon updated successfully.",
-    "successDelete": "Coupon deleted successfully.",
-    "errorCreate": "Failed to create coupon.",
-    "errorUpdate": "Failed to update coupon.",
-    "errorDelete": "Failed to delete coupon.",
-    "errorFetchPartners": "Failed to load partners for selection.",
-    "columns": {
-      "code": "Code",
-      "description": "Description",
-      "discount": "Discount",
-      "validFrom": "Valid From",
-      "validUntil": "Valid Until",
-      "status": "Status",
-      "usage": "Usage",
-      "assignedPartner": "Assigned Partner"
-    },
-    "statusBadges": {
-      "active": "Active",
-      "scheduled": "Scheduled",
-      "expired": "Expired",
-      "inactive_manual": "Inactive"
-    },
-    "partnerSelectPlaceholder": "Select a partner (optional)",
-    "noPartnersFound": "No partners found",
-    "unlimited": "Unlimited",
-    "notesForPartner": "Notes for Partner (optional)",
-    "notesForPartnerPlaceholder": "These notes will be visible to the assigned partner.",
-    "fields": {
-      "code": "Coupon Code",
-      "description": "Description (optional)",
-      "discountType": "Discount Type",
-      "discountValue": "Discount Value",
-      "validFrom": "Valid From",
-      "validUntil": "Valid Until",
-      "usageLimit": "Usage Limit (0 for unlimited)",
-      "usageLimitPerUser": "Usage Limit Per User (0 for unlimited)",
-      "assignedPartnerId": "Assign to Partner (optional)",
-      "isActive": "Is Active",
-      "notesForPartner": "Notes for Partner (optional)"
-    },
-    "discountTypes": {
-      "percentage": "Percentage",
-      "fixed_amount": "Fixed Amount"
-    },
-    "errors": {
-      "codeRequired": "Coupon code is required.",
-      "codeMinLength": "Coupon code must be at least 3 characters.",
-      "discountValueRequired": "Discount value is required.",
-      "discountValuePositive": "Discount value must be positive.",
-      "percentageMax": "Percentage discount cannot exceed 100.",
-      "validFromRequired": "Valid from date is required.",
-      "validUntilRequired": "Valid until date is required.",
-      "validUntilAfterFrom": "Valid until date must be after valid from date.",
-      "usageLimitInteger": "Usage limit must be a whole number.",
-      "usageLimitMin": "Usage limit must be 0 or more.",
-      "usageLimitPerUserInteger": "Usage limit per user must be a whole number.",
-      "usageLimitPerUserMin": "Usage limit per user must be 0 or more."
-    }
   },
   "dashboard": {
     "sidebar": {
@@ -497,29 +426,43 @@
     "adminDisabled": "Admin Disabled",
     "isGiftBadge": "Gift"
   },
-  "partnerAssignedCoupons": {
-    "title": "Assigned Coupons",
-    "description": "View coupons that have been assigned to you by the admin.",
-    "noCoupons": "No coupons have been assigned to you yet.",
-    "loading": "Loading coupons...",
-    "totalAssignedCoupons": "Total Assigned Coupons: {{count}}",
-    "card": {
-      "discount": "Discount:",
-      "validPeriod": "Valid:",
-      "status": "Status:",
-      "totalUses": "Total Uses:",
-      "usesPerCustomer": "Uses Per Customer:",
-      "adminNote": "Admin Note:",
-      "created": "Created:",
-      "copyCodeLabel": "Copy coupon code",
-      "copiedSuccess": "Copied!",
-      "copiedMessage": "Coupon code \"{{code}}\" copied to clipboard.",
-      "copyError": "Failed to copy code."
+  "partnerCoupons": {
+    "title": "Partner Coupons",
+    "description": "Manage partner coupons",
+    "noCoupons": "No partner coupons found",
+    "meta": {
+      "title": "My Assigned Coupons"
     },
-    "pagination": {
-      "previous": "Previous",
-      "next": "Next",
-      "pageInfo": "Page {{currentPage}} of {{totalPages}}"
+    "page": {
+      "title": "My Assigned Coupons",
+      "description": "View coupons assigned to you for distribution."
+    },
+    "card": {
+      "copiedToastTitle": "Copied!",
+      "copiedToastDescription": "Coupon code \"{{code}}\" copied to clipboard.",
+      "copyErrorToastDescription": "Failed to copy code.",
+      "noDescription": "No description",
+      "discountLabel": "Discount:",
+      "validLabel": "Valid:",
+      "statusLabel": "Status:",
+      "totalUsesLabel": "Total Uses:",
+      "unlimitedUses": "Unlimited",
+      "usesPerCustomerLabel": "Uses Per Customer:",
+      "unlimitedUsesPerCustomer": "Unlimited",
+      "adminNoteLabel": "Admin Note:",
+      "createdLabel": "Created:"
+    },
+    "client": {
+      "loadingCoupons": "Loading coupons...",
+      "noCouponsAssigned": "No coupons have been assigned to you yet.",
+      "paginationPageInfo": "Page {{currentPage}} of {{totalPages}}",
+      "totalAssignedCouponsLabel": "Total Assigned Coupons:"
+    },
+    "status": {
+      "active": "Active",
+      "scheduled": "Scheduled",
+      "expired": "Expired",
+      "inactiveManual": "Inactive"
     }
   },
   "memberCoupons": {
@@ -987,6 +930,45 @@
       "thursday": "Thursday",
       "friday": "Friday",
       "saturday": "Saturday"
+    }
+  },
+  "adminCoupons": {
+    "meta": {
+      "title": "Manage Coupons"
+    },
+    "page": {
+      "title": "Coupons Management",
+      "description": "Create and manage coupons for your platform."
+    },
+    "client": {
+      "createCouponButton": "Create Coupon",
+      "totalCouponsLabel": "Total Coupons",
+      "editCouponTitle": "Edit Coupon",
+      "createCouponTitle": "Create New Coupon",
+      "editCouponDescription": "Update the details of this coupon.",
+      "createCouponDescription": "Fill in the details to create a new coupon.",
+      "deleteConfirmDescription": "This action cannot be undone. This will permanently delete the coupon.",
+      "deleteSuccessToast": "Coupon deleted successfully.",
+      "deleteErrorToast": "Failed to delete coupon.",
+      "operationSuccessToast": "Operation successful.",
+      "operationErrorToast": "Operation failed."
+    },
+    "columns": {
+      "code": "Code",
+      "description": "Description",
+      "discount": "Discount",
+      "validFrom": "Valid From",
+      "validUntil": "Valid Until",
+      "status": "Status",
+      "usage": "Usage",
+      "assignedPartner": "Assigned Partner",
+      "unnamedPartner": "Unnamed Partner"
+    },
+    "status": {
+      "active": "Active",
+      "scheduled": "Scheduled",
+      "expired": "Expired",
+      "inactiveManual": "Inactive"
     }
   }
 }

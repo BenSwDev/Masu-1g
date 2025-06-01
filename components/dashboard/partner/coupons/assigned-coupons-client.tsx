@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import type { ICoupon } from "@/lib/db/models/coupon"
@@ -15,6 +16,7 @@ interface AssignedCouponsClientProps {
 export default function AssignedCouponsClient({ initialData }: AssignedCouponsClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { t, dir } = useTranslation()
 
   const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData.coupons)
   const [pagination, setPagination] = React.useState({
@@ -27,16 +29,15 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
   // Add filtering or pagination logic here if needed, similar to admin client
 
   if (loading && coupons.length === 0) {
-    // Could show a more specific loading state for the list
-    return <p>Loading coupons...</p>
+    return <p dir={dir}>{t("partnerCoupons.client.loadingCoupons")}</p>
   }
 
   if (!loading && coupons.length === 0) {
-    return <p>No coupons have been assigned to you yet.</p>
+    return <p dir={dir}>{t("partnerCoupons.client.noCouponsAssigned")}</p>
   }
 
   return (
-    <div>
+    <div dir={dir}>
       {/* Add Filters here if needed */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {coupons.map((coupon) => (
@@ -50,21 +51,24 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
             onClick={() => router.push(`/dashboard/partner/assigned-coupons?page=${pagination.currentPage - 1}`)}
             disabled={pagination.currentPage <= 1 || loading}
           >
-            Previous
+            {t("common.previous")}
           </Button>
           <span className="p-2">
-            Page {pagination.currentPage} of {pagination.totalPages}
+            {t("partnerCoupons.client.paginationPageInfo", {
+              currentPage: pagination.currentPage,
+              totalPages: pagination.totalPages,
+            })}
           </span>
           <Button
             onClick={() => router.push(`/dashboard/partner/assigned-coupons?page=${pagination.currentPage + 1}`)}
             disabled={pagination.currentPage >= pagination.totalPages || loading}
           >
-            Next
+            {t("common.next")}
           </Button>
         </div>
       )}
       <p className="text-sm text-muted-foreground mt-4 text-center">
-        Total Assigned Coupons: {pagination.totalCoupons}
+        {t("partnerCoupons.client.totalAssignedCouponsLabel")} {pagination.totalCoupons}
       </p>
     </div>
   )

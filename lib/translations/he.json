@@ -33,6 +33,7 @@
     "confirm": "אישור",
     "back": "חזרה",
     "next": "הבא",
+    "previous": "הקודם",
     "submit": "שלח",
     "all": "הכל",
     "deactivate": "השבת",
@@ -806,101 +807,84 @@
     "guest": "אורח"
   },
   "adminCoupons": {
-    "title": "ניהול קופונים",
-    "description": "צור, ערוך ונהל את כל הקופונים במערכת.",
-    "createNew": "צור קופון חדש",
-    "editCoupon": "ערוך קופון",
-    "createCoupon": "צור קופון חדש",
-    "formDescriptionEdit": "עדכן את פרטי הקופון.",
-    "formDescriptionCreate": "מלא את הפרטים ליצירת קופון חדש.",
-    "deleteConfirmTitle": "האם אתה בטוח?",
-    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו. פעולה זו תמחק את הקופון לצמיתות.",
-    "deleting": "מוחק...",
-    "totalCoupons": "סה\"כ קופונים: {{count}}",
-    "successCreate": "הקופון נוצר בהצלחה.",
-    "successUpdate": "הקופון עודכן בהצלחה.",
-    "successDelete": "הקופון נמחק בהצלחה.",
-    "errorCreate": "שגיאה ביצירת הקופון.",
-    "errorUpdate": "שגיאה בעדכון הקופון.",
-    "errorDelete": "שגיאה במחיקת הקופון.",
-    "errorFetchPartners": "שגיאה בטעינת שותפים לבחירה.",
+    "meta": {
+      "title": "ניהול קופונים"
+    },
+    "page": {
+      "title": "ניהול קופונים",
+      "description": "צור ונהל קופונים עבור הפלטפורמה שלך."
+    },
+    "client": {
+      "createCouponButton": "צור קופון",
+      "totalCouponsLabel": "סה״כ קופונים",
+      "editCouponTitle": "ערוך קופון",
+      "createCouponTitle": "צור קופון חדש",
+      "editCouponDescription": "עדכן את פרטי הקופון.",
+      "createCouponDescription": "מלא את הפרטים ליצירת קופון חדש.",
+      "deleteConfirmDescription": "לא ניתן לבטל פעולה זו. פעולה זו תמחק את הקופון לצמיתות.",
+      "deleteSuccessToast": "הקופון נמחק בהצלחה.",
+      "deleteErrorToast": "שגיאה במחיקת הקופון.",
+      "operationSuccessToast": "הפעולה הושלמה בהצלחה.",
+      "operationErrorToast": "הפעולה נכשלה."
+    },
     "columns": {
       "code": "קוד",
       "description": "תיאור",
       "discount": "הנחה",
-      "validFrom": "תקף מ-",
+      "validFrom": "תקף מ",
       "validUntil": "תקף עד",
       "status": "סטטוס",
       "usage": "שימוש",
-      "assignedPartner": "שותף משויך"
+      "assignedPartner": "שותף משויך",
+      "unnamedPartner": "שותף ללא שם"
     },
-    "statusBadges": {
+    "status": {
       "active": "פעיל",
       "scheduled": "מתוזמן",
       "expired": "פג תוקף",
-      "inactive_manual": "לא פעיל"
-    },
-    "partnerSelectPlaceholder": "בחר שותף (אופציונלי)",
-    "noPartnersFound": "לא נמצאו שותפים",
-    "unlimited": "ללא הגבלה",
-    "notesForPartner": "הערות לשותף (אופציונלי)",
-    "notesForPartnerPlaceholder": "הערות אלו יהיו גלויות לשותף המשויך.",
-    "fields": {
-      "code": "קוד קופון",
-      "description": "תיאור (אופציונלי)",
-      "discountType": "סוג הנחה",
-      "discountValue": "ערך הנחה",
-      "validFrom": "תקף מ-",
-      "validUntil": "תקף עד",
-      "usageLimit": "הגבלת שימוש (0 ללא הגבלה)",
-      "usageLimitPerUser": "הגבלת שימוש למשתמש (0 ללא הגבלה)",
-      "assignedPartnerId": "שייך לשותף (אופציונלי)",
-      "isActive": "האם פעיל",
-      "notesForPartner": "הערות לשותף (אופציונלי)"
-    },
-    "discountTypes": {
-      "percentage": "אחוז",
-      "fixed_amount": "סכום קבוע"
-    },
-    "errors": {
-      "codeRequired": "קוד קופון נדרש.",
-      "codeMinLength": "קוד קופון חייב להכיל לפחות 3 תווים.",
-      "discountValueRequired": "ערך הנחה נדרש.",
-      "discountValuePositive": "ערך הנחה חייב להיות חיובי.",
-      "percentageMax": "הנחת אחוז לא יכולה לעלות על 100.",
-      "validFromRequired": "תאריך תחילת תוקף נדרש.",
-      "validUntilRequired": "תאריך סיום תוקף נדרש.",
-      "validUntilAfterFrom": "תאריך סיום תוקף חייב להיות אחרי תאריך תחילת תוקף.",
-      "usageLimitInteger": "הגבלת שימוש חייבת להיות מספר שלם.",
-      "usageLimitMin": "הגבלת שימוש חייבת להיות 0 או יותר.",
-      "usageLimitPerUserInteger": "הגבלת שימוש למשתמש חייבת להיות מספר שלם.",
-      "usageLimitPerUserMin": "הגבלת שימוש למשתמש חייבת להיות 0 או יותר."
+      "inactiveManual": "לא פעיל"
     }
   },
-  "partnerAssignedCoupons": {
-    "title": "קופונים שהוקצו לי",
-    "description": "צפה בקופונים שהוקצו לך על ידי המנהל.",
-    "noCoupons": "עדיין לא הוקצו לך קופונים.",
-    "loading": "טוען קופונים...",
-    "totalAssignedCoupons": "סה\"כ קופונים שהוקצו: {{count}}",
-    "card": {
-      "discount": "הנחה:",
-      "validPeriod": "תקף:",
-      "status": "סטטוס:",
-      "totalUses": "סה\"כ שימושים:",
-      "usesPerCustomer": "שימושים ללקוח:",
-      "adminNote": "הערת מנהל:",
-      "created": "נוצר:",
-      "copyCodeLabel": "העתק קוד קופון",
-      "copiedSuccess": "הועתק!",
-      "copiedMessage": "קוד קופון \"{{code}}\" הועתק ללוח.",
-      "copyError": "שגיאה בהעתקת הקוד."
+  "partnerCoupons": {
+    "meta": {
+      "title": "הקופונים המשויכים שלי"
     },
-    "pagination": {
-      "previous": "הקודם",
-      "next": "הבא",
-      "pageInfo": "עמוד {{currentPage}} מתוך {{totalPages}}"
+    "page": {
+      "title": "הקופונים המשויכים שלי",
+      "description": "צפה בקופונים ששויכו אליך להפצה."
+    },
+    "card": {
+      "copiedToastTitle": "הועתק!",
+      "copiedToastDescription": "קוד קופון \"{{code}}\" הועתק ללוח.",
+      "copyErrorToastDescription": "שגיאה בהעתקת הקוד.",
+      "noDescription": "אין תיאור",
+      "discountLabel": "הנחה:",
+      "validLabel": "תקף:",
+      "statusLabel": "סטטוס:",
+      "totalUsesLabel": "סה״כ שימושים:",
+      "unlimitedUses": "ללא הגבלה",
+      "usesPerCustomerLabel": "שימושים ללקוח:",
+      "unlimitedUsesPerCustomer": "ללא הגבלה",
+      "adminNoteLabel": "הערת מנהל:",
+      "createdLabel": "נוצר:"
+    },
+    "client": {
+      "loadingCoupons": "טוען קופונים...",
+      "noCouponsAssigned": "לא שויכו אליך קופונים עדיין.",
+      "paginationPageInfo": "עמוד {{currentPage}} מתוך {{totalPages}}",
+      "totalAssignedCouponsLabel": "סה״כ קופונים משויכים:"
+    },
+    "status": {
+      "active": "פעיל",
+      "scheduled": "מתוזמן",
+      "expired": "פג תוקף",
+      "inactiveManual": "לא פעיל"
     }
+  },
+  "partnerCoupons": {
+    "title": "קופוני שותפים",
+    "description": "ניהול קופוני שותפים",
+    "noCoupons": "לא נמצאו קופוני שותפים"
   },
   "memberCoupons": {
     "title": "קופוני חבר",

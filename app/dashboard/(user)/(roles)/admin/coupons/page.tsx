@@ -2,10 +2,10 @@ import { Suspense } from "react"
 import { getAdminCoupons, getPartnersForSelection } from "@/actions/coupon-actions"
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
 import { Heading } from "@/components/common/ui/heading"
-import { Skeleton } from "@/components/common/ui/skeleton" // Assuming you have Skeleton
+import { Skeleton } from "@/components/common/ui/skeleton"
 
 export const metadata = {
-  title: "Manage Coupons", // Placeholder for translation
+  title: "Manage Coupons",
 }
 
 // Define a type for searchParams for clarity

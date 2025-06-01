@@ -33,6 +33,7 @@
     "confirm": "Подтвердить",
     "back": "Назад",
     "next": "Вперед",
+    "previous": "Предыдущий",
     "submit": "Отправить",
     "all": "Все",
     "deactivate": "Деактивировать",
@@ -423,24 +424,26 @@
     "isGiftBadge": "Подарок"
   },
   "adminCoupons": {
-    "title": "Управление купонами",
-    "description": "Создание, редактирование и управление всеми купонами в системе.",
-    "createNew": "Создать купон",
-    "editCoupon": "Редактировать купон",
-    "createCoupon": "Создать новый купон",
-    "formDescriptionEdit": "Обновите детали этого купона.",
-    "formDescriptionCreate": "Заполните детали для создания нового купона.",
-    "deleteConfirmTitle": "Вы уверены?",
-    "deleteConfirmDescription": "Это действие нельзя отменить. Это приведет к необратимому удалению купона.",
-    "deleting": "Удаление...",
-    "totalCoupons": "Всего купонов: {{count}}",
-    "successCreate": "Купон успешно создан.",
-    "successUpdate": "Купон успешно обновлен.",
-    "successDelete": "Купон успешно удален.",
-    "errorCreate": "Не удалось создать купон.",
-    "errorUpdate": "Не удалось обновить купон.",
-    "errorDelete": "Не удалось удалить купон.",
-    "errorFetchPartners": "Не удалось загрузить партнеров для выбора.",
+    "meta": {
+      "title": "Управление купонами"
+    },
+    "page": {
+      "title": "Управление купонами",
+      "description": "Создавайте и управляйте купонами для вашей платформы."
+    },
+    "client": {
+      "createCouponButton": "Создать купон",
+      "totalCouponsLabel": "Всего купонов",
+      "editCouponTitle": "Редактировать купон",
+      "createCouponTitle": "Создать новый купон",
+      "editCouponDescription": "Обновите детали этого купона.",
+      "createCouponDescription": "Заполните детали для создания нового купона.",
+      "deleteConfirmDescription": "Это действие нельзя отменить. Купон будет удален навсегда.",
+      "deleteSuccessToast": "Купон успешно удален.",
+      "deleteErrorToast": "Не удалось удалить купон.",
+      "operationSuccessToast": "Операция прошла успешно.",
+      "operationErrorToast": "Операция не удалась."
+    },
     "columns": {
       "code": "Код",
       "description": "Описание",
@@ -449,74 +452,50 @@
       "validUntil": "Действителен до",
       "status": "Статус",
       "usage": "Использование",
-      "assignedPartner": "Назначенный партнер"
+      "assignedPartner": "Назначенный партнер",
+      "unnamedPartner": "Партнер без имени"
     },
-    "statusBadges": {
+    "status": {
       "active": "Активен",
       "scheduled": "Запланирован",
       "expired": "Истек",
-      "inactive_manual": "Неактивен"
-    },
-    "partnerSelectPlaceholder": "Выберите партнера (необязательно)",
-    "noPartnersFound": "Партнеры не найдены",
-    "unlimited": "Безлимитный",
-    "notesForPartner": "Примечания для партнера (необязательно)",
-    "notesForPartnerPlaceholder": "Эти примечания будут видны назначенному партнеру.",
-    "fields": {
-      "code": "Код купона",
-      "description": "Описание (необязательно)",
-      "discountType": "Тип скидки",
-      "discountValue": "Размер скидки",
-      "validFrom": "Действителен с",
-      "validUntil": "Действителен до",
-      "usageLimit": "Лимит использования (0 для безлимитного)",
-      "usageLimitPerUser": "Лимит использования на пользователя (0 для безлимитного)",
-      "assignedPartnerId": "Назначить партнеру (необязательно)",
-      "isActive": "Активен",
-      "notesForPartner": "Примечания для партнера (необязательно)"
-    },
-    "discountTypes": {
-      "percentage": "Процент",
-      "fixed_amount": "Фиксированная сумма"
-    },
-    "errors": {
-      "codeRequired": "Код купона обязателен.",
-      "codeMinLength": "Код купона должен содержать не менее 3 символов.",
-      "discountValueRequired": "Размер скидки обязателен.",
-      "discountValuePositive": "Размер скидки должен быть положительным.",
-      "percentageMax": "Процентная скидка не может превышать 100.",
-      "validFromRequired": "Дата начала действия обязательна.",
-      "validUntilRequired": "Дата окончания действия обязательна.",
-      "validUntilAfterFrom": "Дата окончания действия должна быть позже даты начала.",
-      "usageLimitInteger": "Лимит использования должен быть целым числом.",
-      "usageLimitMin": "Лимит использования должен быть 0 или больше.",
-      "usageLimitPerUserInteger": "Лимит использования на пользователя должен быть целым числом.",
-      "usageLimitPerUserMin": "Лимит использования на пользователя должен быть 0 или больше."
+      "inactiveManual": "Неактивен"
     }
   },
-  "partnerAssignedCoupons": {
-    "title": "Назначенные купоны",
-    "description": "Просмотр купонов, назначенных вам администратором.",
-    "noCoupons": "Вам еще не назначены купоны.",
-    "loading": "Загрузка купонов...",
-    "totalAssignedCoupons": "Всего назначенных купонов: {{count}}",
-    "card": {
-      "discount": "Скидка:",
-      "validPeriod": "Действителен:",
-      "status": "Статус:",
-      "totalUses": "Всего использований:",
-      "usesPerCustomer": "Использований на клиента:",
-      "adminNote": "Примечание администратора:",
-      "created": "Создан:",
-      "copyCodeLabel": "Скопировать код купона",
-      "copiedSuccess": "Скопировано!",
-      "copiedMessage": "Код купона \"{{code}}\" скопирован в буфер обмена.",
-      "copyError": "Не удалось скопировать код."
+  "partnerCoupons": {
+    "meta": {
+      "title": "Мои назначенные купоны"
     },
-    "pagination": {
-      "previous": "Предыдущая",
-      "next": "Следующая",
-      "pageInfo": "Страница {{currentPage}} из {{totalPages}}"
+    "page": {
+      "title": "Мои назначенные купоны",
+      "description": "Просмотр купонов, назначенных вам для распространения."
+    },
+    "card": {
+      "copiedToastTitle": "Скопировано!",
+      "copiedToastDescription": "Код купона \"{{code}}\" скопирован в буфер обмена.",
+      "copyErrorToastDescription": "Не удалось скопировать код.",
+      "noDescription": "Нет описания",
+      "discountLabel": "Скидка:",
+      "validLabel": "Действителен:",
+      "statusLabel": "Статус:",
+      "totalUsesLabel": "Всего использований:",
+      "unlimitedUses": "Безлимитно",
+      "usesPerCustomerLabel": "Использований на клиента:",
+      "unlimitedUsesPerCustomer": "Безлимитно",
+      "adminNoteLabel": "Примечание администратора:",
+      "createdLabel": "Создан:"
+    },
+    "client": {
+      "loadingCoupons": "Загрузка купонов...",
+      "noCouponsAssigned": "Вам еще не назначено ни одного купона.",
+      "paginationPageInfo": "Страница {{currentPage}} из {{totalPages}}",
+      "totalAssignedCouponsLabel": "Всего назначенных купонов:"
+    },
+    "status": {
+      "active": "Активен",
+      "scheduled": "Запланирован",
+      "expired": "Истек",
+      "inactiveManual": "Неактивен"
     }
   },
   "memberCoupons": {

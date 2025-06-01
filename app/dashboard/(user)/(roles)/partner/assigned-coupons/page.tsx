@@ -5,7 +5,7 @@ import { Heading } from "@/components/common/ui/heading"
 import { Skeleton } from "@/components/common/ui/skeleton"
 
 export const metadata = {
-  title: "My Assigned Coupons", // Placeholder for translation
+  title: "My Assigned Coupons",
 }
 
 interface PartnerAssignedCouponsPageProps {

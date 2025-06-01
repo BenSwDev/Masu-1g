@@ -58,7 +58,13 @@
     "failedToLoadTreatments": "Failed to load treatments.",
     "dir": "ltr",
     "locale": "en-US",
-    "notSet": "Not set"
+    "notSet": "Not set",
+    "notApplicable": "N/A",
+    "saveChanges": "Save Changes",
+    "allRoles": "All Roles",
+    "selectPlaceholder": "Select...",
+    "optional": "Optional",
+    "loadingData": "Loading data..."
   },
   "dashboard": {
     "sidebar": {
@@ -593,7 +599,54 @@
       "email": "Email",
       "roles": "Roles",
       "created": "Created",
-      "actions": "Actions"
+      "actions": "Actions",
+      "statisticsTitle": "User Statistics",
+      "userListTitle": "User List",
+      "avatar": "Avatar",
+      "phone": "Phone",
+      "dobAndAge": "Date of Birth (Age)",
+      "agePrefix": "(",
+      "ageSuffix": " years old)",
+      "gender": "Gender",
+      "createdDate": "Created Date",
+      "userActions": "Actions",
+      "changePassword": "Change Password",
+      "confirmDeleteTitle": "Confirm User Deletion",
+      "confirmDeleteMessage": "Are you sure you want to delete the user {{userName}}? This action cannot be undone.",
+      "confirmChangePasswordTitle": "Confirm Password Change",
+      "confirmChangePasswordMessage": "An email with instructions to reset the password will be sent to {{userEmail}}. Do you want to proceed?",
+      "sendResetLink": "Send Reset Link",
+      "userUpdatedToast": "User updated successfully.",
+      "userCreatedToast": "User created successfully.",
+      "userDeletedToast": "User deleted successfully.",
+      "deleteUserErrorToast": "Error deleting user: {{error}}",
+      "passwordResetEmailSentToast": "Password reset email sent to {{email}}.",
+      "passwordResetEmailErrorToast": "Error sending password reset email: {{error}}",
+      "addUser": "Add User",
+      "editUserTitleDialog": "Edit User",
+      "createUserTitleDialog": "Create New User",
+      "editUserDescription": "Make changes to the user's profile here. Click save when you're done.",
+      "createUserDescription": "Fill in the details to create a new user. Click create when you're done.",
+      "form": {
+        "name": "Full Name",
+        "namePlaceholder": "Enter full name",
+        "email": "Email",
+        "emailPlaceholder": "Enter email address",
+        "phone": "Phone Number",
+        "phonePlaceholder": "Enter phone number",
+        "password": "Password",
+        "passwordPlaceholder": "Enter password (min. 6 characters)",
+        "passwordRequiredForNew": "Password is required for new users.",
+        "image": "Image URL",
+        "imagePlaceholder": "https://example.com/image.png",
+        "imageHint": "Provide a direct URL to the user's avatar.",
+        "role": "Role",
+        "selectRolePlaceholder": "Select a role",
+        "gender": "Gender",
+        "selectGenderPlaceholder": "Select a gender",
+        "dateOfBirth": "Date of Birth",
+        "selectDatePlaceholder": "Pick a date"
+      }
     }
   },
   "roles": {
@@ -601,7 +654,10 @@
     "member": "Member",
     "partner": "Partner",
     "professional": "Professional",
-    "guest": "Guest"
+    "guest": "Guest",
+    "memberPlural": "Members",
+    "professionalPlural": "Professionals",
+    "partnerPlural": "Partners"
   },
   "name": "Name",
   "email": "Email",
@@ -762,5 +818,10 @@
   "purchaseGiftVoucher": {
     "failedToLoadData": "Failed to load data required for purchase",
     "errorDetails": "Details"
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female",
+    "other": "Other"
   }
 }

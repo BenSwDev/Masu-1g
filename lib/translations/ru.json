@@ -51,7 +51,13 @@
     "failedToLoadTreatments": "Ошибка загрузки процедур.",
     "dir": "ltr",
     "locale": "ru-RU",
-    "notSet": "Не установлено"
+    "notSet": "Не установлено",
+    "notApplicable": "Н/Д",
+    "saveChanges": "Сохранить изменения",
+    "allRoles": "Все роли",
+    "selectPlaceholder": "Выберите...",
+    "optional": "Необязательно",
+    "loadingData": "Загрузка данных..."
   },
   "dashboard": {
     "sidebar": {
@@ -586,10 +592,61 @@
       "email": "Email",
       "roles": "Роли",
       "created": "Создан",
-      "actions": "Действия"
+      "actions": "Действия",
+      "statisticsTitle": "Статистика пользователей",
+      "userListTitle": "Список пользователей",
+      "avatar": "Аватар",
+      "phone": "Телефон",
+      "dobAndAge": "Дата рождения (Возраст)",
+      "agePrefix": "(",
+      "ageSuffix": " лет)",
+      "gender": "Пол",
+      "createdDate": "Дата создания",
+      "userActions": "Действия",
+      "changePassword": "Изменить пароль",
+      "confirmDeleteTitle": "Подтвердите удаление пользователя",
+      "confirmDeleteMessage": "Вы уверены, что хотите удалить пользователя {{userName}}? Это действие необратимо.",
+      "confirmChangePasswordTitle": "Подтвердите изменение пароля",
+      "confirmChangePasswordMessage": "Письмо с инструкциями по сбросу пароля будет отправлено на {{userEmail}}. Продолжить?",
+      "sendResetLink": "Отправить ссылку для сброса",
+      "userUpdatedToast": "Пользователь успешно обновлен.",
+      "userCreatedToast": "Пользователь успешно создан.",
+      "userDeletedToast": "Пользователь успешно удален.",
+      "deleteUserErrorToast": "Ошибка удаления пользователя: {{error}}",
+      "passwordResetEmailSentToast": "Письмо для сброса пароля отправлено на {{email}}.",
+      "passwordResetEmailErrorToast": "Ошибка отправки письма для сброса пароля: {{error}}",
+      "addUser": "Добавить пользователя",
+      "editUserTitleDialog": "Редактировать пользователя",
+      "createUserTitleDialog": "Создать нового пользователя",
+      "editUserDescription": "Внесите изменения в профиль пользователя здесь. Нажмите 'Сохранить', когда закончите.",
+      "createUserDescription": "Заполните данные для создания нового пользователя. Нажмите 'Создать', когда закончите.",
+      "form": {
+        "name": "Полное имя",
+        "namePlaceholder": "Введите полное имя",
+        "email": "Электронная почта",
+        "emailPlaceholder": "Введите адрес электронной почты",
+        "phone": "Номер телефона",
+        "phonePlaceholder": "Введите номер телефона",
+        "password": "Пароль",
+        "passwordPlaceholder": "Введите пароль (мин. 6 символов)",
+        "passwordRequiredForNew": "Пароль обязателен для новых пользователей.",
+        "image": "URL изображения",
+        "imagePlaceholder": "https://example.com/image.png",
+        "imageHint": "Укажите прямую ссылку на аватар пользователя.",
+        "role": "Роль",
+        "selectRolePlaceholder": "Выберите роль",
+        "gender": "Пол",
+        "selectGenderPlaceholder": "Выберите пол",
+        "dateOfBirth": "Дата рождения",
+        "selectDatePlaceholder": "Выберите дату"
+      }
     }
   },
-  "roles": "roles",
+  "roles": {
+    "memberPlural": "Участники",
+    "professionalPlural": "Специалисты",
+    "partnerPlural": "Партнеры"
+  },
   "name": "name",
   "email": "email",
   "createdAt": "createdAt",
@@ -754,5 +811,10 @@
   "purchaseGiftVoucher": {
     "failedToLoadData": "Не удалось загрузить данные, необходимые для покупки",
     "errorDetails": "Детали"
+  },
+  "gender": {
+    "male": "Мужской",
+    "female": "Женский",
+    "other": "Другой"
   }
 }

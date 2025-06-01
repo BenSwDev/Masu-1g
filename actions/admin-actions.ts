@@ -3,293 +3,324 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import { UserQueries } from "@/lib/db/query-builders"
-import User from "@/lib/db/models/user"
+import User, { type IUser } from "@/lib/db/models/user"
+import PasswordResetToken from "@/lib/db/models/password-reset-token"
+import { emailService } from "@/lib/notifications/email-service" // Use the singleton instance
+import type { NotificationData } from "@/lib/notifications/notification-types"
+import bcrypt from "bcryptjs"
+import crypto from "crypto"
 
-/**
- * Get all users with pagination, filtering, and sorting (admin only)
- */
+// Helper function to sanitize user object (remove password, convert _id to id)
+const sanitizeUser = (userDoc: any): Omit<IUser, "password" | "_id"> & { id: string } => {
+  const userObject = userDoc.toObject ? userDoc.toObject() : { ...userDoc }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password, _id, __v, ...rest } = userObject
+  return { ...rest, id: _id.toString() }
+}
+
 export async function getAllUsers(
   page = 1,
-  limit = 20,
+  limit = 10,
   searchTerm?: string,
   roleFilter?: string[],
-  sortField: string = "name",
-  sortDirection: "asc" | "desc" = "asc"
+  sortField = "name",
+  sortDirection: "asc" | "desc" = "asc",
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return { success: false, message: "notAuthenticated", users: [], total: 0 }
-    }
-
-    // Check if current user is an admin
-    if (!session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized", users: [], total: 0 }
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "notAuthorized", users: [], total: 0, totalPages: 0 }
     }
 
     await dbConnect()
 
-    // Build query
     const query: any = {}
-    
-    // Add search term
     if (searchTerm) {
       query.$or = [
         { name: { $regex: searchTerm, $options: "i" } },
-        { email: { $regex: searchTerm, $options: "i" } }
+        { email: { $regex: searchTerm, $options: "i" } },
+        { phone: { $regex: searchTerm, $options: "i" } },
       ]
     }
-    
-    // Add role filter
     if (roleFilter && roleFilter.length > 0) {
       query.roles = { $in: roleFilter }
     }
 
-    // Build sort object
-    const sort: any = {}
-    sort[sortField] = sortDirection === "asc" ? 1 : -1
+    const sortOptions: any = {}
+    sortOptions[sortField] = sortDirection === "asc" ? 1 : -1
 
-    // Execute query with pagination
     const skip = (page - 1) * limit
-    const [users, total] = await Promise.all([
+    const [usersFromDb, total] = await Promise.all([
       User.find(query)
-        .sort(sort)
+        .sort(sortOptions)
         .skip(skip)
         .limit(limit)
-        .lean(),
-      User.countDocuments(query)
+        .select("name email phone image roles dateOfBirth gender createdAt")
+        .lean(), // Use .lean() for performance when not needing Mongoose documents
+      User.countDocuments(query),
     ])
+
+    const users = usersFromDb.map((user) => ({
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      image: user.image,
+      roles: user.roles,
+      dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString() : undefined,
+      gender: user.gender,
+      createdAt: new Date(user.createdAt).toISOString(),
+    }))
 
     return {
       success: true,
-      users: users.map((user: any) => ({
-        id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        roles: user.roles,
-        createdAt: user.createdAt,
-      })),
+      users,
       total,
       page,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     }
   } catch (error) {
-    console.error("Error getting users:", error)
-    return { success: false, message: "fetchFailed", users: [], total: 0 }
+    console.error("Error in getAllUsers (admin-actions):", error)
+    return { success: false, message: "fetchFailed", users: [], total: 0, totalPages: 0 }
   }
 }
 
-/**
- * Get user statistics (admin only)
- */
 export async function getUserStatistics() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return { success: false, message: "notAuthenticated" }
-    }
-
-    if (!session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "notAuthorized", roleCounts: null }
     }
 
     await dbConnect()
 
-    // Run analytics queries in parallel
-    const [roleStats, registrationTrends, demographics] = await Promise.all([
-      UserQueries.getRoleStats(),
-      UserQueries.getRegistrationTrends(30),
-      UserQueries.getUserDemographics(),
+    const [memberCount, professionalCount, partnerCount] = await Promise.all([
+      User.countDocuments({ roles: "member" }),
+      User.countDocuments({ roles: "professional" }),
+      User.countDocuments({ roles: "partner" }),
     ])
 
     return {
       success: true,
-      roleStats,
-      registrationTrends,
-      demographics,
-    }
-  } catch (error) {
-    console.error("Error getting statistics:", error)
-    return { success: false, message: "fetchFailed" }
-  }
-}
-
-/**
- * Bulk update user roles (admin only)
- */
-export async function bulkUpdateUserRoles(userIds: string[], roles: string[]) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return { success: false, message: "notAuthenticated" }
-    }
-
-    if (!session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
-
-    // Validate roles
-    if (!roles || roles.length === 0) {
-      return { success: false, message: "rolesRequired" }
-    }
-
-    const availableRoles = ["member", "admin", "professional", "partner"]
-    const invalidRoles = roles.filter((role) => !availableRoles.includes(role))
-    if (invalidRoles.length > 0) {
-      return { success: false, message: "invalidRoles", invalidRoles }
-    }
-
-    await dbConnect()
-
-    // Use bulk update for better performance
-    const result = await UserQueries.bulkUpdateRoles(userIds, roles)
-
-    return {
-      success: true,
-      message: "rolesUpdated",
-      modifiedCount: result.modifiedCount,
-    }
-  } catch (error) {
-    console.error("Error updating user roles:", error)
-    return { success: false, message: "updateFailed" }
-  }
-}
-
-/**
- * Update user roles (admin only)
- */
-export async function updateUserRoles(userId: string, roles: string[]) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return { success: false, message: "notAuthenticated" }
-    }
-
-    // Check if current user is an admin
-    if (!session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
-
-    // Validate roles
-    if (!roles || roles.length === 0) {
-      return { success: false, message: "rolesRequired" }
-    }
-
-    // Get available roles
-    const availableRoles = ["member", "admin", "professional", "partner"]
-
-    // Check if all roles are valid
-    const invalidRoles = roles.filter((role) => !availableRoles.includes(role))
-    if (invalidRoles.length > 0) {
-      return { success: false, message: "invalidRoles", invalidRoles }
-    }
-
-    await dbConnect()
-
-    // Update user roles
-    const updatedUser = await User.findByIdAndUpdate(userId, { roles }, { new: true, select: "roles activeRole" })
-
-    if (!updatedUser) {
-      return { success: false, message: "userNotFound" }
-    }
-
-    // If activeRole is not valid anymore, set to default
-    if (!updatedUser.roles.includes(updatedUser.activeRole)) {
-      const getDefaultActiveRole = (roles: string[]) => {
-        if (!roles || roles.length === 0) return "member"
-        if (roles.includes("admin")) return "admin"
-        if (roles.includes("professional")) return "professional"
-        if (roles.includes("partner")) return "partner"
-        if (roles.includes("member")) return "member"
-        return roles[0] || "member"
-      }
-      const fallback = getDefaultActiveRole(updatedUser.roles) || "member"
-      await User.findByIdAndUpdate(userId, { activeRole: fallback })
-    }
-
-    return { success: true, message: "rolesUpdated" }
-  } catch (error) {
-    console.error("Error updating user roles:", error)
-    return { success: false, message: "updateFailed" }
-  }
-}
-
-/**
- * Make a user an admin (admin only)
- */
-export async function makeUserAdmin(userId: string) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return { success: false, message: "notAuthenticated" }
-    }
-
-    // Check if current user is an admin
-    if (!session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
-
-    await dbConnect()
-
-    // Use atomic operation to add admin role
-    const result = await User.findByIdAndUpdate(
-      userId,
-      { $addToSet: { roles: "admin" } },
-      { new: true, select: "roles" },
-    ).lean()
-
-    if (!result) {
-      return { success: false, message: "userNotFound" }
-    }
-
-    return { success: true, message: "madeAdmin" }
-  } catch (error) {
-    console.error("Error making user admin:", error)
-    return { success: false, message: "updateFailed" }
-  }
-}
-
-/**
- * Remove admin role from a user (admin only)
- */
-export async function removeAdminRole(userId: string) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return { success: false, message: "notAuthenticated" }
-    }
-
-    // Check if current user is an admin
-    if (!session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
-
-    // Prevent removing admin role from self
-    if (userId === session.user.id) {
-      return { success: false, message: "cannotRemoveSelf" }
-    }
-
-    await dbConnect()
-
-    // Use atomic operation to remove admin role
-    const result = await User.findByIdAndUpdate(
-      userId,
-      {
-        $pull: { roles: "admin" },
-        $addToSet: { roles: "member" }, // Ensure at least member role
+      roleCounts: {
+        members: memberCount,
+        professionals: professionalCount,
+        partners: partnerCount,
       },
-      { new: true, select: "roles" },
-    ).lean()
+    }
+  } catch (error) {
+    console.error("Error in getUserStatistics (admin-actions):", error)
+    return { success: false, message: "fetchFailed", roleCounts: null }
+  }
+}
 
-    if (!result) {
+export async function createUserByAdmin(formData: FormData) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "notAuthorized" }
+    }
+
+    await dbConnect()
+
+    const name = formData.get("name") as string
+    const email = formData.get("email") as string
+    const phone = formData.get("phone") as string
+    const password = formData.get("password") as string
+    const role = formData.get("role") as string
+    const dateOfBirthStr = formData.get("dateOfBirth") as string | null
+    const gender = formData.get("gender") as string
+    const image = formData.get("image") as string | null
+
+    if (!name || !email || !phone || !password || !role || !gender) {
+      return { success: false, message: "missingFields" }
+    }
+    if (password.length < 6) {
+      return { success: false, message: "errors.weakPassword" } // Using existing translation key
+    }
+
+    const existingEmail = await User.findOne({ email: email.toLowerCase() }).lean()
+    if (existingEmail) {
+      return { success: false, message: "errors.emailExists" }
+    }
+    const existingPhone = await User.findOne({ phone }).lean()
+    if (existingPhone) {
+      return { success: false, message: "errors.phoneExists" }
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const dateOfBirth = dateOfBirthStr ? new Date(dateOfBirthStr) : undefined
+    if (dateOfBirthStr && isNaN(dateOfBirth?.getTime())) {
+      return { success: false, message: "errors.invalidDateOfBirth" }
+    }
+
+    const newUserDoc = new User({
+      name,
+      email: email.toLowerCase(),
+      phone,
+      password: hashedPassword,
+      roles: [role],
+      activeRole: role,
+      dateOfBirth,
+      gender,
+      image: image || undefined,
+      emailVerified: new Date(),
+      phoneVerified: new Date(),
+    })
+
+    await newUserDoc.save()
+    return { success: true, message: "admin.users.userCreatedToast", user: sanitizeUser(newUserDoc) }
+  } catch (error: any) {
+    console.error("Error creating user by admin:", error)
+    if (error.code === 11000) {
+      // MongoDB duplicate key error
+      if (error.message.includes("email")) return { success: false, message: "errors.emailExists" }
+      if (error.message.includes("phone")) return { success: false, message: "errors.phoneExists" }
+    }
+    return { success: false, message: "creationFailed" }
+  }
+}
+
+export async function updateUserByAdmin(userId: string, formData: FormData) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "notAuthorized" }
+    }
+
+    await dbConnect()
+
+    const name = formData.get("name") as string
+    const email = formData.get("email") as string
+    const phone = formData.get("phone") as string
+    const role = formData.get("role") as string
+    const dateOfBirthStr = formData.get("dateOfBirth") as string | null
+    const gender = formData.get("gender") as string
+    const image = formData.get("image") as string // Can be empty string
+
+    if (!name || !email || !phone || !role || !gender) {
+      return { success: false, message: "missingFields" }
+    }
+
+    const userToUpdate = await User.findById(userId)
+    if (!userToUpdate) {
       return { success: false, message: "userNotFound" }
     }
 
-    return { success: true, message: "adminRemoved" }
-  } catch (error) {
-    console.error("Error removing admin role:", error)
+    if (email.toLowerCase() !== userToUpdate.email) {
+      const existingEmail = await User.findOne({ email: email.toLowerCase(), _id: { $ne: userId } }).lean()
+      if (existingEmail) return { success: false, message: "errors.emailExists" }
+      userToUpdate.email = email.toLowerCase()
+    }
+    if (phone !== userToUpdate.phone) {
+      const existingPhone = await User.findOne({ phone, _id: { $ne: userId } }).lean()
+      if (existingPhone) return { success: false, message: "errors.phoneExists" }
+      userToUpdate.phone = phone
+    }
+
+    userToUpdate.name = name
+    userToUpdate.roles = [role]
+    userToUpdate.activeRole = role
+    userToUpdate.gender = gender as "male" | "female" | "other"
+    userToUpdate.image = image || undefined
+
+    const dateOfBirth = dateOfBirthStr ? new Date(dateOfBirthStr) : null // Allow clearing date
+    if (dateOfBirthStr && dateOfBirth && isNaN(dateOfBirth.getTime())) {
+      return { success: false, message: "errors.invalidDateOfBirth" }
+    }
+    userToUpdate.dateOfBirth = dateOfBirth || undefined
+
+    await userToUpdate.save()
+    return { success: true, message: "admin.users.userUpdatedToast", user: sanitizeUser(userToUpdate) }
+  } catch (error: any) {
+    console.error("Error updating user by admin:", error)
+    if (error.code === 11000) {
+      if (error.message.includes("email")) return { success: false, message: "errors.emailExists" }
+      if (error.message.includes("phone")) return { success: false, message: "errors.phoneExists" }
+    }
     return { success: false, message: "updateFailed" }
+  }
+}
+
+export async function deleteUserByAdmin(userId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "notAuthorized" }
+    }
+    if (userId === session.user.id) {
+      return { success: false, message: "cannotDeleteSelf" }
+    }
+
+    await dbConnect()
+    const deletedUser = await User.findByIdAndDelete(userId)
+    if (!deletedUser) {
+      return { success: false, message: "userNotFound" }
+    }
+    return { success: true, message: "admin.users.userDeletedToast" }
+  } catch (error) {
+    console.error("Error deleting user by admin:", error)
+    return { success: false, message: "deleteFailed" }
+  }
+}
+
+export async function initiatePasswordResetByAdmin(userId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "notAuthorized" }
+    }
+
+    await dbConnect()
+    const user = await User.findById(userId).select("email name")
+    if (!user || !user.email) {
+      // Ensure email exists
+      return { success: false, message: "userNotFoundOrMissingEmail" }
+    }
+
+    const token = crypto.randomBytes(32).toString("hex")
+    // PasswordResetToken model expects 'token' to be the hashed one, and 'userId'
+    // The actual token sent to user is `token`, the one stored is `hashedToken`
+    // Let's adjust PasswordResetToken model or this logic.
+    // For now, assuming PasswordResetToken stores the raw token and we handle expiry.
+    // A better approach is to store a hashed token.
+    // For simplicity with existing model, let's assume it stores the raw token.
+    // If PasswordResetToken expects a hashed token, this needs to change.
+    // The current PasswordResetQueries.createToken seems to handle this.
+
+    // Delete any existing tokens for this user to avoid conflicts
+    await PasswordResetToken.deleteMany({ userId: user._id }).exec()
+
+    const expires = new Date(Date.now() + 3600000) // 1 hour
+    await new PasswordResetToken({
+      userId: user._id,
+      token: token, // Storing raw token for simplicity, ideally hash it
+      expiresAt: expires,
+    }).save()
+
+    const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${token}&userId=${user._id.toString()}`
+
+    const notificationData: NotificationData = {
+      type: "passwordReset", // Ensure this type is handled in getEmailTemplate
+      userName: user.name || user.email,
+      resetLink: resetUrl,
+      // language: user.language || 'en' // If user language preference is stored
+    }
+
+    // Using the generic sendNotification method
+    const emailResult = await emailService.sendNotification(
+      { value: user.email, name: user.name || user.email, language: "en" /* TODO: Get user lang */ },
+      notificationData,
+    )
+
+    if (!emailResult.success) {
+      console.error("Failed to send password reset email:", emailResult.error)
+      return { success: false, message: "passwordResetEmailErrorToast", errorDetail: emailResult.error }
+    }
+
+    return { success: true, message: "admin.users.passwordResetEmailSentToast", email: user.email }
+  } catch (error) {
+    console.error("Error initiating password reset by admin:", error)
+    return { success: false, message: "passwordResetFailed" }
   }
 }

@@ -58,7 +58,13 @@
     "failedToLoadTreatments": "שגיאה בטעינת טיפולים.",
     "dir": "rtl",
     "locale": "he-IL",
-    "notSet": "לא הוגדר"
+    "notSet": "לא הוגדר",
+    "notApplicable": "לא זמין",
+    "saveChanges": "שמור שינויים",
+    "allRoles": "כל התפקידים",
+    "selectPlaceholder": "בחר...",
+    "optional": "אופציונלי",
+    "loadingData": "טוען נתונים..."
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -822,7 +828,54 @@
       "email": "דוא״ל",
       "roles": "תפקידים",
       "created": "נוצר",
-      "actions": "פעולות"
+      "actions": "פעולות",
+      "statisticsTitle": "סטטיסטיקות משתמשים",
+      "userListTitle": "רשימת משתמשים",
+      "avatar": "תמונה",
+      "phone": "טלפון",
+      "dobAndAge": "תאריך לידה (גיל)",
+      "agePrefix": "(בן ",
+      "ageSuffix": ")",
+      "gender": "מגדר",
+      "createdDate": "תאריך יצירה",
+      "userActions": "פעולות",
+      "changePassword": "שנה סיסמה",
+      "confirmDeleteTitle": "אישור מחיקת משתמש",
+      "confirmDeleteMessage": "האם אתה בטוח שברצונך למחוק את המשתמש {{userName}}? לא ניתן לבטל פעולה זו.",
+      "confirmChangePasswordTitle": "אישור שינוי סיסמה",
+      "confirmChangePasswordMessage": "אימייל עם הוראות לאיפוס הסיסמה יישלח ל-{{userEmail}}. האם להמשיך?",
+      "sendResetLink": "שלח קישור איפוס",
+      "userUpdatedToast": "המשתמש עודכן בהצלחה.",
+      "userCreatedToast": "המשתמש נוצר בהצלחה.",
+      "userDeletedToast": "המשתמש נמחק בהצלחה.",
+      "deleteUserErrorToast": "שגיאה במחיקת משתמש: {{error}}",
+      "passwordResetEmailSentToast": "מייל לאיפוס סיסמה נשלח ל-{{email}}.",
+      "passwordResetEmailErrorToast": "שגיאה בשליחת מייל לאיפוס סיסמה: {{error}}",
+      "addUser": "הוסף משתמש",
+      "editUserTitleDialog": "ערוך משתמש",
+      "createUserTitleDialog": "צור משתמש חדש",
+      "editUserDescription": "בצע שינויים בפרופיל המשתמש כאן. לחץ על שמור בסיום.",
+      "createUserDescription": "מלא את הפרטים ליצירת משתמש חדש. לחץ על צור בסיום.",
+      "form": {
+        "name": "שם מלא",
+        "namePlaceholder": "הזן שם מלא",
+        "email": "אימייל",
+        "emailPlaceholder": "הזן כתובת אימייל",
+        "phone": "מספר טלפון",
+        "phonePlaceholder": "הזן מספר טלפון",
+        "password": "סיסמה",
+        "passwordPlaceholder": "הזן סיסמה (מינימום 6 תווים)",
+        "passwordRequiredForNew": "סיסמה נדרשת עבור משתמשים חדשים.",
+        "image": "כתובת URL לתמונה",
+        "imagePlaceholder": "https://example.com/image.png",
+        "imageHint": "ספק כתובת URL ישירה לתמונת הפרופיל של המשתמש.",
+        "role": "תפקיד",
+        "selectRolePlaceholder": "בחר תפקיד",
+        "gender": "מגדר",
+        "selectGenderPlaceholder": "בחר מגדר",
+        "dateOfBirth": "תאריך לידה",
+        "selectDatePlaceholder": "בחר תאריך"
+      }
     }
   },
   "roles": {
@@ -830,7 +883,10 @@
     "member": "חבר",
     "partner": "שותף",
     "professional": "מקצועי",
-    "guest": "אורח"
+    "guest": "אורח",
+    "memberPlural": "חברים",
+    "professionalPlural": "בעלי מקצוע",
+    "partnerPlural": "שותפים"
   },
   "name": "שם",
   "email": "דוא״ל",
@@ -855,5 +911,10 @@
   "roomNumber": "מספר חדר",
   "instructions": "הוראות",
   "T": "T",
-  "common.totalPrice": "מחיר כולל"
+  "common.totalPrice": "מחיר כולל",
+  "gender": {
+    "male": "זכר",
+    "female": "נקבה",
+    "other": "אחר"
+  }
 }

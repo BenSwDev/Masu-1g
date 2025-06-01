@@ -120,7 +120,7 @@ export function UserManagement({
   initialSortDirection,
   roleCounts,
 }: UserManagementProps) {
-  const { t, i18n } = useTranslation()
+  const { t, language } = useTranslation()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -492,11 +492,11 @@ export function UserManagement({
                     </TableCell>
                     <TableCell>
                       {user.dateOfBirth
-                        ? `${formatDate(user.dateOfBirth, i18n.language)} (${t("admin.users.agePrefix")}${calculateAge(user.dateOfBirth)}${t("admin.users.ageSuffix")})`
+                        ? `${formatDate(user.dateOfBirth, language)} (${t("admin.users.agePrefix")}${calculateAge(user.dateOfBirth)}${t("admin.users.ageSuffix")})`
                         : t("common.notSet")}
                     </TableCell>
                     <TableCell>{getGenderDisplay(user.gender)}</TableCell>
-                    <TableCell>{formatDate(user.createdAt, i18n.language)}</TableCell>
+                    <TableCell>{formatDate(user.createdAt, language)}</TableCell>
                     <TableCell className="text-end">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

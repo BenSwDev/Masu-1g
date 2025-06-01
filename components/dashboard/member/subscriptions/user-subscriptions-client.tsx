@@ -7,7 +7,7 @@ import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils/utils"
-import { useSubscription, cancelSubscription } from "@/actions/user-subscription-actions"
+import { useSubscription, cancelSubscription } from "@/actions/user-management-actions"
 import { toast } from "sonner"
 import { AlertModal } from "@/components/common/modals/alert-modal"
 

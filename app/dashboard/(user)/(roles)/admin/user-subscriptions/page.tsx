@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { getAllUserSubscriptions } from "@/actions/user-subscription-actions"
+import { getAllUserSubscriptions } from "@/actions/user-management-actions"
 import AdminUserSubscriptionsClient from "@/components/dashboard/admin/user-subscriptions/admin-user-subscriptions-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"

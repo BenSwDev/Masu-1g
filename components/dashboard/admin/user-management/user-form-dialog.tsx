@@ -28,25 +28,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { Calendar } from "@/components/common/ui/calendar"
 import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils/utils" // Assuming cn is in utils
+import { cn } from "@/lib/utils/utils"
 import { toast } from "@/components/common/ui/use-toast"
 import { createUserByAdmin, updateUserByAdmin } from "@/actions/admin-actions"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Checkbox } from "@/components/common/ui/checkbox"
-import type { UserData } from "./user-management" // Import UserData type
+import type { UserData } from "./user-management"
 
-// Define Zod schema for form validation
+// Define Zod schema for form validation (removed image field)
 const phoneRegex = new RegExp(/^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/)
 
 const userFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
   phone: z.string().regex(phoneRegex, { message: "Invalid phone number." }),
-  password: z.string().optional(), // Optional for schema, required conditionally in form
+  password: z.string().optional(),
   roles: z.array(z.string()).min(1, { message: "At least one role is required." }),
   gender: z.string().min(1, { message: "Gender is required." }),
   dateOfBirth: z.date().optional().nullable(),
-  image: z.string().url({ message: "Invalid URL." }).optional().or(z.literal("")),
 })
 
 // Conditional validation for password when creating a new user
@@ -77,10 +76,9 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       email: "",
       phone: "",
       password: "",
-      roles: ["member"], // Default role
+      roles: ["member"],
       gender: "",
       dateOfBirth: null,
-      image: "",
     },
   })
 
@@ -90,15 +88,13 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
         name: initialData.name || "",
         email: initialData.email || "",
         phone: initialData.phone || "",
-        password: "", // Password is not edited here
-        roles: initialData.roles || ["member"], // Use all roles
+        password: "",
+        roles: initialData.roles || ["member"],
         gender: initialData.gender || "",
         dateOfBirth: initialData.dateOfBirth ? new Date(initialData.dateOfBirth) : null,
-        image: initialData.image || "",
       })
     } else {
       form.reset({
-        // Default values for new user
         name: "",
         email: "",
         phone: "",
@@ -106,10 +102,9 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
         roles: ["member"],
         gender: "",
         dateOfBirth: null,
-        image: "",
       })
     }
-  }, [initialData, form, isOpen]) // Reset form when dialog opens or initialData changes
+  }, [initialData, form, isOpen])
 
   const onSubmit = async (values: UserFormData) => {
     setIsLoading(true)
@@ -127,20 +122,14 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
     if (values.dateOfBirth) {
       formData.append("dateOfBirth", values.dateOfBirth.toISOString())
     }
-    if (values.image) {
-      formData.append("image", values.image)
-    }
 
     let result
     if (isEditing && initialData) {
-      // No password change in edit form
       result = await updateUserByAdmin(initialData.id, formData)
     } else {
       if (values.password) {
-        // Password is required for new user
         formData.append("password", values.password)
       } else {
-        // This case should be caught by Zod schema for createUserFormSchema
         toast({
           title: t("common.error"),
           description: t("admin.users.passwordRequiredForNew"),
@@ -154,12 +143,12 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
     setIsLoading(false)
 
     if (result.success) {
-      onSuccess() // Callback to refresh list and show success toast
-      onOpenChange(false) // Close dialog
+      onSuccess()
+      onOpenChange(false)
     } else {
       toast({
         title: t("common.error"),
-        description: result.message ? t(result.message, result.message) : t("common.unexpectedError"), // Attempt to translate server message
+        description: result.message ? t(result.message, result.message) : t("common.unexpectedError"),
         variant: "destructive",
       })
     }
@@ -170,25 +159,31 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] md:max-w-lg max-h-[85vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle>{isEditing ? t("admin.users.editUserTitle") : t("admin.users.createUserTitle")}</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[425px] md:max-w-lg max-h-[85vh] flex flex-col bg-gradient-to-br from-slate-50 to-blue-50/30">
+        <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-turquoise-500 to-cyan-500 text-white p-6 -m-6 mb-4 rounded-t-lg">
+          <DialogTitle className="text-xl font-bold">
+            {isEditing ? t("admin.users.editUserTitle") : t("admin.users.createUserTitle")}
+          </DialogTitle>
+          <DialogDescription className="text-turquoise-100">
             {isEditing ? t("admin.users.editUserDescription") : t("admin.users.createUserDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-1">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-2">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.users.form.name")}</FormLabel>
+                    <FormLabel className="text-slate-700 font-semibold">{t("admin.users.form.name")}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t("admin.users.form.namePlaceholder")} {...field} />
+                      <Input
+                        placeholder={t("admin.users.form.namePlaceholder")}
+                        className="border-slate-200 focus:border-turquoise-400 focus:ring-turquoise-400/20"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -199,9 +194,14 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.users.form.email")}</FormLabel>
+                    <FormLabel className="text-slate-700 font-semibold">{t("admin.users.form.email")}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder={t("admin.users.form.emailPlaceholder")} {...field} />
+                      <Input
+                        type="email"
+                        placeholder={t("admin.users.form.emailPlaceholder")}
+                        className="border-slate-200 focus:border-turquoise-400 focus:ring-turquoise-400/20"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -212,10 +212,14 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.users.form.phone")}</FormLabel>
+                    <FormLabel className="text-slate-700 font-semibold">{t("admin.users.form.phone")}</FormLabel>
                     <FormControl>
-                      {/* Consider using a dedicated PhoneInput component if available */}
-                      <Input type="tel" placeholder={t("admin.users.form.phonePlaceholder")} {...field} />
+                      <Input
+                        type="tel"
+                        placeholder={t("admin.users.form.phonePlaceholder")}
+                        className="border-slate-200 focus:border-turquoise-400 focus:ring-turquoise-400/20"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -227,9 +231,14 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("admin.users.form.password")}</FormLabel>
+                      <FormLabel className="text-slate-700 font-semibold">{t("admin.users.form.password")}</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder={t("admin.users.form.passwordPlaceholder")} {...field} />
+                        <Input
+                          type="password"
+                          placeholder={t("admin.users.form.passwordPlaceholder")}
+                          className="border-slate-200 focus:border-turquoise-400 focus:ring-turquoise-400/20"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -244,20 +253,35 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                 render={() => (
                   <FormItem>
                     <div className="mb-4">
-                      <FormLabel className="text-base">{t("admin.users.form.roles")}</FormLabel>
-                      <FormDescription>{t("admin.users.form.rolesDescription")}</FormDescription>
+                      <FormLabel className="text-base font-semibold text-slate-700">
+                        {t("admin.users.form.roles")}
+                      </FormLabel>
+                      <FormDescription className="text-slate-500">
+                        {t("admin.users.form.rolesDescription")}
+                      </FormDescription>
                     </div>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       {availableRoles.map((role) => (
                         <FormField
                           key={role}
                           control={form.control}
                           name="roles"
                           render={({ field }) => {
+                            const roleColors = {
+                              member: "border-emerald-200 bg-emerald-50 hover:bg-emerald-100",
+                              professional: "border-blue-200 bg-blue-50 hover:bg-blue-100",
+                              partner: "border-purple-200 bg-purple-50 hover:bg-purple-100",
+                              admin: "border-orange-200 bg-orange-50 hover:bg-orange-100",
+                            }
+
                             return (
                               <FormItem
                                 key={role}
-                                className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3"
+                                className={cn(
+                                  "flex flex-row items-start space-x-3 space-y-0 rounded-lg border-2 p-3 transition-all duration-200",
+                                  roleColors[role as keyof typeof roleColors],
+                                  field.value?.includes(role) && "ring-2 ring-turquoise-400/50",
+                                )}
                               >
                                 <FormControl>
                                   <Checkbox
@@ -267,7 +291,6 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                                         ? [...field.value, role]
                                         : field.value?.filter((r) => r !== role)
 
-                                      // Ensure at least one role is selected
                                       if (updatedRoles.length === 0) {
                                         toast({
                                           title: t("common.error"),
@@ -279,9 +302,10 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
 
                                       field.onChange(updatedRoles)
                                     }}
+                                    className="data-[state=checked]:bg-turquoise-500 data-[state=checked]:border-turquoise-500"
                                   />
                                 </FormControl>
-                                <FormLabel className="font-normal cursor-pointer">
+                                <FormLabel className="font-medium cursor-pointer text-slate-700">
                                   {t(`roles.${role.toLowerCase()}`, role)}
                                 </FormLabel>
                               </FormItem>
@@ -300,10 +324,10 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                 name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t("admin.users.form.gender")}</FormLabel>
+                    <FormLabel className="text-slate-700 font-semibold">{t("admin.users.form.gender")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="border-slate-200 focus:border-turquoise-400 focus:ring-turquoise-400/20">
                           <SelectValue placeholder={t("admin.users.form.genderPlaceholder")} />
                         </SelectTrigger>
                       </FormControl>
@@ -325,14 +349,14 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>{t("admin.users.form.dateOfBirth")}</FormLabel>
+                    <FormLabel className="text-slate-700 font-semibold">{t("admin.users.form.dateOfBirth")}</FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
                           <Button
                             variant={"outline"}
                             className={cn(
-                              "w-full justify-start text-start font-normal",
+                              "w-full justify-start text-start font-normal border-slate-200 hover:border-turquoise-400",
                               !field.value && "text-muted-foreground",
                             )}
                           >
@@ -362,31 +386,22 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("admin.users.form.imageURL")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("admin.users.form.imageURLPlaceholder")} {...field} />
-                    </FormControl>
-                    <FormDescription>{t("admin.users.form.imageURLDescription")}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </form>
           </Form>
         </div>
 
-        <DialogFooter className="flex-shrink-0 pt-4">
+        <DialogFooter className="flex-shrink-0 pt-6 border-t border-slate-200">
           <DialogClose asChild>
-            <Button type="button" variant="outline" disabled={isLoading}>
+            <Button type="button" variant="outline" disabled={isLoading} className="border-slate-300 hover:bg-slate-50">
               {t("common.cancel")}
             </Button>
           </DialogClose>
-          <Button type="submit" disabled={isLoading} onClick={form.handleSubmit(onSubmit)}>
+          <Button
+            type="submit"
+            disabled={isLoading}
+            onClick={form.handleSubmit(onSubmit)}
+            className="bg-gradient-to-r from-turquoise-500 to-cyan-500 hover:from-turquoise-600 hover:to-cyan-600 text-white shadow-lg"
+          >
             {isLoading ? t("common.saving") : isEditing ? t("common.saveChanges") : t("common.createUser")}
           </Button>
         </DialogFooter>

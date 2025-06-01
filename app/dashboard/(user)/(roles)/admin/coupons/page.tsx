@@ -29,6 +29,7 @@ interface AdminCouponsPageProps {
   }
 }
 
+// Improve the page's responsiveness
 export default async function AdminCouponsPage({ searchParams }: AdminCouponsPageProps) {
   const page = Number(searchParams.page) || 1
   const limit = Number(searchParams.limit) || 10
@@ -43,7 +44,7 @@ export default async function AdminCouponsPage({ searchParams }: AdminCouponsPag
   const partnersPromise = getPartnersForSelection()
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <div className="flex-1 space-y-4 p-2 sm:p-4 md:p-8 pt-4 sm:pt-6">
       <Heading titleKey="adminCoupons.title" descriptionKey="adminCoupons.description" />
       <Suspense fallback={<CouponsLoadingSkeleton />}>
         <CouponsDataWrapper couponsDataPromise={couponsDataPromise} partnersPromise={partnersPromise} />

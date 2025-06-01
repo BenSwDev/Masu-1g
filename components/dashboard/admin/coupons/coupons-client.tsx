@@ -147,7 +147,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
         t,
         dir,
       }),
-    [t, dir],
+    [handleEdit, handleDeleteRequest, t, dir],
   )
 
   return (
@@ -162,6 +162,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
       <DataTable
         columns={columns}
         data={coupons}
+        className="overflow-x-auto w-full"
         // pagination (pass pagination state and handlers to DataTable if it supports server-side pagination)
         // For now, assuming DataTable handles its own client-side pagination or you implement server-side pagination controls
         // totalPages={pagination.totalPages}
@@ -182,7 +183,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
           setIsFormOpen(open)
         }}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>
               {editingCoupon ? t("adminCoupons.form.titleEdit") : t("adminCoupons.form.titleCreate")}

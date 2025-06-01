@@ -711,10 +711,10 @@
       "validUntilLabel": "Действителен до",
       "validUntilError": "Требуется дата окончания.",
       "validUntilAfterValidFromError": "Дата окончания должна быть позже или такой же, как дата начала",
-      "usageLimitLabel": "Общий лимит использования",
+      "usageLimitLabel": "Общий лимит использования (0 для безлимитного)",
       "usageLimitPlaceholder": "0 для безлимитного",
       "usageLimitErrorMin": "Лимит использования должен быть неотрицательным",
-      "usageLimitPerUserLabel": "Лимит использования на пользователя",
+      "usageLimitPerUserLabel": "Лимит использования на пользователя (0 для безлимитного)",
       "usageLimitPerUserPlaceholder": "0 для безлимитного",
       "usageLimitPerUserErrorMin": "Лимит использования на пользователя должен быть неотрицательным",
       "assignedPartnerLabel": "Назначить партнеру (необязательно)",
@@ -762,6 +762,12 @@
       "filterByPartner": "Фильтр по партнеру",
       "allPartners": "Все партнеры",
       "noPartner": "Без назначенного партнера"
+    },
+    "pagination": {
+      "previous": "Предыдущий",
+      "next": "Следующий",
+      "pageInfo": "Страница {{currentPage}} из {{totalPages}}",
+      "rowsSelected": "Выбрано {{count}} из {{total}} строк"
     }
   },
   "partnerAssignedCoupons": {

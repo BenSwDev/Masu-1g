@@ -88,7 +88,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div>
           <Label htmlFor="code">{t("adminCoupons.form.codeLabel")}</Label>
           <Input id="code" {...form.register("code")} disabled={loading} />
@@ -121,26 +121,24 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
             <p className="text-sm text-red-500 mt-1">{form.formState.errors.discountType.message}</p>
           )}
         </div>
-      </div>
 
-      <div>
-        <Label htmlFor="discountValue">{t("adminCoupons.form.discountValueLabel")}</Label>
-        <Input id="discountValue" type="number" step="0.01" {...form.register("discountValue")} disabled={loading} />
-        {form.formState.errors.discountValue && (
-          <p className="text-sm text-red-500 mt-1">
-            {form.formState.errors.discountValue.message === "Discount value must be non-negative"
-              ? t("adminCoupons.form.discountValueErrorMin")
-              : form.formState.errors.discountValue.message}
-          </p>
-        )}
-      </div>
+        <div>
+          <Label htmlFor="discountValue">{t("adminCoupons.form.discountValueLabel")}</Label>
+          <Input id="discountValue" type="number" step="0.01" {...form.register("discountValue")} disabled={loading} />
+          {form.formState.errors.discountValue && (
+            <p className="text-sm text-red-500 mt-1">
+              {form.formState.errors.discountValue.message === "Discount value must be non-negative"
+                ? t("adminCoupons.form.discountValueErrorMin")
+                : form.formState.errors.discountValue.message}
+            </p>
+          )}
+        </div>
 
-      <div>
-        <Label htmlFor="description">{t("adminCoupons.form.descriptionLabel")}</Label>
-        <Textarea id="description" {...form.register("description")} disabled={loading} />
-      </div>
+        <div>
+          <Label htmlFor="description">{t("adminCoupons.form.descriptionLabel")}</Label>
+          <Textarea id="description" {...form.register("description")} disabled={loading} />
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="validFrom">{t("adminCoupons.form.validFromLabel")}</Label>
           <Controller
@@ -161,7 +159,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                     {field.value ? formatDate(field.value) : <span>{t("common.pickDate")}</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align={dir === "rtl" ? "end" : "start"}>
                   <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
                 </PopoverContent>
               </Popover>
@@ -195,7 +193,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
                     {field.value ? formatDate(field.value) : <span>{t("common.pickDate")}</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align={dir === "rtl" ? "end" : "start"}>
                   <Calendar
                     mode="single"
                     selected={field.value}
@@ -217,9 +215,7 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
             </p>
           )}
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="usageLimit">{t("adminCoupons.form.usageLimitLabel")}</Label>
           <Input id="usageLimit" type="number" {...form.register("usageLimit")} disabled={loading} />
@@ -242,70 +238,74 @@ export function CouponForm({ initialData, partnersForSelect, onSubmit, onCancel,
             </p>
           )}
         </div>
-      </div>
 
-      <div>
-        <Label htmlFor="assignedPartnerId">{t("adminCoupons.form.assignedPartnerLabel")}</Label>
-        <Controller
-          name="assignedPartnerId"
-          control={form.control}
-          render={({ field }) => (
-            <Select
-              onValueChange={(value) => {
-                field.onChange(value === NO_PARTNER_SELECTED_VALUE ? null : value)
-              }}
-              value={
-                field.value === null || field.value === undefined ? NO_PARTNER_SELECTED_VALUE : field.value.toString()
-              }
-              disabled={loading || partnersForSelect.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={t("adminCoupons.form.assignedPartnerPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_PARTNER_SELECTED_VALUE}>{t("common.none")}</SelectItem>
-                {partnersForSelect.map((partner) => (
-                  <SelectItem key={partner.value} value={partner.value}>
-                    {partner.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-      </div>
+        <div>
+          <Label htmlFor="assignedPartnerId">{t("adminCoupons.form.assignedPartnerLabel")}</Label>
+          <Controller
+            name="assignedPartnerId"
+            control={form.control}
+            render={({ field }) => (
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(value === NO_PARTNER_SELECTED_VALUE ? null : value)
+                }}
+                value={
+                  field.value === null || field.value === undefined ? NO_PARTNER_SELECTED_VALUE : field.value.toString()
+                }
+                disabled={loading || partnersForSelect.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t("adminCoupons.form.assignedPartnerPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_PARTNER_SELECTED_VALUE}>{t("common.none")}</SelectItem>
+                  {partnersForSelect.map((partner) => (
+                    <SelectItem key={partner.value} value={partner.value}>
+                      {partner.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
 
-      <div>
-        <Label htmlFor="notesForPartner">{t("adminCoupons.form.notesForPartnerLabel")}</Label>
-        <Textarea id="notesForPartner" {...form.register("notesForPartner")} disabled={loading} />
-      </div>
+        <div>
+          <Label htmlFor="notesForPartner">{t("adminCoupons.form.notesForPartnerLabel")}</Label>
+          <Textarea id="notesForPartner" {...form.register("notesForPartner")} disabled={loading} />
+        </div>
 
-      <div className="flex items-center space-x-2">
-        <Controller
-          name="isActive"
-          control={form.control}
-          render={({ field }) => (
-            <Checkbox id="isActive" checked={field.value} onCheckedChange={field.onChange} disabled={loading} />
-          )}
-        />
-        <Label
-          htmlFor="isActive"
-          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-        >
-          {t("adminCoupons.form.isActiveLabel")}
-        </Label>
-      </div>
+        <div className="flex items-center space-x-2">
+          <Controller
+            name="isActive"
+            control={form.control}
+            render={({ field }) => (
+              <Checkbox id="isActive" checked={field.value} onCheckedChange={field.onChange} disabled={loading} />
+            )}
+          />
+          <Label
+            htmlFor="isActive"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+          >
+            {t("adminCoupons.form.isActiveLabel")}
+          </Label>
+        </div>
 
-      {form.formState.errors.root && <p className="text-sm text-red-500 mt-1">{form.formState.errors.root.message}</p>}
+        {form.formState.errors.root && (
+          <p className="text-sm text-red-500 mt-1">{form.formState.errors.root.message}</p>
+        )}
 
-      <div className="flex justify-end space-x-2 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
-          {t("common.cancel")}
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading && <Loader2 className={dir === "rtl" ? "ml-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4 animate-spin"} />}
-          {initialData ? t("adminCoupons.form.saveChanges") : t("adminCoupons.form.createCoupon")}
-        </Button>
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+            {t("common.cancel")}
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading && (
+              <Loader2 className={dir === "rtl" ? "ml-2 h-4 w-4 animate-spin" : "mr-2 h-4 w-4 animate-spin"} />
+            )}
+            {initialData ? t("adminCoupons.form.saveChanges") : t("adminCoupons.form.createCoupon")}
+          </Button>
+        </div>
       </div>
     </form>
   )

@@ -947,10 +947,10 @@
       "validUntilLabel": "תקף עד",
       "validUntilError": "תאריך תפוגה נדרש.",
       "validUntilAfterValidFromError": "תאריך התפוגה חייב להיות אחרי או זהה לתאריך ההתחלה",
-      "usageLimitLabel": "מגבלת שימוש כוללת",
+      "usageLimitLabel": "מגבלת שימוש כוללת (0 ללא הגבלה)",
       "usageLimitPlaceholder": "0 ללא הגבלה",
       "usageLimitErrorMin": "מגבלת השימוש חייבת להיות אי-שלילית",
-      "usageLimitPerUserLabel": "מגבלת שימוש למשתמש",
+      "usageLimitPerUserLabel": "מגבלת שימוש למשתמש (0 ללא הגבלה)",
       "usageLimitPerUserPlaceholder": "0 ללא הגבלה",
       "usageLimitPerUserErrorMin": "מגבלת שימוש למשתמש חייבת להיות אי-שלילית",
       "assignedPartnerLabel": "הקצה לשותף (אופציונלי)",
@@ -998,6 +998,12 @@
       "filterByPartner": "סנן לפי שותף",
       "allPartners": "כל השותפים",
       "noPartner": "ללא שותף משויך"
+    },
+    "pagination": {
+      "previous": "הקודם",
+      "next": "הבא",
+      "pageInfo": "עמוד {{currentPage}} מתוך {{totalPages}}",
+      "rowsSelected": "{{count}} מתוך {{total}} שורות נבחרו"
     }
   },
   "partnerAssignedCoupons": {

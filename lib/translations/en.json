@@ -713,10 +713,10 @@
         "validUntilLabel": "Valid Until",
         "validUntilError": "Expiration date is required.",
         "validUntilAfterValidFromError": "Expiration date must be after or same as start date",
-        "usageLimitLabel": "Total Usage Limit",
+        "usageLimitLabel": "Total Usage Limit (0 for unlimited)",
         "usageLimitPlaceholder": "0 for unlimited",
         "usageLimitErrorMin": "Usage limit must be non-negative",
-        "usageLimitPerUserLabel": "Usage Limit Per User",
+        "usageLimitPerUserLabel": "Usage Limit Per User (0 for unlimited)",
         "usageLimitPerUserPlaceholder": "0 for unlimited",
         "usageLimitPerUserErrorMin": "Usage limit per user must be non-negative",
         "assignedPartnerLabel": "Assign to Partner (Optional)",
@@ -764,6 +764,12 @@
         "filterByPartner": "Filter by Partner",
         "allPartners": "All Partners",
         "noPartner": "No Partner Assigned"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "pageInfo": "Page {{currentPage}} of {{totalPages}}",
+        "rowsSelected": "{{count}} of {{total}} row(s) selected"
       }
     },
     "partnerAssignedCoupons": {

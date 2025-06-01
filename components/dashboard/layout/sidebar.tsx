@@ -24,8 +24,8 @@ import {
   MapPin,
   CreditCard,
   FileText,
+  Package,
   Gift,
-  Calendar,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
@@ -220,6 +220,24 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           isActive: pathname === "/dashboard/admin/users",
         },
         {
+          title: t("dashboard.sidebar.clients"),
+          icon: User,
+          href: "/dashboard/admin/clients",
+          isActive: pathname === "/dashboard/admin/clients",
+        },
+        {
+          title: t("dashboard.sidebar.professionals"),
+          icon: Briefcase,
+          href: "/dashboard/admin/professionals",
+          isActive: pathname === "/dashboard/admin/professionals",
+        },
+        {
+          title: t("dashboard.sidebar.partners"),
+          icon: Handshake,
+          href: "/dashboard/admin/partners",
+          isActive: pathname === "/dashboard/admin/partners",
+        },
+        {
           title: t("dashboard.sidebar.treatments"),
           icon: Shield,
           href: "/dashboard/admin/treatments",
@@ -254,7 +272,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: Gift,
           href: "/dashboard/admin/gift-vouchers",
           isActive: pathname === "/dashboard/admin/gift-vouchers",
-        },
+        }
       )
     } else if (activeRole === "member") {
       baseItems.push(
@@ -281,7 +299,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: Gift,
           href: "/dashboard/member/gift-vouchers",
           isActive: pathname === "/dashboard/member/gift-vouchers",
-        },
+        }
       )
     } else if (activeRole === "professional") {
       baseItems.push(
@@ -308,7 +326,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: FileText,
           href: "/dashboard/professional/documents",
           isActive: pathname === "/dashboard/professional/documents",
-        },
+        }
       )
     } else if (activeRole === "partner") {
       baseItems.push(
@@ -323,37 +341,11 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           icon: CreditCard,
           href: "/dashboard/partner/assigned-coupons",
           isActive: pathname === "/dashboard/partner/assigned-coupons",
-        },
+        }
       )
     }
 
     return baseItems
-  }
-
-  // Get quick action buttons for member role
-  const getMemberQuickActions = () => {
-    if (session?.user?.activeRole !== "member") return []
-
-    return [
-      {
-        title: t("dashboard.sidebar.bookTreatment"),
-        icon: Calendar,
-        href: "/dashboard/member/book-treatment",
-        variant: "default" as const,
-      },
-      {
-        title: t("dashboard.sidebar.purchaseSubscription"),
-        icon: CreditCard,
-        href: "/dashboard/member/subscriptions/purchase",
-        variant: "outline" as const,
-      },
-      {
-        title: t("dashboard.sidebar.purchaseGiftVoucher"),
-        icon: Gift,
-        href: "/dashboard/member/gift-vouchers/purchase",
-        variant: "outline" as const,
-      },
-    ]
   }
 
   // Handle window resize for responsive behavior
@@ -606,73 +598,9 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     </div>
   )
 
-  // Quick action buttons for member desktop
-  const renderMemberQuickActionsDesktop = () => {
-    const quickActions = getMemberQuickActions()
-    if (quickActions.length === 0) return null
-
-    return (
-      <div className="px-2 py-4 border-b border-gray-200">
-        <div className="space-y-2">
-          {quickActions.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 font-medium",
-                action.variant === "default"
-                  ? "bg-gradient-to-r from-turquoise-500 to-turquoise-600 text-white shadow-md hover:shadow-lg"
-                  : "border border-turquoise-200 hover:border-turquoise-300 text-turquoise-700 hover:bg-turquoise-50",
-                isCollapsed && "justify-center px-0 mx-1",
-              )}
-            >
-              <action.icon className="h-4 w-4" />
-              {!isCollapsed && <span>{action.title}</span>}
-            </Link>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  // Quick action buttons for member mobile
-  const renderMemberQuickActionsMobile = () => {
-    const quickActions = getMemberQuickActions()
-    if (quickActions.length === 0) return null
-
-    return (
-      <div className="px-4 py-4 border-b border-gray-200">
-        <div className="space-y-2">
-          {quickActions.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className={cn(
-                "flex items-center gap-4 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
-                action.variant === "default"
-                  ? "bg-turquoise-500 text-white shadow-lg shadow-turquoise-500/25"
-                  : "border border-turquoise-200 text-turquoise-700 hover:bg-turquoise-50",
-              )}
-              onClick={() => onMobileOpenChange(false)}
-            >
-              <action.icon className="h-5 w-5" />
-              <span>{action.title}</span>
-            </Link>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
   // Desktop menu items renderer - enhanced
   const renderDesktopMenuItems = (items: any[]) => (
     <div className="mb-6">
-      {/* Main Menu Title */}
-      <div className="px-3 mb-3">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          {!isCollapsed && t("dashboard.sidebar.mainMenu")}
-        </h3>
-      </div>
       <nav className="flex flex-col gap-1">
         {items.map((item) => (
           <Link
@@ -697,12 +625,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
   // Mobile menu items renderer
   const renderMobileMenuItems = (items: any[]) => (
     <div className="mb-8">
-      {/* Main Menu Title */}
-      <div className="px-4 mb-4">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-          {t("dashboard.sidebar.mainMenu")}
-        </h3>
-      </div>
       <nav className="space-y-2 px-4">
         {items.map((item) => (
           <Link
@@ -739,9 +661,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       {/* User Account Section */}
       {renderDesktopUserAccount()}
 
-      {/* Member Quick Actions */}
-      {renderMemberQuickActionsDesktop()}
-
       {/* Sidebar content */}
       <div className="flex-1 overflow-auto py-6 px-2 bg-gradient-to-b from-white to-gray-50">
         {/* Main menu items */}
@@ -765,9 +684,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       <SheetContent side={dir === "rtl" ? "right" : "left"} className="p-0 w-80 bg-gray-50 flex flex-col">
         {/* User Account Section - Enhanced */}
         {renderMobileUserAccount()}
-
-        {/* Member Quick Actions */}
-        {renderMemberQuickActionsMobile()}
 
         {/* Navigation Content */}
         <div className="flex-1 overflow-auto py-6">

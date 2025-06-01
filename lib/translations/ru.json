@@ -75,10 +75,6 @@
     "sidebar": {
       "title": "Панель управления",
       "dashboard": "Панель управления",
-      "mainMenu": "Главное меню",
-      "bookTreatment": "Записаться на процедуру",
-      "purchaseSubscription": "Купить подписку",
-      "purchaseGiftVoucher": "Купить подарочный сертификат",
       "profile": "Профиль",
       "account": "Аккаунт",
       "signOut": "Выйти",

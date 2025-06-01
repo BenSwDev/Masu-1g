@@ -74,7 +74,8 @@
     "today": "Today",
     "birthYear": "Birth Year",
     "unlimited": "Unlimited",
-    "none": "None"
+    "none": "None",
+    "price": "Price"
   },
   "dashboard": {
     "sidebar": {
@@ -183,7 +184,8 @@
       "summary": "Purchase Summary",
       "confirm": "Confirm Purchase",
       "confirmAndPay": "Confirm & Pay",
-      "selectSubscriptionError": "Please select a subscription plan."
+      "selectSubscriptionError": "Please select a subscription plan.",
+      "new": "Purchase New Subscription"
     },
     "cancelSuccess": "Subscription cancelled successfully.",
     "cancelConfirm": "Are you sure you want to cancel this subscription?",
@@ -207,7 +209,13 @@
     "paidQuantity": "Paid Quantity",
     "pricePaid": "Price Paid",
     "pricePerSession": "Price Per Session",
-    "useTreatment": "Use Treatment"
+    "useTreatment": "Use Treatment",
+    "purchaseDate": "Purchase Date",
+    "expiryDate": "Expiry Date",
+    "cancel": "Cancel Subscription",
+    "use": "Use Subscription",
+    "useSuccess": "Subscription used successfully",
+    "useError": "Error using subscription"
   },
   "giftVouchers": {
     "title": "Gift Vouchers",
@@ -935,7 +943,8 @@
     "unknownTreatment": "Unknown Treatment",
     "selectTreatmentError": "Please select a treatment.",
     "selectDurationError": "Please select a duration for the treatment.",
-    "noActiveDurations": "No active durations available for this treatment."
+    "noActiveDurations": "No active durations available for this treatment.",
+    "name": "Treatment Name"
   },
   "userSubscriptions": {
     "title": "User Subscriptions",

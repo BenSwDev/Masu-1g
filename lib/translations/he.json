@@ -78,7 +78,8 @@
     "today": "היום",
     "birthYear": "שנת לידה",
     "unlimited": "ללא הגבלה",
-    "none": "ללא"
+    "none": "ללא",
+    "price": "מחיר"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -382,7 +383,8 @@
     "unknownTreatment": "טיפול לא ידוע",
     "selectTreatmentError": "אנא בחר טיפול.",
     "selectDurationError": "אנא בחר משך זמן לטיפול.",
-    "noActiveDurations": "אין משכי זמן פעילים זמינים לטיפול זה."
+    "noActiveDurations": "אין משכי זמן פעילים זמינים לטיפול זה.",
+    "name": "שם הטיפול"
   },
   "bundles": {
     "title": "ניהול חבילות",
@@ -465,7 +467,8 @@
       "summary": "סיכום רכישה",
       "confirm": "אשר רכישה",
       "confirmAndPay": "אשר ושלם",
-      "selectSubscriptionError": "אנא בחר תוכנית מנוי."
+      "selectSubscriptionError": "אנא בחר תוכנית מנוי.",
+      "new": "רכישת מנוי חדש"
     },
     "title": "ניהול מנויים",
     "addNew": "הוסף מנוי חדש",
@@ -541,7 +544,13 @@
     "paidQuantity": "כמות בתשלום",
     "pricePaid": "מחיר ששולם",
     "pricePerSession": "מחיר למפגש",
-    "useTreatment": "מימוש טיפול"
+    "useTreatment": "מימוש טיפול",
+    "purchaseDate": "תאריך רכישה",
+    "expiryDate": "תאריך תפוגה",
+    "cancel": "ביטול מנוי",
+    "use": "מימוש מנוי",
+    "useSuccess": "המנוי מומש בהצלחה",
+    "useError": "שגיאה במימוש המנוי"
   },
   "userSubscriptions": {
     "title": "מנויי משתמשים",
@@ -1102,6 +1111,7 @@
       "thursday": "חמישי",
       "friday": "שישי",
       "saturday": "שבת"
-    }
+    },
+    "status.active": "פעיל"
   }
 }

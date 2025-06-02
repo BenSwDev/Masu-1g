@@ -772,18 +772,9 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
     if (paymentSuccess) {
       voucher.paymentId = paymentId
       if (!voucher.isGift) {
-        // If it's not a gift, it's for the purchaser themselves
         voucher.status = "active"
         voucher.isActive = true
-      } else {
-        // If it is a gift, status will be handled by setGiftDetails (e.g., pending_send or sent)
-        // Default to active if not immediately sent, can be overridden by setGiftDetails
-        if (voucher.status === "pending_payment") {
-          // Only update if still pending
-          voucher.status = "active" // Or "pending_send" if that's more appropriate before gift details
-          voucher.isActive = true // Or false if pending_send
-        }
-      }
+      } // For gifts, status/isActive handled by setGiftDetails
       await voucher.save()
       revalidatePath("/dashboard/member/gift-vouchers")
       if (voucher.purchaserUserId.toString() !== voucher.ownerUserId.toString()) {
@@ -794,7 +785,7 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
         voucher: await toGiftVoucherPlain(voucher),
       }
     } else {
-      voucher.status = "cancelled" // Or "payment_failed"
+      voucher.status = "cancelled"
       voucher.isActive = false
       await voucher.save()
       return { success: false, error: "Payment failed. Voucher not activated." }
@@ -830,7 +821,6 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
     if (!details.recipientName || details.recipientName.trim() === "") {
       return { success: false, error: "Recipient name is required." }
     }
-    // Phone validation can be more specific if needed (e.g., regex)
     if (!details.recipientPhone || details.recipientPhone.trim() === "") {
       return { success: false, error: "Recipient phone is required." }
     }
@@ -846,35 +836,26 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
     const now = new Date()
     let sendNotificationNow = false
 
-    // Only transition status if it's not already terminal (e.g., fully_used, expired, cancelled)
-    const canUpdateStatus = !["fully_used", "expired", "cancelled"].includes(voucher.status)
-
     if (details.sendDate === "immediate" || !details.sendDate) {
       voucher.sendDate = now
-      if (canUpdateStatus) {
-        voucher.status = "sent"
-        voucher.isActive = true
-      }
+      voucher.status = "sent"
+      voucher.isActive = true
       sendNotificationNow = true
     } else {
       const scheduledSendDate = new Date(details.sendDate)
       voucher.sendDate = scheduledSendDate
-      if (canUpdateStatus) {
-        if (scheduledSendDate <= now) {
-          voucher.status = "sent"
-          voucher.isActive = true
-          sendNotificationNow = true
-        } else {
-          voucher.status = "pending_send"
-          voucher.isActive = false // Not active until sent
-          // TODO: Schedule notification for future sendDate (requires a job scheduler)
-          logger.info(`Gift voucher ${voucher.code} scheduled for sending on ${scheduledSendDate.toISOString()}`)
-        }
+      if (scheduledSendDate <= now) {
+        voucher.status = "sent"
+        voucher.isActive = true
+        sendNotificationNow = true
+      } else {
+        voucher.status = "pending_send"
+        voucher.isActive = false
+        // TODO: Schedule notification for future sendDate (requires a job scheduler)
       }
     }
 
-    // Attempt to send notification if applicable
-    if (sendNotificationNow && voucher.recipientPhone && voucher.recipientName && voucher.status === "sent") {
+    if (sendNotificationNow && voucher.recipientPhone && voucher.recipientName) {
       try {
         await notificationManager.sendNotification(
           "sms",
@@ -896,7 +877,6 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
           voucherId: voucher._id.toString(),
           recipientPhone: voucher.recipientPhone,
         })
-        // Do not fail the entire operation if notification fails, but log it.
       }
     }
 
@@ -990,14 +970,6 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
     }
 
     if (voucher.ownerUserId.toString() !== session.user.id) {
-      // This check might be too restrictive if vouchers can be gifted and then redeemed by recipient
-      // For now, assuming owner must redeem. If not, this logic needs adjustment.
-      // Alternative: check if recipientPhone matches session.user.phone if it's a gift.
-      // Or, if status is 'sent' and recipientName/Phone are set, allow redemption by a user matching those details.
-      // For simplicity, keeping ownerUserId check for now.
-      logger.warn(
-        `Attempt to redeem voucher ${code} by non-owner. Owner: ${voucher.ownerUserId}, Redeemer: ${session.user.id}`,
-      )
       return { success: false, error: "This voucher does not belong to you or cannot be redeemed by you." }
     }
 
@@ -1007,7 +979,6 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
     }
     if (voucher.validUntil < currentDate && voucher.status !== "expired") {
       voucher.status = "expired"
-      voucher.isActive = false
       await voucher.save()
       return { success: false, error: "Voucher has expired." }
     }
@@ -1016,7 +987,6 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
     }
 
     if (!voucher.isActive) {
-      // This check might be redundant if status check is comprehensive
       return { success: false, error: "Voucher is currently inactive." }
     }
     if (!["active", "partially_used", "sent"].includes(voucher.status)) {
@@ -1042,15 +1012,12 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
       usageEntry.description = `Redeemed for treatment: ${orderDetails.items?.[0]?.name || voucher.treatmentId?.toString() || "Treatment"}`
     } else if (voucher.voucherType === "monetary") {
       if ((voucher.remainingAmount || 0) <= 0) {
-        voucher.status = "fully_used" // Ensure status is correct if remaining is zero
-        await voucher.save()
         return { success: false, error: "Voucher has no remaining balance." }
       }
       const redemptionAmount = orderDetails.totalAmount
       amountApplied = Math.min(redemptionAmount, voucher.remainingAmount || 0)
 
       if (amountApplied <= 0) {
-        // Should not happen if remainingAmount > 0
         return { success: false, error: "No amount could be applied from voucher." }
       }
       voucher.remainingAmount = (voucher.remainingAmount || 0) - amountApplied
@@ -1073,7 +1040,7 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
     await voucher.save()
 
     revalidatePath("/dashboard/member/gift-vouchers")
-    revalidatePath("/dashboard/admin/gift-vouchers") // If admin views usage
+    revalidatePath("/dashboard/admin/gift-vouchers")
 
     return {
       success: true,

@@ -62,7 +62,6 @@ export default function MemberGiftVoucherDetailsModal({
       case "fully_used":
         return "bg-gray-100 text-gray-800 border-gray-200"
       case "pending_send":
-      case "pending_payment":
         return "bg-blue-100 text-blue-800 border-blue-200"
       default:
         return "bg-gray-100 text-gray-800 border-gray-200"
@@ -80,8 +79,8 @@ export default function MemberGiftVoucherDetailsModal({
     value?: string | number | null
     highlight?: boolean
   }) =>
-    value || value === 0 ? ( // Allow 0 to be displayed (e.g. remainingAmount)
-      <div className="flex items-start gap-3">
+    value ? (
+      <div className="flex items-start space-x-3">
         <div className={cn("p-2 rounded-lg mt-0.5", highlight ? "bg-primary/10" : "bg-muted/50")}>
           <Icon className={cn("h-4 w-4", highlight ? "text-primary" : "text-muted-foreground")} />
         </div>
@@ -92,8 +91,7 @@ export default function MemberGiftVoucherDetailsModal({
       </div>
     ) : null
 
-  const isExpired =
-    new Date(voucher.validUntil) < new Date() && voucher.status !== "fully_used" && voucher.status !== "cancelled"
+  const isExpired = new Date(voucher.validUntil) < new Date()
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -104,12 +102,10 @@ export default function MemberGiftVoucherDetailsModal({
               <Tag className="w-5 h-5 text-primary" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                {" "}
-                {/* Added flex-wrap */}
+              <div className="flex items-center gap-2">
                 <span>{voucher.code}</span>
-                <Badge className={cn("border whitespace-nowrap", getStatusColor(voucher.status))}>
-                  {t(`giftVouchers.statuses.${voucher.status}` as any, voucher.status)}
+                <Badge className={cn("border", getStatusColor(voucher.status))}>
+                  {t(`giftVouchers.status.${voucher.status}`)}
                 </Badge>
               </div>
             </div>
@@ -119,28 +115,30 @@ export default function MemberGiftVoucherDetailsModal({
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[calc(90vh-160px)] px-6">
-          {" "}
-          {/* Adjusted max-h */}
+        <ScrollArea className="max-h-[60vh] px-6">
           <div className="space-y-6 pb-6">
+            {/* Value Summary */}
             <div
               className={cn(
-                "p-4 rounded-lg border-2 text-center",
-                isExpired && voucher.status !== "fully_used"
-                  ? "bg-red-50 border-red-200"
-                  : "bg-primary/5 border-primary/20",
+                "p-4 rounded-lg border-2",
+                isExpired ? "bg-red-50 border-red-200" : "bg-primary/5 border-primary/20",
               )}
             >
-              <div className="text-2xl font-bold mb-1">
-                {voucher.voucherType === "monetary"
-                  ? `${voucher.monetaryValue?.toFixed(2)} ${t("common.currency")}`
-                  : voucher.treatmentName || t("giftVouchers.types.treatment")}
+              <div className="text-center">
+                <div className="text-2xl font-bold mb-1">
+                  {voucher.voucherType === "monetary"
+                    ? `${voucher.monetaryValue?.toFixed(2)} ${t("common.currency")}`
+                    : voucher.treatmentName || t("giftVouchers.types.treatment")}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {voucher.voucherType === "monetary"
+                    ? t("giftVouchers.types.monetary")
+                    : t("giftVouchers.types.treatment")}
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {t(`giftVouchers.types.${voucher.voucherType}` as any, voucher.voucherType)}
-              </p>
             </div>
 
+            {/* Basic Information */}
             <div className="space-y-4">
               <h4 className="font-semibold text-base flex items-center gap-2">
                 <Info className="w-4 h-4 text-primary" />
@@ -152,7 +150,7 @@ export default function MemberGiftVoucherDetailsModal({
                 <DetailItem
                   icon={voucher.voucherType === "monetary" ? CreditCard : GiftIcon}
                   label={t("giftVouchers.fields.voucherType")}
-                  value={t(`giftVouchers.types.${voucher.voucherType}` as any, voucher.voucherType)}
+                  value={t(`giftVouchers.types.${voucher.voucherType}`)}
                 />
 
                 {voucher.voucherType === "monetary" && (
@@ -166,7 +164,7 @@ export default function MemberGiftVoucherDetailsModal({
                       icon={CreditCard}
                       label={t("giftVouchers.fields.remainingAmount")}
                       value={`${voucher.remainingAmount?.toFixed(2)} ${t("common.currency")}`}
-                      highlight={voucher.remainingAmount !== voucher.originalAmount}
+                      highlight
                     />
                   </>
                 )}
@@ -191,28 +189,18 @@ export default function MemberGiftVoucherDetailsModal({
                 <DetailItem
                   icon={CalendarDays}
                   label={t("giftVouchers.fields.purchaseDate")}
-                  value={
-                    voucher.purchaseDate
-                      ? format(parseISO(voucher.purchaseDate as string), "PPP")
-                      : t("common.notAvailable")
-                  }
+                  value={format(parseISO(voucher.purchaseDate as string), "PPP")}
                 />
                 <DetailItem
                   icon={CalendarDays}
                   label={t("giftVouchers.fields.validFrom")}
-                  value={
-                    voucher.validFrom ? format(parseISO(voucher.validFrom as string), "PPP") : t("common.notAvailable")
-                  }
+                  value={format(parseISO(voucher.validFrom as string), "PPP")}
                 />
                 <DetailItem
                   icon={CalendarDays}
                   label={t("giftVouchers.fields.validUntil")}
-                  value={
-                    voucher.validUntil
-                      ? format(parseISO(voucher.validUntil as string), "PPP")
-                      : t("common.notAvailable")
-                  }
-                  highlight={isExpired && voucher.status !== "fully_used"}
+                  value={format(parseISO(voucher.validUntil as string), "PPP")}
+                  highlight={isExpired}
                 />
                 <DetailItem
                   icon={voucher.isActive ? CheckCircle : XCircle}
@@ -222,6 +210,7 @@ export default function MemberGiftVoucherDetailsModal({
               </div>
             </div>
 
+            {/* Gift Details */}
             {voucher.isGift && (
               <>
                 <Separator />
@@ -267,12 +256,12 @@ export default function MemberGiftVoucherDetailsModal({
                   {voucher.greetingMessage && (
                     <div className="p-4 bg-muted/30 rounded-lg border">
                       <div className="flex items-start gap-3">
-                        <MessageSquare className="h-4 w-4 text-muted-foreground mt-1 shrink-0" />
-                        <div className="min-w-0">
+                        <MessageSquare className="h-4 w-4 text-muted-foreground mt-1" />
+                        <div>
                           <p className="text-sm text-muted-foreground mb-1">
                             {t("giftVouchers.fields.greetingMessage")}
                           </p>
-                          <p className="text-sm font-medium italic break-words">"{voucher.greetingMessage}"</p>
+                          <p className="text-sm font-medium italic">"{voucher.greetingMessage}"</p>
                         </div>
                       </div>
                     </div>
@@ -281,6 +270,7 @@ export default function MemberGiftVoucherDetailsModal({
               </>
             )}
 
+            {/* Usage History */}
             {voucher.usageHistory && voucher.usageHistory.length > 0 && (
               <>
                 <Separator />
@@ -295,47 +285,29 @@ export default function MemberGiftVoucherDetailsModal({
                       <div key={index} className="p-3 border rounded-lg bg-muted/20">
                         <div className="flex justify-between items-start mb-2">
                           <span className="font-medium text-sm">
-                            {t("giftVouchers.myVouchers.amountUsed", {
-                              amount: item.amountUsed.toFixed(2),
-                              currency: t("common.currency"),
-                            })}
+                            {t("giftVouchers.myVouchers.amountUsed")}: {item.amountUsed.toFixed(2)}{" "}
+                            {t("common.currency")}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {item.date
-                              ? format(parseISO(item.date as unknown as string), "PPP")
-                              : t("common.notAvailable")}
+                            {format(parseISO(item.date as unknown as string), "PPP")}
                           </span>
                         </div>
                         {item.orderId && (
                           <p className="text-xs text-muted-foreground">
-                            {t("giftVouchers.myVouchers.orderId", { id: item.orderId })}
+                            {t("giftVouchers.myVouchers.orderId")}: {item.orderId}
                           </p>
                         )}
-                        {item.description && <p className="text-xs text-muted-foreground mt-1">{item.description}</p>}
                       </div>
                     ))}
                   </div>
                 </div>
               </>
             )}
-            {!voucher.usageHistory ||
-              (voucher.usageHistory.length === 0 &&
-                voucher.voucherType === "monetary" &&
-                voucher.status === "active" && (
-                  <>
-                    <Separator />
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      {t("giftVouchers.myVouchers.noUsageHistory")}
-                    </p>
-                  </>
-                ))}
           </div>
         </ScrollArea>
 
-        <DialogFooter className="p-6 pt-4 border-t">
-          {" "}
-          {/* Added border-t */}
-          <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
+        <DialogFooter className="p-6 pt-0">
+          <Button variant="outline" onClick={onClose} className="px-8">
             {t("common.close")}
           </Button>
         </DialogFooter>

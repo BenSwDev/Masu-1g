@@ -1,7 +1,5 @@
 "use client"
 
-import React from "react"
-
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, Controller } from "react-hook-form"
@@ -46,16 +44,16 @@ import { cn } from "@/lib/utils/utils"
 
 interface TreatmentDuration {
   _id: string
-  name?: string
+  name?: string // Optional: if durations have specific names like "Standard", "Extended"
   price: number
   minutes?: number
 }
 interface Treatment {
   _id: string
   name: string
-  category: string
-  price?: number
-  fixedPrice?: number
+  category: string // Added category
+  price?: number // General price, could be fixedPrice if applicable
+  fixedPrice?: number // Explicit fixed price
   durations: TreatmentDuration[]
 }
 
@@ -84,7 +82,7 @@ const formatMinutesToDurationString = (minutes: number, t: Function): string => 
 
 const giftDetailsSchema = z.object({
   recipientName: z.string().min(2, { message: "Recipient name must be at least 2 characters." }),
-  recipientPhone: z.string().optional(), // Consider making this required if sendOption is immediate or scheduled
+  recipientPhone: z.string().optional(),
   greetingMessage: z.string().optional(),
   sendOption: z.enum(["immediate", "scheduled"]),
   sendDate: z.date().optional(),
@@ -128,8 +126,7 @@ export default function PurchaseGiftVoucherClient({
 
   useEffect(() => {
     const defaultPmId = paymentMethods.find((pm) => pm.isDefault)?._id || paymentMethods[0]?._id || ""
-    if (defaultPmId && !paymentForm.getValues("selectedPaymentMethodId")) {
-      // Set only if not already set
+    if (defaultPmId) {
       paymentForm.setValue("selectedPaymentMethodId", defaultPmId)
     }
   }, [paymentMethods, paymentForm])
@@ -150,13 +147,13 @@ export default function PurchaseGiftVoucherClient({
             if (data.monetaryValue === undefined || data.monetaryValue === null) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: t("purchaseGiftVoucher.minimumAmountDetails", { amount: 150, currency: t("common.currency") }), // Using a more general message
+                message: t("purchaseGiftVoucher.validation.monetaryValueRequired"),
                 path: ["monetaryValue"],
               })
             } else if (data.monetaryValue < 150) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: t("purchaseGiftVoucher.minimumAmountDetails", { amount: 150, currency: t("common.currency") }),
+                message: t("purchaseGiftVoucher.validation.minAmount", { amount: 150 }),
                 path: ["monetaryValue"],
               })
             }
@@ -164,20 +161,20 @@ export default function PurchaseGiftVoucherClient({
             if (!data.treatmentId) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: t("treatments.errors.nameRequired"), // Assuming a generic treatment selection error
+                message: t("purchaseGiftVoucher.validation.treatmentRequired"),
                 path: ["treatmentId"],
               })
             }
-            const currentSelectedTreatment = treatments.find((tr) => tr._id === data.treatmentId)
+            const selectedTreatment = treatments.find((tr) => tr._id === data.treatmentId)
             if (
-              currentSelectedTreatment &&
-              currentSelectedTreatment.durations &&
-              currentSelectedTreatment.durations.length > 0 &&
+              selectedTreatment &&
+              selectedTreatment.durations &&
+              selectedTreatment.durations.length > 0 &&
               !data.selectedDurationId
             ) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: t("treatments.errors.invalidDuration"), // Assuming a generic duration selection error
+                message: t("purchaseGiftVoucher.validation.durationRequired"),
                 path: ["selectedDurationId"],
               })
             }
@@ -194,6 +191,7 @@ export default function PurchaseGiftVoucherClient({
   })
 
   const watchVoucherType = purchaseForm.watch("voucherType")
+  const watchCategory = purchaseForm.watch("category")
   const watchTreatmentId = purchaseForm.watch("treatmentId")
   const watchSelectedDurationId = purchaseForm.watch("selectedDurationId")
   const watchMonetaryValue = purchaseForm.watch("monetaryValue")
@@ -206,6 +204,18 @@ export default function PurchaseGiftVoucherClient({
       if (purchaseForm.formState.errors.monetaryValue) {
         purchaseForm.clearErrors("monetaryValue")
       }
+    } else if (watchVoucherType === "monetary") {
+      // Optional: Clear treatment selection if switching to monetary voucher
+      // purchaseForm.setValue("treatmentId", undefined);
+      // purchaseForm.setValue("selectedDurationId", undefined);
+      // setSelectedTreatment(null);
+      // setSelectedDuration(null);
+      // if (purchaseForm.formState.errors.treatmentId) {
+      //   purchaseForm.clearErrors("treatmentId");
+      // }
+      // if (purchaseForm.formState.errors.selectedDurationId) {
+      //   purchaseForm.clearErrors("selectedDurationId");
+      // }
     }
   }, [watchVoucherType, purchaseForm])
 
@@ -226,7 +236,7 @@ export default function PurchaseGiftVoucherClient({
     for (let i = 8; i <= 23; i++) {
       options.push(`${String(i).padStart(2, "0")}:00`)
     }
-    options.push("00:00") // For midnight
+    options.push("00:00")
     return options
   }, [])
 
@@ -243,7 +253,7 @@ export default function PurchaseGiftVoucherClient({
         } else if (
           (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
           typeof selectedTreatment.fixedPrice === "number" &&
-          selectedTreatment.fixedPrice > 0
+          selectedTreatment.fixedPrice > 0 // Ensure fixed price is positive
         ) {
           price = selectedTreatment.fixedPrice
         }
@@ -256,7 +266,7 @@ export default function PurchaseGiftVoucherClient({
     if (watchTreatmentId) {
       const treatment = filteredTreatments.find((t) => t._id === watchTreatmentId)
       setSelectedTreatment(treatment || null)
-      purchaseForm.setValue("selectedDurationId", undefined) // Reset duration when treatment changes
+      purchaseForm.setValue("selectedDurationId", undefined)
       setSelectedDuration(null)
     } else {
       setSelectedTreatment(null)
@@ -274,7 +284,7 @@ export default function PurchaseGiftVoucherClient({
   }, [watchSelectedDurationId, selectedTreatment])
 
   useEffect(() => {
-    // Reset treatment selection when category changes
+    // When category changes, reset treatment and duration
     purchaseForm.setValue("treatmentId", undefined)
     purchaseForm.setValue("selectedDurationId", undefined)
     setSelectedTreatment(null)
@@ -339,11 +349,10 @@ export default function PurchaseGiftVoucherClient({
   const handlePaymentSubmit = async (_data: PaymentFormData) => {
     setLoading(true)
     try {
-      // Simulate payment confirmation
       const paymentResult = await confirmGiftVoucherPurchase({
         voucherId: voucherId!,
-        paymentId: `PAY-${Date.now()}`, // Simulated payment ID
-        success: true, // Simulate successful payment
+        paymentId: `PAY-${Date.now()}`,
+        success: true,
         amount: calculatedPrice,
       })
 
@@ -358,7 +367,7 @@ export default function PurchaseGiftVoucherClient({
 
           const giftDetailsPayload: GiftDetailsPayload = {
             recipientName: savedGiftDetails.recipientName,
-            recipientPhone: savedGiftDetails.recipientPhone!, // Assuming phone is required if gifting
+            recipientPhone: savedGiftDetails.recipientPhone,
             greetingMessage: savedGiftDetails.greetingMessage,
             sendDate: sendDateForPayload,
           }
@@ -369,8 +378,8 @@ export default function PurchaseGiftVoucherClient({
               description: giftResult.error || "Failed to set gift details",
               variant: "destructive",
             })
-            // Proceed to complete step even if gift details fail, voucher is paid.
-            // User can be notified to try setting gift details again.
+            setStep("complete")
+            return
           }
         }
         setStep("complete")
@@ -399,56 +408,59 @@ export default function PurchaseGiftVoucherClient({
   }
 
   const StepIndicator = ({ currentStep }: { currentStep: string }) => {
-    const stepsConfig = [
+    const steps = [
       { key: "select", label: t("purchaseGiftVoucher.stepSelect"), icon: Gift },
       { key: "giftDetailsEntry", label: t("purchaseGiftVoucher.stepGiftDetails"), icon: Sparkles },
       { key: "payment", label: t("purchaseGiftVoucher.stepPayment"), icon: CreditCard },
       { key: "complete", label: t("purchaseGiftVoucher.stepComplete"), icon: Check },
     ]
 
-    const activeSteps = watchIsGift ? stepsConfig : stepsConfig.filter((s) => s.key !== "giftDetailsEntry")
-    const currentIndex = activeSteps.findIndex((s) => s.key === currentStep)
+    const filteredSteps = watchIsGift ? steps : steps.filter((s) => s.key !== "giftDetailsEntry")
+    const currentIndex = filteredSteps.findIndex((s) => s.key === currentStep)
 
     return (
       <div className="w-full mb-8">
-        <div className="flex items-center">
-          {activeSteps.map((stepItem, index) => {
+        <div className="flex items-center justify-between">
+          {filteredSteps.map((stepItem, index) => {
             const Icon = stepItem.icon
             const isActive = index <= currentIndex
             const isCurrent = stepItem.key === currentStep
 
             return (
-              <React.Fragment key={stepItem.key}>
-                <div className="flex flex-col items-center">
-                  <div
-                    className={cn(
-                      "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200",
-                      isActive
-                        ? "bg-primary border-primary text-primary-foreground"
-                        : "border-muted-foreground/30 text-muted-foreground",
-                      isCurrent && "ring-2 ring-primary/20 ring-offset-2",
-                    )}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <p
-                    className={cn(
-                      "mt-2 text-xs text-center sm:text-sm font-medium transition-colors w-20 sm:w-auto", // Added w-20 for small screens
-                      isActive ? "text-primary" : "text-muted-foreground",
-                    )}
-                  >
-                    {stepItem.label}
-                  </p>
+              <div key={stepItem.key} className="flex items-center">
+                <div
+                  className={cn(
+                    "flex items-center justify-center rounded-full border-2 transition-all duration-200",
+                    isActive
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : "border-muted-foreground/30 text-muted-foreground",
+                    isCurrent &&
+                      "transform scale-110 shadow-lg ring-2 ring-primary ring-offset-2 ring-offset-background w-12 h-12",
+                    isActive && !isCurrent && "w-11 h-11",
+                    !isActive && "w-10 h-10",
+                  )}
+                >
+                  <Icon
+                    className={cn("w-5 h-5", isActive && isCurrent && "w-7 h-7", isActive && !isCurrent && "w-6 h-6")}
+                  />
                 </div>
-                {index < activeSteps.length - 1 && (
+                <div
+                  className={cn(
+                    "hidden sm:block ml-3 text-sm font-medium transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  {stepItem.label}
+                </div>
+                {index < filteredSteps.length - 1 && (
                   <div
                     className={cn(
-                      "flex-1 h-0.5 mx-2 sm:mx-4 transition-colors", // Reduced margin for small screens
+                      "flex-1 h-0.5 mx-4 transition-colors",
                       index < currentIndex ? "bg-primary" : "bg-muted-foreground/30",
                     )}
                   />
                 )}
-              </React.Fragment>
+              </div>
             )
           })}
         </div>
@@ -472,21 +484,22 @@ export default function PurchaseGiftVoucherClient({
 
           <form onSubmit={purchaseForm.handleSubmit(handleInitialSubmit)}>
             <CardContent className="space-y-8">
+              {/* Voucher Type Selection */}
               <div className="space-y-4">
                 <Label className="text-lg font-semibold">{t("purchaseGiftVoucher.selectType")}</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card
                     className={cn(
-                      "cursor-pointer border-2 transition-all duration-200 hover:shadow-md",
+                      "cursor-pointer border-2 transition-all duration-200 hover:shadow-lg",
                       watchVoucherType === "monetary"
-                        ? "border-primary bg-primary/5 shadow-md"
-                        : "border-border hover:border-primary/50",
+                        ? "border-primary bg-primary/10 shadow-xl ring-2 ring-primary/40 ring-offset-2 ring-offset-card"
+                        : "border-border hover:border-primary/30",
                     )}
                     onClick={() => purchaseForm.setValue("voucherType", "monetary")}
                   >
-                    <CardContent className="p-6 text-center">
+                    <CardContent className="p-8 text-center">
                       <CreditCard className="h-12 w-12 mx-auto mb-4 text-primary" />
-                      <h3 className="font-semibold text-lg mb-2">{t("purchaseGiftVoucher.monetaryVoucher")}</h3>
+                      <h3 className="font-bold text-xl text-lg mb-2">{t("purchaseGiftVoucher.monetaryVoucher")}</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {t("purchaseGiftVoucher.monetaryDescription")}
                       </p>
@@ -495,16 +508,16 @@ export default function PurchaseGiftVoucherClient({
 
                   <Card
                     className={cn(
-                      "cursor-pointer border-2 transition-all duration-200 hover:shadow-md",
+                      "cursor-pointer border-2 transition-all duration-200 hover:shadow-lg",
                       watchVoucherType === "treatment"
-                        ? "border-primary bg-primary/5 shadow-md"
-                        : "border-border hover:border-primary/50",
+                        ? "border-primary bg-primary/10 shadow-xl ring-2 ring-primary/40 ring-offset-2 ring-offset-card"
+                        : "border-border hover:border-primary/30",
                     )}
                     onClick={() => purchaseForm.setValue("voucherType", "treatment")}
                   >
-                    <CardContent className="p-6 text-center">
+                    <CardContent className="p-8 text-center">
                       <Gift className="h-12 w-12 mx-auto mb-4 text-primary" />
-                      <h3 className="font-semibold text-lg mb-2">{t("purchaseGiftVoucher.treatmentVoucher")}</h3>
+                      <h3 className="font-bold text-xl text-lg mb-2">{t("purchaseGiftVoucher.treatmentVoucher")}</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {t("purchaseGiftVoucher.treatmentDescription")}
                       </p>
@@ -513,6 +526,7 @@ export default function PurchaseGiftVoucherClient({
                 </div>
               </div>
 
+              {/* Monetary Value Input */}
               {watchVoucherType === "monetary" && (
                 <div className="space-y-4 p-6 bg-muted/30 rounded-lg">
                   <Label htmlFor="monetaryValue" className="text-base font-medium">
@@ -524,11 +538,11 @@ export default function PurchaseGiftVoucherClient({
                     min="150"
                     step="10"
                     placeholder="150"
-                    className="text-lg h-12"
+                    className="text-xl h-14 p-4 font-medium"
                     {...purchaseForm.register("monetaryValue", { valueAsNumber: true })}
                   />
                   <p className="text-sm text-muted-foreground">
-                    {t("purchaseGiftVoucher.minimumAmountDetails", { amount: 150, currency: t("common.currency") })}
+                    {t("purchaseGiftVoucher.minimumAmount")}: 150 {t("common.currency")}
                   </p>
                   {purchaseForm.formState.errors.monetaryValue && (
                     <p className="text-sm text-destructive">{purchaseForm.formState.errors.monetaryValue.message}</p>
@@ -536,6 +550,7 @@ export default function PurchaseGiftVoucherClient({
                 </div>
               )}
 
+              {/* Treatment Selection */}
               {watchVoucherType === "treatment" && (
                 <div className="space-y-6 p-6 bg-muted/30 rounded-lg">
                   <div className="space-y-4">
@@ -544,7 +559,7 @@ export default function PurchaseGiftVoucherClient({
                       {t("purchaseGiftVoucher.selectCategory")}
                     </Label>
                     <Select onValueChange={(value) => setSelectedCategory(value)} value={selectedCategory}>
-                      <SelectTrigger className="h-12">
+                      <SelectTrigger className="h-14 text-base">
                         <SelectValue placeholder={t("purchaseGiftVoucher.chooseCategory")} />
                       </SelectTrigger>
                       <SelectContent>
@@ -563,10 +578,10 @@ export default function PurchaseGiftVoucherClient({
                     <Label className="text-base font-medium">{t("purchaseGiftVoucher.selectTreatment")}</Label>
                     <Select
                       onValueChange={(value) => purchaseForm.setValue("treatmentId", value)}
-                      value={watchTreatmentId || ""}
+                      value={watchTreatmentId}
                       disabled={filteredTreatments.length === 0}
                     >
-                      <SelectTrigger className="h-12">
+                      <SelectTrigger className="h-14 text-base">
                         <SelectValue placeholder={t("purchaseGiftVoucher.chooseTreatment")} />
                       </SelectTrigger>
                       <SelectContent>
@@ -575,12 +590,12 @@ export default function PurchaseGiftVoucherClient({
                             <div className="flex items-center justify-between w-full">
                               <span>{treatment.name}</span>
                               {treatment.fixedPrice && (!treatment.durations || treatment.durations.length === 0) && (
-                                <Badge variant="secondary" className={cn(dir === "rtl" ? "mr-auto" : "ml-auto")}>
+                                <Badge variant="secondary" className={cn("ml-2", dir === "rtl" && "mr-2 ml-0")}>
                                   {treatment.fixedPrice} {t("common.currency")}
                                 </Badge>
                               )}
                               {treatment.durations && treatment.durations.length > 0 && (
-                                <Badge variant="outline" className={cn(dir === "rtl" ? "mr-auto" : "ml-auto")}>
+                                <Badge variant="outline" className={cn("ml-2", dir === "rtl" && "mr-2 ml-0")}>
                                   {treatment.durations.length} {t("purchaseGiftVoucher.durationOptions")}
                                 </Badge>
                               )}
@@ -589,9 +604,6 @@ export default function PurchaseGiftVoucherClient({
                         ))}
                       </SelectContent>
                     </Select>
-                    {purchaseForm.formState.errors.treatmentId && (
-                      <p className="text-sm text-destructive">{purchaseForm.formState.errors.treatmentId.message}</p>
-                    )}
                   </div>
 
                   {selectedTreatment && selectedTreatment.durations.length > 0 && (
@@ -605,14 +617,14 @@ export default function PurchaseGiftVoucherClient({
                           <Card
                             key={duration._id}
                             className={cn(
-                              "cursor-pointer border-2 transition-all duration-200 hover:shadow-sm",
+                              "cursor-pointer border-2 transition-all duration-200 hover:shadow-md",
                               watchSelectedDurationId === duration._id
-                                ? "border-primary bg-primary/5"
-                                : "border-border hover:border-primary/50",
+                                ? "border-primary bg-primary/10 shadow-lg ring-1 ring-primary/30"
+                                : "border-border hover:border-primary/30",
                             )}
                             onClick={() => purchaseForm.setValue("selectedDurationId", duration._id)}
                           >
-                            <CardContent className="p-4">
+                            <CardContent className="p-5">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <Clock className="w-4 h-4 text-muted-foreground" />
@@ -630,11 +642,6 @@ export default function PurchaseGiftVoucherClient({
                           </Card>
                         ))}
                       </div>
-                      {purchaseForm.formState.errors.selectedDurationId && (
-                        <p className="text-sm text-destructive">
-                          {purchaseForm.formState.errors.selectedDurationId.message}
-                        </p>
-                      )}
                     </div>
                   )}
                 </div>
@@ -643,7 +650,7 @@ export default function PurchaseGiftVoucherClient({
               {watchVoucherType === "treatment" &&
                 selectedTreatment &&
                 (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
-                typeof selectedTreatment.fixedPrice === "number" && (
+                typeof selectedTreatment.fixedPrice === "number" && ( // Check fixedPrice here
                   <Alert className="border-primary/20 bg-primary/5">
                     <AlertDescription className="flex justify-between items-center">
                       <span className="font-medium">{t("purchaseGiftVoucher.treatmentPrice")}:</span>
@@ -656,24 +663,23 @@ export default function PurchaseGiftVoucherClient({
 
               <Separator />
 
-              <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
-                {/* Standard RTL: Label on the right, Checkbox on the left */}
-                <Label htmlFor="isGift" className="text-base font-medium cursor-pointer">
-                  {t("purchaseGiftVoucher.sendAsGift")}
-                </Label>
+              <div className="flex items-center space-x-4 p-6 bg-muted/40 rounded-lg shadow-sm border border-transparent hover:border-primary/20 transition-colors">
                 <input
                   type="checkbox"
                   id="isGift"
                   {...purchaseForm.register("isGift")}
-                  className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="w-6 h-6 rounded border-gray-300 text-primary focus:ring-primary focus:ring-offset-2"
                 />
+                <Label htmlFor="isGift" className="text-lg font-semibold cursor-pointer">
+                  {t("purchaseGiftVoucher.sendAsGift")}
+                </Label>
               </div>
 
               {calculatedPrice > 0 && (
                 <Alert className="border-primary/20 bg-primary/5">
-                  <AlertDescription className="flex justify-between items-center text-lg">
+                  <AlertDescription className="flex justify-between items-center text-xl py-3">
                     <span className="font-medium">{t("purchaseGiftVoucher.total")}:</span>
-                    <Badge variant="default" className="text-lg px-4 py-2">
+                    <Badge variant="default" className="text-2xl px-6 py-3 font-bold">
                       {calculatedPrice} {t("common.currency")}
                     </Badge>
                   </AlertDescription>
@@ -682,19 +688,26 @@ export default function PurchaseGiftVoucherClient({
             </CardContent>
 
             <CardFooter className="flex justify-between pt-6">
-              <Button type="button" variant="outline" onClick={() => router.back()} className="px-8">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                className="px-10 py-3 text-base rounded-lg"
+              >
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={loading || calculatedPrice <= 0} className="px-8">
+              <Button
+                type="submit"
+                disabled={loading || calculatedPrice <= 0}
+                className="px-10 py-3 text-base font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:scale-105"
+              >
                 {loading ? (
                   t("common.processing")
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span>
-                      {watchIsGift
-                        ? t("purchaseGiftVoucher.proceedToGiftDetails")
-                        : t("purchaseGiftVoucher.proceedToPayment")}
-                    </span>
+                    {watchIsGift
+                      ? t("purchaseGiftVoucher.proceedToGiftDetails")
+                      : t("purchaseGiftVoucher.proceedToPayment")}
                     {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                   </div>
                 )}
@@ -708,11 +721,13 @@ export default function PurchaseGiftVoucherClient({
 
   if (step === "giftDetailsEntry") {
     return (
-      <div className="max-w-3xl mx-auto space-y-6 p-4">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {" "}
+        {/* Removed p-4 */}
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl font-bold flex items-center justify-center gap-2">
+            <CardTitle className="text-2xl font-semibold flex items-center justify-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
               {t("purchaseGiftVoucher.giftRecipientDetailsTitle")}
             </CardTitle>
@@ -730,7 +745,7 @@ export default function PurchaseGiftVoucherClient({
                     id="recipientName"
                     {...giftForm.register("recipientName")}
                     placeholder={t("purchaseGiftVoucher.recipientNamePlaceholder")}
-                    className="h-11"
+                    className="h-12 text-base"
                   />
                   {giftForm.formState.errors.recipientName && (
                     <p className="text-sm text-destructive">{giftForm.formState.errors.recipientName.message}</p>
@@ -745,7 +760,7 @@ export default function PurchaseGiftVoucherClient({
                     id="recipientPhone"
                     {...giftForm.register("recipientPhone")}
                     placeholder={t("purchaseGiftVoucher.phonePlaceholder")}
-                    className="h-11"
+                    className="h-12 text-base"
                   />
                   {giftForm.formState.errors.recipientPhone && (
                     <p className="text-sm text-destructive">{giftForm.formState.errors.recipientPhone.message}</p>
@@ -762,7 +777,7 @@ export default function PurchaseGiftVoucherClient({
                   {...giftForm.register("greetingMessage")}
                   placeholder={t("purchaseGiftVoucher.greetingPlaceholder")}
                   rows={4}
-                  className="resize-none"
+                  className="resize-none text-base"
                 />
               </div>
 
@@ -777,7 +792,7 @@ export default function PurchaseGiftVoucherClient({
                         type="button"
                         variant={field.value === "immediate" ? "default" : "outline"}
                         onClick={() => field.onChange("immediate")}
-                        className="flex-1"
+                        className="flex-1 py-3 text-base font-medium"
                       >
                         {t("purchaseGiftVoucher.sendNow")}
                       </Button>
@@ -785,7 +800,7 @@ export default function PurchaseGiftVoucherClient({
                         type="button"
                         variant={field.value === "scheduled" ? "default" : "outline"}
                         onClick={() => field.onChange("scheduled")}
-                        className="flex-1"
+                        className="flex-1 py-3 text-base font-medium"
                       >
                         {t("purchaseGiftVoucher.sendOnDate")}
                       </Button>
@@ -802,7 +817,10 @@ export default function PurchaseGiftVoucherClient({
                     render={({ field }) => (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-start font-normal h-11">
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-start font-normal h-12 text-base"
+                          >
                             <CalendarIcon className={cn("h-4 w-4", dir === "rtl" ? "ml-2" : "mr-2")} />
                             {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
                           </Button>
@@ -826,7 +844,7 @@ export default function PurchaseGiftVoucherClient({
                     defaultValue={format(startOfHour(addHours(new Date(), 1)), "HH:mm")}
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger className="h-11">
+                        <SelectTrigger className="h-12 text-base">
                           <SelectValue placeholder={t("purchaseGiftVoucher.selectTime")} />
                         </SelectTrigger>
                         <SelectContent>
@@ -848,16 +866,24 @@ export default function PurchaseGiftVoucherClient({
                 type="button"
                 variant="outline"
                 onClick={() => setStep("select")}
-                className="px-8 flex items-center"
+                className="px-10 py-3 text-base rounded-lg"
               >
-                {dir === "rtl" ? <ArrowRight className="w-4 h-4 ml-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
-                <span>{t("common.back")}</span>
+                {dir === "rtl" ? <ArrowRight className="w-4 h-4 mr-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
+                {t("common.back")}
               </Button>
-              <Button type="submit" disabled={loading} className="px-8">
-                <div className="flex items-center gap-2">
-                  <span>{t("purchaseGiftVoucher.proceedToPayment")}</span>
-                  {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
-                </div>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="px-10 py-3 text-base font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:scale-105"
+              >
+                {loading ? (
+                  t("common.processing")
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {t("purchaseGiftVoucher.proceedToPayment")}
+                    {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                  </div>
+                )}
               </Button>
             </CardFooter>
           </form>
@@ -868,11 +894,13 @@ export default function PurchaseGiftVoucherClient({
 
   if (step === "payment") {
     return (
-      <div className="max-w-3xl mx-auto space-y-6 p-4">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {" "}
+        {/* Removed p-4 */}
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl font-bold flex items-center justify-center gap-2">
+            <CardTitle className="text-2xl font-semibold flex items-center justify-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" />
               {t("purchaseGiftVoucher.paymentDetailsTitle")}
             </CardTitle>
@@ -895,19 +923,19 @@ export default function PurchaseGiftVoucherClient({
                     <Card
                       key={pm._id}
                       className={cn(
-                        "cursor-pointer border-2 transition-all duration-200 hover:shadow-sm",
+                        "cursor-pointer border-2 transition-all duration-200 hover:shadow-md",
                         paymentForm.watch("selectedPaymentMethodId") === pm._id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50",
+                          ? "border-primary bg-primary/10 shadow-lg ring-1 ring-primary/30"
+                          : "border-border hover:border-primary/30",
                       )}
                       onClick={() => paymentForm.setValue("selectedPaymentMethodId", pm._id)}
                     >
-                      <CardContent className="p-4">
+                      <CardContent className="p-5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <CreditCard className="w-5 h-5 text-muted-foreground" />
                             <div>
-                              <p className="font-medium">
+                              <p className="font-semibold text-base">
                                 {pm.cardName || `${t("paymentMethods.card")} **** ${pm.cardNumber.slice(-4)}`}
                               </p>
                               <p className="text-sm text-muted-foreground">
@@ -933,10 +961,10 @@ export default function PurchaseGiftVoucherClient({
                 type="button"
                 variant="outline"
                 onClick={() => setShowPaymentMethodForm(true)}
-                className="w-full h-12 flex items-center justify-center gap-2"
+                className="w-full h-14 text-base font-medium"
               >
-                <PlusCircle className="w-4 h-4" />
-                <span>{t("purchaseGiftVoucher.addNewCard")}</span>
+                <PlusCircle className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
+                {t("purchaseGiftVoucher.addNewCard")}
               </Button>
 
               {showPaymentMethodForm && (
@@ -948,9 +976,9 @@ export default function PurchaseGiftVoucherClient({
               )}
 
               <Alert className="border-primary/20 bg-primary/5">
-                <AlertDescription className="flex justify-between items-center text-lg">
+                <AlertDescription className="flex justify-between items-center text-xl py-3">
                   <span className="font-medium">{t("purchaseGiftVoucher.total")}:</span>
-                  <Badge variant="default" className="text-lg px-4 py-2">
+                  <Badge variant="default" className="text-2xl px-6 py-3 font-bold">
                     {calculatedPrice} {t("common.currency")}
                   </Badge>
                 </AlertDescription>
@@ -962,26 +990,19 @@ export default function PurchaseGiftVoucherClient({
                 type="button"
                 variant="outline"
                 onClick={() => setStep(watchIsGift ? "giftDetailsEntry" : "select")}
-                className="px-8 flex items-center"
+                className="px-10 py-3 text-base rounded-lg"
               >
-                {dir === "rtl" ? <ArrowRight className="w-4 h-4 ml-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
-                <span>{t("common.back")}</span>
+                {dir === "rtl" ? <ArrowRight className="w-4 h-4 mr-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
+                {t("common.back")}
               </Button>
               <Button
                 type="submit"
-                disabled={loading || !paymentForm.watch("selectedPaymentMethodId") || calculatedPrice <= 0}
-                className="px-8"
+                disabled={loading || !paymentForm.watch("selectedPaymentMethodId")}
+                className="px-10 py-3 text-base font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:scale-105"
               >
-                {loading ? (
-                  t("common.processing")
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span>
-                      {t("purchaseGiftVoucher.payAmount", { amount: calculatedPrice, currency: t("common.currency") })}
-                    </span>
-                    {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
-                  </div>
-                )}
+                {loading
+                  ? t("common.processing")
+                  : `${t("purchaseGiftVoucher.payAmount", { amount: calculatedPrice, currency: t("common.currency") })}`}
               </Button>
             </CardFooter>
           </form>
@@ -993,18 +1014,17 @@ export default function PurchaseGiftVoucherClient({
   if (step === "complete") {
     return (
       <div className="max-w-2xl mx-auto space-y-6 text-center p-4">
-        <StepIndicator currentStep={step} />
-        <Card className="shadow-lg p-8">
+        <Card className="shadow-xl p-10 sm:p-12 bg-gradient-to-br from-background via-green-50 to-background border-2 border-green-200 rounded-xl">
           <div className="space-y-6">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-              <Check className="h-10 w-10 text-green-600" />
+            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto shadow-md border-4 border-white">
+              <Check className="h-12 w-12 text-green-600" />
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
                 {watchIsGift ? t("purchaseGiftVoucher.giftSuccess") : t("purchaseGiftVoucher.purchaseSuccess")}
               </h1>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-gray-600 text-xl">
                 {watchIsGift
                   ? t("purchaseGiftVoucher.giftSuccessDescription")
                   : t("purchaseGiftVoucher.purchaseSuccessDescription")}
@@ -1012,10 +1032,17 @@ export default function PurchaseGiftVoucherClient({
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button onClick={() => router.push("/dashboard/member/gift-vouchers")} className="px-8">
+              <Button
+                onClick={() => router.push("/dashboard/member/gift-vouchers")}
+                className="px-10 py-3 text-lg font-medium rounded-lg shadow-sm hover:shadow-md transition-shadow"
+              >
                 {t("purchaseGiftVoucher.viewMyVouchers")}
               </Button>
-              <Button variant="outline" onClick={() => router.push("/dashboard")} className="px-8">
+              <Button
+                variant="outline"
+                onClick={() => router.push("/dashboard")}
+                className="px-10 py-3 text-lg font-medium rounded-lg shadow-sm hover:shadow-md transition-shadow"
+              >
                 {t("purchaseGiftVoucher.backToDashboard")}
               </Button>
             </div>

@@ -130,14 +130,18 @@ export default function PurchaseGiftVoucherClient({
   useEffect(() => {
     let price = 0
     const currentPurchaseValues = purchaseForm.getValues()
+
     if (currentPurchaseValues.voucherType === "monetary") {
       if (typeof currentPurchaseValues.monetaryValue === "number" && currentPurchaseValues.monetaryValue >= 150) {
         price = currentPurchaseValues.monetaryValue
       }
     } else if (currentPurchaseValues.voucherType === "treatment") {
+      // אם יש duration נבחר
       if (selectedDuration && typeof selectedDuration.price === "number") {
         price = selectedDuration.price
-      } else if (
+      }
+      // אם אין durations אבל יש מחיר לטיפול
+      else if (
         selectedTreatment &&
         (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
         typeof selectedTreatment.price === "number"
@@ -145,6 +149,7 @@ export default function PurchaseGiftVoucherClient({
         price = selectedTreatment.price
       }
     }
+
     setCalculatedPrice(price)
   }, [purchaseForm.watch(), selectedTreatment, selectedDuration])
 
@@ -443,9 +448,14 @@ export default function PurchaseGiftVoucherClient({
                           <SelectItem key={treatment._id} value={treatment._id}>
                             <div className="flex items-center justify-between w-full">
                               <span>{treatment.name}</span>
-                              {treatment.price && !treatment.durations?.length && (
+                              {treatment.price && (!treatment.durations || treatment.durations.length === 0) && (
                                 <Badge variant="secondary" className={cn("ml-2", dir === "rtl" && "mr-2 ml-0")}>
                                   {treatment.price} {t("common.currency")}
+                                </Badge>
+                              )}
+                              {treatment.durations && treatment.durations.length > 0 && (
+                                <Badge variant="outline" className={cn("ml-2", dir === "rtl" && "mr-2 ml-0")}>
+                                  {treatment.durations.length} {t("purchaseGiftVoucher.durationOptions")}
                                 </Badge>
                               )}
                             </div>
@@ -475,7 +485,10 @@ export default function PurchaseGiftVoucherClient({
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between">
-                                <span className="font-medium">{duration.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <Clock className="w-4 h-4 text-muted-foreground" />
+                                  <span className="font-medium">{duration.name}</span>
+                                </div>
                                 <Badge variant="secondary">
                                   {duration.price} {t("common.currency")}
                                 </Badge>
@@ -488,6 +501,19 @@ export default function PurchaseGiftVoucherClient({
                   )}
                 </div>
               )}
+
+              {selectedTreatment &&
+                (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
+                selectedTreatment.price && (
+                  <Alert className="border-primary/20 bg-primary/5">
+                    <AlertDescription className="flex justify-between items-center">
+                      <span className="font-medium">{t("purchaseGiftVoucher.treatmentPrice")}:</span>
+                      <Badge variant="secondary" className="text-base px-3 py-1">
+                        {selectedTreatment.price} {t("common.currency")}
+                      </Badge>
+                    </AlertDescription>
+                  </Alert>
+                )}
 
               <Separator />
 

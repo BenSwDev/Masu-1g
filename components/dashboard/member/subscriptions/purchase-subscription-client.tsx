@@ -111,7 +111,7 @@ const PurchaseSubscriptionClient = ({
     if (currentStep === 3 && selectedTreatmentData && selectedTreatmentData.pricingType !== "duration_based") {
       setCurrentStep(4) // Advance to step 4 (Payment Method)
     }
-  }, [currentStep, selectedTreatmentData, setCurrentStep]) // Added setCurrentStep to dependencies
+  }, [currentStep, selectedTreatmentData]) // Removed setCurrentStep from dependencies
 
   // Add function to refresh payment methods
   const handleRefreshPaymentMethods = async () => {

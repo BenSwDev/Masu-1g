@@ -82,17 +82,17 @@
     "cancelling": "Cancelling...",
     "card": "Card",
     "notAvailable": "N/A",
-    "pagination": \{
-      "pageInfo": "Page \{\{page\}\} of \{\{totalPages\}\} (\{\{totalResults\}\} results)",
-      "showPerPage": "Show \{\{count\}\}"
-    \},
+    "pagination": {
+      "pageInfo": "Page {{page}} of {{totalPages}} ({{totalResults}} results)",
+      "showPerPage": "Show {{count}}"
+    },
     "hour": "Hour",
     "hours": "Hours",
     "minute": "Minute",
     "and": "and"
-  \},
-  "dashboard": \{
-    "sidebar": \{
+  },
+  "dashboard": {
+    "sidebar": {
       "title": "Dashboard",
       "dashboard": "Dashboard",
       "mainMenu": "Main Menu",
@@ -122,9 +122,9 @@
       "giftVouchers": "Gift Vouchers",
       "support": "Support",
       "settings": "Settings"
-    \}
-  \},
-  "subscriptions": \{
+    }
+  },
+  "subscriptions": {
     "title": "Manage Subscriptions",
     "addNew": "Add New Subscription",
     "edit": "Edit Subscription",
@@ -143,7 +143,7 @@
     "includedTreatments": "Included Treatments",
     "sortAscending": "Ascending",
     "sortDescending": "Descending",
-    "fields": \{
+    "fields": {
       "name": "Subscription Name",
       "description": "Description",
       "isActive": "Active",
@@ -152,32 +152,32 @@
       "validityMonths": "Validity (months)",
       "treatments": "Treatments",
       "price": "Price"
-    \},
+    },
     "activeDescription": "Active subscriptions will be shown to clients",
     "quantityDescription": "Number of treatments included in the subscription",
     "bonusDescription": "Number of bonus treatments (free)",
     "validityDescription": "Subscription validity period in months",
     "treatmentsDescription": "Select treatments included in this subscription",
     "noTreatmentsAvailable": "No treatments available",
-    "errors": \{
+    "errors": {
       "nameRequired": "Subscription name is required",
       "descriptionRequired": "Description is required",
       "quantityRequired": "Quantity must be at least 1",
       "bonusQuantityInvalid": "Bonus quantity must be at least 0",
       "validityRequired": "Validity must be at least 1 month",
       "treatmentsRequired": "At least one treatment must be selected"
-    \},
-    "my": \{
+    },
+    "my": {
       "title": "My Subscriptions",
       "description": "Manage your subscriptions",
       "noSubscriptions": "No subscriptions found"
-    \},
-    "status": \{
+    },
+    "status": {
       "expired": "Expired",
       "depleted": "Depleted",
       "cancelled": "Cancelled",
       "all": "All Statuses"
-    \},
+    },
     "unknownSubscription": "Unknown Subscription",
     "purchasedOn": "Purchased On",
     "remaining": "Remaining",
@@ -186,7 +186,7 @@
     "usage": "Usage",
     "used": "Used",
     "total": "Total",
-    "purchase": \{
+    "purchase": {
       "title": "Purchase Subscription",
       "description": "Select a subscription plan and treatment to get started.",
       "noSubscriptions": "No subscriptions available for purchase at the moment.",
@@ -201,15 +201,15 @@
       "confirmAndPay": "Confirm & Pay",
       "selectSubscriptionError": "Please select a subscription plan.",
       "new": "Purchase New Subscription"
-    \},
+    },
     "cancelSuccess": "Subscription cancelled successfully.",
     "cancelConfirm": "Are you sure you want to cancel this subscription?",
     "cancelConfirmDescription": "This action cannot be undone. Your remaining sessions will be forfeited.",
     "cancelConfirmDescriptionAdmin": "Are you sure you want to cancel this subscription for \{\{userName\}\}? This action cannot be undone.",
-    "users": \{
+    "users": {
       "title": "Users",
       "description": "Manage users"
-    \},
+    },
     "description": "Description",
     "create": "Create",
     "selectValidity": "Select Validity",
@@ -231,8 +231,8 @@
     "use": "Use Subscription",
     "useSuccess": "Subscription used successfully",
     "useError": "Error using subscription"
-  \},
-  "giftVouchers": \{
+  },
+  "giftVouchers": {
     "title": "Gift Vouchers",
     "description": "Manage gift vouchers",
     "addNew": "Add New Gift Voucher",
@@ -244,7 +244,7 @@
     "deleteConfirmDescription": "This action cannot be undone",
     "pending": "Pending",
     "expired": "Expired",
-    "fields": \{
+    "fields": {
       "code": "Code",
       "value": "Value",
       "validFrom": "Valid From",
@@ -274,7 +274,7 @@
       "daysRemaining": "Days Rem.",
       "daysRemainingShort": "days left",
       "expiredShort": "Expired"
-    \},
+    },
     "createSuccess": "Gift voucher created successfully",
     "createError": "Error creating gift voucher",
     "updateSuccess": "Gift voucher updated successfully",
@@ -291,11 +291,11 @@
     "status": "Status",
     "editVoucher": "Edit Voucher",
     "deleteConfirmTitle": "Delete Gift Voucher",
-    "types": \{
+    "types": {
       "treatment": "Treatment Voucher",
       "monetary": "Monetary Voucher"
-    \},
-    "statuses": \{
+    },
+    "statuses": {
       "pending_payment": "Pending Payment",
       "active": "Active",
       "partially_used": "Partially Used",
@@ -304,8 +304,8 @@
       "pending_send": "Pending Send",
       "sent": "Sent",
       "cancelled": "Cancelled"
-    \},
-    "myVouchers": \{
+    },
+    "myVouchers": {
       "title": "My Gift Vouchers",
       "description": "Manage your purchased and received gift vouchers.",
       "ownedVouchers": "Vouchers I Own",
@@ -345,8 +345,8 @@
       "voucherDetailsTitle": "Voucher Details",
       "voucherDetailsDescription": "Detailed information about your gift voucher.",
       "errorLoading": "Error loading your vouchers. Please try refreshing."
-    \},
-    "admin": \{
+    },
+    "admin": {
       "assignToUser": "Assign to User",
       "selectUser": "Select User",
       "noUsersFound": "No users found",
@@ -356,8 +356,8 @@
       "clearFilters": "Clear Filters",
       "searchByUserEmail": "Search by user email...",
       "searchByVoucherCode": "Search by voucher code..."
-    \},
-    "redeem": \{
+    },
+    "redeem": {
       "title": "Redeem Gift Voucher",
       "enterCode": "Enter Gift Voucher Code",
       "applyVoucher": "Apply Voucher",
@@ -369,25 +369,25 @@
       "fetchErrorTreatments": "Failed to load treatments for selection.",
       "fetchErrorUsers": "Failed to load users for selection.",
       "operationSuccessMessage": "Voucher \{\{code\}\} has been \{\{operation\}\} successfully."
-    \},
+    },
     "useCode": "Use this code during checkout or booking",
-    "status": \{
+    "status": {
       "active": "Active"
-    \},
+    },
     "adminDisabled": "Admin Disabled",
     "isGiftBadge": "Gift"
-  \},
-  "partnerCoupons": \{
+  },
+  "partnerCoupons": {
     "title": "Partner Coupons",
     "description": "Manage partner coupons",
     "noCoupons": "No partner coupons found"
-  \},
-  "memberCoupons": \{
+  },
+  "memberCoupons": {
     "title": "Member Coupons",
     "description": "View available coupons",
     "noCoupons": "No member coupons found"
-  \},
-  "memberGiftVouchers": \{
+  },
+  "memberGiftVouchers": {
     "title": "Member Gift Vouchers",
     "description": "View available gift vouchers",
     "noGiftVouchers": "No gift vouchers found",
@@ -398,8 +398,8 @@
     "expiredVouchers": "Expired Vouchers",
     "totalVouchers": "Total Vouchers",
     "purchaseVoucher": "Purchase Voucher"
-  \},
-  "memberSubscriptions": \{
+  },
+  "memberSubscriptions": {
     "title": "My Subscriptions",
     "description": "View and manage your active and past subscriptions.",
     "noSubscriptions": "You do not have any subscriptions yet.",
@@ -421,8 +421,8 @@
     "pricePaid": "Price Paid",
     "paymentMethod": "Payment Method",
     "treatmentName": "Treatment"
-  \},
-  "errors": \{
+  },
+  "errors": {
     "unknown": "An unknown error occurred",
     "passwordMismatch": "Passwords do not match",
     "emailExists": "Email already exists",
@@ -440,8 +440,8 @@
     "otpVerificationFailed": "Verification code verification failed",
     "noUserFound": "No user found",
     "invalidPassword": "Invalid password"
-  \},
-  "addresses": \{
+  },
+  "addresses": {
     "title": "Addresses",
     "addNew": "Add New",
     "edit": "Edit",
@@ -450,7 +450,7 @@
     "createSuccess": "Address created successfully",
     "updateError": "Error updating address",
     "createError": "Error creating address",
-    "fields": \{
+    "fields": {
       "city": "City",
       "street": "Street",
       "streetNumber": "Street Number",
@@ -466,14 +466,14 @@
       "hasPrivateParking": "Has Private Parking",
       "isDefault": "Default Address",
       "additionalNotes": "Additional Notes"
-    \},
-    "types": \{
+    },
+    "types": {
       "apartment": "Apartment",
       "house": "House",
       "office": "Office",
       "hotel": "Hotel",
       "other": "Other"
-    \},
+    },
     "setDefaultSuccess": "Default address set successfully",
     "setDefaultError": "Error setting default address",
     "deleteSuccess": "Address deleted successfully",
@@ -481,8 +481,8 @@
     "noDetails": "No details",
     "deleteConfirm": "Are you sure you want to delete this address?",
     "deleteConfirmDescription": "This action cannot be undone"
-  \},
-  "login": \{
+  },
+  "login": {
     "languageSelector": "Language Selection",
     "sendingOTP": "Sending verification code",
     "sendingOTPToEmail": "Sending verification code to email",
@@ -524,8 +524,8 @@
     "termsOfService": "Terms of Service",
     "and": "and",
     "privacyPolicy": "Privacy Policy"
-  \},
-  "register": \{
+  },
+  "register": {
     "january": "January",
     "february": "February",
     "march": "March",
@@ -565,10 +565,10 @@
     "termsOfService": "Terms of Service",
     "and": "and",
     "privacyPolicy": "Privacy Policy"
-  \},
-  "success": \{
+  },
+  "success": {
     "registrationComplete": "Registration completed successfully"
-  \},
+  },
   "identifier": "Identifier",
   "password": "Password",
   " ": " ",
@@ -576,8 +576,8 @@
   "newPassword": "New Password",
   "confirmPassword": "Confirm Password",
   "newEmail": "New Email",
-  "admin": \{
-    "users": \{
+  "admin": {
+    "users": {
       "statisticsTitle": "User Statistics",
       "statisticsDescription": "Overview of all users in the system",
       "addUser": "Add User",
@@ -620,7 +620,7 @@
       "editUserDescription": "Update user information and roles",
       "createUserDescription": "Add a new user to the system",
       "passwordRequiredForNew": "Password is required for new users",
-      "form": \{
+      "form": {
         "name": "Full Name",
         "namePlaceholder": "Enter full name",
         "email": "Email Address",
@@ -636,14 +636,14 @@
         "genderPlaceholder": "Select gender",
         "dateOfBirth": "Date of Birth",
         "dateOfBirthPlaceholder": "Select date of birth"
-      \}
-    \},
-    "adminCoupons": \{
+      }
+    },
+    "adminCoupons": {
       "title": "Coupons Management",
       "description": "Create and manage coupons for your platform.",
       "createNew": "Create Coupon",
       "totalCoupons": "Total Coupons: \{\{count\}\}",
-      "form": \{
+      "form": {
         "titleCreate": "Create New Coupon",
         "titleEdit": "Edit Coupon",
         "descriptionCreate": "Fill in the details to create a new coupon.",
@@ -674,8 +674,8 @@
         "isActiveLabel": "Coupon is Active",
         "saveChanges": "Save Changes",
         "createCoupon": "Create Coupon"
-      \},
-      "columns": \{
+      },
+      "columns": {
         "code": "Code",
         "description": "Description",
         "discount": "Discount",
@@ -687,52 +687,52 @@
         "partnerLoading": "Loading...",
         "partnerNotAssigned": "N/A",
         "partnerUnnamed": "Unnamed Partner"
-      \},
-      "status": \{
+      },
+      "status": {
         "active": "Active",
         "scheduled": "Scheduled",
         "expired": "Expired",
         "inactiveManual": "Inactive"
-      \},
-      "deleteDialog": \{
+      },
+      "deleteDialog": {
         "title": "Are you sure?",
         "description": "This action cannot be undone. This will permanently delete the coupon.",
         "confirmButton": "Delete",
         "deletingButton": "Deleting..."
-      \},
-      "toast": \{
+      },
+      "toast": {
         "deleteSuccess": "Coupon deleted successfully",
         "deleteError": "Failed to delete coupon.",
         "updateSuccess": "Coupon updated successfully",
         "createSuccess": "Coupon created successfully",
         "formError": "An unexpected error occurred."
-      \},
-      "filters": \{
+      },
+      "filters": {
         "searchByCode": "Search by code...",
         "filterByStatus": "Filter by Status",
         "filterByPartner": "Filter by Partner",
         "allPartners": "All Partners",
         "noPartner": "No Partner Assigned"
-      \},
-      "pagination": \{
+      },
+      "pagination": {
         "previous": "Previous",
         "next": "Next",
         "pageInfo": "Page \{\{currentPage\}\} of \{\{totalPages\}\}",
         "rowsSelected": "\{\{count\}\} of \{\{total\}\} row(s) selected"
-      \}
-    \},
-    "partnerAssignedCoupons": \{
+      }
+    },
+    "partnerAssignedCoupons": {
       "title": "My Assigned Coupons",
       "description": "View coupons assigned to you for distribution.",
       "loading": "Loading coupons...",
       "noCoupons": "No coupons have been assigned to you yet.",
-      "pagination": \{
+      "pagination": {
         "previous": "Previous",
         "next": "Next",
         "pageInfo": "Page \{\{currentPage\}\} of \{\{totalPages\}\}"
-      \},
+      },
       "totalAssigned": "Total Assigned Coupons: \{\{count\}\}",
-      "card": \{
+      "card": {
         "noDescription": "No description",
         "discountLabel": "Discount:",
         "validLabel": "Valid:",
@@ -742,15 +742,15 @@
         "adminNoteLabel": "Admin Note:",
         "createdLabel": "Created: \{\{date\}\}",
         "copyCodeTooltip": "Copy coupon code"
-      \},
-      "toast": \{
+      },
+      "toast": {
         "copySuccessTitle": "Copied!",
         "copySuccessDescription": "Coupon code \"\{\{code\}\}\" copied to clipboard.",
         "copyErrorDescription": "Failed to copy code."
-      \}
-    \}
-  \},
-  "roles": \{
+      }
+    }
+  },
+  "roles": {
     "admin": "Admin",
     "member": "Member",
     "professional": "Professional",
@@ -758,7 +758,7 @@
     "memberPlural": "Members",
     "professionalPlural": "Professionals",
     "partnerPlural": "Partners"
-  \},
+  },
   "name": "Name",
   "email": "Email",
   "createdAt": "Created At",
@@ -766,7 +766,7 @@
   "search": "Search",
   "sortField": "Sort Field",
   "sortDirection": "Sort Direction",
-  "paymentMethods": \{
+  "paymentMethods": {
     "title": "Payment Methods",
     "addNew": "Add New Payment Method",
     "noPaymentMethods": "No saved payment methods. Please add one to proceed.",
@@ -776,7 +776,7 @@
     "createError": "Create Error",
     "error": "Error",
     "edit": "Edit",
-    "fields": \{
+    "fields": {
       "cardNumber": "Card Number",
       "expiryMonth": "Expiry Month",
       "expiryYear": "Expiry Year",
@@ -785,7 +785,7 @@
       "cardName": "Card Name (e.g., My Visa)",
       "isDefault": "Is Default",
       "expiry": "Expiry"
-    \},
+    },
     "deleted": "Deleted",
     "deleteError": "Delete Error",
     "defaultSet": "Set as Default",
@@ -801,7 +801,7 @@
     "managePaymentMethods": "Manage Payment Methods",
     "selectPaymentMethodError": "Please select a payment method.",
     "unknown": "Unknown"
-  \},
+  },
   "city": "City",
   "street": "Street",
   "streetNumber": "Street Number",
@@ -819,7 +819,7 @@
   "instructions": "Instructions",
   ":": ":",
   "en-US": "en-US",
-  "treatments": \{
+  "treatments": {
     "createSuccess": "Treatment created successfully",
     "updateSuccess": "Treatment updated successfully",
     "addNew": "Add New Treatment",
@@ -827,15 +827,15 @@
     "title": "Treatments",
     "searchPlaceholder": "Search treatments...",
     "noTreatments": "No treatments found",
-    "errors": \{
+    "errors": {
       "nameRequired": "Name is required",
       "categoryRequired": "Category is required",
       "invalidDuration": "Invalid duration"
-    \},
+    },
     "updateError": "Error updating treatment",
     "createError": "Error creating treatment",
     "basicInfo": "Basic Information",
-    "fields": \{
+    "fields": {
       "name": "Name",
       "category": "Category",
       "description": "Description",
@@ -846,18 +846,18 @@
       "durations": "Durations",
       "minutes": "Minutes",
       "duration": "Duration"
-    \},
+    },
     "selectCategory": "Select Category",
-    "categories": \{
+    "categories": {
       "massages": "Massages",
       "facial_treatments": "Facial Treatments"
-    \},
+    },
     "activeDescription": "Active treatments will be shown",
     "pricing": "Pricing",
-    "pricingTypes": \{
+    "pricingTypes": {
       "fixed": "Fixed Price",
       "durationBased": "Duration Based"
-    \},
+    },
     "addDuration": "Add Duration",
     "duration": "Duration",
     "deactivateSuccess": "Treatment deactivated successfully",
@@ -882,8 +882,8 @@
     "selectDurationError": "Please select a duration for the treatment.",
     "noActiveDurations": "No active durations available for this treatment.",
     "name": "Treatment Name"
-  \},
-  "userSubscriptions": \{
+  },
+  "userSubscriptions": {
     "title": "User Subscriptions",
     "description": "Manage all user subscriptions in the system.",
     "pageTitle": "User Subscriptions Management",
@@ -931,13 +931,13 @@
     "cancellationDate": "Cancellation Date",
     "remainingQuantity": "Remaining Quantity",
     "usedQuantity": "Used Quantity",
-    "stats": \{
+    "stats": {
       "total": "Total Subscriptions",
       "active": "Active Subscriptions",
       "expired": "Expired Subscriptions",
       "revenue": "Total Revenue"
-    \},
-    "tableHeaders": \{
+    },
+    "tableHeaders": {
       "user": "User",
       "subscriptionDetails": "Subscription",
       "treatmentDetails": "Treatment",
@@ -946,30 +946,30 @@
       "payment": "Payment",
       "status": "Status",
       "actions": "Actions"
-    \},
-    "actions": \{
+    },
+    "actions": {
       "cancel": "Cancel Subscription",
       "delete": "Delete Subscription",
       "cancelSubscription": "Confirm Cancellation",
       "deleteSubscription": "Confirm Deletion"
-    \},
-    "cancelDialog": \{
+    },
+    "cancelDialog": {
       "title": "Cancel User Subscription",
       "description": "Are you sure you want to cancel the subscription for \{\{userName\}\}? This will mark the subscription as cancelled and prevent further use."
-    \},
-    "deleteDialog": \{
+    },
+    "deleteDialog": {
       "title": "Delete User Subscription",
       "description": "Are you sure you want to permanently delete the subscription for \{\{userName\}\}? This action cannot be undone and all related data will be removed."
-    \},
-    "notifications": \{
+    },
+    "notifications": {
       "dataRefreshed": "Subscription data refreshed successfully.",
       "dataLoadError": "Failed to load subscription data.",
       "cancelSuccess": "Subscription cancelled successfully.",
       "cancelError": "Failed to cancel subscription.",
       "deleteSuccess": "Subscription deleted successfully.",
       "deleteError": "Failed to delete subscription."
-    \},
-    "detailsModal": \{
+    },
+    "detailsModal": {
       "title": "User Subscription Details",
       "description": "Detailed information for \{\{userName\}\}'s subscription.",
       "userSectionTitle": "User Information",
@@ -977,9 +977,9 @@
       "treatmentSectionTitle": "Treatment Information",
       "usageSectionTitle": "Usage Details",
       "paymentSectionTitle": "Payment Information"
-    \}
-  \},
-  "purchaseGiftVoucher": \{
+    }
+  },
+  "purchaseGiftVoucher": {
     "failedToLoadData": "Failed to load data required for purchase",
     "errorDetails": "Details",
     "title": "Purchase Gift Voucher",
@@ -1039,13 +1039,13 @@
     "stepComplete": "Confirmation",
     "minimumAmount": "Minimum amount",
     "minimumAmountDetails": "Minimum amount is \{\{amount\}\} \{\{currency\}\}"
-  \},
-  "gender": \{
+  },
+  "gender": {
     "male": "Male",
     "female": "Female",
     "other": "Other"
-  \},
-  "workingHours": \{
+  },
+  "workingHours": {
     "updateSuccess": "Working hours updated successfully",
     "updateSuccessDescription": "Working hours settings have been saved",
     "updateError": "Error updating working hours",
@@ -1066,7 +1066,7 @@
     "type": "Type",
     "notesPlaceholder": "Add notes...",
     "hours": "Hours",
-    "days": \{
+    "days": {
       "sunday": "Sunday",
       "monday": "Monday",
       "tuesday": "Tuesday",
@@ -1074,7 +1074,7 @@
       "thursday": "Thursday",
       "friday": "Friday",
       "saturday": "Saturday"
-    \},
+    },
     "fixedHoursTab": "Fixed Hours",
     "specialDatesTab": "Special Dates",
     "specialDateName": "Event Name",
@@ -1086,5 +1086,5 @@
     "specialDateActiveDescription": "Mark if services are available on this special date.",
     "noSpecialDates": "No Special Dates Yet",
     "noSpecialDatesHint": "Click 'Add Special Date' to create one."
-  \}
-\}
+  }
+}

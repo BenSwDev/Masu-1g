@@ -205,17 +205,16 @@ export default function PurchaseGiftVoucherClient({
         purchaseForm.clearErrors("monetaryValue")
       }
     } else if (watchVoucherType === "monetary") {
-      // Optional: Clear treatment selection if switching to monetary voucher
-      // purchaseForm.setValue("treatmentId", undefined);
-      // purchaseForm.setValue("selectedDurationId", undefined);
-      // setSelectedTreatment(null);
-      // setSelectedDuration(null);
-      // if (purchaseForm.formState.errors.treatmentId) {
-      //   purchaseForm.clearErrors("treatmentId");
-      // }
-      // if (purchaseForm.formState.errors.selectedDurationId) {
-      //   purchaseForm.clearErrors("selectedDurationId");
-      // }
+      purchaseForm.setValue("treatmentId", undefined)
+      purchaseForm.setValue("selectedDurationId", undefined)
+      setSelectedTreatment(null)
+      setSelectedDuration(null)
+      if (purchaseForm.formState.errors.treatmentId) {
+        purchaseForm.clearErrors("treatmentId")
+      }
+      if (purchaseForm.formState.errors.selectedDurationId) {
+        purchaseForm.clearErrors("selectedDurationId")
+      }
     }
   }, [watchVoucherType, purchaseForm])
 
@@ -585,12 +584,12 @@ export default function PurchaseGiftVoucherClient({
                             <div className="flex items-center justify-between w-full">
                               <span>{treatment.name}</span>
                               {treatment.fixedPrice && (!treatment.durations || treatment.durations.length === 0) && (
-                                <Badge variant="secondary" className={cn("ml-2", dir === "rtl" && "mr-2 ml-0")}>
+                                <Badge variant="secondary" className={cn(dir === "rtl" ? "mr-2" : "ml-2")}>
                                   {treatment.fixedPrice} {t("common.currency")}
                                 </Badge>
                               )}
                               {treatment.durations && treatment.durations.length > 0 && (
-                                <Badge variant="outline" className={cn("ml-2", dir === "rtl" && "mr-2 ml-0")}>
+                                <Badge variant="outline" className={cn(dir === "rtl" ? "mr-2" : "ml-2")}>
                                   {treatment.durations.length} {t("purchaseGiftVoucher.durationOptions")}
                                 </Badge>
                               )}
@@ -691,9 +690,11 @@ export default function PurchaseGiftVoucherClient({
                   t("common.processing")
                 ) : (
                   <div className="flex items-center gap-2">
-                    {watchIsGift
-                      ? t("purchaseGiftVoucher.proceedToGiftDetails")
-                      : t("purchaseGiftVoucher.proceedToPayment")}
+                    <span>
+                      {watchIsGift
+                        ? t("purchaseGiftVoucher.proceedToGiftDetails")
+                        : t("purchaseGiftVoucher.proceedToPayment")}
+                    </span>
                     {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                   </div>
                 )}
@@ -846,15 +847,17 @@ export default function PurchaseGiftVoucherClient({
 
             <CardFooter className="flex justify-between pt-6">
               <Button type="button" variant="outline" onClick={() => setStep("select")} className="px-8">
-                {dir === "rtl" ? <ArrowRight className="w-4 h-4 mr-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
-                {t("common.back")}
+                <div className="flex items-center gap-2">
+                  {dir === "rtl" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                  <span>{t("common.back")}</span>
+                </div>
               </Button>
               <Button type="submit" disabled={loading} className="px-8">
                 {loading ? (
                   t("common.processing")
                 ) : (
                   <div className="flex items-center gap-2">
-                    {t("purchaseGiftVoucher.proceedToPayment")}
+                    <span>{t("purchaseGiftVoucher.proceedToPayment")}</span>
                     {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                   </div>
                 )}
@@ -966,17 +969,19 @@ export default function PurchaseGiftVoucherClient({
                 onClick={() => setStep(watchIsGift ? "giftDetailsEntry" : "select")}
                 className="px-8"
               >
-                {dir === "rtl" ? <ArrowRight className="w-4 h-4 mr-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
-                {t("common.back")}
+                <div className="flex items-center gap-2">
+                  {dir === "rtl" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                  <span>{t("common.back")}</span>
+                </div>
               </Button>
               <Button
                 type="submit"
-                disabled={loading || !paymentForm.watch("selectedPaymentMethodId")}
+                disabled={loading || !paymentForm.watch("selectedPaymentMethodId") || calculatedPrice <= 0}
                 className="px-8"
               >
                 {loading
                   ? t("common.processing")
-                  : `${t("purchaseGiftVoucher.payAmount", { amount: calculatedPrice, currency: t("common.currency") })}`}
+                  : t("purchaseGiftVoucher.payAmount", { amount: calculatedPrice, currency: t("common.currency") })}
               </Button>
             </CardFooter>
           </form>

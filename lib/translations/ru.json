@@ -63,7 +63,7 @@
     "close": "Закрыть",
     "refresh": "Обновить",
     "processing": "Обработка...",
-    "unknownError": "Произошла неизвестная ошибка.",
+    "unknownError": "Произошла неизвестная ошибка. Пожалуйста, попробуйте еще раз.",
     "failedToLoadTreatments": "Ошибка загрузки процедур.",
     "dir": "ltr",
     "locale": "ru-RU",
@@ -83,11 +83,15 @@
       "pageInfo": "Страница {{page}} из {{totalPages}} ({{totalResults}} результатов)",
       "showPerPage": "Показать {{count}}"
     },
-    "hour": "Час",
-    "hours": "Часов",
-    "minute": "Минута",
-    "minutes": "Минут",
-    "and": "и"
+    "hour": "час",
+    "hours": "часа(ов)",
+    "minute": "минута",
+    "minutes": "минут(ы)",
+    "and": "и",
+    "add": "Добавить",
+    "next": "Далее",
+    "previous": "Назад",
+    "requiredField": "Это поле обязательно для заполнения"
   },
   "dashboard": {
     "sidebar": {
@@ -1095,5 +1099,37 @@
     "specialDateActiveDescription": "Отметьте, если услуги доступны в эту особую дату.",
     "noSpecialDates": "Пока нет особых дат",
     "noSpecialDatesHint": "Нажмите 'Добавить особую дату', чтобы создать одну."
+  },
+  "paymentMethods": {
+    "title": "Способы оплаты",
+    "noPaymentMethods": "У вас нет сохраненных способов оплаты.",
+    "addPaymentMethod": "Добавить способ оплаты",
+    "card": "Карта, заканчивающаяся на",
+    "fields": {
+      "cardName": "Имя на карте",
+      "cardNumber": "Номер карты",
+      "expiry": "Срок действия (ММ/ГГ)",
+      "cvc": "CVC",
+      "isDefault": "Установить как способ оплаты по умолчанию"
+    },
+    "validation": {
+      "cardNameRequired": "Имя на карте обязательно.",
+      "cardNumberRequired": "Номер карты обязателен.",
+      "cardNumberInvalid": "Неверный номер карты.",
+      "expiryRequired": "Срок действия обязателен.",
+      "expiryInvalid": "Неверный формат срока действия (ММ/ГГ).",
+      "cvcRequired": "CVC обязателен.",
+      "cvcInvalid": "Неверный CVC (3 или 4 цифры)."
+    }
+  },
+  "treatments": {
+    "categories": {
+      "facial": "Уход за лицом",
+      "massage": "Массажи",
+      "body": "Уход за телом",
+      "hair": "Укладка и уход за волосами",
+      "nails": "Уход за ногтями",
+      "wellness": "Оздоровительные пакеты"
+    }
   }
 }

@@ -106,6 +106,13 @@ const PurchaseSubscriptionClient = ({
     }
   }, [paymentMethods, selectedPaymentMethodId])
 
+  useEffect(() => {
+    // Automatically skip step 3 (Duration selection) if the selected treatment is not duration-based
+    if (currentStep === 3 && selectedTreatmentData && selectedTreatmentData.pricingType !== "duration_based") {
+      setCurrentStep(4) // Advance to step 4 (Payment Method)
+    }
+  }, [currentStep, selectedTreatmentData, setCurrentStep]) // Added setCurrentStep to dependencies
+
   // Add function to refresh payment methods
   const handleRefreshPaymentMethods = async () => {
     setIsLoading(true) // Use existing isLoading state
@@ -290,10 +297,25 @@ const PurchaseSubscriptionClient = ({
           </Card>
         )
       case 3: // Select Duration (if applicable)
-        if (selectedTreatmentData?.pricingType !== "duration_based") {
-          setCurrentStep(4) // Skip to next step
-          return null
+        // The useEffect hook now handles advancing the step if this step is not applicable.
+        // We render a loading/placeholder state if the treatment is not duration-based,
+        // allowing the useEffect to transition the step.
+        if (!selectedTreatmentData || selectedTreatmentData.pricingType !== "duration_based") {
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("treatments.selectDuration")}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 text-center text-gray-500">
+                <p>
+                  {/* Intentionally empty or a subtle loading indicator if preferred, as useEffect handles transition */}
+                </p>
+                {/* Or you can use: <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" /> */}
+              </CardContent>
+            </Card>
+          )
         }
+        // Original JSX for step 3 (duration selection) follows
         return (
           <Card>
             <CardHeader>

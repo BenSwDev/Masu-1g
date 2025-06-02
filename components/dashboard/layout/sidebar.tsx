@@ -1,7 +1,5 @@
 "use client"
 
-import { DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
 import { useEffect, useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -10,6 +8,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { cn } from "@/lib/utils/utils"
 import { Button } from "@/components/common/ui/button"
 import { Avatar, AvatarFallback } from "@/components/common/ui/avatar"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip" // Added Tooltip imports
 import {
   LayoutDashboard,
   ChevronLeft,
@@ -36,6 +35,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuTrigger, // Ensured DropdownMenuTrigger is imported
 } from "@/components/common/ui/dropdown-menu"
 import { toast } from "@/components/common/ui/use-toast"
 import { setActiveRole } from "@/actions/role-actions"
@@ -45,21 +45,17 @@ interface SidebarProps {
   onMobileOpenChange: (open: boolean) => void
 }
 
-// Role Switcher Component
+// Role Switcher Component (with Tooltip for collapsed state)
 const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
   const { data: session, update } = useSession()
   const router = useRouter()
-  const { language } = useTranslation()
+  const { t, language } = useTranslation() // t for tooltip content
   const [isLoading, setIsLoading] = useState(false)
 
   if (!session?.user) return null
-
   const { roles, activeRole } = session.user
-
-  // If user has only one role, don't show the switcher
   if (!roles || roles.length <= 1) return null
 
-  // Get role icon and label
   const getRoleIcon = (role: string) => {
     switch (role) {
       case "admin":
@@ -78,13 +74,13 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
   const getRoleLabel = (role: string) => {
     switch (role) {
       case "admin":
-        return language === "he" ? "מנהל" : language === "ru" ? "Администратор" : "Admin"
+        return t("roles.admin")
       case "professional":
-        return language === "he" ? "בעל מקצוע" : language === "ru" ? "Профессионал" : "Professional"
+        return t("roles.professional")
       case "partner":
-        return language === "he" ? "שותף" : language === "ru" ? "Партнер" : "Partner"
+        return t("roles.partner")
       case "member":
-        return language === "he" ? "חבר" : language === "ru" ? "Участник" : "Member"
+        return t("roles.member")
       default:
         return role.charAt(0).toUpperCase() + role.slice(1)
     }
@@ -94,60 +90,89 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
     if (role === activeRole) return
     setIsLoading(true)
     try {
-      // Update in DB
       const result = await setActiveRole(role)
       if (result.success || result.activeRole) {
-        // Always update session to the new/fallback role
         await update({ activeRole: result.activeRole || role })
-        toast({ title: "החלפת תפקיד בהצלחה", variant: "default" })
-        // Always redirect to the main dashboard page of the new role
+        toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
         router.push(`/dashboard/${result.activeRole || role}`)
       } else {
-        toast({ title: "לא ניתן להחליף לתפקיד זה", variant: "destructive" })
+        toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
       }
     } catch (error) {
       console.error("Error switching role:", error)
-      toast({ title: "שגיאה בהחלפת תפקיד", variant: "destructive" })
+      toast({ title: t("notifications.roleSwitchError"), variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Get current role icon and label
   const currentRoleIcon = getRoleIcon(activeRole)
   const currentRoleLabel = getRoleLabel(activeRole)
+  const roleSwitcherTooltipContent = t("dashboard.sidebar.roleSwitcherTooltip") + `: ${currentRoleLabel}`
+
+  if (isCollapsed) {
+    return (
+      <div className="px-2.5 py-3 flex justify-center">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 p-0 border-gray-300 hover:bg-gray-100 hover:border-gray-400"
+                  disabled={isLoading}
+                  aria-label={roleSwitcherTooltipContent}
+                >
+                  {currentRoleIcon}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" side="right" sideOffset={12} className="w-52">
+                {roles.map((role) => (
+                  <DropdownMenuItem
+                    key={role}
+                    onClick={() => handleRoleSwitch(role)}
+                    className={cn(
+                      "flex items-center gap-2.5 cursor-pointer py-2 px-3 text-sm",
+                      role === activeRole && "bg-turquoise-50 font-medium text-turquoise-700",
+                    )}
+                  >
+                    {getRoleIcon(role)}
+                    <span>{getRoleLabel(role)}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8}>
+            <p>{roleSwitcherTooltipContent}</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    )
+  }
 
   return (
-    <div className={cn("px-4 py-2", isCollapsed ? "flex justify-center" : "")}>
+    <div className="px-4 py-3">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            size={isCollapsed ? "icon" : "default"}
-            className={cn(
-              "w-full justify-start border-turquoise-200 hover:bg-turquoise-50 hover:text-turquoise-700",
-              isCollapsed && "h-10 w-10 p-0",
-            )}
+            className="w-full justify-start border-gray-300 hover:bg-gray-100 hover:border-gray-400 text-gray-700 h-11 px-3"
             disabled={isLoading}
           >
-            {isCollapsed ? (
-              currentRoleIcon
-            ) : (
-              <>
-                {currentRoleIcon}
-                <span className="mx-2">{currentRoleLabel}</span>
-                <ChevronDown className="h-4 w-4 ml-auto" />
-              </>
-            )}
+            {currentRoleIcon}
+            <span className="mx-2.5 text-sm font-medium">{currentRoleLabel}</span>
+            <ChevronDown className="h-4 w-4 ml-auto text-gray-500" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="center" className="w-48">
+        <DropdownMenuContent align="center" className="w-56">
           {roles.map((role) => (
             <DropdownMenuItem
               key={role}
               onClick={() => handleRoleSwitch(role)}
               className={cn(
-                "flex items-center gap-2 cursor-pointer",
+                "flex items-center gap-2.5 cursor-pointer py-2 px-3 text-sm",
                 role === activeRole && "bg-turquoise-50 font-medium text-turquoise-700",
               )}
             >
@@ -162,47 +187,36 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
 }
 
 export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarProps) {
-  const { t, dir } = useTranslation()
+  const { t, dir, language } = useTranslation()
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const { data: session, status } = useSession()
+  const { data: session } = useSession() // Removed status as it wasn't used after debug
   const router = useRouter()
 
-  // Debug logging
   useEffect(() => {
-    console.log("Sidebar - Session status:", status)
-    console.log("Sidebar - Session data:", session)
-  }, [session, status])
+    const handleResize = () => setIsCollapsed(window.innerWidth < 768)
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
 
-  // Get user initials for avatar
   const getUserInitials = (name: string | null | undefined, email: string | null | undefined) => {
-    if (name) {
+    if (name)
       return name
         .split(" ")
         .map((n) => n[0])
         .join("")
         .toUpperCase()
         .slice(0, 2)
-    }
-    if (email) {
-      return email.slice(0, 2).toUpperCase()
-    }
+    if (email) return email.slice(0, 2).toUpperCase()
     return "U"
   }
 
-  const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/auth/login" })
-  }
+  const handleSignOut = async () => await signOut({ callbackUrl: "/auth/login" })
+  const navigateTo = (path: string) => router.push(path)
 
-  const navigateTo = (path: string) => {
-    router.push(path)
-  }
-
-  // Get menu items based on active role
   const getMenuItems = () => {
     const activeRole = session?.user?.activeRole || "member"
-
-    // Base menu items for all users
     const baseItems = [
       {
         title: t("dashboard.sidebar.dashboard"),
@@ -212,130 +226,48 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       },
     ]
 
-    // Add role-specific menu items
-    if (activeRole === "admin") {
-      baseItems.push(
-        {
-          title: t("dashboard.sidebar.users"),
-          icon: User,
-          href: "/dashboard/admin/users",
-          isActive: pathname === "/dashboard/admin/users",
-        },
-        {
-          title: t("dashboard.sidebar.treatments"),
-          icon: Shield,
-          href: "/dashboard/admin/treatments",
-          isActive: pathname === "/dashboard/admin/treatments",
-        },
-        {
-          title: t("dashboard.sidebar.workingHours"),
-          icon: Clock,
-          href: "/dashboard/admin/working-hours",
-          isActive: pathname === "/dashboard/admin/working-hours",
-        },
-        {
-          title: t("dashboard.sidebar.subscriptions"),
-          icon: CreditCard,
-          href: "/dashboard/admin/subscriptions",
-          isActive: pathname === "/dashboard/admin/subscriptions",
-        },
-        {
-          title: t("dashboard.sidebar.userSubscriptions"),
-          icon: CreditCard,
-          href: "/dashboard/admin/user-subscriptions",
-          isActive: pathname === "/dashboard/admin/user-subscriptions",
-        },
-        {
-          title: t("dashboard.sidebar.coupons"),
-          icon: CreditCard,
-          href: "/dashboard/admin/coupons",
-          isActive: pathname === "/dashboard/admin/coupons",
-        },
-        {
-          title: t("dashboard.sidebar.giftVouchers"),
-          icon: Gift,
-          href: "/dashboard/admin/gift-vouchers",
-          isActive: pathname === "/dashboard/admin/gift-vouchers",
-        },
-      )
-    } else if (activeRole === "member") {
-      baseItems.push(
-        {
-          title: t("dashboard.sidebar.addresses"),
-          icon: MapPin,
-          href: "/dashboard/member/addresses",
-          isActive: pathname === "/dashboard/member/addresses",
-        },
-        {
-          title: t("dashboard.sidebar.paymentMethods"),
-          icon: CreditCard,
-          href: "/dashboard/member/payment-methods",
-          isActive: pathname === "/dashboard/member/payment-methods",
-        },
-        {
-          title: t("dashboard.sidebar.subscriptions"),
-          icon: CreditCard,
-          href: "/dashboard/member/subscriptions",
-          isActive: pathname === "/dashboard/member/subscriptions",
-        },
-        {
-          title: t("dashboard.sidebar.giftVouchers"),
-          icon: Gift,
-          href: "/dashboard/member/gift-vouchers",
-          isActive: pathname === "/dashboard/member/gift-vouchers",
-        },
-      )
-    } else if (activeRole === "professional") {
-      baseItems.push(
-        {
-          title: t("dashboard.sidebar.profile"),
-          icon: User,
-          href: "/dashboard/professional/profile",
-          isActive: pathname === "/dashboard/professional/profile",
-        },
-        {
-          title: t("dashboard.sidebar.location"),
-          icon: MapPin,
-          href: "/dashboard/professional/location",
-          isActive: pathname === "/dashboard/professional/location",
-        },
-        {
-          title: t("dashboard.sidebar.bankAccount"),
-          icon: CreditCard,
-          href: "/dashboard/professional/bank-account",
-          isActive: pathname === "/dashboard/professional/bank-account",
-        },
-        {
-          title: t("dashboard.sidebar.documents"),
-          icon: FileText,
-          href: "/dashboard/professional/documents",
-          isActive: pathname === "/dashboard/professional/documents",
-        },
-      )
-    } else if (activeRole === "partner") {
-      baseItems.push(
-        {
-          title: t("dashboard.sidebar.profile"),
-          icon: User,
-          href: "/dashboard/partner/profile",
-          isActive: pathname === "/dashboard/partner/profile",
-        },
-        {
-          title: t("dashboard.sidebar.coupons"),
-          icon: CreditCard,
-          href: "/dashboard/partner/assigned-coupons",
-          isActive: pathname === "/dashboard/partner/assigned-coupons",
-        },
-      )
+    // Simplified menu item generation
+    const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string }>> = {
+      admin: [
+        { titleKey: "users", icon: User, hrefSuffix: "users" },
+        { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments" },
+        { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours" },
+        { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
+        { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions" },
+        { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons" }, // Changed icon for coupons
+        { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
+      ],
+      member: [
+        { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },
+        { titleKey: "paymentMethods", icon: CreditCard, hrefSuffix: "payment-methods" },
+        { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
+        { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
+      ],
+      professional: [
+        { titleKey: "profile", icon: User, hrefSuffix: "profile" },
+        { titleKey: "location", icon: MapPin, hrefSuffix: "location" },
+        { titleKey: "bankAccount", icon: CreditCard, hrefSuffix: "bank-account" },
+        { titleKey: "documents", icon: FileText, hrefSuffix: "documents" },
+      ],
+      partner: [
+        { titleKey: "profile", icon: User, hrefSuffix: "profile" },
+        { titleKey: "coupons", icon: Gift, hrefSuffix: "assigned-coupons" }, // Changed icon
+      ],
     }
-
+    ;(roleMenus[activeRole] || []).forEach((item) => {
+      const href = `/dashboard/${activeRole}/${item.hrefSuffix}`
+      baseItems.push({
+        title: t(`dashboard.sidebar.${item.titleKey}`),
+        icon: item.icon,
+        href,
+        isActive: pathname === href,
+      })
+    })
     return baseItems
   }
 
-  // Get quick action buttons for member role
   const getMemberQuickActions = () => {
     if (session?.user?.activeRole !== "member") return []
-
     return [
       {
         title: t("dashboard.sidebar.bookTreatment"),
@@ -358,40 +290,24 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     ]
   }
 
-  // Handle window resize for responsive behavior
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setIsCollapsed(true)
-      }
-    }
-
-    // Set initial state
-    handleResize()
-
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
-
-  // Enhanced sidebar header for desktop
   const renderDesktopHeader = () => (
-    <div className="flex h-16 items-center justify-between px-4 bg-gradient-to-r from-turquoise-500 to-turquoise-600 text-white shadow-lg">
+    <div className="flex h-16 items-center justify-between px-4 bg-gradient-to-r from-turquoise-500 to-turquoise-600 text-white shadow-md">
       {!isCollapsed && (
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center group-hover:bg-white/30 transition-colors">
             <LayoutDashboard className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold tracking-wide">Masu</h2>
+            <h2 className="text-lg font-semibold tracking-tight">Masu</h2>
             <p className="text-xs text-turquoise-100">Dashboard</p>
           </div>
-        </div>
+        </Link>
       )}
       <Button
         variant="ghost"
         size="icon"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={cn("text-white hover:bg-white/20 transition-all duration-200", isCollapsed && "mx-auto")}
+        className={cn("text-white hover:bg-white/20 transition-all duration-200 rounded-md", isCollapsed && "mx-auto")}
       >
         {dir === "rtl" ? (
           isCollapsed ? (
@@ -408,65 +324,84 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     </div>
   )
 
+  const userMenuTriggerTooltip = t("dashboard.sidebar.userMenu.toggleTooltip")
+
   const renderDesktopUserSectionWithDropdown = () => (
-    <div className={cn("border-b border-gray-200", isCollapsed ? "py-3" : "p-3")}>
-      {" "}
-      {/* Adjusted padding */}
+    <div className={cn("border-b border-gray-200", isCollapsed ? "py-2.5" : "p-2.5")}>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className={cn(
-              "w-full h-auto relative rounded-lg",
-              isCollapsed ? "px-0 justify-center py-2" : "p-0 text-left hover:bg-gray-100",
-            )}
-            aria-label="User menu options"
-          >
-            {!isCollapsed ? (
-              <div className="flex items-center gap-3 w-full p-2">
-                <Avatar className="h-10 w-10 ring-1 ring-turquoise-100 shadow-sm">
-                  <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-semibold text-sm">
-                    {getUserInitials(session?.user?.name, session?.user?.email)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-800 truncate">
-                    {session?.user?.name || session?.user?.email}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
-                </div>
-                <ChevronDown className="h-4 w-4 text-gray-400 ml-1 opacity-90 flex-shrink-0" />
-              </div>
-            ) : (
-              <Avatar className="h-9 w-9 ring-1 ring-turquoise-100 shadow-sm">
-                <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-semibold text-xs">
-                  {getUserInitials(session?.user?.name, session?.user?.email)}
-                </AvatarFallback>
-              </Avatar>
-            )}
-          </Button>
-        </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full h-auto relative rounded-md",
+                  isCollapsed ? "px-0 justify-center py-1.5" : "p-0 text-left hover:bg-gray-100/80",
+                )}
+                aria-label={userMenuTriggerTooltip}
+              >
+                {!isCollapsed ? (
+                  <div className="flex items-center gap-2.5 w-full p-1.5">
+                    <Avatar className="h-9 w-9 ring-1 ring-turquoise-200 shadow-sm flex-shrink-0">
+                      <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-semibold text-xs">
+                        {getUserInitials(session?.user?.name, session?.user?.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">
+                        {session?.user?.name || t("common.anonymousUser")}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-400 ml-1 opacity-80 flex-shrink-0" />
+                  </div>
+                ) : (
+                  <Avatar className="h-9 w-9 ring-1 ring-turquoise-200 shadow-sm">
+                    <AvatarFallback className="bg-gradient-to-br from-turquoise-400 to-turquoise-600 text-white font-semibold text-xs">
+                      {getUserInitials(session?.user?.name, session?.user?.email)}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          {isCollapsed && (
+            <TooltipContent side="right" sideOffset={8}>
+              <p>{userMenuTriggerTooltip}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
         <DropdownMenuContent
           className="w-60"
           align={isCollapsed ? "end" : "start"}
           side={isCollapsed ? "right" : "bottom"}
-          sideOffset={isCollapsed ? 12 : 8}
+          sideOffset={isCollapsed ? 10 : 6}
         >
-          <DropdownMenuItem onClick={() => navigateTo("/dashboard/profile")} className="cursor-pointer group">
-            <User className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600" />
-            <span className="group-hover:text-turquoise-600">{t("dashboard.sidebar.profile")}</span>
+          <DropdownMenuItem
+            onClick={() => navigateTo("/dashboard/profile")}
+            className="cursor-pointer group py-2 px-2.5"
+          >
+            <User className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
+            <span className="text-sm group-hover:text-turquoise-600 transition-colors">
+              {t("dashboard.sidebar.profile")}
+            </span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigateTo("/dashboard/account")} className="cursor-pointer group">
-            <Settings className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600" />
-            <span className="group-hover:text-turquoise-600">{t("dashboard.sidebar.account")}</span>
+          <DropdownMenuItem
+            onClick={() => navigateTo("/dashboard/account")}
+            className="cursor-pointer group py-2 px-2.5"
+          >
+            <Settings className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
+            <span className="text-sm group-hover:text-turquoise-600 transition-colors">
+              {t("dashboard.sidebar.account")}
+            </span>
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="my-1" />
           <DropdownMenuItem
             onClick={handleSignOut}
-            className="text-red-600 hover:!bg-red-50 hover:!text-red-700 focus:bg-red-50 focus:text-red-700 cursor-pointer group"
+            className="text-red-500 hover:!bg-red-50 focus:bg-red-50 focus:text-red-600 cursor-pointer group py-2 px-2.5"
           >
-            <LogOut className="mr-2 h-4 w-4 text-red-600 group-hover:text-red-700" />
-            <span className="group-hover:text-red-700">{t("dashboard.sidebar.signOut")}</span>
+            <LogOut className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors" />
+            <span className="text-sm group-hover:text-red-600 transition-colors">{t("dashboard.sidebar.signOut")}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -474,203 +409,204 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
   )
 
   const renderMobileUserSectionWithDropdown = () => (
-    <div className="p-4 bg-gradient-to-r from-turquoise-50 to-turquoise-100 border-b">
+    <div className="p-3.5 bg-gradient-to-r from-turquoise-50 to-turquoise-100 border-b border-gray-200/80">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             className="w-full h-auto p-0 hover:bg-transparent flex items-center gap-3 text-left rounded-lg"
-            aria-label="User menu options"
+            aria-label={userMenuTriggerTooltip}
           >
-            <Avatar className="h-12 w-12 ring-1 ring-white shadow-md flex-shrink-0">
-              <AvatarFallback className="bg-turquoise-500 text-white font-bold text-base">
+            <Avatar className="h-11 w-11 ring-1 ring-white/80 shadow-md flex-shrink-0">
+              <AvatarFallback className="bg-turquoise-500 text-white font-semibold text-sm">
                 {getUserInitials(session?.user?.name, session?.user?.email)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-semibold text-gray-800 truncate">
-                {session?.user?.name || session?.user?.email}
+              <h3 className="text-base font-medium text-gray-800 truncate">
+                {session?.user?.name || t("common.anonymousUser")}
               </h3>
               <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
             </div>
-            <ChevronDown className="h-5 w-5 text-gray-500 opacity-90 flex-shrink-0" />
+            <ChevronDown className="h-5 w-5 text-gray-500 opacity-80 flex-shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
-          className="w-[calc(100vw-5rem)] max-w-[280px]" // Adjusted max-width
+          className="w-[calc(100vw-4.5rem)] max-w-[290px]"
           side="bottom"
           align="center"
           sideOffset={10}
         >
-          <DropdownMenuItem
-            onClick={() => {
-              navigateTo("/dashboard/profile")
-              onMobileOpenChange(false)
-            }}
-            className="cursor-pointer py-2.5 px-3 text-sm group"
-          >
-            <User className="mr-2.5 h-4 w-4 text-gray-500 group-hover:text-turquoise-600" />
-            <span className="group-hover:text-turquoise-600">{t("dashboard.sidebar.profile")}</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              navigateTo("/dashboard/account")
-              onMobileOpenChange(false)
-            }}
-            className="cursor-pointer py-2.5 px-3 text-sm group"
-          >
-            <Settings className="mr-2.5 h-4 w-4 text-gray-500 group-hover:text-turquoise-600" />
-            <span className="group-hover:text-turquoise-600">{t("dashboard.sidebar.account")}</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
+          {[
+            { labelKey: "dashboard.sidebar.profile", icon: User, action: () => navigateTo("/dashboard/profile") },
+            { labelKey: "dashboard.sidebar.account", icon: Settings, action: () => navigateTo("/dashboard/account") },
+          ].map((item) => (
+            <DropdownMenuItem
+              key={item.labelKey}
+              onClick={() => {
+                item.action()
+                onMobileOpenChange(false)
+              }}
+              className="cursor-pointer group py-2.5 px-3"
+            >
+              <item.icon className="mr-2.5 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
+              <span className="text-sm group-hover:text-turquoise-600 transition-colors">{t(item.labelKey)}</span>
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuSeparator className="my-1" />
           <DropdownMenuItem
             onClick={() => {
               handleSignOut()
               onMobileOpenChange(false)
             }}
-            className="text-red-600 hover:!bg-red-50 hover:!text-red-700 focus:bg-red-50 focus:text-red-700 cursor-pointer py-2.5 px-3 text-sm group"
+            className="text-red-500 hover:!bg-red-50 focus:bg-red-50 focus:text-red-600 cursor-pointer group py-2.5 px-3"
           >
-            <LogOut className="mr-2.5 h-4 w-4 text-red-600 group-hover:text-red-700" />
-            <span className="group-hover:text-red-700">{t("dashboard.sidebar.signOut")}</span>
+            <LogOut className="mr-2.5 h-4 w-4 text-red-500 group-hover:text-red-600 transition-colors" />
+            <span className="text-sm group-hover:text-red-600 transition-colors">{t("dashboard.sidebar.signOut")}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   )
 
-  const renderMemberQuickActionsDesktop = () => {
+  const renderMemberQuickActions = (isMobile: boolean) => {
     const quickActions = getMemberQuickActions()
-
-    if (!quickActions || quickActions.length === 0) {
-      return null
-    }
+    if (!quickActions || quickActions.length === 0) return null
 
     return (
-      <div className="p-2 space-y-2">
+      <div className={cn("border-b border-gray-200/80", isMobile ? "p-3.5 space-y-2.5" : "p-2.5 space-y-1.5")}>
         {quickActions.map((action) => (
-          <Link key={action.title} href={action.href} passHref>
-            <Button variant={action.variant} className="w-full justify-start">
-              <action.icon className="h-4 w-4 mr-2" />
-              {action.title}
-            </Button>
-          </Link>
-        ))}
-      </div>
-    )
-  }
-
-  const renderDesktopMenuItems = (menuItems: any[]) => {
-    return (
-      <div className="space-y-1">
-        {menuItems.map((item) => (
-          <Link key={item.title} href={item.href} passHref>
-            <Button
-              variant="ghost"
+          <Button
+            key={action.title}
+            variant={action.variant === "default" ? "default" : "outline"}
+            size={isMobile ? "default" : "sm"}
+            className={cn(
+              "w-full justify-start text-sm h-auto py-2.5",
+              isMobile ? "px-4" : "px-3",
+              action.variant === "outline" &&
+                "border-gray-300 text-gray-700 hover:border-turquoise-500 hover:bg-turquoise-50 hover:text-turquoise-700",
+              action.variant === "default" &&
+                "bg-gradient-to-r from-turquoise-500 to-turquoise-600 text-white shadow-sm hover:shadow-md",
+              isCollapsed && !isMobile && "justify-center !px-0 w-10 h-10", // Collapsed specific style
+            )}
+            onClick={() => {
+              navigateTo(action.href)
+              if (isMobile) onMobileOpenChange(false)
+            }}
+            title={isCollapsed && !isMobile ? action.title : undefined} // Tooltip for collapsed desktop
+          >
+            <action.icon
               className={cn(
-                "w-full justify-start",
-                item.isActive ? "bg-turquoise-50 text-turquoise-700 font-medium" : "hover:bg-gray-100",
-                isCollapsed ? "px-0 justify-center" : "pl-4",
+                "flex-shrink-0",
+                isMobile ? "h-5 w-5 mr-3" : "h-4 w-4",
+                isCollapsed && !isMobile ? "mr-0" : "mr-2.5",
               )}
-            >
-              <item.icon className="h-4 w-4 mr-2" />
-              {!isCollapsed && <span>{item.title}</span>}
-            </Button>
-          </Link>
+            />
+            {!(isCollapsed && !isMobile) && <span>{action.title}</span>}
+          </Button>
         ))}
       </div>
     )
   }
 
-  const renderMemberQuickActionsMobile = () => {
-    const quickActions = getMemberQuickActions()
-
-    if (!quickActions || quickActions.length === 0) {
-      return null
-    }
-
-    return (
-      <div className="p-4 space-y-3 border-b">
-        {quickActions.map((action) => (
-          <Link key={action.title} href={action.href} passHref>
-            <Button variant={action.variant} className="w-full justify-center">
-              <action.icon className="h-5 w-5 mr-2" />
-              {action.title}
-            </Button>
-          </Link>
-        ))}
-      </div>
-    )
-  }
-
-  const renderMobileMenuItems = (menuItems: any[]) => {
-    return (
-      <div className="space-y-2 px-4">
-        {menuItems.map((item) => (
-          <Link key={item.title} href={item.href} passHref>
-            <Button
-              variant="ghost"
+  const renderMenuItems = (items: ReturnType<typeof getMenuItems>, isMobile: boolean) => (
+    <nav className={cn("flex flex-col gap-0.5", isMobile ? "px-3.5 py-4" : "px-2 py-3")}>
+      {items.map((item) => {
+        const content = (
+          <>
+            <item.icon
               className={cn(
-                "w-full justify-start",
-                item.isActive ? "bg-turquoise-50 text-turquoise-700 font-medium" : "hover:bg-gray-100",
+                "flex-shrink-0 transition-colors",
+                isMobile ? "h-5 w-5" : "h-[18px] w-[18px]",
+                isCollapsed && !isMobile ? "mx-auto" : isMobile ? "mr-3" : "mr-2.5",
+                item.isActive
+                  ? isCollapsed && !isMobile
+                    ? "text-white"
+                    : "text-turquoise-600"
+                  : "text-gray-500 group-hover:text-turquoise-600",
               )}
-              onClick={() => onMobileOpenChange(false)}
-            >
-              <item.icon className="h-5 w-5 mr-2" />
-              {item.title}
-            </Button>
-          </Link>
-        ))}
-      </div>
-    )
-  }
+            />
+            {!(isCollapsed && !isMobile) && (
+              <span
+                className={cn(
+                  "text-sm transition-colors",
+                  item.isActive ? "font-medium text-turquoise-600" : "text-gray-700 group-hover:text-turquoise-600",
+                )}
+              >
+                {item.title}
+              </span>
+            )}
+          </>
+        )
 
-  // Desktop sidebar - enhanced design
-  const DesktopSidebar = (
-    <div
-      className={cn(
-        "hidden md:flex h-screen flex-col bg-white transition-all duration-300 shadow-xl border-r border-gray-200",
-        isCollapsed ? "w-16" : "w-64",
-        dir === "rtl" ? "border-l" : "border-r",
-      )}
-    >
-      {/* Enhanced Header */}
-      {renderDesktopHeader()}
+        const linkButton = (
+          <Button
+            variant="ghost"
+            className={cn(
+              "w-full h-auto justify-start group transition-all duration-150 ease-in-out",
+              isMobile ? "py-3 px-3 rounded-lg" : "py-2.5 px-2.5 rounded-md",
+              item.isActive
+                ? isCollapsed && !isMobile
+                  ? "bg-turquoise-500 hover:bg-turquoise-600"
+                  : "bg-turquoise-50 hover:bg-turquoise-100"
+                : "hover:bg-gray-100/80",
+              isCollapsed && !isMobile && "w-11 h-11 !p-0 flex items-center justify-center",
+            )}
+            onClick={() => {
+              navigateTo(item.href)
+              if (isMobile) onMobileOpenChange(false)
+            }}
+          >
+            {content}
+          </Button>
+        )
 
-      {/* User Account Section */}
-      {renderDesktopUserSectionWithDropdown()}
-
-      {/* Member Quick Actions */}
-      {renderMemberQuickActionsDesktop()}
-
-      {/* Sidebar content */}
-      <div className="flex-1 overflow-auto py-6 px-2 bg-gradient-to-b from-white to-gray-50">
-        {/* Main menu items */}
-        {renderDesktopMenuItems(getMenuItems())}
-      </div>
-
-      {/* Role Switcher */}
-      <RoleSwitcher isCollapsed={isCollapsed} />
-    </div>
+        if (isCollapsed && !isMobile) {
+          return (
+            <Tooltip key={item.href}>
+              <TooltipTrigger asChild>{linkButton}</TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8}>
+                <p>{item.title}</p>
+              </TooltipContent>
+            </Tooltip>
+          )
+        }
+        return <div key={item.href}>{linkButton}</div>
+      })}
+    </nav>
   )
 
-  // Mobile sidebar (Sheet component) - enhanced design
-  const MobileSidebar = (
-    <Sheet open={isMobileOpen} onOpenChange={onMobileOpenChange}>
-      <SheetContent side={dir === "rtl" ? "right" : "left"} className="p-0 w-80 bg-gray-50 flex flex-col">
-        {/* User Account Section - Enhanced */}
-        {renderMobileUserSectionWithDropdown()}
-
-        {/* Member Quick Actions */}
-        {renderMemberQuickActionsMobile()}
-
-        {/* Navigation Content */}
-        <div className="flex-1 overflow-auto py-6">
-          {/* Main menu items */}
-          {renderMobileMenuItems(getMenuItems())}
+  const DesktopSidebarContent = (
+    <TooltipProvider delayDuration={100}>
+      {" "}
+      {/* TooltipProvider wraps content */}
+      <div
+        className={cn(
+          "hidden md:flex h-screen flex-col bg-white transition-all duration-200 shadow-lg border-gray-200/80",
+          isCollapsed ? "w-[72px]" : "w-64",
+          dir === "rtl" ? "border-l" : "border-r",
+        )}
+      >
+        {renderDesktopHeader()}
+        {renderDesktopUserSectionWithDropdown()}
+        {renderMemberQuickActions(false)}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden scrolling-touch">
+          {renderMenuItems(getMenuItems(), false)}
         </div>
+        <RoleSwitcher isCollapsed={isCollapsed} />
+      </div>
+    </TooltipProvider>
+  )
 
-        {/* Role Switcher */}
-        <div className="px-6 py-2">
+  const MobileSidebarContent = (
+    <Sheet open={isMobileOpen} onOpenChange={onMobileOpenChange}>
+      <SheetContent side={dir === "rtl" ? "right" : "left"} className="p-0 w-[300px] bg-gray-50 flex flex-col">
+        {renderMobileUserSectionWithDropdown()}
+        {renderMemberQuickActions(true)}
+        <div className="flex-1 overflow-y-auto scrolling-touch">{renderMenuItems(getMenuItems(), true)}</div>
+        <div className="mt-auto border-t border-gray-200/80">
+          {" "}
+          {/* Ensure RoleSwitcher is at bottom */}
           <RoleSwitcher />
         </div>
       </SheetContent>
@@ -679,8 +615,8 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
 
   return (
     <>
-      {DesktopSidebar}
-      {MobileSidebar}
+      {DesktopSidebarContent}
+      {MobileSidebarContent}
     </>
   )
 }

@@ -690,8 +690,7 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
       return { success: false, error: "Voucher price must be positive." }
     }
 
-    const randomDigits = Math.floor(1000 + Math.random() * 9000).toString() // Generates a 4-digit number
-    const code = `GV-${randomDigits}`
+    const code = `GV-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
 
     const giftVoucherData: Partial<IGiftVoucher> = {
       code,
@@ -856,12 +855,7 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
       }
     }
 
-    if (
-      sendNotificationNow &&
-      voucher.recipientPhone &&
-      voucher.recipientPhone.trim() !== "" &&
-      voucher.recipientName
-    ) {
+    if (sendNotificationNow && voucher.recipientPhone && voucher.recipientName) {
       try {
         await notificationManager.sendNotification(
           "sms",
@@ -884,10 +878,6 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
           recipientPhone: voucher.recipientPhone,
         })
       }
-    } else if (sendNotificationNow && (!voucher.recipientPhone || voucher.recipientPhone.trim() === "")) {
-      logger.info(
-        `Gift voucher SMS notification skipped for voucher ${voucher.code} as recipient phone is not provided.`,
-      )
     }
 
     await voucher.save()

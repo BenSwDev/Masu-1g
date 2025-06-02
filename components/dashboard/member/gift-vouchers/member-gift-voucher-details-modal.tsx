@@ -80,7 +80,7 @@ export default function MemberGiftVoucherDetailsModal({
     highlight?: boolean
   }) =>
     value ? (
-      <div className="flex items-start space-x-3">
+      <div className="flex items-start gap-3">
         <div className={cn("p-2 rounded-lg mt-0.5", highlight ? "bg-primary/10" : "bg-muted/50")}>
           <Icon className={cn("h-4 w-4", highlight ? "text-primary" : "text-muted-foreground")} />
         </div>

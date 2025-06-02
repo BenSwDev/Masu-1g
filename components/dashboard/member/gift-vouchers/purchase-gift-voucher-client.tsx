@@ -641,9 +641,10 @@ export default function PurchaseGiftVoucherClient({
 
   if (step === "giftDetailsEntry") {
     return (
-      <div className="max-w-3xl mx-auto space-y-6 p-4">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {" "}
+        {/* Removed p-4 */}
         <StepIndicator currentStep={step} />
-
         <Card className="shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-xl font-bold flex items-center justify-center gap-2">
@@ -801,9 +802,10 @@ export default function PurchaseGiftVoucherClient({
 
   if (step === "payment") {
     return (
-      <div className="max-w-3xl mx-auto space-y-6 p-4">
+      <div className="max-w-3xl mx-auto space-y-6">
+        {" "}
+        {/* Removed p-4 */}
         <StepIndicator currentStep={step} />
-
         <Card className="shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-xl font-bold flex items-center justify-center gap-2">

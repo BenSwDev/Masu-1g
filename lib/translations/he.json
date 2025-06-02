@@ -866,9 +866,15 @@
     "total": "סה\"כ",
     "giftDetails": "פרטי המתנה",
     "giftDetailsDescription": "אנא ספק את פרטי מקבל/ת המתנה.",
+    "recipientName": "שם מקבל/ת המתנה",
     "recipientNamePlaceholder": "הזן שם מלא של המקבל/ת",
+    "recipientPhone": "טלפון מקבל/ת המתנה",
     "phonePlaceholder": "הזן מספר טלפון של המקבל/ת",
+    "greetingMessage": "הודעת ברכה (אופציונלי)",
     "greetingPlaceholder": "כתוב הודעה אישית (אופציונלי)",
+    "sendDate": "תאריך ושעת שליחה",
+    "sendNow": "שלח עכשיו",
+    "sendOnDate": "שלח בתאריך מסוים",
     "pickDate": "בחר תאריך",
     "skipGiftDetails": "דלג על פרטי המתנה והשלם",
     "setGiftDetails": "הגדר פרטי מתנה והשלם",
@@ -899,7 +905,8 @@
     "stepGiftDetails": "פרטי מתנה",
     "stepPayment": "תשלום",
     "stepComplete": "אישור",
-    "minimumAmount": "סכום מינימלי"
+    "minimumAmount": "סכום מינימלי",
+    "minimumAmountDetails": "סכום מינימלי {{amount}} {{currency}}"
   },
   "Roles": {
     "admin": "מנהל",

@@ -1,5 +1,7 @@
 "use client"
 
+import React from "react"
+
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useForm, Controller } from "react-hook-form"
@@ -82,7 +84,7 @@ const formatMinutesToDurationString = (minutes: number, t: Function): string => 
 
 const giftDetailsSchema = z.object({
   recipientName: z.string().min(2, { message: "Recipient name must be at least 2 characters." }),
-  recipientPhone: z.string().optional(),
+  recipientPhone: z.string().optional(), // Consider making this required if sendOption is immediate or scheduled
   greetingMessage: z.string().optional(),
   sendOption: z.enum(["immediate", "scheduled"]),
   sendDate: z.date().optional(),
@@ -126,7 +128,8 @@ export default function PurchaseGiftVoucherClient({
 
   useEffect(() => {
     const defaultPmId = paymentMethods.find((pm) => pm.isDefault)?._id || paymentMethods[0]?._id || ""
-    if (defaultPmId) {
+    if (defaultPmId && !paymentForm.getValues("selectedPaymentMethodId")) {
+      // Set only if not already set
       paymentForm.setValue("selectedPaymentMethodId", defaultPmId)
     }
   }, [paymentMethods, paymentForm])
@@ -147,13 +150,13 @@ export default function PurchaseGiftVoucherClient({
             if (data.monetaryValue === undefined || data.monetaryValue === null) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: t("purchaseGiftVoucher.validation.monetaryValueRequired"),
+                message: t("purchaseGiftVoucher.minimumAmountDetails", { amount: 150, currency: t("common.currency") }), // Using a more general message
                 path: ["monetaryValue"],
               })
             } else if (data.monetaryValue < 150) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: t("purchaseGiftVoucher.validation.minAmount", { amount: 150 }),
+                message: t("purchaseGiftVoucher.minimumAmountDetails", { amount: 150, currency: t("common.currency") }),
                 path: ["monetaryValue"],
               })
             }
@@ -161,7 +164,7 @@ export default function PurchaseGiftVoucherClient({
             if (!data.treatmentId) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: t("purchaseGiftVoucher.validation.treatmentRequired"),
+                message: t("treatments.errors.nameRequired"), // Assuming a generic treatment selection error
                 path: ["treatmentId"],
               })
             }
@@ -174,7 +177,7 @@ export default function PurchaseGiftVoucherClient({
             ) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: t("purchaseGiftVoucher.validation.durationRequired"),
+                message: t("treatments.errors.invalidDuration"), // Assuming a generic duration selection error
                 path: ["selectedDurationId"],
               })
             }
@@ -223,7 +226,7 @@ export default function PurchaseGiftVoucherClient({
     for (let i = 8; i <= 23; i++) {
       options.push(`${String(i).padStart(2, "0")}:00`)
     }
-    options.push("00:00")
+    options.push("00:00") // For midnight
     return options
   }, [])
 
@@ -253,7 +256,7 @@ export default function PurchaseGiftVoucherClient({
     if (watchTreatmentId) {
       const treatment = filteredTreatments.find((t) => t._id === watchTreatmentId)
       setSelectedTreatment(treatment || null)
-      purchaseForm.setValue("selectedDurationId", undefined)
+      purchaseForm.setValue("selectedDurationId", undefined) // Reset duration when treatment changes
       setSelectedDuration(null)
     } else {
       setSelectedTreatment(null)
@@ -271,6 +274,7 @@ export default function PurchaseGiftVoucherClient({
   }, [watchSelectedDurationId, selectedTreatment])
 
   useEffect(() => {
+    // Reset treatment selection when category changes
     purchaseForm.setValue("treatmentId", undefined)
     purchaseForm.setValue("selectedDurationId", undefined)
     setSelectedTreatment(null)
@@ -335,10 +339,11 @@ export default function PurchaseGiftVoucherClient({
   const handlePaymentSubmit = async (_data: PaymentFormData) => {
     setLoading(true)
     try {
+      // Simulate payment confirmation
       const paymentResult = await confirmGiftVoucherPurchase({
         voucherId: voucherId!,
-        paymentId: `PAY-${Date.now()}`,
-        success: true,
+        paymentId: `PAY-${Date.now()}`, // Simulated payment ID
+        success: true, // Simulate successful payment
         amount: calculatedPrice,
       })
 
@@ -353,7 +358,7 @@ export default function PurchaseGiftVoucherClient({
 
           const giftDetailsPayload: GiftDetailsPayload = {
             recipientName: savedGiftDetails.recipientName,
-            recipientPhone: savedGiftDetails.recipientPhone,
+            recipientPhone: savedGiftDetails.recipientPhone!, // Assuming phone is required if gifting
             greetingMessage: savedGiftDetails.greetingMessage,
             sendDate: sendDateForPayload,
           }
@@ -364,8 +369,8 @@ export default function PurchaseGiftVoucherClient({
               description: giftResult.error || "Failed to set gift details",
               variant: "destructive",
             })
-            setStep("complete")
-            return
+            // Proceed to complete step even if gift details fail, voucher is paid.
+            // User can be notified to try setting gift details again.
           }
         }
         setStep("complete")
@@ -394,55 +399,56 @@ export default function PurchaseGiftVoucherClient({
   }
 
   const StepIndicator = ({ currentStep }: { currentStep: string }) => {
-    const steps = [
+    const stepsConfig = [
       { key: "select", label: t("purchaseGiftVoucher.stepSelect"), icon: Gift },
       { key: "giftDetailsEntry", label: t("purchaseGiftVoucher.stepGiftDetails"), icon: Sparkles },
       { key: "payment", label: t("purchaseGiftVoucher.stepPayment"), icon: CreditCard },
       { key: "complete", label: t("purchaseGiftVoucher.stepComplete"), icon: Check },
     ]
 
-    const filteredSteps = watchIsGift ? steps : steps.filter((s) => s.key !== "giftDetailsEntry")
-    const currentIndex = filteredSteps.findIndex((s) => s.key === currentStep)
+    const activeSteps = watchIsGift ? stepsConfig : stepsConfig.filter((s) => s.key !== "giftDetailsEntry")
+    const currentIndex = activeSteps.findIndex((s) => s.key === currentStep)
 
     return (
       <div className="w-full mb-8">
-        <div className="flex items-center justify-between">
-          {filteredSteps.map((stepItem, index) => {
+        <div className="flex items-center">
+          {activeSteps.map((stepItem, index) => {
             const Icon = stepItem.icon
             const isActive = index <= currentIndex
             const isCurrent = stepItem.key === currentStep
 
             return (
-              <div key={stepItem.key} className="flex items-center">
-                <div
-                  className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200",
-                    isActive
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : "border-muted-foreground/30 text-muted-foreground",
-                    isCurrent && "ring-2 ring-primary/20",
-                  )}
-                >
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div
-                  className={cn(
-                    "hidden sm:block text-sm font-medium transition-colors",
-                    isActive ? "text-primary" : "text-muted-foreground",
-                    dir === "rtl" ? "mr-3" : "ml-3", // Adjusted margin for RTL/LTR
-                  )}
-                >
-                  {stepItem.label}
-                </div>
-                {index < filteredSteps.length - 1 && (
+              <React.Fragment key={stepItem.key}>
+                <div className="flex flex-col items-center">
                   <div
                     className={cn(
-                      "flex-1 h-0.5 mx-4 transition-colors",
+                      "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200",
+                      isActive
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "border-muted-foreground/30 text-muted-foreground",
+                      isCurrent && "ring-2 ring-primary/20 ring-offset-2",
+                    )}
+                  >
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <p
+                    className={cn(
+                      "mt-2 text-xs text-center sm:text-sm font-medium transition-colors w-20 sm:w-auto", // Added w-20 for small screens
+                      isActive ? "text-primary" : "text-muted-foreground",
+                    )}
+                  >
+                    {stepItem.label}
+                  </p>
+                </div>
+                {index < activeSteps.length - 1 && (
+                  <div
+                    className={cn(
+                      "flex-1 h-0.5 mx-2 sm:mx-4 transition-colors", // Reduced margin for small screens
                       index < currentIndex ? "bg-primary" : "bg-muted-foreground/30",
                     )}
                   />
                 )}
-              </div>
+              </React.Fragment>
             )
           })}
         </div>
@@ -522,7 +528,7 @@ export default function PurchaseGiftVoucherClient({
                     {...purchaseForm.register("monetaryValue", { valueAsNumber: true })}
                   />
                   <p className="text-sm text-muted-foreground">
-                    {t("purchaseGiftVoucher.minimumAmount")}: 150 {t("common.currency")}
+                    {t("purchaseGiftVoucher.minimumAmountDetails", { amount: 150, currency: t("common.currency") })}
                   </p>
                   {purchaseForm.formState.errors.monetaryValue && (
                     <p className="text-sm text-destructive">{purchaseForm.formState.errors.monetaryValue.message}</p>
@@ -557,7 +563,7 @@ export default function PurchaseGiftVoucherClient({
                     <Label className="text-base font-medium">{t("purchaseGiftVoucher.selectTreatment")}</Label>
                     <Select
                       onValueChange={(value) => purchaseForm.setValue("treatmentId", value)}
-                      value={watchTreatmentId}
+                      value={watchTreatmentId || ""}
                       disabled={filteredTreatments.length === 0}
                     >
                       <SelectTrigger className="h-12">
@@ -569,12 +575,12 @@ export default function PurchaseGiftVoucherClient({
                             <div className="flex items-center justify-between w-full">
                               <span>{treatment.name}</span>
                               {treatment.fixedPrice && (!treatment.durations || treatment.durations.length === 0) && (
-                                <Badge variant="secondary" className={cn(dir === "rtl" ? "mr-2" : "ml-2")}>
+                                <Badge variant="secondary" className={cn(dir === "rtl" ? "mr-auto" : "ml-auto")}>
                                   {treatment.fixedPrice} {t("common.currency")}
                                 </Badge>
                               )}
                               {treatment.durations && treatment.durations.length > 0 && (
-                                <Badge variant="outline" className={cn(dir === "rtl" ? "mr-2" : "ml-2")}>
+                                <Badge variant="outline" className={cn(dir === "rtl" ? "mr-auto" : "ml-auto")}>
                                   {treatment.durations.length} {t("purchaseGiftVoucher.durationOptions")}
                                 </Badge>
                               )}
@@ -583,6 +589,9 @@ export default function PurchaseGiftVoucherClient({
                         ))}
                       </SelectContent>
                     </Select>
+                    {purchaseForm.formState.errors.treatmentId && (
+                      <p className="text-sm text-destructive">{purchaseForm.formState.errors.treatmentId.message}</p>
+                    )}
                   </div>
 
                   {selectedTreatment && selectedTreatment.durations.length > 0 && (
@@ -621,6 +630,11 @@ export default function PurchaseGiftVoucherClient({
                           </Card>
                         ))}
                       </div>
+                      {purchaseForm.formState.errors.selectedDurationId && (
+                        <p className="text-sm text-destructive">
+                          {purchaseForm.formState.errors.selectedDurationId.message}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -643,18 +657,16 @@ export default function PurchaseGiftVoucherClient({
               <Separator />
 
               <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
+                {/* Standard RTL: Label on the right, Checkbox on the left */}
+                <Label htmlFor="isGift" className="text-base font-medium cursor-pointer">
+                  {t("purchaseGiftVoucher.sendAsGift")}
+                </Label>
                 <input
                   type="checkbox"
                   id="isGift"
                   {...purchaseForm.register("isGift")}
-                  className={cn(
-                    "w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary",
-                    dir === "rtl" ? "ml-3" : "mr-3",
-                  )}
+                  className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
                 />
-                <Label htmlFor="isGift" className="text-base font-medium cursor-pointer">
-                  {t("purchaseGiftVoucher.sendAsGift")}
-                </Label>
               </div>
 
               {calculatedPrice > 0 && (
@@ -678,9 +690,11 @@ export default function PurchaseGiftVoucherClient({
                   t("common.processing")
                 ) : (
                   <div className="flex items-center gap-2">
-                    {watchIsGift
-                      ? t("purchaseGiftVoucher.proceedToGiftDetails")
-                      : t("purchaseGiftVoucher.proceedToPayment")}
+                    <span>
+                      {watchIsGift
+                        ? t("purchaseGiftVoucher.proceedToGiftDetails")
+                        : t("purchaseGiftVoucher.proceedToPayment")}
+                    </span>
                     {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                   </div>
                 )}
@@ -694,7 +708,7 @@ export default function PurchaseGiftVoucherClient({
 
   if (step === "giftDetailsEntry") {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6 p-4">
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
@@ -836,22 +850,14 @@ export default function PurchaseGiftVoucherClient({
                 onClick={() => setStep("select")}
                 className="px-8 flex items-center"
               >
-                {dir === "rtl" ? (
-                  <ArrowRight className={cn("w-4 h-4 ml-2")} />
-                ) : (
-                  <ArrowLeft className={cn("w-4 h-4 mr-2")} />
-                )}
-                {t("common.back")}
+                {dir === "rtl" ? <ArrowRight className="w-4 h-4 ml-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
+                <span>{t("common.back")}</span>
               </Button>
               <Button type="submit" disabled={loading} className="px-8">
-                {loading ? (
-                  t("common.processing")
-                ) : (
-                  <div className="flex items-center gap-2">
-                    {t("purchaseGiftVoucher.proceedToPayment")}
-                    {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <span>{t("purchaseGiftVoucher.proceedToPayment")}</span>
+                  {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                </div>
               </Button>
             </CardFooter>
           </form>
@@ -862,7 +868,7 @@ export default function PurchaseGiftVoucherClient({
 
   if (step === "payment") {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-3xl mx-auto space-y-6 p-4">
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
@@ -927,10 +933,10 @@ export default function PurchaseGiftVoucherClient({
                 type="button"
                 variant="outline"
                 onClick={() => setShowPaymentMethodForm(true)}
-                className="w-full h-12"
+                className="w-full h-12 flex items-center justify-center gap-2"
               >
-                <PlusCircle className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
-                {t("purchaseGiftVoucher.addNewCard")}
+                <PlusCircle className="w-4 h-4" />
+                <span>{t("purchaseGiftVoucher.addNewCard")}</span>
               </Button>
 
               {showPaymentMethodForm && (
@@ -958,21 +964,24 @@ export default function PurchaseGiftVoucherClient({
                 onClick={() => setStep(watchIsGift ? "giftDetailsEntry" : "select")}
                 className="px-8 flex items-center"
               >
-                {dir === "rtl" ? (
-                  <ArrowRight className={cn("w-4 h-4 ml-2")} />
-                ) : (
-                  <ArrowLeft className={cn("w-4 h-4 mr-2")} />
-                )}
-                {t("common.back")}
+                {dir === "rtl" ? <ArrowRight className="w-4 h-4 ml-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
+                <span>{t("common.back")}</span>
               </Button>
               <Button
                 type="submit"
-                disabled={loading || !paymentForm.watch("selectedPaymentMethodId")}
+                disabled={loading || !paymentForm.watch("selectedPaymentMethodId") || calculatedPrice <= 0}
                 className="px-8"
               >
-                {loading
-                  ? t("common.processing")
-                  : `${t("purchaseGiftVoucher.payAmount", { amount: calculatedPrice, currency: t("common.currency") })}`}
+                {loading ? (
+                  t("common.processing")
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span>
+                      {t("purchaseGiftVoucher.payAmount", { amount: calculatedPrice, currency: t("common.currency") })}
+                    </span>
+                    {dir === "rtl" ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                  </div>
+                )}
               </Button>
             </CardFooter>
           </form>
@@ -984,6 +993,7 @@ export default function PurchaseGiftVoucherClient({
   if (step === "complete") {
     return (
       <div className="max-w-2xl mx-auto space-y-6 text-center p-4">
+        <StepIndicator currentStep={step} />
         <Card className="shadow-lg p-8">
           <div className="space-y-6">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">

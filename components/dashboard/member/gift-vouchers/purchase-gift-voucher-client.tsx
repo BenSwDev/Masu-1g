@@ -62,29 +62,6 @@ interface PurchaseGiftVoucherClientProps {
   initialPaymentMethods: IPaymentMethod[]
 }
 
-const purchaseSchema = z.object({
-  voucherType: z.enum(["treatment", "monetary"]),
-  category: z.string().optional(), // Added category field
-  treatmentId: z.string().optional(),
-  selectedDurationId: z.string().optional(),
-  monetaryValue: z.number().min(150, "Minimum value is 150 ILS").optional(),
-  isGift: z.boolean().default(false),
-})
-
-const giftDetailsSchema = z.object({
-  recipientName: z.string().min(1, "Recipient name is required"),
-  recipientPhone: z.string().min(10, "Valid phone number is required"),
-  greetingMessage: z.string().optional(),
-  sendOption: z.enum(["immediate", "scheduled"]).default("immediate"),
-  sendDate: z.date().optional(),
-  sendTime: z.string().optional(),
-})
-
-const paymentSchema = z.object({
-  selectedPaymentMethodId: z.string().min(1, "Payment method is required"),
-})
-
-type PurchaseFormData = z.infer<typeof purchaseSchema>
 type GiftDetailsFormData = z.infer<typeof giftDetailsSchema>
 type PaymentFormData = z.infer<typeof paymentSchema>
 
@@ -102,6 +79,19 @@ const formatMinutesToDurationString = (minutes: number, t: Function): string => 
   }
   return durationString.trim() || `${minutes} ${t("common.minutes")}`
 }
+
+const giftDetailsSchema = z.object({
+  recipientName: z.string().min(2, { message: "Recipient name must be at least 2 characters." }),
+  recipientPhone: z.string().optional(),
+  greetingMessage: z.string().optional(),
+  sendOption: z.enum(["immediate", "scheduled"]),
+  sendDate: z.date().optional(),
+  sendTime: z.string().optional(),
+})
+
+const paymentSchema = z.object({
+  selectedPaymentMethodId: z.string().min(1, { message: "Please select a payment method." }),
+})
 
 export default function PurchaseGiftVoucherClient({
   treatments,
@@ -122,11 +112,6 @@ export default function PurchaseGiftVoucherClient({
   const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
 
-  const purchaseForm = useForm<PurchaseFormData>({
-    resolver: zodResolver(purchaseSchema),
-    defaultValues: { voucherType: "monetary", isGift: false, category: "all" },
-  })
-
   const giftForm = useForm<GiftDetailsFormData>({
     resolver: zodResolver(giftDetailsSchema),
     defaultValues: { sendOption: "immediate" },
@@ -146,6 +131,65 @@ export default function PurchaseGiftVoucherClient({
     }
   }, [paymentMethods, paymentForm])
 
+  const purchaseSchema = useMemo(
+    () =>
+      z
+        .object({
+          voucherType: z.enum(["treatment", "monetary"]),
+          category: z.string().optional(),
+          treatmentId: z.string().optional(),
+          selectedDurationId: z.string().optional(),
+          monetaryValue: z.number().optional(),
+          isGift: z.boolean().default(false),
+        })
+        .superRefine((data, ctx) => {
+          if (data.voucherType === "monetary") {
+            if (data.monetaryValue === undefined || data.monetaryValue === null) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t("purchaseGiftVoucher.validation.monetaryValueRequired"),
+                path: ["monetaryValue"],
+              })
+            } else if (data.monetaryValue < 150) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t("purchaseGiftVoucher.validation.minAmount", { amount: 150 }),
+                path: ["monetaryValue"],
+              })
+            }
+          } else if (data.voucherType === "treatment") {
+            if (!data.treatmentId) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t("purchaseGiftVoucher.validation.treatmentRequired"),
+                path: ["treatmentId"],
+              })
+            }
+            const selectedTreatment = treatments.find((tr) => tr._id === data.treatmentId)
+            if (
+              selectedTreatment &&
+              selectedTreatment.durations &&
+              selectedTreatment.durations.length > 0 &&
+              !data.selectedDurationId
+            ) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t("purchaseGiftVoucher.validation.durationRequired"),
+                path: ["selectedDurationId"],
+              })
+            }
+          }
+        }),
+    [t, treatments],
+  )
+
+  type PurchaseFormData = z.infer<typeof purchaseSchema>
+
+  const purchaseForm = useForm<PurchaseFormData>({
+    resolver: zodResolver(purchaseSchema),
+    defaultValues: { voucherType: "monetary", isGift: false, category: "all" },
+  })
+
   const watchVoucherType = purchaseForm.watch("voucherType")
   const watchCategory = purchaseForm.watch("category")
   const watchTreatmentId = purchaseForm.watch("treatmentId")
@@ -153,6 +197,27 @@ export default function PurchaseGiftVoucherClient({
   const watchMonetaryValue = purchaseForm.watch("monetaryValue")
   const watchIsGift = purchaseForm.watch("isGift")
   const watchSendOption = giftForm.watch("sendOption")
+
+  useEffect(() => {
+    if (watchVoucherType === "treatment") {
+      purchaseForm.setValue("monetaryValue", undefined)
+      if (purchaseForm.formState.errors.monetaryValue) {
+        purchaseForm.clearErrors("monetaryValue")
+      }
+    } else if (watchVoucherType === "monetary") {
+      // Optional: Clear treatment selection if switching to monetary voucher
+      // purchaseForm.setValue("treatmentId", undefined);
+      // purchaseForm.setValue("selectedDurationId", undefined);
+      // setSelectedTreatment(null);
+      // setSelectedDuration(null);
+      // if (purchaseForm.formState.errors.treatmentId) {
+      //   purchaseForm.clearErrors("treatmentId");
+      // }
+      // if (purchaseForm.formState.errors.selectedDurationId) {
+      //   purchaseForm.clearErrors("selectedDurationId");
+      // }
+    }
+  }, [watchVoucherType, purchaseForm])
 
   const treatmentCategories = useMemo(() => {
     const categories = new Set(treatments.map((t) => t.category))

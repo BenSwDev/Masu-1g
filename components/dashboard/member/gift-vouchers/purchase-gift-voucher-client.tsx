@@ -430,19 +430,14 @@ export default function PurchaseGiftVoucherClient({
               <div key={stepItem.key} className="flex items-center">
                 <div
                   className={cn(
-                    "flex items-center justify-center rounded-full border-2 transition-all duration-200",
+                    "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200",
                     isActive
                       ? "bg-primary border-primary text-primary-foreground"
                       : "border-muted-foreground/30 text-muted-foreground",
-                    isCurrent &&
-                      "transform scale-110 shadow-lg ring-2 ring-primary ring-offset-2 ring-offset-background w-12 h-12",
-                    isActive && !isCurrent && "w-11 h-11",
-                    !isActive && "w-10 h-10",
+                    isCurrent && "ring-2 ring-primary/20",
                   )}
                 >
-                  <Icon
-                    className={cn("w-5 h-5", isActive && isCurrent && "w-7 h-7", isActive && !isCurrent && "w-6 h-6")}
-                  />
+                  <Icon className="w-5 h-5" />
                 </div>
                 <div
                   className={cn(
@@ -490,16 +485,16 @@ export default function PurchaseGiftVoucherClient({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card
                     className={cn(
-                      "cursor-pointer border-2 transition-all duration-200 hover:shadow-lg",
+                      "cursor-pointer border-2 transition-all duration-200 hover:shadow-md",
                       watchVoucherType === "monetary"
-                        ? "border-primary bg-primary/10 shadow-xl ring-2 ring-primary/40 ring-offset-2 ring-offset-card"
-                        : "border-border hover:border-primary/30",
+                        ? "border-primary bg-primary/5 shadow-md"
+                        : "border-border hover:border-primary/50",
                     )}
                     onClick={() => purchaseForm.setValue("voucherType", "monetary")}
                   >
-                    <CardContent className="p-8 text-center">
+                    <CardContent className="p-6 text-center">
                       <CreditCard className="h-12 w-12 mx-auto mb-4 text-primary" />
-                      <h3 className="font-bold text-xl text-lg mb-2">{t("purchaseGiftVoucher.monetaryVoucher")}</h3>
+                      <h3 className="font-semibold text-lg mb-2">{t("purchaseGiftVoucher.monetaryVoucher")}</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {t("purchaseGiftVoucher.monetaryDescription")}
                       </p>
@@ -508,16 +503,16 @@ export default function PurchaseGiftVoucherClient({
 
                   <Card
                     className={cn(
-                      "cursor-pointer border-2 transition-all duration-200 hover:shadow-lg",
+                      "cursor-pointer border-2 transition-all duration-200 hover:shadow-md",
                       watchVoucherType === "treatment"
-                        ? "border-primary bg-primary/10 shadow-xl ring-2 ring-primary/40 ring-offset-2 ring-offset-card"
-                        : "border-border hover:border-primary/30",
+                        ? "border-primary bg-primary/5 shadow-md"
+                        : "border-border hover:border-primary/50",
                     )}
                     onClick={() => purchaseForm.setValue("voucherType", "treatment")}
                   >
-                    <CardContent className="p-8 text-center">
+                    <CardContent className="p-6 text-center">
                       <Gift className="h-12 w-12 mx-auto mb-4 text-primary" />
-                      <h3 className="font-bold text-xl text-lg mb-2">{t("purchaseGiftVoucher.treatmentVoucher")}</h3>
+                      <h3 className="font-semibold text-lg mb-2">{t("purchaseGiftVoucher.treatmentVoucher")}</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         {t("purchaseGiftVoucher.treatmentDescription")}
                       </p>
@@ -538,7 +533,7 @@ export default function PurchaseGiftVoucherClient({
                     min="150"
                     step="10"
                     placeholder="150"
-                    className="text-xl h-14 p-4 font-medium"
+                    className="text-lg h-12"
                     {...purchaseForm.register("monetaryValue", { valueAsNumber: true })}
                   />
                   <p className="text-sm text-muted-foreground">
@@ -559,7 +554,7 @@ export default function PurchaseGiftVoucherClient({
                       {t("purchaseGiftVoucher.selectCategory")}
                     </Label>
                     <Select onValueChange={(value) => setSelectedCategory(value)} value={selectedCategory}>
-                      <SelectTrigger className="h-14 text-base">
+                      <SelectTrigger className="h-12">
                         <SelectValue placeholder={t("purchaseGiftVoucher.chooseCategory")} />
                       </SelectTrigger>
                       <SelectContent>
@@ -581,7 +576,7 @@ export default function PurchaseGiftVoucherClient({
                       value={watchTreatmentId}
                       disabled={filteredTreatments.length === 0}
                     >
-                      <SelectTrigger className="h-14 text-base">
+                      <SelectTrigger className="h-12">
                         <SelectValue placeholder={t("purchaseGiftVoucher.chooseTreatment")} />
                       </SelectTrigger>
                       <SelectContent>
@@ -617,14 +612,14 @@ export default function PurchaseGiftVoucherClient({
                           <Card
                             key={duration._id}
                             className={cn(
-                              "cursor-pointer border-2 transition-all duration-200 hover:shadow-md",
+                              "cursor-pointer border-2 transition-all duration-200 hover:shadow-sm",
                               watchSelectedDurationId === duration._id
-                                ? "border-primary bg-primary/10 shadow-lg ring-1 ring-primary/30"
-                                : "border-border hover:border-primary/30",
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50",
                             )}
                             onClick={() => purchaseForm.setValue("selectedDurationId", duration._id)}
                           >
-                            <CardContent className="p-5">
+                            <CardContent className="p-4">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <Clock className="w-4 h-4 text-muted-foreground" />
@@ -663,23 +658,23 @@ export default function PurchaseGiftVoucherClient({
 
               <Separator />
 
-              <div className="flex items-center space-x-4 p-6 bg-muted/40 rounded-lg shadow-sm border border-transparent hover:border-primary/20 transition-colors">
+              <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
                 <input
                   type="checkbox"
                   id="isGift"
                   {...purchaseForm.register("isGift")}
-                  className="w-6 h-6 rounded border-gray-300 text-primary focus:ring-primary focus:ring-offset-2"
+                  className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
                 />
-                <Label htmlFor="isGift" className="text-lg font-semibold cursor-pointer">
+                <Label htmlFor="isGift" className="text-base font-medium cursor-pointer">
                   {t("purchaseGiftVoucher.sendAsGift")}
                 </Label>
               </div>
 
               {calculatedPrice > 0 && (
                 <Alert className="border-primary/20 bg-primary/5">
-                  <AlertDescription className="flex justify-between items-center text-xl py-3">
+                  <AlertDescription className="flex justify-between items-center text-lg">
                     <span className="font-medium">{t("purchaseGiftVoucher.total")}:</span>
-                    <Badge variant="default" className="text-2xl px-6 py-3 font-bold">
+                    <Badge variant="default" className="text-lg px-4 py-2">
                       {calculatedPrice} {t("common.currency")}
                     </Badge>
                   </AlertDescription>
@@ -688,19 +683,10 @@ export default function PurchaseGiftVoucherClient({
             </CardContent>
 
             <CardFooter className="flex justify-between pt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-                className="px-10 py-3 text-base rounded-lg"
-              >
+              <Button type="button" variant="outline" onClick={() => router.back()} className="px-8">
                 {t("common.cancel")}
               </Button>
-              <Button
-                type="submit"
-                disabled={loading || calculatedPrice <= 0}
-                className="px-10 py-3 text-base font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:scale-105"
-              >
+              <Button type="submit" disabled={loading || calculatedPrice <= 0} className="px-8">
                 {loading ? (
                   t("common.processing")
                 ) : (
@@ -727,7 +713,7 @@ export default function PurchaseGiftVoucherClient({
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-semibold flex items-center justify-center gap-2">
+            <CardTitle className="text-xl font-bold flex items-center justify-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
               {t("purchaseGiftVoucher.giftRecipientDetailsTitle")}
             </CardTitle>
@@ -745,7 +731,7 @@ export default function PurchaseGiftVoucherClient({
                     id="recipientName"
                     {...giftForm.register("recipientName")}
                     placeholder={t("purchaseGiftVoucher.recipientNamePlaceholder")}
-                    className="h-12 text-base"
+                    className="h-11"
                   />
                   {giftForm.formState.errors.recipientName && (
                     <p className="text-sm text-destructive">{giftForm.formState.errors.recipientName.message}</p>
@@ -760,7 +746,7 @@ export default function PurchaseGiftVoucherClient({
                     id="recipientPhone"
                     {...giftForm.register("recipientPhone")}
                     placeholder={t("purchaseGiftVoucher.phonePlaceholder")}
-                    className="h-12 text-base"
+                    className="h-11"
                   />
                   {giftForm.formState.errors.recipientPhone && (
                     <p className="text-sm text-destructive">{giftForm.formState.errors.recipientPhone.message}</p>
@@ -777,7 +763,7 @@ export default function PurchaseGiftVoucherClient({
                   {...giftForm.register("greetingMessage")}
                   placeholder={t("purchaseGiftVoucher.greetingPlaceholder")}
                   rows={4}
-                  className="resize-none text-base"
+                  className="resize-none"
                 />
               </div>
 
@@ -792,7 +778,7 @@ export default function PurchaseGiftVoucherClient({
                         type="button"
                         variant={field.value === "immediate" ? "default" : "outline"}
                         onClick={() => field.onChange("immediate")}
-                        className="flex-1 py-3 text-base font-medium"
+                        className="flex-1"
                       >
                         {t("purchaseGiftVoucher.sendNow")}
                       </Button>
@@ -800,7 +786,7 @@ export default function PurchaseGiftVoucherClient({
                         type="button"
                         variant={field.value === "scheduled" ? "default" : "outline"}
                         onClick={() => field.onChange("scheduled")}
-                        className="flex-1 py-3 text-base font-medium"
+                        className="flex-1"
                       >
                         {t("purchaseGiftVoucher.sendOnDate")}
                       </Button>
@@ -817,10 +803,7 @@ export default function PurchaseGiftVoucherClient({
                     render={({ field }) => (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start text-start font-normal h-12 text-base"
-                          >
+                          <Button variant="outline" className="w-full justify-start text-start font-normal h-11">
                             <CalendarIcon className={cn("h-4 w-4", dir === "rtl" ? "ml-2" : "mr-2")} />
                             {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
                           </Button>
@@ -844,7 +827,7 @@ export default function PurchaseGiftVoucherClient({
                     defaultValue={format(startOfHour(addHours(new Date(), 1)), "HH:mm")}
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger className="h-12 text-base">
+                        <SelectTrigger className="h-11">
                           <SelectValue placeholder={t("purchaseGiftVoucher.selectTime")} />
                         </SelectTrigger>
                         <SelectContent>
@@ -862,20 +845,11 @@ export default function PurchaseGiftVoucherClient({
             </CardContent>
 
             <CardFooter className="flex justify-between pt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep("select")}
-                className="px-10 py-3 text-base rounded-lg"
-              >
+              <Button type="button" variant="outline" onClick={() => setStep("select")} className="px-8">
                 {dir === "rtl" ? <ArrowRight className="w-4 h-4 mr-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
                 {t("common.back")}
               </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="px-10 py-3 text-base font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:scale-105"
-              >
+              <Button type="submit" disabled={loading} className="px-8">
                 {loading ? (
                   t("common.processing")
                 ) : (
@@ -900,7 +874,7 @@ export default function PurchaseGiftVoucherClient({
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-semibold flex items-center justify-center gap-2">
+            <CardTitle className="text-xl font-bold flex items-center justify-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" />
               {t("purchaseGiftVoucher.paymentDetailsTitle")}
             </CardTitle>
@@ -923,19 +897,19 @@ export default function PurchaseGiftVoucherClient({
                     <Card
                       key={pm._id}
                       className={cn(
-                        "cursor-pointer border-2 transition-all duration-200 hover:shadow-md",
+                        "cursor-pointer border-2 transition-all duration-200 hover:shadow-sm",
                         paymentForm.watch("selectedPaymentMethodId") === pm._id
-                          ? "border-primary bg-primary/10 shadow-lg ring-1 ring-primary/30"
-                          : "border-border hover:border-primary/30",
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50",
                       )}
                       onClick={() => paymentForm.setValue("selectedPaymentMethodId", pm._id)}
                     >
-                      <CardContent className="p-5">
+                      <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <CreditCard className="w-5 h-5 text-muted-foreground" />
                             <div>
-                              <p className="font-semibold text-base">
+                              <p className="font-medium">
                                 {pm.cardName || `${t("paymentMethods.card")} **** ${pm.cardNumber.slice(-4)}`}
                               </p>
                               <p className="text-sm text-muted-foreground">
@@ -961,7 +935,7 @@ export default function PurchaseGiftVoucherClient({
                 type="button"
                 variant="outline"
                 onClick={() => setShowPaymentMethodForm(true)}
-                className="w-full h-14 text-base font-medium"
+                className="w-full h-12"
               >
                 <PlusCircle className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
                 {t("purchaseGiftVoucher.addNewCard")}
@@ -976,9 +950,9 @@ export default function PurchaseGiftVoucherClient({
               )}
 
               <Alert className="border-primary/20 bg-primary/5">
-                <AlertDescription className="flex justify-between items-center text-xl py-3">
+                <AlertDescription className="flex justify-between items-center text-lg">
                   <span className="font-medium">{t("purchaseGiftVoucher.total")}:</span>
-                  <Badge variant="default" className="text-2xl px-6 py-3 font-bold">
+                  <Badge variant="default" className="text-lg px-4 py-2">
                     {calculatedPrice} {t("common.currency")}
                   </Badge>
                 </AlertDescription>
@@ -990,7 +964,7 @@ export default function PurchaseGiftVoucherClient({
                 type="button"
                 variant="outline"
                 onClick={() => setStep(watchIsGift ? "giftDetailsEntry" : "select")}
-                className="px-10 py-3 text-base rounded-lg"
+                className="px-8"
               >
                 {dir === "rtl" ? <ArrowRight className="w-4 h-4 mr-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
                 {t("common.back")}
@@ -998,7 +972,7 @@ export default function PurchaseGiftVoucherClient({
               <Button
                 type="submit"
                 disabled={loading || !paymentForm.watch("selectedPaymentMethodId")}
-                className="px-10 py-3 text-base font-semibold rounded-lg shadow-md hover:shadow-lg transition-shadow transform hover:scale-105"
+                className="px-8"
               >
                 {loading
                   ? t("common.processing")
@@ -1014,17 +988,17 @@ export default function PurchaseGiftVoucherClient({
   if (step === "complete") {
     return (
       <div className="max-w-2xl mx-auto space-y-6 text-center p-4">
-        <Card className="shadow-xl p-10 sm:p-12 bg-gradient-to-br from-background via-green-50 to-background border-2 border-green-200 rounded-xl">
+        <Card className="shadow-lg p-8">
           <div className="space-y-6">
-            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto shadow-md border-4 border-white">
-              <Check className="h-12 w-12 text-green-600" />
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <Check className="h-10 w-10 text-green-600" />
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
+              <h1 className="text-2xl font-bold text-foreground">
                 {watchIsGift ? t("purchaseGiftVoucher.giftSuccess") : t("purchaseGiftVoucher.purchaseSuccess")}
               </h1>
-              <p className="text-gray-600 text-xl">
+              <p className="text-muted-foreground text-lg">
                 {watchIsGift
                   ? t("purchaseGiftVoucher.giftSuccessDescription")
                   : t("purchaseGiftVoucher.purchaseSuccessDescription")}
@@ -1032,17 +1006,10 @@ export default function PurchaseGiftVoucherClient({
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button
-                onClick={() => router.push("/dashboard/member/gift-vouchers")}
-                className="px-10 py-3 text-lg font-medium rounded-lg shadow-sm hover:shadow-md transition-shadow"
-              >
+              <Button onClick={() => router.push("/dashboard/member/gift-vouchers")} className="px-8">
                 {t("purchaseGiftVoucher.viewMyVouchers")}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => router.push("/dashboard")}
-                className="px-10 py-3 text-lg font-medium rounded-lg shadow-sm hover:shadow-md transition-shadow"
-              >
+              <Button variant="outline" onClick={() => router.push("/dashboard")} className="px-8">
                 {t("purchaseGiftVoucher.backToDashboard")}
               </Button>
             </div>

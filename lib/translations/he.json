@@ -1190,6 +1190,17 @@
       "friday": "שישי",
       "saturday": "שבת"
     },
-    "status.active": "פעיל"
+    "status.active": "פעיל",
+    "fixedHoursTab": "שעות קבועות",
+    "specialDatesTab": "תאריכים מיוחדים",
+    "specialDateName": "שם האירוע",
+    "specialDateNamePlaceholder": "לדוגמה: חג, אירוע מיוחד",
+    "fixedHoursDescription": "הגדר את שעות הפעילות השבועיות הקבועות שלך.",
+    "specialDatesDescription": "נהל חריגות כגון חגים או אירועים מיוחדים.",
+    "specialDateDialogDescription": "הוסף או ערוך פרטים עבור תאריך ספציפי.",
+    "enablePriceAddition": "אפשר תוספת מחיר",
+    "specialDateActiveDescription": "סמן אם השירותים זמינים בתאריך מיוחד זה.",
+    "noSpecialDates": "אין עדיין תאריכים מיוחדים",
+    "noSpecialDatesHint": "לחץ על 'הוסף תאריך מיוחד' כדי ליצור אחד."
   }
 }

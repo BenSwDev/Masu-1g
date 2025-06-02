@@ -4,6 +4,7 @@
     "error": "Error",
     "success": "Success",
     "save": "Save",
+    "saveChanges": "Save Changes",
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
@@ -1095,6 +1096,17 @@
       "thursday": "Thursday",
       "friday": "Friday",
       "saturday": "Saturday"
-    }
+    },
+    "fixedHoursTab": "Fixed Hours",
+    "specialDatesTab": "Special Dates",
+    "specialDateName": "Event Name",
+    "specialDateNamePlaceholder": "e.g., Holiday, Special Event",
+    "fixedHoursDescription": "Set your regular weekly working hours.",
+    "specialDatesDescription": "Manage exceptions like holidays or special events.",
+    "specialDateDialogDescription": "Add or edit details for a specific date.",
+    "enablePriceAddition": "Enable price addition",
+    "specialDateActiveDescription": "Mark if services are available on this special date.",
+    "noSpecialDates": "No Special Dates Yet",
+    "noSpecialDatesHint": "Click 'Add Special Date' to create one."
   }
 }

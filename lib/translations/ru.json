@@ -1094,6 +1094,17 @@
       "thursday": "Четверг",
       "friday": "Пятница",
       "saturday": "Суббота"
-    }
+    },
+    "fixedHoursTab": "Фиксированные часы",
+    "specialDatesTab": "Особые даты",
+    "specialDateName": "Название события",
+    "specialDateNamePlaceholder": "например: Праздник, Особое событие",
+    "fixedHoursDescription": "Установите ваши обычные еженедельные рабочие часы.",
+    "specialDatesDescription": "Управляйте исключениями, такими как праздники или особые события.",
+    "specialDateDialogDescription": "Добавьте или отредактируйте детали для конкретной даты.",
+    "enablePriceAddition": "Включить надбавку к цене",
+    "specialDateActiveDescription": "Отметьте, если услуги доступны в эту особую дату.",
+    "noSpecialDates": "Пока нет особых дат",
+    "noSpecialDatesHint": "Нажмите 'Добавить особую дату', чтобы создать одну."
   }
 }

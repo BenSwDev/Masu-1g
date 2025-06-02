@@ -31,15 +31,17 @@ import { Gift, CreditCard, CalendarIcon, Check, PlusCircle, Clock, ArrowRight, A
 import { format, setHours, setMinutes, addHours, startOfHour } from "date-fns"
 import { cn } from "@/lib/utils/utils"
 
+interface TreatmentDuration {
+  _id: string
+  name: string // This could be "60 minutes", "Standard", etc.
+  price: number
+  minutes?: number // Ensure this is part of the interface
+}
 interface Treatment {
   _id: string
   name: string
   price?: number
-  durations: {
-    _id: string
-    name: string
-    price: number
-  }[]
+  durations: TreatmentDuration[]
 }
 
 interface PurchaseGiftVoucherClientProps {
@@ -72,6 +74,22 @@ type PurchaseFormData = z.infer<typeof purchaseSchema>
 type GiftDetailsFormData = z.infer<typeof giftDetailsSchema>
 type PaymentFormData = z.infer<typeof paymentSchema>
 
+// Helper function to format minutes into a readable string
+const formatMinutesToDurationString = (minutes: number, t: Function): string => {
+  if (!minutes) return ""
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  let durationString = ""
+  if (hours > 0) {
+    durationString += `${hours} ${t(hours === 1 ? "common.hour" : "common.hours")}`
+  }
+  if (mins > 0) {
+    if (hours > 0) durationString += ` ${t("common.and")} `
+    durationString += `${mins} ${t(mins === 1 ? "common.minute" : "common.minutes")}`
+  }
+  return durationString.trim() || `${minutes} ${t("common.minutes")}` // Fallback if hours and mins are 0 but minutes had a value
+}
+
 export default function PurchaseGiftVoucherClient({
   treatments,
   initialPaymentMethods,
@@ -85,7 +103,7 @@ export default function PurchaseGiftVoucherClient({
   const [voucherId, setVoucherId] = useState<string>("")
   const [calculatedPrice, setCalculatedPrice] = useState(0)
   const [selectedTreatment, setSelectedTreatment] = useState<Treatment | null>(null)
-  const [selectedDuration, setSelectedDuration] = useState<Treatment["durations"][0] | null>(null)
+  const [selectedDuration, setSelectedDuration] = useState<TreatmentDuration | null>(null)
   const [savedGiftDetails, setSavedGiftDetails] = useState<GiftDetailsFormData | null>(null)
   const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>(initialPaymentMethods)
   const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false)
@@ -115,6 +133,9 @@ export default function PurchaseGiftVoucherClient({
   }, [paymentMethods, paymentForm])
 
   const watchVoucherType = purchaseForm.watch("voucherType")
+  const watchTreatmentId = purchaseForm.watch("treatmentId")
+  const watchSelectedDurationId = purchaseForm.watch("selectedDurationId")
+  const watchMonetaryValue = purchaseForm.watch("monetaryValue")
   const watchIsGift = purchaseForm.watch("isGift")
   const watchSendOption = giftForm.watch("sendOption")
 
@@ -129,20 +150,15 @@ export default function PurchaseGiftVoucherClient({
 
   useEffect(() => {
     let price = 0
-    const currentPurchaseValues = purchaseForm.getValues()
-
-    if (currentPurchaseValues.voucherType === "monetary") {
-      if (typeof currentPurchaseValues.monetaryValue === "number" && currentPurchaseValues.monetaryValue >= 150) {
-        price = currentPurchaseValues.monetaryValue
+    if (watchVoucherType === "monetary") {
+      if (typeof watchMonetaryValue === "number" && watchMonetaryValue >= 150) {
+        price = watchMonetaryValue
       }
-    } else if (currentPurchaseValues.voucherType === "treatment") {
+    } else if (watchVoucherType === "treatment") {
       if (selectedTreatment) {
-        // אם יש משך זמן נבחר
         if (selectedDuration && typeof selectedDuration.price === "number") {
           price = selectedDuration.price
-        }
-        // אם אין משכי זמן לטיפול, אבל יש לו מחיר קבוע
-        else if (
+        } else if (
           (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
           typeof selectedTreatment.price === "number"
         ) {
@@ -151,31 +167,29 @@ export default function PurchaseGiftVoucherClient({
       }
     }
     setCalculatedPrice(price)
-  }, [purchaseForm.watch(), selectedTreatment, selectedDuration])
+  }, [watchVoucherType, watchMonetaryValue, selectedTreatment, selectedDuration])
 
-  const handleTreatmentChange = (treatmentId: string | undefined) => {
-    purchaseForm.setValue("treatmentId", treatmentId)
-    if (treatmentId) {
-      const treatment = treatments.find((t) => t._id === treatmentId)
+  useEffect(() => {
+    if (watchTreatmentId) {
+      const treatment = treatments.find((t) => t._id === watchTreatmentId)
       setSelectedTreatment(treatment || null)
+      // Reset duration if treatment changes
       purchaseForm.setValue("selectedDurationId", undefined)
       setSelectedDuration(null)
     } else {
       setSelectedTreatment(null)
       setSelectedDuration(null)
-      purchaseForm.setValue("selectedDurationId", undefined)
     }
-  }
+  }, [watchTreatmentId, treatments, purchaseForm])
 
-  const handleDurationChange = (durationId: string | undefined) => {
-    purchaseForm.setValue("selectedDurationId", durationId)
-    if (durationId && selectedTreatment) {
-      const duration = selectedTreatment.durations.find((d) => d._id === durationId)
+  useEffect(() => {
+    if (watchSelectedDurationId && selectedTreatment) {
+      const duration = selectedTreatment.durations.find((d) => d._id === watchSelectedDurationId)
       setSelectedDuration(duration || null)
-    } else {
+    } else if (!watchSelectedDurationId) {
       setSelectedDuration(null)
     }
-  }
+  }, [watchSelectedDurationId, selectedTreatment])
 
   const handleInitialSubmit = async (data: PurchaseFormData) => {
     setLoading(true)
@@ -437,8 +451,8 @@ export default function PurchaseGiftVoucherClient({
                   <div className="space-y-4">
                     <Label className="text-base font-medium">{t("purchaseGiftVoucher.selectTreatment")}</Label>
                     <Select
-                      onValueChange={(value) => handleTreatmentChange(value)}
-                      value={purchaseForm.getValues("treatmentId")}
+                      onValueChange={(value) => purchaseForm.setValue("treatmentId", value)}
+                      value={watchTreatmentId}
                     >
                       <SelectTrigger className="h-12">
                         <SelectValue placeholder={t("purchaseGiftVoucher.chooseTreatment")} />
@@ -477,17 +491,21 @@ export default function PurchaseGiftVoucherClient({
                             key={duration._id}
                             className={cn(
                               "cursor-pointer border-2 transition-all duration-200 hover:shadow-sm",
-                              purchaseForm.getValues("selectedDurationId") === duration._id
+                              watchSelectedDurationId === duration._id
                                 ? "border-primary bg-primary/5"
                                 : "border-border hover:border-primary/50",
                             )}
-                            onClick={() => handleDurationChange(duration._id)}
+                            onClick={() => purchaseForm.setValue("selectedDurationId", duration._id)}
                           >
                             <CardContent className="p-4">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <Clock className="w-4 h-4 text-muted-foreground" />
-                                  <span className="font-medium">{duration.name}</span>
+                                  <span className="font-medium">
+                                    {duration.minutes
+                                      ? formatMinutesToDurationString(duration.minutes, t)
+                                      : duration.name}
+                                  </span>
                                 </div>
                                 <Badge variant="secondary">
                                   {duration.price} {t("common.currency")}
@@ -502,10 +520,11 @@ export default function PurchaseGiftVoucherClient({
                 </div>
               )}
 
-              {selectedTreatment &&
+              {/* Display fixed price for treatment without durations */}
+              {watchVoucherType === "treatment" &&
+                selectedTreatment &&
                 (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
-                selectedTreatment.price &&
-                watchVoucherType === "treatment" && (
+                selectedTreatment.price && (
                   <Alert className="border-primary/20 bg-primary/5">
                     <AlertDescription className="flex justify-between items-center">
                       <span className="font-medium">{t("purchaseGiftVoucher.treatmentPrice")}:</span>
@@ -567,6 +586,7 @@ export default function PurchaseGiftVoucherClient({
     )
   }
 
+  // ... (rest of the steps: giftDetailsEntry, payment, complete - remain the same)
   if (step === "giftDetailsEntry") {
     return (
       <div className="max-w-3xl mx-auto space-y-6 p-4">

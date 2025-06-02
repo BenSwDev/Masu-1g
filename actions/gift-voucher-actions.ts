@@ -555,8 +555,9 @@ export async function getTreatmentsForSelection() {
         durations:
           t.durations?.map((d: any) => ({
             _id: d._id.toString(),
-            name: d.name,
+            name: d.name, // This 'name' might be for a specific duration variant, e.g., "Standard", "Extended"
             price: d.price,
+            minutes: d.minutes, // Ensure minutes is passed
           })) || [],
       })),
     }

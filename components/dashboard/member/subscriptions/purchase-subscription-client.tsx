@@ -12,18 +12,28 @@ import type { ITreatment } from "@/lib/db/models/treatment" // Assuming ISubscri
 import type { ISubscription } from "@/lib/db/models/subscription"
 import { Loader2 } from "lucide-react"
 
+// Add necessary imports
+import { CreditCard, PlusCircle } from "lucide-react"
+import { PaymentMethodForm } from "@/components/dashboard/member/payment-methods/payment-method-form"
+import { getPaymentMethods, type IPaymentMethod } from "@/actions/payment-method-actions"
+import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { Badge } from "@/components/common/ui/badge"
+import { Label } from "@/components/common/ui/label" // Ensure Label is imported
+import { cn } from "@/lib/utils/utils" // Ensure cn is imported
+
+// Update component props interface
 interface PurchaseSubscriptionClientProps {
-  subscriptions?: ISubscription[] // Use defined type
-  treatments?: ITreatment[] // Use defined type
-  paymentMethods?: any[] // Define type if available
+  subscriptions?: ISubscription[]
+  treatments?: ITreatment[]
+  initialPaymentMethods?: IPaymentMethod[] // Changed from paymentMethods: any[]
 }
 
 const PurchaseSubscriptionClient = ({
   subscriptions = [],
   treatments = [],
-  paymentMethods = [],
+  initialPaymentMethods = [],
 }: PurchaseSubscriptionClientProps) => {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const router = useRouter()
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string>("")
   const [selectedTreatmentId, setSelectedTreatmentId] = useState<string>("")
@@ -31,6 +41,10 @@ const PurchaseSubscriptionClient = ({
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
   const [currentStep, setCurrentStep] = useState(1) // 1: Sub, 2: Treatment, 3: Duration, 4: Payment, 5: Summary
+
+  // Add new state variables
+  const [paymentMethods, setPaymentMethods] = useState<IPaymentMethod[]>(initialPaymentMethods)
+  const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false)
 
   const selectedSubscriptionData = useMemo(
     () => subscriptions.find((sub) => sub._id.toString() === selectedSubscriptionId),
@@ -76,6 +90,52 @@ const PurchaseSubscriptionClient = ({
     // Reset duration if treatment changes or pricing type is not duration_based
     setSelectedDurationId("")
   }, [selectedTreatmentId])
+
+  // Add useEffect to update local paymentMethods state when prop changes
+  useEffect(() => {
+    setPaymentMethods(initialPaymentMethods)
+  }, [initialPaymentMethods])
+
+  // Add useEffect for default payment method selection
+  useEffect(() => {
+    if (paymentMethods.length > 0 && !selectedPaymentMethodId) {
+      const defaultPm = paymentMethods.find((pm) => pm.isDefault) || paymentMethods[0]
+      if (defaultPm) {
+        setSelectedPaymentMethodId(defaultPm._id.toString())
+      }
+    }
+  }, [paymentMethods, selectedPaymentMethodId])
+
+  // Add function to refresh payment methods
+  const handleRefreshPaymentMethods = async () => {
+    setIsLoading(true) // Use existing isLoading state
+    try {
+      const pmResult = await getPaymentMethods()
+      if (pmResult.success && pmResult.paymentMethods) {
+        setPaymentMethods(pmResult.paymentMethods)
+        // If no payment method is currently selected, or the selected one is no longer valid, try to select one.
+        const currentSelectedIsValid = pmResult.paymentMethods.some(
+          (pm) => pm._id.toString() === selectedPaymentMethodId,
+        )
+        if (!selectedPaymentMethodId || !currentSelectedIsValid) {
+          const defaultPm = pmResult.paymentMethods.find((pm) => pm.isDefault) || pmResult.paymentMethods[0]
+          if (defaultPm) {
+            setSelectedPaymentMethodId(defaultPm._id.toString())
+          } else {
+            setSelectedPaymentMethodId("") // Clear selection if no methods available
+          }
+        } else {
+          setSelectedPaymentMethodId(selectedPaymentMethodId)
+        }
+      } else {
+        toast.error(pmResult.error || t("paymentMethods.error"))
+      }
+    } catch (error) {
+      toast.error(t("paymentMethods.error"))
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleNextStep = () => {
     if (currentStep === 1 && !selectedSubscriptionId) {
@@ -277,36 +337,73 @@ const PurchaseSubscriptionClient = ({
               <CardTitle>{t("paymentMethods.selectPaymentMethod")}</CardTitle>
               <CardDescription>{t("paymentMethods.selectPaymentMethodDesc")}</CardDescription>
             </CardHeader>
-            <CardContent>
-              {paymentMethods.length === 0 ? (
-                <div className="text-center text-gray-500 mb-4">
-                  {t("paymentMethods.noPaymentMethods")}{" "}
-                  <Button variant="link" onClick={() => router.push("/dashboard/member/payment-methods")}>
-                    {t("paymentMethods.addNewLink")}
-                  </Button>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <Label className="text-base font-medium">{t("purchaseGiftVoucher.selectPaymentMethod")}</Label>
+
+                {paymentMethods.length === 0 && !showPaymentMethodForm && (
+                  <Alert>
+                    <AlertDescription>{t("paymentMethods.noPaymentMethods")}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="space-y-3">
+                  {paymentMethods.map((pm) => (
+                    <Card
+                      key={pm._id.toString()}
+                      className={cn(
+                        "cursor-pointer border-2 transition-all duration-200 hover:shadow-sm",
+                        selectedPaymentMethodId === pm._id.toString()
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50",
+                      )}
+                      onClick={() => setSelectedPaymentMethodId(pm._id.toString())}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <CreditCard className="w-5 h-5 text-muted-foreground" />
+                            <div>
+                              <p className="font-medium">
+                                {pm.cardName || `${t("paymentMethods.card")} **** ${pm.cardNumber.slice(-4)}`}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {t("paymentMethods.fields.expiry")}: {pm.expiryMonth}/{pm.expiryYear}
+                              </p>
+                            </div>
+                          </div>
+                          {pm.isDefault && <Badge variant="outline">{t("purchaseGiftVoucher.defaultCard")}</Badge>}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              ) : (
-                <Select value={selectedPaymentMethodId} onValueChange={setSelectedPaymentMethodId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("paymentMethods.selectPaymentMethodPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentMethods.map((pm) => (
-                      <SelectItem key={pm._id.toString()} value={pm._id.toString()}>
-                        {pm.cardName || t("paymentMethods.card")} - **** {pm.cardNumber.slice(-4)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPaymentMethodForm(true)}
+                className="w-full h-12"
+              >
+                <PlusCircle className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
+                {t("purchaseGiftVoucher.addNewCard")}
+              </Button>
+
+              {showPaymentMethodForm && (
+                <PaymentMethodForm
+                  open={showPaymentMethodForm}
+                  onOpenChange={(isOpen) => {
+                    setShowPaymentMethodForm(isOpen)
+                    if (!isOpen) {
+                      // Dialog has been closed
+                      handleRefreshPaymentMethods() // Refresh list
+                    }
+                  }}
+                />
               )}
             </CardContent>
-            {paymentMethods.length > 0 && (
-              <CardFooter className="flex justify-end">
-                <Button variant="outline" onClick={() => router.push("/dashboard/member/payment-methods")}>
-                  {t("paymentMethods.managePaymentMethods")}
-                </Button>
-              </CardFooter>
-            )}
+            {/* The CardFooter with navigation buttons is handled by the main step rendering logic */}
           </Card>
         )
       case 5: // Summary and Purchase

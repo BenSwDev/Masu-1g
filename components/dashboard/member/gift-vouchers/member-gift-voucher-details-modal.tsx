@@ -81,6 +81,8 @@ export default function MemberGiftVoucherDetailsModal({
   }) =>
     value ? (
       <div className="flex items-start gap-3">
+        {" "}
+        {/* Changed space-x-3 to gap-3 */}
         <div className={cn("p-2 rounded-lg mt-0.5", highlight ? "bg-primary/10" : "bg-muted/50")}>
           <Icon className={cn("h-4 w-4", highlight ? "text-primary" : "text-muted-foreground")} />
         </div>
@@ -117,7 +119,6 @@ export default function MemberGiftVoucherDetailsModal({
 
         <ScrollArea className="max-h-[60vh] px-6">
           <div className="space-y-6 pb-6">
-            {/* Value Summary */}
             <div
               className={cn(
                 "p-4 rounded-lg border-2",
@@ -138,7 +139,6 @@ export default function MemberGiftVoucherDetailsModal({
               </div>
             </div>
 
-            {/* Basic Information */}
             <div className="space-y-4">
               <h4 className="font-semibold text-base flex items-center gap-2">
                 <Info className="w-4 h-4 text-primary" />
@@ -210,7 +210,6 @@ export default function MemberGiftVoucherDetailsModal({
               </div>
             </div>
 
-            {/* Gift Details */}
             {voucher.isGift && (
               <>
                 <Separator />
@@ -256,6 +255,8 @@ export default function MemberGiftVoucherDetailsModal({
                   {voucher.greetingMessage && (
                     <div className="p-4 bg-muted/30 rounded-lg border">
                       <div className="flex items-start gap-3">
+                        {" "}
+                        {/* Changed space-x-3 to gap-3 */}
                         <MessageSquare className="h-4 w-4 text-muted-foreground mt-1" />
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">
@@ -270,7 +271,6 @@ export default function MemberGiftVoucherDetailsModal({
               </>
             )}
 
-            {/* Usage History */}
             {voucher.usageHistory && voucher.usageHistory.length > 0 && (
               <>
                 <Separator />

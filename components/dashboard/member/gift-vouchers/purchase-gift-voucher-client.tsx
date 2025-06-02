@@ -44,16 +44,16 @@ import { cn } from "@/lib/utils/utils"
 
 interface TreatmentDuration {
   _id: string
-  name?: string // Optional: if durations have specific names like "Standard", "Extended"
+  name?: string
   price: number
   minutes?: number
 }
 interface Treatment {
   _id: string
   name: string
-  category: string // Added category
-  price?: number // General price, could be fixedPrice if applicable
-  fixedPrice?: number // Explicit fixed price
+  category: string
+  price?: number
+  fixedPrice?: number
   durations: TreatmentDuration[]
 }
 
@@ -165,11 +165,11 @@ export default function PurchaseGiftVoucherClient({
                 path: ["treatmentId"],
               })
             }
-            const selectedTreatment = treatments.find((tr) => tr._id === data.treatmentId)
+            const currentSelectedTreatment = treatments.find((tr) => tr._id === data.treatmentId)
             if (
-              selectedTreatment &&
-              selectedTreatment.durations &&
-              selectedTreatment.durations.length > 0 &&
+              currentSelectedTreatment &&
+              currentSelectedTreatment.durations &&
+              currentSelectedTreatment.durations.length > 0 &&
               !data.selectedDurationId
             ) {
               ctx.addIssue({
@@ -191,7 +191,6 @@ export default function PurchaseGiftVoucherClient({
   })
 
   const watchVoucherType = purchaseForm.watch("voucherType")
-  const watchCategory = purchaseForm.watch("category")
   const watchTreatmentId = purchaseForm.watch("treatmentId")
   const watchSelectedDurationId = purchaseForm.watch("selectedDurationId")
   const watchMonetaryValue = purchaseForm.watch("monetaryValue")
@@ -204,18 +203,6 @@ export default function PurchaseGiftVoucherClient({
       if (purchaseForm.formState.errors.monetaryValue) {
         purchaseForm.clearErrors("monetaryValue")
       }
-    } else if (watchVoucherType === "monetary") {
-      // Optional: Clear treatment selection if switching to monetary voucher
-      // purchaseForm.setValue("treatmentId", undefined);
-      // purchaseForm.setValue("selectedDurationId", undefined);
-      // setSelectedTreatment(null);
-      // setSelectedDuration(null);
-      // if (purchaseForm.formState.errors.treatmentId) {
-      //   purchaseForm.clearErrors("treatmentId");
-      // }
-      // if (purchaseForm.formState.errors.selectedDurationId) {
-      //   purchaseForm.clearErrors("selectedDurationId");
-      // }
     }
   }, [watchVoucherType, purchaseForm])
 
@@ -253,7 +240,7 @@ export default function PurchaseGiftVoucherClient({
         } else if (
           (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
           typeof selectedTreatment.fixedPrice === "number" &&
-          selectedTreatment.fixedPrice > 0 // Ensure fixed price is positive
+          selectedTreatment.fixedPrice > 0
         ) {
           price = selectedTreatment.fixedPrice
         }
@@ -284,7 +271,6 @@ export default function PurchaseGiftVoucherClient({
   }, [watchSelectedDurationId, selectedTreatment])
 
   useEffect(() => {
-    // When category changes, reset treatment and duration
     purchaseForm.setValue("treatmentId", undefined)
     purchaseForm.setValue("selectedDurationId", undefined)
     setSelectedTreatment(null)
@@ -443,7 +429,7 @@ export default function PurchaseGiftVoucherClient({
                   className={cn(
                     "hidden sm:block text-sm font-medium transition-colors",
                     isActive ? "text-primary" : "text-muted-foreground",
-                    dir === "rtl" ? "mr-3" : "ml-3",
+                    dir === "rtl" ? "mr-3" : "ml-3", // Adjusted margin for RTL/LTR
                   )}
                 >
                   {stepItem.label}
@@ -480,7 +466,6 @@ export default function PurchaseGiftVoucherClient({
 
           <form onSubmit={purchaseForm.handleSubmit(handleInitialSubmit)}>
             <CardContent className="space-y-8">
-              {/* Voucher Type Selection */}
               <div className="space-y-4">
                 <Label className="text-lg font-semibold">{t("purchaseGiftVoucher.selectType")}</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -522,7 +507,6 @@ export default function PurchaseGiftVoucherClient({
                 </div>
               </div>
 
-              {/* Monetary Value Input */}
               {watchVoucherType === "monetary" && (
                 <div className="space-y-4 p-6 bg-muted/30 rounded-lg">
                   <Label htmlFor="monetaryValue" className="text-base font-medium">
@@ -546,7 +530,6 @@ export default function PurchaseGiftVoucherClient({
                 </div>
               )}
 
-              {/* Treatment Selection */}
               {watchVoucherType === "treatment" && (
                 <div className="space-y-6 p-6 bg-muted/30 rounded-lg">
                   <div className="space-y-4">
@@ -586,12 +569,12 @@ export default function PurchaseGiftVoucherClient({
                             <div className="flex items-center justify-between w-full">
                               <span>{treatment.name}</span>
                               {treatment.fixedPrice && (!treatment.durations || treatment.durations.length === 0) && (
-                                <Badge variant="secondary" className={cn("ml-2", dir === "rtl" && "mr-2 ml-0")}>
+                                <Badge variant="secondary" className={cn(dir === "rtl" ? "mr-2" : "ml-2")}>
                                   {treatment.fixedPrice} {t("common.currency")}
                                 </Badge>
                               )}
                               {treatment.durations && treatment.durations.length > 0 && (
-                                <Badge variant="outline" className={cn("ml-2", dir === "rtl" && "mr-2 ml-0")}>
+                                <Badge variant="outline" className={cn(dir === "rtl" ? "mr-2" : "ml-2")}>
                                   {treatment.durations.length} {t("purchaseGiftVoucher.durationOptions")}
                                 </Badge>
                               )}
@@ -646,7 +629,7 @@ export default function PurchaseGiftVoucherClient({
               {watchVoucherType === "treatment" &&
                 selectedTreatment &&
                 (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
-                typeof selectedTreatment.fixedPrice === "number" && ( // Check fixedPrice here
+                typeof selectedTreatment.fixedPrice === "number" && (
                   <Alert className="border-primary/20 bg-primary/5">
                     <AlertDescription className="flex justify-between items-center">
                       <span className="font-medium">{t("purchaseGiftVoucher.treatmentPrice")}:</span>
@@ -664,7 +647,10 @@ export default function PurchaseGiftVoucherClient({
                   type="checkbox"
                   id="isGift"
                   {...purchaseForm.register("isGift")}
-                  className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                  className={cn(
+                    "w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary",
+                    dir === "rtl" ? "ml-3" : "mr-3",
+                  )}
                 />
                 <Label htmlFor="isGift" className="text-base font-medium cursor-pointer">
                   {t("purchaseGiftVoucher.sendAsGift")}
@@ -709,8 +695,6 @@ export default function PurchaseGiftVoucherClient({
   if (step === "giftDetailsEntry") {
     return (
       <div className="max-w-3xl mx-auto space-y-6">
-        {" "}
-        {/* Removed p-4 */}
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
@@ -853,9 +837,9 @@ export default function PurchaseGiftVoucherClient({
                 className="px-8 flex items-center"
               >
                 {dir === "rtl" ? (
-                  <ArrowRight className={cn("w-4 h-4", "ml-2")} />
+                  <ArrowRight className={cn("w-4 h-4 ml-2")} />
                 ) : (
-                  <ArrowLeft className={cn("w-4 h-4", "mr-2")} />
+                  <ArrowLeft className={cn("w-4 h-4 mr-2")} />
                 )}
                 {t("common.back")}
               </Button>
@@ -879,8 +863,6 @@ export default function PurchaseGiftVoucherClient({
   if (step === "payment") {
     return (
       <div className="max-w-3xl mx-auto space-y-6">
-        {" "}
-        {/* Removed p-4 */}
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
@@ -977,9 +959,9 @@ export default function PurchaseGiftVoucherClient({
                 className="px-8 flex items-center"
               >
                 {dir === "rtl" ? (
-                  <ArrowRight className={cn("w-4 h-4", "ml-2")} />
+                  <ArrowRight className={cn("w-4 h-4 ml-2")} />
                 ) : (
-                  <ArrowLeft className={cn("w-4 h-4", "mr-2")} />
+                  <ArrowLeft className={cn("w-4 h-4 mr-2")} />
                 )}
                 {t("common.back")}
               </Button>

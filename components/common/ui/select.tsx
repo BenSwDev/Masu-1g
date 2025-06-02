@@ -5,7 +5,7 @@ import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils/utils"
-import { useTranslation } from "@/lib/translations/i18n"
+import { useTranslation } from "@/lib/translations/i18n" // Import useTranslation
 
 const Select = SelectPrimitive.Root
 
@@ -103,7 +103,7 @@ const SelectLabel = React.forwardRef<
       ref={ref}
       className={cn(
         "py-1.5 text-sm font-semibold",
-        dir === "rtl" ? "pr-8 pl-2" : "pl-8 pr-2", // Conditional padding
+        dir === "rtl" ? "pr-8 pl-2 text-right" : "pl-8 pr-2 text-left", // Conditional padding and text alignment
         className,
       )}
       {...props}
@@ -122,7 +122,7 @@ const SelectItem = React.forwardRef<
       ref={ref}
       className={cn(
         "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        dir === "rtl" ? "pr-8 pl-2" : "pl-8 pr-2", // Conditional padding
+        dir === "rtl" ? "pr-8 pl-2 text-right" : "pl-8 pr-2 text-left", // Conditional padding and text alignment
         className,
       )}
       {...props}

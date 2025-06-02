@@ -14,6 +14,7 @@ export interface IFixedHours {
 }
 
 export interface ISpecialDate {
+  name: string // Added: Name/Title for the special date
   date: Date
   isActive: boolean
   startTime: string // Format: "HH:mm"
@@ -82,6 +83,13 @@ const FixedHoursSchema = new Schema<IFixedHours>({
 })
 
 const SpecialDateSchema = new Schema<ISpecialDate>({
+  name: {
+    // Added: Name/Title for the special date
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 100,
+  },
   date: {
     type: Date,
     required: true,
@@ -155,7 +163,7 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
         endTime: "17:00",
         hasPriceAddition: false,
         notes: "",
-      })
+      } as IFixedHours) // Added type assertion
     }
   }
   next()

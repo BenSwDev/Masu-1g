@@ -1,55 +1,76 @@
 "use client"
 
 import React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { format } from "date-fns"
 import { he, enUS } from "date-fns/locale"
-import { Calendar, Clock, Plus, Trash2, Edit } from "lucide-react"
+import { CalendarIcon, Clock, Plus, Trash2, Edit, AlertTriangle } from "lucide-react"
 
 import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Textarea } from "@/components/common/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/common/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/common/ui/dialog"
 import { Calendar as CalendarComponent } from "@/components/common/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from "@/components/common/ui/form"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { useToast } from "@/components/common/ui/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
+import { Skeleton } from "@/components/common/ui/skeleton"
 
 import { getWorkingHoursSettings, updateWorkingHoursSettings } from "@/actions/working-hours-actions"
+import type { IWorkingHoursSettings, IFixedHours } from "@/lib/db/models/working-hours"
 
-const priceAdditionSchema = z.object({
-  amount: z.number().min(0),
-  type: z.enum(["fixed", "percentage"]),
-})
+const priceAdditionSchema = z
+  .object({
+    amount: z.number().min(0, "Amount must be positive"),
+    type: z.enum(["fixed", "percentage"]),
+  })
+  .optional()
 
 const fixedHoursSchema = z.object({
   dayOfWeek: z.number().min(0).max(6),
   isActive: z.boolean(),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
   hasPriceAddition: z.boolean(),
-  priceAddition: priceAdditionSchema.optional(),
-  notes: z.string().max(500).optional(),
+  priceAddition: priceAdditionSchema,
+  notes: z.string().max(500, "Notes too long").optional(),
 })
 
 const specialDateSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100, "Name too long"),
   date: z.string().min(1, "Date is required"),
   isActive: z.boolean(),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
   hasPriceAddition: z.boolean(),
-  priceAddition: priceAdditionSchema.optional(),
-  notes: z.string().max(500).optional(),
+  priceAddition: priceAdditionSchema,
+  notes: z.string().max(500, "Notes too long").optional(),
 })
 
 const workingHoursSchema = z.object({
@@ -58,49 +79,77 @@ const workingHoursSchema = z.object({
 })
 
 const specialDateFormSchema = z.object({
+  name: z.string().min(1, "Please enter a name").max(100, "Name is too long (max 100 chars)").default(""),
   date: z.date({
     required_error: "Please select a date",
   }),
   isActive: z.boolean().default(true),
   startTime: z
     .string()
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format")
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format. Use HH:MM")
     .default("09:00"),
   endTime: z
     .string()
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format")
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format. Use HH:MM")
     .default("17:00"),
   hasPriceAddition: z.boolean().default(false),
-  priceAddition: priceAdditionSchema.optional(),
-  notes: z.string().max(500).optional().default(""),
+  priceAddition: priceAdditionSchema,
+  notes: z.string().max(500, "Notes are too long (max 500 chars)").optional().default(""),
 })
 
 type WorkingHoursFormData = z.infer<typeof workingHoursSchema>
 type SpecialDateFormData = z.infer<typeof specialDateFormSchema>
 
+const getDefaultFixedHours = (): IFixedHours[] => {
+  const days = []
+  for (let i = 0; i < 7; i++) {
+    days.push({
+      dayOfWeek: i,
+      isActive: false,
+      startTime: "09:00",
+      endTime: "17:00",
+      hasPriceAddition: false,
+      priceAddition: { amount: 0, type: "fixed" },
+      notes: "",
+    })
+  }
+  return days
+}
+
 export default function WorkingHoursClient() {
-  const { t, language } = useTranslation()
+  const { t, language, dir } = useTranslation()
   const { toast } = useToast()
   const queryClient = useQueryClient()
 
   const [isSpecialDateDialogOpen, setIsSpecialDateDialogOpen] = useState(false)
   const [editingSpecialDateIndex, setEditingSpecialDateIndex] = useState<number | null>(null)
 
-  const { data: workingHoursData, isLoading } = useQuery({
+  const {
+    data: workingHoursData,
+    isLoading,
+    error: queryError,
+  } = useQuery<IWorkingHoursSettings | null, Error>({
     queryKey: ["working-hours-settings"],
     queryFn: async () => {
       const result = await getWorkingHoursSettings()
-      if (!result.success) {
-        throw new Error(result.error)
+      if (!result.success || !result.data) {
+        return {
+          _id: "",
+          fixedHours: getDefaultFixedHours(),
+          specialDates: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        } as IWorkingHoursSettings
       }
-      return result.data
+      const fixedHours = result.data.fixedHours?.length === 7 ? result.data.fixedHours : getDefaultFixedHours()
+      return { ...result.data, fixedHours }
     },
   })
 
   const form = useForm<WorkingHoursFormData>({
     resolver: zodResolver(workingHoursSchema),
     defaultValues: {
-      fixedHours: [],
+      fixedHours: getDefaultFixedHours(),
       specialDates: [],
     },
   })
@@ -108,10 +157,12 @@ export default function WorkingHoursClient() {
   const specialDateForm = useForm<SpecialDateFormData>({
     resolver: zodResolver(specialDateFormSchema),
     defaultValues: {
+      name: "",
       isActive: true,
       startTime: "09:00",
       endTime: "17:00",
       hasPriceAddition: false,
+      priceAddition: { amount: 0, type: "fixed" },
       notes: "",
     },
   })
@@ -126,24 +177,38 @@ export default function WorkingHoursClient() {
     name: "specialDates",
   })
 
-  // Update form when data is loaded
-  React.useEffect(() => {
+  useEffect(() => {
     if (workingHoursData) {
       form.reset({
-        fixedHours: workingHoursData.fixedHours || [],
-        specialDates: workingHoursData.specialDates || [],
+        fixedHours:
+          workingHoursData.fixedHours && workingHoursData.fixedHours.length === 7
+            ? workingHoursData.fixedHours
+            : getDefaultFixedHours(),
+        specialDates: (workingHoursData.specialDates || []).map((sd) => ({
+          ...sd,
+          date: format(new Date(sd.date), "yyyy-MM-dd"),
+          priceAddition: sd.priceAddition || { amount: 0, type: "fixed" },
+        })),
       })
     }
   }, [workingHoursData, form])
 
   const updateMutation = useMutation({
     mutationFn: updateWorkingHoursSettings,
-    onSuccess: () => {
-      toast({
-        title: t("workingHours.updateSuccess"),
-        description: t("workingHours.updateSuccessDescription"),
-      })
-      queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: t("workingHours.updateSuccess"),
+          description: t("workingHours.updateSuccessDescription"),
+        })
+        queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
+      } else {
+        toast({
+          title: t("workingHours.updateError"),
+          description: data.error || t("workingHours.updateErrorDescription"),
+          variant: "destructive",
+        })
+      }
     },
     onError: (error: any) => {
       toast({
@@ -155,10 +220,21 @@ export default function WorkingHoursClient() {
   })
 
   const onSubmit = (data: WorkingHoursFormData) => {
-    updateMutation.mutate(data)
+    const processedData = {
+      ...data,
+      fixedHours: data.fixedHours.map((fh) => ({
+        ...fh,
+        priceAddition: fh.hasPriceAddition ? fh.priceAddition : undefined,
+      })),
+      specialDates: data.specialDates.map((sd) => ({
+        ...sd,
+        priceAddition: sd.hasPriceAddition ? sd.priceAddition : undefined,
+      })),
+    }
+    updateMutation.mutate(processedData)
   }
 
-  const handleAddSpecialDate = (data: SpecialDateFormData) => {
+  const handleAddOrUpdateSpecialDate = (data: SpecialDateFormData) => {
     const specialDateData = {
       ...data,
       date: format(data.date, "yyyy-MM-dd"),
@@ -172,7 +248,16 @@ export default function WorkingHoursClient() {
       appendSpecialDate(specialDateData)
     }
 
-    specialDateForm.reset()
+    specialDateForm.reset({
+      name: "",
+      date: undefined,
+      isActive: true,
+      startTime: "09:00",
+      endTime: "17:00",
+      hasPriceAddition: false,
+      priceAddition: { amount: 0, type: "fixed" },
+      notes: "",
+    })
     setIsSpecialDateDialogOpen(false)
   }
 
@@ -181,6 +266,7 @@ export default function WorkingHoursClient() {
     specialDateForm.reset({
       ...specialDate,
       date: new Date(specialDate.date),
+      priceAddition: specialDate.priceAddition || { amount: 0, type: "fixed" },
     })
     setEditingSpecialDateIndex(index)
     setIsSpecialDateDialogOpen(true)
@@ -190,321 +276,393 @@ export default function WorkingHoursClient() {
     removeSpecialDate(index)
   }
 
-  const dayNames = [
-    t("workingHours.days.sunday"),
-    t("workingHours.days.monday"),
-    t("workingHours.days.tuesday"),
-    t("workingHours.days.wednesday"),
-    t("workingHours.days.thursday"),
-    t("workingHours.days.friday"),
-    t("workingHours.days.saturday"),
-  ]
+  const dayNames = React.useMemo(
+    () => [
+      t("workingHours.days.sunday"),
+      t("workingHours.days.monday"),
+      t("workingHours.days.tuesday"),
+      t("workingHours.days.wednesday"),
+      t("workingHours.days.thursday"),
+      t("workingHours.days.friday"),
+      t("workingHours.days.saturday"),
+    ],
+    [t],
+  )
 
   if (isLoading) {
-    return <div className="flex justify-center p-8">{t("common.loading")}</div>
+    return (
+      <div className="space-y-6 p-4 md:p-6">
+        <Skeleton className="h-10 w-1/3" />
+        <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-8 w-1/2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-40 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-8 w-1/2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-40 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (queryError) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-destructive">
+        <AlertTriangle className="h-12 w-12 mb-4" />
+        <p className="text-xl font-semibold">{t("common.errorOccurred")}</p>
+        <p>{queryError.message}</p>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-1 md:p-0">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Fixed Hours Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                {t("workingHours.fixedHours")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("workingHours.day")}</TableHead>
-                    <TableHead>{t("workingHours.active")}</TableHead>
-                    <TableHead>{t("workingHours.startTime")}</TableHead>
-                    <TableHead>{t("workingHours.endTime")}</TableHead>
-                    <TableHead>{t("workingHours.priceAddition")}</TableHead>
-                    <TableHead>{t("workingHours.notes")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {form.watch("fixedHours")?.map((_, index) => {
-                    const dayOfWeek = form.watch(`fixedHours.${index}.dayOfWeek`)
-                    const isActive = form.watch(`fixedHours.${index}.isActive`)
-                    const hasPriceAddition = form.watch(`fixedHours.${index}.hasPriceAddition`)
+          <Tabs defaultValue="fixed-hours" className="w-full" dir={dir}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="fixed-hours">{t("workingHours.fixedHoursTab")}</TabsTrigger>
+              <TabsTrigger value="special-dates">{t("workingHours.specialDatesTab")}</TabsTrigger>
+            </TabsList>
 
-                    return (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{dayNames[dayOfWeek]}</TableCell>
-                        <TableCell>
-                          <FormField
-                            control={form.control}
-                            name={`fixedHours.${index}.isActive`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {isActive && (
-                            <FormField
-                              control={form.control}
-                              name={`fixedHours.${index}.startTime`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormControl>
-                                    <Input type="time" {...field} className="w-32" />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {isActive && (
-                            <FormField
-                              control={form.control}
-                              name={`fixedHours.${index}.endTime`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormControl>
-                                    <Input type="time" {...field} className="w-32" />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {isActive && (
-                            <div className="space-y-2">
-                              <FormField
-                                control={form.control}
-                                name={`fixedHours.${index}.hasPriceAddition`}
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormControl>
-                                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                              {hasPriceAddition && (
-                                <div className="flex gap-2">
+            <TabsContent value="fixed-hours">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    {t("workingHours.fixedHours")}
+                  </CardTitle>
+                  <CardDescription>{t("workingHours.fixedHoursDescription")}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table className="min-w-[800px] md:min-w-full">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[120px]">{t("workingHours.day")}</TableHead>
+                          <TableHead className="w-[80px] text-center">{t("workingHours.active")}</TableHead>
+                          <TableHead className="w-[120px]">{t("workingHours.startTime")}</TableHead>
+                          <TableHead className="w-[120px]">{t("workingHours.endTime")}</TableHead>
+                          <TableHead className="w-[200px]">{t("workingHours.priceAddition")}</TableHead>
+                          <TableHead>{t("workingHours.notes")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {form.watch("fixedHours")?.map((_, index) => {
+                          const dayOfWeek = form.watch(`fixedHours.${index}.dayOfWeek`)
+                          const isActive = form.watch(`fixedHours.${index}.isActive`)
+                          const hasPriceAddition = form.watch(`fixedHours.${index}.hasPriceAddition`)
+
+                          return (
+                            <TableRow key={index}>
+                              <TableCell className="font-medium">{dayNames[dayOfWeek]}</TableCell>
+                              <TableCell className="text-center">
+                                <FormField
+                                  control={form.control}
+                                  name={`fixedHours.${index}.isActive`}
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value}
+                                          onCheckedChange={field.onChange}
+                                          aria-label={`${t("workingHours.active")} for ${dayNames[dayOfWeek]}`}
+                                        />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                {isActive && (
                                   <FormField
                                     control={form.control}
-                                    name={`fixedHours.${index}.priceAddition.amount`}
+                                    name={`fixedHours.${index}.startTime`}
                                     render={({ field }) => (
                                       <FormItem>
                                         <FormControl>
                                           <Input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="0"
+                                            type="time"
                                             {...field}
-                                            onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
-                                            className="w-20"
+                                            className="w-full max-w-[100px]"
+                                            aria-label={`${t("workingHours.startTime")} for ${dayNames[dayOfWeek]}`}
                                           />
                                         </FormControl>
+                                        <FormMessage />
                                       </FormItem>
                                     )}
                                   />
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {isActive && (
                                   <FormField
                                     control={form.control}
-                                    name={`fixedHours.${index}.priceAddition.type`}
+                                    name={`fixedHours.${index}.endTime`}
                                     render={({ field }) => (
                                       <FormItem>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                          <FormControl>
-                                            <SelectTrigger className="w-20">
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                          </FormControl>
-                                          <SelectContent>
-                                            <SelectItem value="fixed">₪</SelectItem>
-                                            <SelectItem value="percentage">%</SelectItem>
-                                          </SelectContent>
-                                        </Select>
+                                        <FormControl>
+                                          <Input
+                                            type="time"
+                                            {...field}
+                                            className="w-full max-w-[100px]"
+                                            aria-label={`${t("workingHours.endTime")} for ${dayNames[dayOfWeek]}`}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
                                       </FormItem>
                                     )}
                                   />
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {isActive && (
-                            <FormField
-                              control={form.control}
-                              name={`fixedHours.${index}.notes`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormControl>
-                                    <Textarea
-                                      {...field}
-                                      placeholder={t("workingHours.notesPlaceholder")}
-                                      className="min-h-[60px] w-40"
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Special Dates Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                {t("workingHours.specialDates")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Dialog open={isSpecialDateDialogOpen} onOpenChange={setIsSpecialDateDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button type="button" variant="outline" className="w-full">
-                      <Plus className="h-4 w-4 mr-2" />
-                      {t("workingHours.addSpecialDate")}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {editingSpecialDateIndex !== null
-                          ? t("workingHours.editSpecialDate")
-                          : t("workingHours.addSpecialDate")}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <Form {...specialDateForm}>
-                      <form onSubmit={specialDateForm.handleSubmit(handleAddSpecialDate)} className="space-y-4">
-                        <FormField
-                          control={specialDateForm.control}
-                          name="date"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                              <FormLabel>{t("workingHours.date")}</FormLabel>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <FormControl>
-                                    <Button
-                                      variant="outline"
-                                      className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                    >
-                                      {field.value ? (
-                                        format(field.value, "PPP", { locale: language === "he" ? he : enUS })
-                                      ) : (
-                                        <span>{t("workingHours.selectDate")}</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {isActive && (
+                                  <div className="space-y-2">
+                                    <FormField
+                                      control={form.control}
+                                      name={`fixedHours.${index}.hasPriceAddition`}
+                                      render={({ field }) => (
+                                        <FormItem className="flex items-center gap-2">
+                                          <FormControl>
+                                            <Checkbox
+                                              checked={field.value}
+                                              onCheckedChange={field.onChange}
+                                              aria-label={`${t("workingHours.hasPriceAddition")} for ${dayNames[dayOfWeek]}`}
+                                            />
+                                          </FormControl>
+                                          <FormLabel className="text-sm font-normal">
+                                            {t("workingHours.enablePriceAddition")}
+                                          </FormLabel>
+                                        </FormItem>
                                       )}
-                                      <Calendar className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                  </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                  <CalendarComponent
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) => date < new Date()}
-                                    initialFocus
+                                    />
+                                    {hasPriceAddition && (
+                                      <div className="flex flex-col sm:flex-row gap-2">
+                                        <FormField
+                                          control={form.control}
+                                          name={`fixedHours.${index}.priceAddition.amount`}
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormControl>
+                                                <Input
+                                                  type="number"
+                                                  min="0"
+                                                  step="0.01"
+                                                  placeholder="0"
+                                                  {...field}
+                                                  onChange={(e) =>
+                                                    field.onChange(Number.parseFloat(e.target.value) || 0)
+                                                  }
+                                                  className="w-full sm:w-20"
+                                                  aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={form.control}
+                                          name={`fixedHours.${index}.priceAddition.type`}
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value || "fixed"}
+                                              >
+                                                <FormControl>
+                                                  <SelectTrigger
+                                                    className="w-full sm:w-[90px]"
+                                                    aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
+                                                  >
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                  <SelectItem value="fixed">₪</SelectItem>
+                                                  <SelectItem value="percentage">%</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {isActive && (
+                                  <FormField
+                                    control={form.control}
+                                    name={`fixedHours.${index}.notes`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormControl>
+                                          <Textarea
+                                            {...field}
+                                            placeholder={t("workingHours.notesPlaceholder")}
+                                            className="min-h-[60px] w-full sm:w-40"
+                                            aria-label={`${t("workingHours.notes")} for ${dayNames[dayOfWeek]}`}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
                                   />
-                                </PopoverContent>
-                              </Popover>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={specialDateForm.control}
-                          name="isActive"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                              <FormControl>
-                                <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                              </FormControl>
-                              <FormLabel>{t("workingHours.active")}</FormLabel>
-                            </FormItem>
-                          )}
-                        />
-
-                        {specialDateForm.watch("isActive") && (
-                          <>
-                            <div className="grid grid-cols-2 gap-4">
-                              <FormField
-                                control={specialDateForm.control}
-                                name="startTime"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>{t("workingHours.startTime")}</FormLabel>
-                                    <FormControl>
-                                      <Input type="time" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
                                 )}
-                              />
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                              <FormField
-                                control={specialDateForm.control}
-                                name="endTime"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>{t("workingHours.endTime")}</FormLabel>
+            <TabsContent value="special-dates">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5" />
+                    {t("workingHours.specialDates")}
+                  </CardTitle>
+                  <CardDescription>{t("workingHours.specialDatesDescription")}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Dialog
+                    open={isSpecialDateDialogOpen}
+                    onOpenChange={(isOpen) => {
+                      setIsSpecialDateDialogOpen(isOpen)
+                      if (!isOpen) {
+                        setEditingSpecialDateIndex(null)
+                        specialDateForm.reset({
+                          name: "",
+                          date: undefined,
+                          isActive: true,
+                          startTime: "09:00",
+                          endTime: "17:00",
+                          hasPriceAddition: false,
+                          priceAddition: { amount: 0, type: "fixed" },
+                          notes: "",
+                        })
+                      }
+                    }}
+                  >
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="outline" className="w-full sm:w-auto">
+                        <Plus className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
+                        {t("workingHours.addSpecialDate")}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingSpecialDateIndex !== null
+                            ? t("workingHours.editSpecialDate")
+                            : t("workingHours.addSpecialDate")}
+                        </DialogTitle>
+                        <DialogDescription>{t("workingHours.specialDateDialogDescription")}</DialogDescription>
+                      </DialogHeader>
+                      <Form {...specialDateForm}>
+                        <form
+                          onSubmit={specialDateForm.handleSubmit(handleAddOrUpdateSpecialDate)}
+                          className="space-y-4"
+                        >
+                          <FormField
+                            control={specialDateForm.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t("workingHours.specialDateName")}</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder={t("workingHours.specialDateNamePlaceholder")} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={specialDateForm.control}
+                            name="date"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-col">
+                                <FormLabel>{t("workingHours.date")}</FormLabel>
+                                <Popover>
+                                  <PopoverTrigger asChild>
                                     <FormControl>
-                                      <Input type="time" {...field} />
+                                      <Button
+                                        variant="outline"
+                                        className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                      >
+                                        <CalendarIcon className="rtl:ml-2 ltr:mr-2 h-4 w-4" />
+                                        {field.value ? (
+                                          format(field.value, "PPP", { locale: language === "he" ? he : enUS })
+                                        ) : (
+                                          <span>{t("workingHours.selectDate")}</span>
+                                        )}
+                                      </Button>
                                     </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0" align="start">
+                                    <CalendarComponent
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                      initialFocus
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                            <FormField
-                              control={specialDateForm.control}
-                              name="hasPriceAddition"
-                              render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                  <FormControl>
-                                    <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                                  </FormControl>
-                                  <FormLabel>{t("workingHours.priceAddition")}</FormLabel>
-                                </FormItem>
-                              )}
-                            />
+                          <FormField
+                            control={specialDateForm.control}
+                            name="isActive"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0 rounded-md border p-4 shadow">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    id="specialDateIsActive"
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel htmlFor="specialDateIsActive">{t("workingHours.active")}</FormLabel>
+                                  <FormDescription>{t("workingHours.specialDateActiveDescription")}</FormDescription>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
 
-                            {specialDateForm.watch("hasPriceAddition") && (
-                              <div className="grid grid-cols-2 gap-4">
+                          {specialDateForm.watch("isActive") && (
+                            <div className="space-y-4 p-4 border rounded-md">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <FormField
                                   control={specialDateForm.control}
-                                  name="priceAddition.amount"
+                                  name="startTime"
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>{t("workingHours.amount")}</FormLabel>
+                                      <FormLabel>{t("workingHours.startTime")}</FormLabel>
                                       <FormControl>
-                                        <Input
-                                          type="number"
-                                          min="0"
-                                          step="0.01"
-                                          placeholder="0"
-                                          {...field}
-                                          onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
-                                        />
+                                        <Input type="time" {...field} />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -513,132 +671,224 @@ export default function WorkingHoursClient() {
 
                                 <FormField
                                   control={specialDateForm.control}
-                                  name="priceAddition.type"
+                                  name="endTime"
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>{t("workingHours.type")}</FormLabel>
-                                      <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
-                                        <FormControl>
-                                          <SelectTrigger>
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                          <SelectItem value="fixed">₪</SelectItem>
-                                          <SelectItem value="percentage">%</SelectItem>
-                                        </SelectContent>
-                                      </Select>
+                                      <FormLabel>{t("workingHours.endTime")}</FormLabel>
+                                      <FormControl>
+                                        <Input type="time" {...field} />
+                                      </FormControl>
                                       <FormMessage />
                                     </FormItem>
                                   )}
                                 />
                               </div>
-                            )}
 
-                            <FormField
-                              control={specialDateForm.control}
-                              name="notes"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t("workingHours.notes")}</FormLabel>
-                                  <FormControl>
-                                    <Textarea
-                                      {...field}
-                                      placeholder={t("workingHours.notesPlaceholder")}
-                                      className="min-h-[80px]"
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
+                              <FormField
+                                control={specialDateForm.control}
+                                name="hasPriceAddition"
+                                render={({ field }) => (
+                                  <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                        id="specialDateHasPriceAddition"
+                                      />
+                                    </FormControl>
+                                    <FormLabel htmlFor="specialDateHasPriceAddition">
+                                      {t("workingHours.enablePriceAddition")}
+                                    </FormLabel>
+                                  </FormItem>
+                                )}
+                              />
+
+                              {specialDateForm.watch("hasPriceAddition") && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <FormField
+                                    control={specialDateForm.control}
+                                    name="priceAddition.amount"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>{t("workingHours.amount")}</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            placeholder="0"
+                                            {...field}
+                                            onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+
+                                  <FormField
+                                    control={specialDateForm.control}
+                                    name="priceAddition.type"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>{t("workingHours.type")}</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                          <FormControl>
+                                            <SelectTrigger>
+                                              <SelectValue />
+                                            </SelectTrigger>
+                                          </FormControl>
+                                          <SelectContent>
+                                            <SelectItem value="fixed">₪</SelectItem>
+                                            <SelectItem value="percentage">%</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
                               )}
-                            />
-                          </>
-                        )}
 
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              setIsSpecialDateDialogOpen(false)
-                              setEditingSpecialDateIndex(null)
-                              specialDateForm.reset()
-                            }}
-                          >
-                            {t("common.cancel")}
-                          </Button>
-                          <Button type="submit">
-                            {editingSpecialDateIndex !== null ? t("common.update") : t("common.add")}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
+                              <FormField
+                                control={specialDateForm.control}
+                                name="notes"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>{t("workingHours.notes")}</FormLabel>
+                                    <FormControl>
+                                      <Textarea
+                                        {...field}
+                                        placeholder={t("workingHours.notesPlaceholder")}
+                                        className="min-h-[80px]"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          )}
+                          <DialogFooter className="gap-2 sm:gap-0">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setIsSpecialDateDialogOpen(false)
+                                setEditingSpecialDateIndex(null)
+                                specialDateForm.reset({
+                                  name: "",
+                                  date: undefined,
+                                  isActive: true,
+                                  startTime: "09:00",
+                                  endTime: "17:00",
+                                  hasPriceAddition: false,
+                                  priceAddition: { amount: 0, type: "fixed" },
+                                  notes: "",
+                                })
+                              }}
+                            >
+                              {t("common.cancel")}
+                            </Button>
+                            <Button type="submit" disabled={specialDateForm.formState.isSubmitting}>
+                              {specialDateForm.formState.isSubmitting
+                                ? t("common.saving")
+                                : editingSpecialDateIndex !== null
+                                  ? t("common.update")
+                                  : t("common.add")}
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
 
-                {specialDateFields.length > 0 && (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("workingHours.date")}</TableHead>
-                        <TableHead>{t("workingHours.active")}</TableHead>
-                        <TableHead>{t("workingHours.hours")}</TableHead>
-                        <TableHead>{t("workingHours.priceAddition")}</TableHead>
-                        <TableHead>{t("workingHours.notes")}</TableHead>
-                        <TableHead>{t("common.actions")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {specialDateFields.map((field, index) => {
-                        const specialDate = form.watch(`specialDates.${index}`)
-                        return (
-                          <TableRow key={field.id}>
-                            <TableCell>
-                              {format(new Date(specialDate.date), "PPP", { locale: language === "he" ? he : enUS })}
-                            </TableCell>
-                            <TableCell>{specialDate.isActive ? t("common.yes") : t("common.no")}</TableCell>
-                            <TableCell>
-                              {specialDate.isActive ? `${specialDate.startTime} - ${specialDate.endTime}` : "-"}
-                            </TableCell>
-                            <TableCell>
-                              {specialDate.hasPriceAddition && specialDate.priceAddition
-                                ? `${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`
-                                : "-"}
-                            </TableCell>
-                            <TableCell className="max-w-[200px] truncate">{specialDate.notes || "-"}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditSpecialDate(index)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDeleteSpecialDate(index)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
+                  {specialDateFields.length === 0 && (
+                    <div className="text-center text-muted-foreground py-8">
+                      <CalendarIcon className="mx-auto h-12 w-12 opacity-50" />
+                      <p className="mt-4 text-lg">{t("workingHours.noSpecialDates")}</p>
+                      <p>{t("workingHours.noSpecialDatesHint")}</p>
+                    </div>
+                  )}
+
+                  {specialDateFields.length > 0 && (
+                    <div className="overflow-x-auto">
+                      <Table className="min-w-[900px] md:min-w-full">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[20%]">{t("workingHours.specialDateName")}</TableHead>
+                            <TableHead className="w-[20%]">{t("workingHours.date")}</TableHead>
+                            <TableHead className="w-[10%] text-center">{t("workingHours.active")}</TableHead>
+                            <TableHead className="w-[15%]">{t("workingHours.hours")}</TableHead>
+                            <TableHead className="w-[15%]">{t("workingHours.priceAddition")}</TableHead>
+                            <TableHead className="w-[10%]">{t("workingHours.notes")}</TableHead>
+                            <TableHead className="w-[10%] text-right rtl:text-left">{t("common.actions")}</TableHead>
                           </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                        </TableHeader>
+                        <TableBody>
+                          {specialDateFields.map((field, index) => {
+                            const specialDate = form.watch(`specialDates.${index}`)
+                            return (
+                              <TableRow key={field.id}>
+                                <TableCell className="font-medium">{specialDate.name}</TableCell>
+                                <TableCell>
+                                  {format(new Date(specialDate.date), "PPP", { locale: language === "he" ? he : enUS })}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {specialDate.isActive ? t("common.yes") : t("common.no")}
+                                </TableCell>
+                                <TableCell>
+                                  {specialDate.isActive ? `${specialDate.startTime} - ${specialDate.endTime}` : "-"}
+                                </TableCell>
+                                <TableCell>
+                                  {specialDate.isActive && specialDate.hasPriceAddition && specialDate.priceAddition
+                                    ? `${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`
+                                    : "-"}
+                                </TableCell>
+                                <TableCell className="max-w-[150px] truncate" title={specialDate.notes}>
+                                  {specialDate.notes || "-"}
+                                </TableCell>
+                                <TableCell className="text-right rtl:text-left">
+                                  <div className="flex gap-2 justify-end rtl:justify-start">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="icon"
+                                      onClick={() => handleEditSpecialDate(index)}
+                                      aria-label={t("workingHours.editSpecialDate")}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="icon"
+                                      onClick={() => handleDeleteSpecialDate(index)}
+                                      aria-label={t("workingHours.deleteSpecialDate")}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={updateMutation.isPending} className="min-w-[120px]">
-              {updateMutation.isPending ? t("common.saving") : t("common.save")}
+          <div className="flex justify-end pt-4">
+            <Button
+              type="submit"
+              disabled={updateMutation.isPending || !form.formState.isDirty}
+              className="min-w-[120px]"
+            >
+              {updateMutation.isPending ? t("common.saving") : t("common.saveChanges")}
             </Button>
           </div>
         </form>

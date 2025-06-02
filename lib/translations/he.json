@@ -89,7 +89,11 @@
     "pagination": {
       "pageInfo": "עמוד {{page}} מתוך {{totalPages}} ({{totalResults}} תוצאות)",
       "showPerPage": "הצג {{count}}"
-    }
+    },
+    "hour": "שעה",
+    "hours": "שעות",
+    "minute": "דקה",
+    "and": "ו"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -885,7 +889,17 @@
     "addNewCard": "הוסף כרטיס חדש",
     "payAmount": "שלם {{amount}} {{currency}}",
     "defaultCard": "ברירת מחדל",
-    "proceedToGiftDetails": "המשך לפרטי המתנה"
+    "proceedToGiftDetails": "המשך לפרטי המתנה",
+    "durationOptions": "אפשרויות משך",
+    "treatmentPrice": "מחיר טיפול",
+    "selectCategory": "בחר קטגוריה",
+    "chooseCategory": "בחר קטגוריה...",
+    "allCategories": "כל הקטגוריות",
+    "stepSelect": "בחירת סוג",
+    "stepGiftDetails": "פרטי מתנה",
+    "stepPayment": "תשלום",
+    "stepComplete": "אישור",
+    "minimumAmount": "סכום מינימלי"
   },
   "Roles": {
     "admin": "מנהל",

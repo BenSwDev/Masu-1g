@@ -86,7 +86,12 @@
     "pagination": {
       "pageInfo": "Page {{page}} of {{totalPages}} ({{totalResults}} results)",
       "showPerPage": "Show {{count}}"
-    }
+    },
+    "hour": "Hour",
+    "hours": "Hours",
+    "minute": "Minute",
+    "minutes": "Minutes",
+    "and": "and"
   },
   "dashboard": {
     "sidebar": {
@@ -373,7 +378,17 @@
       "addNewCard": "Add New Card",
       "payAmount": "Pay {{amount}} {{currency}}",
       "defaultCard": "Default",
-      "proceedToGiftDetails": "Proceed to Gift Details"
+      "proceedToGiftDetails": "Proceed to Gift Details",
+      "durationOptions": "duration options",
+      "treatmentPrice": "Treatment Price",
+      "selectCategory": "Select Category",
+      "chooseCategory": "Choose a category",
+      "allCategories": "All Categories",
+      "stepSelect": "Select Type",
+      "stepGiftDetails": "Gift Details",
+      "stepPayment": "Payment",
+      "stepComplete": "Confirmation",
+      "minimumAmount": "Minimum amount"
     },
     "myVouchers": {
       "title": "My Gift Vouchers",

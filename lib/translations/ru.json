@@ -82,7 +82,12 @@
     "pagination": {
       "pageInfo": "Страница {{page}} из {{totalPages}} ({{totalResults}} результатов)",
       "showPerPage": "Показать {{count}}"
-    }
+    },
+    "hour": "Час",
+    "hours": "Часов",
+    "minute": "Минута",
+    "minutes": "Минут",
+    "and": "и"
   },
   "dashboard": {
     "sidebar": {
@@ -370,7 +375,17 @@
       "addNewCard": "Добавить новую карту",
       "payAmount": "Оплатить {{amount}} {{currency}}",
       "defaultCard": "По умолчанию",
-      "proceedToGiftDetails": "Перейти к данным подарка"
+      "proceedToGiftDetails": "Перейти к данным подарка",
+      "durationOptions": "вариантов длительности",
+      "treatmentPrice": "Цена процедуры",
+      "selectCategory": "Выберите категорию",
+      "chooseCategory": "Выберите категорию...",
+      "allCategories": "Все категории",
+      "stepSelect": "Выбор типа",
+      "stepGiftDetails": "Детали подарка",
+      "stepPayment": "Оплата",
+      "stepComplete": "Подтверждение",
+      "minimumAmount": "Минимальная сумма"
     },
     "myVouchers": {
       "title": "Мои подарочные сертификаты",

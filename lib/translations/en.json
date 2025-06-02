@@ -205,7 +205,7 @@
     "cancelSuccess": "Subscription cancelled successfully.",
     "cancelConfirm": "Are you sure you want to cancel this subscription?",
     "cancelConfirmDescription": "This action cannot be undone. Your remaining sessions will be forfeited.",
-    "cancelConfirmDescriptionAdmin": "Are you sure you want to cancel this subscription for \{\{userName\}\}? This action cannot be undone.",
+    "cancelConfirmDescriptionAdmin": "Are you sure you want to cancel this subscription for {{userName}}? This action cannot be undone.",
     "users": {
       "title": "Users",
       "description": "Manage users"
@@ -326,11 +326,11 @@
       "useVoucher": "Use Voucher",
       "usageHistory": "Usage History",
       "noUsageHistory": "No usage history for this voucher.",
-      "usedOn": "Used on \{\{date\}\}",
-      "amountUsed": "Amount Used: \{\{amount\}\} ILS",
-      "orderId": "Order ID: \{\{id\}\}",
+      "usedOn": "Used on {{date}}",
+      "amountUsed": "Amount Used: {{amount}} ILS",
+      "orderId": "Order ID: {{id}}",
       "giftDetails": "Gift Details",
-      "messageFromSender": "Message from \{\{senderName\}\}",
+      "messageFromSender": "Message from {{senderName}}",
       "filterBy": "Filter by",
       "sortBy": "Sort by",
       "purchaseDate": "Purchase Date",
@@ -361,14 +361,14 @@
       "title": "Redeem Gift Voucher",
       "enterCode": "Enter Gift Voucher Code",
       "applyVoucher": "Apply Voucher",
-      "voucherApplied": "Voucher \{\{code\}\} applied successfully.",
+      "voucherApplied": "Voucher {{code}} applied successfully.",
       "voucherInvalid": "Invalid or expired voucher code.",
       "voucherNotApplicable": "This voucher is not applicable for this order.",
       "voucherDepleted": "This voucher has been fully used.",
       "errorApplying": "Error applying voucher.",
       "fetchErrorTreatments": "Failed to load treatments for selection.",
       "fetchErrorUsers": "Failed to load users for selection.",
-      "operationSuccessMessage": "Voucher \{\{code\}\} has been \{\{operation\}\} successfully."
+      "operationSuccessMessage": "Voucher {{code}} has been {{operation}} successfully."
     },
     "useCode": "Use this code during checkout or booking",
     "status": {
@@ -416,8 +416,8 @@
     "detailsModalTitle": "Subscription Details",
     "usageHistory": "Usage History",
     "noUsageHistory": "No usage history for this subscription.",
-    "usedOnDate": "Used on \{\{date\}\}",
-    "sessionsUsed": "\{\{count\}\} sessions used",
+    "usedOnDate": "Used on {{date}}",
+    "sessionsUsed": "{{count}} sessions used",
     "pricePaid": "Price Paid",
     "paymentMethod": "Payment Method",
     "treatmentName": "Treatment"
@@ -604,10 +604,10 @@
       "agePrefix": "",
       "ageSuffix": " years old",
       "confirmDeleteTitle": "Confirm Delete",
-      "confirmDeleteMessage": "Are you sure you want to delete \{userName\}? This action cannot be undone.",
+      "confirmDeleteMessage": "Are you sure you want to delete {{userName}}? This action cannot be undone.",
       "thisUser": "this user",
       "confirmChangePasswordTitle": "Change Password",
-      "confirmChangePasswordMessage": "A password reset email will be sent to \{userEmail\}. Continue?",
+      "confirmChangePasswordMessage": "A password reset email will be sent to {{userEmail}}. Continue?",
       "sendResetLink": "Send Reset Link",
       "userCreatedToast": "User created successfully",
       "userUpdatedToast": "User updated successfully",
@@ -642,7 +642,7 @@
       "title": "Coupons Management",
       "description": "Create and manage coupons for your platform.",
       "createNew": "Create Coupon",
-      "totalCoupons": "Total Coupons: \{\{count\}\}",
+      "totalCoupons": "Total Coupons: {{count}}",
       "form": {
         "titleCreate": "Create New Coupon",
         "titleEdit": "Edit Coupon",
@@ -717,8 +717,8 @@
       "pagination": {
         "previous": "Previous",
         "next": "Next",
-        "pageInfo": "Page \{\{currentPage\}\} of \{\{totalPages\}\}",
-        "rowsSelected": "\{\{count\}\} of \{\{total\}\} row(s) selected"
+        "pageInfo": "Page {{currentPage}} of {{totalPages}}",
+        "rowsSelected": "{{count}} of {{total}} row(s) selected"
       }
     },
     "partnerAssignedCoupons": {
@@ -729,9 +729,9 @@
       "pagination": {
         "previous": "Previous",
         "next": "Next",
-        "pageInfo": "Page \{\{currentPage\}\} of \{\{totalPages\}\}"
+        "pageInfo": "Page {{currentPage}} of {{totalPages}}"
       },
-      "totalAssigned": "Total Assigned Coupons: \{\{count\}\}",
+      "totalAssigned": "Total Assigned Coupons: {{count}}",
       "card": {
         "noDescription": "No description",
         "discountLabel": "Discount:",
@@ -740,12 +740,12 @@
         "totalUsesLabel": "Total Uses:",
         "usesPerCustomerLabel": "Uses Per Customer:",
         "adminNoteLabel": "Admin Note:",
-        "createdLabel": "Created: \{\{date\}\}",
+        "createdLabel": "Created: {{date}}",
         "copyCodeTooltip": "Copy coupon code"
       },
       "toast": {
         "copySuccessTitle": "Copied!",
-        "copySuccessDescription": "Coupon code \"\{\{code\}\}\" copied to clipboard.",
+        "copySuccessDescription": "Coupon code \"{{code}}\" copied to clipboard.",
         "copyErrorDescription": "Failed to copy code."
       }
     }
@@ -909,7 +909,7 @@
     "purchaseDate": "Purchase Date",
     "deleteConfirmTitle": "Delete User Subscription",
     "deleteConfirmDescription": "Are you sure you want to permanently delete this user's subscription record? This action cannot be undone.",
-    "deleteConfirmDescriptionAdmin": "Are you sure you want to permanently delete the subscription record for \{\{userName\}\}? This action cannot be undone.",
+    "deleteConfirmDescriptionAdmin": "Are you sure you want to permanently delete the subscription record for {{userName}}? This action cannot be undone.",
     "fetchErrorAdmin": "Failed to fetch user subscriptions.",
     "subscriptionDetails": "Subscription Details",
     "treatmentDetails": "Treatment Details",
@@ -920,7 +920,7 @@
     "expiryDateShort": "Expires",
     "usage": "Usage",
     "perSession": "per session",
-    "usageTooltip": "\{\{remaining\}\} out of \{\{total\}\} sessions remaining",
+    "usageTooltip": "{{remaining}} out of {{total}} sessions remaining",
     "purchased": "Purchased",
     "expires": "Expires",
     "pricePerSession": "Price Per Session",
@@ -955,11 +955,11 @@
     },
     "cancelDialog": {
       "title": "Cancel User Subscription",
-      "description": "Are you sure you want to cancel the subscription for \{\{userName\}\}? This will mark the subscription as cancelled and prevent further use."
+      "description": "Are you sure you want to cancel the subscription for {{userName}}? This will mark the subscription as cancelled and prevent further use."
     },
     "deleteDialog": {
       "title": "Delete User Subscription",
-      "description": "Are you sure you want to permanently delete the subscription for \{\{userName\}\}? This action cannot be undone and all related data will be removed."
+      "description": "Are you sure you want to permanently delete the subscription for {{userName}}? This action cannot be undone and all related data will be removed."
     },
     "notifications": {
       "dataRefreshed": "Subscription data refreshed successfully.",
@@ -971,7 +971,7 @@
     },
     "detailsModal": {
       "title": "User Subscription Details",
-      "description": "Detailed information for \{\{userName\}\}'s subscription.",
+      "description": "Detailed information for {{userName}}'s subscription.",
       "userSectionTitle": "User Information",
       "subscriptionSectionTitle": "Subscription Information",
       "treatmentSectionTitle": "Treatment Information",
@@ -1025,7 +1025,7 @@
     "paymentDetailsDescription": "Select or add a payment method to complete your purchase.",
     "selectPaymentMethod": "Select Payment Method",
     "addNewCard": "Add New Card",
-    "payAmount": "Pay \{\{amount\}\} \{\{currency\}\}",
+    "payAmount": "Pay {{amount}} {{currency}}",
     "defaultCard": "Default",
     "proceedToGiftDetails": "Proceed to Gift Details",
     "durationOptions": "duration options",
@@ -1038,7 +1038,7 @@
     "stepPayment": "Payment",
     "stepComplete": "Confirmation",
     "minimumAmount": "Minimum amount",
-    "minimumAmountDetails": "Minimum amount is \{\{amount\}\} \{\{currency\}\}"
+    "minimumAmountDetails": "Minimum amount is {{amount}} {{currency}}"
   },
   "gender": {
     "male": "Male",

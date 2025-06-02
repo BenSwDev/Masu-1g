@@ -44,16 +44,16 @@ import { cn } from "@/lib/utils/utils"
 
 interface TreatmentDuration {
   _id: string
-  name?: string
+  name?: string // Optional: if durations have specific names like "Standard", "Extended"
   price: number
   minutes?: number
 }
 interface Treatment {
   _id: string
   name: string
-  category: string
-  price?: number
-  fixedPrice?: number
+  category: string // Added category
+  price?: number // General price, could be fixedPrice if applicable
+  fixedPrice?: number // Explicit fixed price
   durations: TreatmentDuration[]
 }
 
@@ -64,7 +64,7 @@ interface PurchaseGiftVoucherClientProps {
 
 const purchaseSchema = z.object({
   voucherType: z.enum(["treatment", "monetary"]),
-  category: z.string().optional(),
+  category: z.string().optional(), // Added category field
   treatmentId: z.string().optional(),
   selectedDurationId: z.string().optional(),
   monetaryValue: z.number().min(150, "Minimum value is 150 ILS").optional(),
@@ -107,7 +107,6 @@ export default function PurchaseGiftVoucherClient({
   treatments,
   initialPaymentMethods,
 }: PurchaseGiftVoucherClientProps) {
-  // console.log("Treatments data received by client:", JSON.stringify(treatments, null, 2)); // Uncomment for debugging
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const router = useRouter()
@@ -148,7 +147,7 @@ export default function PurchaseGiftVoucherClient({
   }, [paymentMethods, paymentForm])
 
   const watchVoucherType = purchaseForm.watch("voucherType")
-  // const watchCategory = purchaseForm.watch("category") // Not directly used in price calculation useEffect
+  const watchCategory = purchaseForm.watch("category")
   const watchTreatmentId = purchaseForm.watch("treatmentId")
   const watchSelectedDurationId = purchaseForm.watch("selectedDurationId")
   const watchMonetaryValue = purchaseForm.watch("monetaryValue")
@@ -178,54 +177,23 @@ export default function PurchaseGiftVoucherClient({
 
   useEffect(() => {
     let price = 0
-    let priceSource = "none"
-
     if (watchVoucherType === "monetary") {
       if (typeof watchMonetaryValue === "number" && watchMonetaryValue >= 150) {
         price = watchMonetaryValue
-        priceSource = "monetary_value_input"
-      } else if (typeof watchMonetaryValue === "number" && watchMonetaryValue < 150) {
-        priceSource = "monetary_value_too_low"
       }
     } else if (watchVoucherType === "treatment") {
       if (selectedTreatment) {
         if (selectedDuration && typeof selectedDuration.price === "number") {
           price = selectedDuration.price
-          priceSource = `duration_price (Treatment: ${selectedTreatment.name}, Duration: ${selectedDuration.minutes || selectedDuration._id})`
-          if (price <= 0) {
-            console.warn(
-              `Calculated price for selected duration is ${price}. Treatment: ${selectedTreatment.name}, Duration ID: ${selectedDuration._id}, Duration Price: ${selectedDuration.price}`,
-            )
-          }
         } else if (
           (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
-          typeof selectedTreatment.fixedPrice === "number"
+          typeof selectedTreatment.fixedPrice === "number" &&
+          selectedTreatment.fixedPrice > 0 // Ensure fixed price is positive
         ) {
           price = selectedTreatment.fixedPrice
-          priceSource = `fixed_price (Treatment: ${selectedTreatment.name})`
-          if (price <= 0) {
-            console.warn(
-              `Calculated price for fixed treatment is ${price}. Treatment: ${selectedTreatment.name}, Fixed Price: ${selectedTreatment.fixedPrice}`,
-            )
-          }
-        } else if (selectedDuration && typeof selectedDuration.price !== "number") {
-          priceSource = `duration_price_invalid_type (Treatment: ${selectedTreatment.name}, Duration: ${selectedDuration.minutes || selectedDuration._id}, Price Type: ${typeof selectedDuration.price})`
-          console.warn(
-            `Selected duration for ${selectedTreatment.name} has an invalid price type: ${typeof selectedDuration.price}. Value: ${selectedDuration.price}`,
-          )
-        } else if (selectedTreatment.durations && selectedTreatment.durations.length > 0 && !selectedDuration) {
-          priceSource = "duration_not_selected"
-        } else {
-          priceSource = "treatment_price_undetermined"
-          console.warn(
-            `Could not determine price for selected treatment: ${selectedTreatment.name}. FixedPrice: ${selectedTreatment.fixedPrice}, Durations present: ${selectedTreatment.durations?.length > 0}`,
-          )
         }
-      } else {
-        priceSource = "treatment_not_selected"
       }
     }
-    // console.log(`Price calculation: Type=${watchVoucherType}, Price=${price}, Source=${priceSource}, SelectedTreatment=${selectedTreatment?.name}, SelectedDuration=${selectedDuration?.minutes || selectedDuration?._id}`);
     setCalculatedPrice(price)
   }, [watchVoucherType, watchMonetaryValue, selectedTreatment, selectedDuration])
 
@@ -233,30 +201,30 @@ export default function PurchaseGiftVoucherClient({
     if (watchTreatmentId) {
       const treatment = filteredTreatments.find((t) => t._id === watchTreatmentId)
       setSelectedTreatment(treatment || null)
-      purchaseForm.setValue("selectedDurationId", undefined) // Reset duration when treatment changes
+      purchaseForm.setValue("selectedDurationId", undefined)
       setSelectedDuration(null)
     } else {
       setSelectedTreatment(null)
       setSelectedDuration(null)
     }
-  }, [watchTreatmentId, filteredTreatments, purchaseForm]) // purchaseForm included because setValue is used
+  }, [watchTreatmentId, filteredTreatments, purchaseForm])
 
   useEffect(() => {
     if (watchSelectedDurationId && selectedTreatment) {
       const duration = selectedTreatment.durations.find((d) => d._id === watchSelectedDurationId)
       setSelectedDuration(duration || null)
     } else if (!watchSelectedDurationId) {
-      // This handles deselection or if selectedTreatment changes and duration is no longer valid
       setSelectedDuration(null)
     }
   }, [watchSelectedDurationId, selectedTreatment])
 
   useEffect(() => {
+    // When category changes, reset treatment and duration
     purchaseForm.setValue("treatmentId", undefined)
     purchaseForm.setValue("selectedDurationId", undefined)
     setSelectedTreatment(null)
     setSelectedDuration(null)
-  }, [selectedCategory, purchaseForm]) // purchaseForm included because setValue is used
+  }, [selectedCategory, purchaseForm])
 
   const handleInitialSubmit = async (data: PurchaseFormData) => {
     setLoading(true)
@@ -266,55 +234,10 @@ export default function PurchaseGiftVoucherClient({
         isGift: data.isGift,
       }
       if (data.voucherType === "treatment") {
-        if (!data.treatmentId) {
-          toast({
-            title: t("common.error"),
-            description: t("purchaseGiftVoucher.errors.selectTreatment"),
-            variant: "destructive",
-          })
-          setLoading(false)
-          return
-        }
-        const currentSelectedTreatment = treatments.find((t) => t._id === data.treatmentId)
-        if (
-          currentSelectedTreatment &&
-          currentSelectedTreatment.durations &&
-          currentSelectedTreatment.durations.length > 0 &&
-          !data.selectedDurationId
-        ) {
-          toast({
-            title: t("common.error"),
-            description: t("purchaseGiftVoucher.errors.selectDuration"),
-            variant: "destructive",
-          })
-          setLoading(false)
-          return
-        }
         purchaseData.treatmentId = data.treatmentId
         purchaseData.selectedDurationId = data.selectedDurationId
       } else {
-        // Monetary
-        if (typeof data.monetaryValue !== "number" || data.monetaryValue < 150) {
-          toast({
-            title: t("common.error"),
-            description: t("purchaseGiftVoucher.errors.invalidAmount"),
-            variant: "destructive",
-          })
-          setLoading(false)
-          return
-        }
         purchaseData.monetaryValue = data.monetaryValue
-      }
-
-      // Ensure calculatedPrice is up-to-date before submitting
-      if (calculatedPrice <= 0) {
-        toast({
-          title: t("common.error"),
-          description: t("purchaseGiftVoucher.errors.invalidPrice"),
-          variant: "destructive",
-        })
-        setLoading(false)
-        return
       }
 
       const result = await initiatePurchaseGiftVoucher(purchaseData)
@@ -361,12 +284,11 @@ export default function PurchaseGiftVoucherClient({
   const handlePaymentSubmit = async (_data: PaymentFormData) => {
     setLoading(true)
     try {
-      // Simulate payment confirmation
       const paymentResult = await confirmGiftVoucherPurchase({
         voucherId: voucherId!,
-        paymentId: `PAY-${Date.now()}`, // Simulated payment ID
-        success: true, // Simulate successful payment
-        amount: calculatedPrice, // Use the calculated price
+        paymentId: `PAY-${Date.now()}`,
+        success: true,
+        amount: calculatedPrice,
       })
 
       if (paymentResult.success) {
@@ -391,7 +313,6 @@ export default function PurchaseGiftVoucherClient({
               description: giftResult.error || "Failed to set gift details",
               variant: "destructive",
             })
-            // Proceed to complete step even if gift details fail, as payment was "successful"
             setStep("complete")
             return
           }
@@ -457,7 +378,6 @@ export default function PurchaseGiftVoucherClient({
                   className={cn(
                     "hidden sm:block ml-3 text-sm font-medium transition-colors",
                     isActive ? "text-primary" : "text-muted-foreground",
-                    dir === "rtl" && "ml-0 mr-3",
                   )}
                 >
                   {stepItem.label}
@@ -660,8 +580,7 @@ export default function PurchaseGiftVoucherClient({
               {watchVoucherType === "treatment" &&
                 selectedTreatment &&
                 (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
-                typeof selectedTreatment.fixedPrice === "number" &&
-                selectedTreatment.fixedPrice > 0 && (
+                typeof selectedTreatment.fixedPrice === "number" && ( // Check fixedPrice here
                   <Alert className="border-primary/20 bg-primary/5">
                     <AlertDescription className="flex justify-between items-center">
                       <span className="font-medium">{t("purchaseGiftVoucher.treatmentPrice")}:</span>
@@ -674,7 +593,7 @@ export default function PurchaseGiftVoucherClient({
 
               <Separator />
 
-              <div className="flex items-center space-x-3 rtl:space-x-reverse p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
+              <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
                 <input
                   type="checkbox"
                   id="isGift"
@@ -724,6 +643,8 @@ export default function PurchaseGiftVoucherClient({
   if (step === "giftDetailsEntry") {
     return (
       <div className="max-w-3xl mx-auto space-y-6">
+        {" "}
+        {/* Removed p-4 */}
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
@@ -860,11 +781,7 @@ export default function PurchaseGiftVoucherClient({
 
             <CardFooter className="flex justify-between pt-6">
               <Button type="button" variant="outline" onClick={() => setStep("select")} className="px-8">
-                {dir === "rtl" ? (
-                  <ArrowRight className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
-                ) : (
-                  <ArrowLeft className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
-                )}
+                {dir === "rtl" ? <ArrowRight className="w-4 h-4 mr-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
                 {t("common.back")}
               </Button>
               <Button type="submit" disabled={loading} className="px-8">
@@ -887,6 +804,8 @@ export default function PurchaseGiftVoucherClient({
   if (step === "payment") {
     return (
       <div className="max-w-3xl mx-auto space-y-6">
+        {" "}
+        {/* Removed p-4 */}
         <StepIndicator currentStep={step} />
         <Card className="shadow-lg">
           <CardHeader className="text-center">
@@ -982,11 +901,7 @@ export default function PurchaseGiftVoucherClient({
                 onClick={() => setStep(watchIsGift ? "giftDetailsEntry" : "select")}
                 className="px-8"
               >
-                {dir === "rtl" ? (
-                  <ArrowRight className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
-                ) : (
-                  <ArrowLeft className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
-                )}
+                {dir === "rtl" ? <ArrowRight className="w-4 h-4 mr-2" /> : <ArrowLeft className="w-4 h-4 mr-2" />}
                 {t("common.back")}
               </Button>
               <Button

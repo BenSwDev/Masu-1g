@@ -136,20 +136,20 @@ export default function PurchaseGiftVoucherClient({
         price = currentPurchaseValues.monetaryValue
       }
     } else if (currentPurchaseValues.voucherType === "treatment") {
-      // אם יש duration נבחר
-      if (selectedDuration && typeof selectedDuration.price === "number") {
-        price = selectedDuration.price
-      }
-      // אם אין durations אבל יש מחיר לטיפול
-      else if (
-        selectedTreatment &&
-        (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
-        typeof selectedTreatment.price === "number"
-      ) {
-        price = selectedTreatment.price
+      if (selectedTreatment) {
+        // אם יש משך זמן נבחר
+        if (selectedDuration && typeof selectedDuration.price === "number") {
+          price = selectedDuration.price
+        }
+        // אם אין משכי זמן לטיפול, אבל יש לו מחיר קבוע
+        else if (
+          (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
+          typeof selectedTreatment.price === "number"
+        ) {
+          price = selectedTreatment.price
+        }
       }
     }
-
     setCalculatedPrice(price)
   }, [purchaseForm.watch(), selectedTreatment, selectedDuration])
 
@@ -504,7 +504,8 @@ export default function PurchaseGiftVoucherClient({
 
               {selectedTreatment &&
                 (!selectedTreatment.durations || selectedTreatment.durations.length === 0) &&
-                selectedTreatment.price && (
+                selectedTreatment.price &&
+                watchVoucherType === "treatment" && (
                   <Alert className="border-primary/20 bg-primary/5">
                     <AlertDescription className="flex justify-between items-center">
                       <span className="font-medium">{t("purchaseGiftVoucher.treatmentPrice")}:</span>

@@ -206,7 +206,7 @@ export default function PurchaseGiftVoucherClient({
       setSelectedTreatment(null)
       setSelectedDuration(null)
     }
-  }, [watchTreatmentId, filteredTreatments, purchaseForm])
+  }, [watchTreatmentId, filteredTreatments])
 
   useEffect(() => {
     if (watchSelectedDurationId && selectedTreatment) {
@@ -223,7 +223,7 @@ export default function PurchaseGiftVoucherClient({
     purchaseForm.setValue("selectedDurationId", undefined)
     setSelectedTreatment(null)
     setSelectedDuration(null)
-  }, [selectedCategory, purchaseForm])
+  }, [selectedCategory])
 
   const handleInitialSubmit = async (data: PurchaseFormData) => {
     setLoading(true)
@@ -737,7 +737,7 @@ export default function PurchaseGiftVoucherClient({
                     render={({ field }) => (
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left font-normal h-11">
+                          <Button variant="outline" className="w-full justify-start text-start font-normal h-11">
                             <CalendarIcon className={cn("h-4 w-4", dir === "rtl" ? "ml-2" : "mr-2")} />
                             {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
                           </Button>

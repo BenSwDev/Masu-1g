@@ -669,7 +669,21 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
 
     return { success: true, data: JSON.parse(JSON.stringify(data)) } // Ensure plain objects
   } catch (error) {
-    logger.error("Error fetching initial booking data:", { error, userId })
+    const errorDetails: any = { userId }
+    if (error instanceof Error) {
+      errorDetails.name = error.name
+      errorDetails.errorMessage = error.message
+      errorDetails.stack = error.stack
+    } else {
+      // If the error is not a standard Error object, try to stringify it or log as is
+      try {
+        errorDetails.rawErrorString = JSON.stringify(error)
+      } catch (stringifyError) {
+        errorDetails.rawError = error // Log the raw error object if it can't be stringified
+        errorDetails.stringifyError = "Failed to stringify raw error"
+      }
+    }
+    logger.error("Error fetching initial booking data (enhanced):", errorDetails)
     return { success: false, error: "bookings.errors.initialDataFetchFailed" }
   }
 }

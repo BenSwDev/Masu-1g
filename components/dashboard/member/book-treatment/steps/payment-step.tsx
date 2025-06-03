@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react" // Added useState
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -13,7 +13,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { PaymentDetailsSchema, type PaymentFormValues } from "@/lib/validation/booking-schemas"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
-import { useTranslation } from "@/lib/translations/i18n" // Import useTranslation
 
 interface PaymentStepProps {
   initialData: BookingInitialData
@@ -23,7 +22,7 @@ interface PaymentStepProps {
   onSubmit: () => Promise<void>
   isLoading: boolean
   onPrev: () => void
-  // translations: Record<string, string> // Removed
+  translations: Record<string, string>
 }
 
 export default function PaymentStep({
@@ -34,9 +33,9 @@ export default function PaymentStep({
   onSubmit,
   isLoading,
   onPrev,
+  translations,
 }: PaymentStepProps) {
-  const { t } = useTranslation() // Initialize useTranslation
-  const [isClientLoading, setIsClientLoading] = useState(true)
+  const [isClientLoading, setIsClientLoading] = useState(true) // For initial client-side check
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(PaymentDetailsSchema),
@@ -46,7 +45,7 @@ export default function PaymentStep({
   })
 
   useEffect(() => {
-    setIsClientLoading(false)
+    setIsClientLoading(false) // Finished initial client-side loading
   }, [])
 
   useEffect(() => {
@@ -64,31 +63,36 @@ export default function PaymentStep({
   }
 
   if (isClientLoading || !calculatedPrice) {
+    // Show loader if client is still loading or price not calculated
     return (
       <div className="flex flex-col items-center justify-center p-8 min-h-[300px] text-muted-foreground">
         <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-        <span>{t("bookings.steps.payment.loadingPrice")}</span>
+        <span>{translations["bookings.steps.payment.loadingPrice"] || "Loading payment details..."}</span>
       </div>
     )
   }
 
   if (calculatedPrice.isFullyCoveredByVoucherOrSubscription && calculatedPrice.finalAmount === 0) {
     return (
-      <div className="space-y-8 text-center" dir={t("dir") === "rtl" ? "rtl" : "ltr"}>
+      <div className="space-y-8 text-center">
         <div className="flex flex-col items-center">
           <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
-          <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.payment.confirmTitleNoPayment")}</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {translations["bookings.steps.payment.confirmTitleNoPayment"] || "Confirm Your Booking"}
+          </h2>
           <p className="text-muted-foreground mt-1 max-w-md mx-auto">
-            {t("bookings.steps.payment.confirmDescNoPayment")}
+            {translations["bookings.steps.payment.confirmDescNoPayment"] ||
+              "Your booking is fully covered and no payment is required. Please review and confirm."}
           </p>
         </div>
+        {/* Optionally show a mini summary here if needed */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
           <Button variant="outline" onClick={onPrev} disabled={isLoading} type="button" size="lg">
-            {t("common.back")}
+            {translations["common.back"] || "Back"}
           </Button>
           <Button onClick={onSubmit} disabled={isLoading} type="button" size="lg">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("bookings.steps.payment.confirmBooking")}
+            {translations["bookings.steps.payment.confirmBooking"] || "Confirm Booking"}
           </Button>
         </div>
       </div>
@@ -97,17 +101,17 @@ export default function PaymentStep({
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmitValidated)}
-        className="space-y-8"
-        dir={t("dir") === "rtl" ? "rtl" : "ltr"}
-      >
+      <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.payment.title")}</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {translations["bookings.steps.payment.title"] || "Payment Details"}
+          </h2>
           <p className="text-muted-foreground mt-1">
-            {t("bookings.steps.payment.description")}{" "}
+            {translations["bookings.steps.payment.description"] ||
+              "Please select a payment method to complete your booking."}{" "}
             <span className="font-semibold text-primary">
-              {t("common.totalPrice")}: {calculatedPrice.finalAmount.toFixed(2)} {t("common.currency")}
+              {translations["common.totalPrice"] || "Total"}: {calculatedPrice.finalAmount.toFixed(2)}{" "}
+              {translations["common.currency"] || "ILS"}
             </span>
           </p>
         </div>
@@ -116,7 +120,7 @@ export default function PaymentStep({
           <CardHeader>
             <CardTitle className="text-xl flex items-center">
               <CreditCard className="mr-2 h-5 w-5 text-primary" />
-              {t("bookings.steps.payment.selectPaymentMethod")}
+              {translations["bookings.steps.payment.selectPaymentMethod"] || "Select Payment Method"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -126,7 +130,9 @@ export default function PaymentStep({
                 name="selectedPaymentMethodId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="sr-only">{t("bookings.steps.payment.selectPaymentMethod")}</FormLabel>
+                    <FormLabel className="sr-only">
+                      {translations["bookings.steps.payment.selectPaymentMethod"]}
+                    </FormLabel>
                     <FormControl>
                       <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-3">
                         {initialData.userPaymentMethods.map((pm) => (
@@ -152,7 +158,8 @@ export default function PaymentStep({
                               <div className="text-right">
                                 <p className="text-sm text-muted-foreground">{pm.cardType}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {t("paymentMethods.fields.expiry")}: {pm.expiryMonth}/{pm.expiryYear}
+                                  {translations["paymentMethods.fields.expiry"] || "Expires"}: {pm.expiryMonth}/
+                                  {pm.expiryYear}
                                 </p>
                               </div>
                             </Label>
@@ -167,13 +174,19 @@ export default function PaymentStep({
             ) : (
               <Alert variant="default">
                 <Info className="h-4 w-4" />
-                <AlertTitle>{t("bookings.steps.payment.noSavedPaymentMethodsTitle")}</AlertTitle>
-                <AlertDescription>{t("bookings.steps.payment.noSavedPaymentMethodsDesc")}</AlertDescription>
+                <AlertTitle>
+                  {translations["bookings.steps.payment.noSavedPaymentMethodsTitle"] || "No Payment Methods"}
+                </AlertTitle>
+                <AlertDescription>
+                  {translations["bookings.steps.payment.noSavedPaymentMethodsDesc"] ||
+                    "You don't have any saved payment methods. Please add one in your dashboard to proceed."}
+                </AlertDescription>
               </Alert>
             )}
             <Button variant="outline" className="mt-6 w-full" disabled type="button">
               <CreditCard className="mr-2 h-4 w-4" />
-              {t("paymentMethods.addNew")} ({t("common.comingSoon")})
+              {translations["paymentMethods.addNew"] || "Add New Payment Method"} (
+              {translations["common.comingSoon"] || "Coming Soon"})
             </Button>
           </CardContent>
         </Card>
@@ -187,7 +200,7 @@ export default function PaymentStep({
             size="lg"
             className="w-full sm:w-auto"
           >
-            {t("common.back")}
+            {translations["common.back"] || "Back"}
           </Button>
           <Button
             type="submit"
@@ -196,7 +209,8 @@ export default function PaymentStep({
             className="w-full sm:w-auto"
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("bookings.steps.payment.payAndConfirm")} {calculatedPrice.finalAmount.toFixed(2)} {t("common.currency")}
+            {translations["bookings.steps.payment.payAndConfirm"] || "Pay & Confirm"}{" "}
+            {calculatedPrice.finalAmount.toFixed(2)} {translations["common.currency"] || "ILS"}
           </Button>
         </div>
       </form>

@@ -1,8 +1,10 @@
 "use client"
 
-import type React from "react" // Keep type import
+import { FormDescription } from "@/components/common/ui/form"
+
+import type React from "react"
 import { useEffect } from "react"
-import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking" // Keep type import
+import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Input } from "@/components/common/ui/input"
@@ -11,18 +13,9 @@ import { Loader2, AlertCircle, CheckCircle, Tag, Gift, Star } from "lucide-react
 import { format } from "date-fns"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { SummarySchema, type SummaryFormValues } from "@/lib/validation/booking-schemas" // Keep type import
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-  FormDescription,
-} from "@/components/common/ui/form"
+import { SummarySchema, type SummaryFormValues } from "@/lib/validation/booking-schemas"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
-import { useTranslation } from "@/lib/translations/i18n" // Add this import
 
 interface SummaryStepProps {
   initialData: BookingInitialData
@@ -32,7 +25,7 @@ interface SummaryStepProps {
   isLoadingPrice: boolean
   onNext: () => void
   onPrev: () => void
-  // Remove translations prop: translations: Record<string, string>
+  translations: Record<string, string>
 }
 
 export default function SummaryStep({
@@ -43,9 +36,8 @@ export default function SummaryStep({
   isLoadingPrice,
   onNext,
   onPrev,
-}) {
-  const { t } = useTranslation() // Add this line
-
+  translations,
+}: SummaryStepProps) {
   const selectedTreatment = initialData.activeTreatments.find(
     (t) => t._id.toString() === bookingOptions.selectedTreatmentId,
   )
@@ -78,74 +70,87 @@ export default function SummaryStep({
   const isNextDisabled = isLoadingPrice || !calculatedPrice
 
   const getGenderPreferenceText = (preferenceKey?: string) => {
-    if (!preferenceKey) return t("preferences.treatment.genderAny")
+    if (!preferenceKey) return translations["preferences.treatment.genderAny"] || "Any"
     const key = `preferences.treatment.gender${preferenceKey.charAt(0).toUpperCase()}${preferenceKey.slice(1)}`
-    return t(key, preferenceKey) // Fallback to preferenceKey if translation not found
+    return translations[key] || preferenceKey
   }
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmitValidated)}
-        className="space-y-8"
-        dir={t("dir") === "rtl" ? "rtl" : "ltr"}
-      >
+      <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.summary.title")}</h2>
-          <p className="text-muted-foreground mt-1">{t("bookings.steps.summary.description")}</p>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {translations["bookings.steps.summary.title"] || "Review Your Booking"}
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            {translations["bookings.steps.summary.description"] ||
+              "Please confirm the details below before proceeding."}
+          </p>
         </div>
 
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="text-xl">{t("bookings.steps.summary.bookingDetails")}</CardTitle>
+            <CardTitle className="text-xl">
+              {translations["bookings.steps.summary.bookingDetails"] || "Booking Details"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-medium">{t("bookings.steps.summary.treatment")}:</span>
+              <span className="text-muted-foreground font-medium">
+                {translations["bookings.steps.summary.treatment"] || "Treatment"}:
+              </span>
               <span className="font-semibold text-right">
                 {selectedTreatment?.name}
                 {selectedDuration
-                  ? ` (${selectedDuration.minutes} ${t("common.minAbbreviation", t("common.minutes", "min").substring(0, 3))})`
+                  ? ` (${selectedDuration.minutes} ${translations["common.minAbbreviation"] || (translations["common.minutes"] ? translations["common.minutes"].substring(0, 3) : "min")})`
                   : ""}
               </span>
             </div>
             <Separator />
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-medium">{t("bookings.steps.summary.dateTime")}:</span>
+              <span className="text-muted-foreground font-medium">
+                {translations["bookings.steps.summary.dateTime"] || "Date & Time"}:
+              </span>
               <span className="font-semibold text-right">
                 {bookingOptions.bookingDate && bookingOptions.bookingTime
                   ? `${format(new Date(bookingOptions.bookingDate), "PPP")} @ ${bookingOptions.bookingTime}`
-                  : t("common.notAvailable")}
+                  : translations["common.notAvailable"] || "N/A"}
               </span>
             </div>
             {bookingOptions.isFlexibleTime && (
               <>
                 <Separator />
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">{t("bookings.steps.summary.flexibleTime")}:</span>
+                  <span className="text-muted-foreground font-medium">
+                    {translations["bookings.steps.summary.flexibleTime"] || "Flexible Time"}:
+                  </span>
                   <span className="font-semibold text-primary text-right">
-                    {t("bookings.steps.summary.flexibleTimeDetails", {
-                      yesLabel: t("common.yes"),
-                      count: (bookingOptions.flexibilityRangeHours || 2).toString(),
-                      hoursLabel: t("common.hours"),
-                    })}
+                    {(
+                      translations["bookings.steps.summary.flexibleTimeDetails"] ||
+                      "{yesLabel} (+/- {count} {hoursLabel})"
+                    )
+                      .replace("{yesLabel}", translations["common.yes"] || "Yes")
+                      .replace("{count}", (bookingOptions.flexibilityRangeHours || 2).toString())
+                      .replace("{hoursLabel}", translations["common.hours"] || "hours")}
                   </span>
                 </div>
               </>
             )}
             <Separator />
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-medium">{t("bookings.steps.summary.address")}:</span>
+              <span className="text-muted-foreground font-medium">
+                {translations["bookings.steps.summary.address"] || "Address"}:
+              </span>
               <span className="font-semibold text-right">
                 {selectedAddress
                   ? `${selectedAddress.street} ${selectedAddress.streetNumber || ""}, ${selectedAddress.city}`
-                  : t("common.notAvailable")}
+                  : translations["common.notAvailable"] || "N/A"}
               </span>
             </div>
             <Separator />
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground font-medium">
-                {t("bookings.steps.summary.therapistPreference")}:
+                {translations["bookings.steps.summary.therapistPreference"] || "Therapist Preference"}:
               </span>
               <span className="font-semibold text-right">
                 {getGenderPreferenceText(bookingOptions.therapistGenderPreference)}
@@ -155,7 +160,9 @@ export default function SummaryStep({
               <>
                 <Separator />
                 <div className="space-y-1">
-                  <span className="text-muted-foreground font-medium">{t("bookings.steps.summary.notes")}:</span>
+                  <span className="text-muted-foreground font-medium">
+                    {translations["bookings.steps.summary.notes"] || "Notes"}:
+                  </span>
                   <p className="font-semibold text-sm bg-muted p-2 rounded-md whitespace-pre-wrap">
                     {bookingOptions.notes}
                   </p>
@@ -170,7 +177,7 @@ export default function SummaryStep({
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
                 <Tag className="mr-2 h-5 w-5 text-primary" />
-                {t("bookings.steps.summary.couponCode")}
+                {translations["bookings.steps.summary.couponCode"] || "Have a Coupon Code?"}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -180,17 +187,20 @@ export default function SummaryStep({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel htmlFor="coupon-code" className="sr-only">
-                      {t("bookings.steps.summary.couponCode")}
+                      {translations["bookings.steps.summary.couponCode"]}
                     </FormLabel>
                     <FormControl>
                       <Input
                         id="coupon-code"
-                        placeholder={t("bookings.steps.summary.couponPlaceholder")}
+                        placeholder={translations["bookings.steps.summary.couponPlaceholder"] || "Enter coupon code"}
                         {...field}
                         className="text-base"
                       />
                     </FormControl>
-                    <FormDescription>{t("bookings.steps.summary.couponDesc")}</FormDescription>
+                    <FormDescription>
+                      {translations["bookings.steps.summary.couponDesc"] ||
+                        "If you have a coupon, enter it here to apply the discount."}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -201,35 +211,38 @@ export default function SummaryStep({
 
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="text-xl">{t("common.priceSummary")}</CardTitle>
+            <CardTitle className="text-xl">{translations["common.priceSummary"] || "Price Summary"}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             {isLoadingPrice && (
               <div className="flex items-center justify-center p-6 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin text-primary mr-3" />
-                <span>{t("bookings.steps.summary.calculatingPrice")}</span>
+                <span>{translations["bookings.steps.summary.calculatingPrice"] || "Calculating price..."}</span>
               </div>
             )}
             {!isLoadingPrice && !calculatedPrice && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertTitle>{t("common.error")}</AlertTitle>
-                <AlertDescription>{t("bookings.errors.priceCalculationUnavailable")}</AlertDescription>
+                <AlertTitle>{translations["common.error"] || "Error"}</AlertTitle>
+                <AlertDescription>
+                  {translations["bookings.errors.priceCalculationUnavailable"] ||
+                    "Price details are currently unavailable. Please ensure all previous steps are completed correctly."}
+                </AlertDescription>
               </Alert>
             )}
             {calculatedPrice && !isLoadingPrice && (
               <>
                 <div className="flex justify-between">
-                  <span>{t("bookings.steps.summary.basePrice")}:</span>
+                  <span>{translations["bookings.steps.summary.basePrice"] || "Base Price"}:</span>
                   <span>
-                    {calculatedPrice.basePrice.toFixed(2)} {t("common.currency")}
+                    {calculatedPrice.basePrice.toFixed(2)} {translations["common.currency"] || "ILS"}
                   </span>
                 </div>
                 {calculatedPrice.surcharges.map((surcharge, index) => (
                   <div key={index} className="flex justify-between">
-                    <span>{t(surcharge.description, surcharge.description)}:</span>
+                    <span>{translations[surcharge.description] || surcharge.description}:</span>
                     <span className="text-orange-600">
-                      + {surcharge.amount.toFixed(2)} {t("common.currency")}
+                      + {surcharge.amount.toFixed(2)} {translations["common.currency"] || "ILS"}
                     </span>
                   </div>
                 ))}
@@ -238,14 +251,14 @@ export default function SummaryStep({
                   <div className="flex justify-between items-center font-medium text-green-600">
                     <span className="flex items-center">
                       <Star className="mr-2 h-4 w-4" />
-                      {t("bookings.steps.summary.redeemedFromSubscription")}:
+                      {translations["bookings.steps.summary.redeemedFromSubscription"] || "Subscription Redemption"}:
                     </span>
                     <span>
                       -{" "}
                       {(
                         calculatedPrice.basePrice + calculatedPrice.surcharges.reduce((sum, s) => sum + s.amount, 0)
                       ).toFixed(2)}{" "}
-                      {t("common.currency")}
+                      {translations["common.currency"] || "ILS"}
                     </span>
                   </div>
                 )}
@@ -253,10 +266,10 @@ export default function SummaryStep({
                   <div className="flex justify-between items-center font-medium text-green-600">
                     <span className="flex items-center">
                       <Gift className="mr-2 h-4 w-4" />
-                      {t("bookings.steps.summary.voucherApplied")}:
+                      {translations["bookings.steps.summary.voucherApplied"] || "Gift Voucher Applied"}:
                     </span>
                     <span>
-                      - {calculatedPrice.voucherAppliedAmount.toFixed(2)} {t("common.currency")}
+                      - {calculatedPrice.voucherAppliedAmount.toFixed(2)} {translations["common.currency"] || "ILS"}
                     </span>
                   </div>
                 )}
@@ -264,25 +277,25 @@ export default function SummaryStep({
                   <div className="flex justify-between items-center font-medium text-green-600">
                     <span className="flex items-center">
                       <Tag className="mr-2 h-4 w-4" />
-                      {t("bookings.steps.summary.couponDiscount")}:
+                      {translations["bookings.steps.summary.couponDiscount"] || "Coupon Discount"}:
                     </span>
                     <span>
-                      - {calculatedPrice.couponDiscount.toFixed(2)} {t("common.currency")}
+                      - {calculatedPrice.couponDiscount.toFixed(2)} {translations["common.currency"] || "ILS"}
                     </span>
                   </div>
                 )}
                 <Separator className="my-3" />
                 <div className="flex justify-between font-bold text-lg">
-                  <span>{t("bookings.steps.summary.totalAmount")}:</span>
+                  <span>{translations["bookings.steps.summary.totalAmount"] || "Total Amount"}:</span>
                   <span className="text-primary">
-                    {calculatedPrice.finalAmount.toFixed(2)} {t("common.currency")}
+                    {calculatedPrice.finalAmount.toFixed(2)} {translations["common.currency"] || "ILS"}
                   </span>
                 </div>
                 {calculatedPrice.isFullyCoveredByVoucherOrSubscription && calculatedPrice.finalAmount === 0 && (
                   <Alert variant="default" className="mt-3 bg-green-50 border-green-200 text-green-700">
                     <CheckCircle className="h-5 w-5 text-green-600" />
                     <AlertDescription className="font-medium">
-                      {t("bookings.steps.summary.fullyCovered")}
+                      {translations["bookings.steps.summary.fullyCovered"] || "This booking is fully covered!"}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -299,11 +312,13 @@ export default function SummaryStep({
             disabled={form.formState.isSubmitting || isLoadingPrice}
             size="lg"
           >
-            {t("common.back")}
+            {translations["common.back"] || "Back"}
           </Button>
           <Button type="submit" disabled={isNextDisabled || form.formState.isSubmitting} size="lg">
             {(form.formState.isSubmitting || isLoadingPrice) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {calculatedPrice?.finalAmount === 0 ? t("bookings.steps.summary.confirmBooking") : t("common.next")}
+            {calculatedPrice?.finalAmount === 0
+              ? translations["bookings.steps.summary.confirmBooking"] || "Confirm Booking"
+              : translations["common.next"] || "Next"}
           </Button>
         </div>
       </form>

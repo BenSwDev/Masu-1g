@@ -184,24 +184,22 @@ const DateTimeStep = ({ initialData, currentUser, onNext, onBack, bookingData, s
           setAvailableTimes((result as any).times)
         } else {
           toast({
-            variant: "destructive",
-            title: t(
-              (result as any).error || "bookings.errors.fetchTimeSlotsFailedTitle",
-              (result as any).error || t("common.error", "Error"),
-            ),
-            description: (result as any).error
-              ? t((result as any).error, String((result as any).error))
+            title: t((result as any)?.error || "bookings.errors.fetchTimeSlotsFailedTitle", {
+              defaultValue: (result as any)?.error || t("common.error", { defaultValue: "Error" }),
+            }),
+            description: (result as any)?.error
+              ? t((result as any)?.error, { defaultValue: String((result as any)?.error) })
               : t("bookings.errors.fetchTimeSlotsFailedTitle"),
           })
         }
       } catch (error: any) {
         toast({
-          title: t("bookings.errors.fetchTimeSlotsFailedTitle"),
-          description: (error as any)?.response?.data?.error
-            ? t((error as any)?.response?.data?.error) !== (error as any)?.response?.data?.error
-              ? t((error as any)?.response?.data?.error)
-              : String((error as any)?.response?.data?.error)
-            : t("bookings.errors.fetchTimeSlotsFailed"),
+          title: t((error as any)?.message || "bookings.errors.fetchTimeSlotsFailedTitle", {
+            defaultValue: error?.message || t("common.error", { defaultValue: "Error" }),
+          }),
+          description: error?.message
+            ? t(error?.message, { defaultValue: String(error?.message) })
+            : t("bookings.errors.fetchTimeSlotsFailedTitle"),
         })
       }
     }

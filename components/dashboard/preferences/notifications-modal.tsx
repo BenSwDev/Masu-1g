@@ -32,8 +32,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const { data: session, update: updateSession } = useSession()
-  const { t, i18n } = useTranslation()
-  const dir = i18n.dir()
+  const { t, dir } = useTranslation() // Correctly destructure dir
 
   useEffect(() => {
     if (isOpen && currentPreferences) {
@@ -97,7 +96,12 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
             {t("preferences.notifications.methodsLabel")}
           </Label>
           <div className="mt-2 space-y-2">
-            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+              )}
+            >
               <Checkbox
                 id="method-email"
                 checked={selectedMethods.includes("email")}
@@ -106,7 +110,12 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
               />
               <Label htmlFor="method-email">{t("preferences.notifications.methodEmail")}</Label>
             </div>
-            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+              )}
+            >
               <Checkbox
                 id="method-sms"
                 checked={selectedMethods.includes("sms")}
@@ -128,22 +137,37 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
             className="mt-2 space-y-2"
             dir={dir}
           >
-            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+              )}
+            >
               <RadioGroupItem value="he" id="lang-he" />
               <Label htmlFor="lang-he">{t("preferences.notifications.langHe")}</Label>
             </div>
-            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+              )}
+            >
               <RadioGroupItem value="en" id="lang-en" />
               <Label htmlFor="lang-en">{t("preferences.notifications.langEn")}</Label>
             </div>
-            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
+            <div
+              className={cn(
+                "flex items-center gap-2",
+                dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start",
+              )}
+            >
               <RadioGroupItem value="ru" id="lang-ru" />
               <Label htmlFor="lang-ru">{t("preferences.notifications.langRu")}</Label>
             </div>
           </RadioGroup>
         </div>
       </div>
-      <DialogFooter>
+      <DialogFooter className={cn(dir === "rtl" ? "flex-row-reverse" : "")}>
         <Button variant="outline" onClick={onClose} disabled={isLoading}>
           {t("common.cancel")}
         </Button>

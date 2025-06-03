@@ -28,8 +28,7 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const { data: session, update: updateSession } = useSession()
-  const { t, i18n } = useTranslation()
-  const dir = i18n.dir()
+  const { t, dir } = useTranslation() // Correctly destructure dir
 
   useEffect(() => {
     if (isOpen && currentPreferences) {
@@ -74,23 +73,29 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
           value={selectedGender}
           onValueChange={(value: ITreatmentPreferences["therapistGender"]) => setSelectedGender(value)}
           className="mt-2 space-y-2"
-          dir={dir} // Pass dir to RadioGroup for its own internal RTL handling if any
+          dir={dir}
         >
-          <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
+          <div
+            className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start")}
+          >
             <RadioGroupItem value="male" id="gender-male" />
             <Label htmlFor="gender-male">{t("preferences.treatment.genderMale")}</Label>
           </div>
-          <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
+          <div
+            className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start")}
+          >
             <RadioGroupItem value="female" id="gender-female" />
             <Label htmlFor="gender-female">{t("preferences.treatment.genderFemale")}</Label>
           </div>
-          <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
+          <div
+            className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse justify-end" : "justify-start")}
+          >
             <RadioGroupItem value="any" id="gender-any" />
             <Label htmlFor="gender-any">{t("preferences.treatment.genderAny")}</Label>
           </div>
         </RadioGroup>
       </div>
-      <DialogFooter>
+      <DialogFooter className={cn(dir === "rtl" ? "flex-row-reverse" : "")}>
         <Button variant="outline" onClick={onClose} disabled={isLoading}>
           {t("common.cancel")}
         </Button>

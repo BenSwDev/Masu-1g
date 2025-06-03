@@ -379,6 +379,7 @@ export default function WorkingHoursClient() {
                                           checked={field.value}
                                           onCheckedChange={field.onChange}
                                           aria-label={`${t("workingHours.active")} for ${dayNames[dayOfWeek]}`}
+                                          id={`fixedHours-desktop-${index}-isActive`}
                                         />
                                       </FormControl>
                                     </FormItem>
@@ -398,6 +399,7 @@ export default function WorkingHoursClient() {
                                             {...field}
                                             className="w-full max-w-[120px]"
                                             aria-label={`${t("workingHours.startTime")} for ${dayNames[dayOfWeek]}`}
+                                            id={`fixedHours-desktop-${index}-startTime`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -419,6 +421,7 @@ export default function WorkingHoursClient() {
                                             {...field}
                                             className="w-full max-w-[120px]"
                                             aria-label={`${t("workingHours.endTime")} for ${dayNames[dayOfWeek]}`}
+                                            id={`fixedHours-desktop-${index}-endTime`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -440,9 +443,13 @@ export default function WorkingHoursClient() {
                                               checked={field.value}
                                               onCheckedChange={field.onChange}
                                               aria-label={`${t("workingHours.hasPriceAddition")} for ${dayNames[dayOfWeek]}`}
+                                              id={`fixedHours-desktop-${index}-hasPriceAddition`}
                                             />
                                           </FormControl>
-                                          <FormLabel className="text-sm font-normal">
+                                          <FormLabel
+                                            htmlFor={`fixedHours-desktop-${index}-hasPriceAddition`}
+                                            className="text-sm font-normal"
+                                          >
                                             {t("workingHours.enablePriceAddition")}
                                           </FormLabel>
                                         </FormItem>
@@ -467,6 +474,7 @@ export default function WorkingHoursClient() {
                                                   }
                                                   className="w-20"
                                                   aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
+                                                  id={`fixedHours-desktop-${index}-priceAddition-amount`}
                                                 />
                                               </FormControl>
                                               <FormMessage />
@@ -486,6 +494,7 @@ export default function WorkingHoursClient() {
                                                   <SelectTrigger
                                                     className="w-[90px]"
                                                     aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
+                                                    id={`fixedHours-desktop-${index}-priceAddition-type`}
                                                   >
                                                     <SelectValue />
                                                   </SelectTrigger>
@@ -517,6 +526,7 @@ export default function WorkingHoursClient() {
                                             placeholder={t("workingHours.notesPlaceholder")}
                                             className="min-h-[60px] w-full max-w-[200px]"
                                             aria-label={`${t("workingHours.notes")} for ${dayNames[dayOfWeek]}`}
+                                            id={`fixedHours-desktop-${index}-notes`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -554,6 +564,7 @@ export default function WorkingHoursClient() {
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
                                         aria-label={`${t("workingHours.active")} for ${dayNames[dayOfWeek]}`}
+                                        id={`fixedHours-mobile-${index}-isActive`}
                                       />
                                     </FormControl>
                                   </FormItem>
@@ -569,13 +580,16 @@ export default function WorkingHoursClient() {
                                     name={`fixedHours.${index}.startTime`}
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.startTime")}</FormLabel>
+                                        <FormLabel htmlFor={`fixedHours-mobile-${index}-startTime`}>
+                                          {t("workingHours.startTime")}
+                                        </FormLabel>
                                         <FormControl>
                                           <Input
                                             type="time"
                                             {...field}
                                             className="w-full"
                                             aria-label={`${t("workingHours.startTime")} for ${dayNames[dayOfWeek]}`}
+                                            id={`fixedHours-mobile-${index}-startTime`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -587,13 +601,16 @@ export default function WorkingHoursClient() {
                                     name={`fixedHours.${index}.endTime`}
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.endTime")}</FormLabel>
+                                        <FormLabel htmlFor={`fixedHours-mobile-${index}-endTime`}>
+                                          {t("workingHours.endTime")}
+                                        </FormLabel>
                                         <FormControl>
                                           <Input
                                             type="time"
                                             {...field}
                                             className="w-full"
                                             aria-label={`${t("workingHours.endTime")} for ${dayNames[dayOfWeek]}`}
+                                            id={`fixedHours-mobile-${index}-endTime`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -612,9 +629,13 @@ export default function WorkingHoursClient() {
                                           checked={field.value}
                                           onCheckedChange={field.onChange}
                                           aria-label={`${t("workingHours.hasPriceAddition")} for ${dayNames[dayOfWeek]}`}
+                                          id={`fixedHours-mobile-${index}-hasPriceAddition`}
                                         />
                                       </FormControl>
-                                      <FormLabel className="text-sm font-normal">
+                                      <FormLabel
+                                        htmlFor={`fixedHours-mobile-${index}-hasPriceAddition`}
+                                        className="text-sm font-normal"
+                                      >
                                         {t("workingHours.enablePriceAddition")}
                                       </FormLabel>
                                     </FormItem>
@@ -628,7 +649,9 @@ export default function WorkingHoursClient() {
                                       name={`fixedHours.${index}.priceAddition.amount`}
                                       render={({ field }) => (
                                         <FormItem>
-                                          <FormLabel>{t("workingHours.amount")}</FormLabel>
+                                          <FormLabel htmlFor={`fixedHours-mobile-${index}-priceAddition-amount`}>
+                                            {t("workingHours.amount")}
+                                          </FormLabel>
                                           <FormControl>
                                             <Input
                                               type="number"
@@ -639,6 +662,7 @@ export default function WorkingHoursClient() {
                                               onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
                                               className="w-full"
                                               aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
+                                              id={`fixedHours-mobile-${index}-priceAddition-amount`}
                                             />
                                           </FormControl>
                                           <FormMessage />
@@ -650,12 +674,15 @@ export default function WorkingHoursClient() {
                                       name={`fixedHours.${index}.priceAddition.type`}
                                       render={({ field }) => (
                                         <FormItem>
-                                          <FormLabel>{t("workingHours.type")}</FormLabel>
+                                          <FormLabel htmlFor={`fixedHours-mobile-${index}-priceAddition-type`}>
+                                            {t("workingHours.type")}
+                                          </FormLabel>
                                           <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
                                             <FormControl>
                                               <SelectTrigger
                                                 className="w-full"
                                                 aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
+                                                id={`fixedHours-mobile-${index}-priceAddition-type`}
                                               >
                                                 <SelectValue />
                                               </SelectTrigger>
@@ -677,13 +704,16 @@ export default function WorkingHoursClient() {
                                   name={`fixedHours.${index}.notes`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>{t("workingHours.notes")}</FormLabel>
+                                      <FormLabel htmlFor={`fixedHours-mobile-${index}-notes`}>
+                                        {t("workingHours.notes")}
+                                      </FormLabel>
                                       <FormControl>
                                         <Textarea
                                           {...field}
                                           placeholder={t("workingHours.notesPlaceholder")}
                                           className="min-h-[60px] w-full"
                                           aria-label={`${t("workingHours.notes")} for ${dayNames[dayOfWeek]}`}
+                                          id={`fixedHours-mobile-${index}-notes`}
                                         />
                                       </FormControl>
                                       <FormMessage />
@@ -755,9 +785,15 @@ export default function WorkingHoursClient() {
                             name="name"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{t("workingHours.specialDateName")}</FormLabel>
+                                <FormLabel htmlFor="specialDateForm-name">
+                                  {t("workingHours.specialDateName")}
+                                </FormLabel>
                                 <FormControl>
-                                  <Input {...field} placeholder={t("workingHours.specialDateNamePlaceholder")} />
+                                  <Input
+                                    {...field}
+                                    placeholder={t("workingHours.specialDateNamePlaceholder")}
+                                    id="specialDateForm-name"
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -775,6 +811,7 @@ export default function WorkingHoursClient() {
                                       <Button
                                         variant="outline"
                                         className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                        id="specialDateForm-date-trigger"
                                       >
                                         <CalendarIcon className="rtl:ml-2 ltr:mr-2 h-4 w-4" />
                                         {field.value ? (
@@ -828,9 +865,11 @@ export default function WorkingHoursClient() {
                                   name="startTime"
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>{t("workingHours.startTime")}</FormLabel>
+                                      <FormLabel htmlFor="specialDateForm-startTime">
+                                        {t("workingHours.startTime")}
+                                      </FormLabel>
                                       <FormControl>
-                                        <Input type="time" {...field} />
+                                        <Input type="time" {...field} id="specialDateForm-startTime" />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -842,9 +881,11 @@ export default function WorkingHoursClient() {
                                   name="endTime"
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>{t("workingHours.endTime")}</FormLabel>
+                                      <FormLabel htmlFor="specialDateForm-endTime">
+                                        {t("workingHours.endTime")}
+                                      </FormLabel>
                                       <FormControl>
-                                        <Input type="time" {...field} />
+                                        <Input type="time" {...field} id="specialDateForm-endTime" />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -878,7 +919,9 @@ export default function WorkingHoursClient() {
                                     name="priceAddition.amount"
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.amount")}</FormLabel>
+                                        <FormLabel htmlFor="specialDateForm-priceAddition-amount">
+                                          {t("workingHours.amount")}
+                                        </FormLabel>
                                         <FormControl>
                                           <Input
                                             type="number"
@@ -887,6 +930,7 @@ export default function WorkingHoursClient() {
                                             placeholder="0"
                                             {...field}
                                             onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                                            id="specialDateForm-priceAddition-amount"
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -899,10 +943,12 @@ export default function WorkingHoursClient() {
                                     name="priceAddition.type"
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.type")}</FormLabel>
+                                        <FormLabel htmlFor="specialDateForm-priceAddition-type">
+                                          {t("workingHours.type")}
+                                        </FormLabel>
                                         <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
                                           <FormControl>
-                                            <SelectTrigger>
+                                            <SelectTrigger id="specialDateForm-priceAddition-type">
                                               <SelectValue />
                                             </SelectTrigger>
                                           </FormControl>
@@ -923,12 +969,13 @@ export default function WorkingHoursClient() {
                                 name="notes"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>{t("workingHours.notes")}</FormLabel>
+                                    <FormLabel htmlFor="specialDateForm-notes">{t("workingHours.notes")}</FormLabel>
                                     <FormControl>
                                       <Textarea
                                         {...field}
                                         placeholder={t("workingHours.notesPlaceholder")}
                                         className="min-h-[80px]"
+                                        id="specialDateForm-notes"
                                       />
                                     </FormControl>
                                     <FormMessage />

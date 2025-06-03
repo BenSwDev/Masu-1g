@@ -1,19 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    // This option allows you to specify packages that should be treated as external
-    // when building Server Components, Server Actions, and Route Handlers.
-    // This is crucial for packages that include native Node.js addons (like .node files)
-    // or rely on server-specific APIs that shouldn't be bundled by Webpack.
-    //
-    // By listing 'mongodb', we instruct Next.js not to bundle the MongoDB driver
-    // and its (optional) native dependencies (e.g., 'snappy', '@mongodb-js/zstd')
-    // into the server-side bundles. Instead, these packages will be 'require()'d
-    // at runtime directly from the node_modules directory on the server.
-    // This resolves the "Module parse failed" errors for .node files associated
-    // with 'snappy', as Webpack will no longer attempt to process them.
-    serverComponentsExternalPackages: ['mongodb'],
-  },
+  // This option allows you to specify packages that should be treated as external
+  // when building Server Components, Server Actions, and Route Handlers.
+  // This is crucial for packages that include native Node.js addons (like .node files)
+  // or rely on server-specific APIs that shouldn't be bundled by Webpack.
+  //
+  // By listing 'mongodb', we instruct Next.js not to bundle the MongoDB driver
+  // and its (optional) native dependencies (e.g., 'snappy', '@mongodb-js/zstd')
+  // into the server-side bundles. Instead, these packages will be 'require()'d
+  // at runtime directly from the node_modules directory on the server.
+  // This resolves the "Module parse failed" errors for .node files associated
+  // with 'snappy', as Webpack will no longer attempt to process them.
+  serverExternalPackages: ['mongodb'],
   eslint: {
     // Disables ESLint checks during the build process.
     // This can speed up builds but means ESLint errors won't prevent a deployment.

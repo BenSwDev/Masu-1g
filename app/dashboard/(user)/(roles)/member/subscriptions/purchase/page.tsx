@@ -1,5 +1,3 @@
-export const dynamic = "force-dynamic"
-
 import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
 import { getActivePaymentMethods } from "@/actions/payment-method-actions"

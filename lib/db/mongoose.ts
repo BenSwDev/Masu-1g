@@ -24,8 +24,9 @@ async function dbConnect() {
   }
 
   if (!cached.promise) {
+    const mongooseOptions = { compressors: ["zlib"] } // Specify zlib compressor
     cached.promise = mongoose
-      .connect(MONGODB_URI)
+      .connect(MONGODB_URI, mongooseOptions) // Pass options here
       .then((mongoose) => {
         return mongoose
       })

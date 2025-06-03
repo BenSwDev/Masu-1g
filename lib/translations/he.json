@@ -1349,5 +1349,140 @@
       "saveSuccess": "הגדרות ההתראות נשמרו בהצלחה.",
       "saveError": "שגיאה בשמירת הגדרות ההתראות."
     }
+  },
+  "bookings": {
+    "title": "הזמנת טיפול",
+    "steps": {
+      "source": {
+        "title": "איך תרצה להזמין?",
+        "description": "בחר את שיטת ההזמנה שלך.",
+        "redeemSubscription": "שימוש במנוי שלי",
+        "redeemSubscriptionDesc": "ממש טיפול מהמנויים הפעילים שלך.",
+        "available": "זמין/ים",
+        "redeemVoucher": "שימוש בשובר מתנה",
+        "redeemVoucherDesc": "השתמש בשובר מתנה עבור ההזמנה שלך.",
+        "newBooking": "הזמנה חדשה / תשלום",
+        "newBookingDesc": "הזמן טיפול חדש ושלם ישירות."
+      },
+      "treatment": {
+        "title": "בחר את הטיפול שלך",
+        "description": "בחר את השירות ומשך הזמן המועדפים עליך.",
+        "selectSubscription": "בחר את המנוי שלך",
+        "selectSubscriptionPlaceholder": "בחר מנוי...",
+        "selectVoucher": "בחר את שובר המתנה שלך",
+        "selectVoucherPlaceholder": "בחר שובר...",
+        "selectTreatment": "בחר טיפול",
+        "noDescription": "אין תיאור זמין.",
+        "priceVariesByDuration": "המחיר משתנה לפי משך הטיפול",
+        "noTreatmentsForSelection": "אין טיפולים זמינים לבחירה זו. אנא בדוק את המנוי/שובר שלך או בחר שיטת הזמנה אחרת.",
+        "selectDuration": "בחר משך טיפול",
+        "selectDurationPlaceholder": "בחר משך..."
+      },
+      "scheduling": {
+        "title": "קבע את התור שלך",
+        "description": "בחר תאריך, שעה ומיקום לטיפול שלך.",
+        "selectDate": "בחר תאריך",
+        "selectTime": "בחר שעה",
+        "selectTimePlaceholder": "בחר משבצת זמן...",
+        "noSlotsAvailable": "אין משבצות זמן פנויות לתאריך הנבחר. אנא נסה תאריך אחר.",
+        "selectDateFirst": "אנא בחר תאריך תחילה כדי לראות זמנים פנויים.",
+        "flexibleTimeLabel": "אני גמיש/ה עם השעה (+/- שעתיים)",
+        "selectAddress": "בחר כתובת",
+        "selectAddressPlaceholder": "בחר כתובת...",
+        "noSavedAddresses": "אין לך כתובות שמורות. אנא הוסף כתובת.",
+        "therapistPreference": "העדפת מגדר מטפל/ת",
+        "notes": "הערות נוספות (אופציונלי)",
+        "notesPlaceholder": "בקשות מיוחדות או מידע למטפל/ת..."
+      },
+      "summary": {
+        "title": "בדוק את הזמנתך",
+        "description": "אנא אשר את פרטי התור שלך.",
+        "bookingDetails": "פרטי הזמנה",
+        "treatment": "טיפול",
+        "dateTime": "תאריך ושעה",
+        "flexibleTime": "זמן גמיש",
+        "address": "כתובת",
+        "therapistPreference": "העדפת מטפל/ת",
+        "notes": "הערות",
+        "couponCode": "קוד קופון (אופציונלי)",
+        "couponPlaceholder": "הזן קוד קופון",
+        "applyCoupon": "החל",
+        "calculatingPrice": "מחשב מחיר...",
+        "basePrice": "מחיר בסיס",
+        "redeemedFromSubscription": "מומש מהמנוי",
+        "voucherApplied": "שובר מתנה הופעל",
+        "couponDiscount": "הנחת קופון",
+        "totalAmount": "סכום כולל",
+        "fullyCovered": "הזמנה זו מכוסה במלואה.",
+        "confirmBooking": "אשר הזמנה"
+      },
+      "payment": {
+        "title": "תשלום",
+        "description": "השלם את הזמנתך על ידי מסירת פרטי תשלום.",
+        "loadingPrice": "טוען פרטי מחיר...",
+        "confirmTitleNoPayment": "אשר את הזמנתך",
+        "confirmDescNoPayment": "הזמנתך מכוסה במלואה. אנא אשר לסיום.",
+        "confirmBooking": "אשר הזמנה",
+        "selectPaymentMethod": "בחר אמצעי תשלום",
+        "noSavedPaymentMethods": "אין לך אמצעי תשלום שמורים.",
+        "payAndConfirm": "שלם ואשר"
+      },
+      "confirmation": {
+        "title": "ההזמנה אושרה!",
+        "successMessage": "הטיפול שלך הוזמן בהצלחה. אנו מוצאים עבורך את המטפל/ת המתאימ/ה ביותר.",
+        "bookingId": "מזהה הזמנה",
+        "detailsSentToEmail": "אישור עם פרטי ההזמנה שלך נשלח למייל שלך.",
+        "viewMyBookings": "צפה בהזמנות שלי",
+        "bookAnotherTreatment": "הזמן טיפול נוסף"
+      }
+    },
+    "errors": {
+      "invalidDate": "התאריך שנבחר אינו תקין.",
+      "treatmentNotFound": "הטיפול שנבחר לא נמצא או אינו פעיל.",
+      "durationRequired": "נדרש משך זמן לסוג טיפול זה.",
+      "durationNotFound": "משך הזמן שנבחר לא נמצא או אינו פעיל.",
+      "invalidTreatmentDuration": "משך הטיפול אינו תקין.",
+      "workingHoursNotSet": "שעות הפעילות אינן מוגדרות לתאריך הנבחר.",
+      "fetchTimeSlotsFailed": "שליפת משבצות זמן פנויות נכשלה. אנא נסה שוב.",
+      "invalidBasePrice": "לא ניתן לחשב מחיר, מחיר הבסיס אינו תקין.",
+      "calculatePriceFailed": "חישוב מחיר ההזמנה נכשל. אנא נסה שוב.",
+      "subscriptionInvalid": "המנוי שנבחר אינו תקין, פג תוקף, או שאין בו טיפולים שנותרו.",
+      "giftVoucherInvalid": "שובר המתנה שנבחר אינו תקין, פג תוקף, או נוצל במלואו.",
+      "couponInvalid": "קוד הקופון אינו תקין, פג תוקף, או הגיע למגבלת השימוש שלו.",
+      "subscriptionRedemptionFailed": "מימוש מהמנוי נכשל. אנא בדוק את סטטוס המנוי.",
+      "voucherRedemptionFailedInactive": "מימוש שובר המתנה נכשל. ייתכן שהוא אינו פעיל.",
+      "voucherInsufficientBalance": "אין יתרה מספקת בשובר המתנה להזמנה זו.",
+      "couponApplyFailed": "החלת הקופון נכשלה. ייתכן שהוא אינו תקין או פג תוקף.",
+      "paymentMethodRequired": "נדרש אמצעי תשלום להזמנה זו.",
+      "bookingCreationFailedUnknown": "יצירת ההזמנה נכשלה עקב שגיאה לא ידועה.",
+      "createBookingFailed": "יצירת ההזמנה נכשלה. אנא נסה שוב.",
+      "bookingNotFound": "ההזמנה לא נמצאה.",
+      "cannotCancelAlreadyProcessed": "לא ניתן לבטל הזמנה זו מכיוון שהיא כבר עובדה או בוטלה.",
+      "cancellationFailedUnknown": "ביטול ההזמנה נכשל עקב שגיאה לא ידועה.",
+      "cancelBookingFailed": "ביטול ההזמנה נכשל. אנא נסה שוב.",
+      "initialDataLoadFailed": "טעינת נתונים קריטיים לדף ההזמנה נכשלה.",
+      "initialDataFetchFailed": "שליפת נתונים ראשוניים להזמנה נכשלה. אנא רענן את הדף."
+    },
+    "messages": {
+      "closedOnSelectedDate": "אנו סגורים בתאריך הנבחר."
+    },
+    "surcharges": {
+      "specialTime": "תוספת מחיר לזמן מיוחד"
+    },
+    "voucherUsage": {
+      "redeemedForBooking": "מומש עבור הזמנה מספר:"
+    },
+    "validation": {
+      "sourceRequired": "אנא בחר כיצד ברצונך להזמין.",
+      "treatmentRequired": "אנא בחר טיפול.",
+      "dateRequired": "אנא בחר תאריך להזמנה.",
+      "timeRequired": "אנא בחר שעה להזמנה.",
+      "addressRequired": "אנא בחר כתובת לשירות.",
+      "notesTooLong": "הערות לא יכולות לעלות על 500 תווים.",
+      "paymentMethodRequired": "אנא בחר אמצעי תשלום.",
+      "durationRequiredForType": "נדרש משך זמן עבור הטיפול הנבחר."
+    },
+    "unknownSubscription": "מנוי לא ידוע",
+    "treatmentVoucher": "שובר טיפול"
   }
 }

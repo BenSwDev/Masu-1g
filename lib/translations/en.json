@@ -1154,5 +1154,140 @@
       "saveSuccess": "Notification settings saved successfully.",
       "saveError": "Failed to save notification settings."
     }
+  },
+  "bookings": {
+    "title": "Book a Treatment",
+    "steps": {
+      "source": {
+        "title": "How would you like to book?",
+        "description": "Choose your booking method.",
+        "redeemSubscription": "Use My Subscription",
+        "redeemSubscriptionDesc": "Redeem a session from your active subscriptions.",
+        "available": "available",
+        "redeemVoucher": "Use Gift Voucher",
+        "redeemVoucherDesc": "Apply a gift voucher towards your booking.",
+        "newBooking": "New Booking / Pay Now",
+        "newBookingDesc": "Book a new treatment and pay directly."
+      },
+      "treatment": {
+        "title": "Select Your Treatment",
+        "description": "Choose the service and duration you prefer.",
+        "selectSubscription": "Select Your Subscription",
+        "selectSubscriptionPlaceholder": "Choose a subscription...",
+        "selectVoucher": "Select Your Gift Voucher",
+        "selectVoucherPlaceholder": "Choose a voucher...",
+        "selectTreatment": "Select Treatment",
+        "noDescription": "No description available.",
+        "priceVariesByDuration": "Price varies by duration",
+        "noTreatmentsForSelection": "No treatments available for this selection. Please check your subscription/voucher or choose another booking method.",
+        "selectDuration": "Select Duration",
+        "selectDurationPlaceholder": "Choose a duration..."
+      },
+      "scheduling": {
+        "title": "Schedule Your Appointment",
+        "description": "Pick a date, time, and location for your treatment.",
+        "selectDate": "Select Date",
+        "selectTime": "Select Time",
+        "selectTimePlaceholder": "Select a time slot...",
+        "noSlotsAvailable": "No time slots available for the selected date. Please try another date.",
+        "selectDateFirst": "Please select a date first to see available times.",
+        "flexibleTimeLabel": "I'm flexible with the time (+/- 2 hours)",
+        "selectAddress": "Select Address",
+        "selectAddressPlaceholder": "Choose an address...",
+        "noSavedAddresses": "You have no saved addresses. Please add one.",
+        "therapistPreference": "Preferred Therapist Gender",
+        "notes": "Additional Notes (Optional)",
+        "notesPlaceholder": "Any special requests or information for the therapist..."
+      },
+      "summary": {
+        "title": "Review Your Booking",
+        "description": "Please confirm the details of your appointment.",
+        "bookingDetails": "Booking Details",
+        "treatment": "Treatment",
+        "dateTime": "Date & Time",
+        "flexibleTime": "Flexible Time",
+        "address": "Address",
+        "therapistPreference": "Therapist Preference",
+        "notes": "Notes",
+        "couponCode": "Coupon Code (Optional)",
+        "couponPlaceholder": "Enter coupon code",
+        "applyCoupon": "Apply",
+        "calculatingPrice": "Calculating price...",
+        "basePrice": "Base Price",
+        "redeemedFromSubscription": "Redeemed from Subscription",
+        "voucherApplied": "Gift Voucher Applied",
+        "couponDiscount": "Coupon Discount",
+        "totalAmount": "Total Amount",
+        "fullyCovered": "This booking is fully covered.",
+        "confirmBooking": "Confirm Booking"
+      },
+      "payment": {
+        "title": "Payment",
+        "description": "Complete your booking by providing payment details.",
+        "loadingPrice": "Loading price details...",
+        "confirmTitleNoPayment": "Confirm Your Booking",
+        "confirmDescNoPayment": "Your booking is fully covered. Please confirm to finalize.",
+        "confirmBooking": "Confirm Booking",
+        "selectPaymentMethod": "Select Payment Method",
+        "noSavedPaymentMethods": "You have no saved payment methods.",
+        "payAndConfirm": "Pay & Confirm"
+      },
+      "confirmation": {
+        "title": "Booking Confirmed!",
+        "successMessage": "Your treatment has been successfully booked. We're finding the best professional for you.",
+        "bookingId": "Booking ID",
+        "detailsSentToEmail": "A confirmation with your booking details has been sent to your email.",
+        "viewMyBookings": "View My Bookings",
+        "bookAnotherTreatment": "Book Another Treatment"
+      }
+    },
+    "errors": {
+      "invalidDate": "Invalid date selected.",
+      "treatmentNotFound": "Selected treatment not found or is inactive.",
+      "durationRequired": "Duration is required for this treatment type.",
+      "durationNotFound": "Selected duration not found or is inactive.",
+      "invalidTreatmentDuration": "Treatment duration is invalid.",
+      "workingHoursNotSet": "Working hours are not configured for the selected date.",
+      "fetchTimeSlotsFailed": "Failed to fetch available time slots. Please try again.",
+      "invalidBasePrice": "Cannot calculate price, base price is invalid.",
+      "calculatePriceFailed": "Failed to calculate booking price. Please try again.",
+      "subscriptionInvalid": "Selected subscription is invalid, expired, or has no remaining sessions.",
+      "giftVoucherInvalid": "Selected gift voucher is invalid, expired, or fully used.",
+      "couponInvalid": "The coupon code is invalid, expired, or has reached its usage limit.",
+      "subscriptionRedemptionFailed": "Failed to redeem from subscription. Please check its status.",
+      "voucherRedemptionFailedInactive": "Failed to redeem gift voucher. It may be inactive.",
+      "voucherInsufficientBalance": "Gift voucher has insufficient balance for this booking.",
+      "couponApplyFailed": "Failed to apply coupon. It may be invalid or expired.",
+      "paymentMethodRequired": "A payment method is required for this booking.",
+      "bookingCreationFailedUnknown": "Booking creation failed due to an unknown error.",
+      "createBookingFailed": "Failed to create booking. Please try again.",
+      "bookingNotFound": "Booking not found.",
+      "cannotCancelAlreadyProcessed": "This booking cannot be cancelled as it's already processed or cancelled.",
+      "cancellationFailedUnknown": "Booking cancellation failed due to an unknown error.",
+      "cancelBookingFailed": "Failed to cancel booking. Please try again.",
+      "initialDataLoadFailed": "Critical data for booking page could not be loaded.",
+      "initialDataFetchFailed": "Failed to fetch initial data for booking. Please refresh the page."
+    },
+    "messages": {
+      "closedOnSelectedDate": "We are closed on the selected date."
+    },
+    "surcharges": {
+      "specialTime": "Special Time Surcharge"
+    },
+    "voucherUsage": {
+      "redeemedForBooking": "Redeemed for booking ID:"
+    },
+    "validation": {
+      "sourceRequired": "Please select how you'd like to book.",
+      "treatmentRequired": "Please select a treatment.",
+      "dateRequired": "Please select a booking date.",
+      "timeRequired": "Please select a booking time.",
+      "addressRequired": "Please select an address for the service.",
+      "notesTooLong": "Notes cannot exceed 500 characters.",
+      "paymentMethodRequired": "Please select a payment method.",
+      "durationRequiredForType": "Duration is required for the selected treatment."
+    },
+    "unknownSubscription": "Unknown Subscription",
+    "treatmentVoucher": "Treatment Voucher"
   }
 }

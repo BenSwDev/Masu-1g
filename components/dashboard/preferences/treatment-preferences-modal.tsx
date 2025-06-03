@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
 import { updateTreatmentPreferences } from "@/actions/preferences-actions"
+import { useTranslation } from "@/lib/translations/i18n" // Import useTranslation
 import type { ITreatmentPreferences } from "@/lib/db/models/user"
 import { useSession } from "next-auth/react"
 
@@ -26,6 +27,7 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const { data: session, update: updateSession } = useSession()
+  const { t } = useTranslation() // Initialize useTranslation
 
   useEffect(() => {
     if (isOpen && currentPreferences) {
@@ -41,11 +43,15 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
     setIsLoading(true)
     const result = await updateTreatmentPreferences({ therapistGender: selectedGender })
     if (result.success && result.treatmentPreferences) {
-      toast({ title: "Success", description: "Treatment preferences updated." })
+      toast({ title: t("common.success"), description: t("preferences.treatment.saveSuccess") })
       await updateSession({ treatmentPreferences: result.treatmentPreferences }) // Update session
       onClose()
     } else {
-      toast({ title: "Error", description: result.message || "Failed to update preferences.", variant: "destructive" })
+      toast({
+        title: t("common.error"),
+        description: result.message || t("preferences.treatment.saveError"),
+        variant: "destructive",
+      })
     }
     setIsLoading(false)
   }
@@ -54,11 +60,11 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Treatment Preferences" // Placeholder, will be translated
-      description="Set your preferred therapist gender." // Placeholder, will be translated
+      title={t("preferences.treatment.title")}
+      description={t("preferences.treatment.description")}
     >
       <div className="py-4">
-        <Label htmlFor="therapistGender">Preferred Therapist Gender</Label>
+        <Label htmlFor="therapistGender">{t("preferences.treatment.therapistGenderLabel")}</Label>
         <RadioGroup
           id="therapistGender"
           value={selectedGender}
@@ -67,24 +73,24 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="male" id="gender-male" />
-            <Label htmlFor="gender-male">Male</Label>
+            <Label htmlFor="gender-male">{t("preferences.treatment.genderMale")}</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="female" id="gender-female" />
-            <Label htmlFor="gender-female">Female</Label>
+            <Label htmlFor="gender-female">{t("preferences.treatment.genderFemale")}</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="any" id="gender-any" />
-            <Label htmlFor="gender-any">No Preference</Label>
+            <Label htmlFor="gender-any">{t("preferences.treatment.genderAny")}</Label>
           </div>
         </RadioGroup>
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onClose} disabled={isLoading}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button onClick={handleSave} disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save Preferences"}
+          {isLoading ? t("common.saving") : t("common.savePreferences")}
         </Button>
       </DialogFooter>
     </Modal>

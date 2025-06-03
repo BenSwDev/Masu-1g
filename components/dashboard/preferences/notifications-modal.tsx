@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
 import { updateNotificationPreferences } from "@/actions/preferences-actions"
+import { useTranslation } from "@/lib/translations/i18n" // Import useTranslation
 import type { INotificationPreferences } from "@/lib/db/models/user"
 import { useSession } from "next-auth/react"
 
@@ -30,6 +31,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const { data: session, update: updateSession } = useSession()
+  const { t } = useTranslation() // Initialize useTranslation
 
   useEffect(() => {
     if (isOpen && currentPreferences) {
@@ -55,9 +57,9 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
   const handleSave = async () => {
     if (selectedMethods.length === 0) {
       toast({
-        title: "Validation Error",
-        description: "Please select at least one notification method.",
+        title: t("common.validationError"),
         variant: "destructive",
+        description: t("preferences.notifications.errorMinMethods"),
       })
       return
     }
@@ -67,11 +69,15 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
       language: selectedLanguage,
     })
     if (result.success && result.notificationPreferences) {
-      toast({ title: "Success", description: "Notification settings updated." })
+      toast({ title: t("common.success"), description: t("preferences.notifications.saveSuccess") })
       await updateSession({ notificationPreferences: result.notificationPreferences }) // Update session
       onClose()
     } else {
-      toast({ title: "Error", description: result.message || "Failed to update settings.", variant: "destructive" })
+      toast({
+        title: t("common.error"),
+        description: result.message || t("preferences.notifications.saveError"),
+        variant: "destructive",
+      })
     }
     setIsLoading(false)
   }
@@ -80,12 +86,12 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Notification Settings" // Placeholder, will be translated
-      description="Manage how you receive notifications." // Placeholder, will be translated
+      title={t("preferences.notifications.title")}
+      description={t("preferences.notifications.description")}
     >
       <div className="py-4 space-y-6">
         <div>
-          <Label>Receive notifications via:</Label>
+          <Label>{t("preferences.notifications.methodsLabel")}</Label>
           <div className="mt-2 space-y-2">
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -93,7 +99,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
                 checked={selectedMethods.includes("email")}
                 onCheckedChange={() => handleMethodChange("email")}
               />
-              <Label htmlFor="method-email">Email</Label>
+              <Label htmlFor="method-email">{t("preferences.notifications.methodEmail")}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -101,12 +107,12 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
                 checked={selectedMethods.includes("sms")}
                 onCheckedChange={() => handleMethodChange("sms")}
               />
-              <Label htmlFor="method-sms">SMS</Label>
+              <Label htmlFor="method-sms">{t("preferences.notifications.methodSms")}</Label>
             </div>
           </div>
         </div>
         <div>
-          <Label htmlFor="notificationLanguage">Preferred Language for Notifications</Label>
+          <Label htmlFor="notificationLanguage">{t("preferences.notifications.languageLabel")}</Label>
           <RadioGroup
             id="notificationLanguage"
             value={selectedLanguage}
@@ -115,25 +121,25 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
           >
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="he" id="lang-he" />
-              <Label htmlFor="lang-he">Hebrew</Label>
+              <Label htmlFor="lang-he">{t("preferences.notifications.langHe")}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="en" id="lang-en" />
-              <Label htmlFor="lang-en">English</Label>
+              <Label htmlFor="lang-en">{t("preferences.notifications.langEn")}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="ru" id="lang-ru" />
-              <Label htmlFor="lang-ru">Russian</Label>
+              <Label htmlFor="lang-ru">{t("preferences.notifications.langRu")}</Label>
             </div>
           </RadioGroup>
         </div>
       </div>
       <DialogFooter>
         <Button variant="outline" onClick={onClose} disabled={isLoading}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button onClick={handleSave} disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save Settings"}
+          {isLoading ? t("common.saving") : t("common.saveSettings")}
         </Button>
       </DialogFooter>
     </Modal>

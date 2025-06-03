@@ -443,7 +443,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           >
             <SlidersHorizontal className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
             <span className="text-sm group-hover:text-turquoise-600 transition-colors">
-              Treatment Preferences {/* Placeholder */}
+              {t("dashboard.sidebar.userMenu.treatmentPreferences")}
             </span>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -452,7 +452,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           >
             <Bell className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
             <span className="text-sm group-hover:text-turquoise-600 transition-colors">
-              Notifications {/* Placeholder */}
+              {t("dashboard.sidebar.userMenu.notifications")}
             </span>
           </DropdownMenuItem>
           {/* New Menu Items End */}
@@ -503,27 +503,32 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
             { labelKey: "dashboard.sidebar.account", icon: Settings, action: () => navigateTo("/dashboard/account") },
             // New Mobile Menu Items
             {
-              labelKey: "Treatment Preferences",
+              labelKey: "dashboard.sidebar.userMenu.treatmentPreferences", // Use translation key
               icon: SlidersHorizontal,
               action: () => setIsTreatmentPreferencesModalOpen(true),
-            }, // Placeholder
-            { labelKey: "Notifications", icon: Bell, action: () => setIsNotificationsModalOpen(true) }, // Placeholder
-          ].map((item) => (
-            <DropdownMenuItem
-              key={item.labelKey}
-              onClick={() => {
-                item.action()
-                onMobileOpenChange(false)
-              }}
-              className="cursor-pointer group py-2.5 px-3"
-            >
-              <item.icon className="mr-2.5 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
-              <span className="text-sm group-hover:text-turquoise-600 transition-colors">
-                {/* Use t() if key exists, otherwise placeholder */}
-                {item.labelKey.startsWith("dashboard.sidebar.") ? t(item.labelKey) : item.labelKey}
-              </span>
-            </DropdownMenuItem>
-          ))}
+            },
+            {
+              labelKey: "dashboard.sidebar.userMenu.notifications",
+              icon: Bell,
+              action: () => setIsNotificationsModalOpen(true),
+            }, // Use translation key
+          ].map(
+            (
+              item, // Ensure t() is used for all items
+            ) => (
+              <DropdownMenuItem
+                key={item.labelKey}
+                onClick={() => {
+                  item.action()
+                  onMobileOpenChange(false)
+                }}
+                className="cursor-pointer group py-2.5 px-3"
+              >
+                <item.icon className="mr-2.5 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
+                <span className="text-sm group-hover:text-turquoise-600 transition-colors">{t(item.labelKey)}</span>
+              </DropdownMenuItem>
+            ),
+          )}
           <DropdownMenuSeparator className="my-1" />
           <DropdownMenuItem
             onClick={() => {
@@ -570,7 +575,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
               className={cn(
                 "flex-shrink-0",
                 isMobile ? "h-5 w-5 mr-3" : "h-4 w-4",
-                isCollapsed && !isMobile ? "mr-0" : "mr-2.5",
+                isCollapsed && !isMobile ? "mr-0" : isMobile ? "mr-3" : "mr-2.5",
               )}
             />
             {!(isCollapsed && !isMobile) && <span>{action.title}</span>}

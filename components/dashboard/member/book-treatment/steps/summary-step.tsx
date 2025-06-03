@@ -1,6 +1,6 @@
 "use client"
 
-import { FormDescription } from "@/components/ui/form"
+import { FormDescription } from "@/components/common/ui/form"
 
 import type React from "react"
 import { useEffect } from "react"

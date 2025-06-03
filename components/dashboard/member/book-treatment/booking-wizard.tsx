@@ -1,8 +1,9 @@
 "use client"
-import { useState, useEffect, useCallback, useMemo } from "react" // Added useMemo
+import { useState, useEffect, useCallback } from "react" // Removed useMemo
 
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails, TimeSlot } from "@/types/booking"
 import { useToast } from "@/components/common/ui/use-toast"
+import { useTranslation } from "@/lib/translations/i18n"
 
 import BookingSourceStep from "./steps/booking-source-step"
 import TreatmentSelectionStep from "./steps/treatment-selection-step"
@@ -19,7 +20,7 @@ import { AlertCircle } from "lucide-react" // For error messages
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert" // For error messages
 
 interface BookingWizardProps {
-  initialData: BookingInitialData & { translations: Record<string, string> } // Ensure translations are part of initialData
+  initialData: BookingInitialData // Ensure translations are part of initialData
   currentUser: UserSessionData
 }
 
@@ -45,7 +46,7 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
   const [workingHoursNote, setWorkingHoursNote] = useState<string | undefined>(undefined)
 
   const { toast } = useToast()
-  const translations = useMemo(() => initialData.translations || {}, [initialData.translations])
+  const { t } = useTranslation()
 
   // Effect to fetch time slots
   useEffect(() => {
@@ -66,13 +67,8 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
         } else {
           toast({
             variant: "destructive",
-            title:
-              translations[result.error || "bookings.errors.fetchTimeSlotsFailedTitle"] ||
-              result.error ||
-              "Error fetching time slots",
-            description: result.error
-              ? translations[result.error]
-              : translations["bookings.errors.fetchTimeSlotsFailedTitle"],
+            title: t(result.error || "bookings.errors.fetchTimeSlotsFailedTitle"),
+            description: result.error ? t(result.error) : t("bookings.errors.fetchTimeSlotsFailedTitle"),
           })
         }
         setIsTimeSlotsLoading(false)
@@ -82,13 +78,7 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       setTimeSlots([])
       setWorkingHoursNote(undefined)
     }
-  }, [
-    bookingOptions.bookingDate,
-    bookingOptions.selectedTreatmentId,
-    bookingOptions.selectedDurationId,
-    toast,
-    translations,
-  ])
+  }, [bookingOptions.bookingDate, bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, toast, t])
 
   const triggerPriceCalculation = useCallback(async () => {
     if (
@@ -131,20 +121,17 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
     } else {
       toast({
         variant: "destructive",
-        title:
-          translations[result.error || "bookings.errors.calculatePriceFailedTitle"] ||
-          result.error ||
-          "Error calculating price",
+        title: t(result.error || "bookings.errors.calculatePriceFailedTitle"),
         description: result.issues
           ? result.issues.map((issue) => issue.message).join(", ")
           : result.error
-            ? translations[result.error]
-            : translations["bookings.errors.calculatePriceFailedTitle"],
+            ? t(result.error)
+            : t("bookings.errors.calculatePriceFailedTitle"),
       })
       setCalculatedPrice(null)
     }
     setIsPriceCalculating(false)
-  }, [bookingOptions, currentUser.id, toast, initialData.activeTreatments, translations])
+  }, [bookingOptions, currentUser.id, toast, initialData.activeTreatments, t])
 
   useEffect(() => {
     if (currentStep >= 3) {
@@ -188,8 +175,8 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
     ) {
       toast({
         variant: "destructive",
-        title: translations["bookings.errors.missingInfoTitle"] || "Missing Information",
-        description: translations["bookings.errors.missingInfoSubmit"] || "Please fill all required fields.",
+        title: t("bookings.errors.missingInfoTitle"),
+        description: t("bookings.errors.missingInfoSubmit"),
       })
       setIsLoading(false)
       return
@@ -198,8 +185,8 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
     if (!skipPaymentUI && calculatedPrice.finalAmount > 0 && !bookingOptions.selectedPaymentMethodId) {
       toast({
         variant: "destructive",
-        title: translations["bookings.errors.paymentMethodRequiredTitle"] || "Payment Method Required",
-        description: translations["bookings.errors.paymentMethodRequired"] || "Please select a payment method.",
+        title: t("bookings.errors.paymentMethodRequiredTitle"),
+        description: t("bookings.errors.paymentMethodRequired"),
       })
       setIsLoading(false)
       return
@@ -236,20 +223,17 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
     if (result.success && result.booking) {
       setBookingResult(result.booking)
       toast({
-        title: translations["bookings.success.bookingCreatedTitle"] || "Booking Created!",
-        description:
-          translations["bookings.success.bookingCreatedDescription"] || "Your booking has been successfully created.",
+        title: t("bookings.success.bookingCreatedTitle"),
+        description: t("bookings.success.bookingCreatedDescription"),
       })
       setCurrentStep(CONFIRMATION_STEP_NUMBER)
     } else {
       toast({
         variant: "destructive",
-        title: translations[result.error || "bookings.errors.bookingFailedTitle"] || result.error || "Booking Failed",
+        title: t(result.error || "bookings.errors.bookingFailedTitle"),
         description: result.issues
           ? result.issues.map((issue) => issue.message).join(", ")
-          : translations[result.error || "bookings.errors.unknownBookingError"] ||
-            result.error ||
-            "An unknown error occurred.",
+          : t(result.error || "bookings.errors.unknownBookingError"),
       })
     }
     setIsLoading(false)
@@ -262,7 +246,6 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       initialData,
       bookingOptions,
       setBookingOptions,
-      translations, // Pass translations to all steps
       onNext: nextStep,
       onPrev: prevStep,
     }
@@ -293,13 +276,13 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
           />
         )
       case CONFIRMATION_STEP_NUMBER:
-        return <BookingConfirmation bookingResult={bookingResult} translations={translations} />
+        return <BookingConfirmation bookingResult={bookingResult} />
       default:
         return (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{translations["common.error"] || "Error"}</AlertTitle>
-            <AlertDescription>{translations["common.unknownStep"] || "Unknown step encountered."}</AlertDescription>
+            <AlertTitle>{t("common.error")}</AlertTitle>
+            <AlertDescription>{t("common.unknownStep")}</AlertDescription>
           </Alert>
         )
     }
@@ -311,8 +294,7 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
         <div className="mb-6">
           <Progress value={progressValue} className="w-full" />
           <p className="text-center text-sm text-muted-foreground mt-2">
-            {translations["common.step"] || "Step"} {currentStep} {translations["common.of"] || "of"}{" "}
-            {TOTAL_STEPS_WITH_PAYMENT}
+            {t("common.step")} {currentStep} {t("common.of")} {TOTAL_STEPS_WITH_PAYMENT}
           </p>
         </div>
       )}

@@ -120,7 +120,9 @@
     "priceSummary": "Price Summary",
     "purchaseSuccessful": "Purchase Successful",
     "purchaseSuccessMessage": "Your purchase has been completed successfully.",
-    "months": "months"
+    "months": "months",
+    "unknownStep": "Unknown step encountered.",
+    "addressNotSpecified": "Address not specified"
   },
   "dashboard": {
     "sidebar": {
@@ -519,7 +521,8 @@
     "deleteError": "Error deleting address",
     "noDetails": "No details",
     "deleteConfirm": "Are you sure you want to delete this address?",
-    "deleteConfirmDescription": "This action cannot be undone"
+    "deleteConfirmDescription": "This action cannot be undone",
+    "primary": "Primary"
   },
   "login": {
     "languageSelector": "Language Selection",
@@ -1167,7 +1170,9 @@
         "redeemVoucher": "Use Gift Voucher",
         "redeemVoucherDesc": "Apply a gift voucher towards your booking.",
         "newBooking": "New Booking / Pay Now",
-        "newBookingDesc": "Book a new treatment and pay directly."
+        "newBookingDesc": "Book a new treatment and pay directly.",
+        "newBookingOnlyTitle": "New Booking",
+        "newBookingOnlyDesc": "Currently, only new bookings are available. You can purchase subscriptions or gift vouchers from their respective sections in the dashboard."
       },
       "treatment": {
         "title": "Select Your Treatment",
@@ -1181,7 +1186,12 @@
         "priceVariesByDuration": "Price varies by duration",
         "noTreatmentsForSelection": "No treatments available for this selection. Please check your subscription/voucher or choose another booking method.",
         "selectDuration": "Select Duration",
-        "selectDurationPlaceholder": "Choose a duration..."
+        "selectDurationPlaceholder": "Choose a duration...",
+        "selectSourceFirstTitle": "Select Source",
+        "selectSubscriptionFirstDesc": "Please select a subscription to see available treatments.",
+        "selectVoucherFirstDesc": "Please select a gift voucher to see available treatments.",
+        "noTreatmentsAvailableTitle": "No Treatments Available",
+        "noTreatmentsAvailableDesc": "There are no treatments available for your current selection. Please try a different source or contact support."
       },
       "scheduling": {
         "title": "Schedule Your Appointment",
@@ -1197,7 +1207,10 @@
         "noSavedAddresses": "You have no saved addresses. Please add one.",
         "therapistPreference": "Preferred Therapist Gender",
         "notes": "Additional Notes (Optional)",
-        "notesPlaceholder": "Any special requests or information for the therapist..."
+        "notesPlaceholder": "Any special requests or information for the therapist...",
+        "flexibleTimeDesc": "Allow us to adjust the time by up to 2 hours for better availability.",
+        "noSavedAddressesTitle": "No Saved Addresses",
+        "noSavedAddressesDesc": "You don't have any saved addresses. Please add one in your dashboard."
       },
       "summary": {
         "title": "Review Your Booking",
@@ -1219,7 +1232,8 @@
         "couponDiscount": "Coupon Discount",
         "totalAmount": "Total Amount",
         "fullyCovered": "This booking is fully covered.",
-        "confirmBooking": "Confirm Booking"
+        "confirmBooking": "Confirm Booking",
+        "couponDesc": "If you have a coupon, enter it here to apply the discount."
       },
       "payment": {
         "title": "Payment",
@@ -1230,7 +1244,9 @@
         "confirmBooking": "Confirm Booking",
         "selectPaymentMethod": "Select Payment Method",
         "noSavedPaymentMethods": "You have no saved payment methods.",
-        "payAndConfirm": "Pay & Confirm"
+        "payAndConfirm": "Pay & Confirm",
+        "noSavedPaymentMethodsTitle": "No Payment Methods",
+        "noSavedPaymentMethodsDesc": "You don't have any saved payment methods. Please add one in your dashboard to proceed."
       },
       "confirmation": {
         "title": "Booking Confirmed!",
@@ -1238,7 +1254,19 @@
         "bookingId": "Booking ID",
         "detailsSentToEmail": "A confirmation with your booking details has been sent to your email.",
         "viewMyBookings": "View My Bookings",
-        "bookAnotherTreatment": "Book Another Treatment"
+        "bookAnotherTreatment": "Book Another Treatment",
+        "errorTitle": "Booking Failed",
+        "errorDescription": "We encountered an issue while confirming your booking. Please try again or contact support if the problem persists.",
+        "tryAgain": "Try Again",
+        "bookingSummary": "Booking Summary",
+        "treatment": "Treatment",
+        "treatmentIdPrefix": "Treatment ID",
+        "dateTime": "Date & Time",
+        "status": "Status",
+        "coveredBySubscription": "This booking is covered by your subscription.",
+        "coveredByVoucher": "This booking is covered by your gift voucher.",
+        "notificationSent": "A confirmation email with these details has been sent to your registered email address. If you have any questions, please contact our support.",
+        "bookAnother": "Book Another Treatment"
       }
     },
     "errors": {
@@ -1266,7 +1294,8 @@
       "cancellationFailedUnknown": "Booking cancellation failed due to an unknown error.",
       "cancelBookingFailed": "Failed to cancel booking. Please try again.",
       "initialDataLoadFailed": "Critical data for booking page could not be loaded.",
-      "initialDataFetchFailed": "Failed to fetch initial data for booking. Please refresh the page."
+      "initialDataFetchFailed": "Failed to fetch initial data for booking. Please refresh the page.",
+      "priceCalculationUnavailable": "Price details are currently unavailable. Please ensure all previous steps are completed correctly."
     },
     "messages": {
       "closedOnSelectedDate": "We are closed on the selected date."

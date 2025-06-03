@@ -1,79 +1,93 @@
 "use client"
 
-import type React from "react"
-import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
-import { Label } from "@/components/common/ui/label"
-import { Card, CardContent } from "@/components/common/ui/card"
-import { cn } from "@/lib/utils/utils"
+import { useState } from "react"
+import { Button } from "@/components/common/ui/button"
+import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { useTranslation } from "@/lib/translations/i18n"
-import { CreditCard, Wallet } from "lucide-react"
+import { PurchaseCard } from "./purchase-card"
+import { PaymentMethodForm } from "@/components/dashboard/member/payment-methods/payment-method-form"
+import { CreditCard, PlusCircle } from "lucide-react"
+import { cn } from "@/lib/utils/utils"
 
-export interface PaymentMethod {
-  id: string
-  label: string
-  icon?: React.ReactNode
-  description?: string
+interface PaymentMethod {
+  _id: string
+  cardName?: string
+  cardNumber: string
+  expiryMonth: string
+  expiryYear: string
+  isDefault?: boolean
 }
 
-export interface PaymentMethodSelectorProps {
-  methods: PaymentMethod[]
-  selectedMethod: string
-  onSelectMethod: (method: string) => void
+interface PaymentMethodSelectorProps {
+  paymentMethods: PaymentMethod[]
+  selectedPaymentMethodId: string
+  onPaymentMethodSelect: (id: string) => void
+  onPaymentMethodAdded?: () => void
+  showAddButton?: boolean
   className?: string
 }
 
 export function PaymentMethodSelector({
-  methods,
-  selectedMethod,
-  onSelectMethod,
+  paymentMethods,
+  selectedPaymentMethodId,
+  onPaymentMethodSelect,
+  onPaymentMethodAdded,
+  showAddButton = true,
   className,
 }: PaymentMethodSelectorProps) {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
+  const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false)
 
-  const defaultMethods: PaymentMethod[] = [
-    {
-      id: "credit_card",
-      label: t("payment.methods.credit_card"),
-      icon: <CreditCard className="h-5 w-5" />,
-      description: t("payment.methods.credit_card_description"),
-    },
-    {
-      id: "wallet",
-      label: t("payment.methods.wallet"),
-      icon: <Wallet className="h-5 w-5" />,
-      description: t("payment.methods.wallet_description"),
-    },
-  ]
+  const handlePaymentMethodAdded = () => {
+    setShowPaymentMethodForm(false)
+    onPaymentMethodAdded?.()
+  }
 
-  const paymentMethods = methods.length > 0 ? methods : defaultMethods
+  if (paymentMethods.length === 0 && !showAddButton) {
+    return (
+      <Alert>
+        <AlertDescription>{t("paymentMethods.noPaymentMethods")}</AlertDescription>
+      </Alert>
+    )
+  }
 
   return (
-    <div className={cn("w-full", className)}>
-      <RadioGroup value={selectedMethod} onValueChange={onSelectMethod} className="space-y-3">
-        {paymentMethods.map((method) => (
-          <div key={method.id}>
-            <Label htmlFor={method.id} className="cursor-pointer">
-              <Card
-                className={cn(
-                  "transition-all border-2",
-                  selectedMethod === method.id ? "border-primary" : "border-border",
-                )}
-              >
-                <CardContent className="p-4 flex items-center gap-4">
-                  <RadioGroupItem value={method.id} id={method.id} />
+    <div className={cn("space-y-4", className)}>
+      {paymentMethods.length === 0 && showAddButton && (
+        <Alert>
+          <AlertDescription>{t("paymentMethods.noPaymentMethods")}</AlertDescription>
+        </Alert>
+      )}
 
-                  {method.icon && <div className="flex-shrink-0">{method.icon}</div>}
-
-                  <div className="flex-grow">
-                    <div className="font-medium">{method.label}</div>
-                    {method.description && <div className="text-sm text-muted-foreground">{method.description}</div>}
-                  </div>
-                </CardContent>
-              </Card>
-            </Label>
-          </div>
+      <div className="space-y-3">
+        {paymentMethods.map((pm) => (
+          <PurchaseCard
+            key={pm._id}
+            title={pm.cardName || `${t("paymentMethods.card")} **** ${pm.cardNumber.slice(-4)}`}
+            description={`${t("paymentMethods.fields.expiry")}: ${pm.expiryMonth}/${pm.expiryYear}`}
+            icon={<CreditCard className="w-5 h-5" />}
+            isSelected={selectedPaymentMethodId === pm._id}
+            onClick={() => onPaymentMethodSelect(pm._id)}
+            badge={pm.isDefault ? t("paymentMethods.defaultCard") : undefined}
+            badgeVariant="outline"
+          />
         ))}
-      </RadioGroup>
+      </div>
+
+      {showAddButton && (
+        <Button type="button" variant="outline" onClick={() => setShowPaymentMethodForm(true)} className="w-full h-12">
+          <PlusCircle className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
+          {t("paymentMethods.addNewLink")}
+        </Button>
+      )}
+
+      {showPaymentMethodForm && (
+        <PaymentMethodForm
+          open={showPaymentMethodForm}
+          onOpenChange={setShowPaymentMethodForm}
+          onSuccessCallback={handlePaymentMethodAdded}
+        />
+      )}
     </div>
   )
 }

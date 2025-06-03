@@ -1,66 +1,91 @@
 "use client"
 
-import React from "react"
 import { cn } from "@/lib/utils/utils"
+import type { LucideIcon } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Check } from "lucide-react"
-import { motion } from "framer-motion"
 
-export interface StepIndicatorProps {
-  steps: string[]
-  currentStep: number
-  completedSteps: number[]
+interface Step {
+  key: string
+  label: string
+  icon: LucideIcon
+}
+
+interface StepIndicatorProps {
+  steps: Step[]
+  currentStep: string
   className?: string
 }
 
-export function StepIndicator({ steps, currentStep, completedSteps, className }: StepIndicatorProps) {
-  const { t } = useTranslation()
+export function StepIndicator({ steps, currentStep, className }: StepIndicatorProps) {
+  const { dir } = useTranslation()
+  const currentIndex = steps.findIndex((s) => s.key === currentStep)
 
   return (
-    <div className={cn("w-full flex justify-between items-center mb-8", className)}>
-      {steps.map((step, index) => {
-        const isCompleted = completedSteps.includes(index)
-        const isActive = currentStep === index
+    <div className={cn("w-full mb-10", className)}>
+      <div className="flex items-center justify-between">
+        {steps.map((stepItem, index) => {
+          const Icon = stepItem.icon
+          const isActive = index <= currentIndex
+          const isCurrent = stepItem.key === currentStep
+          const isCompleted = index < currentIndex
 
-        return (
-          <React.Fragment key={index}>
-            {/* Step circle */}
-            <motion.div
-              className={cn(
-                "relative flex items-center justify-center rounded-full w-10 h-10 text-sm font-medium border-2",
-                isCompleted
-                  ? "bg-primary border-primary text-primary-foreground"
-                  : isActive
-                    ? "border-primary text-primary"
-                    : "border-muted-foreground/30 text-muted-foreground",
-              )}
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              {isCompleted ? <Check className="h-5 w-5" /> : <span>{index + 1}</span>}
-
-              {/* Step label */}
-              <span className="absolute -bottom-7 whitespace-nowrap text-xs font-medium text-center w-max left-1/2 transform -translate-x-1/2">
-                {t(step)}
-              </span>
-            </motion.div>
-
-            {/* Connector line */}
-            {index < steps.length - 1 && (
-              <motion.div
-                className={cn(
-                  "flex-1 h-0.5 mx-2",
-                  index < completedSteps.length ? "bg-primary" : "bg-muted-foreground/30",
+          return (
+            <div key={stepItem.key} className="flex items-center flex-1">
+              <div className="flex flex-col items-center relative">
+                <div
+                  className={cn(
+                    "flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-300",
+                    isActive
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : "border-muted-foreground/30 text-muted-foreground",
+                    isCurrent && "ring-4 ring-primary/20",
+                  )}
+                >
+                  <Icon className="w-6 h-6" />
+                </div>
+                <div
+                  className={cn(
+                    "mt-2 text-sm font-medium transition-colors text-center",
+                    isActive ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  {stepItem.label}
+                </div>
+                {/* Animated progress indicator */}
+                {isCompleted && (
+                  <div className="absolute top-6 left-full w-full h-0.5 bg-primary transform -translate-x-6">
+                    <div
+                      className="h-full bg-primary"
+                      style={{
+                        width: "100%",
+                        animation: "progress 0.5s ease-in-out",
+                      }}
+                    ></div>
+                  </div>
                 )}
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 1 }}
-                transition={{ delay: index * 0.1 + 0.05 }}
-              />
-            )}
-          </React.Fragment>
-        )
-      })}
+              </div>
+              {index < steps.length - 1 && (
+                <div
+                  className={cn(
+                    "flex-1 h-0.5 mx-2 transition-colors",
+                    index < currentIndex ? "bg-primary" : "bg-muted-foreground/30",
+                  )}
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+      <style jsx global>{`
+        @keyframes progress {
+          from {
+            width: 0;
+          }
+          to {
+            width: 100%;
+          }
+        }
+      `}</style>
     </div>
   )
 }

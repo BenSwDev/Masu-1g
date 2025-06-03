@@ -1,51 +1,77 @@
 "use client"
-import { Button } from "@/components/common/ui/button"
-import { cn } from "@/lib/utils/utils"
-import { useTranslation } from "@/lib/translations/i18n"
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
 
-export interface PurchaseNavigationProps {
+import { Button } from "@/components/common/ui/button"
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { useTranslation } from "@/lib/translations/i18n"
+import { cn } from "@/lib/utils/utils"
+
+interface PurchaseNavigationProps {
   onNext?: () => void
-  onBack?: () => void
+  onPrevious?: () => void
+  onComplete?: () => void
   canGoNext?: boolean
-  canGoBack?: boolean
+  canGoPrevious?: boolean
   isLoading?: boolean
-  nextLabel?: string
-  backLabel?: string
-  className?: string
   isLastStep?: boolean
+  nextLabel?: string
+  previousLabel?: string
+  completeLabel?: string
+  className?: string
 }
 
 export function PurchaseNavigation({
   onNext,
-  onBack,
+  onPrevious,
+  onComplete,
   canGoNext = true,
-  canGoBack = true,
+  canGoPrevious = true,
   isLoading = false,
-  nextLabel,
-  backLabel,
-  className,
   isLastStep = false,
+  nextLabel,
+  previousLabel,
+  completeLabel,
+  className,
 }: PurchaseNavigationProps) {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
 
   return (
-    <div className={cn("flex justify-between mt-8", className)}>
-      <Button variant="outline" onClick={onBack} disabled={!canGoBack || isLoading} className="flex items-center gap-2">
-        <ArrowLeft className="h-4 w-4" />
-        {backLabel || t("common.back")}
+    <div className={cn("flex justify-between items-center mt-8", className)}>
+      <Button
+        variant="outline"
+        onClick={onPrevious}
+        disabled={!canGoPrevious || isLoading}
+        className={cn(
+          "flex items-center gap-2 transition-all duration-300",
+          !canGoPrevious && "opacity-0 pointer-events-none",
+        )}
+      >
+        {dir === "rtl" ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        {previousLabel || t("common.back")}
       </Button>
 
-      <Button onClick={onNext} disabled={!canGoNext || isLoading} className="flex items-center gap-2">
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <>
-            {nextLabel || (isLastStep ? t("common.finish") : t("common.next"))}
-            <ArrowRight className="h-4 w-4" />
-          </>
-        )}
-      </Button>
+      {isLastStep ? (
+        <Button
+          onClick={onComplete}
+          disabled={!canGoNext || isLoading}
+          className="flex items-center gap-2 transition-all duration-300 px-6 py-2 h-11"
+          size="lg"
+        >
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
+          {completeLabel || t("common.complete")}
+        </Button>
+      ) : (
+        <Button
+          onClick={onNext}
+          disabled={!canGoNext || isLoading}
+          className={cn(
+            "flex items-center gap-2 transition-all duration-300",
+            !canGoNext && "opacity-70 cursor-not-allowed",
+          )}
+        >
+          {nextLabel || t("common.next")}
+          {dir === "rtl" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+        </Button>
+      )}
     </div>
   )
 }

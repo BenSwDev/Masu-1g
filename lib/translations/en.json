@@ -82,6 +82,7 @@
     "cancelling": "Cancelling...",
     "card": "Card",
     "saveSettings": "Save Settings",
+    "savePreferences": "Save Preferences",
     "notAvailable": "N/A",
     "pagination": {
       "pageInfo": "Page {{page}} of {{totalPages}} ({{totalResults}} results)",

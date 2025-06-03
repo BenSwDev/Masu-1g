@@ -1,44 +1,68 @@
 "use client"
 
 import type React from "react"
-
-import { useEffect, useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils/utils"
 
-interface AnimatedContainerProps {
+export interface AnimatedContainerProps {
   children: React.ReactNode
-  isActive: boolean
+  isVisible: boolean
   className?: string
+  key?: string | number
+  direction?: "left" | "right" | "up" | "down"
 }
 
-export function AnimatedContainer({ children, isActive, className }: AnimatedContainerProps) {
-  const [shouldRender, setShouldRender] = useState(isActive)
-  const [animationClass, setAnimationClass] = useState("")
-
-  useEffect(() => {
-    if (isActive) {
-      setShouldRender(true)
-      // Small delay to ensure the element is in the DOM before animating
-      setTimeout(() => {
-        setAnimationClass("opacity-100 translate-y-0")
-      }, 50)
-    } else {
-      setAnimationClass("opacity-0 translate-y-4")
-      // Wait for animation to complete before removing from DOM
-      const timer = setTimeout(() => {
-        setShouldRender(false)
-      }, 300) // Match this with the transition duration
-      return () => clearTimeout(timer)
+export function AnimatedContainer({
+  children,
+  isVisible,
+  className,
+  key,
+  direction = "right",
+}: AnimatedContainerProps) {
+  const getVariants = () => {
+    switch (direction) {
+      case "left":
+        return {
+          hidden: { x: -50, opacity: 0 },
+          visible: { x: 0, opacity: 1 },
+          exit: { x: 50, opacity: 0 },
+        }
+      case "right":
+        return {
+          hidden: { x: 50, opacity: 0 },
+          visible: { x: 0, opacity: 1 },
+          exit: { x: -50, opacity: 0 },
+        }
+      case "up":
+        return {
+          hidden: { y: -50, opacity: 0 },
+          visible: { y: 0, opacity: 1 },
+          exit: { y: 50, opacity: 0 },
+        }
+      case "down":
+        return {
+          hidden: { y: 50, opacity: 0 },
+          visible: { y: 0, opacity: 1 },
+          exit: { y: -50, opacity: 0 },
+        }
     }
-  }, [isActive])
-
-  if (!shouldRender) return null
+  }
 
   return (
-    <div
-      className={cn("transition-all duration-300 ease-in-out", animationClass, isActive ? "z-10" : "z-0", className)}
-    >
-      {children}
-    </div>
+    <AnimatePresence mode="wait">
+      {isVisible && (
+        <motion.div
+          key={key}
+          variants={getVariants()}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className={cn("w-full", className)}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

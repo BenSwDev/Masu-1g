@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { connectDB } from "@/lib/db/mongoose"
 import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
-import { logger } from "@/lib/logs/logger" // Verified path
+import { logger } from "@/lib/logs/logger"
 
 export async function getWorkingHoursSettings() {
   try {
@@ -12,6 +12,7 @@ export async function getWorkingHoursSettings() {
     let settings = await WorkingHoursSettings.findOne().lean()
 
     if (!settings) {
+      // Create default settings if none exist
       const defaultSettings = new WorkingHoursSettings({
         fixedHours: Array.from({ length: 7 }, (_, i) => ({
           dayOfWeek: i,
@@ -25,30 +26,26 @@ export async function getWorkingHoursSettings() {
       })
 
       settings = await defaultSettings.save()
-      logger.info("Default working hours settings created:", { settingsId: settings._id?.toString() })
     }
 
+    // Ensure fixedHours are sorted by dayOfWeek
     if (settings.fixedHours) {
       settings.fixedHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
     }
 
+    // Convert dates to strings for client
     const serializedSettings = {
       ...settings,
       _id: settings._id?.toString(),
       specialDates:
         settings.specialDates?.map((date) => ({
           ...date,
-          date: date.date.toISOString().split("T")[0], // Ensure date is string yyyy-MM-dd
+          date: date.date.toISOString().split("T")[0], // Convert to YYYY-MM-DD format
         })) || [],
       createdAt: settings.createdAt?.toISOString(),
       updatedAt: settings.updatedAt?.toISOString(),
     }
 
-    logger.info("Fetched working hours settings for client:", {
-      settingsId: serializedSettings._id,
-      fixedHoursCount: serializedSettings.fixedHours?.length,
-      specialDatesCount: serializedSettings.specialDates?.length,
-    })
     return { success: true, data: serializedSettings }
   } catch (error) {
     logger.error("Error fetching working hours settings:", error)
@@ -63,13 +60,12 @@ export async function updateWorkingHoursSettings(data: {
   try {
     await connectDB()
 
-    logger.info("Attempting to update working hours settings with data:", { data })
-
+    // Convert date strings back to Date objects for specialDates
     const processedData = {
       ...data,
       specialDates: data.specialDates.map((date) => ({
         ...date,
-        date: new Date(date.date), // Convert string date back to Date object
+        date: new Date(date.date),
       })),
     }
 
@@ -79,17 +75,11 @@ export async function updateWorkingHoursSettings(data: {
       runValidators: true,
     })
 
-    logger.info("Successfully updated working hours settings in DB:", { settingsId: settings._id?.toString() })
-
     revalidatePath("/dashboard/admin/working-hours")
 
     return { success: true, data: settings }
   } catch (error) {
-    logger.error("Error updating working hours settings in DB:", {
-      errorMessage: error instanceof Error ? error.message : "Unknown error",
-      errorStack: error instanceof Error ? error.stack : undefined,
-      originalData: data,
-    })
+    logger.error("Error updating working hours settings:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update working hours settings",

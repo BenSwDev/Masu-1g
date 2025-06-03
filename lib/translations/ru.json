@@ -115,14 +115,7 @@
     "summary": "Сводка",
     "priceSummary": "Сводка цен",
     "purchaseSuccessful": "Покупка успешно завершена",
-    "purchaseSuccessMessage": "Ваша покупка успешно завершена.",
-    "add": "Добавить",
-    "requiredField": "Это поле обязательно для заполнения.",
-    "areYouSure": "Вы уверены?",
-    "confirmDelete": "Это действие нельзя отменить. Элемент будет удален навсегда.",
-    "finish": "Готово",
-    "selectOption": "Выберите опцию",
-    "rowsPerPage": "Строк на странице"
+    "purchaseSuccessMessage": "Ваша покупка успешно завершена."
   },
   "dashboard": {
     "sidebar": {
@@ -159,31 +152,7 @@
         "treatmentPreferences": "Предпочтения по процедурам",
         "notifications": "Уведомления"
       }
-    },
-    "title": "Панель управления",
-    "welcome": "Добро пожаловать, {{name}}!",
-    "profile": "Профиль",
-    "account": "Настройки учетной записи",
-    "admin": "Панель администратора",
-    "users": "Пользователи",
-    "subscriptions": "Подписки",
-    "treatments": "Процедуры",
-    "coupons": "Купоны",
-    "giftVouchers": "Подарочные сертификаты",
-    "partners": "Партнеры",
-    "professionals": "Специалисты",
-    "clients": "Клиенты",
-    "workingHours": "Рабочие часы",
-    "userSubscriptions": "Пользовательские подписки",
-    "addresses": "Мои адреса",
-    "paymentMethods": "Способы оплаты",
-    "mySubscriptions": "Мои подписки",
-    "myGiftVouchers": "Мои подарочные сертификаты",
-    "bookTreatment": "Записаться на процедуру",
-    "assignedCoupons": "Назначенные купоны",
-    "bankAccount": "Банковский счет",
-    "documents": "Документы",
-    "location": "Местоположение"
+    }
   },
   "subscriptions": {
     "title": "Управление подписками",

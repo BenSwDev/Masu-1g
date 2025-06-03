@@ -115,7 +115,8 @@
     "summary": "Сводка",
     "priceSummary": "Сводка цен",
     "purchaseSuccessful": "Покупка успешно завершена",
-    "purchaseSuccessMessage": "Ваша покупка успешно завершена."
+    "purchaseSuccessMessage": "Ваша покупка успешно завершена.",
+    "minAbbreviation": "мин"
   },
   "dashboard": {
     "sidebar": {
@@ -1223,7 +1224,8 @@
         "couponDiscount": "Скидка по купону",
         "totalAmount": "Итоговая сумма",
         "fullyCovered": "Эта запись полностью покрыта.",
-        "confirmBooking": "Подтвердить запись"
+        "confirmBooking": "Подтвердить запись",
+        "flexibleTimeDetails": "{yesLabel} (±{count} {hoursLabel})"
       },
       "payment": {
         "title": "Оплата",

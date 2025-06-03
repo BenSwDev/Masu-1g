@@ -42,6 +42,7 @@ import { useToast } from "@/components/common/ui/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Badge } from "@/components/common/ui/badge"
+import { logger } from "@/lib/logs/logger" // Corrected logger import path
 
 import { getWorkingHoursSettings, updateWorkingHoursSettings } from "@/actions/working-hours-actions"
 import type { IWorkingHoursSettings, IFixedHours } from "@/lib/db/models/working-hours"
@@ -65,7 +66,7 @@ const fixedHoursSchema = z.object({
 
 const specialDateSchema = z.object({
   name: z.string().min(1, "Name is required").max(100, "Name too long"),
-  date: z.string().min(1, "Date is required"),
+  date: z.string().min(1, "Date is required"), // Stored as yyyy-MM-dd string in main form
   isActive: z.boolean(),
   startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
   endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
@@ -82,6 +83,7 @@ const workingHoursSchema = z.object({
 const specialDateFormSchema = z.object({
   name: z.string().min(1, "Please enter a name").max(100, "Name is too long (max 100 chars)").default(""),
   date: z.date({
+    // Handled as Date object in dialog form
     required_error: "Please select a date",
   }),
   isActive: z.boolean().default(true),
@@ -134,16 +136,37 @@ export default function WorkingHoursClient() {
     queryFn: async () => {
       const result = await getWorkingHoursSettings()
       if (!result.success || !result.data) {
+        logger.warn("WorkingHoursClient: getWorkingHoursSettings failed or returned no data, using defaults.")
         return {
-          _id: "",
-          fixedHours: getDefaultFixedHours(),
+          _id: "temp-id-" + Date.now(),
+          fixedHours: getDefaultFixedHours().map((fh) => ({
+            // getDefaultFixedHours already sets priceAddition
+            ...fh,
+          })),
           specialDates: [],
           createdAt: new Date(),
           updatedAt: new Date(),
         } as IWorkingHoursSettings
       }
-      const fixedHours = result.data.fixedHours?.length === 7 ? result.data.fixedHours : getDefaultFixedHours()
-      return { ...result.data, fixedHours }
+
+      // Ensure fixedHours has 7 days and priceAddition defaults
+      const fixedHours = (
+        result.data.fixedHours && result.data.fixedHours.length === 7 ? result.data.fixedHours : getDefaultFixedHours()
+      ).map((fh) => ({
+        ...fh,
+        priceAddition: fh.priceAddition || { amount: 0, type: "fixed" as "fixed" | "percentage" },
+      }))
+
+      // Ensure specialDates have priceAddition defaults and date is string
+      const specialDates = (result.data.specialDates || []).map((sd) => ({
+        ...sd,
+        date: typeof sd.date === "string" ? sd.date : format(new Date(sd.date), "yyyy-MM-dd"), // Ensure date is string
+        priceAddition: sd.priceAddition || { amount: 0, type: "fixed" as "fixed" | "percentage" },
+      }))
+
+      const idString = result.data._id ? result.data._id.toString() : "temp-id-" + Date.now()
+
+      return { ...result.data, _id: idString, fixedHours, specialDates }
     },
   })
 
@@ -180,15 +203,13 @@ export default function WorkingHoursClient() {
 
   useEffect(() => {
     if (workingHoursData) {
+      console.log("WorkingHoursClient: Resetting form with data:", workingHoursData)
       form.reset({
-        fixedHours:
-          workingHoursData.fixedHours && workingHoursData.fixedHours.length === 7
-            ? workingHoursData.fixedHours
-            : getDefaultFixedHours(),
-        specialDates: (workingHoursData.specialDates || []).map((sd) => ({
+        fixedHours: workingHoursData.fixedHours,
+        specialDates: workingHoursData.specialDates.map((sd) => ({
           ...sd,
-          date: format(new Date(sd.date), "yyyy-MM-dd"),
-          priceAddition: sd.priceAddition || { amount: 0, type: "fixed" },
+          // date from workingHoursData.specialDates is already yyyy-MM-dd string
+          date: sd.date,
         })),
       })
     }
@@ -197,6 +218,7 @@ export default function WorkingHoursClient() {
   const updateMutation = useMutation({
     mutationFn: updateWorkingHoursSettings,
     onSuccess: (data) => {
+      console.log("WorkingHoursClient: updateMutation onSuccess", data)
       if (data.success) {
         toast({
           title: t("workingHours.updateSuccess"),
@@ -212,6 +234,7 @@ export default function WorkingHoursClient() {
       }
     },
     onError: (error: any) => {
+      console.error("WorkingHoursClient: updateMutation onError", error)
       toast({
         title: t("workingHours.updateError"),
         description: error.message || t("workingHours.updateErrorDescription"),
@@ -221,6 +244,9 @@ export default function WorkingHoursClient() {
   })
 
   const onSubmit = (data: WorkingHoursFormData) => {
+    console.log("WorkingHoursClient: onSubmit called with data:", data)
+    console.log("WorkingHoursClient: form.formState.isDirty:", form.formState.isDirty)
+
     const processedData = {
       ...data,
       fixedHours: data.fixedHours.map((fh) => ({
@@ -232,13 +258,14 @@ export default function WorkingHoursClient() {
         priceAddition: sd.hasPriceAddition ? sd.priceAddition : undefined,
       })),
     }
+    console.log("WorkingHoursClient: processedData for mutation:", processedData)
     updateMutation.mutate(processedData)
   }
 
   const handleAddOrUpdateSpecialDate = (data: SpecialDateFormData) => {
     const specialDateData = {
       ...data,
-      date: format(data.date, "yyyy-MM-dd"),
+      date: format(data.date, "yyyy-MM-dd"), // Convert Date object from dialog form to string
       priceAddition: data.hasPriceAddition ? data.priceAddition : undefined,
     }
 
@@ -266,7 +293,7 @@ export default function WorkingHoursClient() {
     const specialDate = form.getValues(`specialDates.${index}`)
     specialDateForm.reset({
       ...specialDate,
-      date: new Date(specialDate.date),
+      date: new Date(specialDate.date), // Convert string date from main form to Date object for dialog
       priceAddition: specialDate.priceAddition || { amount: 0, type: "fixed" },
     })
     setEditingSpecialDateIndex(index)
@@ -289,6 +316,14 @@ export default function WorkingHoursClient() {
     ],
     [t],
   )
+
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      console.log("WorkingHoursClient: Form value changed", { value, name, type })
+      console.log("WorkingHoursClient: isDirty:", form.formState.isDirty)
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
 
   if (isLoading) {
     return (
@@ -1003,6 +1038,7 @@ export default function WorkingHoursClient() {
                                   <TableCell className="font-medium">{specialDate.name}</TableCell>
                                   <TableCell>
                                     {format(new Date(specialDate.date), "PPP", {
+                                      // Display formatted date
                                       locale: language === "he" ? he : enUS,
                                     })}
                                   </TableCell>
@@ -1061,6 +1097,7 @@ export default function WorkingHoursClient() {
                                     <h3 className="font-medium text-lg truncate">{specialDate.name}</h3>
                                     <p className="text-sm text-muted-foreground">
                                       {format(new Date(specialDate.date), "PPP", {
+                                        // Display formatted date
                                         locale: language === "he" ? he : enUS,
                                       })}
                                     </p>

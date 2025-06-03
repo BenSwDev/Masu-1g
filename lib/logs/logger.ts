@@ -61,4 +61,4 @@ class Logger {
   }
 }
 
-export const logger = new Logger()
+export const logger = new Logger() // This line IS PRESENT.

@@ -8,8 +8,10 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
+    "add": "Add",
     "create": "Create",
     "update": "Update",
+    "submit": "Submit",
     "search": "Search",
     "filter": "Filter",
     "clear": "Clear",
@@ -33,7 +35,6 @@
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
-    "submit": "Submit",
     "all": "All",
     "deactivate": "Deactivate",
     "activate": "Activate",
@@ -69,6 +70,7 @@
     "locale": "en-US",
     "selectPlaceholder": "Select...",
     "optional": "Optional",
+    "requiredField": "This field is required.",
     "loadingData": "Loading data...",
     "quickNavigation": "Quick Navigation",
     "today": "Today",
@@ -102,7 +104,7 @@
     "showing": "Showing",
     "to": "to",
     "total": "total",
-    "noResults": "No results found",
+    "noResults": "No results found.",
     "noData": "No data available",
     "loadMore": "Load more",
     "showMore": "Show more",
@@ -120,7 +122,52 @@
     "priceSummary": "Price Summary",
     "purchaseSuccessful": "Purchase Successful",
     "purchaseSuccessMessage": "Your purchase has been completed successfully.",
-    "months": "months"
+    "months": "months",
+    "areYouSure": "Are you sure?",
+    "confirmDelete": "This action cannot be undone. This will permanently delete the item.",
+    "saving": "Saving...",
+    "errorOccurred": "An error occurred",
+    "finish": "Finish",
+    "selectOption": "Select an option",
+    "rowsPerPage": "Rows per page"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone Number",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "sendResetLink": "Send Reset Link",
+    "newPassword": "New Password",
+    "otpVerification": "OTP Verification",
+    "enterOtp": "Enter the OTP sent to your phone/email.",
+    "verifyOtp": "Verify OTP",
+    "resendOtp": "Resend OTP",
+    "loginSuccess": "Login successful!",
+    "registerSuccess": "Registration successful! Please check your email to verify your account.",
+    "logoutSuccess": "Logged out successfully.",
+    "passwordResetLinkSent": "Password reset link sent to your email.",
+    "passwordResetSuccess": "Password reset successfully.",
+    "emailVerificationSent": "Verification email sent. Please check your inbox.",
+    "emailVerifiedSuccess": "Email verified successfully! You can now login.",
+    "invalidCredentials": "Invalid email or password.",
+    "userNotFound": "User not found.",
+    "emailInUse": "This email is already in use.",
+    "phoneInUse": "This phone number is already in use.",
+    "weakPassword": "Password is too weak. It must be at least 8 characters long and include uppercase, lowercase, number, and special character.",
+    "passwordsDoNotMatch": "Passwords do not match.",
+    "invalidOtp": "Invalid OTP.",
+    "otpExpired": "OTP has expired.",
+    "accountLocked": "Account locked due to too many failed attempts. Please try again later.",
+    "emailNotVerified": "Email not verified. Please check your inbox or resend verification email.",
+    "resendVerificationEmail": "Resend Verification Email",
+    "verificationEmailResent": "Verification email resent."
   },
   "dashboard": {
     "sidebar": {
@@ -157,7 +204,14 @@
         "treatmentPreferences": "Treatment Preferences",
         "notifications": "Notifications"
       }
-    }
+    },
+    "title": "Dashboard",
+    "welcome": "Welcome, {{name}}!",
+    "admin": "Admin Panel",
+    "mySubscriptions": "My Subscriptions",
+    "myGiftVouchers": "My Gift Vouchers",
+    "assignedCoupons": "Assigned Coupons",
+    "location": "Location"
   },
   "subscriptions": {
     "title": "Manage Subscriptions",
@@ -1289,5 +1343,31 @@
     },
     "unknownSubscription": "Unknown Subscription",
     "treatmentVoucher": "Treatment Voucher"
+  },
+  "userProfile": {
+    "updateProfile": "Update Profile",
+    "profileUpdated": "Profile updated successfully.",
+    "dateOfBirth": "Date of Birth",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "selectGender": "Select gender"
+  },
+  "accountSettings": {
+    "changeEmail": "Change Email",
+    "newEmail": "New Email",
+    "currentPassword": "Current Password",
+    "emailUpdateSuccess": "Email update initiated. Please check your new email address for verification.",
+    "changePassword": "Change Password",
+    "passwordUpdateSuccess": "Password updated successfully.",
+    "changePhoneNumber": "Change Phone Number",
+    "newPhoneNumber": "New Phone Number",
+    "phoneUpdateSuccess": "Phone number update initiated. Please verify with the OTP sent to your new number."
+  },
+  "gender": {
+    "male": "Male",
+    "female": "Female",
+    "other": "Other"
   }
 }

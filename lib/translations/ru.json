@@ -115,8 +115,7 @@
     "summary": "Сводка",
     "priceSummary": "Сводка цен",
     "purchaseSuccessful": "Покупка успешно завершена",
-    "purchaseSuccessMessage": "Ваша покупка успешно завершена.",
-    "errorOccurred": "Произошла ошибка"
+    "purchaseSuccessMessage": "Ваша покупка успешно завершена."
   },
   "dashboard": {
     "sidebar": {
@@ -1097,7 +1096,6 @@
     "updateSuccessDescription": "Настройки рабочих часов сохранены",
     "updateError": "Ошибка обновления рабочих часов",
     "updateErrorDescription": "Не удалось обновить настройки рабочих часов",
-    "fetchError": "Ошибка загрузки настроек рабочих часов. Загружены настройки по умолчанию.",
     "fixedHours": "Фиксированные часы",
     "specialDates": "Особые даты",
     "day": "День",
@@ -1108,7 +1106,6 @@
     "notes": "Заметки",
     "addSpecialDate": "Добавить особую дату",
     "editSpecialDate": "Редактировать особую дату",
-    "specialDateDeleted": "Особая дата успешно удалена",
     "date": "Дата",
     "selectDate": "Выберите дату",
     "amount": "Сумма",
@@ -1134,26 +1131,7 @@
     "enablePriceAddition": "Включить надбавку к цене",
     "specialDateActiveDescription": "Отметьте, если услуги доступны в эту особую дату.",
     "noSpecialDates": "Пока нет особых дат",
-    "noSpecialDatesHint": "Нажмите 'Добавить особую дату', чтобы создать одну.",
-    "priceAdditionTypes": {
-      "fixed": "₪",
-      "percentage": "%"
-    },
-    "validation": {
-      "amountRequired": "Требуется сумма для надбавки к цене.",
-      "amountMustBeNumber": "Сумма должна быть числом.",
-      "amountPositive": "Сумма должна быть положительным числом.",
-      "typeRequired": "Требуется тип для надбавки к цене.",
-      "invalidTimeFormat": "Неверный формат времени. Используйте ЧЧ:ММ.",
-      "notesTooLong": "Заметки слишком длинные (макс. 500 символов).",
-      "timeRequiredWhenActive": "Время начала и окончания требуются, когда день/дата активны.",
-      "priceAdditionDetailsRequired": "Сумма и тип надбавки к цене требуются, когда надбавка включена.",
-      "nameRequired": "Требуется название события.",
-      "nameTooLong": "Название события слишком длинное (макс. 100 символов).",
-      "dateRequired": "Требуется дата.",
-      "dateRequiredCalendar": "Требуется дата для особого события.",
-      "dateInvalidCalendar": "Выбрана неверная дата."
-    }
+    "noSpecialDatesHint": "Нажмите 'Добавить особую дату', чтобы создать одну."
   },
   "preferences": {
     "treatment": {
@@ -1281,7 +1259,7 @@
       "giftVoucherInvalid": "Выбранный подарочный сертификат недействителен, истек или полностью использован.",
       "couponInvalid": "Код купона недействителен, истек или достиг лимита использования.",
       "subscriptionRedemptionFailed": "Не удалось использовать абонемент. Пожалуйста, проверьте его статус.",
-      "giftVoucherRedemptionFailedInactive": "Не удалось использовать подарочный сертификат. Возможно, он неактивен.",
+      "voucherRedemptionFailedInactive": "Не удалось использовать подарочный сертификат. Возможно, он неактивен.",
       "voucherInsufficientBalance": "На подарочном сертификате недостаточно средств для этой записи.",
       "couponApplyFailed": "Не удалось применить купон. Возможно, он недействителен или истек.",
       "paymentMethodRequired": "Для этой записи требуется способ оплаты.",

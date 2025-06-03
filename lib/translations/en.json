@@ -120,8 +120,7 @@
     "priceSummary": "Price Summary",
     "purchaseSuccessful": "Purchase Successful",
     "purchaseSuccessMessage": "Your purchase has been completed successfully.",
-    "months": "months",
-    "errorOccurred": "An error occurred"
+    "months": "months"
   },
   "dashboard": {
     "sidebar": {
@@ -1093,7 +1092,6 @@
     "updateSuccessDescription": "Working hours settings have been saved",
     "updateError": "Error updating working hours",
     "updateErrorDescription": "Failed to update working hours settings",
-    "fetchError": "Failed to fetch working hours settings. Default settings loaded.",
     "fixedHours": "Fixed Hours",
     "specialDates": "Special Dates",
     "day": "Day",
@@ -1104,7 +1102,6 @@
     "notes": "Notes",
     "addSpecialDate": "Add Special Date",
     "editSpecialDate": "Edit Special Date",
-    "specialDateDeleted": "Special date deleted successfully",
     "date": "Date",
     "selectDate": "Select Date",
     "amount": "Amount",
@@ -1130,26 +1127,7 @@
     "enablePriceAddition": "Enable price addition",
     "specialDateActiveDescription": "Mark if services are available on this special date.",
     "noSpecialDates": "No Special Dates Yet",
-    "noSpecialDatesHint": "Click 'Add Special Date' to create one.",
-    "priceAdditionTypes": {
-      "fixed": "₪",
-      "percentage": "%"
-    },
-    "validation": {
-      "amountRequired": "Amount is required for price addition.",
-      "amountMustBeNumber": "Amount must be a number.",
-      "amountPositive": "Amount must be a positive number.",
-      "typeRequired": "Type is required for price addition.",
-      "invalidTimeFormat": "Invalid time format. Use HH:MM.",
-      "notesTooLong": "Notes are too long (max 500 characters).",
-      "timeRequiredWhenActive": "Start and end time are required when the day/date is active.",
-      "priceAdditionDetailsRequired": "Price addition amount and type are required when price addition is enabled.",
-      "nameRequired": "Event name is required.",
-      "nameTooLong": "Event name is too long (max 100 characters).",
-      "dateRequired": "Date is required.",
-      "dateRequiredCalendar": "A date is required for the special event.",
-      "dateInvalidCalendar": "Invalid date selected."
-    }
+    "noSpecialDatesHint": "Click 'Add Special Date' to create one."
   },
   "preferences": {
     "treatment": {

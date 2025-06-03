@@ -1,86 +1,236 @@
-export interface NotificationData {
-  type: "welcome" | "passwordReset" | "inviteUser" | "adminPasswordReset" // Assuming adminPasswordReset can use passwordReset
-  userName: string
-  email: string
+export interface EmailNotificationData {
+  type:
+    | "welcome"
+    | "passwordReset"
+    | "inviteUser"
+    | "adminPasswordReset"
+    | "GIFT_VOUCHER_RECEIVED" // Added to match potential usage
+    | "PURCHASE_SUCCESS_SUBSCRIPTION" // New
+    | "PURCHASE_SUCCESS_GIFT_VOUCHER" // New
+  userName?: string // Made optional as not all types use it directly (e.g. GIFT_VOUCHER_RECEIVED uses recipientName)
+  email?: string // Made optional
   resetLink?: string
   inviteLink?: string
   organizationName?: string
+  // Fields for GIFT_VOUCHER_RECEIVED
+  recipientName?: string
+  purchaserName?: string
+  voucherCode?: string
+  greetingMessage?: string
+  // Fields for PURCHASE_SUCCESS_SUBSCRIPTION
+  subscriptionName?: string
+  purchaseDetailsLink?: string
+  // Fields for PURCHASE_SUCCESS_GIFT_VOUCHER
+  voucherType?: "monetary" | "treatment"
+  treatmentName?: string
+  voucherValue?: number
+  // voucherCode is already defined above
+  // purchaseDetailsLink is already defined above
 }
 
-export const getEmailTemplate = (data: NotificationData, language = "en") => {
+export const getEmailTemplate = (data: EmailNotificationData, language = "en") => {
   let subject = ""
   let text = ""
   let html = ""
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || "Masu"
+  const emailFrom = process.env.EMAIL_FROM || "Masu" // Used for "The Masu Team"
 
-  // Common email wrapper structure (simplified from original project for this example)
-  // In a real scenario, you'd use the more complex wrapper from your project.
   const wrapHtml = (content: string, emailSubject: string): string => `
-   <!DOCTYPE html>
-   <html lang="${language}">
-   <head>
-     <meta charset="UTF-8">
-     <title>${emailSubject}</title>
-     <style>
-       body { font-family: sans-serif; margin: 20px; padding: 0; }
-       .container { max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; }
-       .button { display: inline-block; padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
-     </style>
-   </head>
-   <body>
-     <div class="container">
-       ${content}
-       <hr/>
-       <p><small>If you have any questions, please contact us. All rights reserved &copy; ${new Date().getFullYear()} ${process.env.NEXT_PUBLIC_APP_NAME || "Masu"}</small></p>
+ <!DOCTYPE html>
+ <html lang="${language}" dir="${language === "he" ? "rtl" : "ltr"}">
+ <head>
+   <meta charset="UTF-8">
+   <title>${emailSubject}</title>
+   <style>
+     body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; direction: ${
+       language === "he" ? "rtl" : "ltr"
+     }; }
+     .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
+     .header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+     .header img { max-width: 150px; } /* Placeholder for logo */
+     .content { padding: 20px 0; color: #333; line-height: 1.6; }
+     .button { display: inline-block; padding: 12px 25px; background-color: #007bff; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; text-align: center; }
+     .footer { padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 0.9em; color: #777; }
+     p { margin: 10px 0; }
+   </style>
+ </head>
+ <body>
+   <div class="container">
+     <div class="header">
+        място ללוגו בעתיד <!-- <img src="YOUR_LOGO_URL_HERE" alt="${appName} Logo" /> -->
+       <h2>${appName}</h2>
      </div>
-   </body>
-   </html>
-  `
+     <div class="content">
+       ${content}
+     </div>
+     <div class="footer">
+       <p>${
+         language === "he"
+           ? `אם יש לך שאלות, אנא צור קשר. כל הזכויות שמורות &copy; ${new Date().getFullYear()} ${appName}`
+           : language === "ru"
+             ? `Если у вас есть вопросы, пожалуйста, свяжитесь с нами. Все права защищены &copy; ${new Date().getFullYear()} ${appName}`
+             : `If you have any questions, please contact us. All rights reserved &copy; ${new Date().getFullYear()} ${appName}`
+       }</p>
+     </div>
+   </div>
+ </body>
+ </html>
+`
 
   switch (data.type) {
     case "welcome":
-      subject = language === "he" ? "ברוכים הבאים!" : "Welcome!"
-      const welcomeTextContent = `Hello ${data.userName},\n\nWelcome to ${process.env.NEXT_PUBLIC_APP_NAME || "Masu"}!\n\nThanks,\nThe ${process.env.EMAIL_FROM || "Masu"} Team`
+      subject =
+        language === "he"
+          ? `ברוך הבא ל${appName}!`
+          : language === "ru"
+            ? `Добро пожаловать в ${appName}!`
+            : `Welcome to ${appName}!`
+      const welcomeTextContent =
+        language === "he"
+          ? `שלום ${data.userName},\n\nברוך הבא ל${appName}!\n\nתודה,\nצוות ${emailFrom}`
+          : language === "ru"
+            ? `Здравствуйте, ${data.userName},\n\nДобро пожаловать в ${appName}!\n\nСпасибо,\nКоманда ${emailFrom}`
+            : `Hello ${data.userName},\n\nWelcome to ${appName}!\n\nThanks,\nThe ${emailFrom} Team`
       const welcomeHtmlContent = `
-        <p>Hello ${data.userName},</p>
-        <p>Welcome to ${process.env.NEXT_PUBLIC_APP_NAME || "Masu"}!</p>
-        <p>Thanks,<br/>The ${process.env.EMAIL_FROM || "Masu"} Team</p>
-      `
+      <p>${language === "he" ? `שלום ${data.userName},` : language === "ru" ? `Здравствуйте, ${data.userName},` : `Hello ${data.userName},`}</p>
+      <p>${language === "he" ? `ברוך הבא ל${appName}!` : language === "ru" ? `Добро пожаловать в ${appName}!` : `Welcome to ${appName}!`}</p>
+      <p>${language === "he" ? "תודה," : language === "ru" ? "Спасибо," : "Thanks,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
+    `
       text = welcomeTextContent
       html = wrapHtml(welcomeHtmlContent, subject)
       break
 
     case "passwordReset":
-      subject = language === "he" ? `איפוס סיסמה עבור ${data.userName}` : `Password Reset for ${data.userName}`
-      const passwordResetTextContent = `Hello ${data.userName},\n\nPlease click the following link to reset your password: ${data.resetLink}\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe ${process.env.EMAIL_FROM || "Masu"} Team`
+      subject =
+        language === "he"
+          ? `איפוס סיסמה עבור ${data.userName}`
+          : language === "ru"
+            ? `Сброс пароля для ${data.userName}`
+            : `Password Reset for ${data.userName}`
+      const passwordResetTextContent =
+        language === "he"
+          ? `שלום ${data.userName},\n\nאנא לחץ על הקישור הבא לאיפוס סיסמתך: ${data.resetLink}\n\nאם לא ביקשת זאת, אנא התעלם ממייל זה.\n\nתודה,\nצוות ${emailFrom}`
+          : language === "ru"
+            ? `Здравствуйте, ${data.userName},\n\nПожалуйста, нажмите на следующую ссылку, чтобы сбросить пароль: ${data.resetLink}\n\nЕсли вы не запрашивали это, пожалуйста, проигнорируйте это письмо.\n\nСпасибо,\nКоманда ${emailFrom}`
+            : `Hello ${data.userName},\n\nPlease click the following link to reset your password: ${data.resetLink}\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe ${emailFrom} Team`
       const passwordResetHtmlContent = `
-        <p>Hello ${data.userName},</p>
-        <p>Please click the link below to reset your password:</p>
-        <p><a href="${data.resetLink}" class="button">Reset Password</a></p>
-        <p>If you did not request this, please ignore this email.</p>
-        <p>Thanks,<br/>The ${process.env.EMAIL_FROM || "Masu"} Team</p>
-      `
+      <p>${language === "he" ? `שלום ${data.userName},` : language === "ru" ? `Здравствуйте, ${data.userName},` : `Hello ${data.userName},`}</p>
+      <p>${language === "he" ? "אנא לחץ על הקישור הבא לאיפוס סיסמתך:" : language === "ru" ? "Пожалуйста, нажмите на следующую ссылку, чтобы сбросить пароль:" : "Please click the link below to reset your password:"}</p>
+      <p style="text-align: center; margin: 20px 0;"><a href="${data.resetLink}" class="button">${language === "he" ? "אפס סיסמה" : language === "ru" ? "Сбросить пароль" : "Reset Password"}</a></p>
+      <p>${language === "he" ? "אם לא ביקשת זאת, אנא התעלם ממייל זה." : language === "ru" ? "Если вы не запрашивали это, пожалуйста, проигнорируйте это письмо." : "If you did not request this, please ignore this email."}</p>
+      <p>${language === "he" ? "תודה," : language === "ru" ? "Спасибо," : "Thanks,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
+    `
       text = passwordResetTextContent
       html = wrapHtml(passwordResetHtmlContent, subject)
       break
 
-    case "inviteUser":
-      subject = language === "he" ? `הוזמנת ל ${data.organizationName}` : `You're invited to ${data.organizationName}`
-      const inviteUserTextContent = `Hello ${data.userName},\n\nYou have been invited to join ${data.organizationName} on ${process.env.NEXT_PUBLIC_APP_NAME || "Masu"}.\n\nPlease click the following link to accept the invitation: ${data.inviteLink}\n\nThanks,\nThe ${process.env.EMAIL_FROM || "Masu"} Team`
+    case "inviteUser": // Assuming this template remains as is
+      subject =
+        language === "he"
+          ? `הוזמנת ל ${data.organizationName}`
+          : language === "ru"
+            ? `Вас пригласили в ${data.organizationName}`
+            : `You're invited to ${data.organizationName}`
+      const inviteUserTextContent = `Hello ${data.userName},\n\nYou have been invited to join ${data.organizationName} on ${appName}.\n\nPlease click the following link to accept the invitation: ${data.inviteLink}\n\nThanks,\nThe ${emailFrom} Team`
       const inviteUserHtmlContent = `
-        <p>Hello ${data.userName},</p>
-        <p>You have been invited to join ${data.organizationName} on ${process.env.NEXT_PUBLIC_APP_NAME || "Masu"}.</p>
-        <p>Please click the link below to accept the invitation:</p>
-        <p><a href="${data.inviteLink}" class="button">Accept Invitation</a></p>
-        <p>Thanks,<br/>The ${process.env.EMAIL_FROM || "Masu"} Team</p>
-      `
+      <p>Hello ${data.userName},</p>
+      <p>You have been invited to join ${data.organizationName} on ${appName}.</p>
+      <p>Please click the link below to accept the invitation:</p>
+      <p><a href="${data.inviteLink}" class="button">Accept Invitation</a></p>
+      <p>Thanks,<br/>The ${emailFrom} Team</p>
+    `
       text = inviteUserTextContent
       html = wrapHtml(inviteUserHtmlContent, subject)
       break
 
-    default: // Corrected default case
-      subject = "Notification"
-      const defaultTextContent = `Hello,\n\nThis is a notification from ${process.env.NEXT_PUBLIC_APP_NAME || "Masu"}.`
-      const defaultHtmlContent = `<p>Hello,</p><p>This is a notification from ${process.env.NEXT_PUBLIC_APP_NAME || "Masu"}.</p>`
+    case "GIFT_VOUCHER_RECEIVED": // For the recipient of a gift
+      subject =
+        language === "he"
+          ? `קיבלת שובר מתנה מ${data.purchaserName}!`
+          : language === "ru"
+            ? `Вы получили подарочный сертификат от ${data.purchaserName}!`
+            : `You've received a gift voucher from ${data.purchaserName}!`
+      const giftReceivedText =
+        language === "he"
+          ? `שלום ${data.recipientName},\n\n${data.purchaserName} שלח לך שובר מתנה!\nקוד השובר שלך: ${data.voucherCode}\n${data.greetingMessage ? `הודעה אישית: ${data.greetingMessage}\n` : ""}\nתוכל להשתמש בשובר זה ב${appName}.\n\nבברכה,\nצוות ${emailFrom}`
+          : language === "ru"
+            ? `Здравствуйте, ${data.recipientName},\n\n${data.purchaserName} отправил(а) вам подарочный сертификат!\nКод вашего сертификата: ${data.voucherCode}\n${data.greetingMessage ? `Личное сообщение: ${data.greetingMessage}\n` : ""}\nВы можете использовать этот сертификат в ${appName}.\n\nС наилучшими пожеланиями,\nКоманда ${emailFrom}`
+            : `Hello ${data.recipientName},\n\n${data.purchaserName} has sent you a gift voucher!\nYour voucher code is: ${data.voucherCode}\n${data.greetingMessage ? `Personal message: ${data.greetingMessage}\n` : ""}\nYou can use this voucher at ${appName}.\n\nBest regards,\nThe ${emailFrom} Team`
+      const giftReceivedHtml = `
+      <p>${language === "he" ? `שלום ${data.recipientName},` : language === "ru" ? `Здравствуйте, ${data.recipientName},` : `Hello ${data.recipientName},`}</p>
+      <p>${language === "he" ? `${data.purchaserName} שלח לך שובר מתנה!` : language === "ru" ? `${data.purchaserName} отправил(а) вам подарочный сертификат!` : `${data.purchaserName} has sent you a gift voucher!`}</p>
+      <p>${language === "he" ? "קוד השובר שלך:" : language === "ru" ? "Код вашего сертификата:" : "Your voucher code is:"} <strong>${data.voucherCode}</strong></p>
+      ${data.greetingMessage ? `<p>${language === "he" ? "הודעה אישית:" : language === "ru" ? "Личное сообщение:" : "Personal message:"} <em>${data.greetingMessage}</em></p>` : ""}
+      <p>${language === "he" ? `תוכל להשתמש בשובר זה ב${appName}.` : language === "ru" ? `Вы можете использовать этот сертификат в ${appName}.` : `You can use this voucher at ${appName}.`}</p>
+      <p>${language === "he" ? "בברכה," : language === "ru" ? "С наилучшими пожеланиями," : "Best regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
+    `
+      text = giftReceivedText
+      html = wrapHtml(giftReceivedHtml, subject)
+      break
+
+    case "PURCHASE_SUCCESS_SUBSCRIPTION":
+      subject =
+        language === "he"
+          ? "רכישת מנוי הושלמה בהצלחה!"
+          : language === "ru"
+            ? "Покупка подписки успешно завершена!"
+            : "Subscription Purchase Successful!"
+      const subText =
+        language === "he"
+          ? `שלום ${data.userName},\n\nתודה על רכישת המנוי "${data.subscriptionName}".\nפרטי המנוי שלך זמינים לצפייה בקישור הבא: ${data.purchaseDetailsLink}\n\nבברכה,\nצוות ${emailFrom}`
+          : language === "ru"
+            ? `Здравствуйте, ${data.userName},\n\nСпасибо за покупку подписки "${data.subscriptionName}".\nДетали вашей подписки доступны по следующей ссылке: ${data.purchaseDetailsLink}\n\nС уважением,\nКоманда ${emailFrom}`
+            : `Hello ${data.userName},\n\nThank you for purchasing the "${data.subscriptionName}" subscription.\nYour subscription details are available at the following link: ${data.purchaseDetailsLink}\n\nRegards,\nThe ${emailFrom} Team`
+      const subHtml = `
+      <p>${language === "he" ? `שלום ${data.userName},` : language === "ru" ? `Здравствуйте, ${data.userName},` : `Hello ${data.userName},`}</p>
+      <p>${language === "he" ? `תודה על רכישת המנוי "${data.subscriptionName}".` : language === "ru" ? `Спасибо за покупку подписки "${data.subscriptionName}".` : `Thank you for purchasing the "${data.subscriptionName}" subscription.`}</p>
+      <p>${language === "he" ? "פרטי המנוי שלך זמינים לצפייה בקישור הבא:" : language === "ru" ? "Детали вашей подписки доступны по следующей ссылке:" : "Your subscription details are available at the following link:"}</p>
+      <p style="text-align: center; margin: 20px 0;"><a href="${data.purchaseDetailsLink}" class="button">${language === "he" ? "צפה במנוי שלי" : language === "ru" ? "Посмотреть мою подписку" : "View My Subscription"}</a></p>
+      <p>${language === "he" ? "בברכה," : language === "ru" ? "С уважением," : "Regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
+    `
+      text = subText
+      html = wrapHtml(subHtml, subject)
+      break
+
+    case "PURCHASE_SUCCESS_GIFT_VOUCHER": // For the purchaser
+      const voucherDesc =
+        data.voucherType === "treatment"
+          ? data.treatmentName ||
+            (language === "he" ? "שובר טיפול" : language === "ru" ? "сертификат на процедуру" : "treatment voucher")
+          : `${data.voucherValue} ILS ${language === "he" ? "שובר כספי" : language === "ru" ? "денежный сертификат" : "monetary voucher"}`
+      subject =
+        language === "he"
+          ? "רכישת שובר מתנה הושלמה בהצלחה!"
+          : language === "ru"
+            ? "Покупка подарочного сертификата успешно завершена!"
+            : "Gift Voucher Purchase Successful!"
+      const voucherText =
+        language === "he"
+          ? `שלום ${data.userName},\n\nתודה על רכישת ${voucherDesc}.\nקוד השובר: ${data.voucherCode}\nפרטי השובר שלך זמינים לצפייה בקישור הבא: ${data.purchaseDetailsLink}\n\nבברכה,\nצוות ${emailFrom}`
+          : language === "ru"
+            ? `Здравствуйте, ${data.userName},\n\nСпасибо за покупку ${voucherDesc}.\nКод сертификата: ${data.voucherCode}\nДетали вашего сертификата доступны по следующей ссылке: ${data.purchaseDetailsLink}\n\nС уважением,\nКоманда ${emailFrom}`
+            : `Hello ${data.userName},\n\nThank you for purchasing a ${voucherDesc}.\nYour voucher code is: ${data.voucherCode}\nYour voucher details are available at the following link: ${data.purchaseDetailsLink}\n\nRegards,\nThe ${emailFrom} Team`
+      const voucherHtml = `
+      <p>${language === "he" ? `שלום ${data.userName},` : language === "ru" ? `Здравствуйте, ${data.userName},` : `Hello ${data.userName},`}</p>
+      <p>${language === "he" ? `תודה על רכישת ${voucherDesc}.` : language === "ru" ? `Спасибо за покупку ${voucherDesc}.` : `Thank you for purchasing a ${voucherDesc}.`}</p>
+      <p>${language === "he" ? "קוד השובר:" : language === "ru" ? "Код сертификата:" : "Voucher Code:"} <strong>${data.voucherCode}</strong></p>
+      <p>${language === "he" ? "פרטי השובר שלך זמינים לצפייה בקישור הבא:" : language === "ru" ? "Детали вашего сертификата доступны по следующей ссылке:" : "Your voucher details are available at the following link:"}</p>
+      <p style="text-align: center; margin: 20px 0;"><a href="${data.purchaseDetailsLink}" class="button">${language === "he" ? "צפה בשוברים שלי" : language === "ru" ? "Посмотреть мои сертификаты" : "View My Vouchers"}</a></p>
+      <p>${language === "he" ? "בברכה," : language === "ru" ? "С уважением," : "Regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
+    `
+      text = voucherText
+      html = wrapHtml(voucherHtml, subject)
+      break
+
+    default:
+      subject = language === "he" ? "הודעה" : language === "ru" ? "Уведомление" : "Notification"
+      const defaultTextContent =
+        language === "he"
+          ? `שלום,\n\nזוהי הודעה מ${appName}.`
+          : language === "ru"
+            ? `Здравствуйте,\n\nЭто уведомление от ${appName}.`
+            : `Hello,\n\nThis is a notification from ${appName}.`
+      const defaultHtmlContent = `<p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p><p>${language === "he" ? `זוהי הודעה מ${appName}.` : language === "ru" ? `Это уведомление от ${appName}.` : `This is a notification from ${appName}.`}</p>`
       text = defaultTextContent
       html = wrapHtml(defaultHtmlContent, subject)
       break

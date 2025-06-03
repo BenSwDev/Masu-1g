@@ -72,6 +72,41 @@ export interface CustomNotificationData {
 }
 
 /**
+ * Gift Voucher Received notification data (already exists implicitly via sms-templates, let's make it explicit if needed for email)
+ */
+export interface GiftVoucherReceivedNotificationData {
+  type: "GIFT_VOUCHER_RECEIVED" // Matches type used in gift-voucher-actions.ts for SMS
+  recipientName: string
+  purchaserName: string
+  voucherCode: string
+  greetingMessage?: string
+  // Add purchaseDetailsLink if we want to send a link to the recipient to view it online
+}
+
+/**
+ * Purchase Success Subscription notification data
+ */
+export interface PurchaseSuccessSubscriptionNotificationData {
+  type: "PURCHASE_SUCCESS_SUBSCRIPTION"
+  userName: string
+  subscriptionName: string
+  purchaseDetailsLink: string
+}
+
+/**
+ * Purchase Success Gift Voucher notification data (for the purchaser)
+ */
+export interface PurchaseSuccessGiftVoucherNotificationData {
+  type: "PURCHASE_SUCCESS_GIFT_VOUCHER"
+  userName: string
+  voucherType: "monetary" | "treatment"
+  treatmentName?: string // If voucherType is 'treatment'
+  voucherValue?: number // If voucherType is 'monetary'
+  voucherCode: string
+  purchaseDetailsLink: string
+}
+
+/**
  * Union type for all notification data
  */
 export type NotificationData =
@@ -80,6 +115,9 @@ export type NotificationData =
   | PasswordResetNotificationData
   | AppointmentNotificationData
   | CustomNotificationData
+  | GiftVoucherReceivedNotificationData // Added for clarity, matches existing usage
+  | PurchaseSuccessSubscriptionNotificationData // New
+  | PurchaseSuccessGiftVoucherNotificationData // New
 
 /**
  * Result of a notification send operation

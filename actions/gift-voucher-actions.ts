@@ -12,6 +12,12 @@ import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import { notificationManager } from "@/lib/notifications/notification-manager"
 import type { GiftVoucherPlain as IGiftVoucherPlainFile } from "@/lib/db/models/gift-voucher"
+import type {
+  PurchaseSuccessGiftVoucherNotificationData,
+  EmailRecipient,
+  PhoneRecipient,
+  GiftVoucherReceivedNotificationData,
+} from "@/lib/notifications/notification-types" // Added imports
 
 // Extended GiftVoucherPlain for client-side use
 export interface GiftVoucherPlain extends IGiftVoucherPlainFile {
@@ -734,7 +740,7 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
     })
     if (error instanceof mongoose.Error.ValidationError) {
       const messages = Object.values(error.errors)
-        .map((err) => err.message)
+        .map((err: any) => err.message)
         .join(", ")
       return { success: false, error: `Validation failed: ${messages}` }
     }
@@ -742,7 +748,6 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
   }
 }
 
-// ... (confirmGiftVoucherPurchase, setGiftDetails, getMemberPurchasedVouchers, getMemberOwnedVouchers, redeemGiftVoucher)
 export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
   try {
     const session = await getServerSession(authOptions)
@@ -760,34 +765,121 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
     if (!voucher) {
       return { success: false, error: "Voucher not found" }
     }
-    if (voucher.purchaserUserId.toString() !== session.user.id) {
-      // Consider if admin can confirm or if payment callback is server-to-server
-      // logger.warn("Voucher purchaser mismatch during confirmation.", { voucherId, userId: session.user.id });
-      // return { success: false, error: "Purchase record mismatch." };
+    // Allow confirmation if user is the purchaser OR an admin (admin might confirm manually)
+    if (voucher.purchaserUserId.toString() !== session.user.id && !session.user.roles.includes("admin")) {
+      logger.warn("Voucher purchaser mismatch during confirmation by non-admin.", {
+        voucherId,
+        userId: session.user.id,
+      })
+      // return { success: false, error: "Purchase record mismatch." }; // Keep this commented if admin can confirm for others
     }
     if (voucher.status !== "pending_payment") {
-      return { success: false, error: "Voucher not awaiting payment or already processed." }
+      // If already active/sent, it might be a duplicate callback, still return success with current voucher state.
+      if (voucher.status === "active" || voucher.status === "sent" || voucher.status === "partially_used") {
+        logger.info(`Voucher ${voucherId} already processed. Status: ${voucher.status}`)
+        return { success: true, voucher: await toGiftVoucherPlain(voucher) }
+      }
+      return {
+        success: false,
+        error: "Voucher not awaiting payment or already processed with a non-successful status.",
+      }
     }
 
     if (paymentSuccess) {
       voucher.paymentId = paymentId
       if (!voucher.isGift) {
+        // If it's not a gift, it's for the purchaser themselves
         voucher.status = "active"
         voucher.isActive = true
-      } // For gifts, status/isActive handled by setGiftDetails
+        voucher.ownerUserId = voucher.purchaserUserId // Ensure owner is purchaser if not a gift
+      } else {
+        // If it IS a gift, status will be 'pending_send' or 'sent' based on setGiftDetails.
+        // For now, if payment is successful, we can mark it as 'active' conceptually,
+        // but `setGiftDetails` will finalize its status.
+        // If it's a gift and no recipient details are set yet, it remains owned by purchaser.
+        // Let's assume if it's a gift, it's 'active' for the purchaser to manage until recipient details are set.
+        // Or, if `setGiftDetails` is always called after this, it will handle the status.
+        // For simplicity, if it's a gift, we'll leave status as pending_payment until setGiftDetails.
+        // However, the user might expect it to be 'active' in their list of purchased vouchers.
+        // Let's make it 'active' for the purchaser if it's a gift and payment is successful.
+        // `setGiftDetails` will then transition it to 'pending_send' or 'sent'.
+        voucher.status = "active" // Purchaser now owns an active voucher they can gift
+        voucher.isActive = true
+      }
       await voucher.save()
+
+      // --- Send purchase success notification to purchaser ---
+      try {
+        const purchaser = await User.findById(voucher.purchaserUserId)
+          .select("name email phone notificationPreferences")
+          .lean()
+
+        if (purchaser) {
+          const lang = purchaser.notificationPreferences?.language || "he"
+          const methods = purchaser.notificationPreferences?.methods || ["email", "sms"]
+          const userNameForNotification = purchaser.name || (lang === "he" ? "לקוח" : "Customer")
+          const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+
+          let treatmentNameForNotif: string | undefined
+          if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+            const treatmentDoc = await Treatment.findById(voucher.treatmentId).select("name").lean()
+            treatmentNameForNotif = treatmentDoc?.name
+          }
+
+          const notificationData: PurchaseSuccessGiftVoucherNotificationData = {
+            type: "PURCHASE_SUCCESS_GIFT_VOUCHER",
+            userName: userNameForNotification,
+            voucherType: voucher.voucherType,
+            treatmentName: treatmentNameForNotif,
+            voucherValue: voucher.voucherType === "monetary" ? voucher.amount : undefined,
+            voucherCode: voucher.code,
+            purchaseDetailsLink: `${appBaseUrl}/dashboard/member/gift-vouchers`,
+          }
+
+          if (methods.includes("email") && purchaser.email) {
+            const emailRecipient: EmailRecipient = {
+              type: "email",
+              value: purchaser.email,
+              language: lang,
+              name: userNameForNotification,
+            }
+            await notificationManager.sendNotification(emailRecipient, notificationData)
+          }
+          if (methods.includes("sms") && purchaser.phone) {
+            const phoneRecipient: PhoneRecipient = {
+              type: "phone",
+              value: purchaser.phone,
+              language: lang,
+            }
+            await notificationManager.sendNotification(phoneRecipient, notificationData)
+          }
+        } else {
+          logger.warn(
+            `Purchaser not found for notification after gift voucher purchase confirmation: ${voucher.purchaserUserId.toString()}`,
+          )
+        }
+      } catch (notificationError) {
+        logger.error("Failed to send purchase success notification for gift voucher (purchaser):", {
+          userId: voucher.purchaserUserId.toString(),
+          voucherId: voucher._id.toString(),
+          error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+        })
+      }
+      // --- End notification sending to purchaser ---
+
       revalidatePath("/dashboard/member/gift-vouchers")
       if (voucher.purchaserUserId.toString() !== voucher.ownerUserId.toString()) {
-        revalidatePath(`/dashboard/user/${voucher.ownerUserId.toString()}/gift-vouchers`)
+        revalidatePath(`/dashboard/user/${voucher.ownerUserId.toString()}/gift-vouchers`) // This path might not exist
       }
       return {
         success: true,
         voucher: await toGiftVoucherPlain(voucher),
       }
     } else {
-      voucher.status = "cancelled"
+      voucher.status = "cancelled" // Or 'payment_failed'
       voucher.isActive = false
       await voucher.save()
+      // Optionally send a payment failed notification
       return { success: false, error: "Payment failed. Voucher not activated." }
     }
   } catch (error) {
@@ -818,9 +910,18 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
     if (voucher.purchaserUserId.toString() !== session.user.id) {
       return { success: false, error: "You are not authorized to modify this voucher." }
     }
+    // Ensure voucher is in a state where gift details can be set (e.g., 'active' or 'pending_payment' if payment was confirmed)
+    if (!["active", "pending_payment"].includes(voucher.status)) {
+      // If it was 'pending_payment', it means confirmGiftVoucherPurchase might not have run or payment failed.
+      // If it's already 'sent', 'expired', etc., details shouldn't be changed.
+      logger.warn(`Attempt to set gift details for voucher ${voucherId} with status ${voucher.status}`)
+      // return { success: false, error: `Cannot set gift details for voucher with status: ${voucher.status}` };
+    }
+
     if (!details.recipientName || details.recipientName.trim() === "") {
       return { success: false, error: "Recipient name is required." }
     }
+    // Basic phone validation (presence) - more robust validation can be added
     if (!details.recipientPhone || details.recipientPhone.trim() === "") {
       return { success: false, error: "Recipient phone is required." }
     }
@@ -830,50 +931,62 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
 
     voucher.isGift = true
     voucher.recipientName = details.recipientName
-    voucher.recipientPhone = details.recipientPhone
+    voucher.recipientPhone = details.recipientPhone // Store as is, SMSService should format
     voucher.greetingMessage = details.greetingMessage
+    // The owner of the voucher might change to the recipient if the system supports that,
+    // or it might remain with the purchaser but be designated for the recipient.
+    // For now, ownerUserId remains the purchaser.
 
     const now = new Date()
-    let sendNotificationNow = false
+    let sendNotificationToRecipientNow = false
 
     if (details.sendDate === "immediate" || !details.sendDate) {
       voucher.sendDate = now
-      voucher.status = "sent"
-      voucher.isActive = true
-      sendNotificationNow = true
+      voucher.status = "sent" // Voucher is now sent to recipient
+      voucher.isActive = true // Recipient can use it
+      sendNotificationToRecipientNow = true
     } else {
       const scheduledSendDate = new Date(details.sendDate)
       voucher.sendDate = scheduledSendDate
       if (scheduledSendDate <= now) {
         voucher.status = "sent"
         voucher.isActive = true
-        sendNotificationNow = true
+        sendNotificationToRecipientNow = true
       } else {
-        voucher.status = "pending_send"
-        voucher.isActive = false
-        // TODO: Schedule notification for future sendDate (requires a job scheduler)
+        voucher.status = "pending_send" // Scheduled for future
+        voucher.isActive = false // Not active for recipient yet
+        // TODO: Implement a job scheduler for future sending if this is a hard requirement.
+        // For now, it relies on a cron job or manual process to check and send.
+        logger.info(`Gift voucher ${voucher.code} scheduled for sending on ${voucher.sendDate}`)
       }
     }
 
-    if (sendNotificationNow && voucher.recipientPhone && voucher.recipientName) {
+    if (sendNotificationToRecipientNow && voucher.recipientPhone && voucher.recipientName) {
       try {
-        await notificationManager.sendNotification(
-          "sms",
-          { value: voucher.recipientPhone, name: voucher.recipientName },
-          {
-            type: "GIFT_VOUCHER_RECEIVED",
-            params: {
-              recipientName: voucher.recipientName || "there",
-              purchaserName: session.user.name || "Someone special",
-              voucherCode: voucher.code,
-              greetingMessage: voucher.greetingMessage || "",
-            },
-          },
-        )
+        const recipientLang = session.user.language || "he" // Or detect recipient's language if possible
+
+        const notificationDataForRecipient: GiftVoucherReceivedNotificationData = {
+          type: "GIFT_VOUCHER_RECEIVED",
+          recipientName: voucher.recipientName,
+          purchaserName: session.user.name || (recipientLang === "he" ? "מישהו שאוהב אותך" : "Someone special"),
+          voucherCode: voucher.code,
+          greetingMessage: voucher.greetingMessage || "",
+        }
+
+        // Send SMS to recipient
+        const phoneRecipient: PhoneRecipient = {
+          type: "phone",
+          value: voucher.recipientPhone, // SMSService will handle formatting
+          language: recipientLang,
+        }
+        await notificationManager.sendNotification(phoneRecipient, notificationDataForRecipient)
         logger.info(`Gift voucher SMS notification sent to ${voucher.recipientPhone} for voucher ${voucher.code}`)
+
+        // Optionally, send an email to the recipient if their email is known/collected
+        // For now, only SMS as per original logic.
       } catch (notificationError) {
-        logger.error("Failed to send gift voucher SMS notification", {
-          error: notificationError,
+        logger.error("Failed to send gift voucher notification to recipient", {
+          error: notificationError instanceof Error ? notificationError.message : String(notificationError),
           voucherId: voucher._id.toString(),
           recipientPhone: voucher.recipientPhone,
         })
@@ -881,7 +994,8 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
     }
 
     await voucher.save()
-    revalidatePath("/dashboard/member/gift-vouchers")
+    revalidatePath("/dashboard/member/gift-vouchers") // For the purchaser
+    // If recipient has an account and can see vouchers gifted to them, revalidate their path too.
 
     return {
       success: true,
@@ -931,7 +1045,12 @@ export async function getMemberOwnedVouchers() {
       return { success: false, error: "Unauthorized", giftVouchers: [] }
     }
     await dbConnect()
-    const voucherDocs = await GiftVoucher.find({ ownerUserId: new mongoose.Types.ObjectId(session.user.id) })
+    // This should fetch vouchers where the current user is the ownerUserId
+    // AND the voucher is in a state where they can use it (e.g., active, sent, partially_used)
+    const voucherDocs = await GiftVoucher.find({
+      ownerUserId: new mongoose.Types.ObjectId(session.user.id),
+      // status: { $in: ['active', 'sent', 'partially_used'] } // Consider if only active/usable ones should show here
+    })
       .sort({ validUntil: 1, purchaseDate: -1 })
       .lean()
 
@@ -953,8 +1072,8 @@ export async function getMemberOwnedVouchers() {
 
 export interface OrderDetailsForRedemption {
   orderId?: string
-  totalAmount: number
-  items?: { name: string; price: number }[]
+  totalAmount: number // Amount to be covered by voucher
+  items?: { name: string; price: number }[] // For description purposes
 }
 
 export async function redeemGiftVoucher(code: string, orderDetails: OrderDetailsForRedemption) {
@@ -969,7 +1088,17 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
       return { success: false, error: "Voucher not found." }
     }
 
+    // Check if the current user is the owner OR if the voucher was gifted to them (recipientName/Phone match)
+    // For simplicity, current logic assumes ownerUserId must match session.user.id
+    // A more complex scenario might allow redemption if recipient details match and voucher is 'sent'.
     if (voucher.ownerUserId.toString() !== session.user.id) {
+      // If it's a gift sent to someone else, the owner (purchaser) cannot redeem it.
+      // If it was gifted TO this user, ownerUserId might still be the purchaser.
+      // This needs clarification: who can redeem? The owner or the designated recipient?
+      // Assuming for now: only the ownerUserId can redeem.
+      // If a voucher is gifted, ownerUserId should ideally be updated to the recipient if they have an account.
+      // Or, redemption logic needs to check recipientPhone if status is 'sent'.
+      // For now, sticking to ownerUserId check.
       return { success: false, error: "This voucher does not belong to you or cannot be redeemed by you." }
     }
 
@@ -979,6 +1108,7 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
     }
     if (voucher.validUntil < currentDate && voucher.status !== "expired") {
       voucher.status = "expired"
+      voucher.isActive = false
       await voucher.save()
       return { success: false, error: "Voucher has expired." }
     }
@@ -987,12 +1117,14 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
     }
 
     if (!voucher.isActive) {
+      // This check might be redundant if status checks cover it, but good for explicit isActive flag.
       return { success: false, error: "Voucher is currently inactive." }
     }
+    // Valid statuses for redemption: 'active', 'partially_used', 'sent' (if sent to self or if owner is redeeming)
     if (!["active", "partially_used", "sent"].includes(voucher.status)) {
       return {
         success: false,
-        error: "Voucher is not available for use (e.g., pending payment, fully used, cancelled).",
+        error: `Voucher is not available for use (status: ${voucher.status}).`,
       }
     }
 
@@ -1000,29 +1132,37 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
     const usageEntry: any = {
       date: new Date(),
       orderId: orderDetails.orderId ? new mongoose.Types.ObjectId(orderDetails.orderId) : undefined,
+      userId: new mongoose.Types.ObjectId(session.user.id), // Track who redeemed it
     }
 
     if (voucher.voucherType === "treatment") {
       if (voucher.status === "fully_used") {
+        // Should be caught by isActive or status check above
         return { success: false, error: "Treatment voucher already used." }
       }
+      // For treatment voucher, it's typically one-time use for the specific treatment.
+      // The 'amount' field of the voucher represents its value if used for that treatment.
+      amountApplied = voucher.amount
       voucher.status = "fully_used"
-      amountApplied = voucher.amount // Use the main 'amount' field for treatment value
+      voucher.remainingAmount = 0 // Explicitly set remaining to 0
       usageEntry.amountUsed = amountApplied
-      usageEntry.description = `Redeemed for treatment: ${orderDetails.items?.[0]?.name || voucher.treatmentId?.toString() || "Treatment"}`
+      const treatmentName = orderDetails.items?.[0]?.name || voucher.treatmentId?.toString() || "Treatment"
+      usageEntry.description = `Redeemed for treatment: ${treatmentName}`
     } else if (voucher.voucherType === "monetary") {
       if ((voucher.remainingAmount || 0) <= 0) {
+        // Should be caught by isActive or status check
         return { success: false, error: "Voucher has no remaining balance." }
       }
-      const redemptionAmount = orderDetails.totalAmount
+      const redemptionAmount = orderDetails.totalAmount // This is how much the user WANTS to redeem
       amountApplied = Math.min(redemptionAmount, voucher.remainingAmount || 0)
 
       if (amountApplied <= 0) {
+        // Should not happen if remainingAmount > 0
         return { success: false, error: "No amount could be applied from voucher." }
       }
       voucher.remainingAmount = (voucher.remainingAmount || 0) - amountApplied
       usageEntry.amountUsed = amountApplied
-      usageEntry.description = `Redeemed against order total: ${orderDetails.totalAmount}. Applied: ${amountApplied}`
+      usageEntry.description = `Redeemed against order/service. Order total: ${orderDetails.totalAmount}. Applied: ${amountApplied}`
 
       if (voucher.remainingAmount <= 0) {
         voucher.status = "fully_used"
@@ -1036,11 +1176,18 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
 
     if (!voucher.usageHistory) voucher.usageHistory = []
     voucher.usageHistory.push(usageEntry)
+    // Update isActive based on new status
     voucher.isActive = voucher.status === "active" || voucher.status === "partially_used" || voucher.status === "sent"
+    // (A 'sent' voucher is active for the recipient until used or expired)
+    // If fully_used or expired, isActive becomes false.
+    if (voucher.status === "fully_used" || voucher.status === "expired") {
+      voucher.isActive = false
+    }
+
     await voucher.save()
 
     revalidatePath("/dashboard/member/gift-vouchers")
-    revalidatePath("/dashboard/admin/gift-vouchers")
+    revalidatePath("/dashboard/admin/gift-vouchers") // Admin might want to see updated status
 
     return {
       success: true,

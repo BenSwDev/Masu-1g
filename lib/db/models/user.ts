@@ -7,6 +7,16 @@ export enum UserRole {
   ADMIN = "admin",
 }
 
+// Define interfaces for preferences
+export interface ITreatmentPreferences {
+  therapistGender: "male" | "female" | "any"
+}
+
+export interface INotificationPreferences {
+  methods: ("email" | "sms")[]
+  language: "he" | "en" | "ru"
+}
+
 export interface IUser extends Document {
   name: string
   email: string
@@ -19,6 +29,8 @@ export interface IUser extends Document {
   phoneVerified?: Date
   roles: string[] // Array of roles
   activeRole?: string // Add activeRole
+  treatmentPreferences?: ITreatmentPreferences // New field
+  notificationPreferences?: INotificationPreferences // New field
   createdAt: Date
   updatedAt: Date
 }
@@ -79,11 +91,52 @@ const UserSchema: Schema = new Schema(
       type: Date,
       required: false,
     },
+    treatmentPreferences: {
+      // New field definition
+      therapistGender: {
+        type: String,
+        enum: ["male", "female", "any"],
+        default: "any",
+      },
+    },
+    notificationPreferences: {
+      // New field definition
+      methods: {
+        type: [String],
+        enum: ["email", "sms"],
+        default: ["email", "sms"],
+      },
+      language: {
+        type: String,
+        enum: ["he", "en", "ru"],
+        default: "he",
+      },
+    },
   },
   {
     timestamps: true,
   },
 )
+
+// Ensure defaults are applied if the objects themselves are missing
+UserSchema.pre("save", function (next) {
+  if (this.isNew || !this.treatmentPreferences) {
+    this.treatmentPreferences = { therapistGender: "any" }
+  }
+  if (this.isNew || !this.notificationPreferences) {
+    this.notificationPreferences = { methods: ["email", "sms"], language: "he" }
+  }
+  if (this.treatmentPreferences && this.treatmentPreferences.therapistGender === undefined) {
+    this.treatmentPreferences.therapistGender = "any"
+  }
+  if (this.notificationPreferences && this.notificationPreferences.methods === undefined) {
+    this.notificationPreferences.methods = ["email", "sms"]
+  }
+  if (this.notificationPreferences && this.notificationPreferences.language === undefined) {
+    this.notificationPreferences.language = "he"
+  }
+  next()
+})
 
 // שאר האינדקסים
 UserSchema.index({ roles: 1 })

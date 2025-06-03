@@ -6,6 +6,7 @@ import clientPromise from "@/lib/db/mongodb"
 import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
 import { logger } from "@/lib/logs/logger"
+import type { ITreatmentPreferences, INotificationPreferences } from "@/lib/db/models/user" // Import preference types
 
 // Add interface for our custom user type
 interface CustomUser {
@@ -16,6 +17,8 @@ interface CustomUser {
   roles?: string[]
   password?: string
   activeRole?: string
+  treatmentPreferences?: ITreatmentPreferences // Add here
+  notificationPreferences?: INotificationPreferences // Add here
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -89,6 +92,9 @@ function getDefaultActiveRole(roles: string[]): string {
   return roles[0] || "member"
 }
 
+const defaultTreatmentPreferences: ITreatmentPreferences = { therapistGender: "any" }
+const defaultNotificationPreferences: INotificationPreferences = { methods: ["email", "sms"], language: "he" }
+
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
   providers: [
@@ -127,7 +133,9 @@ export const authOptions: NextAuthOptions = {
         } else {
           throw new Error("Invalid email or phone format")
         }
-        const user = await User.findOne(query).select("+password email name image roles") as CustomUser
+        const user = (await User.findOne(query).select(
+          "+password email name image roles treatmentPreferences notificationPreferences",
+        )) as CustomUser // Include preferences
         if (!user) {
           throw new Error("No user found with this identifier")
         }
@@ -145,8 +153,10 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           roles: userRoles,
+          treatmentPreferences: user.treatmentPreferences || defaultTreatmentPreferences, // Pass preferences
+          notificationPreferences: user.notificationPreferences || defaultNotificationPreferences, // Pass preferences
         }
-      }
+      },
     }),
     CredentialsProvider({
       id: "otp",
@@ -159,7 +169,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Missing userId in OTP credentials")
         }
         await dbConnect()
-        const user = await User.findById(credentials.userId) as CustomUser
+        const user = (await User.findById(credentials.userId).select(
+          "email name image roles treatmentPreferences notificationPreferences",
+        )) as CustomUser // Include preferences
         if (!user) {
           throw new Error("User not found")
         }
@@ -170,6 +182,8 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           roles: userRoles,
+          treatmentPreferences: user.treatmentPreferences || defaultTreatmentPreferences, // Pass preferences
+          notificationPreferences: user.notificationPreferences || defaultNotificationPreferences, // Pass preferences
         }
       },
     }),
@@ -180,65 +194,84 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account, trigger, session }) {
-      await dbConnect();
-      // On first login
+      await dbConnect()
+      // On first login or when user object is passed
       if (user) {
-        token.id = user.id;
-        const customUser = user as unknown as CustomUser;
-        token.roles = customUser.roles && customUser.roles.length > 0 ? customUser.roles : ["member"];
-        // Always pull from DB for activeRole
-        const dbUser = await User.findById(token.id).select("roles activeRole");
-        let activeRole = dbUser?.activeRole;
-        if (!activeRole || !dbUser.roles.includes(activeRole)) {
-          // Fallback to default and update DB if needed
-          activeRole = getDefaultActiveRole(dbUser.roles);
+        token.id = user.id
+        const customUserFromAuth = user as unknown as CustomUser // User from authorize callback
+        token.roles =
+          customUserFromAuth.roles && customUserFromAuth.roles.length > 0 ? customUserFromAuth.roles : ["member"]
+
+        // Fetch from DB to ensure latest activeRole and preferences
+        const dbUser = await User.findById(token.id).select(
+          "roles activeRole treatmentPreferences notificationPreferences",
+        )
+
+        let activeRole = dbUser?.activeRole
+        if (!activeRole || !dbUser?.roles.includes(activeRole)) {
+          activeRole = getDefaultActiveRole(dbUser?.roles || [])
           if (dbUser) {
-            dbUser.activeRole = activeRole;
-            await dbUser.save();
+            dbUser.activeRole = activeRole
+            // await dbUser.save(); // Avoid saving here if not strictly necessary, rely on updates
           }
         }
-        token.activeRole = activeRole;
-        return token;
+        token.activeRole = activeRole
+        token.treatmentPreferences = dbUser?.treatmentPreferences || defaultTreatmentPreferences
+        token.notificationPreferences = dbUser?.notificationPreferences || defaultNotificationPreferences
       }
-      // On session update (role switch)
-      if (trigger === "update" && session && session.activeRole) {
-        const dbUser = await User.findById(token.id).select("roles activeRole");
+      // On session update (e.g., role switch or preference update)
+      else if (trigger === "update" && session) {
+        const dbUser = await User.findById(token.id).select(
+          "roles activeRole treatmentPreferences notificationPreferences",
+        )
         if (dbUser) {
-          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"];
-          let activeRole = session.activeRole;
-          if (!dbUser.roles.includes(activeRole)) {
-            activeRole = getDefaultActiveRole(dbUser.roles);
-            dbUser.activeRole = activeRole;
-            await dbUser.save();
+          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
+
+          if (session.activeRole) {
+            let activeRole = session.activeRole
+            if (!dbUser.roles.includes(activeRole)) {
+              activeRole = getDefaultActiveRole(dbUser.roles)
+            }
+            token.activeRole = activeRole
           }
-          token.activeRole = activeRole;
+          // If preferences were updated, they should be in the session object passed to update()
+          // However, it's safer to re-fetch from DB to ensure consistency
+          token.treatmentPreferences = dbUser.treatmentPreferences || defaultTreatmentPreferences
+          token.notificationPreferences = dbUser.notificationPreferences || defaultNotificationPreferences
         }
-        return token;
       }
-      // On every other call, always sync from DB
-      if (token.id) {
-        const dbUser = await User.findById(token.id).select("roles activeRole");
+      // On every other call, sync from DB if needed (e.g., if token is old)
+      // For simplicity and to ensure freshness, we can always fetch if not first login or update
+      else if (token.id) {
+        const dbUser = await User.findById(token.id).select(
+          "roles activeRole treatmentPreferences notificationPreferences",
+        )
         if (dbUser) {
-          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"];
-          let activeRole = dbUser.activeRole;
+          token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
+          let activeRole = dbUser.activeRole
           if (!activeRole || !dbUser.roles.includes(activeRole)) {
-            activeRole = getDefaultActiveRole(dbUser.roles);
-            dbUser.activeRole = activeRole;
-            await dbUser.save();
+            activeRole = getDefaultActiveRole(dbUser.roles)
+            // dbUser.activeRole = activeRole; // Avoid save if not changing
+            // await dbUser.save();
           }
-          token.activeRole = activeRole;
+          token.activeRole = activeRole
+          token.treatmentPreferences = dbUser.treatmentPreferences || defaultTreatmentPreferences
+          token.notificationPreferences = dbUser.notificationPreferences || defaultNotificationPreferences
         }
       }
+
       if (account) {
-        token.accessToken = account.access_token;
+        token.accessToken = account.access_token
       }
-      return token;
+      return token
     },
     async session({ session, token }) {
       if (session.user && token) {
         session.user.id = token.id as string
         session.user.roles = token.roles as string[]
         session.user.activeRole = token.activeRole as string
+        session.user.treatmentPreferences = token.treatmentPreferences as ITreatmentPreferences // Add to session
+        session.user.notificationPreferences = token.notificationPreferences as INotificationPreferences // Add to session
       }
       return session
     },

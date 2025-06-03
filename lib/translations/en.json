@@ -150,7 +150,11 @@
       "coupons": "Coupons",
       "giftVouchers": "Gift Vouchers",
       "support": "Support",
-      "settings": "Settings"
+      "settings": "Settings",
+      "userMenu": {
+        "treatmentPreferences": "Treatment Preferences",
+        "notifications": "Notifications"
+      }
     }
   },
   "subscriptions": {
@@ -1122,5 +1126,31 @@
     "specialDateActiveDescription": "Mark if services are available on this special date.",
     "noSpecialDates": "No Special Dates Yet",
     "noSpecialDatesHint": "Click 'Add Special Date' to create one."
+  },
+  "preferences": {
+    "treatment": {
+      "title": "Treatment Preferences",
+      "description": "Set your preferred therapist gender.",
+      "therapistGenderLabel": "Preferred Therapist Gender",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "genderAny": "No Preference",
+      "saveSuccess": "Treatment preferences saved successfully.",
+      "saveError": "Failed to save treatment preferences."
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "description": "Manage how you receive notifications and in which language.",
+      "methodsLabel": "Receive notifications via:",
+      "methodEmail": "Email",
+      "methodSms": "SMS",
+      "languageLabel": "Preferred Language for Notifications",
+      "langHe": "Hebrew",
+      "langEn": "English",
+      "langRu": "Russian",
+      "errorMinMethods": "Please select at least one notification method.",
+      "saveSuccess": "Notification settings saved successfully.",
+      "saveError": "Failed to save notification settings."
+    }
   }
 }

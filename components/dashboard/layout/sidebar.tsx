@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react" // Added useCallback
 import { usePathname, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
@@ -8,7 +8,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { cn } from "@/lib/utils/utils"
 import { Button } from "@/components/common/ui/button"
 import { Avatar, AvatarFallback } from "@/components/common/ui/avatar"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip" // Added Tooltip imports
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
 import {
   LayoutDashboard,
   ChevronLeft,
@@ -27,6 +27,8 @@ import {
   FileText,
   Gift,
   Calendar,
+  Bell,
+  SlidersHorizontal,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
@@ -35,10 +37,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger, // Ensured DropdownMenuTrigger is imported
+  DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
 import { toast } from "@/components/common/ui/use-toast"
 import { setActiveRole } from "@/actions/role-actions"
+import { TreatmentPreferencesModal } from "@/components/dashboard/preferences/treatment-preferences-modal" // Import modal
+import { NotificationsModal } from "@/components/dashboard/preferences/notifications-modal" // Import modal
+import type { ITreatmentPreferences, INotificationPreferences } from "@/lib/db/models/user" // Import preference types
 
 interface SidebarProps {
   isMobileOpen: boolean
@@ -92,7 +97,7 @@ const RoleSwitcher = ({ isCollapsed = false }: { isCollapsed?: boolean }) => {
     try {
       const result = await setActiveRole(role)
       if (result.success || result.activeRole) {
-        await update({ activeRole: result.activeRole || role })
+        await update({ activeRole: result.activeRole || role }) // This will trigger JWT update
         toast({ title: t("notifications.roleSwitchSuccess"), variant: "default" })
         router.push(`/dashboard/${result.activeRole || role}`)
       } else {
@@ -190,8 +195,45 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
   const { t, dir, language } = useTranslation()
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
-  const { data: session } = useSession() // Removed status as it wasn't used after debug
+  const { data: session, update: updateSession } = useSession() // Added updateSession
   const router = useRouter()
+
+  // State for modals
+  const [isTreatmentPreferencesModalOpen, setIsTreatmentPreferencesModalOpen] = useState(false)
+  const [isNotificationsModalOpen, setIsNotificationsModalOpen] = useState(false)
+
+  // State for fetched preferences to pass to modals
+  // These can also be read directly from session if session update is quick enough
+  const [treatmentPreferences, setTreatmentPreferences] = useState<ITreatmentPreferences | undefined>(
+    session?.user?.treatmentPreferences,
+  )
+  const [notificationPreferences, setNotificationPreferences] = useState<INotificationPreferences | undefined>(
+    session?.user?.notificationPreferences,
+  )
+
+  // Fetch preferences when component mounts or session changes
+  // This ensures modals have the latest data if not relying solely on session prop updates
+  useEffect(() => {
+    if (session?.user) {
+      if (session.user.treatmentPreferences) {
+        setTreatmentPreferences(session.user.treatmentPreferences)
+      }
+      if (session.user.notificationPreferences) {
+        setNotificationPreferences(session.user.notificationPreferences)
+      }
+      // Optionally, fetch fresh from server if session might be stale for preferences
+      // const fetchPrefs = async () => {
+      //   const prefsData = await getUserPreferences();
+      //   if (prefsData.success) {
+      //     setTreatmentPreferences(prefsData.treatmentPreferences);
+      //     setNotificationPreferences(prefsData.notificationPreferences);
+      //     // Optionally update session if fetched data is different and more up-to-date
+      //     // await updateSession({ treatmentPreferences: prefsData.treatmentPreferences, notificationPreferences: prefsData.notificationPreferences });
+      //   }
+      // };
+      // fetchPrefs();
+    }
+  }, [session?.user, session?.user?.treatmentPreferences, session?.user?.notificationPreferences])
 
   useEffect(() => {
     const handleResize = () => setIsCollapsed(window.innerWidth < 768)
@@ -226,7 +268,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       },
     ]
 
-    // Simplified menu item generation
     const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string }>> = {
       admin: [
         { titleKey: "users", icon: User, hrefSuffix: "users" },
@@ -234,7 +275,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
         { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions" },
-        { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons" }, // Changed icon for coupons
+        { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
       ],
       member: [
@@ -251,7 +292,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       ],
       partner: [
         { titleKey: "profile", icon: User, hrefSuffix: "profile" },
-        { titleKey: "coupons", icon: Gift, hrefSuffix: "assigned-coupons" }, // Changed icon
+        { titleKey: "coupons", icon: Gift, hrefSuffix: "assigned-coupons" },
       ],
     }
     ;(roleMenus[activeRole] || []).forEach((item) => {
@@ -324,7 +365,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     </div>
   )
 
-  const userMenuTriggerTooltip = t("dashboard.sidebar.userMenu.toggleTooltip")
+  const userMenuTriggerTooltip = t("dashboard.sidebar.userMenu.toggleTooltip") // Placeholder, will be translated
 
   const renderDesktopUserSectionWithDropdown = () => (
     <div className={cn("border-b border-gray-200", isCollapsed ? "py-2.5" : "p-2.5")}>
@@ -395,6 +436,26 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
               {t("dashboard.sidebar.account")}
             </span>
           </DropdownMenuItem>
+          {/* New Menu Items Start */}
+          <DropdownMenuItem
+            onClick={() => setIsTreatmentPreferencesModalOpen(true)}
+            className="cursor-pointer group py-2 px-2.5"
+          >
+            <SlidersHorizontal className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
+            <span className="text-sm group-hover:text-turquoise-600 transition-colors">
+              Treatment Preferences {/* Placeholder */}
+            </span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => setIsNotificationsModalOpen(true)}
+            className="cursor-pointer group py-2 px-2.5"
+          >
+            <Bell className="mr-2 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
+            <span className="text-sm group-hover:text-turquoise-600 transition-colors">
+              Notifications {/* Placeholder */}
+            </span>
+          </DropdownMenuItem>
+          {/* New Menu Items End */}
           <DropdownMenuSeparator className="my-1" />
           <DropdownMenuItem
             onClick={handleSignOut}
@@ -440,6 +501,13 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           {[
             { labelKey: "dashboard.sidebar.profile", icon: User, action: () => navigateTo("/dashboard/profile") },
             { labelKey: "dashboard.sidebar.account", icon: Settings, action: () => navigateTo("/dashboard/account") },
+            // New Mobile Menu Items
+            {
+              labelKey: "Treatment Preferences",
+              icon: SlidersHorizontal,
+              action: () => setIsTreatmentPreferencesModalOpen(true),
+            }, // Placeholder
+            { labelKey: "Notifications", icon: Bell, action: () => setIsNotificationsModalOpen(true) }, // Placeholder
           ].map((item) => (
             <DropdownMenuItem
               key={item.labelKey}
@@ -450,7 +518,10 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
               className="cursor-pointer group py-2.5 px-3"
             >
               <item.icon className="mr-2.5 h-4 w-4 text-gray-500 group-hover:text-turquoise-600 transition-colors" />
-              <span className="text-sm group-hover:text-turquoise-600 transition-colors">{t(item.labelKey)}</span>
+              <span className="text-sm group-hover:text-turquoise-600 transition-colors">
+                {/* Use t() if key exists, otherwise placeholder */}
+                {item.labelKey.startsWith("dashboard.sidebar.") ? t(item.labelKey) : item.labelKey}
+              </span>
             </DropdownMenuItem>
           ))}
           <DropdownMenuSeparator className="my-1" />
@@ -578,8 +649,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
 
   const DesktopSidebarContent = (
     <TooltipProvider delayDuration={100}>
-      {" "}
-      {/* TooltipProvider wraps content */}
       <div
         className={cn(
           "hidden md:flex h-screen flex-col bg-white transition-all duration-200 shadow-lg border-gray-200/80",
@@ -605,8 +674,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         {renderMemberQuickActions(true)}
         <div className="flex-1 overflow-y-auto scrolling-touch">{renderMenuItems(getMenuItems(), true)}</div>
         <div className="mt-auto border-t border-gray-200/80">
-          {" "}
-          {/* Ensure RoleSwitcher is at bottom */}
           <RoleSwitcher />
         </div>
       </SheetContent>
@@ -617,6 +684,18 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     <>
       {DesktopSidebarContent}
       {MobileSidebarContent}
+
+      {/* Modals */}
+      <TreatmentPreferencesModal
+        isOpen={isTreatmentPreferencesModalOpen}
+        onClose={() => setIsTreatmentPreferencesModalOpen(false)}
+        currentPreferences={treatmentPreferences}
+      />
+      <NotificationsModal
+        isOpen={isNotificationsModalOpen}
+        onClose={() => setIsNotificationsModalOpen(false)}
+        currentPreferences={notificationPreferences}
+      />
     </>
   )
 }

@@ -268,7 +268,11 @@
       "categories": "קטגוריות",
       "orders": "הזמנות",
       "support": "תמיכה",
-      "settings": "הגדרות"
+      "settings": "הגדרות",
+      "userMenu": {
+        "treatmentPreferences": "העדפות טיפול",
+        "notifications": "התראות"
+      }
     },
     "roles": {
       "member": "חבר",
@@ -1206,12 +1210,11 @@
       "next": "הבא",
       "pageInfo": "עמוד {{currentPage}} מתוך {{totalPages}}",
       "rowsSelected": "{{count}} מתוך {{total}} שורות נבחרו"
-    }
-  },
-  "partnerAssignedCoupons": {
-    "title": "הקופונים שהוקצו לי",
-    "description": "צפה בקופונים שהוקצו לך להפצה.",
-    "loading": "טוען קופונים...",
+    },
+    "partnerAssignedCoupons": {
+      "title": "הקופונים שהוקצו לי",
+      "description": "צפה בקופונים שהוקצו לך להפצה.",
+      "loading": "טוען קופונים...",
     "noCoupons": "עדיין לא הוקצו לך קופונים.",
     "pagination": {
       "previous": "הקודם",
@@ -1317,5 +1320,31 @@
     "specialDateActiveDescription": "סמן אם השירותים זמינים בתאריך מיוחד זה.",
     "noSpecialDates": "אין עדיין תאריכים מיוחדים",
     "noSpecialDatesHint": "לחץ על 'הוסף תאריך מיוחד' כדי ליצור אחד."
+  },
+  "preferences": {
+    "treatment": {
+      "title": "העדפות טיפול",
+      "description": "הגדר את מגדר המטפל המועדף עליך.",
+      "therapistGenderLabel": "מגדר מטפל מועדף",
+      "genderMale": "זכר",
+      "genderFemale": "נקבה",
+      "genderAny": "אין העדפה",
+      "saveSuccess": "העדפות הטיפול נשמרו בהצלחה.",
+      "saveError": "שגיאה בשמירת העדפות הטיפול."
+    },
+    "notifications": {
+      "title": "הגדרות התראות",
+      "description": "נהל כיצד ברצונך לקבל התראות ובאיזו שפה.",
+      "methodsLabel": "קבל התראות באמצעות:",
+      "methodEmail": "אימייל",
+      "methodSms": "SMS",
+      "languageLabel": "שפה מועדפת להתראות",
+      "langHe": "עברית",
+      "langEn": "אנגלית",
+      "langRu": "רוסית",
+      "errorMinMethods": "אנא בחר לפחות אמצעי התראה אחד.",
+      "saveSuccess": "הגדרות ההתראות נשמרו בהצלחה.",
+      "saveError": "שגיאה בשמירת הגדרות ההתראות."
+    }
   }
 }

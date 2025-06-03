@@ -1,14 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    // Add 'snappy' and '@mongodb-js/zstd' to this array.
-    // This tells Next.js to treat these packages as external on the server-side,
-    // preventing Webpack from attempting to bundle their native .node files,
-    // which causes the build error.
-    // Your MongoDB driver is already configured to use 'zlib' for compression,
-    // so these packages are not strictly needed at runtime for your setup.
-    serverComponentsExternalPackages: ['snappy', '@mongodb-js/zstd'],
-  },
+  serverExternalPackages: [
+    'snappy',
+    '@mongodb-js/zstd',
+    'kerberos',
+    'mongodb-client-encryption',
+    'aws4',
+  ],
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -2,28 +2,31 @@
 
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
-import mongoose from "mongoose"
+import mongoose from "mongoose" // Keep mongoose for session and ObjectId if needed
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
+
+// Import Models directly
 import Booking, { type IBooking } from "@/lib/db/models/booking"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import UserSubscription from "@/lib/db/models/user-subscription"
 import GiftVoucher from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
+import User from "@/lib/db/models/user" // Import User model
+import Address from "@/lib/db/models/address" // Import Address model
+import PaymentMethod from "@/lib/db/models/payment-method" // Import PaymentMethod model
 import {
   WorkingHoursSettings,
   type IWorkingHoursSettings,
   type IFixedHours,
   type ISpecialDate,
 } from "@/lib/db/models/working-hours"
+
 import { logger } from "@/lib/logs/logger"
 import type { TimeSlot } from "@/types/booking"
 import { add, format, parse, set, getDay, isSameDay, addMinutes, isBefore, isAfter } from "date-fns"
 import { CalculatePricePayloadSchema, CreateBookingPayloadSchema } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
-// import { utcToZonedTime, zonedToUtc } from "date-fns-tz"; // For timezone handling if needed
-
-// const TIMEZONE = "Asia/Jerusalem"; // Or your relevant timezone
 
 // Helper to get working hours for a specific date
 function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixedHours | ISpecialDate | null {
@@ -55,9 +58,6 @@ export async function getAvailableTimeSlots(
 
     let treatmentDurationMinutes = 0
     if (treatment.pricingType === "fixed") {
-      // Assuming a default duration for fixed price treatments if not specified, e.g., 60 mins.
-      // This needs to be defined in the treatment model or passed. For now, let's assume 60.
-      // Ideally, ITreatment should have a `defaultDurationMinutes` or similar.
       treatmentDurationMinutes = 60 // Placeholder: This should come from treatment data
     } else if (treatment.pricingType === "duration_based") {
       if (!selectedDurationId) return { success: false, error: "bookings.errors.durationRequired" }
@@ -93,52 +93,37 @@ export async function getAvailableTimeSlots(
     let currentTimeSlot = set(selectedDate, { hours: startHour, minutes: startMinute, seconds: 0, milliseconds: 0 })
     const endTimeForDay = set(selectedDate, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 })
 
-    // Minimum booking time: 2 hours from now if today
     const now = new Date()
     const minimumBookingTime = add(now, { hours: 2 })
 
     while (isBefore(currentTimeSlot, endTimeForDay)) {
       const potentialEndTime = addMinutes(currentTimeSlot, treatmentDurationMinutes)
-
-      // Check if slot is in the past or too soon for today
       let isSlotAvailable = true
       if (isSameDay(selectedDate, now) && isBefore(currentTimeSlot, minimumBookingTime)) {
         isSlotAvailable = false
       }
-
-      // Check if potential end time exceeds working hours for the day
       if (isAfter(potentialEndTime, endTimeForDay)) {
-        isSlotAvailable = false // Cannot fit treatment
+        isSlotAvailable = false
       }
-
-      // TODO: Check against existing bookings for this day (more complex, skip for now)
-      // const existingBookingsForSlot = await Booking.find({
-      //   bookingDateTime: { $gte: currentTimeSlot, $lt: potentialEndTime },
-      //   status: { $in: ["pending_professional_assignment", "confirmed"] }
-      // });
-      // if (existingBookingsForSlot.length > 0) isSlotAvailable = false;
 
       if (isSlotAvailable) {
         const slot: TimeSlot = {
           time: format(currentTimeSlot, "HH:mm"),
-          isAvailable: true, // For now, assume available if within hours
+          isAvailable: true,
         }
         if (daySettings.hasPriceAddition && daySettings.priceAddition) {
-          // This is a simplified surcharge application.
-          // Real logic might depend on the exact time slot, not just the day.
           slot.surcharge = {
             description: daySettings.notes || "bookings.surcharges.specialTime",
             amount:
               daySettings.priceAddition.type === "fixed"
                 ? daySettings.priceAddition.amount
-                : (treatment.fixedPrice || 0) * (daySettings.priceAddition.amount / 100), // Simplified for fixed price
+                : (treatment.fixedPrice || 0) * (daySettings.priceAddition.amount / 100),
           }
         }
         timeSlots.push(slot)
       }
       currentTimeSlot = addMinutes(currentTimeSlot, slotInterval)
     }
-
     return { success: true, timeSlots, workingHoursNote: daySettings.notes }
   } catch (error) {
     logger.error("Error fetching available time slots:", { error })
@@ -147,7 +132,7 @@ export async function getAvailableTimeSlots(
 }
 
 export async function calculateBookingPrice(
-  payload: unknown, // Change type to unknown for initial validation
+  payload: unknown,
 ): Promise<{ success: boolean; priceDetails?: any; error?: string; issues?: z.ZodIssue[] }> {
   const validationResult = CalculatePricePayloadSchema.safeParse(payload)
   if (!validationResult.success) {
@@ -166,7 +151,7 @@ export async function calculateBookingPrice(
       giftVoucherCode,
       userSubscriptionId,
       userId,
-    } = validatedPayload // Use validatedPayload
+    } = validatedPayload
 
     const treatment = (await Treatment.findById(treatmentId).lean()) as ITreatment | null
     if (!treatment || !treatment.isActive) {
@@ -174,8 +159,6 @@ export async function calculateBookingPrice(
     }
 
     let basePrice = 0
-    let treatmentNameForDescription = treatment.name
-
     if (treatment.pricingType === "fixed") {
       basePrice = treatment.fixedPrice || 0
     } else if (treatment.pricingType === "duration_based") {
@@ -183,12 +166,6 @@ export async function calculateBookingPrice(
       const duration = treatment.durations?.find((d) => d._id.toString() === selectedDurationId && d.isActive)
       if (!duration) return { success: false, error: "bookings.errors.durationNotFound" }
       basePrice = duration.price
-      treatmentNameForDescription = `${treatment.name} (${duration.minutes} ${"common.minutes"})`
-    }
-
-    if (basePrice <= 0 && !userSubscriptionId && !giftVoucherCode) {
-      // Allow 0 if fully covered
-      // return { success: false, error: "bookings.errors.invalidBasePrice" };
     }
 
     const priceDetails: any = {
@@ -200,17 +177,14 @@ export async function calculateBookingPrice(
       isFullyCoveredByVoucherOrSubscription: false,
     }
 
-    // 1. Apply Surcharges based on bookingDateTime and workingHoursSettings
     const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
     if (settings) {
       const daySettings = getDayWorkingHours(bookingDateTime, settings)
       if (daySettings?.isActive && daySettings.hasPriceAddition && daySettings.priceAddition?.amount) {
-        // More precise surcharge logic might check if bookingDateTime falls into specific surchargeable hours
         const surchargeAmount =
           daySettings.priceAddition.type === "fixed"
             ? daySettings.priceAddition.amount
             : basePrice * (daySettings.priceAddition.amount / 100)
-
         if (surchargeAmount > 0) {
           priceDetails.surcharges.push({
             description: daySettings.notes || `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
@@ -223,7 +197,6 @@ export async function calculateBookingPrice(
 
     let currentPayableAmount = priceDetails.finalAmount
 
-    // 2. Handle Subscription Redemption
     if (userSubscriptionId) {
       const userSub = await UserSubscription.findById(userSubscriptionId).populate("subscriptionId")
       if (
@@ -232,21 +205,17 @@ export async function calculateBookingPrice(
         userSub.status === "active" &&
         userSub.remainingQuantity > 0
       ) {
-        // Check if treatment matches (this logic can be complex depending on subscription rules)
-        // For simplicity, assume if userSub is provided, it's applicable.
-        priceDetails.isFullyCoveredByVoucherOrSubscription = true // Assuming 1 session covers it
+        priceDetails.isFullyCoveredByVoucherOrSubscription = true
         priceDetails.finalAmount = 0
         currentPayableAmount = 0
         priceDetails.redeemedUserSubscriptionId = userSub._id.toString()
-        // No price change, but it's covered.
       } else {
         return { success: false, error: "bookings.errors.subscriptionInvalid" }
       }
     }
 
-    // 3. Handle Gift Voucher Redemption (only if not covered by subscription)
     if (currentPayableAmount > 0 && giftVoucherCode) {
-      const voucher = await GiftVoucher.findOne({ code: giftVoucherCode, ownerUserId: userId }).lean() // Ensure user owns it
+      const voucher = await GiftVoucher.findOne({ code: giftVoucherCode, ownerUserId: userId }).lean()
       if (
         voucher &&
         voucher.isActive &&
@@ -255,8 +224,7 @@ export async function calculateBookingPrice(
         new Date(voucher.validUntil) >= new Date()
       ) {
         if (voucher.voucherType === "treatment" && voucher.treatmentId?.toString() === treatmentId) {
-          // Potentially check selectedDurationId if voucher is specific
-          priceDetails.voucherAppliedAmount = currentPayableAmount // Covers remaining
+          priceDetails.voucherAppliedAmount = currentPayableAmount
           currentPayableAmount = 0
           priceDetails.appliedGiftVoucherId = voucher._id.toString()
         } else if (voucher.voucherType === "monetary" && voucher.remainingAmount && voucher.remainingAmount > 0) {
@@ -265,16 +233,11 @@ export async function calculateBookingPrice(
           currentPayableAmount -= amountToApply
           priceDetails.appliedGiftVoucherId = voucher._id.toString()
         }
-      } else {
-        // Optional: return error if voucher invalid, or just ignore it
-        // return { success: false, error: "bookings.errors.giftVoucherInvalid" };
       }
     }
 
-    // 4. Apply Coupon (only if not fully covered by subscription/voucher and amount > 0)
     if (currentPayableAmount > 0 && couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode }).lean()
-      // Basic validation: active, within date range, usage limits (more complex validation needed for per-user limits)
       const now = new Date()
       if (
         coupon &&
@@ -287,19 +250,15 @@ export async function calculateBookingPrice(
         if (coupon.discountType === "percentage") {
           discount = currentPayableAmount * (coupon.discountValue / 100)
         } else {
-          // fixedAmount
-          discount = Math.min(currentPayableAmount, coupon.discountValue) // Cannot discount more than payable
+          discount = Math.min(currentPayableAmount, coupon.discountValue)
         }
         priceDetails.couponDiscount = discount
         currentPayableAmount -= discount
         priceDetails.appliedCouponId = coupon._id.toString()
-      } else {
-        // Optional: return error if coupon invalid, or just ignore it
-        // return { success: false, error: "bookings.errors.couponInvalid" };
       }
     }
 
-    priceDetails.finalAmount = Math.max(0, currentPayableAmount) // Ensure final amount is not negative
+    priceDetails.finalAmount = Math.max(0, currentPayableAmount)
     if (
       priceDetails.finalAmount === 0 &&
       (priceDetails.redeemedUserSubscriptionId || priceDetails.appliedGiftVoucherId)
@@ -309,13 +268,13 @@ export async function calculateBookingPrice(
 
     return { success: true, priceDetails }
   } catch (error) {
-    logger.error("Error calculating booking price:", { error, payload: validatedPayload }) // Log validated payload
+    logger.error("Error calculating booking price:", { error, payload: validatedPayload })
     return { success: false, error: "bookings.errors.calculatePriceFailed" }
   }
 }
 
 export async function createBooking(
-  payload: unknown, // Change type to unknown
+  payload: unknown,
 ): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
   const validationResult = CreateBookingPayloadSchema.safeParse(payload)
   if (!validationResult.success) {
@@ -326,48 +285,40 @@ export async function createBooking(
 
   const session = await getServerSession(authOptions)
   if (!session || session.user.id !== validatedPayload.userId) {
-    // Use validatedPayload
     return { success: false, error: "common.unauthorized" }
   }
 
+  const mongooseDbSession = await mongoose.startSession() // Renamed to avoid conflict
+  let bookingResult: IBooking | null = null
+
   try {
     await dbConnect()
-
-    // Start a mongoose session for transaction
-    const mongooseSession = await mongoose.startSession()
-    let bookingResult: IBooking | null = null
-
-    await mongooseSession.withTransaction(async () => {
-      // 1. Create the booking record
+    await mongooseDbSession.withTransaction(async () => {
       const newBooking = new Booking({
         ...validatedPayload,
-        status: "pending_professional_assignment", // Initial status
+        status: "pending_professional_assignment",
       })
-      await newBooking.save({ session: mongooseSession })
+      await newBooking.save({ session: mongooseDbSession })
       bookingResult = newBooking
 
-      // 2. Update redeemed UserSubscription if applicable
       if (validatedPayload.source === "subscription_redemption" && validatedPayload.redeemedUserSubscriptionId) {
         const userSub = await UserSubscription.findById(validatedPayload.redeemedUserSubscriptionId).session(
-          mongooseSession,
+          mongooseDbSession,
         )
         if (!userSub || userSub.remainingQuantity < 1 || userSub.status !== "active") {
           throw new Error("bookings.errors.subscriptionRedemptionFailed")
         }
         userSub.remainingQuantity -= 1
-        if (userSub.remainingQuantity === 0) {
-          userSub.status = "depleted"
-        }
-        await userSub.save({ session: mongooseSession })
+        if (userSub.remainingQuantity === 0) userSub.status = "depleted"
+        await userSub.save({ session: mongooseDbSession })
       }
 
-      // 3. Update redeemed GiftVoucher if applicable
       if (
         validatedPayload.source === "gift_voucher_redemption" &&
         validatedPayload.redeemedGiftVoucherId &&
         validatedPayload.priceDetails.voucherAppliedAmount > 0
       ) {
-        const voucher = await GiftVoucher.findById(validatedPayload.redeemedGiftVoucherId).session(mongooseSession)
+        const voucher = await GiftVoucher.findById(validatedPayload.redeemedGiftVoucherId).session(mongooseDbSession)
         if (!voucher || !voucher.isActive) throw new Error("bookings.errors.voucherRedemptionFailedInactive")
 
         if (voucher.voucherType === "treatment") {
@@ -381,206 +332,163 @@ export async function createBooking(
             throw new Error("bookings.errors.voucherInsufficientBalance")
           }
           voucher.remainingAmount -= validatedPayload.priceDetails.voucherAppliedAmount
-          if (voucher.remainingAmount <= 0) {
-            voucher.status = "fully_used"
-            voucher.remainingAmount = 0
-          } else {
-            voucher.status = "partially_used"
-          }
+          voucher.status = voucher.remainingAmount <= 0 ? "fully_used" : "partially_used"
+          if (voucher.remainingAmount <= 0) voucher.remainingAmount = 0
         }
         voucher.isActive = voucher.status === "active" || voucher.status === "partially_used"
         voucher.usageHistory = voucher.usageHistory || []
         voucher.usageHistory.push({
           date: new Date(),
           amountUsed: validatedPayload.priceDetails.voucherAppliedAmount,
-          orderId: newBooking._id, // Link to this booking
+          orderId: newBooking._id,
           description: `bookings.voucherUsage.redeemedForBooking ${newBooking._id.toString()}`,
         })
-        await voucher.save({ session: mongooseSession })
+        await voucher.save({ session: mongooseDbSession })
       }
 
-      // 4. Update applied Coupon if applicable
       if (validatedPayload.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
-        const coupon = await Coupon.findById(validatedPayload.appliedCouponId).session(mongooseSession)
+        const coupon = await Coupon.findById(validatedPayload.appliedCouponId).session(mongooseDbSession)
         if (!coupon || !coupon.isActive) throw new Error("bookings.errors.couponApplyFailed")
         coupon.timesUsed += 1
-        // Could add more complex logic for usageLimitPerUser here
-        await coupon.save({ session: mongooseSession })
+        await coupon.save({ session: mongooseDbSession })
       }
 
-      // 5. TODO: Process payment if finalAmount > 0 (Simulated for now)
       if (
         validatedPayload.paymentDetails.paymentStatus === "pending" &&
         validatedPayload.priceDetails.finalAmount > 0
       ) {
-        // Simulate payment processing
-        // In a real app, call payment gateway here
-        // For now, assume payment is successful if paymentMethodId is provided
         if (validatedPayload.paymentDetails.paymentMethodId) {
           bookingResult!.paymentDetails.paymentStatus = "paid"
-          // bookingResult!.paymentDetails.transactionId = `SIM_TXN_${Date.now()}`; // Simulated
-          await bookingResult!.save({ session: mongooseSession })
+          await bookingResult!.save({ session: mongooseDbSession })
         } else {
-          // This case should ideally be caught by frontend validation
           throw new Error("bookings.errors.paymentMethodRequired")
         }
       } else if (validatedPayload.priceDetails.finalAmount === 0) {
         bookingResult!.paymentDetails.paymentStatus = "not_required"
-        await bookingResult!.save({ session: mongooseSession })
+        await bookingResult!.save({ session: mongooseDbSession })
       }
-    }) // End of transaction
-
-    await mongooseSession.endSession()
+    })
 
     if (bookingResult) {
-      revalidatePath("/dashboard/member/book-treatment") // Or specific history page
+      revalidatePath("/dashboard/member/book-treatment")
       revalidatePath("/dashboard/member/subscriptions")
       revalidatePath("/dashboard/member/gift-vouchers")
-      // TODO: Send notifications (booking confirmation, etc.)
-      // notificationManager.sendNotification(...)
       return { success: true, booking: bookingResult.toObject() as IBooking }
     } else {
-      // Should not happen if transaction is set up correctly
       return { success: false, error: "bookings.errors.bookingCreationFailedUnknown" }
     }
   } catch (error) {
-    logger.error("Error creating booking:", { error, userId: session?.user?.id, payload: validatedPayload }) // Log validated payload
+    logger.error("Error creating booking:", { error, userId: session?.user?.id, payload: validatedPayload })
     const errorMessage = error instanceof Error ? error.message : "bookings.errors.createBookingFailed"
-    if (errorMessage.startsWith("bookings.errors.")) {
-      return { success: false, error: errorMessage }
+    return {
+      success: false,
+      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.createBookingFailed",
     }
-    return { success: false, error: "bookings.errors.createBookingFailed" }
+  } finally {
+    await mongooseDbSession.endSession()
   }
 }
 
 export async function cancelBooking(
   bookingId: string,
-  userId: string, // User performing cancellation (can be admin or booking owner)
+  userId: string,
   cancelledByRole: "user" | "admin",
   reason?: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.id !== userId) {
-    // If admin is cancelling, userId might be different from session.user.id
-    // but admin role must be present.
-    if (!(cancelledByRole === "admin" && session?.user?.roles.includes("admin"))) {
+  const authSession = await getServerSession(authOptions) // Renamed to avoid conflict
+  if (!authSession || authSession.user.id !== userId) {
+    if (!(cancelledByRole === "admin" && authSession?.user?.roles.includes("admin"))) {
       return { success: false, error: "common.unauthorized" }
     }
   }
 
+  const mongooseDbSession = await mongoose.startSession() // Renamed
+  let success = false
+
   try {
     await dbConnect()
-    const mongooseSession = await mongoose.startSession()
-    let success = false
-
-    await mongooseSession.withTransaction(async () => {
-      const booking = await Booking.findById(bookingId).session(mongooseSession)
-      if (!booking) {
-        throw new Error("bookings.errors.bookingNotFound")
-      }
-
-      // Authorization: User can cancel their own, Admin can cancel any
-      if (booking.userId.toString() !== userId && cancelledByRole !== "admin") {
-        throw new Error("common.unauthorized")
-      }
-
-      // Check if booking can be cancelled (e.g., not already completed or cancelled, within cancellation window)
+    await mongooseDbSession.withTransaction(async () => {
+      const booking = await Booking.findById(bookingId).session(mongooseDbSession)
+      if (!booking) throw new Error("bookings.errors.bookingNotFound")
+      if (booking.userId.toString() !== userId && cancelledByRole !== "admin") throw new Error("common.unauthorized")
       if (["completed", "cancelled_by_user", "cancelled_by_admin"].includes(booking.status)) {
         throw new Error("bookings.errors.cannotCancelAlreadyProcessed")
       }
-      // Add logic for cancellation window if needed (e.g., cannot cancel < 24h before)
 
       booking.status = cancelledByRole === "user" ? "cancelled_by_user" : "cancelled_by_admin"
       booking.cancellationReason = reason
       booking.cancelledBy = cancelledByRole
 
-      // Restore redeemed items
-      // 1. UserSubscription
       if (booking.source === "subscription_redemption" && booking.redeemedUserSubscriptionId) {
-        const userSub = await UserSubscription.findById(booking.redeemedUserSubscriptionId).session(mongooseSession)
+        const userSub = await UserSubscription.findById(booking.redeemedUserSubscriptionId).session(mongooseDbSession)
         if (userSub) {
           userSub.remainingQuantity += 1
-          if (userSub.status === "depleted") {
-            userSub.status = "active" // Or logic to check expiry date
-          }
-          await userSub.save({ session: mongooseSession })
+          if (userSub.status === "depleted") userSub.status = "active"
+          await userSub.save({ session: mongooseDbSession })
         }
       }
 
-      // 2. GiftVoucher
       if (
         booking.source === "gift_voucher_redemption" &&
         booking.redeemedGiftVoucherId &&
         booking.priceDetails.voucherAppliedAmount > 0
       ) {
-        const voucher = await GiftVoucher.findById(booking.redeemedGiftVoucherId).session(mongooseSession)
+        const voucher = await GiftVoucher.findById(booking.redeemedGiftVoucherId).session(mongooseDbSession)
         if (voucher) {
           if (voucher.voucherType === "treatment" && voucher.status === "fully_used") {
-            voucher.status = "active" // Or original status before redemption
-            voucher.remainingAmount = voucher.originalAmount || voucher.amount // Restore original value
+            voucher.status = "active"
+            voucher.remainingAmount = voucher.originalAmount || voucher.amount
           } else if (voucher.voucherType === "monetary") {
             voucher.remainingAmount = (voucher.remainingAmount || 0) + booking.priceDetails.voucherAppliedAmount
-            if (voucher.status === "fully_used") {
-              voucher.status = "partially_used" // Or active if full amount restored
-            }
+            if (voucher.status === "fully_used") voucher.status = "partially_used"
             if (voucher.remainingAmount > (voucher.originalAmount || 0)) {
-              // Cap at original
               voucher.remainingAmount = voucher.originalAmount || 0
             }
           }
-          voucher.isActive = true // Make it active again
-          // Remove the specific usage entry for this booking
+          voucher.isActive = true
           if (voucher.usageHistory) {
             voucher.usageHistory = voucher.usageHistory.filter(
               (entry) => entry.orderId?.toString() !== booking._id.toString(),
             )
           }
-          await voucher.save({ session: mongooseSession })
+          await voucher.save({ session: mongooseDbSession })
         }
       }
 
-      // 3. Coupon
       if (booking.appliedCouponId && booking.priceDetails.couponDiscount > 0) {
-        const coupon = await Coupon.findById(booking.appliedCouponId).session(mongooseSession)
+        const coupon = await Coupon.findById(booking.appliedCouponId).session(mongooseDbSession)
         if (coupon && coupon.timesUsed > 0) {
           coupon.timesUsed -= 1
-          await coupon.save({ session: mongooseSession })
+          await coupon.save({ session: mongooseDbSession })
         }
       }
-
-      // TODO: Handle payment refund if applicable (complex, depends on payment gateway)
-      // For now, assume no direct refund logic here.
-
-      await booking.save({ session: mongooseSession })
+      await booking.save({ session: mongooseDbSession })
       success = true
     })
 
-    await mongooseSession.endSession()
-
     if (success) {
-      revalidatePath("/dashboard/member/book-treatment") // Or history page
-      revalidatePath("/dashboard/admin/bookings") // If admin page exists
-      // TODO: Send cancellation notifications
+      revalidatePath("/dashboard/member/book-treatment")
+      revalidatePath("/dashboard/admin/bookings")
       return { success: true }
     } else {
-      // Should not happen if transaction is set up correctly
       return { success: false, error: "bookings.errors.cancellationFailedUnknown" }
     }
   } catch (error) {
     logger.error("Error cancelling booking:", { error, bookingId, userId })
     const errorMessage = error instanceof Error ? error.message : "bookings.errors.cancelBookingFailed"
-    if (errorMessage.startsWith("bookings.errors.")) {
-      return { success: false, error: errorMessage }
+    return {
+      success: false,
+      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.cancelBookingFailed",
     }
-    return { success: false, error: "bookings.errors.cancelBookingFailed" }
+  } finally {
+    await mongooseDbSession.endSession()
   }
 }
 
-// Action to fetch initial data for the booking page
 export async function getBookingInitialData(userId: string): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.id !== userId) {
+    const authSession = await getServerSession(authOptions) // Renamed
+    if (!authSession || authSession.user.id !== userId) {
       return { success: false, error: "common.unauthorized" }
     }
     await dbConnect()
@@ -588,7 +496,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
     const [
       userSubscriptionsResult,
       giftVouchersResult,
-      userResult, // For preferences
+      userResult,
       addressesResult,
       paymentMethodsResult,
       treatmentsResult,
@@ -603,9 +511,11 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() },
       }).lean(),
-      mongoose.models.User.findById(userId).select("preferences name email phone notificationPreferences").lean(),
-      mongoose.models.Address.find({ userId }).lean(),
-      mongoose.models.PaymentMethod.find({ userId, isActive: true }).lean(),
+      User.findById(userId)
+        .select("preferences name email phone notificationPreferences treatmentPreferences")
+        .lean(), // Use imported User model
+      Address.find({ userId }).lean(), // Use imported Address model
+      PaymentMethod.find({ userId, isActive: true }).lean(), // Use imported PaymentMethod model
       Treatment.find({ isActive: true }).populate("durations").lean(),
       WorkingHoursSettings.findOne().lean(),
     ])
@@ -622,19 +532,30 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
     const workingHoursSettings = getFulfilledValue(workingHoursResult)
 
     if (!user || !activeTreatments || !workingHoursSettings) {
-      logger.error("Failed to load critical initial data for booking", {
+      logger.error("Failed to load critical initial data for booking (models check)", {
         userId,
-        user,
-        activeTreatments,
-        workingHoursSettings,
+        userExists: !!user,
+        activeTreatmentsExists: !!activeTreatments,
+        workingHoursSettingsExists: !!workingHoursSettings,
+        // Log if models were undefined during call (though error would be earlier)
+        UserSubscriptionModel: !!UserSubscription,
+        GiftVoucherModel: !!GiftVoucher,
+        UserModel: !!User,
+        AddressModel: !!Address,
+        PaymentMethodModel: !!PaymentMethod,
+        TreatmentModel: !!Treatment,
+        WorkingHoursSettingsModel: !!WorkingHoursSettings,
       })
       return { success: false, error: "bookings.errors.initialDataLoadFailed" }
     }
 
-    // Populate selectedDurationDetails for subscriptions
+    // Ensure user.notificationPreferences and user.treatmentPreferences exist before accessing their properties
+    const notificationPrefs = user.notificationPreferences || {}
+    const treatmentPrefs = user.treatmentPreferences || {}
+
     const populatedUserSubscriptions = activeUserSubscriptions.map((sub: any) => {
       if (sub.treatmentId && sub.treatmentId.pricingType === "duration_based" && sub.selectedDurationId) {
-        const treatmentDoc = sub.treatmentId as ITreatment
+        const treatmentDoc = sub.treatmentId as ITreatment // Assuming ITreatment is correctly defined
         if (treatmentDoc.durations) {
           const selectedDuration = treatmentDoc.durations.find(
             (d: any) => d._id.toString() === sub.selectedDurationId.toString(),
@@ -649,17 +570,15 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       activeUserSubscriptions: populatedUserSubscriptions,
       usableGiftVouchers,
       userPreferences: {
-        // Assuming structure from user.preferences
-        therapistGender: user.preferences?.treatment?.therapistGender || "any",
-        notificationMethods: user.notificationPreferences?.methods || ["email"],
-        notificationLanguage: user.notificationPreferences?.language || "he",
+        therapistGender: treatmentPrefs.therapistGender || "any",
+        notificationMethods: notificationPrefs.methods || ["email"],
+        notificationLanguage: notificationPrefs.language || "he",
       },
       userAddresses,
       userPaymentMethods,
       activeTreatments,
       workingHoursSettings,
       currentUser: {
-        // Pass some basic user info if needed by client
         id: user._id.toString(),
         name: user.name,
         email: user.email,
@@ -667,7 +586,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       },
     }
 
-    return { success: true, data: JSON.parse(JSON.stringify(data)) } // Ensure plain objects
+    return { success: true, data: JSON.parse(JSON.stringify(data)) }
   } catch (error) {
     const errorDetails: any = { userId }
     if (error instanceof Error) {
@@ -675,11 +594,10 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       errorDetails.errorMessage = error.message
       errorDetails.stack = error.stack
     } else {
-      // If the error is not a standard Error object, try to stringify it or log as is
       try {
         errorDetails.rawErrorString = JSON.stringify(error)
       } catch (stringifyError) {
-        errorDetails.rawError = error // Log the raw error object if it can't be stringified
+        errorDetails.rawError = error
         errorDetails.stringifyError = "Failed to stringify raw error"
       }
     }

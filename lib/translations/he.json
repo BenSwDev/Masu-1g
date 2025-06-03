@@ -1210,11 +1210,12 @@
       "next": "הבא",
       "pageInfo": "עמוד {{currentPage}} מתוך {{totalPages}}",
       "rowsSelected": "{{count}} מתוך {{total}} שורות נבחרו"
-    },
-    "partnerAssignedCoupons": {
-      "title": "הקופונים שהוקצו לי",
-      "description": "צפה בקופונים שהוקצו לך להפצה.",
-      "loading": "טוען קופונים...",
+    }
+  },
+  "partnerAssignedCoupons": {
+    "title": "הקופונים שהוקצו לי",
+    "description": "צפה בקופונים שהוקצו לך להפצה.",
+    "loading": "טוען קופונים...",
     "noCoupons": "עדיין לא הוקצו לך קופונים.",
     "pagination": {
       "previous": "הקודם",

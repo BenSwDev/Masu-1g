@@ -4,9 +4,9 @@ import { useState, useEffect, useMemo } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z, type ZodType } from "zod"
+import { z } from "zod" // Removed 'type ZodType' as it's not explicitly used now
 import { format, parse } from "date-fns"
-import { he, enUS, ru } from "date-fns/locale" // הוספת ru
+import { he, enUS, ru } from "date-fns/locale"
 import { CalendarIcon, Clock, Plus, Trash2, Edit, AlertTriangle } from "lucide-react"
 import type { TFunction } from "i18next"
 
@@ -46,7 +46,8 @@ import { getWorkingHoursSettings, updateWorkingHoursSettings } from "@/actions/w
 import type { IWorkingHoursSettings, IFixedHours } from "@/lib/db/models/working-hours"
 
 // Schemas with translation function
-const getPriceAdditionSchema = (t: TFunction): ZodType<IFixedHours["priceAddition"]> =>
+// Return types will be inferred by TypeScript
+const getPriceAdditionSchema = (t: TFunction) =>
   z.object({
     amount: z
       .number({
@@ -79,31 +80,31 @@ const getFixedHoursSchema = (t: TFunction) =>
       },
       {
         message: t("workingHours.validation.timeRequiredWhenActive"),
-        path: ["startTime"], // Path to highlight error, can be more general
+        path: ["startTime"],
       },
     )
     .refine(
       (data) => {
         if (data.hasPriceAddition && !data.priceAddition) {
-          return false // If hasPriceAddition is true, priceAddition object must exist
+          return false
         }
         return true
       },
       {
         message: t("workingHours.validation.priceAdditionDetailsRequired"),
-        path: ["priceAddition.amount"], // Path to highlight error
+        path: ["priceAddition"], // Changed path to be more general for the object
       },
     )
 
 const getSpecialDateSchema = (t: TFunction) =>
   z
     .object({
-      _id: z.string().optional(), // For existing dates from DB
+      _id: z.string().optional(),
       name: z
         .string()
         .min(1, t("workingHours.validation.nameRequired"))
         .max(100, t("workingHours.validation.nameTooLong")),
-      date: z.string().min(1, t("workingHours.validation.dateRequired")), // Stored as YYYY-MM-DD string
+      date: z.string().min(1, t("workingHours.validation.dateRequired")),
       isActive: z.boolean(),
       startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, t("workingHours.validation.invalidTimeFormat")),
       endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, t("workingHours.validation.invalidTimeFormat")),
@@ -132,7 +133,7 @@ const getSpecialDateSchema = (t: TFunction) =>
       },
       {
         message: t("workingHours.validation.priceAdditionDetailsRequired"),
-        path: ["priceAddition.amount"],
+        path: ["priceAddition"], // Changed path
       },
     )
 
@@ -142,7 +143,6 @@ const getWorkingHoursSchema = (t: TFunction) =>
     specialDates: z.array(getSpecialDateSchema(t)),
   })
 
-// Schema for the Special Date Dialog Form
 const getSpecialDateFormSchema = (t: TFunction) =>
   z
     .object({
@@ -182,7 +182,7 @@ const getSpecialDateFormSchema = (t: TFunction) =>
       },
       {
         message: t("workingHours.validation.priceAdditionDetailsRequired"),
-        path: ["priceAddition.amount"],
+        path: ["priceAddition"], // Changed path
       },
     )
 
@@ -198,14 +198,14 @@ const getDefaultFixedHours = (): IFixedHours[] => {
     startTime: "09:00",
     endTime: "17:00",
     hasPriceAddition: false,
-    priceAddition: undefined, // Default to undefined, will be set if hasPriceAddition is true
+    priceAddition: undefined,
     notes: "",
   }))
 }
 
 const defaultSpecialDateFormValues: SpecialDateFormData = {
   name: "",
-  date: new Date(), // Will be overridden or set by user
+  date: new Date(),
   isActive: true,
   startTime: "09:00",
   endTime: "17:00",
@@ -222,7 +222,6 @@ export default function WorkingHoursClient() {
   const [isSpecialDateDialogOpen, setIsSpecialDateDialogOpen] = useState(false)
   const [editingSpecialDateIndex, setEditingSpecialDateIndex] = useState<number | null>(null)
 
-  // Memoize schemas to prevent re-creation on every render
   const workingHoursSchema = useMemo(() => getWorkingHoursSchema(t), [t])
   const specialDateFormSchema = useMemo(() => getSpecialDateFormSchema(t), [t])
 
@@ -240,16 +239,14 @@ export default function WorkingHoursClient() {
           description: result.error || t("workingHours.fetchError"),
           variant: "destructive",
         })
-        // Return a structure that matches IWorkingHoursSettings for consistency
         return {
-          _id: "", // Or some other indicator of non-existence/default
+          _id: "",
           fixedHours: getDefaultFixedHours(),
           specialDates: [],
           createdAt: new Date(),
           updatedAt: new Date(),
         }
       }
-      // Ensure fixedHours are always 7 days and specialDates have proper structure
       const fixedHours =
         result.data.fixedHours && result.data.fixedHours.length === 7
           ? result.data.fixedHours.map((fh) => ({
@@ -260,7 +257,7 @@ export default function WorkingHoursClient() {
 
       const specialDates = (result.data.specialDates || []).map((sd) => ({
         ...sd,
-        date: format(new Date(sd.date), "yyyy-MM-dd"), // Ensure date is string
+        date: format(new Date(sd.date), "yyyy-MM-dd"),
         priceAddition: sd.hasPriceAddition && sd.priceAddition ? sd.priceAddition : undefined,
       }))
       return { ...result.data, fixedHours, specialDates }
@@ -289,7 +286,7 @@ export default function WorkingHoursClient() {
   } = useFieldArray({
     control: form.control,
     name: "specialDates",
-    keyName: "fieldId", // Important for unique keys
+    keyName: "fieldId",
   })
 
   useEffect(() => {
@@ -297,7 +294,6 @@ export default function WorkingHoursClient() {
       form.reset({
         fixedHours: workingHoursData.fixedHours.map((fh) => ({
           ...fh,
-          // Ensure priceAddition is properly initialized based on hasPriceAddition
           priceAddition:
             fh.hasPriceAddition && fh.priceAddition
               ? fh.priceAddition
@@ -307,7 +303,7 @@ export default function WorkingHoursClient() {
         })),
         specialDates: workingHoursData.specialDates.map((sd) => ({
           ...sd,
-          date: sd.date, // Already formatted to yyyy-MM-dd string from queryFn
+          date: sd.date,
           priceAddition:
             sd.hasPriceAddition && sd.priceAddition
               ? sd.priceAddition
@@ -317,7 +313,7 @@ export default function WorkingHoursClient() {
         })),
       })
     }
-  }, [workingHoursData, form, t]) // Added t to dependencies as schemas depend on it
+  }, [workingHoursData, form, t])
 
   const updateMutation = useMutation({
     mutationFn: updateWorkingHoursSettings,
@@ -346,7 +342,6 @@ export default function WorkingHoursClient() {
   })
 
   const onSubmit = (data: WorkingHoursFormData) => {
-    // Process data before sending: ensure priceAddition is undefined if not hasPriceAddition
     const processedData = {
       ...data,
       fixedHours: data.fixedHours.map((fh) => ({
@@ -366,7 +361,7 @@ export default function WorkingHoursClient() {
       const specialDate = form.getValues(`specialDates.${index}`)
       specialDateForm.reset({
         ...specialDate,
-        date: parse(specialDate.date, "yyyy-MM-dd", new Date()), // Parse string to Date for Calendar
+        date: parse(specialDate.date, "yyyy-MM-dd", new Date()),
         priceAddition:
           specialDate.hasPriceAddition && specialDate.priceAddition
             ? specialDate.priceAddition
@@ -385,7 +380,7 @@ export default function WorkingHoursClient() {
   const handleSpecialDateFormSubmit = (data: SpecialDateFormData) => {
     const specialDateToSave = {
       ...data,
-      date: format(data.date, "yyyy-MM-dd"), // Format Date to string for main form
+      date: format(data.date, "yyyy-MM-dd"),
       priceAddition: data.hasPriceAddition ? data.priceAddition || defaultPriceAddition : undefined,
     }
 
@@ -451,7 +446,6 @@ export default function WorkingHoursClient() {
     )
   }
 
-  // Watch specific fields to trigger re-renders for conditional UI
   const watchedFixedHours = form.watch("fixedHours")
   const watchedSpecialDates = form.watch("specialDates")
 
@@ -478,7 +472,6 @@ export default function WorkingHoursClient() {
                   <CardDescription>{t("workingHours.fixedHoursDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Desktop Table */}
                   <div className="hidden md:block">
                     <Table>
                       <TableHeader>
@@ -512,7 +505,6 @@ export default function WorkingHoursClient() {
                                           onCheckedChange={(checked) => {
                                             field.onChange(checked)
                                             if (!checked) {
-                                              // If deactivated, clear related fields if necessary
                                               form.setValue(`fixedHours.${index}.hasPriceAddition`, false)
                                               form.setValue(`fixedHours.${index}.priceAddition`, undefined)
                                             }
@@ -671,7 +663,6 @@ export default function WorkingHoursClient() {
                     </Table>
                   </div>
 
-                  {/* Mobile Cards */}
                   <div className="md:hidden space-y-4">
                     {watchedFixedHours?.map((_, index) => {
                       const dayOfWeek = watchedFixedHours[index]?.dayOfWeek
@@ -870,7 +861,6 @@ export default function WorkingHoursClient() {
 
                   {specialDateFields.length > 0 && (
                     <>
-                      {/* Desktop Table */}
                       <div className="hidden md:block">
                         <Table>
                           <TableHeader>
@@ -887,7 +877,7 @@ export default function WorkingHoursClient() {
                           <TableBody>
                             {specialDateFields.map((field, index) => {
                               const specialDate = watchedSpecialDates[index]
-                              if (!specialDate) return null // Should not happen with keyName
+                              if (!specialDate) return null
                               return (
                                 <TableRow key={field.fieldId}>
                                   <TableCell className="font-medium">{specialDate.name}</TableCell>
@@ -940,7 +930,6 @@ export default function WorkingHoursClient() {
                           </TableBody>
                         </Table>
                       </div>
-                      {/* Mobile Cards */}
                       <div className="md:hidden space-y-4">
                         {specialDateFields.map((field, index) => {
                           const specialDate = watchedSpecialDates[index]

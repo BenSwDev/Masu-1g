@@ -46,57 +46,227 @@ import { Badge } from "@/components/common/ui/badge"
 import { getWorkingHoursSettings, updateWorkingHoursSettings } from "@/actions/working-hours-actions"
 import type { IWorkingHoursSettings, IFixedHours } from "@/lib/db/models/working-hours"
 
+// priceAdditionSchema remains the same as it's already optional
+// and its fields are validated conditionally in parent schemas.
 const priceAdditionSchema = z
   .object({
-    amount: z.number().min(0, "Amount must be positive"),
+    amount: z.number().min(0, "Amount must be positive"), // Non-translated
     type: z.enum(["fixed", "percentage"]),
   })
   .optional()
 
-const fixedHoursSchema = z.object({
-  dayOfWeek: z.number().min(0).max(6),
-  isActive: z.boolean(),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
-  hasPriceAddition: z.boolean(),
-  priceAddition: priceAdditionSchema,
-  notes: z.string().max(500, "Notes too long").optional(),
-})
+const fixedHoursSchema = z
+  .object({
+    dayOfWeek: z.number().min(0).max(6),
+    isActive: z.boolean(),
+    startTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
+      .optional(), // Made optional
+    endTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
+      .optional(), // Made optional
+    hasPriceAddition: z.boolean(),
+    priceAddition: priceAdditionSchema,
+    notes: z.string().max(500, "Notes too long").optional(), // Non-translated
+  })
+  .superRefine((data, ctx) => {
+    if (data.isActive) {
+      if (!data.startTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Start time is required when active", // Non-translated
+          path: ["startTime"],
+        })
+      }
+      if (!data.endTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End time is required when active", // Non-translated
+          path: ["endTime"],
+        })
+      }
+      if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End time must be after start time", // Non-translated
+          path: ["endTime"],
+        })
+      }
+    }
 
-const specialDateSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name too long"),
-  date: z.string().min(1, "Date is required"),
-  isActive: z.boolean(),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
-  hasPriceAddition: z.boolean(),
-  priceAddition: priceAdditionSchema,
-  notes: z.string().max(500, "Notes too long").optional(),
-})
+    if (data.hasPriceAddition) {
+      if (!data.priceAddition) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Price addition details are required when enabled", // Non-translated
+          path: ["priceAddition", "amount"], // Path to the first field for user focus
+        })
+      } else {
+        if (typeof data.priceAddition.amount !== "number" || data.priceAddition.amount < 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Valid price addition amount (0 or more) is required", // Non-translated
+            path: ["priceAddition", "amount"],
+          })
+        }
+        if (!data.priceAddition.type) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Price addition type is required", // Non-translated
+            path: ["priceAddition", "type"],
+          })
+        }
+      }
+    }
+  })
+
+const specialDateSchema = z
+  .object({
+    name: z.string().min(1, "Name is required").max(100, "Name too long"), // Non-translated
+    date: z.string().min(1, "Date is required"), // Non-translated
+    isActive: z.boolean(),
+    startTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
+      .optional(), // Made optional
+    endTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
+      .optional(), // Made optional
+    hasPriceAddition: z.boolean(),
+    priceAddition: priceAdditionSchema,
+    notes: z.string().max(500, "Notes too long").optional(), // Non-translated
+  })
+  .superRefine((data, ctx) => {
+    if (data.isActive) {
+      if (!data.startTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Start time is required when active", // Non-translated
+          path: ["startTime"],
+        })
+      }
+      if (!data.endTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End time is required when active", // Non-translated
+          path: ["endTime"],
+        })
+      }
+      if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End time must be after start time", // Non-translated
+          path: ["endTime"],
+        })
+      }
+    }
+
+    if (data.hasPriceAddition) {
+      if (!data.priceAddition) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Price addition details are required when enabled", // Non-translated
+          path: ["priceAddition", "amount"],
+        })
+      } else {
+        if (typeof data.priceAddition.amount !== "number" || data.priceAddition.amount < 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Valid price addition amount (0 or more) is required", // Non-translated
+            path: ["priceAddition", "amount"],
+          })
+        }
+        if (!data.priceAddition.type) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Price addition type is required", // Non-translated
+            path: ["priceAddition", "type"],
+          })
+        }
+      }
+    }
+  })
 
 const workingHoursSchema = z.object({
   fixedHours: z.array(fixedHoursSchema),
   specialDates: z.array(specialDateSchema),
 })
 
-const specialDateFormSchema = z.object({
-  name: z.string().min(1, "Please enter a name").max(100, "Name is too long (max 100 chars)").default(""),
-  date: z.date({
-    required_error: "Please select a date",
-  }),
-  isActive: z.boolean().default(true),
-  startTime: z
-    .string()
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format. Use HH:MM")
-    .default("09:00"),
-  endTime: z
-    .string()
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format. Use HH:MM")
-    .default("17:00"),
-  hasPriceAddition: z.boolean().default(false),
-  priceAddition: priceAdditionSchema,
-  notes: z.string().max(500, "Notes are too long (max 500 chars)").optional().default(""),
-})
+// For the Special Date Dialog Form
+const specialDateFormSchema = z
+  .object({
+    name: z.string().min(1, "Please enter a name").max(100, "Name is too long (max 100 chars)").default(""), // Non-translated
+    date: z.date({
+      required_error: "Please select a date", // Non-translated
+    }),
+    isActive: z.boolean().default(true),
+    startTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format. Use HH:MM") // Non-translated
+      .optional() // Made optional
+      .default("09:00"), // Default remains for form usability
+    endTime: z
+      .string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format. Use HH:MM") // Non-translated
+      .optional() // Made optional
+      .default("17:00"), // Default remains for form usability
+    hasPriceAddition: z.boolean().default(false),
+    priceAddition: priceAdditionSchema, // Uses the same optional priceAdditionSchema
+    notes: z.string().max(500, "Notes are too long (max 500 chars)").optional().default(""), // Non-translated
+  })
+  .superRefine((data, ctx) => {
+    if (data.isActive) {
+      if (!data.startTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Start time is required when active", // Non-translated
+          path: ["startTime"],
+        })
+      }
+      if (!data.endTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End time is required when active", // Non-translated
+          path: ["endTime"],
+        })
+      }
+      if (data.startTime && data.endTime && data.startTime >= data.endTime) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "End time must be after start time", // Non-translated
+          path: ["endTime"],
+        })
+      }
+    }
+
+    if (data.hasPriceAddition) {
+      if (!data.priceAddition) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Price addition details are required when enabled", // Non-translated
+          path: ["priceAddition", "amount"],
+        })
+      } else {
+        if (typeof data.priceAddition.amount !== "number" || data.priceAddition.amount < 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Valid price addition amount (0 or more) is required", // Non-translated
+            path: ["priceAddition", "amount"],
+          })
+        }
+        if (!data.priceAddition.type) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Price addition type is required", // Non-translated
+            path: ["priceAddition", "type"],
+          })
+        }
+      }
+    }
+  })
 
 type WorkingHoursFormData = z.infer<typeof workingHoursSchema>
 type SpecialDateFormData = z.infer<typeof specialDateFormSchema>
@@ -225,13 +395,21 @@ export default function WorkingHoursClient() {
       ...data,
       fixedHours: data.fixedHours.map((fh) => ({
         ...fh,
+        startTime: fh.isActive ? fh.startTime : undefined,
+        endTime: fh.isActive ? fh.endTime : undefined,
         priceAddition: fh.hasPriceAddition ? fh.priceAddition : undefined,
+        notes: fh.isActive ? fh.notes : undefined,
       })),
       specialDates: data.specialDates.map((sd) => ({
         ...sd,
+        startTime: sd.isActive ? sd.startTime : undefined,
+        endTime: sd.isActive ? sd.endTime : undefined,
         priceAddition: sd.hasPriceAddition ? sd.priceAddition : undefined,
+        notes: sd.isActive ? sd.notes : undefined,
       })),
     }
+    console.log("Submitting processed data:", processedData) // Added for debugging
+    console.log("Form errors:", form.formState.errors) // Added for debugging
     updateMutation.mutate(processedData)
   }
 
@@ -239,7 +417,10 @@ export default function WorkingHoursClient() {
     const specialDateData = {
       ...data,
       date: format(data.date, "yyyy-MM-dd"),
+      startTime: data.isActive ? data.startTime : undefined,
+      endTime: data.isActive ? data.endTime : undefined,
       priceAddition: data.hasPriceAddition ? data.priceAddition : undefined,
+      notes: data.isActive ? data.notes : undefined,
     }
 
     if (editingSpecialDateIndex !== null) {
@@ -253,8 +434,8 @@ export default function WorkingHoursClient() {
       name: "",
       date: undefined,
       isActive: true,
-      startTime: "09:00",
-      endTime: "17:00",
+      startTime: "09:00", // Keep defaults for new entries
+      endTime: "17:00", // Keep defaults for new entries
       hasPriceAddition: false,
       priceAddition: { amount: 0, type: "fixed" },
       notes: "",

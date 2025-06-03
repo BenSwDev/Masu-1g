@@ -101,9 +101,7 @@ export default function SummaryStep({
               </span>
               <span className="font-semibold text-right">
                 {selectedTreatment?.name}
-                {selectedDuration
-                  ? ` (${selectedDuration.minutes} ${translations["common.minAbbreviation"] || (translations["common.minutes"] ? translations["common.minutes"].substring(0, 3) : "min")})`
-                  : ""}
+                {selectedDuration ? ` (${selectedDuration.minutes} ${translations["common.minutes"] || "min"})` : ""}
               </span>
             </div>
             <Separator />
@@ -125,13 +123,8 @@ export default function SummaryStep({
                     {translations["bookings.steps.summary.flexibleTime"] || "Flexible Time"}:
                   </span>
                   <span className="font-semibold text-primary text-right">
-                    {(
-                      translations["bookings.steps.summary.flexibleTimeDetails"] ||
-                      "{yesLabel} (+/- {count} {hoursLabel})"
-                    )
-                      .replace("{yesLabel}", translations["common.yes"] || "Yes")
-                      .replace("{count}", (bookingOptions.flexibilityRangeHours || 2).toString())
-                      .replace("{hoursLabel}", translations["common.hours"] || "hours")}
+                    {translations["common.yes"] || "Yes"} (+/- {bookingOptions.flexibilityRangeHours || 2}{" "}
+                    {translations["common.hours"] || "hours"})
                   </span>
                 </div>
               </>

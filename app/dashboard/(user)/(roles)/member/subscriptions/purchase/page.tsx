@@ -4,8 +4,6 @@ import { getActivePaymentMethods } from "@/actions/payment-method-actions"
 import PurchaseSubscriptionClient from "@/components/dashboard/member/subscriptions/purchase-subscription-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 
-export const dynamic = "force-dynamic"
-
 export default async function PurchaseSubscriptionPage() {
   const [subscriptionsData, treatmentsData, paymentMethodsData] = await Promise.all([
     getActiveSubscriptionsForPurchase(),

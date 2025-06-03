@@ -120,8 +120,7 @@
     "priceSummary": "Price Summary",
     "purchaseSuccessful": "Purchase Successful",
     "purchaseSuccessMessage": "Your purchase has been completed successfully.",
-    "months": "months",
-    "minAbbreviation": "min"
+    "months": "months"
   },
   "dashboard": {
     "sidebar": {
@@ -1220,8 +1219,7 @@
         "couponDiscount": "Coupon Discount",
         "totalAmount": "Total Amount",
         "fullyCovered": "This booking is fully covered.",
-        "confirmBooking": "Confirm Booking",
-        "flexibleTimeDetails": "{yesLabel} (+/- {count} {hoursLabel})"
+        "confirmBooking": "Confirm Booking"
       },
       "payment": {
         "title": "Payment",

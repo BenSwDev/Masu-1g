@@ -16,7 +16,6 @@ import { TreatmentSelectionSchema, type TreatmentSelectionFormValues } from "@/l
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
 import { AlertCircle, Info } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
-import { useTranslation } from "@/lib/translations/i18n"
 
 interface TreatmentSelectionStepProps {
   initialData: BookingInitialData
@@ -24,6 +23,7 @@ interface TreatmentSelectionStepProps {
   setBookingOptions: React.Dispatch<React.SetStateAction<Partial<SelectedBookingOptions>>>
   onNext: () => void
   onPrev: () => void
+  translations: Record<string, string>
 }
 
 export default function TreatmentSelectionStep({
@@ -32,6 +32,7 @@ export default function TreatmentSelectionStep({
   setBookingOptions,
   onNext,
   onPrev,
+  translations,
 }: TreatmentSelectionStepProps) {
   const [selectedSubscriptionDetails, setSelectedSubscriptionDetails] = useState<IUserSubscription | null>(null)
   const [selectedVoucherDetails, setSelectedVoucherDetails] = useState<IGiftVoucher | null>(null)
@@ -47,8 +48,6 @@ export default function TreatmentSelectionStep({
       selectedDurationId: bookingOptions.selectedDurationId,
     },
   })
-
-  const { t } = useTranslation()
 
   useEffect(() => {
     const subscription = form.watch((values) => {
@@ -161,7 +160,8 @@ export default function TreatmentSelectionStep({
     if (selectedTreatment?.pricingType === "duration_based" && !data.selectedDurationId) {
       form.setError("selectedDurationId", {
         type: "manual",
-        message: t("bookings.validation.durationRequiredForType"),
+        message:
+          translations["bookings.validation.durationRequiredForType"] || "Duration is required for this treatment.",
       })
       return
     }
@@ -182,8 +182,12 @@ export default function TreatmentSelectionStep({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.treatment.title")}</h2>
-          <p className="text-muted-foreground mt-1">{t("bookings.steps.treatment.description")}</p>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {translations["bookings.steps.treatment.title"] || "Select Your Treatment"}
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            {translations["bookings.steps.treatment.description"] || "Choose the service you'd like to book."}
+          </p>
         </div>
 
         {bookingOptions.source === "subscription_redemption" && (
@@ -192,7 +196,9 @@ export default function TreatmentSelectionStep({
             name="selectedUserSubscriptionId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("bookings.steps.treatment.selectSubscription")}</FormLabel>
+                <FormLabel>
+                  {translations["bookings.steps.treatment.selectSubscription"] || "Select Subscription"}
+                </FormLabel>
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value)
@@ -203,20 +209,27 @@ export default function TreatmentSelectionStep({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={t("bookings.steps.treatment.selectSubscriptionPlaceholder")} />
+                      <SelectValue
+                        placeholder={
+                          translations["bookings.steps.treatment.selectSubscriptionPlaceholder"] ||
+                          "Choose a subscription"
+                        }
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {initialData.activeUserSubscriptions.length > 0 ? (
                       initialData.activeUserSubscriptions.map((sub) => (
                         <SelectItem key={sub._id.toString()} value={sub._id.toString()}>
-                          {(sub.subscriptionId as any)?.name || t("bookings.unknownSubscription")} ($
-                          {t("bookings.subscriptions.remaining")}: {sub.remainingQuantity})
+                          {(sub.subscriptionId as any)?.name ||
+                            translations["bookings.unknownSubscription"] ||
+                            "Unknown Subscription"}{" "}
+                          ({translations["bookings.subscriptions.remaining"] || "Remaining"}: {sub.remainingQuantity})
                         </SelectItem>
                       ))
                     ) : (
                       <div className="p-4 text-sm text-muted-foreground text-center">
-                        {t("bookings.steps.treatment.noSubscriptions")}
+                        {translations["bookings.steps.treatment.noSubscriptions"] || "No active subscriptions found."}
                       </div>
                     )}
                   </SelectContent>
@@ -233,7 +246,7 @@ export default function TreatmentSelectionStep({
             name="selectedGiftVoucherId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("bookings.steps.treatment.selectVoucher")}</FormLabel>
+                <FormLabel>{translations["bookings.steps.treatment.selectVoucher"] || "Select Gift Voucher"}</FormLabel>
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value)
@@ -244,7 +257,11 @@ export default function TreatmentSelectionStep({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={t("bookings.steps.treatment.selectVoucherPlaceholder")} />
+                      <SelectValue
+                        placeholder={
+                          translations["bookings.steps.treatment.selectVoucherPlaceholder"] || "Choose a gift voucher"
+                        }
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -253,14 +270,14 @@ export default function TreatmentSelectionStep({
                         <SelectItem key={v._id} value={v._id}>
                           {v.code} (
                           {v.voucherType === "monetary"
-                            ? `${v.remainingAmount} ${t("common.currency")}`
-                            : v.treatmentName || t("bookings.treatmentVoucher")}
+                            ? `${v.remainingAmount} ${translations["common.currency"] || "ILS"}`
+                            : v.treatmentName || translations["bookings.treatmentVoucher"] || "Treatment Voucher"}
                           )
                         </SelectItem>
                       ))
                     ) : (
                       <div className="p-4 text-sm text-muted-foreground text-center">
-                        {t("bookings.steps.treatment.noVouchers")}
+                        {translations["bookings.steps.treatment.noVouchers"] || "No usable gift vouchers found."}
                       </div>
                     )}
                   </SelectContent>
@@ -274,11 +291,15 @@ export default function TreatmentSelectionStep({
         {noTreatmentsForSource && (
           <Alert variant="default" className="mt-6">
             <Info className="h-4 w-4" />
-            <AlertTitle>{t("bookings.steps.treatment.selectSourceFirstTitle")}</AlertTitle>
+            <AlertTitle>
+              {translations["bookings.steps.treatment.selectSourceFirstTitle"] || "Select Source"}
+            </AlertTitle>
             <AlertDescription>
               {bookingOptions.source === "subscription_redemption"
-                ? t("bookings.steps.treatment.selectSubscriptionFirstDesc")
-                : t("bookings.steps.treatment.selectVoucherFirstDesc")}
+                ? translations["bookings.steps.treatment.selectSubscriptionFirstDesc"] ||
+                  "Please select a subscription to see available treatments."
+                : translations["bookings.steps.treatment.selectVoucherFirstDesc"] ||
+                  "Please select a gift voucher to see available treatments."}
             </AlertDescription>
           </Alert>
         )}
@@ -289,7 +310,7 @@ export default function TreatmentSelectionStep({
             name="selectedTreatmentId"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>{t("bookings.steps.treatment.selectTreatment")}</FormLabel>
+                <FormLabel>{translations["bookings.steps.treatment.selectTreatment"] || "Select Treatment"}</FormLabel>
                 <FormControl>
                   <RadioGroup
                     onValueChange={(value) => {
@@ -323,8 +344,8 @@ export default function TreatmentSelectionStep({
                             <CardFooter className="mt-auto">
                               <p className="font-semibold text-primary text-sm">
                                 {treatment.pricingType === "fixed"
-                                  ? `${treatment.fixedPrice} ${t("common.currency")}`
-                                  : t("bookings.priceVariesByDuration")}
+                                  ? `${treatment.fixedPrice} ${translations["common.currency"] || "ILS"}`
+                                  : translations["bookings.priceVariesByDuration"] || "Price varies by duration"}
                               </p>
                             </CardFooter>
                           </Card>
@@ -342,8 +363,13 @@ export default function TreatmentSelectionStep({
         {noTreatmentsToList && !noTreatmentsForSource && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{t("bookings.steps.treatment.noTreatmentsAvailableTitle")}</AlertTitle>
-            <AlertDescription>{t("bookings.steps.treatment.noTreatmentsAvailableDesc")}</AlertDescription>
+            <AlertTitle>
+              {translations["bookings.steps.treatment.noTreatmentsAvailableTitle"] || "No Treatments Available"}
+            </AlertTitle>
+            <AlertDescription>
+              {translations["bookings.steps.treatment.noTreatmentsAvailableDesc"] ||
+                "There are no treatments available for your current selection. Please try a different source or contact support."}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -353,7 +379,7 @@ export default function TreatmentSelectionStep({
             name="selectedDurationId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("bookings.steps.treatment.selectDuration")}</FormLabel>
+                <FormLabel>{translations["bookings.steps.treatment.selectDuration"] || "Select Duration"}</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   value={field.value}
@@ -361,13 +387,18 @@ export default function TreatmentSelectionStep({
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={t("bookings.steps.treatment.selectDurationPlaceholder")} />
+                      <SelectValue
+                        placeholder={
+                          translations["bookings.steps.treatment.selectDurationPlaceholder"] || "Choose a duration"
+                        }
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {availableDurations.map((duration) => (
                       <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
-                        {duration.minutes} {t("common.minutes")} - {duration.price} {t("common.currency")}
+                        {duration.minutes} {translations["common.minutes"] || "minutes"} - {duration.price}{" "}
+                        {translations["common.currency"] || "ILS"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -380,10 +411,10 @@ export default function TreatmentSelectionStep({
 
         <div className="flex justify-between pt-6">
           <Button variant="outline" type="button" onClick={onPrev} size="lg">
-            {t("common.back")}
+            {translations["common.back"] || "Back"}
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting} size="lg">
-            {t("common.next")}
+            {translations["common.next"] || "Next"}
           </Button>
         </div>
       </form>

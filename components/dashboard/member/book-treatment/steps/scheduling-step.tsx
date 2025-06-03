@@ -23,7 +23,6 @@ import {
   FormMessage,
 } from "@/components/common/ui/form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
-import { useTranslation } from "@/lib/translations/i18n"
 
 interface SchedulingStepProps {
   initialData: BookingInitialData
@@ -33,6 +32,7 @@ interface SchedulingStepProps {
   isTimeSlotsLoading: boolean
   onNext: () => void
   onPrev: () => void
+  translations: Record<string, string>
   workingHoursNote?: string // Added this prop
 }
 
@@ -44,9 +44,9 @@ export default function SchedulingStep({
   isTimeSlotsLoading,
   onNext,
   onPrev,
+  translations,
   workingHoursNote,
 }: SchedulingStepProps) {
-  const { t } = useTranslation()
   const form = useForm<SchedulingFormValues>({
     resolver: zodResolver(SchedulingDetailsSchema),
     defaultValues: {
@@ -90,8 +90,13 @@ export default function SchedulingStep({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.scheduling.title")}</h2>
-          <p className="text-muted-foreground mt-1">{t("bookings.steps.scheduling.description")}</p>
+          <h2 className="text-2xl font-semibold tracking-tight">
+            {translations["bookings.steps.scheduling.title"] || "Schedule Your Appointment"}
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            {translations["bookings.steps.scheduling.description"] ||
+              "Choose a date, time, and location for your treatment."}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -100,7 +105,7 @@ export default function SchedulingStep({
             name="bookingDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>{t("bookings.steps.scheduling.selectDate")}</FormLabel>
+                <FormLabel>{translations["bookings.steps.scheduling.selectDate"] || "Select Date"}</FormLabel>
                 <FormControl>
                   <Calendar
                     mode="single"
@@ -121,11 +126,11 @@ export default function SchedulingStep({
               name="bookingTime"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("bookings.steps.scheduling.selectTime")}</FormLabel>
+                  <FormLabel>{translations["bookings.steps.scheduling.selectTime"] || "Select Time"}</FormLabel>
                   {isTimeSlotsLoading ? (
                     <div className="flex items-center space-x-2 h-10 p-2 border rounded-md bg-muted animate-pulse">
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                      <span className="text-muted-foreground">{t("common.loading")}</span>
+                      <span className="text-muted-foreground">{translations["common.loading"] || "Loading..."}</span>
                     </div>
                   ) : timeSlots.length > 0 ? (
                     <Select
@@ -135,7 +140,11 @@ export default function SchedulingStep({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t("bookings.steps.scheduling.selectTimePlaceholder")} />
+                          <SelectValue
+                            placeholder={
+                              translations["bookings.steps.scheduling.selectTimePlaceholder"] || "Choose a time slot"
+                            }
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -145,7 +154,7 @@ export default function SchedulingStep({
                             <SelectItem key={slot.time} value={slot.time}>
                               {slot.time}
                               {slot.surcharge &&
-                                ` (+${slot.surcharge.amount.toFixed(2)} ${t("common.currency") || "ILS"})`}
+                                ` (+${slot.surcharge.amount.toFixed(2)} ${translations["common.currency"] || "ILS"})`}
                             </SelectItem>
                           ))}
                       </SelectContent>
@@ -156,9 +165,10 @@ export default function SchedulingStep({
                       <AlertDescription>
                         {form.getValues("bookingDate")
                           ? workingHoursNote
-                            ? t(workingHoursNote)
-                            : t("bookings.steps.scheduling.noSlotsAvailable")
-                          : t("bookings.steps.scheduling.selectDateFirst")}
+                            ? translations[workingHoursNote] || workingHoursNote
+                            : translations["bookings.steps.scheduling.noSlotsAvailable"] ||
+                              "No slots available for this date."
+                          : translations["bookings.steps.scheduling.selectDateFirst"] || "Please select a date first."}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -169,7 +179,7 @@ export default function SchedulingStep({
             {workingHoursNote && timeSlots.length === 0 && form.getValues("bookingDate") && (
               <Alert variant="default" className="text-sm">
                 <Info className="h-4 w-4" />
-                <AlertDescription>{t(workingHoursNote)}</AlertDescription>
+                <AlertDescription>{translations[workingHoursNote] || workingHoursNote}</AlertDescription>
               </Alert>
             )}
             <FormField
@@ -182,10 +192,11 @@ export default function SchedulingStep({
                   </FormControl>
                   <div className="space-y-0.5">
                     <Label htmlFor="flexibleTime" className="text-sm font-medium cursor-pointer">
-                      {t("bookings.steps.scheduling.flexibleTimeLabel")}
+                      {translations["bookings.steps.scheduling.flexibleTimeLabel"] || "I'm flexible with the time"}
                     </Label>
                     <FormDescription className="text-xs">
-                      {t("bookings.steps.scheduling.flexibleTimeDesc")}
+                      {translations["bookings.steps.scheduling.flexibleTimeDesc"] ||
+                        "Allow us to adjust the time by up to 2 hours for better availability."}
                     </FormDescription>
                   </div>
                 </FormItem>
@@ -199,19 +210,23 @@ export default function SchedulingStep({
           name="selectedAddressId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("bookings.steps.scheduling.selectAddress")}</FormLabel>
+              <FormLabel>{translations["bookings.steps.scheduling.selectAddress"] || "Select Address"}</FormLabel>
               {initialData.userAddresses.length > 0 ? (
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder={t("bookings.steps.scheduling.selectAddressPlaceholder")} />
+                      <SelectValue
+                        placeholder={
+                          translations["bookings.steps.scheduling.selectAddressPlaceholder"] || "Choose an address"
+                        }
+                      />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {initialData.userAddresses.map((address) => (
                       <SelectItem key={address._id.toString()} value={address._id.toString()}>
                         {`${address.street} ${address.streetNumber || ""}, ${address.city}`}
-                        {address.isPrimary && ` (${t("addresses.primary")})`}
+                        {address.isPrimary && ` (${translations["addresses.primary"] || "Primary"})`}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -219,9 +234,12 @@ export default function SchedulingStep({
               ) : (
                 <Alert variant="default">
                   <Info className="h-4 w-4" />
-                  <AlertTitle>{t("bookings.steps.scheduling.noSavedAddressesTitle")}</AlertTitle>
+                  <AlertTitle>
+                    {translations["bookings.steps.scheduling.noSavedAddressesTitle"] || "No Saved Addresses"}
+                  </AlertTitle>
                   <AlertDescription>
-                    {t("bookings.steps.scheduling.noSavedAddressesDesc")}
+                    {translations["bookings.steps.scheduling.noSavedAddressesDesc"] ||
+                      "You don't have any saved addresses. Please add one in your dashboard."}
                     {/* TODO: Add button to open AddressForm modal or link to dashboard page */}
                   </AlertDescription>
                 </Alert>
@@ -236,7 +254,9 @@ export default function SchedulingStep({
           name="therapistGenderPreference"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("bookings.steps.scheduling.therapistPreference")}</FormLabel>
+              <FormLabel>
+                {translations["bookings.steps.scheduling.therapistPreference"] || "Therapist Gender Preference"}
+              </FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -244,9 +264,11 @@ export default function SchedulingStep({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="any">{t("preferences.treatment.genderAny")}</SelectItem>
-                  <SelectItem value="male">{t("preferences.treatment.genderMale")}</SelectItem>
-                  <SelectItem value="female">{t("preferences.treatment.genderFemale")}</SelectItem>
+                  <SelectItem value="any">{translations["preferences.treatment.genderAny"] || "Any"}</SelectItem>
+                  <SelectItem value="male">{translations["preferences.treatment.genderMale"] || "Male"}</SelectItem>
+                  <SelectItem value="female">
+                    {translations["preferences.treatment.genderFemale"] || "Female"}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -259,9 +281,16 @@ export default function SchedulingStep({
           name="notes"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>{t("bookings.steps.scheduling.notes")}</FormLabel>
+              <FormLabel>{translations["bookings.steps.scheduling.notes"] || "Additional Notes (Optional)"}</FormLabel>
               <FormControl>
-                <Textarea placeholder={t("bookings.steps.scheduling.notesPlaceholder")} {...field} rows={3} />
+                <Textarea
+                  placeholder={
+                    translations["bookings.steps.scheduling.notesPlaceholder"] ||
+                    "Any special requests or information for the therapist..."
+                  }
+                  {...field}
+                  rows={3}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -270,11 +299,11 @@ export default function SchedulingStep({
 
         <div className="flex justify-between pt-6">
           <Button variant="outline" type="button" onClick={onPrev} disabled={form.formState.isSubmitting} size="lg">
-            {t("common.back")}
+            {translations["common.back"] || "Back"}
           </Button>
           <Button type="submit" disabled={form.formState.isSubmitting || !initialData.userAddresses.length} size="lg">
             {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("common.next")}
+            {translations["common.next"] || "Next"}
           </Button>
         </div>
       </form>

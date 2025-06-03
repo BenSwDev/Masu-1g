@@ -125,9 +125,7 @@
     "summary": "סיכום",
     "priceSummary": "סיכום מחיר",
     "purchaseSuccessful": "הרכישה הושלמה בהצלחה",
-    "purchaseSuccessMessage": "הרכישה שלך הושלמה בהצלחה.",
-    "unknownStep": "שלב לא ידוע.",
-    "addressNotSpecified": "כתובת לא צוינה"
+    "purchaseSuccessMessage": "הרכישה שלך הושלמה בהצלחה."
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -332,8 +330,7 @@
     "deleted": "הכתובת נמחקה",
     "defaultSet": "כתובת ברירת מחדל עודכנה",
     "created": "הכתובת נוצרה",
-    "updated": "הכתובת עודכנה",
-    "primary": "ראשי"
+    "updated": "הכתובת עודכנה"
   },
   "paymentMethods": {
     "title": "ניהול אמצעי תשלום",
@@ -1365,9 +1362,7 @@
         "redeemVoucher": "שימוש בשובר מתנה",
         "redeemVoucherDesc": "השתמש בשובר מתנה עבור ההזמנה שלך.",
         "newBooking": "הזמנה חדשה / תשלום",
-        "newBookingDesc": "הזמן טיפול חדש ושלם ישירות.",
-        "newBookingOnlyTitle": "הזמנה חדשה",
-        "newBookingOnlyDesc": "כרגע זמינות רק הזמנות חדשות. ניתן לרכוש מנויים או שוברי מתנה באזורים המתאימים בלוח הבקרה."
+        "newBookingDesc": "הזמן טיפול חדש ושלם ישירות."
       },
       "treatment": {
         "title": "בחר את הטיפול שלך",
@@ -1381,12 +1376,7 @@
         "priceVariesByDuration": "המחיר משתנה לפי משך הטיפול",
         "noTreatmentsForSelection": "אין טיפולים זמינים לבחירה זו. אנא בדוק את המנוי/שובר שלך או בחר שיטת הזמנה אחרת.",
         "selectDuration": "בחר משך טיפול",
-        "selectDurationPlaceholder": "בחר משך...",
-        "selectSourceFirstTitle": "בחר מקור",
-        "selectSubscriptionFirstDesc": "אנא בחר מנוי כדי לראות טיפולים זמינים.",
-        "selectVoucherFirstDesc": "אנא בחר שובר מתנה כדי לראות טיפולים זמינים.",
-        "noTreatmentsAvailableTitle": "אין טיפולים זמינים",
-        "noTreatmentsAvailableDesc": "אין טיפולים זמינים לבחירה הנוכחית שלך. אנא נסה מקור אחר או פנה לתמיכה."
+        "selectDurationPlaceholder": "בחר משך..."
       },
       "scheduling": {
         "title": "קבע את התור שלך",
@@ -1402,10 +1392,7 @@
         "noSavedAddresses": "אין לך כתובות שמורות. אנא הוסף כתובת.",
         "therapistPreference": "העדפת מגדר מטפל/ת",
         "notes": "הערות נוספות (אופציונלי)",
-        "notesPlaceholder": "בקשות מיוחדות או מידע למטפל/ת...",
-        "flexibleTimeDesc": "אפשר לנו להתאים את השעה עד שעתיים לזמינות טובה יותר.",
-        "noSavedAddressesTitle": "אין כתובות שמורות",
-        "noSavedAddressesDesc": "אין לך כתובות שמורות. אנא הוסף כתובת בלוח הבקרה שלך."
+        "notesPlaceholder": "בקשות מיוחדות או מידע למטפל/ת..."
       },
       "summary": {
         "title": "בדוק את הזמנתך",
@@ -1427,8 +1414,7 @@
         "couponDiscount": "הנחת קופון",
         "totalAmount": "סכום כולל",
         "fullyCovered": "הזמנה זו מכוסה במלואה.",
-        "confirmBooking": "אשר הזמנה",
-        "couponDesc": "אם יש לך קופון, הזן אותו כאן כדי להחיל את ההנחה."
+        "confirmBooking": "אשר הזמנה"
       },
       "payment": {
         "title": "תשלום",
@@ -1439,9 +1425,7 @@
         "confirmBooking": "אשר הזמנה",
         "selectPaymentMethod": "בחר אמצעי תשלום",
         "noSavedPaymentMethods": "אין לך אמצעי תשלום שמורים.",
-        "payAndConfirm": "שלם ואשר",
-        "noSavedPaymentMethodsTitle": "אין אמצעי תשלום",
-        "noSavedPaymentMethodsDesc": "אין לך אמצעי תשלום שמורים. אנא הוסף אחד בלוח הבקרה שלך כדי להמשיך."
+        "payAndConfirm": "שלם ואשר"
       },
       "confirmation": {
         "title": "ההזמנה אושרה!",
@@ -1449,19 +1433,7 @@
         "bookingId": "מזהה הזמנה",
         "detailsSentToEmail": "אישור עם פרטי ההזמנה שלך נשלח למייל שלך.",
         "viewMyBookings": "צפה בהזמנות שלי",
-        "bookAnotherTreatment": "הזמן טיפול נוסף",
-        "errorTitle": "ההזמנה נכשלה",
-        "errorDescription": "נתקלנו בבעיה בעת אישור ההזמנה שלך. אנא נסה שוב או פנה לתמיכה אם הבעיה נמשכת.",
-        "tryAgain": "נסה שוב",
-        "bookingSummary": "סיכום הזמנה",
-        "treatment": "טיפול",
-        "treatmentIdPrefix": "מזהה טיפול",
-        "dateTime": "תאריך ושעה",
-        "status": "סטטוס",
-        "coveredBySubscription": "הזמנה זו מכוסה על ידי המנוי שלך.",
-        "coveredByVoucher": "הזמנה זו מכוסה על ידי שובר המתנה שלך.",
-        "notificationSent": "אימייל אישור עם פרטים אלו נשלח לכתובת האימייל הרשומה שלך. אם יש לך שאלות, אנא פנה לתמיכה שלנו.",
-        "bookAnother": "הזמן טיפול נוסף"
+        "bookAnotherTreatment": "הזמן טיפול נוסף"
       }
     },
     "errors": {
@@ -1489,8 +1461,7 @@
       "cancellationFailedUnknown": "ביטול ההזמנה נכשל עקב שגיאה לא ידועה.",
       "cancelBookingFailed": "ביטול ההזמנה נכשל. אנא נסה שוב.",
       "initialDataLoadFailed": "טעינת נתונים קריטיים לדף ההזמנה נכשלה.",
-      "initialDataFetchFailed": "שליפת נתונים ראשוניים להזמנה נכשלה. אנא רענן את הדף.",
-      "priceCalculationUnavailable": "פרטי המחיר אינם זמינים כעת. אנא ודא שכל השלבים הקודמים הושלמו כהלכה."
+      "initialDataFetchFailed": "שליפת נתונים ראשוניים להזמנה נכשלה. אנא רענן את הדף."
     },
     "messages": {
       "closedOnSelectedDate": "אנו סגורים בתאריך הנבחר."

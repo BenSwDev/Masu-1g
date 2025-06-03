@@ -2,20 +2,44 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState, useEffect, useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Card, CardContent } from "@/components/common/ui/card"
 import { purchaseSubscription } from "@/actions/user-subscription-actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import type { ITreatment } from "@/lib/db/models/treatment" // Assuming ISubscription is also needed
+import type { ITreatment } from "@/lib/db/models/treatment"
 import type { ISubscription } from "@/lib/db/models/subscription"
-import { Loader2 } from "lucide-react"
+import { StepIndicator } from "@/components/common/purchase/step-indicator"
+import { PurchaseCard } from "@/components/common/purchase/purchase-card"
+import { PurchaseNavigation } from "@/components/common/purchase/purchase-navigation"
+import { PurchaseSummary } from "@/components/common/purchase/purchase-summary"
+import { AnimatedContainer } from "@/components/common/purchase/animated-container"
+import { PurchaseSuccess } from "@/components/common/purchase/purchase-success"
+import {
+  Package,
+  Stethoscope,
+  Clock,
+  CreditCard,
+  CheckCircle,
+  Calendar,
+  Award,
+  Timer,
+  CreditCardIcon,
+} from "lucide-react"
+import { PaymentMethodSelector } from "@/components/common/purchase/payment-method-selector"
+
+interface PaymentMethod {
+  _id: string
+  cardName?: string
+  cardNumber: string
+  expiryMonth: string
+  expiryYear: string
+  isDefault?: boolean
+}
 
 interface PurchaseSubscriptionClientProps {
-  subscriptions?: ISubscription[] // Use defined type
-  treatments?: ITreatment[] // Use defined type
-  paymentMethods?: any[] // Define type if available
+  subscriptions?: ISubscription[]
+  treatments?: ITreatment[]
+  paymentMethods?: PaymentMethod[]
 }
 
 const PurchaseSubscriptionClient = ({
@@ -30,7 +54,50 @@ const PurchaseSubscriptionClient = ({
   const [selectedDurationId, setSelectedDurationId] = useState<string>("")
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
-  const [currentStep, setCurrentStep] = useState(1) // 1: Sub, 2: Treatment, 3: Duration, 4: Payment, 5: Summary
+  const [currentStep, setCurrentStep] = useState("subscription")
+  const [purchaseComplete, setPurchaseComplete] = useState(false)
+  const [paymentMethodsState, setPaymentMethodsState] = useState(paymentMethods)
+
+  // Define steps with icons
+  const steps = useMemo(() => {
+    const baseSteps = [
+      {
+        key: "subscription",
+        label: t("subscriptions.purchase.selectSubscription"),
+        icon: Package,
+      },
+      {
+        key: "treatment",
+        label: t("treatments.selectTreatment"),
+        icon: Stethoscope,
+      },
+    ]
+
+    // Add duration step only if selected treatment is duration-based
+    const selectedTreatmentData = treatments.find((treatment) => treatment._id.toString() === selectedTreatmentId)
+    if (selectedTreatmentData?.pricingType === "duration_based") {
+      baseSteps.push({
+        key: "duration",
+        label: t("treatments.selectDuration"),
+        icon: Clock,
+      })
+    }
+
+    baseSteps.push(
+      {
+        key: "payment",
+        label: t("paymentMethods.selectPaymentMethod"),
+        icon: CreditCard,
+      },
+      {
+        key: "summary",
+        label: t("common.summary"),
+        icon: CheckCircle,
+      },
+    )
+
+    return baseSteps
+  }, [t, treatments, selectedTreatmentId])
 
   const selectedSubscriptionData = useMemo(
     () => subscriptions.find((sub) => sub._id.toString() === selectedSubscriptionId),
@@ -73,30 +140,66 @@ const PurchaseSubscriptionClient = ({
   }, [selectedSubscriptionData, singleSessionPrice])
 
   useEffect(() => {
-    // Reset duration if treatment changes or pricing type is not duration_based
     setSelectedDurationId("")
   }, [selectedTreatmentId])
 
   const handleNextStep = () => {
-    if (currentStep === 1 && !selectedSubscriptionId) {
-      toast.error(t("subscriptions.purchase.selectSubscriptionError"))
-      return
+    const currentIndex = steps.findIndex((s) => s.key === currentStep)
+    if (currentIndex < steps.length - 1) {
+      const nextStep = steps[currentIndex + 1]
+
+      // Skip duration step if treatment is not duration-based
+      if (nextStep.key === "duration" && selectedTreatmentData?.pricingType !== "duration_based") {
+        const afterDurationIndex = steps.findIndex((s) => s.key === "payment")
+        if (afterDurationIndex !== -1) {
+          setCurrentStep(steps[afterDurationIndex].key)
+        }
+      } else {
+        setCurrentStep(nextStep.key)
+      }
     }
-    if (currentStep === 2 && !selectedTreatmentId) {
-      toast.error(t("treatments.selectTreatmentError"))
-      return
-    }
-    if (currentStep === 3 && selectedTreatmentData?.pricingType === "duration_based" && !selectedDurationId) {
-      toast.error(t("treatments.selectDurationError"))
-      return
-    }
-    if (currentStep === 4 && !selectedPaymentMethodId) {
-      toast.error(t("paymentMethods.selectPaymentMethodError"))
-      return
-    }
-    setCurrentStep((prev) => prev + 1)
   }
-  const handlePrevStep = () => setCurrentStep((prev) => prev - 1)
+
+  const handlePrevStep = () => {
+    const currentIndex = steps.findIndex((s) => s.key === currentStep)
+    if (currentIndex > 0) {
+      const prevStep = steps[currentIndex - 1]
+
+      // Skip duration step if treatment is not duration-based
+      if (prevStep.key === "duration" && selectedTreatmentData?.pricingType !== "duration_based") {
+        const beforeDurationIndex = steps.findIndex((s) => s.key === "treatment")
+        if (beforeDurationIndex !== -1) {
+          setCurrentStep(steps[beforeDurationIndex].key)
+        }
+      } else {
+        setCurrentStep(prevStep.key)
+      }
+    }
+  }
+
+  const canGoNext = useMemo(() => {
+    switch (currentStep) {
+      case "subscription":
+        return !!selectedSubscriptionId
+      case "treatment":
+        return !!selectedTreatmentId
+      case "duration":
+        return selectedTreatmentData?.pricingType !== "duration_based" || !!selectedDurationId
+      case "payment":
+        return !!selectedPaymentMethodId
+      case "summary":
+        return true
+      default:
+        return false
+    }
+  }, [
+    currentStep,
+    selectedSubscriptionId,
+    selectedTreatmentId,
+    selectedDurationId,
+    selectedPaymentMethodId,
+    selectedTreatmentData,
+  ])
 
   const handlePurchase = async () => {
     if (!selectedSubscriptionId || !selectedTreatmentId || !selectedPaymentMethodId) {
@@ -117,8 +220,7 @@ const PurchaseSubscriptionClient = ({
         selectedDurationId: selectedTreatmentData?.pricingType === "duration_based" ? selectedDurationId : undefined,
       })
       if (result.success) {
-        toast.success(t("subscriptions.purchase.success"))
-        router.push("/dashboard/member/subscriptions")
+        setPurchaseComplete(true)
       } else {
         toast.error(result.error || t("subscriptions.purchase.error"))
       }
@@ -129,256 +231,30 @@ const PurchaseSubscriptionClient = ({
     }
   }
 
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1: // Select Subscription
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("subscriptions.purchase.selectSubscription")}</CardTitle>
-              <CardDescription>{t("subscriptions.purchase.selectSubscriptionDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Select value={selectedSubscriptionId} onValueChange={setSelectedSubscriptionId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("subscriptions.purchase.selectSubscriptionPlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {subscriptions.map((sub) => (
-                    <SelectItem key={sub._id.toString()} value={sub._id.toString()}>
-                      {sub.name} - {t("subscriptions.quantity")}: {sub.quantity} + {sub.bonusQuantity}{" "}
-                      {t("subscriptions.bonus")}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedSubscriptionData && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-md border">
-                  <h3 className="font-semibold text-lg">{selectedSubscriptionData.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{selectedSubscriptionData.description}</p>
-                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <div>
-                      <span className="font-medium">{t("subscriptions.fields.quantity")}:</span>{" "}
-                      {selectedSubscriptionData.quantity}
-                    </div>
-                    <div>
-                      <span className="font-medium">{t("subscriptions.fields.bonusQuantity")}:</span>{" "}
-                      {selectedSubscriptionData.bonusQuantity}
-                    </div>
-                    <div>
-                      <span className="font-medium">{t("subscriptions.fields.validityMonths")}:</span>{" "}
-                      {selectedSubscriptionData.validityMonths} {t("common.months")}
-                    </div>
-                    <div className="font-semibold">
-                      <span className="font-medium">{t("subscriptions.totalQuantity")}:</span>{" "}
-                      {selectedSubscriptionData.quantity + selectedSubscriptionData.bonusQuantity}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )
-      case 2: // Select Treatment
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("treatments.selectTreatment")}</CardTitle>
-              <CardDescription>{t("treatments.selectTreatmentDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Select value={selectedTreatmentId} onValueChange={setSelectedTreatmentId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("treatments.selectTreatmentPlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {treatments
-                    .filter((t) => t.isActive)
-                    .map((treatment) => (
-                      <SelectItem key={treatment._id.toString()} value={treatment._id.toString()}>
-                        {treatment.name}
-                        {treatment.pricingType === "fixed" && ` - ${treatment.fixedPrice} ₪`}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              {selectedTreatmentData && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-md border">
-                  <h3 className="font-semibold text-lg">{selectedTreatmentData.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{selectedTreatmentData.description}</p>
-                  <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                    <div>
-                      <span className="font-medium">{t("treatments.fields.category")}:</span>{" "}
-                      {t(`treatments.categories.${selectedTreatmentData.category}`)}
-                    </div>
-                    <div>
-                      <span className="font-medium">{t("treatments.fields.pricingType")}:</span>{" "}
-                      {t(
-                        `treatments.pricingTypes.${selectedTreatmentData.pricingType === "duration_based" ? "durationBased" : "fixed"}`,
-                      )}
-                    </div>
-                    {selectedTreatmentData.pricingType === "fixed" && (
-                      <div>
-                        <span className="font-medium">{t("treatments.fields.price")}:</span>{" "}
-                        {selectedTreatmentData.fixedPrice} ₪
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )
-      case 3: // Select Duration (if applicable)
-        if (selectedTreatmentData?.pricingType !== "duration_based") {
-          setCurrentStep(4) // Skip to next step
-          return null
-        }
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("treatments.selectDuration")}</CardTitle>
-              <CardDescription>{t("treatments.selectDurationDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {activeDurations.length > 0 ? (
-                <Select value={selectedDurationId} onValueChange={setSelectedDurationId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("treatments.selectDurationPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {activeDurations.map((duration) => (
-                      <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
-                        {duration.minutes} {t("common.minutes")} - {duration.price} ₪
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <p className="text-sm text-gray-500">{t("treatments.noActiveDurations")}</p>
-              )}
-              {selectedDurationData && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-md border">
-                  <h3 className="font-semibold text-lg">
-                    {selectedDurationData.minutes} {t("common.minutes")}
-                  </h3>
-                  <div className="mt-3 text-sm">
-                    <span className="font-medium">{t("treatments.fields.price")}:</span> {selectedDurationData.price} ₪
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )
-      case 4: // Select Payment Method
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("paymentMethods.selectPaymentMethod")}</CardTitle>
-              <CardDescription>{t("paymentMethods.selectPaymentMethodDesc")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {paymentMethods.length === 0 ? (
-                <div className="text-center text-gray-500 mb-4">
-                  {t("paymentMethods.noPaymentMethods")}{" "}
-                  <Button variant="link" onClick={() => router.push("/dashboard/member/payment-methods")}>
-                    {t("paymentMethods.addNewLink")}
-                  </Button>
-                </div>
-              ) : (
-                <Select value={selectedPaymentMethodId} onValueChange={setSelectedPaymentMethodId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t("paymentMethods.selectPaymentMethodPlaceholder")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {paymentMethods.map((pm) => (
-                      <SelectItem key={pm._id.toString()} value={pm._id.toString()}>
-                        {pm.cardName || t("paymentMethods.card")} - **** {pm.cardNumber.slice(-4)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </CardContent>
-            {paymentMethods.length > 0 && (
-              <CardFooter className="flex justify-end">
-                <Button variant="outline" onClick={() => router.push("/dashboard/member/payment-methods")}>
-                  {t("paymentMethods.managePaymentMethods")}
-                </Button>
-              </CardFooter>
-            )}
-          </Card>
-        )
-      case 5: // Summary and Purchase
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("subscriptions.purchase.summary")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">{t("subscriptions.fields.name")}:</span>
-                <span className="font-medium">{selectedSubscriptionData?.name}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">{t("treatments.fields.name")}:</span>
-                <span className="font-medium">{selectedTreatmentData?.name}</span>
-              </div>
-              {selectedTreatmentData?.pricingType === "duration_based" && selectedDurationData && (
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-600">{t("treatments.fields.duration")}:</span>
-                  <span className="font-medium">
-                    {selectedDurationData.minutes} {t("common.minutes")}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">{t("subscriptions.paidQuantity")}:</span>
-                <span className="font-medium">{selectedSubscriptionData?.quantity}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">{t("subscriptions.bonusQuantity")}:</span>
-                <span className="font-medium">{selectedSubscriptionData?.bonusQuantity}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">{t("subscriptions.totalQuantity")}:</span>
-                <span className="font-medium">
-                  {(selectedSubscriptionData?.quantity || 0) + (selectedSubscriptionData?.bonusQuantity || 0)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">{t("subscriptions.fields.validityMonths")}:</span>
-                <span className="font-medium">
-                  {selectedSubscriptionData?.validityMonths} {t("common.months")}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b">
-                <span className="text-gray-600">{t("subscriptions.pricePerSession")}:</span>
-                <span className="font-medium">{singleSessionPrice.toFixed(2)} ₪</span>
-              </div>
-              <div className="flex justify-between items-center pt-3 text-lg">
-                <span className="font-semibold">{t("common.totalPrice")}:</span>
-                <span className="font-bold text-xl">{totalSubscriptionPrice.toFixed(2)} ₪</span>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handlePurchase} disabled={isLoading} className="w-full">
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : t("subscriptions.purchase.confirm")}
-              </Button>
-            </CardFooter>
-          </Card>
-        )
-      default:
-        return null
-    }
+  const handlePaymentMethodAdded = () => {
+    // In a real implementation, you would refetch payment methods from the server
+    // For now, we'll just trigger a re-render
+    window.location.reload()
+  }
+
+  if (purchaseComplete) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <PurchaseSuccess
+          title={t("subscriptions.purchase.success")}
+          message={t("subscriptions.purchase.successMessage")}
+          actionLabel={t("subscriptions.viewSubscriptions")}
+          onAction={() => router.push("/dashboard/member/subscriptions")}
+          secondaryActionLabel={t("common.backToDashboard")}
+          onSecondaryAction={() => router.push("/dashboard")}
+        />
+      </div>
+    )
   }
 
   if (subscriptions.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>{t("subscriptions.purchase.title")}</CardTitle>
-        </CardHeader>
         <CardContent className="p-6">
           <div className="text-center text-gray-500">{t("subscriptions.purchase.noSubscriptions")}</div>
         </CardContent>
@@ -386,46 +262,248 @@ const PurchaseSubscriptionClient = ({
     )
   }
 
-  const maxSteps = selectedTreatmentData?.pricingType === "duration_based" ? 5 : 4
-
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-gray-900">{t("subscriptions.purchase.title")}</h1>
-        <p className="text-gray-600 mt-1">{t("subscriptions.purchase.description")}</p>
+        <p className="text-gray-600 mt-2">{t("subscriptions.purchase.description")}</p>
       </div>
 
-      {/* Progress Bar (Optional) */}
-      <div className="mb-6">
-        <div className="flex justify-between text-sm text-gray-500 mb-1">
-          <span>
-            {t("common.step")} {currentStep} {t("common.of")} {maxSteps}
-          </span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${(currentStep / maxSteps) * 100}%` }}
-          ></div>
-        </div>
+      <StepIndicator steps={steps} currentStep={currentStep} />
+
+      <div className="min-h-[400px] relative">
+        <AnimatedContainer isActive={currentStep === "subscription"}>
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900">{t("subscriptions.purchase.selectSubscription")}</h2>
+              <p className="text-gray-600 mt-2">{t("subscriptions.purchase.selectSubscriptionDesc")}</p>
+            </div>
+            <div className="grid gap-4">
+              {subscriptions.map((sub) => (
+                <PurchaseCard
+                  key={sub._id.toString()}
+                  title={sub.name}
+                  description={sub.description}
+                  isSelected={selectedSubscriptionId === sub._id.toString()}
+                  onClick={() => setSelectedSubscriptionId(sub._id.toString())}
+                  badge={`${sub.quantity + sub.bonusQuantity} ${t("subscriptions.totalQuantity")}`}
+                  icon={<Package className="w-5 h-5" />}
+                >
+                  <div className="grid grid-cols-2 gap-4 text-sm mt-3">
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        <span className="font-medium">{t("subscriptions.fields.quantity")}:</span> {sub.quantity}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        <span className="font-medium">{t("subscriptions.fields.bonusQuantity")}:</span>{" "}
+                        {sub.bonusQuantity}
+                      </span>
+                    </div>
+                    <div className="col-span-2 flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        <span className="font-medium">{t("subscriptions.fields.validityMonths")}:</span>{" "}
+                        {sub.validityMonths} {t("common.months")}
+                      </span>
+                    </div>
+                  </div>
+                </PurchaseCard>
+              ))}
+            </div>
+          </div>
+        </AnimatedContainer>
+
+        <AnimatedContainer isActive={currentStep === "treatment"}>
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900">{t("treatments.selectTreatment")}</h2>
+              <p className="text-gray-600 mt-2">{t("treatments.selectTreatmentDesc")}</p>
+            </div>
+            <div className="grid gap-4">
+              {treatments
+                .filter((t) => t.isActive)
+                .map((treatment) => (
+                  <PurchaseCard
+                    key={treatment._id.toString()}
+                    title={treatment.name}
+                    description={treatment.description}
+                    price={treatment.pricingType === "fixed" ? treatment.fixedPrice : undefined}
+                    isSelected={selectedTreatmentId === treatment._id.toString()}
+                    onClick={() => setSelectedTreatmentId(treatment._id.toString())}
+                    badge={t(`treatments.categories.${treatment.category}`)}
+                    icon={<Stethoscope className="w-5 h-5" />}
+                  >
+                    <div className="text-sm flex items-center gap-2 mt-3">
+                      <Timer className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        <span className="font-medium">{t("treatments.fields.pricingType")}:</span>{" "}
+                        {t(
+                          `treatments.pricingTypes.${treatment.pricingType === "duration_based" ? "durationBased" : "fixed"}`,
+                        )}
+                      </span>
+                    </div>
+                  </PurchaseCard>
+                ))}
+            </div>
+          </div>
+        </AnimatedContainer>
+
+        <AnimatedContainer isActive={currentStep === "duration"}>
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900">{t("treatments.selectDuration")}</h2>
+              <p className="text-gray-600 mt-2">{t("treatments.selectDurationDesc")}</p>
+            </div>
+            {activeDurations.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {activeDurations.map((duration) => (
+                  <PurchaseCard
+                    key={duration._id.toString()}
+                    title={`${duration.minutes} ${t("common.minutes")}`}
+                    price={duration.price}
+                    isSelected={selectedDurationId === duration._id.toString()}
+                    onClick={() => setSelectedDurationId(duration._id.toString())}
+                    icon={<Clock className="w-5 h-5" />}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-6 text-center text-gray-500">{t("treatments.noActiveDurations")}</CardContent>
+              </Card>
+            )}
+          </div>
+        </AnimatedContainer>
+
+        <AnimatedContainer isActive={currentStep === "payment"}>
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900">{t("paymentMethods.selectPaymentMethod")}</h2>
+              <p className="text-gray-600 mt-2">{t("paymentMethods.selectPaymentMethodDesc")}</p>
+            </div>
+            <PaymentMethodSelector
+              paymentMethods={paymentMethodsState}
+              selectedPaymentMethodId={selectedPaymentMethodId}
+              onPaymentMethodSelect={setSelectedPaymentMethodId}
+              onPaymentMethodAdded={handlePaymentMethodAdded}
+            />
+          </div>
+        </AnimatedContainer>
+
+        <AnimatedContainer isActive={currentStep === "summary"}>
+          <div className="space-y-6">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-semibold text-gray-900">{t("subscriptions.purchase.summary")}</h2>
+              <p className="text-gray-600 mt-2">{t("subscriptions.purchase.reviewBeforePurchase")}</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-lg font-medium mb-3">{t("subscriptions.details")}</h3>
+                <PurchaseCard
+                  title={selectedSubscriptionData?.name || ""}
+                  description={selectedSubscriptionData?.description}
+                  badge={`${(selectedSubscriptionData?.quantity || 0) + (selectedSubscriptionData?.bonusQuantity || 0)} ${t(
+                    "subscriptions.totalQuantity",
+                  )}`}
+                  icon={<Package className="w-5 h-5" />}
+                  className="mb-4"
+                >
+                  <div className="grid grid-cols-2 gap-4 text-sm mt-3">
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        <span className="font-medium">{t("subscriptions.fields.quantity")}:</span>{" "}
+                        {selectedSubscriptionData?.quantity}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        <span className="font-medium">{t("subscriptions.fields.bonusQuantity")}:</span>{" "}
+                        {selectedSubscriptionData?.bonusQuantity}
+                      </span>
+                    </div>
+                    <div className="col-span-2 flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        <span className="font-medium">{t("subscriptions.fields.validityMonths")}:</span>{" "}
+                        {selectedSubscriptionData?.validityMonths} {t("common.months")}
+                      </span>
+                    </div>
+                  </div>
+                </PurchaseCard>
+
+                <h3 className="text-lg font-medium mb-3">{t("treatments.details")}</h3>
+                <PurchaseCard
+                  title={selectedTreatmentData?.name || ""}
+                  description={selectedTreatmentData?.description}
+                  price={
+                    selectedTreatmentData?.pricingType === "fixed"
+                      ? selectedTreatmentData?.fixedPrice
+                      : selectedDurationData?.price
+                  }
+                  badge={
+                    selectedTreatmentData?.pricingType === "duration_based" && selectedDurationData
+                      ? `${selectedDurationData.minutes} ${t("common.minutes")}`
+                      : undefined
+                  }
+                  icon={<Stethoscope className="w-5 h-5" />}
+                />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium mb-3">{t("paymentMethods.details")}</h3>
+                <PurchaseCard
+                  title={
+                    paymentMethodsState.find((pm) => pm._id === selectedPaymentMethodId)?.cardName ||
+                    t("paymentMethods.card")
+                  }
+                  description={`**** ${
+                    paymentMethodsState.find((pm) => pm._id === selectedPaymentMethodId)?.cardNumber.slice(-4) || ""
+                  }`}
+                  icon={<CreditCardIcon className="w-5 h-5" />}
+                  className="mb-6"
+                />
+
+                <h3 className="text-lg font-medium mb-3">{t("common.priceSummary")}</h3>
+                <PurchaseSummary
+                  items={[
+                    {
+                      label: t("subscriptions.pricePerSession"),
+                      value: `${singleSessionPrice.toFixed(2)} ₪`,
+                    },
+                    {
+                      label: t("subscriptions.paidQuantity"),
+                      value: selectedSubscriptionData?.quantity || 0,
+                    },
+                    {
+                      label: t("subscriptions.bonusQuantity"),
+                      value: selectedSubscriptionData?.bonusQuantity || 0,
+                    },
+                  ]}
+                  totalPrice={totalSubscriptionPrice}
+                />
+              </div>
+            </div>
+          </div>
+        </AnimatedContainer>
       </div>
 
-      <div className="space-y-6">{renderStepContent()}</div>
-
-      <div className="mt-8 flex justify-between">
-        <Button variant="outline" onClick={handlePrevStep} disabled={currentStep === 1 || isLoading}>
-          {t("common.back")}
-        </Button>
-        {currentStep < maxSteps ? (
-          <Button onClick={handleNextStep} disabled={isLoading}>
-            {t("common.next")}
-          </Button>
-        ) : (
-          <Button onClick={handlePurchase} disabled={isLoading || totalSubscriptionPrice <= 0}>
-            {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : t("subscriptions.purchase.confirmAndPay")}
-          </Button>
-        )}
-      </div>
+      <PurchaseNavigation
+        onNext={handleNextStep}
+        onPrevious={handlePrevStep}
+        onComplete={handlePurchase}
+        canGoNext={canGoNext}
+        canGoPrevious={steps.findIndex((s) => s.key === currentStep) > 0}
+        isLoading={isLoading}
+        isLastStep={currentStep === "summary"}
+        completeLabel={t("subscriptions.purchase.confirmAndPay")}
+      />
     </div>
   )
 }

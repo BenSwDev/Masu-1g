@@ -81,6 +81,7 @@
     "featureComingSoon": "This feature is coming soon!",
     "cancelling": "Cancelling...",
     "card": "Card",
+    "saveSettings": "Save Settings",
     "notAvailable": "N/A",
     "pagination": {
       "pageInfo": "Page {{page}} of {{totalPages}} ({{totalResults}} results)",

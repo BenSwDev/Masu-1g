@@ -9,9 +9,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
 import { updateNotificationPreferences } from "@/actions/preferences-actions"
-import { useTranslation } from "@/lib/translations/i18n" // Import useTranslation
+import { useTranslation } from "@/lib/translations/i18n"
 import type { INotificationPreferences } from "@/lib/db/models/user"
 import { useSession } from "next-auth/react"
+import { cn } from "@/lib/utils/utils"
 
 interface NotificationsModalProps {
   isOpen: boolean
@@ -31,7 +32,8 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const { data: session, update: updateSession } = useSession()
-  const { t } = useTranslation() // Initialize useTranslation
+  const { t, i18n } = useTranslation()
+  const dir = i18n.dir()
 
   useEffect(() => {
     if (isOpen && currentPreferences) {
@@ -70,7 +72,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
     })
     if (result.success && result.notificationPreferences) {
       toast({ title: t("common.success"), description: t("preferences.notifications.saveSuccess") })
-      await updateSession({ notificationPreferences: result.notificationPreferences }) // Update session
+      await updateSession({ notificationPreferences: result.notificationPreferences })
       onClose()
     } else {
       toast({
@@ -91,43 +93,50 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
     >
       <div className="py-4 space-y-6">
         <div>
-          <Label>{t("preferences.notifications.methodsLabel")}</Label>
+          <Label className={cn(dir === "rtl" ? "text-right block" : "text-left block")}>
+            {t("preferences.notifications.methodsLabel")}
+          </Label>
           <div className="mt-2 space-y-2">
-            <div className="flex items-center space-x-2">
+            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
               <Checkbox
                 id="method-email"
                 checked={selectedMethods.includes("email")}
                 onCheckedChange={() => handleMethodChange("email")}
+                dir={dir}
               />
               <Label htmlFor="method-email">{t("preferences.notifications.methodEmail")}</Label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
               <Checkbox
                 id="method-sms"
                 checked={selectedMethods.includes("sms")}
                 onCheckedChange={() => handleMethodChange("sms")}
+                dir={dir}
               />
               <Label htmlFor="method-sms">{t("preferences.notifications.methodSms")}</Label>
             </div>
           </div>
         </div>
         <div>
-          <Label htmlFor="notificationLanguage">{t("preferences.notifications.languageLabel")}</Label>
+          <Label htmlFor="notificationLanguage" className={cn(dir === "rtl" ? "text-right block" : "text-left block")}>
+            {t("preferences.notifications.languageLabel")}
+          </Label>
           <RadioGroup
             id="notificationLanguage"
             value={selectedLanguage}
             onValueChange={(value: INotificationPreferences["language"]) => setSelectedLanguage(value)}
             className="mt-2 space-y-2"
+            dir={dir}
           >
-            <div className="flex items-center space-x-2">
+            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
               <RadioGroupItem value="he" id="lang-he" />
               <Label htmlFor="lang-he">{t("preferences.notifications.langHe")}</Label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
               <RadioGroupItem value="en" id="lang-en" />
               <Label htmlFor="lang-en">{t("preferences.notifications.langEn")}</Label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
               <RadioGroupItem value="ru" id="lang-ru" />
               <Label htmlFor="lang-ru">{t("preferences.notifications.langRu")}</Label>
             </div>

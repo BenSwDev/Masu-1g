@@ -8,9 +8,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
 import { updateTreatmentPreferences } from "@/actions/preferences-actions"
-import { useTranslation } from "@/lib/translations/i18n" // Import useTranslation
+import { useTranslation } from "@/lib/translations/i18n"
 import type { ITreatmentPreferences } from "@/lib/db/models/user"
 import { useSession } from "next-auth/react"
+import { cn } from "@/lib/utils/utils"
 
 interface TreatmentPreferencesModalProps {
   isOpen: boolean
@@ -27,7 +28,8 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const { data: session, update: updateSession } = useSession()
-  const { t } = useTranslation() // Initialize useTranslation
+  const { t, i18n } = useTranslation()
+  const dir = i18n.dir()
 
   useEffect(() => {
     if (isOpen && currentPreferences) {
@@ -44,7 +46,7 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
     const result = await updateTreatmentPreferences({ therapistGender: selectedGender })
     if (result.success && result.treatmentPreferences) {
       toast({ title: t("common.success"), description: t("preferences.treatment.saveSuccess") })
-      await updateSession({ treatmentPreferences: result.treatmentPreferences }) // Update session
+      await updateSession({ treatmentPreferences: result.treatmentPreferences })
       onClose()
     } else {
       toast({
@@ -64,22 +66,25 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
       description={t("preferences.treatment.description")}
     >
       <div className="py-4">
-        <Label htmlFor="therapistGender">{t("preferences.treatment.therapistGenderLabel")}</Label>
+        <Label htmlFor="therapistGender" className={cn(dir === "rtl" ? "text-right block" : "text-left block")}>
+          {t("preferences.treatment.therapistGenderLabel")}
+        </Label>
         <RadioGroup
           id="therapistGender"
           value={selectedGender}
           onValueChange={(value: ITreatmentPreferences["therapistGender"]) => setSelectedGender(value)}
           className="mt-2 space-y-2"
+          dir={dir} // Pass dir to RadioGroup for its own internal RTL handling if any
         >
-          <div className="flex items-center space-x-2">
+          <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
             <RadioGroupItem value="male" id="gender-male" />
             <Label htmlFor="gender-male">{t("preferences.treatment.genderMale")}</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
             <RadioGroupItem value="female" id="gender-female" />
             <Label htmlFor="gender-female">{t("preferences.treatment.genderFemale")}</Label>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className={cn("flex items-center gap-2", dir === "rtl" ? "flex-row-reverse" : "")}>
             <RadioGroupItem value="any" id="gender-any" />
             <Label htmlFor="gender-any">{t("preferences.treatment.genderAny")}</Label>
           </div>

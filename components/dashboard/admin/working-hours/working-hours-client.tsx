@@ -220,35 +220,12 @@ export default function WorkingHoursClient() {
     },
   })
 
-  const onSubmit = async (data: WorkingHoursFormData) => {
-    try {
-      const processedData = {
-        ...data,
-        fixedHours: data.fixedHours.map((fh) => ({
-          ...fh,
-          priceAddition: fh.hasPriceAddition ? fh.priceAddition : undefined,
-        })),
-        specialDates: data.specialDates.map((sd) => ({
-          ...sd,
-          date: new Date(sd.date).toISOString(), // Convert to ISO string
-          priceAddition: sd.hasPriceAddition ? sd.priceAddition : undefined,
-        })),
-      }
-      await updateMutation.mutateAsync(processedData)
-    } catch (error: any) {
-      toast({
-        title: t("workingHours.updateError"),
-        description: error.message || t("workingHours.updateErrorDescription"),
-        variant: "destructive",
-      })
-    }
-  }
-
   const handleAddOrUpdateSpecialDate = (data: SpecialDateFormData) => {
     const specialDateData = {
       ...data,
-      date: format(data.date, "yyyy-MM-dd"),
-      priceAddition: data.hasPriceAddition ? data.priceAddition : undefined,
+      date: data.date.toISOString().split("T")[0], // המר ל-YYYY-MM-DD
+      priceAddition: data.hasPriceAddition ? data.priceAddition : { amount: 0, type: "fixed" },
+      notes: data.notes || "",
     }
 
     if (editingSpecialDateIndex !== null) {
@@ -271,12 +248,47 @@ export default function WorkingHoursClient() {
     setIsSpecialDateDialogOpen(false)
   }
 
+  const onSubmit = async (data: WorkingHoursFormData) => {
+    try {
+      console.log("Submitting data:", data) // הוסף לוג לדיבוג
+
+      const processedData = {
+        ...data,
+        fixedHours: data.fixedHours.map((fh) => ({
+          ...fh,
+          priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
+          notes: fh.notes?.trim() || "",
+        })),
+        specialDates: data.specialDates.map((sd) => ({
+          ...sd,
+          // שמור את התאריך כמו שהוא - כבר בפורמט YYYY-MM-DD
+          date: sd.date,
+          priceAddition: sd.hasPriceAddition && sd.priceAddition ? sd.priceAddition : { amount: 0, type: "fixed" },
+          notes: sd.notes?.trim() || "",
+        })),
+      }
+
+      console.log("Processed data:", processedData) // הוסף לוג לדיבוג
+      await updateMutation.mutateAsync(processedData)
+    } catch (error: any) {
+      console.error("Submit error:", error) // הוסף לוג לדיבוג
+      toast({
+        title: t("workingHours.updateError"),
+        description: error.message || t("workingHours.updateErrorDescription"),
+        variant: "destructive",
+      })
+    }
+  }
+
   const handleEditSpecialDate = (index: number) => {
     const specialDate = form.getValues(`specialDates.${index}`)
+    console.log("Editing special date:", specialDate) // הוסף לוג לדיבוג
+
     specialDateForm.reset({
       ...specialDate,
-      date: new Date(specialDate.date),
+      date: new Date(specialDate.date), // ודא שזה Date object
       priceAddition: specialDate.priceAddition || { amount: 0, type: "fixed" },
+      notes: specialDate.notes || "",
     })
     setEditingSpecialDateIndex(index)
     setIsSpecialDateDialogOpen(true)
@@ -976,6 +988,11 @@ export default function WorkingHoursClient() {
                               />
                             </div>
                           )}
+                          <div className="text-xs text-muted-foreground">
+                            {specialDateForm.formState.errors.root && (
+                              <p className="text-destructive">{specialDateForm.formState.errors.root.message}</p>
+                            )}
+                          </div>
                           <DialogFooter className="gap-2 sm:gap-0">
                             <Button
                               type="button"

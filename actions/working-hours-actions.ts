@@ -6,7 +6,7 @@ import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
 import { logger } from "@/lib/logs/logger"
 
 export async function getWorkingHoursSettings() {
-  const requestId = `get_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+  const requestId = `get_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 2, 10)}`
 
   try {
     logger.info(`[${requestId}] Fetching working hours settings`)
@@ -68,7 +68,10 @@ export async function updateWorkingHoursSettings(data: {
   const requestId = `update_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
-    logger.info(`[${requestId}] Updating working hours settings`)
+    logger.info(`[${requestId}] Updating working hours settings`, {
+      fixedHoursCount: data.fixedHours?.length,
+      specialDatesCount: data.specialDates?.length,
+    })
     await dbConnect()
 
     // Validate fixedHours
@@ -86,28 +89,52 @@ export async function updateWorkingHoursSettings(data: {
       }
     }
 
+    // Process special dates with better date handling
+    const processedSpecialDates = data.specialDates.map((date) => {
+      let processedDate
+
+      // טפל בפורמטים שונים של תאריך
+      if (typeof date.date === "string") {
+        // אם זה string, נסה לפרש אותו
+        if (date.date.includes("T")) {
+          // ISO string
+          processedDate = new Date(date.date)
+        } else {
+          // YYYY-MM-DD format
+          processedDate = new Date(date.date + "T00:00:00.000Z")
+        }
+      } else {
+        // אם זה כבר Date object
+        processedDate = new Date(date.date)
+      }
+
+      // ודא שהתאריך תקין
+      if (isNaN(processedDate.getTime())) {
+        throw new Error(`Invalid date format: ${date.date}`)
+      }
+
+      return {
+        ...date,
+        date: processedDate,
+        priceAddition: date.hasPriceAddition && date.priceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
+        notes: date.notes?.trim() || "",
+      }
+    })
+
     // Convert date strings back to Date objects for specialDates
     const processedData = {
       ...data,
       fixedHours: data.fixedHours.map((fh) => ({
         ...fh,
-        // וודא שpriceAddition קיים תמיד
         priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
-        // נקה הערות אם הן ריקות
         notes: fh.notes?.trim() || "",
       })),
-      specialDates: data.specialDates.map((date) => {
-        return {
-          ...date,
-          date: new Date(date.date),
-          priceAddition:
-            date.hasPriceAddition && date.priceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
-          notes: date.notes?.trim() || "",
-        }
-      }),
+      specialDates: processedSpecialDates,
     }
 
-    logger.info(`[${requestId}] Processed data for update`)
+    logger.info(`[${requestId}] Processed data for update`, {
+      specialDatesProcessed: processedData.specialDates.length,
+    })
 
     const settings = await WorkingHoursSettings.findOneAndUpdate({}, processedData, {
       new: true,

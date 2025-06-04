@@ -91,13 +91,18 @@ export async function updateWorkingHoursSettings(data: {
       ...data,
       fixedHours: data.fixedHours.map((fh) => ({
         ...fh,
-        priceAddition: fh.hasPriceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
+        // וודא שpriceAddition קיים תמיד
+        priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
+        // נקה הערות אם הן ריקות
+        notes: fh.notes?.trim() || "",
       })),
       specialDates: data.specialDates.map((date) => {
         return {
           ...date,
           date: new Date(date.date),
-          priceAddition: date.hasPriceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
+          priceAddition:
+            date.hasPriceAddition && date.priceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
+          notes: date.notes?.trim() || "",
         }
       }),
     }

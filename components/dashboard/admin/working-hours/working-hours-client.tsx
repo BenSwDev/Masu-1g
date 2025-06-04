@@ -286,6 +286,35 @@ export default function WorkingHoursClient() {
     removeSpecialDate(index)
   }
 
+  // אני אוסיף פונקציה שמטפלת בשינוי מצב הפעילות של יום
+  const handleDayActiveChange = (index: number, isActive: boolean) => {
+    form.setValue(`fixedHours.${index}.isActive`, isActive)
+
+    if (isActive) {
+      // כשהיום הופך לפעיל, ודא שיש priceAddition
+      const currentPriceAddition = form.getValues(`fixedHours.${index}.priceAddition`)
+      if (!currentPriceAddition) {
+        form.setValue(`fixedHours.${index}.priceAddition`, { amount: 0, type: "fixed" })
+      }
+    } else {
+      // כשהיום הופך ללא פעיל, אפס את כל השדות
+      form.setValue(`fixedHours.${index}.hasPriceAddition`, false)
+      form.setValue(`fixedHours.${index}.priceAddition`, { amount: 0, type: "fixed" })
+      form.setValue(`fixedHours.${index}.notes`, "")
+    }
+  }
+
+  // אני אוסיף פונקציה דומה לתאריכים מיוחדים
+  const handleSpecialDateActiveChange = (isActive: boolean) => {
+    specialDateForm.setValue("isActive", isActive)
+
+    if (!isActive) {
+      specialDateForm.setValue("hasPriceAddition", false)
+      specialDateForm.setValue("priceAddition", { amount: 0, type: "fixed" })
+      specialDateForm.setValue("notes", "")
+    }
+  }
+
   const dayNames = React.useMemo(
     () => [
       t("workingHours.days.sunday"),
@@ -386,7 +415,7 @@ export default function WorkingHoursClient() {
                                       <FormControl>
                                         <Checkbox
                                           checked={field.value}
-                                          onCheckedChange={field.onChange}
+                                          onCheckedChange={(checked) => handleDayActiveChange(index, !!checked)}
                                           aria-label={`${t("workingHours.active")} for ${dayNames[dayOfWeek]}`}
                                         />
                                       </FormControl>
@@ -512,6 +541,7 @@ export default function WorkingHoursClient() {
                                     )}
                                   </div>
                                 )}
+                                {!isActive && <span className="text-muted-foreground">-</span>}
                               </TableCell>
                               <TableCell>
                                 {isActive && (
@@ -561,7 +591,7 @@ export default function WorkingHoursClient() {
                                     <FormControl>
                                       <Checkbox
                                         checked={field.value}
-                                        onCheckedChange={field.onChange}
+                                        onCheckedChange={(checked) => handleDayActiveChange(index, !!checked)}
                                         aria-label={`${t("workingHours.active")} for ${dayNames[dayOfWeek]}`}
                                       />
                                     </FormControl>

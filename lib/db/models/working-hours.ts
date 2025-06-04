@@ -84,6 +84,17 @@ const FixedHoursSchema = new Schema<IFixedHours>({
   },
 })
 
+// אני אוסיף pre-save hook שמוודא שpriceAddition מאותחל נכון
+FixedHoursSchema.pre("save", function (next) {
+  if (this.isActive && !this.priceAddition) {
+    this.priceAddition = { amount: 0, type: "fixed" }
+  }
+  if (!this.hasPriceAddition) {
+    this.priceAddition = { amount: 0, type: "fixed" }
+  }
+  next()
+})
+
 const SpecialDateSchema = new Schema<ISpecialDate>({
   name: {
     type: String,

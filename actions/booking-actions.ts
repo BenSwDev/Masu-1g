@@ -30,10 +30,13 @@ import type { z } from "zod"
 
 // Helper to get working hours for a specific date
 function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixedHours | ISpecialDate | null {
+  // בדוק תחילה תאריכים מיוחדים - הם עוקפים את ההגדרות הכלליות
   const specialDateSetting = settings.specialDates?.find((sd) => isSameDay(new Date(sd.date), date))
   if (specialDateSetting) {
     return specialDateSetting
   }
+
+  // אם אין תאריך מיוחד, השתמש בהגדרות הקבועות
   const dayOfWeek = getDay(date) // 0 for Sunday, 1 for Monday...
   const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeek)
   return fixedDaySetting || null
@@ -111,15 +114,22 @@ export async function getAvailableTimeSlots(
           time: format(currentTimeSlot, "HH:mm"),
           isAvailable: true,
         }
-        if (daySettings.hasPriceAddition && daySettings.priceAddition) {
-          slot.surcharge = {
-            description: daySettings.notes || "bookings.surcharges.specialTime",
-            amount:
-              daySettings.priceAddition.type === "fixed"
-                ? daySettings.priceAddition.amount
-                : (treatment.fixedPrice || 0) * (daySettings.priceAddition.amount / 100),
+
+        // בדוק אם יש תוספת מחיר לזמן הזה
+        if (daySettings.hasPriceAddition && daySettings.priceAddition && daySettings.priceAddition.amount > 0) {
+          const surchargeAmount =
+            daySettings.priceAddition.type === "fixed"
+              ? daySettings.priceAddition.amount
+              : (treatment.fixedPrice || 0) * (daySettings.priceAddition.amount / 100)
+
+          if (surchargeAmount > 0) {
+            slot.surcharge = {
+              description: daySettings.notes || "bookings.surcharges.specialTime",
+              amount: surchargeAmount,
+            }
           }
         }
+
         timeSlots.push(slot)
       }
       currentTimeSlot = addMinutes(currentTimeSlot, slotInterval)
@@ -180,11 +190,17 @@ export async function calculateBookingPrice(
     const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
     if (settings) {
       const daySettings = getDayWorkingHours(bookingDateTime, settings)
-      if (daySettings?.isActive && daySettings.hasPriceAddition && daySettings.priceAddition?.amount) {
+      if (
+        daySettings?.isActive &&
+        daySettings.hasPriceAddition &&
+        daySettings.priceAddition?.amount &&
+        daySettings.priceAddition.amount > 0
+      ) {
         const surchargeAmount =
           daySettings.priceAddition.type === "fixed"
             ? daySettings.priceAddition.amount
             : basePrice * (daySettings.priceAddition.amount / 100)
+
         if (surchargeAmount > 0) {
           priceDetails.surcharges.push({
             description: daySettings.notes || `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,

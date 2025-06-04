@@ -10,7 +10,7 @@ import dbConnect from "@/lib/db/mongoose"
 import Booking, { type IBooking } from "@/lib/db/models/booking"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
-import GiftVoucher from "@/lib/db/models/gift-voucher"
+import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
 import User from "@/lib/db/models/user" // Import User model
 import Address from "@/lib/db/models/address" // Import Address model
@@ -301,48 +301,38 @@ export async function calculateBookingPrice(
 
     // Apply Gift Voucher (if not fully covered by subscription)
     if (currentPayableAmount > 0 && giftVoucherCode) {
-      // Assuming giftVoucherCode is the actual code, not ID. If ID, adjust query.
-      // The original code used ownerUserId in findOne, which is good for security.
-      const voucher = await GiftVoucher.findOne({
+      const voucher = (await GiftVoucher.findOne({
         code: giftVoucherCode,
-        /* ownerUserId: userId */ status: { $in: ["active", "partially_used", "sent"] },
-      }).lean()
-      // Note: ownerUserId check might be too restrictive if vouchers can be gifted and used by others.
-      // If gifted, the ownerUserId might be the purchaser, not the current user.
-      // Let's assume for now the voucher is usable by the current user if it's active and valid.
+        status: { $in: ["active", "partially_used", "sent"] },
+        validUntil: { $gte: new Date() },
+      }).lean()) as IGiftVoucher | null // Ensure IGiftVoucher type
 
-      if (
-        voucher &&
-        voucher.isActive && // Redundant if status check is comprehensive
-        (voucher.status === "active" || voucher.status === "partially_used" || voucher.status === "sent") && // 'sent' implies it's active but not yet owned by a specific user until claimed.
-        new Date(voucher.validUntil) >= new Date()
-      ) {
-        let voucherCoversThisTreatment = false
+      if (voucher && voucher.isActive) {
         if (voucher.voucherType === "treatment") {
-          if (voucher.treatmentId?.toString() === treatmentId) {
-            // If voucher is for a specific duration, it must match
-            if (voucher.selectedDurationId) {
-              if (voucher.selectedDurationId.toString() === selectedDurationId) {
-                voucherCoversThisTreatment = true
-              }
-            } else {
-              // Voucher for treatment, any duration (or fixed price treatment)
-              voucherCoversThisTreatment = true
-            }
-          }
-        }
+          const treatmentMatches = voucher.treatmentId?.toString() === treatmentId
+          const durationMatchesOrNotApplicable =
+            !treatment.durations ||
+            treatment.durations.length === 0 ||
+            !voucher.selectedDurationId ||
+            voucher.selectedDurationId.toString() === selectedDurationId
 
-        if (voucherCoversThisTreatment) {
-          // Voucher for specific treatment covers the current payable amount for that treatment
-          const amountToApplyFromTreatmentVoucher = currentPayableAmount
-          priceDetails.voucherAppliedAmount = amountToApplyFromTreatmentVoucher
-          currentPayableAmount -= amountToApplyFromTreatmentVoucher
-          priceDetails.appliedGiftVoucherId = voucher._id.toString()
+          if (treatmentMatches && durationMatchesOrNotApplicable) {
+            const amountToCoverByTreatmentVoucher = currentPayableAmount
+            priceDetails.voucherAppliedAmount = amountToCoverByTreatmentVoucher
+            currentPayableAmount = 0
+            priceDetails.appliedGiftVoucherId = voucher._id.toString()
+            priceDetails.isFullyCoveredByVoucherOrSubscription = true
+          } else {
+            logger.warn("Treatment gift voucher mismatch or invalid for selected treatment/duration", {
+              /* ... */
+            })
+          }
         } else if (voucher.voucherType === "monetary" && voucher.remainingAmount && voucher.remainingAmount > 0) {
           const amountToApply = Math.min(currentPayableAmount, voucher.remainingAmount)
           priceDetails.voucherAppliedAmount = amountToApply
           currentPayableAmount -= amountToApply
           priceDetails.appliedGiftVoucherId = voucher._id.toString()
+          // isFullyCoveredByVoucherOrSubscription will be set later based on finalAmount
         }
       }
     }
@@ -375,13 +365,23 @@ export async function calculateBookingPrice(
     priceDetails.finalAmount = Math.max(0, currentPayableAmount)
     if (
       priceDetails.finalAmount === 0 &&
-      (priceDetails.redeemedUserSubscriptionId || priceDetails.appliedGiftVoucherId) &&
-      !priceDetails.redeemedUserSubscriptionId // Only set this if voucher made it zero, subscription already sets it
+      (priceDetails.redeemedUserSubscriptionId || priceDetails.appliedGiftVoucherId)
     ) {
       priceDetails.isFullyCoveredByVoucherOrSubscription = true
     }
-    // If subscription was used, isFullyCoveredByVoucherOrSubscription is already true.
-
+    // Ensure it's also true if a monetary voucher made it zero without being a subscription
+    else if (
+      priceDetails.finalAmount === 0 &&
+      priceDetails.appliedGiftVoucherId &&
+      !priceDetails.redeemedUserSubscriptionId
+    ) {
+      const appliedVoucher = (await GiftVoucher.findById(
+        priceDetails.appliedGiftVoucherId,
+      ).lean()) as IGiftVoucher | null
+      if (appliedVoucher && appliedVoucher.voucherType === "monetary") {
+        priceDetails.isFullyCoveredByVoucherOrSubscription = true
+      }
+    }
     return { success: true, priceDetails }
   } catch (error) {
     logger.error("Error calculating booking price:", { error, payload: validatedPayload })
@@ -478,35 +478,57 @@ export async function createBooking(
       if (
         validatedPayload.source === "gift_voucher_redemption" &&
         validatedPayload.redeemedGiftVoucherId &&
-        validatedPayload.priceDetails.voucherAppliedAmount > 0 // Ensure voucher was actually used
+        validatedPayload.priceDetails.voucherAppliedAmount > 0
       ) {
-        const voucher = await GiftVoucher.findById(validatedPayload.redeemedGiftVoucherId).session(mongooseDbSession)
-        if (!voucher || !voucher.isActive) throw new Error("bookings.errors.voucherRedemptionFailedInactive")
+        const voucher = (await GiftVoucher.findById(validatedPayload.redeemedGiftVoucherId).session(
+          mongooseDbSession,
+        )) as IGiftVoucher | null // Cast to IGiftVoucher
 
-        // Logic for updating voucher status and remainingAmount
+        if (!voucher) throw new Error("bookings.errors.voucherNotFoundDuringCreation")
+        // Allow 'sent' status for first-time redemption of a gifted voucher
+        if (!voucher.isActive && voucher.status !== "sent") {
+          throw new Error("bookings.errors.voucherRedemptionFailedInactive")
+        }
+
         if (voucher.voucherType === "treatment") {
-          // If it's a treatment voucher that covered part or all of the cost
-          voucher.status = "fully_used" // Or partially_used if it can be for multiple specific treatments (unlikely)
-          voucher.remainingAmount = 0
+          // Validation for treatment voucher (already done in calculatePrice, but good for safety)
+          const treatmentMatches = voucher.treatmentId?.toString() === validatedPayload.treatmentId
+          const durationMatchesOrNotApplicable =
+            !validatedPayload.selectedDurationId ||
+            !voucher.selectedDurationId ||
+            voucher.selectedDurationId.toString() === validatedPayload.selectedDurationId
+          if (!treatmentMatches || !durationMatchesOrNotApplicable) {
+            logger.error("Mismatch: redeemed treatment voucher vs booking details (createBooking)", {
+              /* ... */
+            })
+            throw new Error("bookings.errors.voucherMismatchDuringCreation")
+          }
+          voucher.status = "fully_used"
+          voucher.remainingAmount = 0 // Explicitly set
+          voucher.isActive = false // Treatment voucher is single use for that treatment
         } else if (voucher.voucherType === "monetary") {
           if (
-            !voucher.remainingAmount ||
+            typeof voucher.remainingAmount !== "number" || // Check if remainingAmount is a number
             voucher.remainingAmount < validatedPayload.priceDetails.voucherAppliedAmount
           ) {
             throw new Error("bookings.errors.voucherInsufficientBalance")
           }
           voucher.remainingAmount -= validatedPayload.priceDetails.voucherAppliedAmount
           voucher.status = voucher.remainingAmount <= 0 ? "fully_used" : "partially_used"
-          if (voucher.remainingAmount <= 0) voucher.remainingAmount = 0
+          if (voucher.remainingAmount < 0) voucher.remainingAmount = 0 // Ensure not negative
+          voucher.isActive = voucher.remainingAmount > 0 // Active if there's balance
+        } else {
+          throw new Error("bookings.errors.unknownVoucherTypeDuringCreation")
         }
-        voucher.isActive = voucher.status === "active" || voucher.status === "partially_used"
+
         voucher.usageHistory = voucher.usageHistory || []
         voucher.usageHistory.push({
           date: new Date(),
           amountUsed: validatedPayload.priceDetails.voucherAppliedAmount,
-          orderId: newBooking._id,
-          description: `bookings.voucherUsage.redeemedForBooking ${newBooking._id.toString()}`,
-        })
+          orderId: bookingResult!._id,
+          description: `bookings.voucherUsage.redeemedForBooking ${bookingResult!._id.toString()}`,
+          userId: validatedPayload.userId,
+        } as any)
         await voucher.save({ session: mongooseDbSession })
       }
 
@@ -520,20 +542,30 @@ export async function createBooking(
 
       // Payment status handling
       if (bookingResult) {
-        // Ensure bookingResult is not null
-        if (validatedPayload.priceDetails.finalAmount === 0) {
+        if (
+          validatedPayload.priceDetails.finalAmount === 0 &&
+          (validatedPayload.redeemedUserSubscriptionId || validatedPayload.redeemedGiftVoucherId)
+        ) {
           bookingResult.paymentDetails.paymentStatus = "not_required"
-        } else if (validatedPayload.paymentDetails.paymentMethodId) {
-          // Assume payment is processed elsewhere or immediately after this action
-          // For now, if paymentMethodId is present and amount > 0, mark as 'pending' or 'paid' based on actual payment flow
-          // If payment is synchronous and successful, it would be 'paid'.
-          // If payment is asynchronous or requires further steps, it's 'pending'.
-          // The original code set it to 'paid' if paymentMethodId was present. Let's keep that for now.
-          bookingResult.paymentDetails.paymentStatus = "paid"
-        } else {
-          // This case should ideally be caught by frontend validation if amount > 0
-          throw new Error("bookings.errors.paymentMethodRequired")
+        } else if (validatedPayload.priceDetails.finalAmount > 0 && !validatedPayload.paymentDetails.paymentMethodId) {
+          // This case should ideally be caught by frontend or schema validation if amount > 0
+          logger.warn("Booking creation: Payment method ID missing for non-zero final amount.", {
+            bookingId: bookingResult._id,
+          })
+          // Depending on strictness, could throw error or default to 'pending'
+          // For now, if it reaches here, it implies an issue upstream or a specific flow.
+          // Let's assume schema validation on payload would catch this.
+          // If not, and paymentMethodId is truly optional in payload:
+          // bookingResult.paymentDetails.paymentStatus = "pending";
+        } else if (validatedPayload.priceDetails.finalAmount > 0 && validatedPayload.paymentDetails.paymentMethodId) {
+          // If payment method is provided for a payable amount, assume it's 'paid' or 'pending' based on actual payment integration.
+          // The original schema has paymentStatus in payload.paymentDetails.
+          // So, we should trust validatedPayload.paymentDetails.paymentStatus if provided.
+          // If not provided, and amount > 0, then it's an issue.
+          bookingResult.paymentDetails.paymentStatus = validatedPayload.paymentDetails.paymentStatus || "pending"
         }
+        // If paymentDetails.paymentStatus was already set in payload, it will be used.
+        // The above logic primarily handles the 'not_required' case.
         await bookingResult.save({ session: mongooseDbSession })
       }
     }) // End of transaction

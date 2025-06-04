@@ -1,20 +1,25 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
-import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
+import { useState, useEffect, useMemo } from "react"
+import type {
+  BookingInitialData,
+  SelectedBookingOptions,
+  PopulatedUserSubscription,
+  IUserSubscription,
+} from "@/types/booking"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import type { ITreatment, ITreatmentDuration, IUserSubscription } from "@/lib/db/models"
+import type { ITreatment, ITreatmentDuration } from "@/lib/db/models"
 import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { TreatmentSelectionSchema, type TreatmentSelectionFormValues } from "@/lib/validation/booking-schemas"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
-import { AlertCircle, Info } from "lucide-react"
+import { AlertCircle, Info, GiftIcon } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
 import { Loader2 } from "lucide-react"
 
@@ -35,7 +40,7 @@ export default function TreatmentSelectionStep({
   onPrev,
   translations,
 }: TreatmentSelectionStepProps) {
-  const [selectedUserSubscription, setSelectedUserSubscription] = useState<IUserSubscription | null>(null)
+  const [selectedUserSubscription, setSelectedUserSubscription] = useState<PopulatedUserSubscription | null>(null)
   const [selectedVoucherDetails, setSelectedVoucherDetails] = useState<IGiftVoucher | null>(null)
   const [availableTreatmentsForStep, setAvailableTreatmentsForStep] = useState<ITreatment[]>(
     initialData.activeTreatments || [],
@@ -53,6 +58,13 @@ export default function TreatmentSelectionStep({
       selectedDurationId: bookingOptions.selectedDurationId,
     },
   })
+
+  // Memoize filtered gift vouchers for treatment type
+  const allUsableGiftVouchers = useMemo(() => {
+    return initialData.usableGiftVouchers.filter(
+      (v) => v.status === "active" || v.status === "partially_used" || v.status === "sent",
+    )
+  }, [initialData.usableGiftVouchers])
 
   // Watch form values and update bookingOptions
   useEffect(() => {
@@ -83,7 +95,7 @@ export default function TreatmentSelectionStep({
       selectedDurationId: undefined,
     })
     setSelectedUserSubscription(null)
-    // setSelectedVoucherDetails(null); // This is handled by its own effect
+    setSelectedVoucherDetails(null) // Reset selected voucher details
     setAvailableDurationsForStep([])
 
     if (currentSource === "new_purchase") {
@@ -92,8 +104,10 @@ export default function TreatmentSelectionStep({
       // Treatments will be determined by selected subscription
       setAvailableTreatmentsForStep([]) // Clear until a subscription is chosen
     } else if (currentSource === "gift_voucher_redemption") {
-      // Treatments will be determined by selected voucher
-      setAvailableTreatmentsForStep([]) // Clear until a voucher is chosen
+      // If source is gift voucher, initially show no treatments until a voucher is selected.
+      // Or, if only treatment vouchers are relevant, filter initialData.usableGiftVouchers here.
+      // For now, treatments will be determined by selected voucher.
+      setAvailableTreatmentsForStep([])
     }
   }, [bookingOptions.source, initialData.activeTreatments, form])
 
@@ -102,7 +116,7 @@ export default function TreatmentSelectionStep({
     if (bookingOptions.source === "subscription_redemption" && form.getValues("selectedUserSubscriptionId")) {
       const subId = form.getValues("selectedUserSubscriptionId")
       const sub = initialData.activeUserSubscriptions.find((s) => s._id.toString() === subId) as
-        | (IUserSubscription & { treatmentId: ITreatment; selectedDurationDetails?: ITreatmentDuration })
+        | PopulatedUserSubscription
         | undefined
       setSelectedUserSubscription(sub || null)
 
@@ -114,31 +128,25 @@ export default function TreatmentSelectionStep({
 
         const activeDurationsForSubTreatment = treatmentFromSub.durations?.filter((d) => d.isActive) || []
 
-        if (sub.selectedDurationId) {
-          // Subscription is for a specific duration
-          const specificDuration = activeDurationsForSubTreatment.find(
-            (d) => d._id.toString() === sub.selectedDurationId?.toString(),
-          )
+        if (sub.selectedDurationId || sub.selectedDurationDetails?._id) {
+          const subDurationId = sub.selectedDurationId || sub.selectedDurationDetails?._id.toString()
+          const specificDuration = activeDurationsForSubTreatment.find((d) => d._id.toString() === subDurationId)
           if (specificDuration) {
             setAvailableDurationsForStep([specificDuration])
             form.setValue("selectedDurationId", specificDuration._id.toString(), { shouldValidate: true })
             setIsDurationLockedBySource(true)
           } else {
-            // Duration specified in sub not found or inactive in treatment
             setAvailableDurationsForStep([])
             form.setValue("selectedDurationId", undefined, { shouldValidate: true })
-            setIsDurationLockedBySource(false) // Allow selection if sub's duration is invalid
+            setIsDurationLockedBySource(false)
           }
         } else if (treatmentFromSub.pricingType === "duration_based") {
-          // Subscription for treatment, any valid duration
           setAvailableDurationsForStep(activeDurationsForSubTreatment)
           setIsDurationLockedBySource(false)
-          // Do not auto-select duration here, let user choose from available for that treatment
         } else {
-          // Fixed price treatment from subscription
           setAvailableDurationsForStep([])
           form.setValue("selectedDurationId", undefined, { shouldValidate: true })
-          setIsDurationLockedBySource(true) // No duration to select
+          setIsDurationLockedBySource(true)
         }
       } else {
         // No specific treatment tied to subscription (should not happen with current data model) or sub not found
@@ -161,67 +169,104 @@ export default function TreatmentSelectionStep({
 
   // Effect for when a gift voucher is selected
   useEffect(() => {
-    // Similar logic to subscription selection
     const formVoucherId = form.getValues("selectedGiftVoucherId")
     if (formVoucherId && bookingOptions.source === "gift_voucher_redemption") {
-      const voucher = initialData.usableGiftVouchers.find((v) => v._id.toString() === formVoucherId)
+      const voucher = allUsableGiftVouchers.find((v) => v._id.toString() === formVoucherId)
       setSelectedVoucherDetails(voucher || null)
 
-      if (voucher?.voucherType === "treatment" && voucher.treatmentId) {
-        const treatmentFromVoucher = initialData.activeTreatments.find((t) => t._id.toString() === voucher.treatmentId)
-        if (treatmentFromVoucher) {
-          setAvailableTreatmentsForStep([treatmentFromVoucher])
-          form.setValue("selectedTreatmentId", treatmentFromVoucher._id.toString(), { shouldValidate: true })
-          setIsTreatmentLockedBySource(true)
+      if (voucher) {
+        if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+          const treatmentFromVoucher = initialData.activeTreatments.find(
+            (t) => t._id.toString() === voucher.treatmentId,
+          )
+          if (treatmentFromVoucher) {
+            setAvailableTreatmentsForStep([treatmentFromVoucher])
+            form.setValue("selectedTreatmentId", treatmentFromVoucher._id.toString(), { shouldValidate: true })
+            setIsTreatmentLockedBySource(true)
 
-          const activeDurationsForVoucherTreatment = treatmentFromVoucher.durations?.filter((d) => d.isActive) || []
-          if (voucher.selectedDurationId) {
-            const specificDuration = activeDurationsForVoucherTreatment.find(
-              (d) => d._id.toString() === voucher.selectedDurationId?.toString(),
-            )
-            if (specificDuration) {
-              setAvailableDurationsForStep([specificDuration])
-              form.setValue("selectedDurationId", specificDuration._id.toString(), { shouldValidate: true })
-              setIsDurationLockedBySource(true)
-            } else {
-              setAvailableDurationsForStep([]) // Invalid duration in voucher
+            const activeDurationsForVoucherTreatment = treatmentFromVoucher.durations?.filter((d) => d.isActive) || []
+            if (voucher.selectedDurationId) {
+              const specificDuration = activeDurationsForVoucherTreatment.find(
+                (d) => d._id.toString() === voucher.selectedDurationId?.toString(),
+              )
+              if (specificDuration) {
+                setAvailableDurationsForStep([specificDuration])
+                form.setValue("selectedDurationId", specificDuration._id.toString(), { shouldValidate: true })
+                setIsDurationLockedBySource(true)
+              } else {
+                setAvailableDurationsForStep([])
+                form.setValue("selectedDurationId", undefined, { shouldValidate: true })
+                setIsDurationLockedBySource(false)
+              }
+            } else if (treatmentFromVoucher.pricingType === "duration_based") {
+              setAvailableDurationsForStep(activeDurationsForVoucherTreatment)
               setIsDurationLockedBySource(false)
+              form.setValue("selectedDurationId", undefined, { shouldValidate: true })
+            } else {
+              setAvailableDurationsForStep([])
+              form.setValue("selectedDurationId", undefined, { shouldValidate: true })
+              setIsDurationLockedBySource(true)
             }
-          } else if (treatmentFromVoucher.pricingType === "duration_based") {
-            setAvailableDurationsForStep(activeDurationsForVoucherTreatment)
-            setIsDurationLockedBySource(false)
           } else {
-            // Fixed price
+            // Treatment from voucher not found/active
+            setAvailableTreatmentsForStep(initialData.activeTreatments || []) // Allow selecting any treatment
+            setIsTreatmentLockedBySource(false)
+            form.setValue("selectedTreatmentId", undefined, { shouldValidate: true })
             setAvailableDurationsForStep([])
-            setIsDurationLockedBySource(true)
+            setIsDurationLockedBySource(false)
+            form.setValue("selectedDurationId", undefined, { shouldValidate: true })
+          }
+        } else if (voucher.voucherType === "monetary") {
+          // Monetary voucher: unlock treatment and duration selection
+          setAvailableTreatmentsForStep(initialData.activeTreatments || [])
+          setIsTreatmentLockedBySource(false)
+          setIsDurationLockedBySource(false)
+          // Do not auto-select treatment/duration, let user choose
+          // form.setValue("selectedTreatmentId", undefined, { shouldValidate: true }); // Keep previous selection if any, or let user pick
+          // form.setValue("selectedDurationId", undefined, { shouldValidate: true });
+          // If a treatment was previously selected, re-evaluate its durations
+          const currentTreatmentId = form.getValues("selectedTreatmentId")
+          if (currentTreatmentId) {
+            const treatment = initialData.activeTreatments.find((t) => t._id.toString() === currentTreatmentId)
+            if (treatment?.pricingType === "duration_based" && treatment.durations) {
+              setAvailableDurationsForStep(treatment.durations.filter((d) => d.isActive))
+            } else {
+              setAvailableDurationsForStep([])
+            }
+          } else {
+            setAvailableDurationsForStep([])
           }
         } else {
-          // Treatment from voucher not found/active
-          setAvailableTreatmentsForStep([])
+          // Unknown voucher type or missing data
+          setAvailableTreatmentsForStep(initialData.activeTreatments || [])
           setIsTreatmentLockedBySource(false)
+          setIsDurationLockedBySource(false)
+          form.setValue("selectedTreatmentId", undefined, { shouldValidate: true })
+          form.setValue("selectedDurationId", undefined, { shouldValidate: true })
         }
-      } else if (voucher?.voucherType === "monetary") {
+      } else {
+        // No voucher found (should not happen if ID is from the list)
+        setSelectedVoucherDetails(null)
         setAvailableTreatmentsForStep(initialData.activeTreatments || [])
         setIsTreatmentLockedBySource(false)
-        setIsDurationLockedBySource(false) // Duration selection depends on chosen treatment
-      } else {
-        // No voucher selected or voucher has no treatment info
-        setAvailableTreatmentsForStep([])
-        setIsTreatmentLockedBySource(false)
+        setIsDurationLockedBySource(false)
+        form.setValue("selectedTreatmentId", undefined)
+        form.setValue("selectedDurationId", undefined)
       }
     } else if (bookingOptions.source === "gift_voucher_redemption") {
+      // No voucher ID selected yet
       setSelectedVoucherDetails(null)
-      setAvailableTreatmentsForStep([])
+      // Show all treatments if no voucher selected yet, or default to previous state
+      setAvailableTreatmentsForStep(initialData.activeTreatments || [])
       setIsTreatmentLockedBySource(false)
-      setAvailableDurationsForStep([])
       setIsDurationLockedBySource(false)
-      form.setValue("selectedTreatmentId", undefined)
-      form.setValue("selectedDurationId", undefined)
+      // form.setValue("selectedTreatmentId", undefined); // Don't clear if user was already selecting
+      // form.setValue("selectedDurationId", undefined);
     }
   }, [
     form.watch("selectedGiftVoucherId"),
     bookingOptions.source,
-    initialData.usableGiftVouchers,
+    allUsableGiftVouchers,
     initialData.activeTreatments,
     form,
   ])
@@ -237,8 +282,14 @@ export default function TreatmentSelectionStep({
         const activeDurations = treatment.durations.filter((d) => d.isActive)
         setAvailableDurationsForStep(activeDurations)
         // Do not auto-select duration if multiple are available
-        if (activeDurations.length === 1 && !form.getValues("selectedDurationId")) {
+        if (activeDurations.length === 1 && !form.getValues("selectedDurationId") && !isDurationLockedBySource) {
           // form.setValue("selectedDurationId", activeDurations[0]._id.toString(), { shouldValidate: true });
+        } else if (activeDurations.length > 1 && !isDurationLockedBySource) {
+          // If multiple durations and not locked, ensure selectedDurationId is cleared if it's not in the new list
+          const currentDurationId = form.getValues("selectedDurationId")
+          if (currentDurationId && !activeDurations.some((d) => d._id.toString() === currentDurationId)) {
+            form.setValue("selectedDurationId", undefined, { shouldValidate: true })
+          }
         }
       } else {
         // Fixed price or no durations
@@ -250,11 +301,19 @@ export default function TreatmentSelectionStep({
       setAvailableDurationsForStep([])
       form.setValue("selectedDurationId", undefined, { shouldValidate: true })
     }
-  }, [form.watch("selectedTreatmentId"), availableTreatmentsForStep, form, isTreatmentLockedBySource])
+  }, [
+    form.watch("selectedTreatmentId"),
+    availableTreatmentsForStep,
+    form,
+    isTreatmentLockedBySource,
+    isDurationLockedBySource,
+  ])
 
   const onSubmitValidated = (data: TreatmentSelectionFormValues) => {
     const selectedTreatment = availableTreatmentsForStep.find((t) => t._id.toString() === data.selectedTreatmentId)
-    if (selectedTreatment?.pricingType === "duration_based" && !data.selectedDurationId) {
+    if (selectedTreatment?.pricingType === "duration_based" && !data.selectedDurationId && !isDurationLockedBySource) {
+      // If duration is not locked by source (e.g. voucher for treatment but not specific duration)
+      // and treatment is duration_based, then duration is required.
       form.setError("selectedDurationId", {
         type: "manual",
         message:
@@ -273,6 +332,70 @@ export default function TreatmentSelectionStep({
     !isTreatmentLockedBySource && // Only show if not locked (i.e. new purchase or monetary voucher)
     availableTreatmentsForStep.length === 0 &&
     bookingOptions.source === "new_purchase" // Or monetary voucher case
+
+  const treatmentCardFooter = (treatment: ITreatment) => {
+    if (
+      bookingOptions.source === "gift_voucher_redemption" &&
+      selectedVoucherDetails?.voucherType === "treatment" && // Only for treatment vouchers
+      selectedVoucherDetails?.treatmentId === treatment._id.toString()
+    ) {
+      return (
+        <CardFooter className="mt-auto">
+          <p className="font-semibold text-primary text-sm">
+            {translations["bookings.coveredByGiftVoucher"] || "Covered by Gift Voucher"}
+          </p>
+        </CardFooter>
+      )
+    }
+    if (
+      bookingOptions.source === "subscription_redemption" &&
+      selectedUserSubscription?.treatmentId?._id.toString() === treatment._id.toString()
+    ) {
+      return (
+        <CardFooter className="mt-auto">
+          <p className="font-semibold text-primary text-sm">
+            {translations["bookings.coveredBySubscription"] || "Covered by Subscription"}
+          </p>
+        </CardFooter>
+      )
+    }
+    return (
+      <CardFooter className="mt-auto">
+        <p className="font-semibold text-primary text-sm">
+          {treatment.pricingType === "fixed"
+            ? `${treatment.fixedPrice} ${translations["common.currency"] || "ILS"}`
+            : translations["bookings.priceVariesByDuration"] || "Price varies by duration"}
+        </p>
+      </CardFooter>
+    )
+  }
+
+  const durationSelectItem = (duration: ITreatmentDuration) => {
+    if (
+      (bookingOptions.source === "gift_voucher_redemption" &&
+        selectedVoucherDetails?.voucherType === "treatment" && // Only for treatment vouchers
+        selectedVoucherDetails?.selectedDurationId === duration._id.toString()) ||
+      (bookingOptions.source === "subscription_redemption" &&
+        (selectedUserSubscription?.selectedDurationId === duration._id.toString() ||
+          selectedUserSubscription?.selectedDurationDetails?._id.toString() === duration._id.toString()))
+    ) {
+      return (
+        <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
+          {duration.minutes} {translations["common.minutes"] || "minutes"} (
+          {bookingOptions.source === "gift_voucher_redemption"
+            ? translations["bookings.coveredByGiftVoucher"] || "Covered by Gift Voucher"
+            : translations["bookings.coveredBySubscription"] || "Covered by Subscription"}
+          )
+        </SelectItem>
+      )
+    }
+    return (
+      <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
+        {duration.minutes} {translations["common.minutes"] || "minutes"} - {duration.price}{" "}
+        {translations["common.currency"] || "ILS"}
+      </SelectItem>
+    )
+  }
 
   return (
     <Form {...form}>
@@ -355,20 +478,23 @@ export default function TreatmentSelectionStep({
           />
         )}
 
-        {/* Gift Voucher Selector (similar structure to subscription) */}
         {bookingOptions.source === "gift_voucher_redemption" && (
           <FormField
             control={form.control}
             name="selectedGiftVoucherId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{translations["bookings.steps.treatment.selectVoucher"] || "Select Gift Voucher"}</FormLabel>
+                <FormLabel className="flex items-center">
+                  <GiftIcon className="mr-2 h-5 w-5 text-primary" />
+                  {translations["bookings.steps.treatment.selectVoucher"] || "Select Gift Voucher"}
+                </FormLabel>
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value)
+                    // Reset dependent fields, effects will repopulate
                     form.setValue("selectedTreatmentId", undefined, { shouldValidate: false })
                     form.setValue("selectedDurationId", undefined, { shouldValidate: false })
-                    setIsTreatmentLockedBySource(false)
+                    setIsTreatmentLockedBySource(false) // Will be re-evaluated by effect
                     setIsDurationLockedBySource(false)
                   }}
                   defaultValue={field.value}
@@ -383,14 +509,14 @@ export default function TreatmentSelectionStep({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {initialData.usableGiftVouchers.length > 0 ? (
-                      initialData.usableGiftVouchers.map((v) => (
+                    {allUsableGiftVouchers.length > 0 ? (
+                      allUsableGiftVouchers.map((v) => (
                         <SelectItem key={v._id.toString()} value={v._id.toString()}>
-                          {v.code} (
-                          {v.voucherType === "monetary"
-                            ? `${v.remainingAmount} ${translations["common.currency"] || "ILS"}`
-                            : v.treatmentName || translations["bookings.treatmentVoucher"] || "Treatment Voucher"}
-                          )
+                          {`${v.code} - ${
+                            v.voucherType === "treatment"
+                              ? `${v.treatmentName || translations["bookings.treatmentVoucher"] || "Treatment Voucher"}${v.selectedDurationName ? ` (${v.selectedDurationName})` : ""}`
+                              : `${translations["bookings.monetaryVoucher"] || "Monetary Voucher"} (${v.remainingAmount?.toFixed(2)} ${translations["common.currency"] || "ILS"} ${translations["bookings.remaining"] || "remaining"})`
+                          }`}
                         </SelectItem>
                       ))
                     ) : (
@@ -479,13 +605,7 @@ export default function TreatmentSelectionStep({
                                 </CardDescription>
                               )}
                             </CardHeader>
-                            <CardFooter className="mt-auto">
-                              <p className="font-semibold text-primary text-sm">
-                                {treatment.pricingType === "fixed"
-                                  ? `${treatment.fixedPrice} ${translations["common.currency"] || "ILS"}`
-                                  : translations["bookings.priceVariesByDuration"] || "Price varies by duration"}
-                              </p>
-                            </CardFooter>
+                            {treatmentCardFooter(treatment)}
                           </Card>
                         </Label>
                       </FormItem>
@@ -547,12 +667,7 @@ export default function TreatmentSelectionStep({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {availableDurationsForStep.map((duration) => (
-                      <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
-                        {duration.minutes} {translations["common.minutes"] || "minutes"} - {duration.price}{" "}
-                        {translations["common.currency"] || "ILS"}
-                      </SelectItem>
-                    ))}
+                    {availableDurationsForStep.map((duration) => durationSelectItem(duration))}
                   </SelectContent>
                 </Select>
                 <FormMessage />

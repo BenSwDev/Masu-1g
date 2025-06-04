@@ -3,13 +3,13 @@
 import { FormDescription } from "@/components/common/ui/form"
 
 import type React from "react"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Input } from "@/components/common/ui/input"
 import { Separator } from "@/components/common/ui/separator"
-import { Loader2, AlertCircle, CheckCircle, Tag, Gift, Star } from "lucide-react"
+import { Loader2, AlertCircle, CheckCircle, Tag, GiftIcon, Ticket } from "lucide-react"
 import { format } from "date-fns"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -53,6 +53,24 @@ export default function SummaryStep({
     },
   })
 
+  const selectedGiftVoucherDisplay = useMemo(() => {
+    if (bookingOptions.source === "gift_voucher_redemption" && bookingOptions.selectedGiftVoucherId) {
+      const voucher = initialData.usableGiftVouchers.find(
+        (v) => v._id.toString() === bookingOptions.selectedGiftVoucherId,
+      )
+      if (voucher) {
+        if (voucher.voucherType === "treatment") {
+          return `${voucher.code} (${voucher.treatmentName}${voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""})`
+        } else if (voucher.voucherType === "monetary") {
+          // For monetary voucher, we'll show its effect in the price breakdown,
+          // but we can still acknowledge its selection here.
+          return `${voucher.code} (${translations["bookings.monetaryVoucher"] || "Monetary Voucher"})`
+        }
+      }
+    }
+    return null
+  }, [bookingOptions.source, bookingOptions.selectedGiftVoucherId, initialData.usableGiftVouchers, translations])
+
   useEffect(() => {
     const subscription = form.watch((values) => {
       setBookingOptions((prev) => ({
@@ -90,6 +108,151 @@ export default function SummaryStep({
 
   const subscriptionName = getSubscriptionName()
 
+  const treatmentDisplayDiv = (
+    <div className="flex justify-between items-start">
+      <span className="text-muted-foreground font-medium">
+        {translations["bookings.steps.summary.treatment"] || "Treatment"}:
+      </span>
+      <div className="font-semibold text-right">
+        <span>
+          {selectedTreatment?.name}
+          {selectedDuration ? ` (${selectedDuration.minutes} ${translations["common.minutes"] || "min"})` : ""}
+        </span>
+        {subscriptionName && (
+          <span className="block text-xs text-primary mt-1">
+            <Ticket className="inline-block h-3 w-3 mr-1" />
+            {translations["bookings.steps.summary.usingSubscription"] || "Using subscription"}: {subscriptionName}
+          </span>
+        )}
+        {selectedGiftVoucherDisplay && (
+          <span className="block text-xs text-primary mt-1">
+            <GiftIcon className="inline-block h-3 w-3 mr-1" />
+            {translations["bookings.steps.summary.usingGiftVoucher"] || "Using Gift Voucher"}:{" "}
+            {selectedGiftVoucherDisplay}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+
+  const showCouponCard =
+    bookingOptions.source === "new_purchase" &&
+    (!calculatedPrice ||
+      (calculatedPrice && !calculatedPrice.isFullyCoveredByVoucherOrSubscription && calculatedPrice.finalAmount > 0))
+
+  const priceSummaryContent = () => {
+    if (!calculatedPrice) return null
+
+    if (calculatedPrice.isFullyCoveredByVoucherOrSubscription && calculatedPrice.finalAmount === 0) {
+      let coveredByMessage = ""
+      if (bookingOptions.source === "subscription_redemption") {
+        coveredByMessage =
+          translations["bookings.steps.summary.fullyCoveredBySubscription"] || "Fully covered by your subscription."
+      } else if (bookingOptions.source === "gift_voucher_redemption") {
+        const voucher = initialData.usableGiftVouchers.find(
+          (v) => v._id.toString() === calculatedPrice.appliedGiftVoucherId,
+        )
+        if (voucher?.voucherType === "treatment") {
+          coveredByMessage =
+            translations["bookings.steps.summary.fullyCoveredByGiftVoucherTreatment"] ||
+            "Your treatment is fully covered by the gift voucher."
+        } else {
+          // Monetary voucher that covered everything
+          coveredByMessage =
+            translations["bookings.steps.summary.fullyCoveredByGiftVoucherMonetary"] ||
+            "The cost is fully covered by your gift voucher."
+        }
+      }
+
+      return (
+        <>
+          <Alert variant="default" className="mt-3 bg-green-50 border-green-200 text-green-700">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <AlertTitle className="font-semibold">
+              {translations["bookings.steps.summary.bookingCovered"] || "Booking Covered!"}
+            </AlertTitle>
+            <AlertDescription>{coveredByMessage}</AlertDescription>
+          </Alert>
+          <Separator className="my-3" />
+          <div className="flex justify-between font-bold text-lg">
+            <span>{translations["bookings.steps.summary.totalAmount"] || "Total Amount"}:</span>
+            <span className="text-primary">{translations["bookings.steps.summary.gift"] || "Gift"}</span>
+          </div>
+        </>
+      )
+    }
+
+    return (
+      <>
+        <div className="flex justify-between">
+          <span>{translations["bookings.steps.summary.basePrice"] || "Base Price"}:</span>
+          <span>
+            {calculatedPrice.basePrice.toFixed(2)} {translations["common.currency"] || "ILS"}
+          </span>
+        </div>
+        {calculatedPrice.surcharges.map((surcharge, index) => (
+          <div key={index} className="flex justify-between">
+            <span>{translations[surcharge.description] || surcharge.description}:</span>
+            <span className="text-orange-600">
+              + {surcharge.amount.toFixed(2)} {translations["common.currency"] || "ILS"}
+            </span>
+          </div>
+        ))}
+
+        {calculatedPrice.redeemedUserSubscriptionId && (
+          <div className="flex justify-between items-center font-medium text-green-600">
+            <span className="flex items-center">
+              <Ticket className="mr-2 h-4 w-4" />
+              {translations["bookings.steps.summary.redeemedFromSubscription"] || "Subscription Redemption"}:
+            </span>
+            <span>
+              -{" "}
+              {(calculatedPrice.basePrice + calculatedPrice.surcharges.reduce((sum, s) => sum + s.amount, 0)).toFixed(
+                2,
+              )}{" "}
+              {translations["common.currency"] || "ILS"}
+            </span>
+          </div>
+        )}
+        {calculatedPrice.voucherAppliedAmount > 0 &&
+          !(
+            calculatedPrice.isFullyCoveredByVoucherOrSubscription &&
+            calculatedPrice.finalAmount === 0 &&
+            initialData.usableGiftVouchers.find((v) => v._id.toString() === calculatedPrice.appliedGiftVoucherId)
+              ?.voucherType === "treatment"
+          ) && (
+            <div className="flex justify-between items-center font-medium text-green-600">
+              <span className="flex items-center">
+                <GiftIcon className="mr-2 h-4 w-4" />
+                {translations["bookings.steps.summary.voucherApplied"] || "Gift Voucher Applied"}:
+              </span>
+              <span>
+                - {calculatedPrice.voucherAppliedAmount.toFixed(2)} {translations["common.currency"] || "ILS"}
+              </span>
+            </div>
+          )}
+        {calculatedPrice.couponDiscount > 0 && (
+          <div className="flex justify-between items-center font-medium text-green-600">
+            <span className="flex items-center">
+              <Tag className="mr-2 h-4 w-4" />
+              {translations["bookings.steps.summary.couponDiscount"] || "Coupon Discount"}:
+            </span>
+            <span>
+              - {calculatedPrice.couponDiscount.toFixed(2)} {translations["common.currency"] || "ILS"}
+            </span>
+          </div>
+        )}
+        <Separator className="my-3" />
+        <div className="flex justify-between font-bold text-lg">
+          <span>{translations["bookings.steps.summary.totalAmount"] || "Total Amount"}:</span>
+          <span className="text-primary">
+            {calculatedPrice.finalAmount.toFixed(2)} {translations["common.currency"] || "ILS"}
+          </span>
+        </div>
+      </>
+    )
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
@@ -110,21 +273,7 @@ export default function SummaryStep({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-medium">
-                {translations["bookings.steps.summary.treatment"] || "Treatment"}:
-              </span>
-              <span className="font-semibold text-right">
-                {selectedTreatment?.name}
-                {selectedDuration ? ` (${selectedDuration.minutes} ${translations["common.minutes"] || "min"})` : ""}
-                {subscriptionName && (
-                  <span className="block text-xs text-primary">
-                    ({translations["bookings.steps.summary.usingSubscription"] || "Using subscription"}:{" "}
-                    {subscriptionName})
-                  </span>
-                )}
-              </span>
-            </div>
+            {treatmentDisplayDiv}
             <Separator />
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground font-medium">
@@ -186,7 +335,7 @@ export default function SummaryStep({
           </CardContent>
         </Card>
 
-        {bookingOptions.source === "new_purchase" && !calculatedPrice?.isFullyCoveredByVoucherOrSubscription && (
+        {showCouponCard && (
           <Card className="shadow-md">
             <CardHeader>
               <CardTitle className="text-lg flex items-center">
@@ -244,77 +393,7 @@ export default function SummaryStep({
                 </AlertDescription>
               </Alert>
             )}
-            {calculatedPrice && !isLoadingPrice && (
-              <>
-                <div className="flex justify-between">
-                  <span>{translations["bookings.steps.summary.basePrice"] || "Base Price"}:</span>
-                  <span>
-                    {calculatedPrice.basePrice.toFixed(2)} {translations["common.currency"] || "ILS"}
-                  </span>
-                </div>
-                {calculatedPrice.surcharges.map((surcharge, index) => (
-                  <div key={index} className="flex justify-between">
-                    <span>{translations[surcharge.description] || surcharge.description}:</span>
-                    <span className="text-orange-600">
-                      + {surcharge.amount.toFixed(2)} {translations["common.currency"] || "ILS"}
-                    </span>
-                  </div>
-                ))}
-
-                {calculatedPrice.redeemedUserSubscriptionId && (
-                  <div className="flex justify-between items-center font-medium text-green-600">
-                    <span className="flex items-center">
-                      <Star className="mr-2 h-4 w-4" />
-                      {translations["bookings.steps.summary.redeemedFromSubscription"] || "Subscription Redemption"}:
-                    </span>
-                    <span>
-                      -{" "}
-                      {(
-                        calculatedPrice.basePrice + calculatedPrice.surcharges.reduce((sum, s) => sum + s.amount, 0)
-                      ).toFixed(2)}{" "}
-                      {translations["common.currency"] || "ILS"}
-                    </span>
-                  </div>
-                )}
-                {calculatedPrice.voucherAppliedAmount > 0 && (
-                  <div className="flex justify-between items-center font-medium text-green-600">
-                    <span className="flex items-center">
-                      <Gift className="mr-2 h-4 w-4" />
-                      {translations["bookings.steps.summary.voucherApplied"] || "Gift Voucher Applied"}:
-                    </span>
-                    <span>
-                      - {calculatedPrice.voucherAppliedAmount.toFixed(2)} {translations["common.currency"] || "ILS"}
-                    </span>
-                  </div>
-                )}
-                {calculatedPrice.couponDiscount > 0 && (
-                  <div className="flex justify-between items-center font-medium text-green-600">
-                    <span className="flex items-center">
-                      <Tag className="mr-2 h-4 w-4" />
-                      {translations["bookings.steps.summary.couponDiscount"] || "Coupon Discount"}:
-                    </span>
-                    <span>
-                      - {calculatedPrice.couponDiscount.toFixed(2)} {translations["common.currency"] || "ILS"}
-                    </span>
-                  </div>
-                )}
-                <Separator className="my-3" />
-                <div className="flex justify-between font-bold text-lg">
-                  <span>{translations["bookings.steps.summary.totalAmount"] || "Total Amount"}:</span>
-                  <span className="text-primary">
-                    {calculatedPrice.finalAmount.toFixed(2)} {translations["common.currency"] || "ILS"}
-                  </span>
-                </div>
-                {calculatedPrice.isFullyCoveredByVoucherOrSubscription && calculatedPrice.finalAmount === 0 && (
-                  <Alert variant="default" className="mt-3 bg-green-50 border-green-200 text-green-700">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <AlertDescription className="font-medium">
-                      {translations["bookings.steps.summary.fullyCovered"] || "This booking is fully covered!"}
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </>
-            )}
+            {!isLoadingPrice && calculatedPrice && priceSummaryContent()}
           </CardContent>
         </Card>
 

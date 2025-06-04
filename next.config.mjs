@@ -1,12 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: [
-    'snappy',
-    '@mongodb-js/zstd',
-    'kerberos',
-    'mongodb-client-encryption',
-    'aws4',
-  ],
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -16,7 +9,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // You can add other Next.js configurations here if needed.
-};
+}
 
-export default nextConfig;
+export default nextConfig

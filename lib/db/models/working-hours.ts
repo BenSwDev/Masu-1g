@@ -14,6 +14,7 @@ export interface IFixedHours {
 }
 
 export interface ISpecialDate {
+  name: string // הוסף שדה name שחסר
   date: Date
   isActive: boolean
   startTime: string // Format: "HH:mm"
@@ -68,6 +69,7 @@ const FixedHoursSchema = new Schema<IFixedHours>({
     amount: {
       type: Number,
       min: 0,
+      default: 0,
     },
     type: {
       type: String,
@@ -78,10 +80,16 @@ const FixedHoursSchema = new Schema<IFixedHours>({
   notes: {
     type: String,
     maxlength: 500,
+    default: "",
   },
 })
 
 const SpecialDateSchema = new Schema<ISpecialDate>({
+  name: {
+    type: String,
+    required: true,
+    maxlength: 100,
+  },
   date: {
     type: Date,
     required: true,
@@ -114,6 +122,7 @@ const SpecialDateSchema = new Schema<ISpecialDate>({
     amount: {
       type: Number,
       min: 0,
+      default: 0,
     },
     type: {
       type: String,
@@ -124,6 +133,7 @@ const SpecialDateSchema = new Schema<ISpecialDate>({
   notes: {
     type: String,
     maxlength: 500,
+    default: "",
   },
 })
 
@@ -132,6 +142,10 @@ const WorkingHoursSettingsSchema = new Schema<IWorkingHoursSettings>(
     fixedHours: {
       type: [FixedHoursSchema],
       default: [],
+      validate: {
+        validator: (v: IFixedHours[]) => v.length === 7,
+        message: "Fixed hours must contain exactly 7 days",
+      },
     },
     specialDates: {
       type: [SpecialDateSchema],
@@ -154,12 +168,37 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
         startTime: "09:00",
         endTime: "17:00",
         hasPriceAddition: false,
+        priceAddition: { amount: 0, type: "fixed" },
         notes: "",
       })
     }
   }
+
+  // Ensure all days 0-6 exist
+  for (let i = 0; i < 7; i++) {
+    const existingDay = this.fixedHours.find((day) => day.dayOfWeek === i)
+    if (!existingDay) {
+      this.fixedHours.push({
+        dayOfWeek: i,
+        isActive: false,
+        startTime: "09:00",
+        endTime: "17:00",
+        hasPriceAddition: false,
+        priceAddition: { amount: 0, type: "fixed" },
+        notes: "",
+      })
+    }
+  }
+
+  // Sort by dayOfWeek
+  this.fixedHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+
   next()
 })
+
+// Add index for better performance
+WorkingHoursSettingsSchema.index({ createdAt: -1 })
+WorkingHoursSettingsSchema.index({ "specialDates.date": 1 })
 
 export const WorkingHoursSettings =
   mongoose.models.WorkingHoursSettings ||

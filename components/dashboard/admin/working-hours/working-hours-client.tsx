@@ -3,7 +3,7 @@
 import React from "react"
 import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useForm, useFieldArray } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { format } from "date-fns"
@@ -43,7 +43,13 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Badge } from "@/components/common/ui/badge"
 
-import { getWorkingHoursSettings, updateWorkingHoursSettings } from "@/actions/working-hours-actions"
+import {
+  getWorkingHoursSettings,
+  updateFixedHours,
+  addSpecialDate,
+  updateSpecialDate,
+  deleteSpecialDate,
+} from "@/actions/working-hours-actions"
 import type { IWorkingHoursSettings, IFixedHours } from "@/lib/db/models/working-hours"
 
 const priceAdditionSchema = z
@@ -63,20 +69,8 @@ const fixedHoursSchema = z.object({
   notes: z.string().max(500, "Notes too long").optional(),
 })
 
-const specialDateSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100, "Name too long"),
-  date: z.string().min(1, "Date is required"),
-  isActive: z.boolean(),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM"),
-  hasPriceAddition: z.boolean(),
-  priceAddition: priceAdditionSchema,
-  notes: z.string().max(500, "Notes too long").optional(),
-})
-
-const workingHoursSchema = z.object({
+const fixedHoursFormSchema = z.object({
   fixedHours: z.array(fixedHoursSchema),
-  specialDates: z.array(specialDateSchema),
 })
 
 const specialDateFormSchema = z.object({
@@ -98,7 +92,7 @@ const specialDateFormSchema = z.object({
   notes: z.string().max(500, "Notes are too long (max 500 chars)").optional().default(""),
 })
 
-type WorkingHoursFormData = z.infer<typeof workingHoursSchema>
+type FixedHoursFormData = z.infer<typeof fixedHoursFormSchema>
 type SpecialDateFormData = z.infer<typeof specialDateFormSchema>
 
 const getDefaultFixedHours = (): IFixedHours[] => {
@@ -147,14 +141,15 @@ export default function WorkingHoursClient() {
     },
   })
 
-  const form = useForm<WorkingHoursFormData>({
-    resolver: zodResolver(workingHoursSchema),
+  // טופס נפרד לשעות קבועות
+  const fixedHoursForm = useForm<FixedHoursFormData>({
+    resolver: zodResolver(fixedHoursFormSchema),
     defaultValues: {
       fixedHours: getDefaultFixedHours(),
-      specialDates: [],
     },
   })
 
+  // טופס נפרד לתאריכים מיוחדים
   const specialDateForm = useForm<SpecialDateFormData>({
     resolver: zodResolver(specialDateFormSchema),
     defaultValues: {
@@ -168,39 +163,25 @@ export default function WorkingHoursClient() {
     },
   })
 
-  const {
-    fields: specialDateFields,
-    append: appendSpecialDate,
-    remove: removeSpecialDate,
-    update: updateSpecialDate,
-  } = useFieldArray({
-    control: form.control,
-    name: "specialDates",
-  })
-
   useEffect(() => {
     if (workingHoursData) {
-      form.reset({
+      fixedHoursForm.reset({
         fixedHours:
           workingHoursData.fixedHours && workingHoursData.fixedHours.length === 7
             ? workingHoursData.fixedHours
             : getDefaultFixedHours(),
-        specialDates: (workingHoursData.specialDates || []).map((sd) => ({
-          ...sd,
-          date: format(new Date(sd.date), "yyyy-MM-dd"),
-          priceAddition: sd.priceAddition || { amount: 0, type: "fixed" },
-        })),
       })
     }
-  }, [workingHoursData, form])
+  }, [workingHoursData, fixedHoursForm])
 
-  const updateMutation = useMutation({
-    mutationFn: updateWorkingHoursSettings,
+  // מוטציות נפרדות
+  const updateFixedHoursMutation = useMutation({
+    mutationFn: updateFixedHours,
     onSuccess: (data) => {
       if (data.success) {
         toast({
           title: t("workingHours.updateSuccess"),
-          description: t("workingHours.updateSuccessDescription"),
+          description: t("workingHours.fixedHoursUpdated"),
         })
         queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
       } else {
@@ -220,74 +201,114 @@ export default function WorkingHoursClient() {
     },
   })
 
-  const handleAddOrUpdateSpecialDate = (data: SpecialDateFormData) => {
-    console.log("=== ADDING/UPDATING SPECIAL DATE ===")
-    console.log("Form data:", data)
+  const addSpecialDateMutation = useMutation({
+    mutationFn: addSpecialDate,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: t("workingHours.addSuccess"),
+          description: t("workingHours.specialDateAdded"),
+        })
+        queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
+        setIsSpecialDateDialogOpen(false)
+        specialDateForm.reset()
+      } else {
+        toast({
+          title: t("workingHours.addError"),
+          description: data.error || t("workingHours.addErrorDescription"),
+          variant: "destructive",
+        })
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("workingHours.addError"),
+        description: error.message || t("workingHours.addErrorDescription"),
+        variant: "destructive",
+      })
+    },
+  })
 
+  const updateSpecialDateMutation = useMutation({
+    mutationFn: ({ index, data }: { index: number; data: any }) => updateSpecialDate(index, data),
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: t("workingHours.updateSuccess"),
+          description: t("workingHours.specialDateUpdated"),
+        })
+        queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
+        setIsSpecialDateDialogOpen(false)
+        setEditingSpecialDateIndex(null)
+        specialDateForm.reset()
+      } else {
+        toast({
+          title: t("workingHours.updateError"),
+          description: data.error || t("workingHours.updateErrorDescription"),
+          variant: "destructive",
+        })
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("workingHours.updateError"),
+        description: error.message || t("workingHours.updateErrorDescription"),
+        variant: "destructive",
+      })
+    },
+  })
+
+  const deleteSpecialDateMutation = useMutation({
+    mutationFn: deleteSpecialDate,
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: t("workingHours.deleteSuccess"),
+          description: t("workingHours.specialDateDeleted"),
+        })
+        queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
+      } else {
+        toast({
+          title: t("workingHours.deleteError"),
+          description: data.error || t("workingHours.deleteErrorDescription"),
+          variant: "destructive",
+        })
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: t("workingHours.deleteError"),
+        description: error.message || t("workingHours.deleteErrorDescription"),
+        variant: "destructive",
+      })
+    },
+  })
+
+  const handleAddOrUpdateSpecialDate = (data: SpecialDateFormData) => {
     const specialDateData = {
       ...data,
-      date: data.date.toISOString().split("T")[0], // המר ל-YYYY-MM-DD
+      date: data.date.toISOString().split("T")[0],
       priceAddition: data.hasPriceAddition ? data.priceAddition : { amount: 0, type: "fixed" },
       notes: data.notes || "",
     }
 
-    console.log("Processed special date data:", specialDateData)
-
     if (editingSpecialDateIndex !== null) {
-      console.log("Updating existing special date at index:", editingSpecialDateIndex)
-      updateSpecialDate(editingSpecialDateIndex, specialDateData)
-      setEditingSpecialDateIndex(null)
+      updateSpecialDateMutation.mutate({ index: editingSpecialDateIndex, data: specialDateData })
     } else {
-      console.log("Adding new special date")
-      appendSpecialDate(specialDateData)
+      addSpecialDateMutation.mutate(specialDateData)
     }
-
-    console.log("Current special dates after update:", form.getValues("specialDates"))
-
-    specialDateForm.reset({
-      name: "",
-      date: undefined,
-      isActive: true,
-      startTime: "09:00",
-      endTime: "17:00",
-      hasPriceAddition: false,
-      priceAddition: { amount: 0, type: "fixed" },
-      notes: "",
-    })
-    setIsSpecialDateDialogOpen(false)
   }
 
-  const onSubmit = async (data: WorkingHoursFormData) => {
+  const onSubmitFixedHours = async (data: FixedHoursFormData) => {
     try {
-      console.log("=== FORM SUBMIT START ===")
-      console.log("Raw form data:", data)
-      console.log("Special dates count:", data.specialDates.length)
-      console.log("Special dates details:", data.specialDates)
+      const processedData = data.fixedHours.map((fh) => ({
+        ...fh,
+        priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
+        notes: fh.notes?.trim() || "",
+      }))
 
-      const processedData = {
-        ...data,
-        fixedHours: data.fixedHours.map((fh) => ({
-          ...fh,
-          priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
-          notes: fh.notes?.trim() || "",
-        })),
-        specialDates: data.specialDates.map((sd) => ({
-          ...sd,
-          // שמור את התאריך כמו שהוא - כבר בפורמט YYYY-MM-DD
-          date: sd.date,
-          priceAddition: sd.hasPriceAddition && sd.priceAddition ? sd.priceAddition : { amount: 0, type: "fixed" },
-          notes: sd.notes?.trim() || "",
-        })),
-      }
-
-      console.log("Processed data for server:", processedData)
-      console.log("=== SENDING TO SERVER ===")
-
-      const result = await updateMutation.mutateAsync(processedData)
-      console.log("Server response:", result)
-      console.log("=== FORM SUBMIT END ===")
+      await updateFixedHoursMutation.mutateAsync(processedData)
     } catch (error: any) {
-      console.error("Submit error:", error)
       toast({
         title: t("workingHours.updateError"),
         description: error.message || t("workingHours.updateErrorDescription"),
@@ -297,12 +318,12 @@ export default function WorkingHoursClient() {
   }
 
   const handleEditSpecialDate = (index: number) => {
-    const specialDate = form.getValues(`specialDates.${index}`)
-    console.log("Editing special date:", specialDate) // הוסף לוג לדיבוג
+    const specialDate = workingHoursData?.specialDates?.[index]
+    if (!specialDate) return
 
     specialDateForm.reset({
       ...specialDate,
-      date: new Date(specialDate.date), // ודא שזה Date object
+      date: new Date(specialDate.date),
       priceAddition: specialDate.priceAddition || { amount: 0, type: "fixed" },
       notes: specialDate.notes || "",
     })
@@ -311,35 +332,21 @@ export default function WorkingHoursClient() {
   }
 
   const handleDeleteSpecialDate = (index: number) => {
-    removeSpecialDate(index)
+    deleteSpecialDateMutation.mutate(index)
   }
 
-  // אני אוסיף פונקציה שמטפלת בשינוי מצב הפעילות של יום
   const handleDayActiveChange = (index: number, isActive: boolean) => {
-    form.setValue(`fixedHours.${index}.isActive`, isActive)
+    fixedHoursForm.setValue(`fixedHours.${index}.isActive`, isActive)
 
     if (isActive) {
-      // כשהיום הופך לפעיל, ודא שיש priceAddition
-      const currentPriceAddition = form.getValues(`fixedHours.${index}.priceAddition`)
+      const currentPriceAddition = fixedHoursForm.getValues(`fixedHours.${index}.priceAddition`)
       if (!currentPriceAddition) {
-        form.setValue(`fixedHours.${index}.priceAddition`, { amount: 0, type: "fixed" })
+        fixedHoursForm.setValue(`fixedHours.${index}.priceAddition`, { amount: 0, type: "fixed" })
       }
     } else {
-      // כשהיום הופך ללא פעיל, אפס את כל השדות
-      form.setValue(`fixedHours.${index}.hasPriceAddition`, false)
-      form.setValue(`fixedHours.${index}.priceAddition`, { amount: 0, type: "fixed" })
-      form.setValue(`fixedHours.${index}.notes`, "")
-    }
-  }
-
-  // אני אוסיף פונקציה דומה לתאריכים מיוחדים
-  const handleSpecialDateActiveChange = (isActive: boolean) => {
-    specialDateForm.setValue("isActive", isActive)
-
-    if (!isActive) {
-      specialDateForm.setValue("hasPriceAddition", false)
-      specialDateForm.setValue("priceAddition", { amount: 0, type: "fixed" })
-      specialDateForm.setValue("notes", "")
+      fixedHoursForm.setValue(`fixedHours.${index}.hasPriceAddition`, false)
+      fixedHoursForm.setValue(`fixedHours.${index}.priceAddition`, { amount: 0, type: "fixed" })
+      fixedHoursForm.setValue(`fixedHours.${index}.notes`, "")
     }
   }
 
@@ -394,24 +401,24 @@ export default function WorkingHoursClient() {
 
   return (
     <div className="w-full max-w-full overflow-hidden p-4 space-y-6">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <Tabs defaultValue="fixed-hours" className="w-full" dir={dir}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="fixed-hours">{t("workingHours.fixedHoursTab")}</TabsTrigger>
-              <TabsTrigger value="special-dates">{t("workingHours.specialDatesTab")}</TabsTrigger>
-            </TabsList>
+      <Tabs defaultValue="fixed-hours" className="w-full" dir={dir}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="fixed-hours">{t("workingHours.fixedHoursTab")}</TabsTrigger>
+          <TabsTrigger value="special-dates">{t("workingHours.specialDatesTab")}</TabsTrigger>
+        </TabsList>
 
-            <TabsContent value="fixed-hours">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5" />
-                    {t("workingHours.fixedHours")}
-                  </CardTitle>
-                  <CardDescription>{t("workingHours.fixedHoursDescription")}</CardDescription>
-                </CardHeader>
-                <CardContent>
+        <TabsContent value="fixed-hours">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                {t("workingHours.fixedHours")}
+              </CardTitle>
+              <CardDescription>{t("workingHours.fixedHoursDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...fixedHoursForm}>
+                <form onSubmit={fixedHoursForm.handleSubmit(onSubmitFixedHours)} className="space-y-6">
                   {/* Desktop Table */}
                   <div className="hidden md:block">
                     <Table>
@@ -426,17 +433,17 @@ export default function WorkingHoursClient() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {form.watch("fixedHours")?.map((_, index) => {
-                          const dayOfWeek = form.watch(`fixedHours.${index}.dayOfWeek`)
-                          const isActive = form.watch(`fixedHours.${index}.isActive`)
-                          const hasPriceAddition = form.watch(`fixedHours.${index}.hasPriceAddition`)
+                        {fixedHoursForm.watch("fixedHours")?.map((_, index) => {
+                          const dayOfWeek = fixedHoursForm.watch(`fixedHours.${index}.dayOfWeek`)
+                          const isActive = fixedHoursForm.watch(`fixedHours.${index}.isActive`)
+                          const hasPriceAddition = fixedHoursForm.watch(`fixedHours.${index}.hasPriceAddition`)
 
                           return (
                             <TableRow key={index}>
                               <TableCell className="font-medium">{dayNames[dayOfWeek]}</TableCell>
                               <TableCell className="text-center">
                                 <FormField
-                                  control={form.control}
+                                  control={fixedHoursForm.control}
                                   name={`fixedHours.${index}.isActive`}
                                   render={({ field }) => (
                                     <FormItem>
@@ -454,7 +461,7 @@ export default function WorkingHoursClient() {
                               <TableCell>
                                 {isActive && (
                                   <FormField
-                                    control={form.control}
+                                    control={fixedHoursForm.control}
                                     name={`fixedHours.${index}.startTime`}
                                     render={({ field }) => (
                                       <FormItem>
@@ -475,7 +482,7 @@ export default function WorkingHoursClient() {
                               <TableCell>
                                 {isActive && (
                                   <FormField
-                                    control={form.control}
+                                    control={fixedHoursForm.control}
                                     name={`fixedHours.${index}.endTime`}
                                     render={({ field }) => (
                                       <FormItem>
@@ -497,7 +504,7 @@ export default function WorkingHoursClient() {
                                 {isActive && (
                                   <div className="space-y-2">
                                     <FormField
-                                      control={form.control}
+                                      control={fixedHoursForm.control}
                                       name={`fixedHours.${index}.hasPriceAddition`}
                                       render={({ field }) => (
                                         <FormItem className="flex items-center gap-2">
@@ -517,7 +524,7 @@ export default function WorkingHoursClient() {
                                     {hasPriceAddition && (
                                       <div className="flex gap-2">
                                         <FormField
-                                          control={form.control}
+                                          control={fixedHoursForm.control}
                                           name={`fixedHours.${index}.priceAddition.amount`}
                                           render={({ field }) => (
                                             <FormItem>
@@ -540,7 +547,7 @@ export default function WorkingHoursClient() {
                                           )}
                                         />
                                         <FormField
-                                          control={form.control}
+                                          control={fixedHoursForm.control}
                                           name={`fixedHours.${index}.priceAddition.type`}
                                           render={({ field }) => (
                                             <FormItem>
@@ -574,7 +581,7 @@ export default function WorkingHoursClient() {
                               <TableCell>
                                 {isActive && (
                                   <FormField
-                                    control={form.control}
+                                    control={fixedHoursForm.control}
                                     name={`fixedHours.${index}.notes`}
                                     render={({ field }) => (
                                       <FormItem>
@@ -601,10 +608,10 @@ export default function WorkingHoursClient() {
 
                   {/* Mobile Cards */}
                   <div className="md:hidden space-y-4">
-                    {form.watch("fixedHours")?.map((_, index) => {
-                      const dayOfWeek = form.watch(`fixedHours.${index}.dayOfWeek`)
-                      const isActive = form.watch(`fixedHours.${index}.isActive`)
-                      const hasPriceAddition = form.watch(`fixedHours.${index}.hasPriceAddition`)
+                    {fixedHoursForm.watch("fixedHours")?.map((_, index) => {
+                      const dayOfWeek = fixedHoursForm.watch(`fixedHours.${index}.dayOfWeek`)
+                      const isActive = fixedHoursForm.watch(`fixedHours.${index}.isActive`)
+                      const hasPriceAddition = fixedHoursForm.watch(`fixedHours.${index}.hasPriceAddition`)
 
                       return (
                         <Card key={index} className="p-4">
@@ -612,7 +619,7 @@ export default function WorkingHoursClient() {
                             <div className="flex items-center justify-between">
                               <h3 className="font-medium text-lg">{dayNames[dayOfWeek]}</h3>
                               <FormField
-                                control={form.control}
+                                control={fixedHoursForm.control}
                                 name={`fixedHours.${index}.isActive`}
                                 render={({ field }) => (
                                   <FormItem>
@@ -632,7 +639,7 @@ export default function WorkingHoursClient() {
                               <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                   <FormField
-                                    control={form.control}
+                                    control={fixedHoursForm.control}
                                     name={`fixedHours.${index}.startTime`}
                                     render={({ field }) => (
                                       <FormItem>
@@ -650,7 +657,7 @@ export default function WorkingHoursClient() {
                                     )}
                                   />
                                   <FormField
-                                    control={form.control}
+                                    control={fixedHoursForm.control}
                                     name={`fixedHours.${index}.endTime`}
                                     render={({ field }) => (
                                       <FormItem>
@@ -670,7 +677,7 @@ export default function WorkingHoursClient() {
                                 </div>
 
                                 <FormField
-                                  control={form.control}
+                                  control={fixedHoursForm.control}
                                   name={`fixedHours.${index}.hasPriceAddition`}
                                   render={({ field }) => (
                                     <FormItem className="flex items-center gap-2">
@@ -691,7 +698,7 @@ export default function WorkingHoursClient() {
                                 {hasPriceAddition && (
                                   <div className="grid grid-cols-2 gap-4">
                                     <FormField
-                                      control={form.control}
+                                      control={fixedHoursForm.control}
                                       name={`fixedHours.${index}.priceAddition.amount`}
                                       render={({ field }) => (
                                         <FormItem>
@@ -713,7 +720,7 @@ export default function WorkingHoursClient() {
                                       )}
                                     />
                                     <FormField
-                                      control={form.control}
+                                      control={fixedHoursForm.control}
                                       name={`fixedHours.${index}.priceAddition.type`}
                                       render={({ field }) => (
                                         <FormItem>
@@ -740,7 +747,7 @@ export default function WorkingHoursClient() {
                                 )}
 
                                 <FormField
-                                  control={form.control}
+                                  control={fixedHoursForm.control}
                                   name={`fixedHours.${index}.notes`}
                                   render={({ field }) => (
                                     <FormItem>
@@ -764,445 +771,429 @@ export default function WorkingHoursClient() {
                       )
                     })}
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
-            <TabsContent value="special-dates">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CalendarIcon className="h-5 w-5" />
-                    {t("workingHours.specialDates")}
-                  </CardTitle>
-                  <CardDescription>{t("workingHours.specialDatesDescription")}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Dialog
-                    open={isSpecialDateDialogOpen}
-                    onOpenChange={(isOpen) => {
-                      setIsSpecialDateDialogOpen(isOpen)
-                      if (!isOpen) {
-                        setEditingSpecialDateIndex(null)
-                        specialDateForm.reset({
-                          name: "",
-                          date: undefined,
-                          isActive: true,
-                          startTime: "09:00",
-                          endTime: "17:00",
-                          hasPriceAddition: false,
-                          priceAddition: { amount: 0, type: "fixed" },
-                          notes: "",
-                        })
-                      }
-                    }}
-                  >
-                    <DialogTrigger asChild>
-                      <Button type="button" variant="outline" className="w-full">
-                        <Plus className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
-                        {t("workingHours.addSpecialDate")}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>
-                          {editingSpecialDateIndex !== null
-                            ? t("workingHours.editSpecialDate")
-                            : t("workingHours.addSpecialDate")}
-                        </DialogTitle>
-                        <DialogDescription>{t("workingHours.specialDateDialogDescription")}</DialogDescription>
-                      </DialogHeader>
-                      <Form {...specialDateForm}>
-                        <form
-                          onSubmit={specialDateForm.handleSubmit(handleAddOrUpdateSpecialDate)}
-                          className="space-y-4"
-                        >
-                          <FormField
-                            control={specialDateForm.control}
-                            name="name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>{t("workingHours.specialDateName")}</FormLabel>
+                  <div className="flex justify-end pt-4">
+                    <Button
+                      type="submit"
+                      disabled={updateFixedHoursMutation.isPending || !fixedHoursForm.formState.isDirty}
+                      className="w-full sm:w-auto min-w-[120px]"
+                    >
+                      {updateFixedHoursMutation.isPending ? t("common.saving") : t("common.saveChanges")}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="special-dates">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5" />
+                {t("workingHours.specialDates")}
+              </CardTitle>
+              <CardDescription>{t("workingHours.specialDatesDescription")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Dialog
+                open={isSpecialDateDialogOpen}
+                onOpenChange={(isOpen) => {
+                  setIsSpecialDateDialogOpen(isOpen)
+                  if (!isOpen) {
+                    setEditingSpecialDateIndex(null)
+                    specialDateForm.reset({
+                      name: "",
+                      date: undefined,
+                      isActive: true,
+                      startTime: "09:00",
+                      endTime: "17:00",
+                      hasPriceAddition: false,
+                      priceAddition: { amount: 0, type: "fixed" },
+                      notes: "",
+                    })
+                  }
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button type="button" variant="outline" className="w-full">
+                    <Plus className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
+                    {t("workingHours.addSpecialDate")}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingSpecialDateIndex !== null
+                        ? t("workingHours.editSpecialDate")
+                        : t("workingHours.addSpecialDate")}
+                    </DialogTitle>
+                    <DialogDescription>{t("workingHours.specialDateDialogDescription")}</DialogDescription>
+                  </DialogHeader>
+                  <Form {...specialDateForm}>
+                    <form onSubmit={specialDateForm.handleSubmit(handleAddOrUpdateSpecialDate)} className="space-y-4">
+                      <FormField
+                        control={specialDateForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{t("workingHours.specialDateName")}</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder={t("workingHours.specialDateNamePlaceholder")} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={specialDateForm.control}
+                        name="date"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel>{t("workingHours.date")}</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
                                 <FormControl>
-                                  <Input {...field} placeholder={t("workingHours.specialDateNamePlaceholder")} />
+                                  <Button
+                                    variant="outline"
+                                    className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                                  >
+                                    <CalendarIcon className="rtl:ml-2 ltr:mr-2 h-4 w-4" />
+                                    {field.value ? (
+                                      format(field.value, "PPP", { locale: language === "he" ? he : enUS })
+                                    ) : (
+                                      <span>{t("workingHours.selectDate")}</span>
+                                    )}
+                                  </Button>
                                 </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={specialDateForm.control}
-                            name="date"
-                            render={({ field }) => (
-                              <FormItem className="flex flex-col">
-                                <FormLabel>{t("workingHours.date")}</FormLabel>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <FormControl>
-                                      <Button
-                                        variant="outline"
-                                        className={`w-full justify-start text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                                      >
-                                        <CalendarIcon className="rtl:ml-2 ltr:mr-2 h-4 w-4" />
-                                        {field.value ? (
-                                          format(field.value, "PPP", { locale: language === "he" ? he : enUS })
-                                        ) : (
-                                          <span>{t("workingHours.selectDate")}</span>
-                                        )}
-                                      </Button>
-                                    </FormControl>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0" align="start">
-                                    <CalendarComponent
-                                      mode="single"
-                                      selected={field.value}
-                                      onSelect={field.onChange}
-                                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                                      initialFocus
-                                    />
-                                  </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start">
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={specialDateForm.control}
+                        name="isActive"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0 rounded-md border p-4 shadow">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                id="specialDateIsActive"
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel htmlFor="specialDateIsActive">{t("workingHours.active")}</FormLabel>
+                              <FormDescription>{t("workingHours.specialDateActiveDescription")}</FormDescription>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {specialDateForm.watch("isActive") && (
+                        <div className="space-y-4 p-4 border rounded-md">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                              control={specialDateForm.control}
+                              name="startTime"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t("workingHours.startTime")}</FormLabel>
+                                  <FormControl>
+                                    <Input type="time" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={specialDateForm.control}
+                              name="endTime"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>{t("workingHours.endTime")}</FormLabel>
+                                  <FormControl>
+                                    <Input type="time" {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
 
                           <FormField
                             control={specialDateForm.control}
-                            name="isActive"
+                            name="hasPriceAddition"
                             render={({ field }) => (
-                              <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0 rounded-md border p-4 shadow">
+                              <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0">
                                 <FormControl>
                                   <Checkbox
                                     checked={field.value}
                                     onCheckedChange={field.onChange}
-                                    id="specialDateIsActive"
+                                    id="specialDateHasPriceAddition"
                                   />
                                 </FormControl>
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel htmlFor="specialDateIsActive">{t("workingHours.active")}</FormLabel>
-                                  <FormDescription>{t("workingHours.specialDateActiveDescription")}</FormDescription>
-                                </div>
+                                <FormLabel htmlFor="specialDateHasPriceAddition">
+                                  {t("workingHours.enablePriceAddition")}
+                                </FormLabel>
                               </FormItem>
                             )}
                           />
 
-                          {specialDateForm.watch("isActive") && (
-                            <div className="space-y-4 p-4 border rounded-md">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <FormField
-                                  control={specialDateForm.control}
-                                  name="startTime"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>{t("workingHours.startTime")}</FormLabel>
-                                      <FormControl>
-                                        <Input type="time" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-
-                                <FormField
-                                  control={specialDateForm.control}
-                                  name="endTime"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>{t("workingHours.endTime")}</FormLabel>
-                                      <FormControl>
-                                        <Input type="time" {...field} />
-                                      </FormControl>
-                                      <FormMessage />
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-
+                          {specialDateForm.watch("hasPriceAddition") && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <FormField
                                 control={specialDateForm.control}
-                                name="hasPriceAddition"
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse space-y-0">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                        id="specialDateHasPriceAddition"
-                                      />
-                                    </FormControl>
-                                    <FormLabel htmlFor="specialDateHasPriceAddition">
-                                      {t("workingHours.enablePriceAddition")}
-                                    </FormLabel>
-                                  </FormItem>
-                                )}
-                              />
-
-                              {specialDateForm.watch("hasPriceAddition") && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                  <FormField
-                                    control={specialDateForm.control}
-                                    name="priceAddition.amount"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>{t("workingHours.amount")}</FormLabel>
-                                        <FormControl>
-                                          <Input
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="0"
-                                            {...field}
-                                            onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
-                                          />
-                                        </FormControl>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-
-                                  <FormField
-                                    control={specialDateForm.control}
-                                    name="priceAddition.type"
-                                    render={({ field }) => (
-                                      <FormItem>
-                                        <FormLabel>{t("workingHours.type")}</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
-                                          <FormControl>
-                                            <SelectTrigger>
-                                              <SelectValue />
-                                            </SelectTrigger>
-                                          </FormControl>
-                                          <SelectContent>
-                                            <SelectItem value="fixed">₪</SelectItem>
-                                            <SelectItem value="percentage">%</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                      </FormItem>
-                                    )}
-                                  />
-                                </div>
-                              )}
-
-                              <FormField
-                                control={specialDateForm.control}
-                                name="notes"
+                                name="priceAddition.amount"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>{t("workingHours.notes")}</FormLabel>
+                                    <FormLabel>{t("workingHours.amount")}</FormLabel>
                                     <FormControl>
-                                      <Textarea
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0"
                                         {...field}
-                                        placeholder={t("workingHours.notesPlaceholder")}
-                                        className="min-h-[80px]"
+                                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
                                       />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
                                 )}
                               />
+
+                              <FormField
+                                control={specialDateForm.control}
+                                name="priceAddition.type"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>{t("workingHours.type")}</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="fixed">₪</SelectItem>
+                                        <SelectItem value="percentage">%</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
                             </div>
                           )}
-                          <div className="text-xs text-muted-foreground">
-                            {specialDateForm.formState.errors.root && (
-                              <p className="text-destructive">{specialDateForm.formState.errors.root.message}</p>
+
+                          <FormField
+                            control={specialDateForm.control}
+                            name="notes"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>{t("workingHours.notes")}</FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    {...field}
+                                    placeholder={t("workingHours.notesPlaceholder")}
+                                    className="min-h-[80px]"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      )}
+                      <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setIsSpecialDateDialogOpen(false)
+                            setEditingSpecialDateIndex(null)
+                            specialDateForm.reset()
+                          }}
+                        >
+                          {t("common.cancel")}
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={
+                            specialDateForm.formState.isSubmitting ||
+                            addSpecialDateMutation.isPending ||
+                            updateSpecialDateMutation.isPending
+                          }
+                        >
+                          {specialDateForm.formState.isSubmitting ||
+                          addSpecialDateMutation.isPending ||
+                          updateSpecialDateMutation.isPending
+                            ? t("common.saving")
+                            : editingSpecialDateIndex !== null
+                              ? t("common.update")
+                              : t("common.add")}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+
+              {(!workingHoursData?.specialDates || workingHoursData.specialDates.length === 0) && (
+                <div className="text-center text-muted-foreground py-8">
+                  <CalendarIcon className="mx-auto h-12 w-12 opacity-50" />
+                  <p className="mt-4 text-lg">{t("workingHours.noSpecialDates")}</p>
+                  <p>{t("workingHours.noSpecialDatesHint")}</p>
+                </div>
+              )}
+
+              {workingHoursData?.specialDates && workingHoursData.specialDates.length > 0 && (
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t("workingHours.specialDateName")}</TableHead>
+                          <TableHead>{t("workingHours.date")}</TableHead>
+                          <TableHead className="text-center">{t("workingHours.active")}</TableHead>
+                          <TableHead>{t("workingHours.hours")}</TableHead>
+                          <TableHead>{t("workingHours.priceAddition")}</TableHead>
+                          <TableHead>{t("workingHours.notes")}</TableHead>
+                          <TableHead className="text-right rtl:text-left">{t("common.actions")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {workingHoursData.specialDates.map((specialDate, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{specialDate.name}</TableCell>
+                            <TableCell>
+                              {format(new Date(specialDate.date), "PPP", {
+                                locale: language === "he" ? he : enUS,
+                              })}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {specialDate.isActive ? t("common.yes") : t("common.no")}
+                            </TableCell>
+                            <TableCell>
+                              {specialDate.isActive ? `${specialDate.startTime} - ${specialDate.endTime}` : "-"}
+                            </TableCell>
+                            <TableCell>
+                              {specialDate.isActive && specialDate.hasPriceAddition && specialDate.priceAddition
+                                ? `${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`
+                                : "-"}
+                            </TableCell>
+                            <TableCell className="max-w-[150px] truncate" title={specialDate.notes}>
+                              {specialDate.notes || "-"}
+                            </TableCell>
+                            <TableCell className="text-right rtl:text-left">
+                              <div className="flex gap-2 justify-end rtl:justify-start">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => handleEditSpecialDate(index)}
+                                  aria-label={t("workingHours.editSpecialDate")}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  onClick={() => handleDeleteSpecialDate(index)}
+                                  disabled={deleteSpecialDateMutation.isPending}
+                                  aria-label={t("workingHours.deleteSpecialDate")}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile Cards */}
+                  <div className="md:hidden space-y-4">
+                    {workingHoursData.specialDates.map((specialDate, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-lg truncate">{specialDate.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {format(new Date(specialDate.date), "PPP", {
+                                  locale: language === "he" ? he : enUS,
+                                })}
+                              </p>
+                            </div>
+                            <div className="flex gap-2 ml-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleEditSpecialDate(index)}
+                                aria-label={t("workingHours.editSpecialDate")}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => handleDeleteSpecialDate(index)}
+                                disabled={deleteSpecialDateMutation.isPending}
+                                aria-label={t("workingHours.deleteSpecialDate")}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant={specialDate.isActive ? "default" : "secondary"}>
+                              {specialDate.isActive ? t("common.yes") : t("common.no")}
+                            </Badge>
+                            {specialDate.isActive && (
+                              <Badge variant="outline">{`${specialDate.startTime} - ${specialDate.endTime}`}</Badge>
+                            )}
+                            {specialDate.isActive && specialDate.hasPriceAddition && specialDate.priceAddition && (
+                              <Badge variant="outline">
+                                {`+${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`}
+                              </Badge>
                             )}
                           </div>
-                          <DialogFooter className="gap-2 sm:gap-0">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => {
-                                setIsSpecialDateDialogOpen(false)
-                                setEditingSpecialDateIndex(null)
-                                specialDateForm.reset({
-                                  name: "",
-                                  date: undefined,
-                                  isActive: true,
-                                  startTime: "09:00",
-                                  endTime: "17:00",
-                                  hasPriceAddition: false,
-                                  priceAddition: { amount: 0, type: "fixed" },
-                                  notes: "",
-                                })
-                              }}
-                            >
-                              {t("common.cancel")}
-                            </Button>
-                            <Button type="submit" disabled={specialDateForm.formState.isSubmitting}>
-                              {specialDateForm.formState.isSubmitting
-                                ? t("common.saving")
-                                : editingSpecialDateIndex !== null
-                                  ? t("common.update")
-                                  : t("common.add")}
-                            </Button>
-                          </DialogFooter>
-                        </form>
-                      </Form>
-                    </DialogContent>
-                  </Dialog>
 
-                  {specialDateFields.length === 0 && (
-                    <div className="text-center text-muted-foreground py-8">
-                      <CalendarIcon className="mx-auto h-12 w-12 opacity-50" />
-                      <p className="mt-4 text-lg">{t("workingHours.noSpecialDates")}</p>
-                      <p>{t("workingHours.noSpecialDatesHint")}</p>
-                    </div>
-                  )}
-
-                  {specialDateFields.length > 0 && (
-                    <>
-                      {/* Desktop Table */}
-                      <div className="hidden md:block">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>{t("workingHours.specialDateName")}</TableHead>
-                              <TableHead>{t("workingHours.date")}</TableHead>
-                              <TableHead className="text-center">{t("workingHours.active")}</TableHead>
-                              <TableHead>{t("workingHours.hours")}</TableHead>
-                              <TableHead>{t("workingHours.priceAddition")}</TableHead>
-                              <TableHead>{t("workingHours.notes")}</TableHead>
-                              <TableHead className="text-right rtl:text-left">{t("common.actions")}</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {specialDateFields.map((field, index) => {
-                              const specialDate = form.watch(`specialDates.${index}`)
-                              return (
-                                <TableRow key={field.id}>
-                                  <TableCell className="font-medium">{specialDate.name}</TableCell>
-                                  <TableCell>
-                                    {format(new Date(specialDate.date), "PPP", {
-                                      locale: language === "he" ? he : enUS,
-                                    })}
-                                  </TableCell>
-                                  <TableCell className="text-center">
-                                    {specialDate.isActive ? t("common.yes") : t("common.no")}
-                                  </TableCell>
-                                  <TableCell>
-                                    {specialDate.isActive ? `${specialDate.startTime} - ${specialDate.endTime}` : "-"}
-                                  </TableCell>
-                                  <TableCell>
-                                    {specialDate.isActive && specialDate.hasPriceAddition && specialDate.priceAddition
-                                      ? `${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`
-                                      : "-"}
-                                  </TableCell>
-                                  <TableCell className="max-w-[150px] truncate" title={specialDate.notes}>
-                                    {specialDate.notes || "-"}
-                                  </TableCell>
-                                  <TableCell className="text-right rtl:text-left">
-                                    <div className="flex gap-2 justify-end rtl:justify-start">
-                                      <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => handleEditSpecialDate(index)}
-                                        aria-label={t("workingHours.editSpecialDate")}
-                                      >
-                                        <Edit className="h-4 w-4" />
-                                      </Button>
-                                      <Button
-                                        type="button"
-                                        variant="destructive"
-                                        size="icon"
-                                        onClick={() => handleDeleteSpecialDate(index)}
-                                        aria-label={t("workingHours.deleteSpecialDate")}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </div>
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-
-                      {/* Mobile Cards */}
-                      <div className="md:hidden space-y-4">
-                        {specialDateFields.map((field, index) => {
-                          const specialDate = form.watch(`specialDates.${index}`)
-                          return (
-                            <Card key={field.id} className="p-4">
-                              <div className="space-y-3">
-                                <div className="flex items-start justify-between">
-                                  <div className="flex-1 min-w-0">
-                                    <h3 className="font-medium text-lg truncate">{specialDate.name}</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                      {format(new Date(specialDate.date), "PPP", {
-                                        locale: language === "he" ? he : enUS,
-                                      })}
-                                    </p>
-                                  </div>
-                                  <div className="flex gap-2 ml-2">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="icon"
-                                      onClick={() => handleEditSpecialDate(index)}
-                                      aria-label={t("workingHours.editSpecialDate")}
-                                    >
-                                      <Edit className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="destructive"
-                                      size="icon"
-                                      onClick={() => handleDeleteSpecialDate(index)}
-                                      aria-label={t("workingHours.deleteSpecialDate")}
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-wrap gap-2">
-                                  <Badge variant={specialDate.isActive ? "default" : "secondary"}>
-                                    {specialDate.isActive ? t("common.yes") : t("common.no")}
-                                  </Badge>
-                                  {specialDate.isActive && (
-                                    <Badge variant="outline">
-                                      {`${specialDate.startTime} - ${specialDate.endTime}`}
-                                    </Badge>
-                                  )}
-                                  {specialDate.isActive &&
-                                    specialDate.hasPriceAddition &&
-                                    specialDate.priceAddition && (
-                                      <Badge variant="outline">
-                                        {`+${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`}
-                                      </Badge>
-                                    )}
-                                </div>
-
-                                {specialDate.notes && (
-                                  <p className="text-sm text-muted-foreground break-words">{specialDate.notes}</p>
-                                )}
-                              </div>
-                            </Card>
-                          )
-                        })}
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          <div className="flex justify-end pt-4">
-            <Button
-              type="submit"
-              disabled={updateMutation.isPending || !form.formState.isDirty}
-              className="w-full sm:w-auto min-w-[120px]"
-            >
-              {updateMutation.isPending ? t("common.saving") : t("common.saveChanges")}
-            </Button>
-          </div>
-        </form>
-      </Form>
+                          {specialDate.notes && (
+                            <p className="text-sm text-muted-foreground break-words">{specialDate.notes}</p>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

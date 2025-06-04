@@ -220,19 +220,28 @@ export default function WorkingHoursClient() {
     },
   })
 
-  const onSubmit = (data: WorkingHoursFormData) => {
-    const processedData = {
-      ...data,
-      fixedHours: data.fixedHours.map((fh) => ({
-        ...fh,
-        priceAddition: fh.hasPriceAddition ? fh.priceAddition : undefined,
-      })),
-      specialDates: data.specialDates.map((sd) => ({
-        ...sd,
-        priceAddition: sd.hasPriceAddition ? sd.priceAddition : undefined,
-      })),
+  const onSubmit = async (data: WorkingHoursFormData) => {
+    try {
+      const processedData = {
+        ...data,
+        fixedHours: data.fixedHours.map((fh) => ({
+          ...fh,
+          priceAddition: fh.hasPriceAddition ? fh.priceAddition : undefined,
+        })),
+        specialDates: data.specialDates.map((sd) => ({
+          ...sd,
+          date: new Date(sd.date).toISOString(), // Convert to ISO string
+          priceAddition: sd.hasPriceAddition ? sd.priceAddition : undefined,
+        })),
+      }
+      await updateMutation.mutateAsync(processedData)
+    } catch (error: any) {
+      toast({
+        title: t("workingHours.updateError"),
+        description: error.message || t("workingHours.updateErrorDescription"),
+        variant: "destructive",
+      })
     }
-    updateMutation.mutate(processedData)
   }
 
   const handleAddOrUpdateSpecialDate = (data: SpecialDateFormData) => {

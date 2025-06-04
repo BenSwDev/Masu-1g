@@ -93,11 +93,13 @@ export async function updateWorkingHoursSettings(data: {
         ...fh,
         priceAddition: fh.hasPriceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
       })),
-      specialDates: data.specialDates.map((date) => ({
-        ...date,
-        date: new Date(date.date),
-        priceAddition: date.hasPriceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
-      })),
+      specialDates: data.specialDates.map((date) => {
+        return {
+          ...date,
+          date: new Date(date.date),
+          priceAddition: date.hasPriceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
+        }
+      }),
     }
 
     logger.info(`[${requestId}] Processed data for update`)

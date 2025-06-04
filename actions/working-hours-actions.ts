@@ -68,9 +68,12 @@ export async function updateWorkingHoursSettings(data: {
   const requestId = `update_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
+    console.log(`[${requestId}] Raw input data:`, JSON.stringify(data, null, 2))
+
     logger.info(`[${requestId}] Updating working hours settings`, {
       fixedHoursCount: data.fixedHours?.length,
       specialDatesCount: data.specialDates?.length,
+      specialDatesRaw: data.specialDates,
     })
     await dbConnect()
 
@@ -90,7 +93,9 @@ export async function updateWorkingHoursSettings(data: {
     }
 
     // Process special dates with better date handling
-    const processedSpecialDates = data.specialDates.map((date) => {
+    const processedSpecialDates = data.specialDates.map((date, index) => {
+      console.log(`[${requestId}] Processing special date ${index}:`, date)
+
       let processedDate
 
       // טפל בפורמטים שונים של תאריך
@@ -100,8 +105,8 @@ export async function updateWorkingHoursSettings(data: {
           // ISO string
           processedDate = new Date(date.date)
         } else {
-          // YYYY-MM-DD format
-          processedDate = new Date(date.date + "T00:00:00.000Z")
+          // YYYY-MM-DD format - הוסף זמן UTC כדי למנוע בעיות timezone
+          processedDate = new Date(date.date + "T12:00:00.000Z")
         }
       } else {
         // אם זה כבר Date object
@@ -110,20 +115,27 @@ export async function updateWorkingHoursSettings(data: {
 
       // ודא שהתאריך תקין
       if (isNaN(processedDate.getTime())) {
+        console.error(`[${requestId}] Invalid date format: ${date.date}`)
         throw new Error(`Invalid date format: ${date.date}`)
       }
 
-      return {
-        ...date,
+      const processed = {
+        name: date.name || "",
         date: processedDate,
+        isActive: Boolean(date.isActive),
+        startTime: date.startTime || "09:00",
+        endTime: date.endTime || "17:00",
+        hasPriceAddition: Boolean(date.hasPriceAddition),
         priceAddition: date.hasPriceAddition && date.priceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
         notes: date.notes?.trim() || "",
       }
+
+      console.log(`[${requestId}] Processed special date ${index}:`, processed)
+      return processed
     })
 
     // Convert date strings back to Date objects for specialDates
     const processedData = {
-      ...data,
       fixedHours: data.fixedHours.map((fh) => ({
         ...fh,
         priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
@@ -132,15 +144,20 @@ export async function updateWorkingHoursSettings(data: {
       specialDates: processedSpecialDates,
     }
 
+    console.log(`[${requestId}] Final processed data:`, JSON.stringify(processedData, null, 2))
+
     logger.info(`[${requestId}] Processed data for update`, {
       specialDatesProcessed: processedData.specialDates.length,
+      specialDatesData: processedData.specialDates,
     })
 
-    const settings = await WorkingHoursSettings.findOneAndUpdate({}, processedData, {
-      new: true,
-      upsert: true,
-      runValidators: true,
-    })
+    // מחק את ההגדרות הקיימות ויצור חדשות
+    await WorkingHoursSettings.deleteMany({})
+
+    const newSettings = new WorkingHoursSettings(processedData)
+    const settings = await newSettings.save()
+
+    console.log(`[${requestId}] Saved settings:`, JSON.stringify(settings.toObject(), null, 2))
 
     if (!settings) {
       logger.error(`[${requestId}] Failed to update/create settings`)
@@ -151,8 +168,9 @@ export async function updateWorkingHoursSettings(data: {
 
     revalidatePath("/dashboard/admin/working-hours")
 
-    return { success: true, data: settings }
+    return { success: true, data: settings.toObject() }
   } catch (error) {
+    console.error(`[${requestId}] Error updating working hours settings:`, error)
     logger.error(`[${requestId}] Error updating working hours settings:`, error)
     return {
       success: false,

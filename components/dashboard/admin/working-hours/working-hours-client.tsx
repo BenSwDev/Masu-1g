@@ -221,6 +221,9 @@ export default function WorkingHoursClient() {
   })
 
   const handleAddOrUpdateSpecialDate = (data: SpecialDateFormData) => {
+    console.log("=== ADDING/UPDATING SPECIAL DATE ===")
+    console.log("Form data:", data)
+
     const specialDateData = {
       ...data,
       date: data.date.toISOString().split("T")[0], // המר ל-YYYY-MM-DD
@@ -228,12 +231,18 @@ export default function WorkingHoursClient() {
       notes: data.notes || "",
     }
 
+    console.log("Processed special date data:", specialDateData)
+
     if (editingSpecialDateIndex !== null) {
+      console.log("Updating existing special date at index:", editingSpecialDateIndex)
       updateSpecialDate(editingSpecialDateIndex, specialDateData)
       setEditingSpecialDateIndex(null)
     } else {
+      console.log("Adding new special date")
       appendSpecialDate(specialDateData)
     }
+
+    console.log("Current special dates after update:", form.getValues("specialDates"))
 
     specialDateForm.reset({
       name: "",
@@ -250,7 +259,10 @@ export default function WorkingHoursClient() {
 
   const onSubmit = async (data: WorkingHoursFormData) => {
     try {
-      console.log("Submitting data:", data) // הוסף לוג לדיבוג
+      console.log("=== FORM SUBMIT START ===")
+      console.log("Raw form data:", data)
+      console.log("Special dates count:", data.specialDates.length)
+      console.log("Special dates details:", data.specialDates)
 
       const processedData = {
         ...data,
@@ -268,10 +280,14 @@ export default function WorkingHoursClient() {
         })),
       }
 
-      console.log("Processed data:", processedData) // הוסף לוג לדיבוג
-      await updateMutation.mutateAsync(processedData)
+      console.log("Processed data for server:", processedData)
+      console.log("=== SENDING TO SERVER ===")
+
+      const result = await updateMutation.mutateAsync(processedData)
+      console.log("Server response:", result)
+      console.log("=== FORM SUBMIT END ===")
     } catch (error: any) {
-      console.error("Submit error:", error) // הוסף לוג לדיבוג
+      console.error("Submit error:", error)
       toast({
         title: t("workingHours.updateError"),
         description: error.message || t("workingHours.updateErrorDescription"),

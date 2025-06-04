@@ -104,6 +104,7 @@ const SpecialDateSchema = new Schema<ISpecialDate>({
   date: {
     type: Date,
     required: true,
+    index: true, // הוסף אינדקס לביצועים טובים יותר
   },
   isActive: {
     type: Boolean,
@@ -146,6 +147,17 @@ const SpecialDateSchema = new Schema<ISpecialDate>({
     maxlength: 500,
     default: "",
   },
+})
+
+// הוסף pre-save hook גם לתאריכים מיוחדים
+SpecialDateSchema.pre("save", function (next) {
+  if (!this.priceAddition) {
+    this.priceAddition = { amount: 0, type: "fixed" }
+  }
+  if (!this.hasPriceAddition) {
+    this.priceAddition = { amount: 0, type: "fixed" }
+  }
+  next()
 })
 
 const WorkingHoursSettingsSchema = new Schema<IWorkingHoursSettings>(

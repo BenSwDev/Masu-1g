@@ -38,10 +38,16 @@ type PaymentMethodFormValues = z.infer<typeof paymentMethodSchema>
 interface PaymentMethodFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  paymentMethod?: IPaymentMethod
+  paymentMethod?: IPaymentMethod // For editing
+  onPaymentMethodUpserted?: (method: IPaymentMethod) => void // Callback after successful upsert
 }
 
-export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: PaymentMethodFormProps) {
+export function PaymentMethodForm({
+  open,
+  onOpenChange,
+  paymentMethod,
+  onPaymentMethodUpserted,
+}: PaymentMethodFormProps) {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const isEditing = !!paymentMethod
@@ -65,13 +71,12 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
         cardNumber: paymentMethod.cardNumber || "",
         expiryMonth: paymentMethod.expiryMonth || "",
         expiryYear: paymentMethod.expiryYear || "",
-        cvv: paymentMethod.cvv || "",
+        cvv: paymentMethod.cvv || "", // Assuming CVV is not stored/returned for editing
         cardHolderName: paymentMethod.cardHolderName || "",
         cardName: paymentMethod.cardName || "",
         isDefault: paymentMethod.isDefault || false,
       })
     } else if (!isEditing) {
-      // Reset to empty values for new payment method
       form.reset({
         cardNumber: "",
         expiryMonth: "",
@@ -82,33 +87,32 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
         isDefault: false,
       })
     }
-  }, [paymentMethod, isEditing, form])
+  }, [paymentMethod, isEditing, form, open]) // Added 'open' to reset form when dialog reopens for new entry
 
   const onSubmit = async (data: PaymentMethodFormValues) => {
     setIsLoading(true)
     try {
       const formData: PaymentMethodFormData = {
-        cardNumber: data.cardNumber,
-        expiryMonth: data.expiryMonth,
-        expiryYear: data.expiryYear,
-        cvv: data.cvv,
-        cardHolderName: data.cardHolderName,
-        cardName: data.cardName,
-        isDefault: data.isDefault,
+        ...data, // Spread all validated form data
       }
 
-      const result = isEditing
-        ? await updatePaymentMethod(paymentMethod._id as string, formData)
-        : await createPaymentMethod(formData)
+      const result =
+        isEditing && paymentMethod
+          ? await updatePaymentMethod(paymentMethod._id as string, formData)
+          : await createPaymentMethod(formData)
 
-      if (result.success) {
+      if (result.success && result.paymentMethod) {
         toast.success(isEditing ? t("paymentMethods.updated") : t("paymentMethods.created"))
+        if (onPaymentMethodUpserted) {
+          onPaymentMethodUpserted(result.paymentMethod)
+        }
         onOpenChange(false)
-        form.reset()
+        // No need to call form.reset() here if useEffect handles it based on 'open'
       } else {
-        toast.error(isEditing ? t("paymentMethods.updateError") : t("paymentMethods.createError"))
+        toast.error(result.error || (isEditing ? t("paymentMethods.updateError") : t("paymentMethods.createError")))
       }
     } catch (error) {
+      console.error("Payment method form submission error:", error)
       toast.error(t("paymentMethods.error"))
     } finally {
       setIsLoading(false)
@@ -116,9 +120,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
   }
 
   const formatCardNumber = (value: string) => {
-    // Remove all non-digits
     const digits = value.replace(/\D/g, "")
-    // Add spaces every 4 digits
     return digits.replace(/(\d{4})(?=\d)/g, "$1 ")
   }
 
@@ -128,13 +130,11 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
     form.setValue("cardNumber", digitsOnly)
   }
 
-  // Generate month options
   const months = Array.from({ length: 12 }, (_, i) => {
     const month = (i + 1).toString().padStart(2, "0")
     return { value: month, label: month }
   })
 
-  // Generate year options (current year + 10 years)
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 11 }, (_, i) => {
     const year = (currentYear + i).toString()
@@ -178,10 +178,10 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("paymentMethods.fields.expiryMonth")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="חודש" />
+                          <SelectValue placeholder={t("paymentMethods.fields.monthPlaceholder") || "חודש"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -203,10 +203,10 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("paymentMethods.fields.expiryYear")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value || undefined}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="שנה" />
+                          <SelectValue placeholder={t("paymentMethods.fields.yearPlaceholder") || "שנה"} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -253,7 +253,10 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
                 <FormItem>
                   <FormLabel>{t("paymentMethods.fields.cardHolderName")}</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="שם בעל הכרטיס" />
+                    <Input
+                      {...field}
+                      placeholder={t("paymentMethods.fields.cardHolderNamePlaceholder") || "שם בעל הכרטיס"}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -267,7 +270,10 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
                 <FormItem>
                   <FormLabel>{t("paymentMethods.fields.cardName")}</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="שם הכרטיס (אופציונלי)" />
+                    <Input
+                      {...field}
+                      placeholder={t("paymentMethods.fields.cardNamePlaceholder") || "שם הכרטיס (אופציונלי)"}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -278,7 +284,7 @@ export function PaymentMethodForm({ open, onOpenChange, paymentMethod }: Payment
               control={form.control}
               name="isDefault"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rtl:space-x-reverse">
                   <FormControl>
                     <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                   </FormControl>

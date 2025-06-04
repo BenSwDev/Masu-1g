@@ -11,9 +11,17 @@ export type BookingStatus =
 export interface IPriceDetails {
   basePrice: number
   surcharges: { description: string; amount: number }[]
+  totalSurchargesAmount: number
+  treatmentPriceAfterSubscriptionOrTreatmentVoucher: number
   discountAmount: number // From coupon
   voucherAppliedAmount: number // From gift voucher
   finalAmount: number
+  isBaseTreatmentCoveredBySubscription?: boolean
+  isBaseTreatmentCoveredByTreatmentVoucher?: boolean
+  isFullyCoveredByVoucherOrSubscription?: boolean
+  appliedCouponId?: Types.ObjectId
+  appliedGiftVoucherId?: Types.ObjectId
+  redeemedUserSubscriptionId?: Types.ObjectId
 }
 
 export interface IPaymentDetails {
@@ -63,9 +71,17 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
         amount: { type: Number, required: true, min: 0 },
       },
     ],
+    totalSurchargesAmount: { type: Number, default: 0, min: 0 },
+    treatmentPriceAfterSubscriptionOrTreatmentVoucher: { type: Number, default: 0, min: 0 },
     discountAmount: { type: Number, default: 0, min: 0 },
     voucherAppliedAmount: { type: Number, default: 0, min: 0 },
     finalAmount: { type: Number, required: true, min: 0 },
+    isBaseTreatmentCoveredBySubscription: { type: Boolean, default: false },
+    isBaseTreatmentCoveredByTreatmentVoucher: { type: Boolean, default: false },
+    isFullyCoveredByVoucherOrSubscription: { type: Boolean, default: false },
+    appliedCouponId: { type: Schema.Types.ObjectId, ref: "Coupon" },
+    appliedGiftVoucherId: { type: Schema.Types.ObjectId, ref: "GiftVoucher" },
+    redeemedUserSubscriptionId: { type: Schema.Types.ObjectId, ref: "UserSubscription" },
   },
   { _id: false },
 )

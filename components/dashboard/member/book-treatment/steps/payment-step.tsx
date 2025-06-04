@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react" // Added useState
+import { useEffect, useState } from "react"
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -13,6 +13,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { PaymentDetailsSchema, type PaymentFormValues } from "@/lib/validation/booking-schemas"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
+import { PaymentMethodForm } from "@/components/dashboard/member/payment-methods/payment-method-form"
+import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 
 interface PaymentStepProps {
   initialData: BookingInitialData
@@ -35,7 +37,9 @@ export default function PaymentStep({
   onPrev,
   translations,
 }: PaymentStepProps) {
-  const [isClientLoading, setIsClientLoading] = useState(true) // For initial client-side check
+  const [isClientLoading, setIsClientLoading] = useState(true)
+  const [showAddPaymentMethodForm, setShowAddPaymentMethodForm] = useState(false)
+  const [localPaymentMethods, setLocalPaymentMethods] = useState<IPaymentMethod[]>(initialData.userPaymentMethods || [])
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(PaymentDetailsSchema),
@@ -45,9 +49,29 @@ export default function PaymentStep({
   })
 
   useEffect(() => {
-    setIsClientLoading(false) // Finished initial client-side loading
+    setIsClientLoading(false)
   }, [])
 
+  // Update localPaymentMethods if initialData changes
+  useEffect(() => {
+    setLocalPaymentMethods(initialData.userPaymentMethods || [])
+  }, [initialData.userPaymentMethods])
+
+  // Effect to select default payment method or first one if none selected
+  useEffect(() => {
+    if (localPaymentMethods.length > 0 && !form.getValues("selectedPaymentMethodId")) {
+      const defaultMethod = localPaymentMethods.find((pm) => pm.isDefault)
+      const methodToSelect = defaultMethod || localPaymentMethods[0] // Select default or first
+
+      if (methodToSelect) {
+        const methodId = methodToSelect._id.toString()
+        form.setValue("selectedPaymentMethodId", methodId)
+        // No need to call setBookingOptions here, form.watch will handle it
+      }
+    }
+  }, [localPaymentMethods, form]) // Rerun when localPaymentMethods or form instance changes
+
+  // Watch for form changes and update bookingOptions
   useEffect(() => {
     const subscription = form.watch((values) => {
       setBookingOptions((prev) => ({
@@ -58,12 +82,38 @@ export default function PaymentStep({
     return () => subscription.unsubscribe()
   }, [form, setBookingOptions])
 
+  const handlePaymentMethodUpserted = (upsertedMethod: IPaymentMethod) => {
+    setLocalPaymentMethods((prevMethods) => {
+      const existingIndex = prevMethods.findIndex((pm) => pm._id.toString() === upsertedMethod._id.toString())
+      let newMethodsArray
+      if (existingIndex !== -1) {
+        // Update existing method
+        newMethodsArray = [...prevMethods]
+        newMethodsArray[existingIndex] = upsertedMethod
+      } else {
+        // Add new method
+        newMethodsArray = [...prevMethods, upsertedMethod]
+      }
+
+      // If the new method is set as default, unset others
+      if (upsertedMethod.isDefault) {
+        newMethodsArray = newMethodsArray.map((pm) =>
+          pm._id.toString() === upsertedMethod._id.toString() ? pm : { ...pm, isDefault: false },
+        )
+      }
+      return newMethodsArray
+    })
+
+    // Select the newly added/updated method
+    form.setValue("selectedPaymentMethodId", upsertedMethod._id.toString())
+    setShowAddPaymentMethodForm(false)
+  }
+
   const onSubmitValidated = async (data: PaymentFormValues) => {
     await onSubmit()
   }
 
   if (isClientLoading || !calculatedPrice) {
-    // Show loader if client is still loading or price not calculated
     return (
       <div className="flex flex-col items-center justify-center p-8 min-h-[300px] text-muted-foreground">
         <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
@@ -85,7 +135,6 @@ export default function PaymentStep({
               "Your booking is fully covered and no payment is required. Please review and confirm."}
           </p>
         </div>
-        {/* Optionally show a mini summary here if needed */}
         <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
           <Button variant="outline" onClick={onPrev} disabled={isLoading} type="button" size="lg">
             {translations["common.back"] || "Back"}
@@ -124,7 +173,7 @@ export default function PaymentStep({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {initialData.userPaymentMethods.length > 0 ? (
+            {localPaymentMethods.length > 0 ? (
               <FormField
                 control={form.control}
                 name="selectedPaymentMethodId"
@@ -135,7 +184,7 @@ export default function PaymentStep({
                     </FormLabel>
                     <FormControl>
                       <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-3">
-                        {initialData.userPaymentMethods.map((pm) => (
+                        {localPaymentMethods.map((pm) => (
                           <FormItem key={pm._id.toString()} className="flex items-center">
                             <FormControl>
                               <RadioGroupItem
@@ -154,6 +203,11 @@ export default function PaymentStep({
                                   className={`h-6 w-6 ${field.value === pm._id.toString() ? "text-primary" : "text-muted-foreground"}`}
                                 />
                                 <span className="font-medium">{pm.cardName || `**** ${pm.last4Digits}`}</span>
+                                {pm.isDefault && (
+                                  <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full ml-2">
+                                    {translations["paymentMethods.default"] || "Default"}
+                                  </span>
+                                )}
                               </div>
                               <div className="text-right">
                                 <p className="text-sm text-muted-foreground">{pm.cardType}</p>
@@ -179,17 +233,27 @@ export default function PaymentStep({
                 </AlertTitle>
                 <AlertDescription>
                   {translations["bookings.steps.payment.noSavedPaymentMethodsDesc"] ||
-                    "You don't have any saved payment methods. Please add one in your dashboard to proceed."}
+                    "You don't have any saved payment methods. Please add one to proceed."}
                 </AlertDescription>
               </Alert>
             )}
-            <Button variant="outline" className="mt-6 w-full" disabled type="button">
+            <Button
+              variant="outline"
+              className="mt-6 w-full"
+              type="button"
+              onClick={() => setShowAddPaymentMethodForm(true)}
+            >
               <CreditCard className="mr-2 h-4 w-4" />
-              {translations["paymentMethods.addNew"] || "Add New Payment Method"} (
-              {translations["common.comingSoon"] || "Coming Soon"})
+              {translations["paymentMethods.addNew"] || "Add New Payment Method"}
             </Button>
           </CardContent>
         </Card>
+
+        <PaymentMethodForm
+          open={showAddPaymentMethodForm}
+          onOpenChange={setShowAddPaymentMethodForm}
+          onPaymentMethodUpserted={handlePaymentMethodUpserted}
+        />
 
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6">
           <Button
@@ -204,7 +268,12 @@ export default function PaymentStep({
           </Button>
           <Button
             type="submit"
-            disabled={isLoading || !form.formState.isValid || initialData.userPaymentMethods.length === 0}
+            disabled={
+              isLoading ||
+              !form.formState.isValid ||
+              (localPaymentMethods.length === 0 && calculatedPrice.finalAmount > 0) || // Disable if no methods and payment needed
+              !form.getValues("selectedPaymentMethodId") // Disable if no method selected and payment needed
+            }
             size="lg"
             className="w-full sm:w-auto"
           >

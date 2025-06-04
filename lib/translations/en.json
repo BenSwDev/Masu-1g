@@ -1181,7 +1181,10 @@
         "priceVariesByDuration": "Price varies by duration",
         "noTreatmentsForSelection": "No treatments available for this selection. Please check your subscription/voucher or choose another booking method.",
         "selectDuration": "Select Duration",
-        "selectDurationPlaceholder": "Choose a duration..."
+        "selectDurationPlaceholder": "Choose a duration...",
+        "treatmentLockedBySource": "Treatment is determined by your selected subscription/voucher:",
+        "durationLockedBySource": "Duration is determined by your selected subscription/voucher:",
+        "noDurationsForTreatment": "No durations available for the selected treatment."
       },
       "scheduling": {
         "title": "Schedule Your Appointment",
@@ -1219,7 +1222,8 @@
         "couponDiscount": "Coupon Discount",
         "totalAmount": "Total Amount",
         "fullyCovered": "This booking is fully covered.",
-        "confirmBooking": "Confirm Booking"
+        "confirmBooking": "Confirm Booking",
+        "usingSubscription": "Using subscription"
       },
       "payment": {
         "title": "Payment",
@@ -1266,7 +1270,10 @@
       "cancellationFailedUnknown": "Booking cancellation failed due to an unknown error.",
       "cancelBookingFailed": "Failed to cancel booking. Please try again.",
       "initialDataLoadFailed": "Critical data for booking page could not be loaded.",
-      "initialDataFetchFailed": "Failed to fetch initial data for booking. Please refresh the page."
+      "initialDataFetchFailed": "Failed to fetch initial data for booking. Please refresh the page.",
+      "subscriptionTreatmentMismatch": "The selected treatment does not match the one covered by your subscription.",
+      "subscriptionDurationMismatch": "The selected duration does not match the one covered by your subscription.",
+      "priceCalculationUnavailable": "Price details are currently unavailable. Please ensure all previous steps are completed correctly."
     },
     "messages": {
       "closedOnSelectedDate": "We are closed on the selected date."
@@ -1288,6 +1295,10 @@
       "durationRequiredForType": "Duration is required for the selected treatment."
     },
     "unknownSubscription": "Unknown Subscription",
-    "treatmentVoucher": "Treatment Voucher"
+    "treatmentVoucher": "Treatment Voucher",
+    "subscriptions": {
+      "remaining": "Remaining",
+      "expiry": "Expires"
+    }
   }
 }

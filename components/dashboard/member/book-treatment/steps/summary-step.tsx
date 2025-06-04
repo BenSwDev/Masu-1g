@@ -75,6 +75,21 @@ export default function SummaryStep({
     return translations[key] || preferenceKey
   }
 
+  const getSubscriptionName = () => {
+    if (bookingOptions.source === "subscription_redemption" && bookingOptions.selectedUserSubscriptionId) {
+      const sub = initialData.activeUserSubscriptions.find(
+        (s) => s._id.toString() === bookingOptions.selectedUserSubscriptionId,
+      )
+      if (sub && (sub.subscriptionId as any)?.name) {
+        return (sub.subscriptionId as any).name
+      }
+      return translations["bookings.unknownSubscription"] || "Unknown Subscription"
+    }
+    return null
+  }
+
+  const subscriptionName = getSubscriptionName()
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
@@ -102,6 +117,12 @@ export default function SummaryStep({
               <span className="font-semibold text-right">
                 {selectedTreatment?.name}
                 {selectedDuration ? ` (${selectedDuration.minutes} ${translations["common.minutes"] || "min"})` : ""}
+                {subscriptionName && (
+                  <span className="block text-xs text-primary">
+                    ({translations["bookings.steps.summary.usingSubscription"] || "Using subscription"}:{" "}
+                    {subscriptionName})
+                  </span>
+                )}
               </span>
             </div>
             <Separator />
@@ -240,7 +261,7 @@ export default function SummaryStep({
                   </div>
                 ))}
 
-                {bookingOptions.source === "subscription_redemption" && calculatedPrice.redeemedUserSubscriptionId && (
+                {calculatedPrice.redeemedUserSubscriptionId && (
                   <div className="flex justify-between items-center font-medium text-green-600">
                     <span className="flex items-center">
                       <Star className="mr-2 h-4 w-4" />

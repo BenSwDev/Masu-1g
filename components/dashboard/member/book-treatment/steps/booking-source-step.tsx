@@ -13,6 +13,8 @@ import { BookingSourceSchema, type BookingSourceFormValues } from "@/lib/validat
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
 import { useEffect } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
+import { format } from "date-fns" // For formatting expiry date
+import type { ITreatment } from "@/types"
 
 interface BookingSourceStepProps {
   initialData: BookingInitialData
@@ -64,6 +66,27 @@ export default function BookingSourceStep({
 
   const noOptionsAvailable = !hasSubscriptions && !hasVouchers
 
+  // Helper to get subscription display details
+  const getSubscriptionDisplayDetails = (sub: any) => {
+    let details = `${(sub.subscriptionId as any)?.name || translations["bookings.unknownSubscription"] || "Unknown Subscription"}`
+    details += ` (${translations["bookings.subscriptions.remaining"] || "Remaining"}: ${sub.remainingQuantity})`
+
+    const treatmentFromSub = sub.treatmentId as ITreatment | undefined
+    if (treatmentFromSub) {
+      details += ` - ${treatmentFromSub.name}`
+      if (treatmentFromSub.pricingType === "duration_based" && sub.selectedDurationId) {
+        const duration = treatmentFromSub.durations?.find((d) => d._id.toString() === sub.selectedDurationId.toString())
+        if (duration) {
+          details += ` (${duration.minutes} ${translations["common.minutes"] || "min"})`
+        }
+      }
+    }
+    if (sub.expiryDate) {
+      details += ` (${translations["subscriptions.expiry"] || "Expires"}: ${format(new Date(sub.expiryDate), "PP")})`
+    }
+    return details
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
@@ -111,6 +134,7 @@ export default function BookingSourceStep({
                             ({initialData.activeUserSubscriptions.length}{" "}
                             {translations["bookings.steps.source.available"] || "available"})
                           </CardDescription>
+                          {/* Display more details about subscriptions if needed, or in the next step */}
                         </Card>
                       </Label>
                     </FormItem>

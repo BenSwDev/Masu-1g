@@ -1376,7 +1376,10 @@
         "priceVariesByDuration": "המחיר משתנה לפי משך הטיפול",
         "noTreatmentsForSelection": "אין טיפולים זמינים לבחירה זו. אנא בדוק את המנוי/שובר שלך או בחר שיטת הזמנה אחרת.",
         "selectDuration": "בחר משך טיפול",
-        "selectDurationPlaceholder": "בחר משך..."
+        "selectDurationPlaceholder": "בחר משך...",
+        "treatmentLockedBySource": "הטיפול נקבע על פי המנוי/שובר שבחרת:",
+        "durationLockedBySource": "משך הזמן נקבע על פי המנוי/שובר שבחרת:",
+        "noDurationsForTreatment": "אין משכי זמן זמינים לטיפול הנבחר."
       },
       "scheduling": {
         "title": "קבע את התור שלך",
@@ -1414,7 +1417,8 @@
         "couponDiscount": "הנחת קופון",
         "totalAmount": "סכום כולל",
         "fullyCovered": "הזמנה זו מכוסה במלואה.",
-        "confirmBooking": "אשר הזמנה"
+        "confirmBooking": "אשר הזמנה",
+        "usingSubscription": "בשימוש ממנוי"
       },
       "payment": {
         "title": "תשלום",
@@ -1461,7 +1465,10 @@
       "cancellationFailedUnknown": "ביטול ההזמנה נכשל עקב שגיאה לא ידועה.",
       "cancelBookingFailed": "ביטול ההזמנה נכשל. אנא נסה שוב.",
       "initialDataLoadFailed": "טעינת נתונים קריטיים לדף ההזמנה נכשלה.",
-      "initialDataFetchFailed": "שליפת נתונים ראשוניים להזמנה נכשלה. אנא רענן את הדף."
+      "initialDataFetchFailed": "שליפת נתונים ראשוניים להזמנה נכשלה. אנא רענן את הדף.",
+      "subscriptionTreatmentMismatch": "הטיפול שנבחר אינו תואם לטיפול המכוסה במנוי שלך.",
+      "subscriptionDurationMismatch": "משך הזמן שנבחר אינו תואם למשך המכוסה במנוי שלך.",
+      "priceCalculationUnavailable": "פרטי המחיר אינם זמינים כעת. אנא ודא שכל השלבים הקודמים הושלמו כראוי."
     },
     "messages": {
       "closedOnSelectedDate": "אנו סגורים בתאריך הנבחר."
@@ -1483,6 +1490,10 @@
       "durationRequiredForType": "נדרש משך זמן עבור הטיפול הנבחר."
     },
     "unknownSubscription": "מנוי לא ידוע",
-    "treatmentVoucher": "שובר טיפול"
+    "treatmentVoucher": "שובר טיפול",
+    "subscriptions": {
+      "remaining": "נותרו",
+      "expiry": "תוקף"
+    }
   }
 }

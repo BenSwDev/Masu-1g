@@ -1,19 +1,22 @@
 import type {
-  IUserSubscription,
-  ITreatment,
-  ITreatmentDuration,
+  IUserSubscription as IUserSubscriptionBase, // Keep original
+  ITreatment as ITreatmentBase, // Keep original
+  ITreatmentDuration as ITreatmentDurationBase, // Keep original
   IAddress,
   IPaymentMethod,
   IWorkingHoursSettings,
   GiftVoucherPlain as IGiftVoucher,
 } from "@/lib/db/models" // Assuming models export their interfaces or types
 
+// Extend IUserSubscription for populated data in BookingInitialData
+export type PopulatedUserSubscription = IUserSubscriptionBase & {
+  subscriptionId: { _id: string; name: string /* other ISubscription fields if needed */ } // Assuming subscriptionId is populated
+  treatmentId?: ITreatmentBase & { durations?: ITreatmentDurationBase[] } // treatmentId can be optional or fully populated
+  selectedDurationDetails?: ITreatmentDurationBase // If a specific duration is tied to the user's subscription instance
+}
+
 export interface BookingInitialData {
-  activeUserSubscriptions: (IUserSubscription & {
-    subscriptionId: any
-    treatmentId: any
-    selectedDurationDetails?: any
-  })[] // Simplified, use proper populated types
+  activeUserSubscriptions: PopulatedUserSubscription[] // Use the more specific type
   usableGiftVouchers: IGiftVoucher[]
   userPreferences: {
     therapistGender: "male" | "female" | "any"
@@ -22,8 +25,9 @@ export interface BookingInitialData {
   }
   userAddresses: IAddress[]
   userPaymentMethods: IPaymentMethod[]
-  activeTreatments: (ITreatment & { durations: ITreatmentDuration[] })[] // Ensure durations are populated
+  activeTreatments: (ITreatmentBase & { durations: ITreatmentDurationBase[] })[]
   workingHoursSettings: IWorkingHoursSettings
+  translations: Record<string, string> // Added this based on your wizard props
 }
 
 export interface SelectedBookingOptions {
@@ -48,7 +52,7 @@ export interface CalculatedPriceDetails {
   basePrice: number
   surcharges: { description: string; amount: number }[]
   couponDiscount: number
-  voucherCoverage: number
+  voucherAppliedAmount: number // Renamed from voucherCoverage
   finalAmount: number
   isFullyCoveredByVoucherOrSubscription: boolean
   appliedCouponId?: string

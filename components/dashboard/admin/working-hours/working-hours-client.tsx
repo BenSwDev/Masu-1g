@@ -141,7 +141,7 @@ export default function WorkingHoursClient() {
     },
   })
 
-  // טופס נפרד לשעות קבועות
+  // Fixed Hours Form
   const fixedHoursForm = useForm<FixedHoursFormData>({
     resolver: zodResolver(fixedHoursFormSchema),
     defaultValues: {
@@ -149,7 +149,7 @@ export default function WorkingHoursClient() {
     },
   })
 
-  // טופס נפרד לתאריכים מיוחדים
+  // Special Date Form
   const specialDateForm = useForm<SpecialDateFormData>({
     resolver: zodResolver(specialDateFormSchema),
     defaultValues: {
@@ -174,56 +174,57 @@ export default function WorkingHoursClient() {
     }
   }, [workingHoursData, fixedHoursForm])
 
-  // מוטציות נפרדות
+  // Fixed Hours Mutations
   const updateFixedHoursMutation = useMutation({
     mutationFn: updateFixedHours,
     onSuccess: (data) => {
       if (data.success) {
         toast({
-          title: t("workingHours.updateSuccess"),
-          description: t("workingHours.fixedHoursUpdated"),
+          title: "Fixed hours updated successfully",
+          description: "Your working hours have been saved.",
         })
         queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
       } else {
         toast({
-          title: t("workingHours.updateError"),
-          description: data.error || t("workingHours.updateErrorDescription"),
+          title: "Error updating fixed hours",
+          description: data.error || "Failed to update fixed hours",
           variant: "destructive",
         })
       }
     },
     onError: (error: any) => {
       toast({
-        title: t("workingHours.updateError"),
-        description: error.message || t("workingHours.updateErrorDescription"),
+        title: "Error updating fixed hours",
+        description: error.message || "Failed to update fixed hours",
         variant: "destructive",
       })
     },
   })
 
+  // Special Date Mutations
   const addSpecialDateMutation = useMutation({
     mutationFn: addSpecialDate,
     onSuccess: (data) => {
       if (data.success) {
         toast({
-          title: t("workingHours.addSuccess"),
-          description: t("workingHours.specialDateAdded"),
+          title: "Special date added successfully",
+          description: "The special date has been added.",
         })
         queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
         setIsSpecialDateDialogOpen(false)
         specialDateForm.reset()
       } else {
         toast({
-          title: t("workingHours.addError"),
-          description: data.error || t("workingHours.addErrorDescription"),
+          title: "Error adding special date",
+          description: data.error || "Failed to add special date",
           variant: "destructive",
         })
       }
     },
     onError: (error: any) => {
       toast({
-        title: t("workingHours.addError"),
-        description: error.message || t("workingHours.addErrorDescription"),
+        title: "Error adding special date",
+        description: error.message || "Failed to add special date",
         variant: "destructive",
       })
     },
@@ -234,8 +235,8 @@ export default function WorkingHoursClient() {
     onSuccess: (data) => {
       if (data.success) {
         toast({
-          title: t("workingHours.updateSuccess"),
-          description: t("workingHours.specialDateUpdated"),
+          title: "Special date updated successfully",
+          description: "The special date has been updated.",
         })
         queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
         setIsSpecialDateDialogOpen(false)
@@ -243,16 +244,16 @@ export default function WorkingHoursClient() {
         specialDateForm.reset()
       } else {
         toast({
-          title: t("workingHours.updateError"),
-          description: data.error || t("workingHours.updateErrorDescription"),
+          title: "Error updating special date",
+          description: data.error || "Failed to update special date",
           variant: "destructive",
         })
       }
     },
     onError: (error: any) => {
       toast({
-        title: t("workingHours.updateError"),
-        description: error.message || t("workingHours.updateErrorDescription"),
+        title: "Error updating special date",
+        description: error.message || "Failed to update special date",
         variant: "destructive",
       })
     },
@@ -263,26 +264,34 @@ export default function WorkingHoursClient() {
     onSuccess: (data) => {
       if (data.success) {
         toast({
-          title: t("workingHours.deleteSuccess"),
-          description: t("workingHours.specialDateDeleted"),
+          title: "Special date deleted successfully",
+          description: "The special date has been removed.",
         })
         queryClient.invalidateQueries({ queryKey: ["working-hours-settings"] })
       } else {
         toast({
-          title: t("workingHours.deleteError"),
-          description: data.error || t("workingHours.deleteErrorDescription"),
+          title: "Error deleting special date",
+          description: data.error || "Failed to delete special date",
           variant: "destructive",
         })
       }
     },
     onError: (error: any) => {
       toast({
-        title: t("workingHours.deleteError"),
-        description: error.message || t("workingHours.deleteErrorDescription"),
+        title: "Error deleting special date",
+        description: error.message || "Failed to delete special date",
         variant: "destructive",
       })
     },
   })
+
+  const handleFixedHoursSubmit = async (data: FixedHoursFormData) => {
+    try {
+      await updateFixedHoursMutation.mutateAsync(data.fixedHours)
+    } catch (error: any) {
+      console.error("Fixed hours submit error:", error)
+    }
+  }
 
   const handleAddOrUpdateSpecialDate = (data: SpecialDateFormData) => {
     const specialDateData = {
@@ -296,24 +305,6 @@ export default function WorkingHoursClient() {
       updateSpecialDateMutation.mutate({ index: editingSpecialDateIndex, data: specialDateData })
     } else {
       addSpecialDateMutation.mutate(specialDateData)
-    }
-  }
-
-  const onSubmitFixedHours = async (data: FixedHoursFormData) => {
-    try {
-      const processedData = data.fixedHours.map((fh) => ({
-        ...fh,
-        priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
-        notes: fh.notes?.trim() || "",
-      }))
-
-      await updateFixedHoursMutation.mutateAsync(processedData)
-    } catch (error: any) {
-      toast({
-        title: t("workingHours.updateError"),
-        description: error.message || t("workingHours.updateErrorDescription"),
-        variant: "destructive",
-      })
     }
   }
 
@@ -351,16 +342,8 @@ export default function WorkingHoursClient() {
   }
 
   const dayNames = React.useMemo(
-    () => [
-      t("workingHours.days.sunday"),
-      t("workingHours.days.monday"),
-      t("workingHours.days.tuesday"),
-      t("workingHours.days.wednesday"),
-      t("workingHours.days.thursday"),
-      t("workingHours.days.friday"),
-      t("workingHours.days.saturday"),
-    ],
-    [t],
+    () => ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    [],
   )
 
   if (isLoading) {
@@ -393,7 +376,7 @@ export default function WorkingHoursClient() {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-destructive">
         <AlertTriangle className="h-12 w-12 mb-4" />
-        <p className="text-xl font-semibold">{t("common.errorOccurred")}</p>
+        <p className="text-xl font-semibold">An error occurred</p>
         <p>{queryError.message}</p>
       </div>
     )
@@ -403,8 +386,8 @@ export default function WorkingHoursClient() {
     <div className="w-full max-w-full overflow-hidden p-4 space-y-6">
       <Tabs defaultValue="fixed-hours" className="w-full" dir={dir}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="fixed-hours">{t("workingHours.fixedHoursTab")}</TabsTrigger>
-          <TabsTrigger value="special-dates">{t("workingHours.specialDatesTab")}</TabsTrigger>
+          <TabsTrigger value="fixed-hours">Fixed Hours</TabsTrigger>
+          <TabsTrigger value="special-dates">Special Dates</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fixed-hours">
@@ -412,24 +395,24 @@ export default function WorkingHoursClient() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Clock className="h-5 w-5" />
-                {t("workingHours.fixedHours")}
+                Fixed Working Hours
               </CardTitle>
-              <CardDescription>{t("workingHours.fixedHoursDescription")}</CardDescription>
+              <CardDescription>Set your regular weekly working hours</CardDescription>
             </CardHeader>
             <CardContent>
               <Form {...fixedHoursForm}>
-                <form onSubmit={fixedHoursForm.handleSubmit(onSubmitFixedHours)} className="space-y-6">
+                <form onSubmit={fixedHoursForm.handleSubmit(handleFixedHoursSubmit)} className="space-y-6">
                   {/* Desktop Table */}
                   <div className="hidden md:block">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>{t("workingHours.day")}</TableHead>
-                          <TableHead className="text-center">{t("workingHours.active")}</TableHead>
-                          <TableHead>{t("workingHours.startTime")}</TableHead>
-                          <TableHead>{t("workingHours.endTime")}</TableHead>
-                          <TableHead>{t("workingHours.priceAddition")}</TableHead>
-                          <TableHead>{t("workingHours.notes")}</TableHead>
+                          <TableHead>Day</TableHead>
+                          <TableHead className="text-center">Active</TableHead>
+                          <TableHead>Start Time</TableHead>
+                          <TableHead>End Time</TableHead>
+                          <TableHead>Price Addition</TableHead>
+                          <TableHead>Notes</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -451,7 +434,7 @@ export default function WorkingHoursClient() {
                                         <Checkbox
                                           checked={field.value}
                                           onCheckedChange={(checked) => handleDayActiveChange(index, !!checked)}
-                                          aria-label={`${t("workingHours.active")} for ${dayNames[dayOfWeek]}`}
+                                          aria-label={`Active for ${dayNames[dayOfWeek]}`}
                                         />
                                       </FormControl>
                                     </FormItem>
@@ -470,7 +453,7 @@ export default function WorkingHoursClient() {
                                             type="time"
                                             {...field}
                                             className="w-full max-w-[120px]"
-                                            aria-label={`${t("workingHours.startTime")} for ${dayNames[dayOfWeek]}`}
+                                            aria-label={`Start time for ${dayNames[dayOfWeek]}`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -491,7 +474,7 @@ export default function WorkingHoursClient() {
                                             type="time"
                                             {...field}
                                             className="w-full max-w-[120px]"
-                                            aria-label={`${t("workingHours.endTime")} for ${dayNames[dayOfWeek]}`}
+                                            aria-label={`End time for ${dayNames[dayOfWeek]}`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -512,12 +495,10 @@ export default function WorkingHoursClient() {
                                             <Checkbox
                                               checked={field.value}
                                               onCheckedChange={field.onChange}
-                                              aria-label={`${t("workingHours.hasPriceAddition")} for ${dayNames[dayOfWeek]}`}
+                                              aria-label={`Price addition for ${dayNames[dayOfWeek]}`}
                                             />
                                           </FormControl>
-                                          <FormLabel className="text-sm font-normal">
-                                            {t("workingHours.enablePriceAddition")}
-                                          </FormLabel>
+                                          <FormLabel className="text-sm font-normal">Enable Price Addition</FormLabel>
                                         </FormItem>
                                       )}
                                     />
@@ -539,7 +520,7 @@ export default function WorkingHoursClient() {
                                                     field.onChange(Number.parseFloat(e.target.value) || 0)
                                                   }
                                                   className="w-20"
-                                                  aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
+                                                  aria-label={`Amount for ${dayNames[dayOfWeek]}`}
                                                 />
                                               </FormControl>
                                               <FormMessage />
@@ -558,7 +539,7 @@ export default function WorkingHoursClient() {
                                                 <FormControl>
                                                   <SelectTrigger
                                                     className="w-[90px]"
-                                                    aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
+                                                    aria-label={`Type for ${dayNames[dayOfWeek]}`}
                                                   >
                                                     <SelectValue />
                                                   </SelectTrigger>
@@ -588,9 +569,9 @@ export default function WorkingHoursClient() {
                                         <FormControl>
                                           <Textarea
                                             {...field}
-                                            placeholder={t("workingHours.notesPlaceholder")}
+                                            placeholder="Add notes..."
                                             className="min-h-[60px] w-full max-w-[200px]"
-                                            aria-label={`${t("workingHours.notes")} for ${dayNames[dayOfWeek]}`}
+                                            aria-label={`Notes for ${dayNames[dayOfWeek]}`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -627,7 +608,7 @@ export default function WorkingHoursClient() {
                                       <Checkbox
                                         checked={field.value}
                                         onCheckedChange={(checked) => handleDayActiveChange(index, !!checked)}
-                                        aria-label={`${t("workingHours.active")} for ${dayNames[dayOfWeek]}`}
+                                        aria-label={`Active for ${dayNames[dayOfWeek]}`}
                                       />
                                     </FormControl>
                                   </FormItem>
@@ -643,13 +624,13 @@ export default function WorkingHoursClient() {
                                     name={`fixedHours.${index}.startTime`}
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.startTime")}</FormLabel>
+                                        <FormLabel>Start Time</FormLabel>
                                         <FormControl>
                                           <Input
                                             type="time"
                                             {...field}
                                             className="w-full"
-                                            aria-label={`${t("workingHours.startTime")} for ${dayNames[dayOfWeek]}`}
+                                            aria-label={`Start time for ${dayNames[dayOfWeek]}`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -661,13 +642,13 @@ export default function WorkingHoursClient() {
                                     name={`fixedHours.${index}.endTime`}
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>{t("workingHours.endTime")}</FormLabel>
+                                        <FormLabel>End Time</FormLabel>
                                         <FormControl>
                                           <Input
                                             type="time"
                                             {...field}
                                             className="w-full"
-                                            aria-label={`${t("workingHours.endTime")} for ${dayNames[dayOfWeek]}`}
+                                            aria-label={`End time for ${dayNames[dayOfWeek]}`}
                                           />
                                         </FormControl>
                                         <FormMessage />
@@ -685,12 +666,10 @@ export default function WorkingHoursClient() {
                                         <Checkbox
                                           checked={field.value}
                                           onCheckedChange={field.onChange}
-                                          aria-label={`${t("workingHours.hasPriceAddition")} for ${dayNames[dayOfWeek]}`}
+                                          aria-label={`Price addition for ${dayNames[dayOfWeek]}`}
                                         />
                                       </FormControl>
-                                      <FormLabel className="text-sm font-normal">
-                                        {t("workingHours.enablePriceAddition")}
-                                      </FormLabel>
+                                      <FormLabel className="text-sm font-normal">Enable Price Addition</FormLabel>
                                     </FormItem>
                                   )}
                                 />
@@ -702,7 +681,7 @@ export default function WorkingHoursClient() {
                                       name={`fixedHours.${index}.priceAddition.amount`}
                                       render={({ field }) => (
                                         <FormItem>
-                                          <FormLabel>{t("workingHours.amount")}</FormLabel>
+                                          <FormLabel>Amount</FormLabel>
                                           <FormControl>
                                             <Input
                                               type="number"
@@ -712,7 +691,7 @@ export default function WorkingHoursClient() {
                                               {...field}
                                               onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
                                               className="w-full"
-                                              aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
+                                              aria-label={`Amount for ${dayNames[dayOfWeek]}`}
                                             />
                                           </FormControl>
                                           <FormMessage />
@@ -724,12 +703,12 @@ export default function WorkingHoursClient() {
                                       name={`fixedHours.${index}.priceAddition.type`}
                                       render={({ field }) => (
                                         <FormItem>
-                                          <FormLabel>{t("workingHours.type")}</FormLabel>
+                                          <FormLabel>Type</FormLabel>
                                           <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
                                             <FormControl>
                                               <SelectTrigger
                                                 className="w-full"
-                                                aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
+                                                aria-label={`Type for ${dayNames[dayOfWeek]}`}
                                               >
                                                 <SelectValue />
                                               </SelectTrigger>
@@ -751,13 +730,13 @@ export default function WorkingHoursClient() {
                                   name={`fixedHours.${index}.notes`}
                                   render={({ field }) => (
                                     <FormItem>
-                                      <FormLabel>{t("workingHours.notes")}</FormLabel>
+                                      <FormLabel>Notes</FormLabel>
                                       <FormControl>
                                         <Textarea
                                           {...field}
-                                          placeholder={t("workingHours.notesPlaceholder")}
+                                          placeholder="Add notes..."
                                           className="min-h-[60px] w-full"
-                                          aria-label={`${t("workingHours.notes")} for ${dayNames[dayOfWeek]}`}
+                                          aria-label={`Notes for ${dayNames[dayOfWeek]}`}
                                         />
                                       </FormControl>
                                       <FormMessage />
@@ -778,7 +757,7 @@ export default function WorkingHoursClient() {
                       disabled={updateFixedHoursMutation.isPending || !fixedHoursForm.formState.isDirty}
                       className="w-full sm:w-auto min-w-[120px]"
                     >
-                      {updateFixedHoursMutation.isPending ? t("common.saving") : t("common.saveChanges")}
+                      {updateFixedHoursMutation.isPending ? "Saving..." : "Save Fixed Hours"}
                     </Button>
                   </div>
                 </form>
@@ -792,9 +771,9 @@ export default function WorkingHoursClient() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CalendarIcon className="h-5 w-5" />
-                {t("workingHours.specialDates")}
+                Special Dates
               </CardTitle>
-              <CardDescription>{t("workingHours.specialDatesDescription")}</CardDescription>
+              <CardDescription>Set special working hours for holidays and events</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Dialog
@@ -819,17 +798,15 @@ export default function WorkingHoursClient() {
                 <DialogTrigger asChild>
                   <Button type="button" variant="outline" className="w-full">
                     <Plus className="h-4 w-4 rtl:ml-2 ltr:mr-2" />
-                    {t("workingHours.addSpecialDate")}
+                    Add Special Date
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
-                      {editingSpecialDateIndex !== null
-                        ? t("workingHours.editSpecialDate")
-                        : t("workingHours.addSpecialDate")}
+                      {editingSpecialDateIndex !== null ? "Edit Special Date" : "Add Special Date"}
                     </DialogTitle>
-                    <DialogDescription>{t("workingHours.specialDateDialogDescription")}</DialogDescription>
+                    <DialogDescription>Configure working hours for a special date</DialogDescription>
                   </DialogHeader>
                   <Form {...specialDateForm}>
                     <form onSubmit={specialDateForm.handleSubmit(handleAddOrUpdateSpecialDate)} className="space-y-4">
@@ -838,9 +815,9 @@ export default function WorkingHoursClient() {
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("workingHours.specialDateName")}</FormLabel>
+                            <FormLabel>Name</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder={t("workingHours.specialDateNamePlaceholder")} />
+                              <Input {...field} placeholder="e.g., Holiday, Special Event" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -851,7 +828,7 @@ export default function WorkingHoursClient() {
                         name="date"
                         render={({ field }) => (
                           <FormItem className="flex flex-col">
-                            <FormLabel>{t("workingHours.date")}</FormLabel>
+                            <FormLabel>Date</FormLabel>
                             <Popover>
                               <PopoverTrigger asChild>
                                 <FormControl>
@@ -863,7 +840,7 @@ export default function WorkingHoursClient() {
                                     {field.value ? (
                                       format(field.value, "PPP", { locale: language === "he" ? he : enUS })
                                     ) : (
-                                      <span>{t("workingHours.selectDate")}</span>
+                                      <span>Select date</span>
                                     )}
                                   </Button>
                                 </FormControl>
@@ -896,8 +873,8 @@ export default function WorkingHoursClient() {
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel htmlFor="specialDateIsActive">{t("workingHours.active")}</FormLabel>
-                              <FormDescription>{t("workingHours.specialDateActiveDescription")}</FormDescription>
+                              <FormLabel htmlFor="specialDateIsActive">Active</FormLabel>
+                              <FormDescription>Enable working hours for this date</FormDescription>
                             </div>
                           </FormItem>
                         )}
@@ -911,7 +888,7 @@ export default function WorkingHoursClient() {
                               name="startTime"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>{t("workingHours.startTime")}</FormLabel>
+                                  <FormLabel>Start Time</FormLabel>
                                   <FormControl>
                                     <Input type="time" {...field} />
                                   </FormControl>
@@ -925,7 +902,7 @@ export default function WorkingHoursClient() {
                               name="endTime"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>{t("workingHours.endTime")}</FormLabel>
+                                  <FormLabel>End Time</FormLabel>
                                   <FormControl>
                                     <Input type="time" {...field} />
                                   </FormControl>
@@ -947,9 +924,7 @@ export default function WorkingHoursClient() {
                                     id="specialDateHasPriceAddition"
                                   />
                                 </FormControl>
-                                <FormLabel htmlFor="specialDateHasPriceAddition">
-                                  {t("workingHours.enablePriceAddition")}
-                                </FormLabel>
+                                <FormLabel htmlFor="specialDateHasPriceAddition">Enable Price Addition</FormLabel>
                               </FormItem>
                             )}
                           />
@@ -961,7 +936,7 @@ export default function WorkingHoursClient() {
                                 name="priceAddition.amount"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>{t("workingHours.amount")}</FormLabel>
+                                    <FormLabel>Amount</FormLabel>
                                     <FormControl>
                                       <Input
                                         type="number"
@@ -982,7 +957,7 @@ export default function WorkingHoursClient() {
                                 name="priceAddition.type"
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>{t("workingHours.type")}</FormLabel>
+                                    <FormLabel>Type</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
                                       <FormControl>
                                         <SelectTrigger>
@@ -1006,13 +981,9 @@ export default function WorkingHoursClient() {
                             name="notes"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{t("workingHours.notes")}</FormLabel>
+                                <FormLabel>Notes</FormLabel>
                                 <FormControl>
-                                  <Textarea
-                                    {...field}
-                                    placeholder={t("workingHours.notesPlaceholder")}
-                                    className="min-h-[80px]"
-                                  />
+                                  <Textarea {...field} placeholder="Add notes..." className="min-h-[80px]" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -1030,7 +1001,7 @@ export default function WorkingHoursClient() {
                             specialDateForm.reset()
                           }}
                         >
-                          {t("common.cancel")}
+                          Cancel
                         </Button>
                         <Button
                           type="submit"
@@ -1043,10 +1014,10 @@ export default function WorkingHoursClient() {
                           {specialDateForm.formState.isSubmitting ||
                           addSpecialDateMutation.isPending ||
                           updateSpecialDateMutation.isPending
-                            ? t("common.saving")
+                            ? "Saving..."
                             : editingSpecialDateIndex !== null
-                              ? t("common.update")
-                              : t("common.add")}
+                              ? "Update"
+                              : "Add"}
                         </Button>
                       </DialogFooter>
                     </form>
@@ -1057,8 +1028,8 @@ export default function WorkingHoursClient() {
               {(!workingHoursData?.specialDates || workingHoursData.specialDates.length === 0) && (
                 <div className="text-center text-muted-foreground py-8">
                   <CalendarIcon className="mx-auto h-12 w-12 opacity-50" />
-                  <p className="mt-4 text-lg">{t("workingHours.noSpecialDates")}</p>
-                  <p>{t("workingHours.noSpecialDatesHint")}</p>
+                  <p className="mt-4 text-lg">No special dates configured</p>
+                  <p>Add special dates to override regular working hours</p>
                 </div>
               )}
 
@@ -1069,13 +1040,13 @@ export default function WorkingHoursClient() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>{t("workingHours.specialDateName")}</TableHead>
-                          <TableHead>{t("workingHours.date")}</TableHead>
-                          <TableHead className="text-center">{t("workingHours.active")}</TableHead>
-                          <TableHead>{t("workingHours.hours")}</TableHead>
-                          <TableHead>{t("workingHours.priceAddition")}</TableHead>
-                          <TableHead>{t("workingHours.notes")}</TableHead>
-                          <TableHead className="text-right rtl:text-left">{t("common.actions")}</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-center">Active</TableHead>
+                          <TableHead>Hours</TableHead>
+                          <TableHead>Price Addition</TableHead>
+                          <TableHead>Notes</TableHead>
+                          <TableHead className="text-right rtl:text-left">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1087,9 +1058,7 @@ export default function WorkingHoursClient() {
                                 locale: language === "he" ? he : enUS,
                               })}
                             </TableCell>
-                            <TableCell className="text-center">
-                              {specialDate.isActive ? t("common.yes") : t("common.no")}
-                            </TableCell>
+                            <TableCell className="text-center">{specialDate.isActive ? "Yes" : "No"}</TableCell>
                             <TableCell>
                               {specialDate.isActive ? `${specialDate.startTime} - ${specialDate.endTime}` : "-"}
                             </TableCell>
@@ -1108,7 +1077,7 @@ export default function WorkingHoursClient() {
                                   variant="outline"
                                   size="icon"
                                   onClick={() => handleEditSpecialDate(index)}
-                                  aria-label={t("workingHours.editSpecialDate")}
+                                  aria-label="Edit special date"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -1117,8 +1086,8 @@ export default function WorkingHoursClient() {
                                   variant="destructive"
                                   size="icon"
                                   onClick={() => handleDeleteSpecialDate(index)}
+                                  aria-label="Delete special date"
                                   disabled={deleteSpecialDateMutation.isPending}
-                                  aria-label={t("workingHours.deleteSpecialDate")}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -1150,7 +1119,7 @@ export default function WorkingHoursClient() {
                                 variant="outline"
                                 size="icon"
                                 onClick={() => handleEditSpecialDate(index)}
-                                aria-label={t("workingHours.editSpecialDate")}
+                                aria-label="Edit special date"
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -1159,8 +1128,8 @@ export default function WorkingHoursClient() {
                                 variant="destructive"
                                 size="icon"
                                 onClick={() => handleDeleteSpecialDate(index)}
+                                aria-label="Delete special date"
                                 disabled={deleteSpecialDateMutation.isPending}
-                                aria-label={t("workingHours.deleteSpecialDate")}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -1169,7 +1138,7 @@ export default function WorkingHoursClient() {
 
                           <div className="flex flex-wrap gap-2">
                             <Badge variant={specialDate.isActive ? "default" : "secondary"}>
-                              {specialDate.isActive ? t("common.yes") : t("common.no")}
+                              {specialDate.isActive ? "Yes" : "No"}
                             </Badge>
                             {specialDate.isActive && (
                               <Badge variant="outline">{`${specialDate.startTime} - ${specialDate.endTime}`}</Badge>

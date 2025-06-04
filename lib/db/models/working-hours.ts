@@ -216,6 +216,13 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
   // Sort by dayOfWeek
   this.fixedHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
 
+  // בדוק תאריכים כפולים
+  const dates = this.specialDates.map((sd) => sd.date.toISOString().split("T")[0])
+  const uniqueDates = [...new Set(dates)]
+  if (dates.length !== uniqueDates.length) {
+    return next(new Error("Duplicate special dates are not allowed"))
+  }
+
   next()
 })
 

@@ -61,133 +61,13 @@ export async function getWorkingHoursSettings() {
   }
 }
 
-export async function updateWorkingHoursSettings(data: {
-  fixedHours: any[]
-  specialDates: any[]
-}) {
-  const requestId = `update_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
-
-  try {
-    console.log(`[${requestId}] Raw input data:`, JSON.stringify(data, null, 2))
-
-    logger.info(`[${requestId}] Updating working hours settings`, {
-      fixedHoursCount: data.fixedHours?.length,
-      specialDatesCount: data.specialDates?.length,
-      specialDatesRaw: data.specialDates,
-    })
-    await dbConnect()
-
-    // Validate fixedHours
-    if (!data.fixedHours || data.fixedHours.length !== 7) {
-      logger.error(`[${requestId}] Invalid fixedHours length: ${data.fixedHours?.length}`)
-      return { success: false, error: "Fixed hours must contain exactly 7 days" }
-    }
-
-    // Ensure all days 0-6 are present
-    for (let i = 0; i < 7; i++) {
-      const dayExists = data.fixedHours.some((day) => day.dayOfWeek === i)
-      if (!dayExists) {
-        logger.error(`[${requestId}] Missing day ${i} in fixedHours`)
-        return { success: false, error: `Missing day ${i} in fixed hours` }
-      }
-    }
-
-    // Process special dates with better date handling
-    const processedSpecialDates = data.specialDates.map((date, index) => {
-      console.log(`[${requestId}] Processing special date ${index}:`, date)
-
-      let processedDate
-
-      // טפל בפורמטים שונים של תאריך
-      if (typeof date.date === "string") {
-        // אם זה string, נסה לפרש אותו
-        if (date.date.includes("T")) {
-          // ISO string
-          processedDate = new Date(date.date)
-        } else {
-          // YYYY-MM-DD format - הוסף זמן UTC כדי למנוע בעיות timezone
-          processedDate = new Date(date.date + "T12:00:00.000Z")
-        }
-      } else {
-        // אם זה כבר Date object
-        processedDate = new Date(date.date)
-      }
-
-      // ודא שהתאריך תקין
-      if (isNaN(processedDate.getTime())) {
-        console.error(`[${requestId}] Invalid date format: ${date.date}`)
-        throw new Error(`Invalid date format: ${date.date}`)
-      }
-
-      const processed = {
-        name: date.name || "",
-        date: processedDate,
-        isActive: Boolean(date.isActive),
-        startTime: date.startTime || "09:00",
-        endTime: date.endTime || "17:00",
-        hasPriceAddition: Boolean(date.hasPriceAddition),
-        priceAddition: date.hasPriceAddition && date.priceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
-        notes: date.notes?.trim() || "",
-      }
-
-      console.log(`[${requestId}] Processed special date ${index}:`, processed)
-      return processed
-    })
-
-    // Convert date strings back to Date objects for specialDates
-    const processedData = {
-      fixedHours: data.fixedHours.map((fh) => ({
-        ...fh,
-        priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
-        notes: fh.notes?.trim() || "",
-      })),
-      specialDates: processedSpecialDates,
-    }
-
-    console.log(`[${requestId}] Final processed data:`, JSON.stringify(processedData, null, 2))
-
-    logger.info(`[${requestId}] Processed data for update`, {
-      specialDatesProcessed: processedData.specialDates.length,
-      specialDatesData: processedData.specialDates,
-    })
-
-    // מחק את ההגדרות הקיימות ויצור חדשות
-    await WorkingHoursSettings.deleteMany({})
-
-    const newSettings = new WorkingHoursSettings(processedData)
-    const settings = await newSettings.save()
-
-    console.log(`[${requestId}] Saved settings:`, JSON.stringify(settings.toObject(), null, 2))
-
-    if (!settings) {
-      logger.error(`[${requestId}] Failed to update/create settings`)
-      return { success: false, error: "Failed to update working hours settings" }
-    }
-
-    logger.info(`[${requestId}] Successfully updated working hours settings with ID: ${settings._id}`)
-
-    revalidatePath("/dashboard/admin/working-hours")
-
-    return { success: true, data: settings.toObject() }
-  } catch (error) {
-    console.error(`[${requestId}] Error updating working hours settings:`, error)
-    logger.error(`[${requestId}] Error updating working hours settings:`, error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to update working hours settings",
-    }
-  }
-}
-
-// הוסף פונקציות נפרדות לעדכון כל חלק בנפרד:
+// הוסף פונקציות נפרדות לעדכון fixedHours ו-specialDates
 
 export async function updateFixedHours(fixedHours: any[]) {
   const requestId = `update_fixed_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
-    logger.info(`[${requestId}] Updating fixed hours only`, {
-      fixedHoursCount: fixedHours?.length,
-    })
+    logger.info(`[${requestId}] Updating fixed hours only`)
     await dbConnect()
 
     // Validate fixedHours
@@ -316,7 +196,7 @@ export async function updateSpecialDate(index: number, specialDate: any) {
   const requestId = `update_special_date_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
-    logger.info(`[${requestId}] Updating special date at index ${index}`, { specialDate })
+    logger.info(`[${requestId}] Updating special date at index ${index}`)
     await dbConnect()
 
     let processedDate
@@ -349,9 +229,8 @@ export async function updateSpecialDate(index: number, specialDate: any) {
     }
 
     const settings = await WorkingHoursSettings.findOne()
-
     if (!settings) {
-      return { success: false, error: "Working hours settings not found" }
+      return { success: false, error: "Settings not found" }
     }
 
     if (index < 0 || index >= settings.specialDates.length) {
@@ -382,9 +261,8 @@ export async function deleteSpecialDate(index: number) {
     await dbConnect()
 
     const settings = await WorkingHoursSettings.findOne()
-
     if (!settings) {
-      return { success: false, error: "Working hours settings not found" }
+      return { success: false, error: "Settings not found" }
     }
 
     if (index < 0 || index >= settings.specialDates.length) {
@@ -403,6 +281,123 @@ export async function deleteSpecialDate(index: number) {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to delete special date",
+    }
+  }
+}
+export async function updateWorkingHoursSettings(data: {
+  fixedHours: any[]
+  specialDates: any[]
+}) {
+  const requestId = `update_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+
+  try {
+    console.log(`[${requestId}] Raw input data:`, JSON.stringify(data, null, 2))
+
+    logger.info(`[${requestId}] Updating working hours settings`, {
+      fixedHoursCount: data.fixedHours?.length,
+      specialDatesCount: data.specialDates?.length,
+      specialDatesRaw: data.specialDates,
+    })
+    await dbConnect()
+
+    // Validate fixedHours
+    if (!data.fixedHours || data.fixedHours.length !== 7) {
+      logger.error(`[${requestId}] Invalid fixedHours length: ${data.fixedHours?.length}`)
+      return { success: false, error: "Fixed hours must contain exactly 7 days" }
+    }
+
+    // Ensure all days 0-6 are present
+    for (let i = 0; i < 7; i++) {
+      const dayExists = data.fixedHours.some((day) => day.dayOfWeek === i)
+      if (!dayExists) {
+        logger.error(`[${requestId}] Missing day ${i} in fixedHours`)
+        return { success: false, error: `Missing day ${i} in fixed hours` }
+      }
+    }
+
+    // Process special dates with better date handling
+    const processedSpecialDates = data.specialDates.map((date, index) => {
+      console.log(`[${requestId}] Processing special date ${index}:`, date)
+
+      let processedDate
+
+      // טפל בפורמטים שונים של תאריך
+      if (typeof date.date === "string") {
+        // אם זה string, נסה לפרש אותו
+        if (date.date.includes("T")) {
+          // ISO string
+          processedDate = new Date(date.date)
+        } else {
+          // YYYY-MM-DD format - הוסף זמן UTC כדי למנוע בעיות timezone
+          processedDate = new Date(date.date + "T12:00:00.000Z")
+        }
+      } else {
+        // אם זה כבר Date object
+        processedDate = new Date(date.date)
+      }
+
+      // ודא שהתאריך תקין
+      if (isNaN(processedDate.getTime())) {
+        console.error(`[${requestId}] Invalid date format: ${date.date}`)
+        throw new Error(`Invalid date format: ${date.date}`)
+      }
+
+      const processed = {
+        name: date.name || "",
+        date: processedDate,
+        isActive: Boolean(date.isActive),
+        startTime: date.startTime || "09:00",
+        endTime: date.endTime || "17:00",
+        hasPriceAddition: Boolean(date.hasPriceAddition),
+        priceAddition: date.hasPriceAddition && date.priceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
+        notes: date.notes?.trim() || "",
+      }
+
+      console.log(`[${requestId}] Processed special date ${index}:`, processed)
+      return processed
+    })
+
+    // Convert date strings back to Date objects for specialDates
+    const processedData = {
+      fixedHours: data.fixedHours.map((fh) => ({
+        ...fh,
+        priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
+        notes: fh.notes?.trim() || "",
+      })),
+      specialDates: processedSpecialDates,
+    }
+
+    console.log(`[${requestId}] Final processed data:`, JSON.stringify(processedData, null, 2))
+
+    logger.info(`[${requestId}] Processed data for update`, {
+      specialDatesProcessed: processedData.specialDates.length,
+      specialDatesData: processedData.specialDates,
+    })
+
+    // מחק את ההגדרות הקיימות ויצור חדשות
+    await WorkingHoursSettings.deleteMany({})
+
+    const newSettings = new WorkingHoursSettings(processedData)
+    const settings = await newSettings.save()
+
+    console.log(`[${requestId}] Saved settings:`, JSON.stringify(settings.toObject(), null, 2))
+
+    if (!settings) {
+      logger.error(`[${requestId}] Failed to update/create settings`)
+      return { success: false, error: "Failed to update working hours settings" }
+    }
+
+    logger.info(`[${requestId}] Successfully updated working hours settings with ID: ${settings._id}`)
+
+    revalidatePath("/dashboard/admin/working-hours")
+
+    return { success: true, data: settings.toObject() }
+  } catch (error) {
+    console.error(`[${requestId}] Error updating working hours settings:`, error)
+    logger.error(`[${requestId}] Error updating working hours settings:`, error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update working hours settings",
     }
   }
 }

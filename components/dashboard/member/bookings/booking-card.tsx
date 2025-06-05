@@ -14,15 +14,11 @@ import {
   Ticket,
   Hourglass,
 } from "lucide-react"
-// Remove next-intl imports
-// import { useLocale, useTranslations } from "next-intl"
-// Import your custom translation hook
-import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
 import { cn, formatDate, formatCurrency } from "@/lib/utils/utils"
-import type { PopulatedBooking } from "@/actions/booking-actions"
+import type { PopulatedBooking } from "@/actions/booking-actions" // We'll define this type in booking-actions
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { cancelBooking as cancelBookingAction } from "@/actions/booking-actions"
 import { toast } from "@/components/common/ui/use-toast"
@@ -38,6 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/common/ui/alert-dialog"
 import { useState } from "react"
+import { useTranslation } from "@/lib/translations/i18n"
 
 interface BookingCardProps {
   booking: PopulatedBooking
@@ -45,15 +42,13 @@ interface BookingCardProps {
 }
 
 export default function BookingCard({ booking, currentUserId }: BookingCardProps) {
-  // Use your custom translation hook
-  const { t, language } = useTranslation() // language corresponds to locale
+  const { t, locale } = useTranslation() // Using custom hook
   const queryClient = useQueryClient()
   const [isCancelling, setIsCancelling] = useState(false)
 
   const { mutate: cancelBooking, isPending: isCancelPending } = useMutation({
     mutationFn: async () => {
       setIsCancelling(true)
-      // Use full keys for translations
       const result = await cancelBookingAction(
         booking._id.toString(),
         currentUserId,
@@ -125,7 +120,7 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
         }
       default:
         return {
-          label: status,
+          label: status, // This might need a generic translation if status can be arbitrary
           icon: <Info className="mr-1.5 h-4 w-4 text-gray-600" />,
           badgeClass: "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200",
           textColor: "text-gray-700",
@@ -176,12 +171,13 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
       <CardContent className="flex-grow space-y-3 p-4">
         <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
           <CalendarDays className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
-          <span>{formatDate(bookingDateTime)}</span>
+          {/* locale is now from custom useTranslation hook */}
+          <span>{formatDate(bookingDateTime, locale)}</span>
         </div>
         <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
           <Clock className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
-          {/* Use language from useTranslation for locale */}
-          <span>{bookingDateTime.toLocaleTimeString(language, { hour: "2-digit", minute: "2-digit" })}</span>
+          {/* locale is now from custom useTranslation hook */}
+          <span>{bookingDateTime.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}</span>
         </div>
         <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
           <MapPin className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
@@ -217,7 +213,7 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
 
       <CardFooter className="flex flex-col items-stretch gap-2 border-t bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-700/50 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-lg font-semibold text-teal-700 dark:text-teal-400">
-          {formatCurrency(booking.priceDetails.finalAmount, t("common.currency"))}
+          {formatCurrency(booking.priceDetails.finalAmount, t("common.currency"), locale)}
         </div>
         {isCancellable && (
           <AlertDialog>

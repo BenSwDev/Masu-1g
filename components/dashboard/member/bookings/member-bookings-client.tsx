@@ -2,9 +2,6 @@
 
 import { useState, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-// Remove next-intl import
-// import { useTranslations } from "next-intl"
-// Import your custom translation hook
 import { useTranslation } from "@/lib/translations/i18n"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { getUserBookings, type PopulatedBooking } from "@/actions/booking-actions"
@@ -30,7 +27,6 @@ interface MemberBookingsClientProps {
 const BOOKINGS_PER_PAGE = 6
 
 export default function MemberBookingsClient({ userId }: MemberBookingsClientProps) {
-  // Use your custom translation hook
   const { t } = useTranslation()
   const router = useRouter()
   const pathname = usePathname()
@@ -58,7 +54,7 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
         sortBy: filters.sortBy === "newest" ? "bookingDateTime" : "bookingDateTime",
         sortDirection: filters.sortBy === "newest" ? "desc" : "asc",
       }),
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previousData) => previousData, // Keep previous data while fetching new
     refetchOnWindowFocus: false,
   })
 
@@ -84,6 +80,7 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
   }
 
   if (isLoading && !data) {
+    // Show skeleton only on initial load
     return <MemberBookingsClientSkeleton />
   }
 
@@ -91,7 +88,6 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-8 text-center text-destructive">
         <AlertTriangle className="mb-4 h-12 w-12" />
-        {/* Use full keys for translations */}
         <h3 className="mb-2 text-xl font-semibold">{t("common.error")}</h3>
         <p>{t("memberBookings.fetchError")}</p>
         <Button onClick={() => window.location.reload()} className="mt-4">

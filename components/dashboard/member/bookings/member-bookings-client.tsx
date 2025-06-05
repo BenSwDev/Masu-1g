@@ -2,6 +2,10 @@
 
 import { useState, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
+// Remove next-intl import
+// import { useTranslations } from "next-intl"
+// Import your custom translation hook
+import { useTranslation } from "@/lib/translations/i18n"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { getUserBookings, type PopulatedBooking } from "@/actions/booking-actions"
 import BookingCard from "./booking-card"
@@ -26,6 +30,8 @@ interface MemberBookingsClientProps {
 const BOOKINGS_PER_PAGE = 6
 
 export default function MemberBookingsClient({ userId }: MemberBookingsClientProps) {
+  // Use your custom translation hook
+  const { t } = useTranslation()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -52,7 +58,7 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
         sortBy: filters.sortBy === "newest" ? "bookingDateTime" : "bookingDateTime",
         sortDirection: filters.sortBy === "newest" ? "desc" : "asc",
       }),
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching new
+    placeholderData: (previousData) => previousData,
     refetchOnWindowFocus: false,
   })
 
@@ -78,7 +84,6 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
   }
 
   if (isLoading && !data) {
-    // Show skeleton only on initial load
     return <MemberBookingsClientSkeleton />
   }
 
@@ -86,10 +91,11 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-8 text-center text-destructive">
         <AlertTriangle className="mb-4 h-12 w-12" />
-        <h3 className="mb-2 text-xl font-semibold">Error</h3>
-        <p>Could not load your bookings. Please try again.</p>
+        {/* Use full keys for translations */}
+        <h3 className="mb-2 text-xl font-semibold">{t("common.error")}</h3>
+        <p>{t("memberBookings.fetchError")}</p>
         <Button onClick={() => window.location.reload()} className="mt-4">
-          Refresh
+          {t("common.refresh")}
         </Button>
       </div>
     )
@@ -105,22 +111,22 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
           <Select value={filters.status} onValueChange={(value) => handleFilterChange("status", value)}>
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t("memberBookings.filterByStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="upcoming">Upcoming</SelectItem>
-              <SelectItem value="past">Past</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="all">{t("memberBookings.statusAll")}</SelectItem>
+              <SelectItem value="upcoming">{t("memberBookings.statusUpcoming")}</SelectItem>
+              <SelectItem value="past">{t("memberBookings.statusPast")}</SelectItem>
+              <SelectItem value="cancelled">{t("memberBookings.statusCancelled")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filters.sortBy} onValueChange={(value) => handleFilterChange("sortBy", value)}>
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Sort by" />
+              <SelectValue placeholder={t("memberBookings.sortByDate")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Newest first</SelectItem>
-              <SelectItem value="oldest">Oldest first</SelectItem>
+              <SelectItem value="newest">{t("memberBookings.sortNewestFirst")}</SelectItem>
+              <SelectItem value="oldest">{t("memberBookings.sortOldestFirst")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -132,10 +138,10 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
           <ListX className="mb-4 h-16 w-16 text-muted-foreground" />
           <h3 className="mb-2 text-xl font-semibold text-card-foreground">
             {filters.status === "all" && filters.sortBy === "newest" && totalBookings === 0
-              ? "You have no bookings yet."
-              : "No bookings match your current filters."}
+              ? t("memberBookings.noBookingsFound")
+              : t("memberBookings.noBookingsFoundFiltered")}
           </h3>
-          <p className="text-muted-foreground">Try changing your filters or book a new treatment.</p>
+          <p className="text-muted-foreground">{t("memberBookings.tryAdjustingFilters")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">

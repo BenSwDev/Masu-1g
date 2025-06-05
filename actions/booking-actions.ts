@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth"
 import mongoose from "mongoose" // Keep mongoose for session and ObjectId if needed
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
+import { getActivePaymentMethods as fetchUserActivePaymentMethods } from "@/actions/payment-method-actions"
 
 // Import Models directly
 import Booking, { type IBooking, type IPriceDetails } from "@/lib/db/models/booking"
@@ -14,7 +15,6 @@ import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
 import User from "@/lib/db/models/user" // Import User model
 import Address from "@/lib/db/models/address" // Import Address model
-import PaymentMethod from "@/lib/db/models/payment-method" // Import PaymentMethod model
 import {
   WorkingHoursSettings,
   type IWorkingHoursSettings,
@@ -200,6 +200,10 @@ export async function calculateBookingPrice(
       isFullyCoveredByVoucherOrSubscription: false,
     }
 
+    // Initialize amountToPay with basePrice only. Surcharges will be added after determining base coverage.
+    let amountToPayForBaseTreatment = basePrice
+    priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = basePrice // Initialize with full base price
+
     // 1. Calculate Surcharges (always apply, regardless of coverage)
     const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
     if (settings) {
@@ -228,8 +232,6 @@ export async function calculateBookingPrice(
       }
     }
 
-    let amountToPay = basePrice + priceDetails.totalSurchargesAmount
-
     // 2. Apply User Subscription (covers basePrice only)
     if (userSubscriptionId) {
       const userSub = (await UserSubscription.findById(userSubscriptionId)
@@ -253,7 +255,7 @@ export async function calculateBookingPrice(
         }
 
         if (isTreatmentMatch && isDurationMatch) {
-          amountToPay -= basePrice // Subscription covers the base price
+          amountToPayForBaseTreatment = 0 // Subscription covers the base price
           priceDetails.isBaseTreatmentCoveredBySubscription = true
           priceDetails.redeemedUserSubscriptionId = userSub._id.toString()
           priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
@@ -268,9 +270,9 @@ export async function calculateBookingPrice(
     }
 
     // 3. Apply Gift Voucher
-    // Gift vouchers can cover remaining basePrice and then surcharges.
-    // Treatment voucher covers basePrice. Monetary voucher covers anything.
-    if (amountToPay > 0 && giftVoucherCode) {
+    // Treatment voucher covers basePrice (if not covered by sub). Monetary voucher covers anything remaining.
+    if (giftVoucherCode) {
+      // Check if voucher code is provided
       const voucher = (await GiftVoucher.findOne({
         code: giftVoucherCode,
         status: { $in: ["active", "partially_used", "sent"] },
@@ -278,7 +280,9 @@ export async function calculateBookingPrice(
       }).lean()) as IGiftVoucher | null
 
       if (voucher && voucher.isActive) {
-        let voucherCoverage = 0
+        let voucherCanBeApplied = false
+        let voucherCoverageAmount = 0
+
         if (voucher.voucherType === "treatment") {
           const treatmentMatches = voucher.treatmentId?.toString() === treatmentId
           const durationMatches =
@@ -288,28 +292,81 @@ export async function calculateBookingPrice(
             voucher.selectedDurationId.toString() === selectedDurationId
 
           if (treatmentMatches && durationMatches && !priceDetails.isBaseTreatmentCoveredBySubscription) {
-            // Only if not already covered by sub
-            voucherCoverage = Math.min(amountToPay, basePrice) // Covers up to base price
+            // Treatment voucher applies only if base isn't already covered by subscription
+            voucherCoverageAmount = amountToPayForBaseTreatment // Covers the remaining base treatment cost
             priceDetails.isBaseTreatmentCoveredByTreatmentVoucher = true
-            priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = Math.max(
-              0,
-              priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher - voucherCoverage,
-            )
+            priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0 // Base treatment is now fully covered
+            voucherCanBeApplied = true
           }
         } else if (voucher.voucherType === "monetary" && voucher.remainingAmount && voucher.remainingAmount > 0) {
-          voucherCoverage = Math.min(amountToPay, voucher.remainingAmount)
+          // Monetary voucher can cover remaining base treatment cost AND surcharges
+          // First, see how much of base treatment is left (if any)
+          let coverageForBase = 0
+          if (amountToPayForBaseTreatment > 0) {
+            coverageForBase = Math.min(amountToPayForBaseTreatment, voucher.remainingAmount)
+            priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = Math.max(
+              0,
+              amountToPayForBaseTreatment - coverageForBase,
+            )
+          }
+
+          // Then, remaining voucher amount can cover surcharges
+          const remainingVoucherAfterBase = voucher.remainingAmount - coverageForBase
+          const coverageForSurcharges = Math.min(priceDetails.totalSurchargesAmount, remainingVoucherAfterBase)
+
+          voucherCoverageAmount = coverageForBase + coverageForSurcharges
+          voucherCanBeApplied = true
         }
 
-        if (voucherCoverage > 0) {
-          amountToPay -= voucherCoverage
-          priceDetails.voucherAppliedAmount = voucherCoverage
+        if (voucherCanBeApplied && voucherCoverageAmount > 0) {
+          // Apply the calculated voucherCoverageAmount to the relevant parts
+          if (voucher.voucherType === "treatment") {
+            amountToPayForBaseTreatment -= voucherCoverageAmount // Should be 0 now
+          } else {
+            // Monetary
+            // Reduce amountToPayForBaseTreatment first
+            const appliedToBase = Math.min(amountToPayForBaseTreatment, voucherCoverageAmount)
+            amountToPayForBaseTreatment -= appliedToBase
+
+            // Then reduce from totalSurchargesAmount effectively
+            // The finalAmount calculation will handle this.
+          }
+          priceDetails.voucherAppliedAmount = voucherCoverageAmount
           priceDetails.appliedGiftVoucherId = voucher._id.toString()
         }
       }
     }
 
-    // 4. Apply Coupon (applies to the remaining amountToPay)
-    if (amountToPay > 0 && couponCode) {
+    // Calculate final amount: remaining base treatment cost + all surcharges
+    let currentTotalDue = amountToPayForBaseTreatment + priceDetails.totalSurchargesAmount
+
+    // If a monetary voucher was applied, its voucherAppliedAmount already reduced the effective cost.
+    // We need to ensure monetary voucher application correctly reduces currentTotalDue.
+    // The previous logic for monetary voucher already calculates voucherCoverageAmount that can be applied.
+    // Let's refine how monetary voucher reduces the total.
+
+    const initialData = await getBookingInitialData(userId)
+
+    if (
+      priceDetails.appliedGiftVoucherId &&
+      initialData.data.usableGiftVouchers.find((v) => v._id.toString() === priceDetails.appliedGiftVoucherId)
+        ?.voucherType === "monetary"
+    ) {
+      // If a monetary voucher was applied, `priceDetails.voucherAppliedAmount` is the total amount it covered.
+      // `currentTotalDue` should be (original base + original surcharges) - monetary voucher amount.
+      currentTotalDue = basePrice + priceDetails.totalSurchargesAmount - priceDetails.voucherAppliedAmount
+      // Ensure `treatmentPriceAfterSubscriptionOrTreatmentVoucher` reflects any base price coverage by monetary voucher.
+      if (
+        !priceDetails.isBaseTreatmentCoveredBySubscription &&
+        !priceDetails.isBaseTreatmentCoveredByTreatmentVoucher
+      ) {
+        const baseCoveredByMonetary = Math.min(basePrice, priceDetails.voucherAppliedAmount)
+        priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = basePrice - baseCoveredByMonetary
+      }
+    }
+
+    // 4. Apply Coupon (applies to the currentTotalDue)
+    if (currentTotalDue > 0 && couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode }).lean()
       const now = new Date()
       if (
@@ -321,25 +378,41 @@ export async function calculateBookingPrice(
       ) {
         let discount = 0
         if (coupon.discountType === "percentage") {
-          discount = amountToPay * (coupon.discountValue / 100)
+          discount = currentTotalDue * (coupon.discountValue / 100)
         } else {
-          // Fixed amount
-          discount = Math.min(amountToPay, coupon.discountValue)
+          discount = Math.min(currentTotalDue, coupon.discountValue)
         }
-        amountToPay -= discount
+        currentTotalDue -= discount
         priceDetails.couponDiscount = discount
         priceDetails.appliedCouponId = coupon._id.toString()
       }
     }
 
-    priceDetails.finalAmount = Math.max(0, amountToPay)
+    priceDetails.finalAmount = Math.max(0, currentTotalDue)
+
     if (priceDetails.finalAmount === 0) {
       priceDetails.isFullyCoveredByVoucherOrSubscription = true
+    } else {
+      priceDetails.isFullyCoveredByVoucherOrSubscription = false // Explicitly set if not zero
     }
 
     // Ensure treatmentPriceAfterSubscriptionOrTreatmentVoucher is correctly set if base was covered
+    // This might be redundant if already handled above, but good for final check.
     if (priceDetails.isBaseTreatmentCoveredBySubscription || priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
       priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
+    } else if (
+      priceDetails.appliedGiftVoucherId &&
+      initialData.data.usableGiftVouchers.find((v) => v._id.toString() === priceDetails.appliedGiftVoucherId)
+        ?.voucherType === "monetary"
+    ) {
+      // If only monetary voucher applied, check how much of base it covered
+      const voucherDetails = initialData.data.usableGiftVouchers.find(
+        (v) => v._id.toString() === priceDetails.appliedGiftVoucherId,
+      )
+      if (voucherDetails) {
+        const baseCoveredByMonetary = Math.min(basePrice, voucherDetails.remainingAmount || 0) // Use remainingAmount from voucher
+        priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = Math.max(0, basePrice - baseCoveredByMonetary)
+      }
     }
 
     return { success: true, priceDetails }
@@ -657,7 +730,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       }).lean(),
       User.findById(userId).select("preferences name email phone notificationPreferences treatmentPreferences").lean(),
       Address.find({ userId, isArchived: { $ne: true } }).lean(),
-      PaymentMethod.find({ userId, isActive: true }).lean(),
+      fetchUserActivePaymentMethods(), // קריאה לפונקציה המיובאת
       Treatment.find({ isActive: true }).populate("durations").lean(),
       WorkingHoursSettings.findOne().lean(),
     ])
@@ -669,7 +742,25 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
     const usableGiftVouchers = getFulfilledValue(giftVouchersResult, [])
     const user = getFulfilledValue(userResult)
     const userAddresses = getFulfilledValue(addressesResult, [])
-    const userPaymentMethods = getFulfilledValue(paymentMethodsResult, [])
+    const paymentMethodsSettledResult = paymentMethodsResult.status === "fulfilled" ? paymentMethodsResult.value : null
+    let userPaymentMethods: any[] = [] // Explicitly type if possible, e.g., IPaymentMethod[] from payment-method-actions
+
+    if (
+      paymentMethodsSettledResult &&
+      paymentMethodsSettledResult.success &&
+      paymentMethodsSettledResult.paymentMethods
+    ) {
+      userPaymentMethods = paymentMethodsSettledResult.paymentMethods
+    } else if (paymentMethodsSettledResult && paymentMethodsSettledResult.error) {
+      logger.warn(
+        `Failed to fetch payment methods for user ${userId} in getBookingInitialData: ${paymentMethodsSettledResult.error}`,
+      )
+      // Consider if this should be a critical error or if it's okay to proceed with an empty list
+    } else if (paymentMethodsResult.status === "rejected") {
+      logger.error(
+        `Promise for fetching payment methods was rejected for user ${userId}: ${paymentMethodsResult.reason}`,
+      )
+    }
     const activeTreatments = getFulfilledValue(treatmentsResult, [])
     const workingHoursSettings = getFulfilledValue(workingHoursResult)
 

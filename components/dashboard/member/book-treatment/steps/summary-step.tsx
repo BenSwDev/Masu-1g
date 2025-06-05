@@ -145,42 +145,55 @@ export default function SummaryStep({
 
     const {
       basePrice,
-      surcharges,
-      totalSurchargesAmount,
+      surcharges, // This is an array of surcharge objects
+      totalSurchargesAmount, // This is the sum of surcharge amounts
       treatmentPriceAfterSubscriptionOrTreatmentVoucher,
       couponDiscount,
       voucherAppliedAmount,
       finalAmount,
       isBaseTreatmentCoveredBySubscription,
       isBaseTreatmentCoveredByTreatmentVoucher,
-      isFullyCoveredByVoucherOrSubscription, // This is true if finalAmount is 0
+      isFullyCoveredByVoucherOrSubscription,
       appliedGiftVoucherId,
-      redeemedUserSubscriptionId,
+      // redeemedUserSubscriptionId, // Already destructured
     } = calculatedPrice
 
     // Case 1: Everything is covered (finalAmount is 0)
     if (isFullyCoveredByVoucherOrSubscription) {
+      // ... (existing logic for fully covered message seems okay)
+      // Ensure the message reflects the source of full coverage correctly.
       let coveredByMessage = ""
-      if (isBaseTreatmentCoveredBySubscription) {
+      if (isBaseTreatmentCoveredBySubscription && totalSurchargesAmount === 0) {
+        // Full coverage by sub, no surcharges
         coveredByMessage =
           translations["bookings.steps.summary.fullyCoveredBySubscription"] || "Fully covered by your subscription."
-      } else if (isBaseTreatmentCoveredByTreatmentVoucher) {
+      } else if (isBaseTreatmentCoveredByTreatmentVoucher && totalSurchargesAmount === 0) {
+        // Full coverage by treatment voucher, no surcharges
         const voucher = initialData.usableGiftVouchers.find((v) => v._id.toString() === appliedGiftVoucherId)
         if (voucher?.voucherType === "treatment") {
           coveredByMessage =
             translations["bookings.steps.summary.fullyCoveredByGiftVoucherTreatment"] ||
             "Your treatment is fully covered by the gift voucher."
         } else {
-          // Monetary voucher covered everything
+          // Should not happen if it's a treatment voucher and totalSurchargesAmount is 0
           coveredByMessage =
             translations["bookings.steps.summary.fullyCoveredByGiftVoucherMonetary"] ||
             "The cost is fully covered by your gift voucher."
         }
       } else if (voucherAppliedAmount > 0 && appliedGiftVoucherId) {
-        // Monetary voucher covered all, including potential surcharges
+        // Monetary voucher covered everything
         coveredByMessage =
           translations["bookings.steps.summary.fullyCoveredByGiftVoucherMonetary"] ||
           "The cost is fully covered by your gift voucher."
+      } else if (isBaseTreatmentCoveredBySubscription && totalSurchargesAmount > 0 && finalAmount === 0) {
+        // This case implies a monetary voucher or coupon covered the surcharges after subscription covered base
+        coveredByMessage =
+          translations["bookings.steps.summary.treatmentCoveredSurchargesPaid"] ||
+          "Treatment covered by subscription, additional fees paid."
+      } else if (isBaseTreatmentCoveredByTreatmentVoucher && totalSurchargesAmount > 0 && finalAmount === 0) {
+        coveredByMessage =
+          translations["bookings.steps.summary.treatmentVoucherCoveredSurchargesPaid"] ||
+          "Treatment covered by voucher, additional fees paid."
       }
 
       return (
@@ -205,12 +218,13 @@ export default function SummaryStep({
       )
     }
 
-    // Case 2: Base treatment covered, but surcharges or other costs remain
-    const isBaseCovered = isBaseTreatmentCoveredBySubscription || isBaseTreatmentCoveredByTreatmentVoucher
+    // Case 2: There is a finalAmount > 0 to pay
+    const isBaseEffectivelyCovered = treatmentPriceAfterSubscriptionOrTreatmentVoucher === 0
 
     return (
       <>
-        {!isBaseCovered && (
+        {/* Display Base Price only if it wasn't fully covered by subscription/treatment voucher initially */}
+        {!isBaseEffectivelyCovered && basePrice > 0 && (
           <div className="flex justify-between">
             <span>{translations["bookings.steps.summary.basePrice"] || "Base Price"}:</span>
             <span>
@@ -218,16 +232,14 @@ export default function SummaryStep({
             </span>
           </div>
         )}
-        {isBaseCovered && treatmentPriceAfterSubscriptionOrTreatmentVoucher === 0 && (
+
+        {/* Indicate if base treatment was covered by subscription or treatment voucher */}
+        {isBaseTreatmentCoveredBySubscription && (
           <div className="flex justify-between items-center font-medium text-green-600">
             <span className="flex items-center">
-              {isBaseTreatmentCoveredBySubscription && <Ticket className="mr-2 h-4 w-4" />}
-              {isBaseTreatmentCoveredByTreatmentVoucher && <GiftIcon className="mr-2 h-4 w-4" />}
-              {isBaseTreatmentCoveredBySubscription
-                ? translations["bookings.steps.summary.treatmentCoveredBySubscription"] ||
-                  "Treatment covered by subscription"
-                : translations["bookings.steps.summary.treatmentCoveredByVoucher"] ||
-                  "Treatment covered by gift voucher"}
+              <Ticket className="mr-2 h-4 w-4" />
+              {translations["bookings.steps.summary.treatmentCoveredBySubscription"] ||
+                "Treatment covered by subscription"}
               :
             </span>
             <span className="line-through text-muted-foreground">
@@ -235,7 +247,22 @@ export default function SummaryStep({
             </span>
           </div>
         )}
+        {isBaseTreatmentCoveredByTreatmentVoucher &&
+          !isBaseTreatmentCoveredBySubscription && ( // Avoid double message if sub also applied
+            <div className="flex justify-between items-center font-medium text-green-600">
+              <span className="flex items-center">
+                <GiftIcon className="mr-2 h-4 w-4" />
+                {translations["bookings.steps.summary.treatmentCoveredByVoucher"] ||
+                  "Treatment covered by gift voucher"}
+                :
+              </span>
+              <span className="line-through text-muted-foreground">
+                {basePrice.toFixed(2)} {translations["common.currency"] || "ILS"}
+              </span>
+            </div>
+          )}
 
+        {/* Display Surcharges */}
         {surcharges.map((surcharge, index) => (
           <div key={index} className="flex justify-between">
             <span>{translations[surcharge.description] || surcharge.description}:</span>
@@ -245,17 +272,15 @@ export default function SummaryStep({
           </div>
         ))}
 
-        {/* Display monetary voucher if applied and not fully covering */}
+        {/* Display Monetary Voucher Application if any */}
         {voucherAppliedAmount > 0 &&
           appliedGiftVoucherId &&
-          !isBaseTreatmentCoveredByTreatmentVoucher &&
-          (initialData.usableGiftVouchers.find((v) => v._id.toString() === appliedGiftVoucherId)?.voucherType ===
-            "monetary" ||
-            (isBaseTreatmentCoveredByTreatmentVoucher && finalAmount > 0)) && ( // Treatment voucher covered base, but monetary part of it or another monetary voucher applied to surcharges
+          initialData.usableGiftVouchers.find((v) => v._id.toString() === appliedGiftVoucherId)?.voucherType ===
+            "monetary" && (
             <div className="flex justify-between items-center font-medium text-green-600">
               <span className="flex items-center">
                 <GiftIcon className="mr-2 h-4 w-4" />
-                {translations["bookings.steps.summary.voucherApplied"] || "Gift Voucher Applied"}:
+                {translations["bookings.steps.summary.monetaryVoucherApplied"] || "Monetary Voucher Applied"}:
               </span>
               <span>
                 - {voucherAppliedAmount.toFixed(2)} {translations["common.currency"] || "ILS"}
@@ -263,6 +288,7 @@ export default function SummaryStep({
             </div>
           )}
 
+        {/* Display Coupon Discount if any */}
         {couponDiscount > 0 && (
           <div className="flex justify-between items-center font-medium text-green-600">
             <span className="flex items-center">
@@ -281,7 +307,9 @@ export default function SummaryStep({
             {finalAmount.toFixed(2)} {translations["common.currency"] || "ILS"}
           </span>
         </div>
-        {isBaseCovered && finalAmount > 0 && (
+
+        {/* Alert if base was covered but there are still charges (surcharges) */}
+        {isBaseEffectivelyCovered && finalAmount > 0 && (
           <Alert variant="info" className="mt-3">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>
@@ -289,7 +317,7 @@ export default function SummaryStep({
             </AlertTitle>
             <AlertDescription>
               {translations["bookings.steps.summary.additionalPaymentDescSurcharges"] ||
-                "Your treatment is covered, but an additional payment is required for surcharges or other fees."}
+                "Your treatment is covered. The amount below is for additional fees or surcharges."}
             </AlertDescription>
           </Alert>
         )}

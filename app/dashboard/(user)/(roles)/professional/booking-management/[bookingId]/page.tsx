@@ -41,7 +41,7 @@ export default function ProfessionalBookingManagementPage() {
   const router = useRouter()
   const { data: session, status: sessionStatus } = useSession()
   const { toast } = useToast()
-  const { t, i18n } = useTranslation()
+  const { t, language } = useTranslation()
 
   const bookingId = params.bookingId as string
 
@@ -248,7 +248,7 @@ export default function ProfessionalBookingManagementPage() {
             </p>
             <p>
               <strong>{t("professionalBookingManagement.details.dateTime")}:</strong>{" "}
-              {formatDateTime(booking.bookingDateTime, i18n.language)}
+              {formatDateTime(booking.bookingDateTime, language)}
             </p>
             <p>
               <strong>{t("professionalBookingManagement.details.duration")}:</strong>{" "}

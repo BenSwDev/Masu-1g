@@ -36,7 +36,7 @@ export interface GiftVoucherPlain {
   validFrom: Date | string
   validUntil: Date | string
   paymentId?: string
-  usageHistory?: { date: Date | string; amountUsed: number; orderId?: string; description?: string }[]
+  usageHistory?: { date: Date | string; amountUsed: number; orderId?: string; description?: string; userId?: string }[]
   isActive: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -72,22 +72,29 @@ export interface IGiftVoucher extends Document {
   validFrom: Date
   validUntil: Date
   paymentId?: string
-  usageHistory: { date: Date; amountUsed: number; orderId?: mongoose.Types.ObjectId; description?: string }[]
+  usageHistory: {
+    date: Date
+    amountUsed: number
+    orderId?: mongoose.Types.ObjectId
+    description?: string
+    userId?: mongoose.Types.ObjectId // Added userId to usage history
+  }[]
   isActive: boolean
   createdAt: Date
   updatedAt: Date
+  isExpired: boolean // Virtual property
 }
 
 const GiftVoucherSchema: Schema<IGiftVoucher> = new Schema(
   {
-    code: { type: String, required: true, unique: true, trim: true }, // unique: true also creates an index
+    code: { type: String, required: true, unique: true, trim: true },
     voucherType: { type: String, enum: ["treatment", "monetary"], required: true },
-    amount: { type: Number, required: true, min: 0 }, // *** This field is required ***
+    amount: { type: Number, required: true, min: 0 },
     treatmentId: { type: Schema.Types.ObjectId, ref: "Treatment", sparse: true },
-    selectedDurationId: { type: Schema.Types.ObjectId, sparse: true }, // Assuming you have a Duration concept
-    monetaryValue: { type: Number, min: 0 }, // Value for monetary type, or price of treatment at purchase
-    originalAmount: { type: Number, min: 0 }, // Initial value, especially for monetary type
-    remainingAmount: { type: Number, min: 0 }, // Current balance for monetary type
+    selectedDurationId: { type: Schema.Types.ObjectId, sparse: true },
+    monetaryValue: { type: Number, min: 0 },
+    originalAmount: { type: Number, min: 0 },
+    remainingAmount: { type: Number, min: 0 },
     purchaserUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     isGift: { type: Boolean, default: false },
@@ -117,62 +124,76 @@ const GiftVoucherSchema: Schema<IGiftVoucher> = new Schema(
     usageHistory: [
       {
         date: { type: Date, required: true },
-        amountUsed: { type: Number, required: true },
-        orderId: { type: Schema.Types.ObjectId, ref: "Order" }, // Assuming an Order model
+        amountUsed: { type: Number, required: true, min: 0 },
+        orderId: { type: Schema.Types.ObjectId, ref: "Order" },
         description: { type: String },
+        userId: { type: Schema.Types.ObjectId, ref: "User" }, // Added userId to usage history schema
       },
     ],
-    isActive: { type: Boolean, default: true }, // Admin override or general flag
+    isActive: { type: Boolean, default: true },
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true }, // Ensure virtuals are included in toJSON
+    toObject: { virtuals: true }, // Ensure virtuals are included in toObject
   },
 )
 
-// Indexes (unique index on 'code' is handled by 'unique: true' in schema definition)
 GiftVoucherSchema.index({ ownerUserId: 1, status: 1, validUntil: 1 })
-// GiftVoucherSchema.index({ purchaserUserId: 1 }); // Already indexed via purchaserUserId field with index:true
 GiftVoucherSchema.index({ status: 1, sendDate: 1, isGift: 1 })
 
 GiftVoucherSchema.virtual("isExpired").get(function (this: IGiftVoucher) {
-  return new Date() > this.validUntil && this.status !== "fully_used" && this.status !== "cancelled"
+  return new Date() > this.validUntil && !["fully_used", "cancelled", "expired"].includes(this.status)
 })
 
 GiftVoucherSchema.pre<IGiftVoucher>("save", function (next) {
-  // Ensure 'amount' is positive if not already handled by min:0
-  if (this.amount < 0) {
-    // Or handle as a validation error
-    this.amount = 0
+  // Defensive: If 'amount' is missing or not a number during an update, try to restore it from 'originalAmount'.
+  // 'originalAmount' should be the immutable face value set at creation.
+  if (!this.isNew && typeof this.amount !== "number" && typeof this.originalAmount === "number") {
+    this.amount = this.originalAmount
   }
 
-  // If monetaryValue, originalAmount, or remainingAmount are not set,
-  // and 'amount' is present, consider defaulting them from 'amount'.
-  if (this.voucherType === "monetary") {
+  // On creation, ensure 'amount' is valid and initialize other monetary fields from it.
+  if (this.isNew) {
+    if (typeof this.amount !== "number" || this.amount < 0) {
+      // This should ideally be caught by schema 'required' and 'min' validators.
+      // If it reaches here, it's a pre-validation issue.
+      return next(new Error("GiftVoucher 'amount' is invalid or missing at creation."))
+    }
+
     if (typeof this.originalAmount !== "number") {
       this.originalAmount = this.amount
     }
-    if (typeof this.remainingAmount !== "number") {
-      this.remainingAmount = this.amount // Or originalAmount if that's set
+    // For monetary vouchers, remainingAmount should also be initialized from amount.
+    if (this.voucherType === "monetary" && typeof this.remainingAmount !== "number") {
+      this.remainingAmount = this.amount
     }
+    // monetaryValue might be the price of treatment or same as amount.
     if (typeof this.monetaryValue !== "number") {
       this.monetaryValue = this.amount
     }
-  } else if (this.voucherType === "treatment") {
-    // For treatment vouchers, monetaryValue and originalAmount might represent the treatment's value at purchase.
-    // remainingAmount might be less relevant or represent "1 use".
-    if (typeof this.monetaryValue !== "number") {
-      this.monetaryValue = this.amount
-    }
-    if (typeof this.originalAmount !== "number") {
+  } else {
+    // On update
+    // Ensure 'originalAmount' is also preserved or restored from 'amount' if it got lost (and amount is valid).
+    // This is less likely to be needed if 'amount' is restored first, but good for robustness.
+    if (typeof this.originalAmount !== "number" && typeof this.amount === "number" && this.amount >= 0) {
       this.originalAmount = this.amount
     }
-    // For treatment, remainingAmount could be set to amount if it represents 1 use, or 0 if it's single-use and this is post-use.
-    // Initial creation logic in actions should handle this.
   }
 
-  if (this.isExpired && this.status !== "expired" && this.status !== "fully_used" && this.status !== "cancelled") {
+  // Ensure critical monetary fields are not negative.
+  // These checks run after potential restoration/initialization.
+  if (typeof this.amount === "number" && this.amount < 0) this.amount = 0
+  if (typeof this.originalAmount === "number" && this.originalAmount < 0) this.originalAmount = 0
+  if (typeof this.remainingAmount === "number" && this.remainingAmount < 0) this.remainingAmount = 0
+  if (typeof this.monetaryValue === "number" && this.monetaryValue < 0) this.monetaryValue = 0
+
+  // Update status if expired (and not already in a terminal state)
+  if (this.isExpired && !["fully_used", "cancelled", "expired"].includes(this.status)) {
     this.status = "expired"
+    this.isActive = false // Also set isActive to false if it expires
   }
+
   next()
 })
 

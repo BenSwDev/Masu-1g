@@ -63,7 +63,6 @@
     "mongoose": "latest",
     "next": "15.2.4",
     "next-auth": "latest",
-    "next-intl": "latest",
     "next-themes": "latest",
     "nodemailer": "latest",
     "prisma": "latest",

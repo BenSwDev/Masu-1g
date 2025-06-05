@@ -634,7 +634,10 @@ export async function createBooking(
             logger.info("Sending notifications to professionals...")
 
             try {
-              const professionals = await User.find({ roles: "professional", isActive: true })
+              const professionals = await User.find({
+                roles: "professional",
+                $or: [{ isActive: true }, { isActive: { $exists: false } }],
+              })
                 .select("name email phone notificationPreferences")
                 .lean()
 

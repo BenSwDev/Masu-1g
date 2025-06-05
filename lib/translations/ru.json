@@ -151,7 +151,8 @@
       "userMenu": {
         "treatmentPreferences": "Предпочтения по процедурам",
         "notifications": "Уведомления"
-      }
+      },
+      "bookings": "Мои Записи"
     }
   },
   "subscriptions": {
@@ -1277,7 +1278,9 @@
       "initialDataFetchFailed": "Не удалось получить начальные данные для записи. Пожалуйста, обновите страницу.",
       "subscriptionTreatmentMismatch": "Выбранная процедура не соответствует процедуре, покрываемой вашим абонементом.",
       "subscriptionDurationMismatch": "Выбранная продолжительность не соответствует продолжительности, покрываемой вашим абонементом.",
-      "priceCalculationUnavailable": "Информация о цене в данный момент недоступна. Убедитесь, что все предыдущие шаги выполнены корректно."
+      "priceCalculationUnavailable": "Информация о цене в данный момент недоступна. Убедитесь, что все предыдущие шаги выполнены корректно.",
+      "fetchBookingsFailed": "Не удалось загрузить ваши записи. Пожалуйста, попробуйте еще раз.",
+      "invalidUserId": "Неверный идентификатор пользователя."
     },
     "messages": {
       "closedOnSelectedDate": "Мы закрыты в выбранную дату."
@@ -1303,6 +1306,74 @@
     "subscriptions": {
       "remaining": "Осталось",
       "expiry": "Истекает"
+    }
+  },
+  "memberBookings": {
+    "title": "Мои Записи",
+    "description": "Просмотр и управление вашими прошлыми и предстоящими записями.",
+    "noBookings": "У вас пока нет записей. Готовы запланировать следующий момент расслабления?",
+    "noBookingsFoundTitle": "Записи не найдены",
+    "noBookingsFoundFiltered": "Нет записей, соответствующих вашим текущим фильтрам. Попробуйте изменить их или просмотреть все записи.",
+    "showAllBookings": "Показать все записи",
+    "filterByStatus": "Фильтр по статусу",
+    "statusFilter": {
+      "all": "Все записи",
+      "upcoming": "Предстоящие",
+      "past": "Прошедшие",
+      "cancelled": "Отмененные"
+    },
+    "status": {
+      "pending_professional_assignment": "Ожидание специалиста",
+      "confirmed": "Подтверждено",
+      "completed": "Завершено",
+      "cancelled_by_user": "Отменено вами",
+      "cancelled_by_admin": "Отменено администратором",
+      "no_show": "Неявка"
+    },
+    "treatment": "Процедура",
+    "duration": "Длительность",
+    "date": "Дата",
+    "time": "Время",
+    "professional": "Специалист",
+    "address": "Адрес",
+    "addressNotSet": "Адрес не указан",
+    "addressInstructions": "Инструкции",
+    "price": "Цена",
+    "viewDetails": "Посмотреть детали",
+    "cancelBooking": "Отменить запись",
+    "cancelConfirmTitle": "Подтвердить отмену",
+    "cancelConfirmMessage": "Вы уверены, что хотите отменить эту запись? Это действие может быть необратимым в зависимости от политики отмены.",
+    "cancelSuccess": "Запись успешно отменена.",
+    "cancelError": "Не удалось отменить запись. Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой.",
+    "detailsModal": {
+      "title": "Детали записи",
+      "bookingId": "ID Записи",
+      "treatmentInfo": "Информация о процедуре",
+      "scheduleInfo": "Расписание и местоположение",
+      "priceInfo": "Цена и оплата",
+      "notes": "Ваши заметки"
+    },
+    "upcoming": "Предстоящие",
+    "past": "Прошедшие",
+    "all": "Все",
+    "loadMore": "Загрузить еще записи",
+    "flexibleTime": "Гибкое время",
+    "notes": "Заметки",
+    "coveredBySubscription": "Покрыто подпиской",
+    "coveredByVoucher": "Покрыто подарочным сертификатом",
+    "coveredBySubscriptionFull": "Покрытие подпиской",
+    "coveredByTreatmentVoucherFull": "Покрытие сертификатом на процедуру",
+    "voucherApplied": "Применен подарочный сертификат",
+    "couponDiscount": "Скидка по купону",
+    "basePrice": "Базовая цена",
+    "finalAmount": "Итоговая сумма",
+    "therapistPreference": "Предпочтение специалиста",
+    "cancellationReason": "Причина отмены"
+  },
+  "memberBookings": {
+    "errors": {
+      "fetchBookingsFailed": "Не удалось загрузить ваши записи. Пожалуйста, попробуйте еще раз.",
+      "invalidUserId": "Неверный идентификатор пользователя."
     }
   }
 }

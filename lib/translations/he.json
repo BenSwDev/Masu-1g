@@ -274,7 +274,8 @@
       "userMenu": {
         "treatmentPreferences": "העדפות טיפול",
         "notifications": "התראות"
-      }
+      },
+      "bookings": "ההזמנות שלי"
     },
     "roles": {
       "member": "חבר",
@@ -1468,7 +1469,9 @@
       "initialDataFetchFailed": "שליפת נתונים ראשוניים להזמנה נכשלה. אנא רענן את הדף.",
       "subscriptionTreatmentMismatch": "הטיפול שנבחר אינו תואם לטיפול המכוסה במנוי שלך.",
       "subscriptionDurationMismatch": "משך הזמן שנבחר אינו תואם למשך המכוסה במנוי שלך.",
-      "priceCalculationUnavailable": "פרטי המחיר אינם זמינים כעת. אנא ודא שכל השלבים הקודמים הושלמו כראוי."
+      "priceCalculationUnavailable": "פרטי המחיר אינם זמינים כעת. אנא ודא שכל השלבים הקודמים הושלמו כראוי.",
+      "fetchBookingsFailed": "טעינת ההזמנות שלך נכשלה. אנא נסה שוב.",
+      "invalidUserId": "מזהה משתמש לא תקין."
     },
     "messages": {
       "closedOnSelectedDate": "אנו סגורים בתאריך הנבחר."
@@ -1495,5 +1498,67 @@
       "remaining": "נותרו",
       "expiry": "תוקף"
     }
+  },
+  "memberBookings": {
+    "title": "ההזמנות שלי",
+    "description": "צפה ונהל את ההזמנות הקרובות והקודמות שלך.",
+    "noBookings": "אין לך הזמנות עדיין. מוכן לתאם את רגע הרוגע הבא שלך?",
+    "noBookingsFoundTitle": "לא נמצאו הזמנות",
+    "noBookingsFoundFiltered": "לא נמצאו הזמנות התואמות לסינונים שלך. נסה לשנות אותם או להציג את כל ההזמנות.",
+    "showAllBookings": "הצג את כל ההזמנות",
+    "filterByStatus": "סנן לפי סטטוס",
+    "statusFilter": {
+      "all": "כל ההזמנות",
+      "upcoming": "הזמנות קרובות",
+      "past": "הזמנות קודמות",
+      "cancelled": "הזמנות מבוטלות"
+    },
+    "status": {
+      "pending_professional_assignment": "ממתין למטפל",
+      "confirmed": "מאושרת",
+      "completed": "הושלמה",
+      "cancelled_by_user": "בוטלה על ידך",
+      "cancelled_by_admin": "בוטלה ע\"י מנהל",
+      "no_show": "לא הופעת"
+    },
+    "treatment": "טיפול",
+    "duration": "משך",
+    "date": "תאריך",
+    "time": "שעה",
+    "professional": "מטפל/ת",
+    "address": "כתובת",
+    "addressNotSet": "כתובת לא הוגדרה",
+    "addressInstructions": "הוראות הגעה",
+    "price": "מחיר",
+    "viewDetails": "צפה בפרטים",
+    "cancelBooking": "בטל הזמנה",
+    "cancelConfirmTitle": "אישור ביטול",
+    "cancelConfirmMessage": "האם אתה בטוח שברצונך לבטל הזמנה זו? ייתכן שלא ניתן יהיה לבטל פעולה זו בהתאם למדיניות הביטולים.",
+    "cancelSuccess": "ההזמנה בוטלה בהצלחה.",
+    "cancelError": "ביטול ההזמנה נכשל. אנא נסה שוב או פנה לתמיכה.",
+    "detailsModal": {
+      "title": "פרטי הזמנה",
+      "bookingId": "מזהה הזמנה",
+      "treatmentInfo": "פרטי הטיפול",
+      "scheduleInfo": "מועד ומיקום",
+      "priceInfo": "מחיר ותשלום",
+      "notes": "ההערות שלך"
+    },
+    "upcoming": "קרובות",
+    "past": "קודמות",
+    "all": "הכל",
+    "loadMore": "טען הזמנות נוספות",
+    "flexibleTime": "זמן גמיש",
+    "notes": "הערות",
+    "coveredBySubscription": "כוסה ע\"י מנוי",
+    "coveredByVoucher": "כוסה ע\"י שובר מתנה",
+    "coveredBySubscriptionFull": "כיסוי מנוי",
+    "coveredByTreatmentVoucherFull": "כיסוי שובר טיפול",
+    "voucherApplied": "שובר מתנה הופעל",
+    "couponDiscount": "הנחת קופון",
+    "basePrice": "מחיר בסיס",
+    "finalAmount": "סכום סופי",
+    "therapistPreference": "העדפת מטפל/ת",
+    "cancellationReason": "סיבת ביטול"
   }
 }

@@ -29,6 +29,7 @@ import {
   Calendar,
   Bell,
   SlidersHorizontal,
+  CalendarCheck,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
@@ -283,6 +284,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "paymentMethods", icon: CreditCard, hrefSuffix: "payment-methods" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
+        { titleKey: "bookings", icon: CalendarCheck, hrefSuffix: "bookings" },
       ],
       professional: [
         { titleKey: "profile", icon: User, hrefSuffix: "profile" },

@@ -27,6 +27,9 @@ import { add, format, set, addMinutes, isBefore, isAfter } from "date-fns"
 import { CalculatePricePayloadSchema, CreateBookingPayloadSchema } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
 import type { CreateBookingPayload as CreateBookingPayloadSchemaType } from "@/lib/validation/booking-schemas"
+// Add to existing imports
+import type { PopulatedBooking } from "@/types/booking" // Assuming you'll create/update this type
+import { isValidObjectId } from "mongoose"
 
 // Helper to compare if two Date objects represent the same calendar day in UTC
 function isSameUTCDay(dateLeft: Date, dateRight: Date): boolean {
@@ -573,6 +576,168 @@ export async function createBooking(
   }
 }
 
+// Add new function getUserBookings
+export async function getUserBookings(params: {
+  userId: string
+  page?: number
+  limit?: number
+  status?: string[] // Allow multiple statuses
+  sortBy?: string
+  sortDirection?: "asc" | "desc"
+  dateFrom?: string
+  dateTo?: string
+}): Promise<{
+  success: boolean
+  bookings?: PopulatedBooking[]
+  totalBookings?: number
+  totalPages?: number
+  error?: string
+}> {
+  const {
+    userId,
+    page = 1,
+    limit = 10,
+    status,
+    sortBy = "bookingDateTime",
+    sortDirection = "desc",
+    dateFrom,
+    dateTo,
+  } = params
+
+  if (!userId || !isValidObjectId(userId)) {
+    return { success: false, error: "common.invalidUserId" }
+  }
+
+  try {
+    await dbConnect()
+    const session = await getServerSession(authOptions)
+    if (!session || session.user.id !== userId) {
+      return { success: false, error: "common.unauthorized" }
+    }
+
+    const query: any = { userId: new mongoose.Types.ObjectId(userId) }
+
+    if (status && status.length > 0) {
+      query.status = { $in: status }
+    }
+
+    if (dateFrom || dateTo) {
+      query.bookingDateTime = {}
+      if (dateFrom) query.bookingDateTime.$gte = new Date(dateFrom)
+      if (dateTo) {
+        const endDate = new Date(dateTo)
+        endDate.setHours(23, 59, 59, 999) // Include the whole day
+        query.bookingDateTime.$lte = endDate
+      }
+    }
+
+    const sortDirectionNum = sortDirection === "asc" ? 1 : -1
+    const skip = (page - 1) * limit
+
+    const totalBookings = await Booking.countDocuments(query)
+    const totalPages = Math.ceil(totalBookings / limit)
+
+    const bookingsData = await Booking.find(query)
+      .populate<{ treatmentId: ITreatment }>({
+        path: "treatmentId",
+        select: "name category pricingType defaultDurationMinutes durations",
+      })
+      .populate<{ professionalId: Pick<typeof User.schema.obj, "name" | "email"> }>({
+        path: "professionalId",
+        select: "name email",
+      })
+      .populate<{ addressId: InstanceType<typeof Address> }>("addressId")
+      .sort({ [sortBy]: sortDirectionNum })
+      .skip(skip)
+      .limit(limit)
+      .lean()
+
+    const bookings = bookingsData.map((booking) => {
+      let selectedDurationDetails
+      const treatment = booking.treatmentId as ITreatment | null
+      if (
+        treatment &&
+        treatment.pricingType === "duration_based" &&
+        booking.selectedDurationId &&
+        treatment.durations
+      ) {
+        const foundDuration = treatment.durations.find(
+          (d) => d._id?.toString() === booking.selectedDurationId?.toString(),
+        )
+        if (foundDuration) {
+          selectedDurationDetails = {
+            minutes: foundDuration.minutes,
+            price: foundDuration.price,
+          }
+        }
+      } else if (treatment && treatment.pricingType === "fixed") {
+        selectedDurationDetails = {
+          minutes: treatment.defaultDurationMinutes || 0,
+          price: treatment.fixedPrice || 0, // Assuming fixedPrice is on ITreatment
+        }
+      }
+
+      return {
+        ...booking,
+        _id: booking._id.toString(),
+        userId: {
+          _id: booking.userId.toString(),
+          // Populate user name/email if needed, but it's the current user
+        },
+        treatmentId: treatment
+          ? {
+              _id: treatment._id.toString(),
+              name: treatment.name,
+              category: treatment.category,
+              pricingType: treatment.pricingType,
+              defaultDurationMinutes: treatment.defaultDurationMinutes,
+              durations: treatment.durations?.map((d) => ({
+                _id: d._id?.toString(),
+                minutes: d.minutes,
+                price: d.price,
+                isActive: d.isActive,
+              })),
+            }
+          : undefined,
+        selectedDurationId: booking.selectedDurationId?.toString(),
+        selectedDuration: selectedDurationDetails,
+        professionalId: booking.professionalId
+          ? {
+              _id: (booking.professionalId as any)._id.toString(),
+              name: (booking.professionalId as any).name,
+              email: (booking.professionalId as any).email,
+            }
+          : undefined,
+        addressId: booking.addressId
+          ? {
+              ...((booking.addressId as any).toObject ? (booking.addressId as any).toObject() : booking.addressId),
+              _id: (booking.addressId as any)._id.toString(),
+            }
+          : undefined,
+        priceDetails: {
+          ...booking.priceDetails,
+          appliedCouponId: booking.priceDetails.appliedCouponId?.toString(),
+          appliedGiftVoucherId: booking.priceDetails.appliedGiftVoucherId?.toString(),
+          redeemedUserSubscriptionId: booking.priceDetails.redeemedUserSubscriptionId?.toString(),
+        },
+        paymentDetails: {
+          ...booking.paymentDetails,
+          paymentMethodId: booking.paymentDetails.paymentMethodId?.toString(),
+        },
+        // Ensure all ObjectId fields are converted to strings if necessary for client
+        appliedCouponId: booking.appliedCouponId?.toString(),
+        redeemedGiftVoucherId: booking.redeemedGiftVoucherId?.toString(),
+        redeemedUserSubscriptionId: booking.redeemedUserSubscriptionId?.toString(),
+      } as PopulatedBooking
+    })
+
+    return { success: true, bookings, totalBookings, totalPages }
+  } catch (error) {
+    logger.error("Error fetching user bookings:", { error, userId, params })
+    return { success: false, error: "bookings.errors.fetchBookingsFailed" }
+  }
+}
+
 export async function cancelBooking(
   bookingId: string,
   userId: string,
@@ -664,8 +829,9 @@ export async function cancelBooking(
     })
 
     if (success) {
-      revalidatePath("/dashboard/member/book-treatment")
-      revalidatePath("/dashboard/admin/bookings") // Assuming admin might view bookings
+      revalidatePath("/dashboard/member/bookings") // ADD THIS LINE or ensure it's covered
+      revalidatePath("/dashboard/member/book-treatment") // This might be less relevant now or could be kept
+      revalidatePath("/dashboard/admin/bookings")
       revalidatePath("/dashboard/member/subscriptions")
       revalidatePath("/dashboard/member/gift-vouchers")
       return { success: true }

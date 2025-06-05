@@ -246,8 +246,8 @@
       "dashboard": "לוח בקרה",
       "mainMenu": "תפריט ראשי",
       "bookTreatment": "הזמנת טיפול",
-      "purchaseSubscription": "רכישת מנוי",
-      "purchaseGiftVoucher": "רכישת שובר מתנה",
+      "purchaseSubscription": "קניית מנוי",
+      "purchaseGiftVoucher": "קניית שובר מתנה",
       "profile": "פרופיל",
       "account": "חשבון",
       "signOut": "התנתק",
@@ -264,21 +264,18 @@
       "location": "הגדרות מיקום",
       "bankAccount": "פרטי חשבון בנק",
       "documents": "העלאת מסמכים",
+      "coupons": "קופונים",
+      "giftVouchers": "שוברי מתנה",
       "products": "מוצרים",
       "categories": "קטגוריות",
       "orders": "הזמנות",
-      "coupons": "קופונים",
-      "assignedCoupons": "קופונים שהוקצו לי",
-      "giftVouchers": "שוברי מתנה",
       "support": "תמיכה",
+      "myBookings": "ההזמנות שלי",
       "settings": "הגדרות",
       "userMenu": {
         "treatmentPreferences": "העדפות טיפול",
-        "notifications": "התראות",
-        "toggleTooltip": "תפריט משתמש"
-      },
-      "myBookings": "ההזמנות שלי",
-      "roleSwitcherTooltip": "תפקיד נוכחי"
+        "notifications": "התראות"
+      }
     },
     "roles": {
       "member": "חבר",
@@ -1245,20 +1242,6 @@
       "copySuccessDescription": "קוד קופון \"{{code}}\" הועתק ללוח.",
       "copyErrorDescription": "העתקת הקוד נכשלה."
     }
-  },
-  "notifications": {
-    "roleSwitchSuccess": "התפקיד הוחלף בהצלחה ל{{role}}",
-    "roleSwitchError": "נכשל בהחלפת התפקיד"
-  },
-  "roles": {
-    "admin": "מנהל",
-    "member": "חבר",
-    "partner": "שותף",
-    "professional": "מקצועי",
-    "guest": "אורח",
-    "memberPlural": "חברים",
-    "professionalPlural": "מקצועיים",
-    "partnerPlural": "שותפים"
   },
   "roles": {
     "admin": "מנהל",

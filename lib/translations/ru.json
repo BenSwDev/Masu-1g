@@ -145,17 +145,14 @@
       "categories": "Категории",
       "orders": "Заказы",
       "coupons": "Купоны",
-      "assignedCoupons": "Мои назначенные купоны",
       "giftVouchers": "Подарочные сертификаты",
       "support": "Поддержка",
       "settings": "Настройки",
       "userMenu": {
         "treatmentPreferences": "Предпочтения по процедурам",
-        "notifications": "Уведомления",
-        "toggleTooltip": "Меню пользователя"
+        "notifications": "Уведомления"
       },
-      "myBookings": "Мои Записи",
-      "roleSwitcherTooltip": "Текущая роль"
+      "myBookings": "Мои Записи"
     }
   },
   "subscriptions": {
@@ -1378,9 +1375,5 @@
     "sidebar": {
       "myBookings": "Мои Записи"
     }
-  },
-  "notifications": {
-    "roleSwitchSuccess": "Роль успешно изменена на {{role}}",
-    "roleSwitchError": "Не удалось сменить роль"
   }
 }

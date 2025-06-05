@@ -150,17 +150,14 @@
       "categories": "Categories",
       "orders": "Orders",
       "coupons": "Coupons",
-      "assignedCoupons": "Assigned Coupons",
       "giftVouchers": "Gift Vouchers",
       "support": "Support",
       "settings": "Settings",
       "userMenu": {
         "treatmentPreferences": "Treatment Preferences",
-        "notifications": "Notifications",
-        "toggleTooltip": "User menu"
+        "notifications": "Notifications"
       },
-      "myBookings": "My Bookings",
-      "roleSwitcherTooltip": "Current Role"
+      "myBookings": "My Bookings"
     }
   },
   "subscriptions": {
@@ -1503,9 +1500,5 @@
       "saveSuccess": "Notification settings saved successfully.",
       "saveError": "Failed to save notification settings."
     }
-  },
-  "notifications": {
-    "roleSwitchSuccess": "Role switched successfully to {{role}}",
-    "roleSwitchError": "Failed to switch role"
   }
 }

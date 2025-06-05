@@ -27,7 +27,6 @@ import {
   FileText,
   Gift,
   Calendar,
-  CalendarCheck2,
   Bell,
   SlidersHorizontal,
 } from "lucide-react"
@@ -282,7 +281,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       member: [
         { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },
         { titleKey: "paymentMethods", icon: CreditCard, hrefSuffix: "payment-methods" },
-        { titleKey: "myBookings", icon: CalendarCheck2, hrefSuffix: "bookings" }, // ADD THIS LINE
+        { titleKey: "myBookings", icon: CreditCard, hrefSuffix: "bookings" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
       ],
@@ -294,7 +293,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       ],
       partner: [
         { titleKey: "profile", icon: User, hrefSuffix: "profile" },
-        { titleKey: "assignedCoupons", icon: Gift, hrefSuffix: "assigned-coupons" }, // Changed titleKey
+        { titleKey: "coupons", icon: Gift, hrefSuffix: "assigned-coupons" },
       ],
     }
     ;(roleMenus[activeRole] || []).forEach((item) => {

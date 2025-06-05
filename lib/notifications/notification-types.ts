@@ -72,6 +72,31 @@ export interface CustomNotificationData {
 }
 
 /**
+ * Booking Success Notification Data (for the user who booked)
+ */
+export interface BookingSuccessNotificationData {
+  type: "BOOKING_SUCCESS"
+  userName: string
+  bookingId: string // For reference
+  treatmentName: string
+  bookingDateTime: Date
+  orderDetailsLink: string // Link to user's bookings page
+}
+
+/**
+ * New Booking Available Notification Data (for professionals)
+ */
+export interface NewBookingAvailableNotificationData {
+  type: "NEW_BOOKING_AVAILABLE"
+  professionalName?: string // Optional, for personalization
+  bookingId: string
+  treatmentName: string
+  bookingDateTime: Date
+  bookingAddress?: string // e.g., city or full address if available and relevant
+  adminBookingDetailsLink: string // Link to admin/professional booking management page
+}
+
+/**
  * Gift Voucher Received notification data (already exists implicitly via sms-templates, let's make it explicit if needed for email)
  */
 export interface GiftVoucherReceivedNotificationData {
@@ -115,6 +140,8 @@ export type NotificationData =
   | PasswordResetNotificationData
   | AppointmentNotificationData
   | CustomNotificationData
+  | BookingSuccessNotificationData // New
+  | NewBookingAvailableNotificationData // New
   | GiftVoucherReceivedNotificationData // Added for clarity, matches existing usage
   | PurchaseSuccessSubscriptionNotificationData // New
   | PurchaseSuccessGiftVoucherNotificationData // New

@@ -2,6 +2,8 @@ import type {
   NotificationData,
   PurchaseSuccessGiftVoucherNotificationData,
   PurchaseSuccessSubscriptionNotificationData,
+  BookingSuccessNotificationData, // New
+  NewBookingAvailableNotificationData, // New
 } from "../notification-types" // Ensure new types are imported or compatible
 
 // Define Language type locally to avoid importing from client-side i18n
@@ -35,6 +37,18 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
         data.purchaserName,
         data.voucherCode,
         data.greetingMessage,
+        language,
+      )
+
+    case "BOOKING_SUCCESS":
+      return getBookingSuccessSmsTemplate(
+        data as BookingSuccessNotificationData, // Cast to specific type
+        language,
+      )
+
+    case "NEW_BOOKING_AVAILABLE":
+      return getNewBookingAvailableSmsTemplate(
+        data as NewBookingAvailableNotificationData, // Cast to specific type
         language,
       )
 
@@ -181,5 +195,54 @@ function getPurchaseSuccessGiftVoucherSmsTemplate(
       return `Уважаемый(ая) ${data.userName}, покупка ${voucherDesc} (код: ${data.voucherCode}) успешно завершена! Детали: ${data.purchaseDetailsLink} ${appName}`
     default: // English
       return `Dear ${data.userName}, your purchase of ${voucherDesc} (code: ${data.voucherCode}) was successful! Details: ${data.purchaseDetailsLink} ${appName}`
+  }
+}
+
+// Booking Success SMS Template (for user)
+function getBookingSuccessSmsTemplate(data: BookingSuccessNotificationData, language: SMSLanguage): string {
+  const dateTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { hour: "2-digit", minute: "2-digit" },
+  )
+  const dateDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { day: "2-digit", month: "2-digit", year: "numeric" },
+  )
+
+  switch (language) {
+    case "he":
+      return `הזמנתך לטיפול ${data.treatmentName} ב-${dateDate} בשעה ${dateTime} (מס' ${data.bookingId}) אושרה! פרטים נוספים: ${data.orderDetailsLink} ${appName}`
+    case "ru":
+      return `Ваш заказ на ${data.treatmentName} ${dateDate} в ${dateTime} (№${data.bookingId}) подтвержден! Подробнее: ${data.orderDetailsLink} ${appName}`
+    default: // English
+      return `Your booking for ${data.treatmentName} on ${dateDate} at ${dateTime} (#${data.bookingId}) is confirmed! Details: ${data.orderDetailsLink} ${appName}`
+  }
+}
+
+// New Booking Available SMS Template (for professionals)
+function getNewBookingAvailableSmsTemplate(data: NewBookingAvailableNotificationData, language: SMSLanguage): string {
+  const dateTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { hour: "2-digit", minute: "2-digit" },
+  )
+  const dateDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { day: "2-digit", month: "2-digit", year: "numeric" },
+  )
+  const locationInfo = data.bookingAddress
+    ? language === "he"
+      ? ` ב${data.bookingAddress}`
+      : language === "ru"
+        ? ` в ${data.bookingAddress}`
+        : ` at ${data.bookingAddress}`
+    : ""
+
+  switch (language) {
+    case "he":
+      return `הזמנה חדשה: ${data.treatmentName} ב-${dateDate} ${dateTime}${locationInfo} (מס' ${data.bookingId}). לשיבוץ: ${data.adminBookingDetailsLink} ${appName}`
+    case "ru":
+      return `Новый заказ: ${data.treatmentName} ${dateDate} в ${dateTime}${locationInfo} (№${data.bookingId}). Назначить: ${data.adminBookingDetailsLink} ${appName}`
+    default: // English
+      return `New booking: ${data.treatmentName} on ${dateDate} at ${dateTime}${locationInfo} (#${data.bookingId}). Assign: ${data.adminBookingDetailsLink} ${appName}`
   }
 }

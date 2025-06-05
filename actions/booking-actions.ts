@@ -28,6 +28,18 @@ import { CalculatePricePayloadSchema, CreateBookingPayloadSchema } from "@/lib/v
 import type { z } from "zod"
 import type { CreateBookingPayload as CreateBookingPayloadSchemaType } from "@/lib/validation/booking-schemas"
 
+// Add new imports at the top
+import { notificationManager } from "@/lib/notifications/notification-manager"
+import type {
+  EmailRecipient,
+  PhoneRecipient,
+  BookingSuccessNotificationData,
+  NewBookingAvailableNotificationData,
+  NotificationLanguage,
+} from "@/lib/notifications/notification-types"
+// User model might already be imported, if not, add it:
+// import User, { type IUser } from "@/lib/db/models/user";
+
 // This defines the shape of a booking object after populating related fields.
 export interface PopulatedBooking
   extends Omit<IBooking, "treatmentId" | "addressId" | "professionalId" | "selectedDurationId"> {
@@ -565,13 +577,112 @@ export async function createBooking(
       revalidatePath("/dashboard/member/book-treatment")
       revalidatePath("/dashboard/member/subscriptions")
       revalidatePath("/dashboard/member/gift-vouchers")
-      // Augment bookingResult with updated voucher details if any
+      revalidatePath("/dashboard/member/bookings") // For the user
+      revalidatePath("/dashboard/admin/bookings") // For admin/professionals
+
       const finalBookingObject = bookingResult.toObject() as IBooking
       if (updatedVoucherDetails) {
         ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
       }
+
+      // --- START: Send Notifications ---
+      try {
+        const user = await User.findById(finalBookingObject.userId)
+          .select("name email phone notificationPreferences")
+          .lean()
+        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
+
+        if (user && treatment) {
+          const userLang = (user.notificationPreferences?.language as NotificationLanguage) || "he"
+          const userNotificationMethods = user.notificationPreferences?.methods || ["email"]
+
+          // 1. Notify User about successful booking
+          const bookingSuccessData: BookingSuccessNotificationData = {
+            type: "BOOKING_SUCCESS",
+            userName: user.name || "User",
+            bookingId: finalBookingObject._id.toString(),
+            treatmentName: treatment.name,
+            bookingDateTime: finalBookingObject.bookingDateTime,
+            // TODO: Construct this link properly based on your routing
+            orderDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${finalBookingObject._id.toString()}`,
+          }
+
+          if (userNotificationMethods.includes("email") && user.email) {
+            const emailRecipient: EmailRecipient = {
+              type: "email",
+              value: user.email,
+              name: user.name,
+              language: userLang,
+            }
+            await notificationManager.sendNotification(emailRecipient, bookingSuccessData)
+          }
+          if (userNotificationMethods.includes("sms") && user.phone) {
+            const phoneRecipient: PhoneRecipient = {
+              type: "phone",
+              value: user.phone,
+              language: userLang,
+            }
+            await notificationManager.sendNotification(phoneRecipient, bookingSuccessData)
+          }
+
+          // 2. Notify Professionals if booking is pending assignment
+          if (finalBookingObject.status === "pending_professional_assignment") {
+            const professionals = await User.find({ roles: "professional", isActive: true })
+              .select("name email phone notificationPreferences")
+              .lean()
+
+            const newBookingAvailableData: NewBookingAvailableNotificationData = {
+              type: "NEW_BOOKING_AVAILABLE",
+              bookingId: finalBookingObject._id.toString(),
+              treatmentName: treatment.name,
+              bookingDateTime: finalBookingObject.bookingDateTime,
+              // TODO: Construct this link properly
+              adminBookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/admin/bookings?bookingId=${finalBookingObject._id.toString()}`, // Or professional specific dashboard
+              bookingAddress:
+                finalBookingObject.customAddressDetails?.city || (finalBookingObject.addressId as any)?.city, // Example, adjust as needed
+            }
+
+            for (const prof of professionals) {
+              const profLang = (prof.notificationPreferences?.language as NotificationLanguage) || "he"
+              const profNotificationMethods = prof.notificationPreferences?.methods || ["email"]
+              const personalizedData = { ...newBookingAvailableData, professionalName: prof.name }
+
+              if (profNotificationMethods.includes("email") && prof.email) {
+                const emailRecipient: EmailRecipient = {
+                  type: "email",
+                  value: prof.email,
+                  name: prof.name,
+                  language: profLang,
+                }
+                await notificationManager.sendNotification(emailRecipient, personalizedData)
+              }
+              if (profNotificationMethods.includes("sms") && prof.phone) {
+                const phoneRecipient: PhoneRecipient = {
+                  type: "phone",
+                  value: prof.phone,
+                  language: profLang,
+                }
+                await notificationManager.sendNotification(phoneRecipient, personalizedData)
+              }
+            }
+          }
+        } else {
+          logger.warn("Could not send booking notifications: User or Treatment not found", {
+            bookingId: finalBookingObject._id.toString(),
+          })
+        }
+      } catch (notificationError) {
+        logger.error("Failed to send booking notifications:", {
+          error: notificationError,
+          bookingId: finalBookingObject._id.toString(),
+        })
+        // Do not fail the whole booking creation if notifications fail, but log it.
+      }
+      // --- END: Send Notifications ---
+
       return { success: true, booking: finalBookingObject }
     } else {
+      // This part should ideally not be reached if transaction failed, but as a fallback:
       return { success: false, error: "bookings.errors.bookingCreationFailedUnknown" }
     }
   } catch (error) {

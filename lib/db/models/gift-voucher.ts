@@ -139,40 +139,105 @@ GiftVoucherSchema.virtual("isExpired").get(function (this: IGiftVoucher) {
 })
 
 GiftVoucherSchema.pre<IGiftVoucher>("save", function (next) {
-  // Ensure 'amount' is positive if not already handled by min:0
-  if (this.amount < 0) {
-    // Or handle as a validation error
-    this.amount = 0
+  // 1. Ensure 'amount' is populated if missing and originalAmount exists
+  if (typeof this.amount !== "number" && typeof this.originalAmount === "number") {
+    this.amount = this.originalAmount
   }
 
-  // If monetaryValue, originalAmount, or remainingAmount are not set,
-  // and 'amount' is present, consider defaulting them from 'amount'.
-  if (this.voucherType === "monetary") {
+  // 2. Ensure 'amount' is non-negative if it's a number.
+  // If 'amount' is still not a number at this point, the 'required: true' validation will catch it.
+  if (typeof this.amount === "number") {
+    if (this.amount < 0) {
+      this.amount = 0
+    }
+  } else {
+    // If amount is still not a number, and this is a new document,
+    // Mongoose's `required: true` validation for `amount` will fail, which is correct.
+    // If this is an existing document, it indicates a data integrity issue that this hook couldn't resolve from originalAmount.
+    // We cannot proceed to default other fields from an undefined `amount`.
+    // For now, we let the `required` validation catch this.
+    // If we absolutely had to save, we might consider throwing an error here or setting a default if appropriate.
+  }
+
+  // 3. Default originalAmount, monetaryValue, and remainingAmount
+  //    These should only be defaulted if 'amount' is now a valid number.
+  if (typeof this.amount === "number") {
+    // Default originalAmount from amount if originalAmount is missing
     if (typeof this.originalAmount !== "number") {
       this.originalAmount = this.amount
     }
-    if (typeof this.remainingAmount !== "number") {
-      this.remainingAmount = this.amount // Or originalAmount if that's set
-    }
+
+    // Default monetaryValue
     if (typeof this.monetaryValue !== "number") {
-      this.monetaryValue = this.amount
+      if (this.voucherType === "monetary" && typeof this.originalAmount === "number") {
+        this.monetaryValue = this.originalAmount
+      } else {
+        // For treatment vouchers, or if originalAmount is somehow still not a number for monetary
+        this.monetaryValue = this.amount
+      }
+    }
+
+    // Default remainingAmount for monetary vouchers
+    if (this.voucherType === "monetary") {
+      if (typeof this.remainingAmount !== "number") {
+        // If remainingAmount is missing, default it to originalAmount (which should be set by now)
+        if (typeof this.originalAmount === "number") {
+          this.remainingAmount = this.originalAmount
+        } else {
+          // Fallback if originalAmount somehow didn't get set (should not happen if amount is a number)
+          this.remainingAmount = this.amount
+        }
+      }
+      // Ensure remainingAmount does not exceed originalAmount for monetary vouchers
+      if (typeof this.remainingAmount === "number" && typeof this.originalAmount === "number") {
+        if (this.remainingAmount > this.originalAmount) {
+          this.remainingAmount = this.originalAmount
+        }
+        if (this.remainingAmount < 0) {
+          this.remainingAmount = 0
+        }
+      }
+    }
+    // For treatment vouchers, remainingAmount is typically specific (e.g., 1 for one use, or 0 after use).
+    // It's usually set by application logic rather than defaulted from 'amount' in this generic hook,
+    // unless 'amount' itself represents a single use value and it's a new voucher.
+    // The application logic in `createBooking` handles setting remainingAmount to 0 for treatment vouchers upon use.
+  }
+
+  // 4. Handle 'isExpired' status
+  // Ensure 'validUntil' is a Date object for comparison
+  const validUntilDate = this.validUntil instanceof Date ? this.validUntil : new Date(this.validUntil)
+  if (
+    new Date() > validUntilDate &&
+    this.status !== "fully_used" &&
+    this.status !== "expired" &&
+    this.status !== "cancelled"
+  ) {
+    this.status = "expired"
+    this.isActive = false // Expired vouchers should not be active
+  }
+
+  // Ensure isActive reflects status for monetary vouchers
+  if (this.voucherType === "monetary") {
+    if (
+      this.status === "fully_used" ||
+      this.status === "expired" ||
+      this.status === "cancelled" ||
+      (typeof this.remainingAmount === "number" && this.remainingAmount <= 0)
+    ) {
+      this.isActive = false
+    } else if (this.status === "active" || this.status === "partially_used") {
+      this.isActive = true
     }
   } else if (this.voucherType === "treatment") {
-    // For treatment vouchers, monetaryValue and originalAmount might represent the treatment's value at purchase.
-    // remainingAmount might be less relevant or represent "1 use".
-    if (typeof this.monetaryValue !== "number") {
-      this.monetaryValue = this.amount
+    if (this.status === "fully_used" || this.status === "expired" || this.status === "cancelled") {
+      this.isActive = false
+    } else if (this.status === "active" || this.status === "pending_send" || this.status === "sent") {
+      // Treatment vouchers are active until used/expired/cancelled
+      this.isActive = true
     }
-    if (typeof this.originalAmount !== "number") {
-      this.originalAmount = this.amount
-    }
-    // For treatment, remainingAmount could be set to amount if it represents 1 use, or 0 if it's single-use and this is post-use.
-    // Initial creation logic in actions should handle this.
   }
 
-  if (this.isExpired && this.status !== "expired" && this.status !== "fully_used" && this.status !== "cancelled") {
-    this.status = "expired"
-  }
   next()
 })
 

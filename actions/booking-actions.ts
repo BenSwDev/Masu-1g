@@ -169,10 +169,11 @@ export async function getAvailableTimeSlots(
               ? treatment.fixedPrice || 0
               : treatment.durations?.find((d) => d._id.toString() === selectedDurationId)?.price || 0
 
+          const surchargeBase = basePriceForSurchargeCalc
           const surchargeAmount =
             daySettings.priceAddition.type === "fixed"
               ? daySettings.priceAddition.amount
-              : basePriceForSurchargeCalc * (daySettings.priceAddition.amount / 100)
+              : surchargeBase * (daySettings.priceAddition.amount / 100)
 
           if (surchargeAmount > 0) {
             slot.surcharge = {
@@ -625,45 +626,65 @@ export async function createBooking(
             await notificationManager.sendNotification(phoneRecipient, bookingSuccessData)
           }
 
+          // Log booking status
+          logger.info(`Booking status: ${finalBookingObject.status}`)
+
           // 2. Notify Professionals if booking is pending assignment
           if (finalBookingObject.status === "pending_professional_assignment") {
-            const professionals = await User.find({ roles: "professional", isActive: true })
-              .select("name email phone notificationPreferences")
-              .lean()
+            logger.info("Sending notifications to professionals...")
 
-            const newBookingAvailableData: NewBookingAvailableNotificationData = {
-              type: "NEW_BOOKING_AVAILABLE",
-              bookingId: finalBookingObject._id.toString(),
-              treatmentName: treatment.name,
-              bookingDateTime: finalBookingObject.bookingDateTime,
-              // TODO: Construct this link properly
-              adminBookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/admin/bookings?bookingId=${finalBookingObject._id.toString()}`, // Or professional specific dashboard
-              bookingAddress:
-                finalBookingObject.customAddressDetails?.city || (finalBookingObject.addressId as any)?.city, // Example, adjust as needed
-            }
+            try {
+              const professionals = await User.find({ roles: "professional", isActive: true })
+                .select("name email phone notificationPreferences")
+                .lean()
 
-            for (const prof of professionals) {
-              const profLang = (prof.notificationPreferences?.language as NotificationLanguage) || "he"
-              const profNotificationMethods = prof.notificationPreferences?.methods || ["email"]
-              const personalizedData = { ...newBookingAvailableData, professionalName: prof.name }
+              logger.info(`Found ${professionals.length} professionals.`)
 
-              if (profNotificationMethods.includes("email") && prof.email) {
-                const emailRecipient: EmailRecipient = {
-                  type: "email",
-                  value: prof.email,
-                  name: prof.name,
-                  language: profLang,
-                }
-                await notificationManager.sendNotification(emailRecipient, personalizedData)
+              const newBookingAvailableData: NewBookingAvailableNotificationData = {
+                type: "NEW_BOOKING_AVAILABLE",
+                bookingId: finalBookingObject._id.toString(),
+                treatmentName: treatment.name,
+                bookingDateTime: finalBookingObject.bookingDateTime,
+                // TODO: Construct this link properly
+                adminBookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/admin/bookings?bookingId=${finalBookingObject._id.toString()}`, // Or professional specific dashboard
+                bookingAddress:
+                  finalBookingObject.customAddressDetails?.city || (finalBookingObject.addressId as any)?.city, // Example, adjust as needed
               }
-              if (profNotificationMethods.includes("sms") && prof.phone) {
-                const phoneRecipient: PhoneRecipient = {
-                  type: "phone",
-                  value: prof.phone,
-                  language: profLang,
+
+              for (const prof of professionals) {
+                try {
+                  logger.info(`Processing professional: ${prof.name}`)
+                  const profLang = (prof.notificationPreferences?.language as NotificationLanguage) || "he"
+                  const profNotificationMethods = prof.notificationPreferences?.methods || ["email"]
+                  const personalizedData = { ...newBookingAvailableData, professionalName: prof.name }
+
+                  if (profNotificationMethods.includes("email") && prof.email) {
+                    const emailRecipient: EmailRecipient = {
+                      type: "email",
+                      value: prof.email,
+                      name: prof.name,
+                      language: profLang,
+                    }
+                    logger.info(`Sending email to professional: ${prof.name}`)
+                    await notificationManager.sendNotification(emailRecipient, personalizedData)
+                  }
+                  if (profNotificationMethods.includes("sms") && prof.phone) {
+                    const phoneRecipient: PhoneRecipient = {
+                      type: "phone",
+                      value: prof.phone,
+                      language: profLang,
+                    }
+                    logger.info(`Sending SMS to professional: ${prof.name}`)
+                    await notificationManager.sendNotification(phoneRecipient, personalizedData)
+                  }
+                } catch (profNotificationError) {
+                  logger.error(`Failed to send notification to professional ${prof.name}:`, {
+                    error: profNotificationError,
+                  })
                 }
-                await notificationManager.sendNotification(phoneRecipient, personalizedData)
               }
+            } catch (professionalsError) {
+              logger.error("Failed to fetch professionals:", { error: professionalsError })
             }
           }
         } else {
@@ -999,16 +1020,14 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         `Failed to fetch payment methods for user ${userId} in getBookingInitialData: ${paymentMethodsSettledResult.error}`,
       )
     } else if (paymentMethodsResult.status === "rejected") {
-      logger.error(
-        `Promise for fetching payment methods was rejected for user ${userId}: ${paymentMethodsResult.reason}`,
-      )
+      logger.error(`Failed to fetch payment methods for user ${userId}: ${paymentMethodsResult.reason}`)
     }
 
     const activeTreatments = getFulfilledValue(treatmentsResult, [])
     const workingHoursSettings = getFulfilledValue(workingHoursResult)
 
     if (!user || !activeTreatments || !workingHoursSettings) {
-      logger.error("Failed to load critical initial data for booking (models check)", {
+      logger.error("Failed to load critical initial data for booking (enhanced):", {
         userId,
         userFound: !!user,
         treatmentsFound: !!activeTreatments,

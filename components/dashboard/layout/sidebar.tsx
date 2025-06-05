@@ -294,7 +294,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       ],
       partner: [
         { titleKey: "profile", icon: User, hrefSuffix: "profile" },
-        { titleKey: "coupons", icon: Gift, hrefSuffix: "assigned-coupons" },
+        { titleKey: "assignedCoupons", icon: Gift, hrefSuffix: "assigned-coupons" }, // Changed titleKey
       ],
     }
     ;(roleMenus[activeRole] || []).forEach((item) => {

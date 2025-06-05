@@ -120,7 +120,10 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       bookingDateTime,
       couponCode: bookingOptions.appliedCouponCode,
       giftVoucherCode:
-        bookingOptions.source === "gift_voucher_redemption" ? bookingOptions.selectedGiftVoucherId : undefined,
+        bookingOptions.source === "gift_voucher_redemption" && bookingOptions.selectedGiftVoucherId
+          ? initialData.usableGiftVouchers.find((gv) => gv._id.toString() === bookingOptions.selectedGiftVoucherId)
+              ?.code
+          : undefined,
       userSubscriptionId:
         bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
       userId: currentUser.id,
@@ -144,7 +147,14 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       setCalculatedPrice(null)
     }
     setIsPriceCalculating(false)
-  }, [bookingOptions, currentUser.id, toast, initialData.activeTreatments, translations])
+  }, [
+    bookingOptions,
+    currentUser.id,
+    toast,
+    initialData.activeTreatments,
+    translations,
+    initialData.usableGiftVouchers,
+  ])
 
   useEffect(() => {
     if (currentStep >= 3) {

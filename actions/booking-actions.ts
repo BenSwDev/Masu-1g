@@ -23,7 +23,7 @@ import {
 
 import { logger } from "@/lib/logs/logger"
 import type { TimeSlot, CalculatedPriceDetails as ClientCalculatedPriceDetails } from "@/types/booking"
-import { add, format, set, addMinutes, isBefore, isAfter } from "date-fns" // Removed parse, getDay, isSameDay as we'll use UTC versions
+import { add, format, set, addMinutes, isBefore, isAfter } from "date-fns"
 import { CalculatePricePayloadSchema, CreateBookingPayloadSchema } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
 import type { CreateBookingPayload as CreateBookingPayloadSchemaType } from "@/lib/validation/booking-schemas"
@@ -39,15 +39,11 @@ function isSameUTCDay(dateLeft: Date, dateRight: Date): boolean {
 
 // Helper to get working hours for a specific date, using UTC for day calculation
 function getDayWorkingHours(dateUTC: Date, settings: IWorkingHoursSettings): IFixedHours | ISpecialDate | null {
-  // Check special dates first - they override fixed settings
-  // Ensure sd.date from DB (which is likely a BSON UTC date) is correctly converted to a JS Date object for comparison
   const specialDateSetting = settings.specialDates?.find((sd) => isSameUTCDay(new Date(sd.date), dateUTC))
   if (specialDateSetting) {
     return specialDateSetting
   }
-
-  // If no special date, use fixed settings based on UTC day of week
-  const dayOfWeekUTC = dateUTC.getUTCDay() // 0 for Sunday (UTC), 1 for Monday (UTC)...
+  const dayOfWeekUTC = dateUTC.getUTCDay()
   const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeekUTC)
   return fixedDaySetting || null
 }
@@ -55,7 +51,6 @@ function getDayWorkingHours(dateUTC: Date, settings: IWorkingHoursSettings): IFi
 // Helper to parse "YYYY-MM-DD" string to a UTC Date object at midnight
 function parseDateStringToUTCDate(dateString: string): Date {
   const [year, month, day] = dateString.split("-").map(Number)
-  // JavaScript months are 0-indexed (0 for January, 11 for December)
   return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
 }
 
@@ -66,9 +61,8 @@ export async function getAvailableTimeSlots(
 ): Promise<{ success: boolean; timeSlots?: TimeSlot[]; error?: string; workingHoursNote?: string }> {
   try {
     await dbConnect()
-    const selectedDateUTC = parseDateStringToUTCDate(dateString) // Use UTC date
+    const selectedDateUTC = parseDateStringToUTCDate(dateString)
 
-    // Validate selectedDateUTC (e.g., check if it's a valid date, though parseDateStringToUTCDate should handle basic format)
     if (isNaN(selectedDateUTC.getTime())) {
       return { success: false, error: "bookings.errors.invalidDate" }
     }
@@ -97,7 +91,7 @@ export async function getAvailableTimeSlots(
       return { success: false, error: "bookings.errors.workingHoursNotSet" }
     }
 
-    const daySettings = getDayWorkingHours(selectedDateUTC, settings) // Pass UTC date
+    const daySettings = getDayWorkingHours(selectedDateUTC, settings)
     if (!daySettings || !daySettings.isActive) {
       return {
         success: true,
@@ -112,8 +106,6 @@ export async function getAvailableTimeSlots(
     const [startHour, startMinute] = daySettings.startTime.split(":").map(Number)
     const [endHour, endMinute] = daySettings.endTime.split(":").map(Number)
 
-    // Create time slots based on UTC date but local time parts from settings
-    // The times (e.g., 09:00) are relative to the calendar day, not a specific UTC offset for the time itself.
     let currentTimeSlotStart = set(selectedDateUTC, {
       hours: startHour,
       minutes: startMinute,
@@ -122,7 +114,7 @@ export async function getAvailableTimeSlots(
     })
     const dayEndTime = set(selectedDateUTC, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 })
 
-    const now = new Date() // Current time in server's local timezone (UTC on Vercel)
+    const now = new Date()
     const minimumBookingLeadTimeHours = settings.minimumBookingLeadTimeHours || 2
     const minimumBookingTime = add(now, { hours: minimumBookingLeadTimeHours })
 
@@ -142,7 +134,7 @@ export async function getAvailableTimeSlots(
           time: format(currentTimeSlotStart, "HH:mm", {
             useAdditionalWeekYearTokens: false,
             useAdditionalDayOfYearTokens: false,
-          }), // Format time part only
+          }),
           isAvailable: true,
         }
 
@@ -191,25 +183,13 @@ export async function calculateBookingPrice(
     const {
       treatmentId,
       selectedDurationId,
-      bookingDateTime, // This is a full JS Date object from client, includes time
+      bookingDateTime,
       couponCode,
-      giftVoucherCode,
+      giftVoucherCode, // This is the CODE of the voucher
       userSubscriptionId,
       userId,
     } = validatedPayload
 
-    // For surcharge calculation based on day, we need the DATE PART in UTC
-    // bookingDateTime is already a Date object. We need to ensure its day is interpreted correctly for surcharges.
-    // The time part of bookingDateTime is what the user selected (e.g., 11:30).
-    // We need to determine the calendar day in UTC for surcharge rules.
-    // Example: bookingDateTime could be "2025-06-15T08:30:00.000Z" if user selected June 15th 11:30 Israel time (UTC+3)
-    // We need to use this bookingDateTime directly for getDayWorkingHours if it's already UTC normalized,
-    // or convert its *date part* to a consistent UTC representation for day-based rules.
-    // Since bookingDateTime comes from client selection, it should represent the intended local date and time.
-    // Let's assume bookingDateTime is a JS Date object whose UTC representation reflects the chosen slot.
-    // For example, if user chose June 15th, 11:30 (Israel Time = UTC+3), bookingDateTime might be 2025-06-15T08:30:00Z.
-    // getDayWorkingHours needs the *calendar day* of this event.
-    // We can create a new UTC date just for the day part.
     const bookingDatePartUTC = new Date(
       Date.UTC(
         bookingDateTime.getUTCFullYear(),
@@ -241,33 +221,26 @@ export async function calculateBookingPrice(
       basePrice,
       surcharges: [],
       totalSurchargesAmount: 0,
-      treatmentPriceAfterSubscriptionOrTreatmentVoucher: basePrice,
+      treatmentPriceAfterSubscriptionOrTreatmentVoucher: basePrice, // Initialize with basePrice
       couponDiscount: 0,
-      voucherAppliedAmount: 0,
+      voucherAppliedAmount: 0, // This will store amount from monetary or treatment voucher
       finalAmount: 0,
       isBaseTreatmentCoveredBySubscription: false,
       isBaseTreatmentCoveredByTreatmentVoucher: false,
       isFullyCoveredByVoucherOrSubscription: false,
     }
 
-    let amountToPayForBaseTreatment = basePrice
-    priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = basePrice
-
+    // 1. Calculate Surcharges (based on original basePrice)
     const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
     if (settings) {
-      const daySettings = getDayWorkingHours(bookingDatePartUTC, settings) // Use UTC date part
+      const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
       if (
         daySettings?.isActive &&
         daySettings.hasPriceAddition &&
         daySettings.priceAddition?.amount &&
         daySettings.priceAddition.amount > 0
       ) {
-        // Surcharge calculation should use the original basePrice, not amountToPayForBaseTreatment
-        const surchargeBase =
-          treatment.pricingType === "fixed"
-            ? treatment.fixedPrice || 0
-            : treatment.durations?.find((d) => d._id.toString() === selectedDurationId)?.price || 0
-
+        const surchargeBase = basePrice // Surcharge is on the original base price
         const surchargeAmount =
           daySettings.priceAddition.type === "fixed"
             ? daySettings.priceAddition.amount
@@ -278,7 +251,7 @@ export async function calculateBookingPrice(
             description:
               daySettings.priceAddition.description ||
               daySettings.notes ||
-              `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`, // format bookingDateTime for time display
+              `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
             amount: surchargeAmount,
           })
           priceDetails.totalSurchargesAmount += surchargeAmount
@@ -286,7 +259,6 @@ export async function calculateBookingPrice(
       }
     }
 
-    // ... (rest of the calculateBookingPrice logic remains the same as previously corrected)
     // 2. Apply User Subscription (covers basePrice only)
     if (userSubscriptionId) {
       const userSub = (await UserSubscription.findById(userSubscriptionId)
@@ -310,203 +282,90 @@ export async function calculateBookingPrice(
         }
 
         if (isTreatmentMatch && isDurationMatch) {
-          amountToPayForBaseTreatment = 0 // Subscription covers the base price
+          priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0 // Subscription covers the base price
           priceDetails.isBaseTreatmentCoveredBySubscription = true
           priceDetails.redeemedUserSubscriptionId = userSub._id.toString()
-          priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
-        } else {
-          logger.warn("Attempt to use subscription for mismatched treatment/duration", {
-            userSubscriptionId,
-            treatmentId,
-            selectedDurationId,
-          })
         }
       }
     }
 
-    // 3. Apply Gift Voucher
+    // 3. Apply Gift Voucher (Treatment or Monetary)
+    // This section needs to handle both types carefully.
+    // If a subscription already covered the base treatment, a treatment voucher for the same should not also apply to the base.
+    // Monetary vouchers apply more generally.
     if (giftVoucherCode) {
       const voucher = (await GiftVoucher.findOne({
         code: giftVoucherCode,
-        // Ensure status check allows for 'sent' if that's a valid state for redemption
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() },
       }).lean()) as IGiftVoucher | null
 
       if (voucher && voucher.isActive) {
-        // isActive might be redundant if status check is comprehensive
-        logger.debug("Processing gift voucher:", {
-          voucherId: voucher._id,
-          voucherType: voucher.voucherType,
-          treatmentIdFromPayload: treatmentId,
-          durationIdFromPayload: selectedDurationId,
-        })
-
-        let voucherCanBeApplied = false
-        let voucherCoverageAmount = 0
+        priceDetails.appliedGiftVoucherId = voucher._id.toString()
 
         if (voucher.voucherType === "treatment") {
-          // Log values for precise comparison debugging
-          logger.debug("Voucher (Treatment Type) Details:", {
-            voucherTreatmentId: voucher.treatmentId?.toString(),
-            payloadTreatmentId: treatmentId,
-            voucherDurationId: voucher.selectedDurationId?.toString(),
-            payloadDurationId: selectedDurationId,
-            isSubscriptionApplied: priceDetails.isBaseTreatmentCoveredBySubscription,
-          })
-
           const treatmentMatches = voucher.treatmentId?.toString() === treatmentId
+          let durationMatches = true // Assume true for fixed price treatments or if voucher doesn't specify duration
 
-          let durationMatches = false
           if (treatment.pricingType === "duration_based") {
-            // Both voucher and payload must have matching duration IDs if treatment is duration-based
-            // and voucher specifies a duration.
-            if (voucher.selectedDurationId) {
-              durationMatches = voucher.selectedDurationId.toString() === selectedDurationId
-            } else {
-              // If voucher is for a duration-based treatment but doesn't specify a duration,
-              // it implies it's generic for the treatment, and any valid duration selected by user is fine.
-              // This case might need clarification: does a "treatment voucher" without duration lock duration?
-              // For now, assume if voucher.selectedDurationId is null/undefined, it doesn't restrict duration choice.
-              // However, for it to *cover* the treatment, the selected duration by user is what matters.
-              // The current logic implies the voucher must specify the duration if the treatment is duration-based.
-              // Let's stick to: if voucher has a duration, it must match. If not, it cannot cover a duration-based treatment this way.
-              // This might be too strict. A common scenario is a voucher for "Treatment X" and user picks duration.
-              // For now, to fix the user's specific case (where voucher HAS duration):
-              durationMatches = voucher.selectedDurationId?.toString() === selectedDurationId
-            }
+            // If treatment is duration-based, voucher must match the selected duration if voucher specifies one
+            durationMatches = voucher.selectedDurationId
+              ? voucher.selectedDurationId.toString() === selectedDurationId
+              : true
+            // If voucher is for a duration-based treatment but doesn't specify a duration, it can't cover it.
+            // This logic might need refinement based on business rules for generic treatment vouchers.
+            // For now, if voucher.selectedDurationId is null for a duration-based treatment, it won't match.
+            if (!voucher.selectedDurationId) durationMatches = false
           } else {
-            // treatment.pricingType === "fixed"
-            // For fixed price treatments, duration is not a factor for matching.
-            // Voucher also should not have a selectedDurationId.
-            durationMatches = !voucher.selectedDurationId
+            // Fixed price treatment
+            durationMatches = !voucher.selectedDurationId // Voucher should not specify duration for fixed price
           }
-
-          logger.debug("Voucher Match Check:", { treatmentMatches, durationMatches })
 
           if (treatmentMatches && durationMatches && !priceDetails.isBaseTreatmentCoveredBySubscription) {
-            voucherCoverageAmount = amountToPayForBaseTreatment // amountToPayForBaseTreatment is the current base price due
+            // Treatment voucher covers the base price if not already covered by subscription
+            priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
             priceDetails.isBaseTreatmentCoveredByTreatmentVoucher = true
-            priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0 // Base price is now fully covered
-            voucherCanBeApplied = true
-            logger.debug("Treatment voucher applied successfully to cover base treatment.", { voucherCoverageAmount })
-          } else {
-            logger.warn("Treatment voucher conditions not met for base treatment coverage.", {
-              treatmentMatches,
-              durationMatches,
-              isSubscriptionApplied: priceDetails.isBaseTreatmentCoveredBySubscription,
-            })
+            priceDetails.voucherAppliedAmount = basePrice // Records that the voucher covered this much of base
           }
-        } else if (voucher.voucherType === "monetary" && voucher.remainingAmount && voucher.remainingAmount > 0) {
-          priceDetails.isBaseTreatmentCoveredByTreatmentVoucher = false // Explicitly ensure this is false for monetary vouchers
-
-          let coverageForBase = 0
-          if (amountToPayForBaseTreatment > 0) {
-            // If base treatment not yet covered by subscription or another treatment voucher
-            coverageForBase = Math.min(amountToPayForBaseTreatment, voucher.remainingAmount)
-            // Update treatmentPriceAfterSubscriptionOrTreatmentVoucher only if it's not already 0
-            if (priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher > 0) {
-              priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = Math.max(
-                0,
-                priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher - coverageForBase,
-              )
-            }
-          }
-          const remainingVoucherAfterBase = voucher.remainingAmount - coverageForBase
-          // Monetary voucher can also cover surcharges
-          const coverageForSurcharges = Math.min(priceDetails.totalSurchargesAmount, remainingVoucherAfterBase)
-
-          voucherCoverageAmount = coverageForBase + coverageForSurcharges
-          voucherCanBeApplied = true
-          logger.debug("Monetary voucher applied.", {
-            coverageForBase,
-            coverageForSurcharges,
-            totalCoverage: voucherCoverageAmount,
-          })
         }
-
-        if (voucherCanBeApplied && voucherCoverageAmount > 0) {
-          if (voucher.voucherType === "treatment" && priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
-            // This ensures amountToPayForBaseTreatment becomes 0 if the treatment voucher covered it.
-            amountToPayForBaseTreatment = 0
-          } else if (voucher.voucherType === "monetary") {
-            // For monetary, we reduce amountToPayForBaseTreatment by the part of voucher used for base.
-            // This was handled by `coverageForBase` logic above, which updated `priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher`.
-            // We need to ensure `amountToPayForBaseTreatment` reflects this.
-            // If a subscription/treatment voucher already covered the base, amountToPayForBaseTreatment is 0.
-            // If not, and monetary voucher covers part/all of base, update it.
-            if (
-              !priceDetails.isBaseTreatmentCoveredBySubscription &&
-              !priceDetails.isBaseTreatmentCoveredByTreatmentVoucher
-            ) {
-              const partOfMonetaryForBase = Math.min(amountToPayForBaseTreatment, voucher.remainingAmount)
-              amountToPayForBaseTreatment -= partOfMonetaryForBase
-            }
-          }
-          priceDetails.voucherAppliedAmount += voucherCoverageAmount // Use += in case multiple vouchers could apply (though current logic is one)
-          priceDetails.appliedGiftVoucherId = voucher._id.toString()
-        }
-      } else {
-        logger.warn("Gift voucher not found, inactive, or expired.", { giftVoucherCode })
+        // Monetary voucher application will happen *after* calculating subtotal below
       }
     }
 
-    // Recalculate currentTotalDue *after* all potential base price coverages
-    // amountToPayForBaseTreatment should be 0 if covered by subscription or treatment voucher.
-    // Or reduced if partially covered by monetary voucher (if that's a use case for base price).
-    // For clarity, ensure treatmentPriceAfterSubscriptionOrTreatmentVoucher is the primary source for base cost due.
-
-    const finalBasePriceDue = priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher
-
-    // If a monetary voucher was applied and it covered some of the base price,
-    // treatmentPriceAfterSubscriptionOrTreatmentVoucher should reflect that.
-    // Let's ensure this is consistent.
-    // The `amountToPayForBaseTreatment` variable should be aligned with `priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher`
-    // before calculating currentTotalDue.
-    // The most reliable value for base price still due is priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher
-
-    let currentTotalDue =
+    // Calculate subtotal: (treatment cost after specific coverage) + surcharges
+    let subtotalBeforeGeneralReductions =
       priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher + priceDetails.totalSurchargesAmount
 
-    // If a monetary voucher was applied, part of its `voucherAppliedAmount` might have covered surcharges.
-    // This needs to be subtracted from currentTotalDue.
-    if (priceDetails.appliedGiftVoucherId && priceDetails.voucherAppliedAmount > 0) {
-      const appliedVoucher = (await GiftVoucher.findById(
+    // Apply Monetary Gift Voucher (if one was found and is monetary type)
+    if (priceDetails.appliedGiftVoucherId && subtotalBeforeGeneralReductions > 0) {
+      // Re-fetch voucher to ensure we're using the one identified by appliedGiftVoucherId
+      const voucherToApply = (await GiftVoucher.findById(
         priceDetails.appliedGiftVoucherId,
       ).lean()) as IGiftVoucher | null
-      if (appliedVoucher?.voucherType === "monetary") {
-        // How much of the monetary voucher was used for base price?
-        // This is tricky if base was already covered by sub/treatment voucher.
-        // Let's assume voucherAppliedAmount for monetary voucher is the total reduction it provides.
-        // The previous logic for monetary voucher:
-        // voucherCoverageAmount = coverageForBase + coverageForSurcharges;
-        // priceDetails.voucherAppliedAmount += voucherCoverageAmount;
-        // So, currentTotalDue should effectively be reduced by priceDetails.voucherAppliedAmount if it's monetary.
-        // currentTotalDue = (base price after sub/treat_voucher) + surcharges - (monetary_voucher_value_applied_to_this_sum)
-
-        // Simpler: currentTotalDue is base_due + surcharges. Now apply monetary voucher to this sum.
-        currentTotalDue -= priceDetails.voucherAppliedAmount // This assumes voucherAppliedAmount is ONLY from monetary here.
-        // This is problematic if treatment voucher also sets voucherAppliedAmount.
-
-        // Let's refine:
-        // priceDetails.voucherAppliedAmount should be the sum of all voucher effects.
-        // If treatment voucher: priceDetails.voucherAppliedAmount = basePrice (if covered)
-        // If monetary voucher: priceDetails.voucherAppliedAmount = amount used from monetary
-        // This needs to be clearer. Let's use separate fields or ensure voucherAppliedAmount is handled carefully.
-
-        // For now, let's assume priceDetails.voucherAppliedAmount is ONLY for monetary for now for this calculation step.
-        // And treatmentPriceAfterSubscriptionOrTreatmentVoucher handles the other types.
-        // The issue is if both a treatment voucher AND a monetary voucher are somehow applied (not typical).
-
-        // Given the user's problem is with TREATMENT VOUCHER not zeroing out base price:
-        // The key is that `priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher` must be 0.
-        // And `priceDetails.isBaseTreatmentCoveredByTreatmentVoucher` must be true.
-        // If these are correct, then `currentTotalDue` will start as `0 + priceDetails.totalSurchargesAmount`.
-        // The display in SummaryStep will then correctly hide the raw base price and show the strikethrough.
+      if (
+        voucherToApply &&
+        voucherToApply.isActive &&
+        voucherToApply.voucherType === "monetary" &&
+        voucherToApply.remainingAmount &&
+        voucherToApply.remainingAmount > 0
+      ) {
+        const amountToApplyFromMonetary = Math.min(subtotalBeforeGeneralReductions, voucherToApply.remainingAmount)
+        if (amountToApplyFromMonetary > 0) {
+          // If a treatment voucher already set voucherAppliedAmount, we should add to it or handle separately.
+          // For now, assume only one voucher type sets voucherAppliedAmount significantly for calculation.
+          // If treatment voucher covered base, voucherAppliedAmount was basePrice.
+          // If monetary, it's amountToApplyFromMonetary.
+          // This logic assumes `priceDetails.voucherAppliedAmount` is reset or primarily for monetary if both present.
+          // Let's ensure `voucherAppliedAmount` reflects the monetary part if a monetary voucher is used.
+          priceDetails.voucherAppliedAmount = amountToApplyFromMonetary // Overwrites if treatment voucher set it. This is fine if monetary is the final voucher effect.
+          subtotalBeforeGeneralReductions -= amountToApplyFromMonetary
+        }
       }
     }
 
-    // Apply Coupon
+    let currentTotalDue = subtotalBeforeGeneralReductions
+
+    // 4. Apply Coupon
     if (currentTotalDue > 0 && couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode }).lean()
       const now = new Date()
@@ -530,46 +389,23 @@ export async function calculateBookingPrice(
     }
 
     priceDetails.finalAmount = Math.max(0, currentTotalDue)
+    priceDetails.isFullyCoveredByVoucherOrSubscription = priceDetails.finalAmount === 0
 
-    if (priceDetails.finalAmount === 0) {
-      priceDetails.isFullyCoveredByVoucherOrSubscription = true
-    } else {
-      priceDetails.isFullyCoveredByVoucherOrSubscription = false
-    }
-
-    // Define initialDataForPriceCalc here, before it's used
-    const initialDataForPriceCalc = await getBookingInitialData(userId)
-
+    // Ensure treatmentPriceAfterSubscriptionOrTreatmentVoucher is correct:
+    // It should be 0 if a subscription or a *treatment-specific* voucher covered the base treatment.
+    // Otherwise, it's the original basePrice. It should NOT be affected by monetary vouchers.
     if (priceDetails.isBaseTreatmentCoveredBySubscription || priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
       priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
-    } else if (
-      priceDetails.appliedGiftVoucherId &&
-      initialDataForPriceCalc.success &&
-      initialDataForPriceCalc.data &&
-      initialDataForPriceCalc.data.usableGiftVouchers.find(
-        (v) => v._id.toString() === priceDetails.appliedGiftVoucherId,
-      )?.voucherType === "monetary"
-    ) {
-      const voucherDetails = initialDataForPriceCalc.data.usableGiftVouchers.find(
-        (v) => v._id.toString() === priceDetails.appliedGiftVoucherId,
-      )
-      if (voucherDetails) {
-        const baseCoveredByMonetary = Math.min(basePrice, voucherDetails.remainingAmount || 0)
-        priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = Math.max(0, basePrice - baseCoveredByMonetary)
-      }
+    } else {
+      priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = basePrice
     }
+
     return { success: true, priceDetails }
   } catch (error) {
     logger.error("Error calculating booking price:", { error, payload: validatedPayload })
     return { success: false, error: "bookings.errors.calculatePriceFailed" }
   }
 }
-
-// createBooking, cancelBooking, getBookingInitialData remain the same as in previous correct version
-// ... (rest of the file: createBooking, cancelBooking, getBookingInitialData)
-// Ensure getBookingInitialData is also using UTC for any date comparisons if necessary,
-// but its primary role is data fetching, not date logic for pricing.
-// The `fetchUserActivePaymentMethods` call in `getBookingInitialData` is not related to this date issue.
 
 export async function createBooking(
   payload: unknown,
@@ -590,6 +426,7 @@ export async function createBooking(
 
   const mongooseDbSession = await mongoose.startSession()
   let bookingResult: IBooking | null = null
+  let updatedVoucherDetails: IGiftVoucher | null = null
 
   try {
     await dbConnect()
@@ -603,7 +440,7 @@ export async function createBooking(
           totalSurchargesAmount: validatedPayload.priceDetails.totalSurchargesAmount,
           treatmentPriceAfterSubscriptionOrTreatmentVoucher:
             validatedPayload.priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher,
-          discountAmount: validatedPayload.priceDetails.couponDiscount,
+          discountAmount: validatedPayload.priceDetails.couponDiscount, // Renamed from couponDiscount for consistency with IPriceDetails
           voucherAppliedAmount: validatedPayload.priceDetails.voucherAppliedAmount,
           finalAmount: validatedPayload.priceDetails.finalAmount,
           isBaseTreatmentCoveredBySubscription: validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription,
@@ -652,13 +489,14 @@ export async function createBooking(
 
       if (
         validatedPayload.priceDetails.appliedGiftVoucherId &&
-        validatedPayload.priceDetails.voucherAppliedAmount > 0
+        validatedPayload.priceDetails.voucherAppliedAmount > 0 // Ensure some amount was actually applied
       ) {
         const voucher = (await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(
           mongooseDbSession,
         )) as IGiftVoucher | null
         if (!voucher) throw new Error("bookings.errors.voucherNotFoundDuringCreation")
         if (!voucher.isActive && voucher.status !== "sent")
+          // 'sent' might be a valid pre-active state
           throw new Error("bookings.errors.voucherRedemptionFailedInactive")
 
         if (
@@ -673,22 +511,24 @@ export async function createBooking(
             typeof voucher.remainingAmount !== "number" ||
             voucher.remainingAmount < validatedPayload.priceDetails.voucherAppliedAmount
           ) {
+            // This check should ideally be in calculatePrice, but good to have a safeguard
             throw new Error("bookings.errors.voucherInsufficientBalance")
           }
           voucher.remainingAmount -= validatedPayload.priceDetails.voucherAppliedAmount
           voucher.status = voucher.remainingAmount <= 0 ? "fully_used" : "partially_used"
-          if (voucher.remainingAmount < 0) voucher.remainingAmount = 0
-          voucher.isActive = voucher.remainingAmount > 0
+          if (voucher.remainingAmount < 0) voucher.remainingAmount = 0 // Ensure not negative
+          voucher.isActive = voucher.remainingAmount > 0 // Monetary voucher is active if balance > 0
         }
         voucher.usageHistory = voucher.usageHistory || []
         voucher.usageHistory.push({
           date: new Date(),
           amountUsed: validatedPayload.priceDetails.voucherAppliedAmount,
-          orderId: bookingResult!._id,
+          orderId: bookingResult!._id, // bookingResult is guaranteed to be set here
           description: `bookings.voucherUsage.redeemedForBooking ${bookingResult!._id.toString()}`,
-          userId: validatedPayload.userId,
-        } as any)
+          userId: new mongoose.Types.ObjectId(validatedPayload.userId),
+        } as any) // Cast to any to satisfy mongoose schema typing for push
         await voucher.save({ session: mongooseDbSession })
+        updatedVoucherDetails = voucher.toObject() as IGiftVoucher
       }
 
       if (validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
@@ -702,6 +542,8 @@ export async function createBooking(
         if (bookingResult.priceDetails.finalAmount === 0) {
           bookingResult.paymentDetails.paymentStatus = "not_required"
         }
+        // Ensure bookingResult is populated with the latest priceDetails before saving again
+        bookingResult.priceDetails = newBooking.priceDetails
         await bookingResult.save({ session: mongooseDbSession })
       }
     })
@@ -710,7 +552,12 @@ export async function createBooking(
       revalidatePath("/dashboard/member/book-treatment")
       revalidatePath("/dashboard/member/subscriptions")
       revalidatePath("/dashboard/member/gift-vouchers")
-      return { success: true, booking: bookingResult.toObject() as IBooking }
+      // Augment bookingResult with updated voucher details if any
+      const finalBookingObject = bookingResult.toObject() as IBooking
+      if (updatedVoucherDetails) {
+        ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
+      }
+      return { success: true, booking: finalBookingObject }
     } else {
       return { success: false, error: "bookings.errors.bookingCreationFailedUnknown" }
     }
@@ -776,17 +623,25 @@ export async function cancelBooking(
         )) as IGiftVoucher | null
         if (voucher) {
           if (voucher.voucherType === "treatment" && booking.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
-            voucher.status = "active"
+            // For treatment voucher, revert to active if it was fully used for this booking
+            voucher.status = "active" // Or its original status before this booking if more complex logic needed
             voucher.isActive = true
-            voucher.remainingAmount = voucher.originalAmount || voucher.amount
+            // remainingAmount for treatment voucher might be conceptual (1 use), or its monetary value if stored
+            voucher.remainingAmount = voucher.originalAmount || voucher.amount // Reset to original value
           } else if (voucher.voucherType === "monetary") {
             voucher.remainingAmount = (voucher.remainingAmount || 0) + booking.priceDetails.voucherAppliedAmount
-            if (voucher.status === "fully_used" && voucher.remainingAmount > 0) voucher.status = "partially_used"
-            if (voucher.remainingAmount > (voucher.originalAmount || 0)) {
-              voucher.remainingAmount = voucher.originalAmount || 0
+            // Cap remainingAmount at originalAmount if it exceeds
+            if (voucher.originalAmount && voucher.remainingAmount > voucher.originalAmount) {
+              voucher.remainingAmount = voucher.originalAmount
             }
+            voucher.status =
+              voucher.remainingAmount > 0
+                ? voucher.remainingAmount < (voucher.originalAmount || voucher.amount)
+                  ? "partially_used"
+                  : "active"
+                : "fully_used"
+            voucher.isActive = voucher.remainingAmount > 0
           }
-          voucher.isActive = voucher.remainingAmount > 0 || voucher.voucherType === "treatment"
 
           if (voucher.usageHistory) {
             voucher.usageHistory = voucher.usageHistory.filter(
@@ -810,7 +665,9 @@ export async function cancelBooking(
 
     if (success) {
       revalidatePath("/dashboard/member/book-treatment")
-      revalidatePath("/dashboard/admin/bookings")
+      revalidatePath("/dashboard/admin/bookings") // Assuming admin might view bookings
+      revalidatePath("/dashboard/member/subscriptions")
+      revalidatePath("/dashboard/member/gift-vouchers")
       return { success: true }
     } else {
       return { success: false, error: "bookings.errors.cancellationFailedUnknown" }
@@ -840,7 +697,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       giftVouchersResult,
       userResult,
       addressesResult,
-      paymentMethodsResult, // This will now be the result of fetchUserActivePaymentMethods
+      paymentMethodsResult,
       treatmentsResult,
       workingHoursResult,
     ] = await Promise.allSettled([
@@ -849,13 +706,14 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         .populate({ path: "treatmentId", model: Treatment, populate: { path: "durations" } })
         .lean(),
       GiftVoucher.find({
-        $or: [{ ownerUserId: userId }, { recipientEmail: authSession.user.email }],
-        status: { $in: ["active", "partially_used", "sent"] },
+        $or: [{ ownerUserId: userId }, { recipientEmail: authSession.user.email }], // Consider if recipientPhone should also be a factor
+        status: { $in: ["active", "partially_used", "sent"] }, // 'sent' can be redeemed
         validUntil: { $gte: new Date() },
+        isActive: true, // Explicitly check isActive flag
       }).lean(),
       User.findById(userId).select("preferences name email phone notificationPreferences treatmentPreferences").lean(),
       Address.find({ userId, isArchived: { $ne: true } }).lean(),
-      fetchUserActivePaymentMethods(), // Using the imported central function
+      fetchUserActivePaymentMethods(),
       Treatment.find({ isActive: true }).populate("durations").lean(),
       WorkingHoursSettings.findOne().lean(),
     ])
@@ -916,26 +774,30 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
     })
 
     const enhancedUsableGiftVouchers = usableGiftVouchers.map((voucher: IGiftVoucher) => {
+      let treatmentName = voucher.treatmentName // Keep existing if any
+      let selectedDurationName = voucher.selectedDurationName
+
       if (voucher.voucherType === "treatment" && voucher.treatmentId) {
         const treatmentDetails = activeTreatments.find(
           (t: ITreatment) => t._id.toString() === voucher.treatmentId?.toString(),
         )
         if (treatmentDetails) {
-          let durationName = ""
+          treatmentName = treatmentDetails.name
           if (treatmentDetails.pricingType === "duration_based" && voucher.selectedDurationId) {
             const durationDetails = treatmentDetails.durations?.find(
               (d) => d._id.toString() === voucher.selectedDurationId?.toString(),
             )
-            if (durationDetails) durationName = `${durationDetails.minutes} ${"min"}`
-          }
-          return {
-            ...voucher,
-            treatmentName: treatmentDetails.name,
-            selectedDurationName: durationName,
+            if (durationDetails) selectedDurationName = `${durationDetails.minutes} ${"min"}`
+          } else {
+            selectedDurationName = "" // Clear if not applicable
           }
         }
       }
-      return voucher
+      return {
+        ...voucher,
+        treatmentName,
+        selectedDurationName,
+      }
     })
 
     const data = {
@@ -944,10 +806,10 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       userPreferences: {
         therapistGender: treatmentPrefs.therapistGender || "any",
         notificationMethods: notificationPrefs.methods || ["email"],
-        notificationLanguage: notificationPrefs.language || "he",
+        notificationLanguage: notificationPrefs.language || "he", // Default to Hebrew if not set
       },
       userAddresses,
-      userPaymentMethods, // This now comes from the central function
+      userPaymentMethods,
       activeTreatments,
       workingHoursSettings,
       currentUser: {

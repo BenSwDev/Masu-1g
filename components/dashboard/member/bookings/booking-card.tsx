@@ -14,7 +14,6 @@ import {
   Ticket,
   Hourglass,
 } from "lucide-react"
-import { useLocale, useTranslations } from "next-intl"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
@@ -42,37 +41,31 @@ interface BookingCardProps {
 }
 
 export default function BookingCard({ booking, currentUserId }: BookingCardProps) {
-  const t = useTranslations("memberBookings")
-  const tCommon = useTranslations("common")
-  const locale = useLocale()
   const queryClient = useQueryClient()
   const [isCancelling, setIsCancelling] = useState(false)
 
   const { mutate: cancelBooking, isPending: isCancelPending } = useMutation({
     mutationFn: async () => {
       setIsCancelling(true)
-      const result = await cancelBookingAction(
-        booking._id.toString(),
-        currentUserId,
-        "user",
-        t("userCancellationReason"),
-      )
+      const result = await cancelBookingAction(booking._id.toString(), currentUserId, "user", "Cancelled by user")
       if (!result.success) {
-        throw new Error(result.error ? tCommon(`errors.${result.error}`) : tCommon("errors.unknown"))
+        throw new Error(
+          result.error ? `Cancellation failed: ${result.error}` : "Cancellation failed due to an unknown error.",
+        )
       }
       return result
     },
     onSuccess: () => {
       toast({
-        title: tCommon("success"),
-        description: t("cancelSuccess"),
+        title: "Success",
+        description: "Booking cancelled successfully.",
         variant: "default",
       })
       queryClient.invalidateQueries({ queryKey: ["userBookings", currentUserId] })
     },
     onError: (error: Error) => {
       toast({
-        title: tCommon("error"),
+        title: "Error",
         description: error.message,
         variant: "destructive",
       })
@@ -86,36 +79,42 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
     switch (status) {
       case "pending_professional_assignment":
         return {
-          label: t("status.pending_professional_assignment"),
+          label: "Pending Assignment",
           icon: <Hourglass className="mr-1.5 h-4 w-4 text-amber-600" />,
           badgeClass: "bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200",
           textColor: "text-amber-700",
         }
       case "confirmed":
         return {
-          label: t("status.confirmed"),
+          label: "Confirmed",
           icon: <CheckCircle className="mr-1.5 h-4 w-4 text-green-600" />,
           badgeClass: "bg-green-100 text-green-700 border-green-300 hover:bg-green-200",
           textColor: "text-green-700",
         }
       case "completed":
         return {
-          label: t("status.completed"),
+          label: "Completed",
           icon: <CheckCircle className="mr-1.5 h-4 w-4 text-sky-600" />,
           badgeClass: "bg-sky-100 text-sky-700 border-sky-300 hover:bg-sky-200",
           textColor: "text-sky-700",
         }
       case "cancelled_by_user":
+        return {
+          label: "Cancelled by User",
+          icon: <XCircle className="mr-1.5 h-4 w-4 text-red-600" />,
+          badgeClass: "bg-red-100 text-red-700 border-red-300 hover:bg-red-200",
+          textColor: "text-red-700",
+        }
       case "cancelled_by_admin":
         return {
-          label: t(`status.${status}`),
+          label: "Cancelled by Admin",
           icon: <XCircle className="mr-1.5 h-4 w-4 text-red-600" />,
           badgeClass: "bg-red-100 text-red-700 border-red-300 hover:bg-red-200",
           textColor: "text-red-700",
         }
       case "no_show":
         return {
-          label: t("status.no_show"),
+          label: "No Show",
           icon: <User className="mr-1.5 h-4 w-4 text-orange-600" />, // Or another appropriate icon
           badgeClass: "bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200",
           textColor: "text-orange-700",
@@ -140,11 +139,11 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
   const getSourceInfo = (source: PopulatedBooking["source"]) => {
     switch (source) {
       case "new_purchase":
-        return { label: t("sourceNewPurchase"), icon: <DollarSign className="h-4 w-4 text-green-500" /> }
+        return { label: "New Purchase", icon: <DollarSign className="h-4 w-4 text-green-500" /> }
       case "subscription_redemption":
-        return { label: t("sourceSubscription"), icon: <Ticket className="h-4 w-4 text-blue-500" /> }
+        return { label: "Subscription Redemption", icon: <Ticket className="h-4 w-4 text-blue-500" /> }
       case "gift_voucher_redemption":
-        return { label: t("sourceGiftVoucher"), icon: <Gift className="h-4 w-4 text-purple-500" /> }
+        return { label: "Gift Voucher Redemption", icon: <Gift className="h-4 w-4 text-purple-500" /> }
       default:
         return { label: "", icon: null }
     }
@@ -156,7 +155,7 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
       <CardHeader className="bg-slate-50 p-4 dark:bg-gray-700/50">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            {booking.treatmentId?.name || tCommon("unknownTreatment")}
+            {booking.treatmentId?.name || "Unknown Treatment"}
           </CardTitle>
           <Badge variant="outline" className={cn("text-xs font-medium", statusInfo.badgeClass)}>
             {statusInfo.icon}
@@ -165,7 +164,7 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
         </div>
         {booking.treatmentId?.selectedDuration?.minutes && (
           <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-            {t("duration", { minutes: booking.treatmentId.selectedDuration.minutes })}
+            {`${booking.treatmentId.selectedDuration.minutes} minutes`}
           </CardDescription>
         )}
       </CardHeader>
@@ -177,43 +176,39 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
         </div>
         <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
           <Clock className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
-          <span>{bookingDateTime.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}</span>
+          <span>{bookingDateTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</span>
         </div>
         <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
           <MapPin className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
           <span>
             {booking.addressId
               ? `${booking.addressId.street || ""} ${booking.addressId.streetNumber || ""}, ${booking.addressId.city || ""}`
-              : booking.customAddressDetails?.fullAddress || t("customAddress")}
+              : booking.customAddressDetails?.fullAddress || "Custom Address"}
           </span>
         </div>
         {booking.professionalId?.name && (
           <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
             <User className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
-            <span>
-              {t("professional")}: {booking.professionalId.name}
-            </span>
+            <span>Professional: {booking.professionalId.name}</span>
           </div>
         )}
         {booking.isFlexibleTime && (
           <div className="flex items-start text-xs text-slate-500 dark:text-slate-400">
             <Hourglass className="mr-2 mt-0.5 h-3 w-3 flex-shrink-0 text-sky-600 dark:text-sky-400" />
-            <span>{t("flexibleTime")}</span>
+            <span>Flexible Time</span>
           </div>
         )}
         {sourceInfo.label && (
           <div className="flex items-center text-xs text-slate-500 dark:text-slate-400">
             {sourceInfo.icon && <span className="mr-1.5">{sourceInfo.icon}</span>}
-            <span>
-              {t("source")}: {sourceInfo.label}
-            </span>
+            <span>Source: {sourceInfo.label}</span>
           </div>
         )}
       </CardContent>
 
       <CardFooter className="flex flex-col items-stretch gap-2 border-t bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-700/50 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-lg font-semibold text-teal-700 dark:text-teal-400">
-          {formatCurrency(booking.priceDetails.finalAmount, tCommon("currency"))}
+          {formatCurrency(booking.priceDetails.finalAmount, "USD")}
         </div>
         {isCancellable && (
           <AlertDialog>
@@ -224,18 +219,18 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
                 ) : (
                   <XCircle className="mr-2 h-4 w-4" />
                 )}
-                {t("cancelBooking")}
+                Cancel Booking
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{tCommon("deleteConfirm")}</AlertDialogTitle>
-                <AlertDialogDescription>{t("cancelConfirmDescription")}</AlertDialogDescription>
+                <AlertDialogTitle>Confirm Cancellation</AlertDialogTitle>
+                <AlertDialogDescription>Are you sure you want to cancel this booking?</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={() => cancelBooking()} className="bg-destructive hover:bg-destructive/90">
-                  {tCommon("confirm")}
+                  Confirm
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

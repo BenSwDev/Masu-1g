@@ -2,18 +2,18 @@
 
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
-import mongoose from "mongoose"
+import mongoose, { type Types } from "mongoose"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import { getActivePaymentMethods as fetchUserActivePaymentMethods } from "@/actions/payment-method-actions"
 
 import Booking, { type IBooking, type IPriceDetails } from "@/lib/db/models/booking"
-import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
+import Treatment, { type ITreatment, type ITreatmentDuration } from "@/lib/db/models/treatment"
 import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
-import User from "@/lib/db/models/user"
-import Address from "@/lib/db/models/address"
+import User, { type IUser } from "@/lib/db/models/user"
+import Address, { type IAddress } from "@/lib/db/models/address"
 import {
   WorkingHoursSettings,
   type IWorkingHoursSettings,
@@ -27,6 +27,19 @@ import { add, format, set, addMinutes, isBefore, isAfter } from "date-fns"
 import { CalculatePricePayloadSchema, CreateBookingPayloadSchema } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
 import type { CreateBookingPayload as CreateBookingPayloadSchemaType } from "@/lib/validation/booking-schemas"
+
+// This defines the shape of a booking object after populating related fields.
+export interface PopulatedBooking
+  extends Omit<IBooking, "treatmentId" | "addressId" | "professionalId" | "selectedDurationId"> {
+  _id: Types.ObjectId // Ensure _id is explicitly typed as ObjectId
+  treatmentId?: {
+    _id: Types.ObjectId
+    name: string
+    selectedDuration?: ITreatmentDuration // This will be populated based on selectedDurationId
+  } | null
+  addressId?: Pick<IAddress, "_id" | "city" | "street" | "streetNumber" | "fullAddress"> | null
+  professionalId?: Pick<IUser, "_id" | "name"> | null
+}
 
 // Helper to compare if two Date objects represent the same calendar day in UTC
 function isSameUTCDay(dateLeft: Date, dateRight: Date): boolean {
@@ -570,6 +583,142 @@ export async function createBooking(
     }
   } finally {
     await mongooseDbSession.endSession()
+  }
+}
+
+export async function getUserBookings(
+  userId: string,
+  filters: {
+    status?: string
+    page?: number
+    limit?: number
+    sortBy?: string
+    sortDirection?: "asc" | "desc"
+  },
+): Promise<{ bookings: PopulatedBooking[]; totalPages: number; totalBookings: number }> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session || session.user.id !== userId) {
+      // Or throw new Error("Unauthorized") if you prefer to handle errors upstream
+      logger.warn("Unauthorized attempt to fetch user bookings", {
+        requestedUserId: userId,
+        sessionUserId: session?.user?.id,
+      })
+      return { bookings: [], totalPages: 0, totalBookings: 0 }
+    }
+
+    await dbConnect()
+
+    const { status, page = 1, limit = 10, sortBy = "bookingDateTime", sortDirection = "desc" } = filters
+
+    const query: any = { userId: new mongoose.Types.ObjectId(userId) }
+
+    if (status && status !== "all") {
+      switch (status) {
+        case "upcoming":
+          query.status = { $in: ["pending_professional_assignment", "confirmed"] }
+          query.bookingDateTime = { $gte: new Date() }
+          break
+        case "past":
+          query.status = { $in: ["completed", "no_show"] }
+          // Optionally, could also filter by bookingDateTime < new Date()
+          break
+        case "cancelled":
+          query.status = { $in: ["cancelled_by_user", "cancelled_by_admin"] }
+          break
+        default: // If a specific status string is passed
+          query.status = status
+          break
+      }
+    }
+
+    const sortOptions: { [key: string]: 1 | -1 } = {}
+    if (sortBy) {
+      sortOptions[sortBy] = sortDirection === "asc" ? 1 : -1
+    } else {
+      sortOptions["bookingDateTime"] = -1 // Default sort
+    }
+
+    const totalBookings = await Booking.countDocuments(query)
+    const totalPages = Math.ceil(totalBookings / limit)
+
+    const rawBookings = await Booking.find(query)
+      .populate<{ treatmentId: ITreatment | null }>({
+        path: "treatmentId",
+        select: "name durations defaultDurationMinutes pricingType", // Select fields needed
+        populate: { path: "durations" }, // Ensure durations are populated if ITreatment has them as refs
+      })
+      .populate<{ addressId: Pick<IAddress, "_id" | "city" | "street" | "streetNumber" | "fullAddress"> | null }>({
+        path: "addressId",
+        select: "city street streetNumber fullAddress", // Select necessary address fields
+      })
+      .populate<{ professionalId: Pick<IUser, "_id" | "name"> | null }>({
+        path: "professionalId",
+        select: "name", // Select professional's name
+      })
+      .sort(sortOptions)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean()
+
+    // Manually structure the treatmentId to include the selectedDuration details
+    const bookings: PopulatedBooking[] = rawBookings.map((booking) => {
+      const populatedBooking: PopulatedBooking = {
+        ...booking,
+        _id: booking._id as Types.ObjectId, // Ensure _id is ObjectId
+        treatmentId: null, // Initialize
+      }
+
+      if (booking.treatmentId) {
+        const treatmentDoc = booking.treatmentId as ITreatment // Cast to ITreatment
+        populatedBooking.treatmentId = {
+          _id: treatmentDoc._id as Types.ObjectId,
+          name: treatmentDoc.name,
+        }
+        if (treatmentDoc.pricingType === "duration_based" && booking.selectedDurationId && treatmentDoc.durations) {
+          const selectedDuration = treatmentDoc.durations.find(
+            (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString(),
+          )
+          if (selectedDuration) {
+            populatedBooking.treatmentId.selectedDuration = selectedDuration
+          }
+        } else if (treatmentDoc.pricingType === "fixed" && treatmentDoc.defaultDurationMinutes) {
+          // For fixed price, create a pseudo-duration object if needed by card
+          populatedBooking.treatmentId.selectedDuration = {
+            minutes: treatmentDoc.defaultDurationMinutes,
+            price: treatmentDoc.fixedPrice || 0, // Assuming fixedPrice exists
+            isActive: true, // Assuming it's active
+            // _id is not strictly necessary here unless card expects it
+          } as ITreatmentDuration
+        }
+      }
+
+      // Ensure addressId and professionalId are correctly typed or null
+      populatedBooking.addressId = booking.addressId
+        ? {
+            _id: (booking.addressId as any)._id as Types.ObjectId,
+            city: (booking.addressId as any).city,
+            street: (booking.addressId as any).street,
+            streetNumber: (booking.addressId as any).streetNumber,
+            fullAddress: (booking.addressId as any).fullAddress,
+          }
+        : null
+
+      populatedBooking.professionalId = booking.professionalId
+        ? {
+            _id: (booking.professionalId as any)._id as Types.ObjectId,
+            name: (booking.professionalId as any).name,
+          }
+        : null
+
+      return populatedBooking
+    })
+
+    return { bookings, totalPages, totalBookings }
+  } catch (error) {
+    logger.error("Error fetching user bookings:", { userId, filters, error })
+    // In a real app, you might want to throw a more specific error or return a standardized error object
+    return { bookings: [], totalPages: 0, totalBookings: 0 }
   }
 }
 

@@ -35,6 +35,9 @@ import type {
   PhoneRecipient,
   BookingSuccessNotificationData,
   NewBookingAvailableNotificationData,
+  BookingConfirmedClientNotificationData,
+  ProfessionalEnRouteClientNotificationData,
+  BookingCompletedClientNotificationData,
   NotificationLanguage,
 } from "@/lib/notifications/notification-types"
 // User model might already be imported, if not, add it:
@@ -648,10 +651,9 @@ export async function createBooking(
                 bookingId: finalBookingObject._id.toString(),
                 treatmentName: treatment.name,
                 bookingDateTime: finalBookingObject.bookingDateTime,
-                // TODO: Construct this link properly
-                adminBookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/admin/bookings?bookingId=${finalBookingObject._id.toString()}`, // Or professional specific dashboard
+                professionalActionLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/professional/booking-management/${finalBookingObject._id.toString()}`,
                 bookingAddress:
-                  finalBookingObject.customAddressDetails?.city || (finalBookingObject.addressId as any)?.city, // Example, adjust as needed
+                  finalBookingObject.customAddressDetails?.city || (finalBookingObject.addressId as any)?.city,
               }
 
               for (const prof of professionals) {
@@ -1106,5 +1108,244 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
   } catch (error) {
     logger.error("Error fetching initial booking data (enhanced):", { error, userId })
     return { success: false, error: "bookings.errors.initialDataFetchFailed" }
+  }
+}
+
+/**
+ * @description Professional accepts an available booking.
+ * @param bookingId - The ID of the booking to accept.
+ * @returns Object indicating success or failure.
+ */
+export async function professionalAcceptBooking(
+  bookingId: string,
+): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("professional")) {
+    return { success: false, error: "common.unauthorized" }
+  }
+  const professionalId = session.user.id
+
+  const mongooseDbSession = await mongoose.startSession()
+  try {
+    await dbConnect()
+    let acceptedBooking: IBooking | null = null
+
+    await mongooseDbSession.withTransaction(async () => {
+      const booking = await Booking.findById(bookingId).session(mongooseDbSession)
+      if (!booking) {
+        throw new Error("bookings.errors.bookingNotFound")
+      }
+      if (booking.status !== "pending_professional_assignment") {
+        throw new Error("bookings.errors.bookingNotAvailableForAcceptance")
+      }
+
+      booking.status = "confirmed"
+      booking.professionalId = new mongoose.Types.ObjectId(professionalId)
+      await booking.save({ session: mongooseDbSession })
+      acceptedBooking = booking.toObject()
+    })
+
+    if (acceptedBooking) {
+      revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
+      revalidatePath("/dashboard/admin/bookings") // For admin overview
+
+      // Notify client
+      try {
+        const clientUser = await User.findById(acceptedBooking.userId)
+          .select("name email phone notificationPreferences")
+          .lean()
+        const treatment = await Treatment.findById(acceptedBooking.treatmentId).select("name").lean()
+        const professional = await User.findById(professionalId).select("name").lean()
+
+        if (clientUser && treatment && professional) {
+          const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
+          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
+
+          const notificationData: BookingConfirmedClientNotificationData = {
+            type: "BOOKING_CONFIRMED_CLIENT",
+            userName: clientUser.name || "לקוח/ה",
+            professionalName: professional.name || "מטפל/ת",
+            bookingDateTime: acceptedBooking.bookingDateTime,
+            treatmentName: treatment.name,
+            bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${acceptedBooking._id.toString()}`,
+          }
+
+          if (clientNotificationMethods.includes("email") && clientUser.email) {
+            await notificationManager.sendNotification(
+              { type: "email", value: clientUser.email, name: clientUser.name, language: clientLang },
+              notificationData,
+            )
+          }
+          if (clientNotificationMethods.includes("sms") && clientUser.phone) {
+            await notificationManager.sendNotification(
+              { type: "phone", value: clientUser.phone, language: clientLang },
+              notificationData,
+            )
+          }
+        }
+      } catch (notificationError) {
+        logger.error("Failed to send booking confirmed by pro notification to client:", {
+          error: notificationError,
+          bookingId,
+        })
+      }
+      return { success: true, booking: acceptedBooking }
+    }
+    return { success: false, error: "bookings.errors.acceptBookingFailed" } // Should not happen if transaction succeeded
+  } catch (error) {
+    logger.error("Error in professionalAcceptBooking:", { error, bookingId, professionalId })
+    const errorMessage = error instanceof Error ? error.message : "bookings.errors.acceptBookingFailed"
+    return {
+      success: false,
+      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.acceptBookingFailed",
+    }
+  } finally {
+    await mongooseDbSession.endSession()
+  }
+}
+
+/**
+ * @description Professional marks a booking as "en route".
+ * @param bookingId - The ID of the booking.
+ * @returns Object indicating success or failure.
+ */
+export async function professionalMarkEnRoute(
+  bookingId: string,
+): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("professional")) {
+    return { success: false, error: "common.unauthorized" }
+  }
+  const professionalId = session.user.id
+
+  try {
+    await dbConnect()
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "bookings.errors.bookingNotFound" }
+    }
+    if (booking.professionalId?.toString() !== professionalId) {
+      return { success: false, error: "common.forbidden" } // Not assigned to this professional
+    }
+    if (booking.status !== "confirmed") {
+      return { success: false, error: "bookings.errors.bookingNotInCorrectStateForEnRoute" }
+    }
+
+    booking.status = "professional_en_route"
+    await booking.save()
+    revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
+
+    // Notify client (optional, but good UX)
+    try {
+      const clientUser = await User.findById(booking.userId).select("name email phone notificationPreferences").lean()
+      const treatment = await Treatment.findById(booking.treatmentId).select("name").lean()
+      const professional = await User.findById(professionalId).select("name").lean()
+
+      if (clientUser && treatment && professional) {
+        const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
+        const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
+        const notificationData: ProfessionalEnRouteClientNotificationData = {
+          type: "PROFESSIONAL_EN_ROUTE_CLIENT",
+          userName: clientUser.name || "לקוח/ה",
+          professionalName: professional.name || "מטפל/ת",
+          bookingDateTime: booking.bookingDateTime,
+          treatmentName: treatment.name,
+        }
+        if (clientNotificationMethods.includes("email") && clientUser.email) {
+          await notificationManager.sendNotification(
+            { type: "email", value: clientUser.email, name: clientUser.name, language: clientLang },
+            notificationData,
+          )
+        }
+        if (clientNotificationMethods.includes("sms") && clientUser.phone) {
+          await notificationManager.sendNotification(
+            { type: "phone", value: clientUser.phone, language: clientLang },
+            notificationData,
+          )
+        }
+      }
+    } catch (notificationError) {
+      logger.error("Failed to send professional en route notification to client:", {
+        error: notificationError,
+        bookingId,
+      })
+    }
+
+    return { success: true, booking: booking.toObject() }
+  } catch (error) {
+    logger.error("Error in professionalMarkEnRoute:", { error, bookingId, professionalId })
+    return { success: false, error: "bookings.errors.markEnRouteFailed" }
+  }
+}
+
+/**
+ * @description Professional marks a booking as "completed".
+ * @param bookingId - The ID of the booking.
+ * @returns Object indicating success or failure.
+ */
+export async function professionalMarkCompleted(
+  bookingId: string,
+): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("professional")) {
+    return { success: false, error: "common.unauthorized" }
+  }
+  const professionalId = session.user.id
+
+  try {
+    await dbConnect()
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "bookings.errors.bookingNotFound" }
+    }
+    if (booking.professionalId?.toString() !== professionalId) {
+      return { success: false, error: "common.forbidden" }
+    }
+    if (!["confirmed", "professional_en_route"].includes(booking.status)) {
+      return { success: false, error: "bookings.errors.bookingNotInCorrectStateForCompletion" }
+    }
+
+    booking.status = "completed"
+    // Potentially trigger payment processing logic here if not handled elsewhere
+    await booking.save()
+    revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
+    revalidatePath("/dashboard/admin/bookings")
+
+    // Notify client (optional)
+    try {
+      const clientUser = await User.findById(booking.userId).select("name email phone notificationPreferences").lean()
+      const treatment = await Treatment.findById(booking.treatmentId).select("name").lean()
+      const professional = await User.findById(professionalId).select("name").lean()
+
+      if (clientUser && treatment && professional) {
+        const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
+        const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
+        const notificationData: BookingCompletedClientNotificationData = {
+          type: "BOOKING_COMPLETED_CLIENT",
+          userName: clientUser.name || "לקוח/ה",
+          professionalName: professional.name || "מטפל/ת",
+          treatmentName: treatment.name,
+        }
+        if (clientNotificationMethods.includes("email") && clientUser.email) {
+          await notificationManager.sendNotification(
+            { type: "email", value: clientUser.email, name: clientUser.name, language: clientLang },
+            notificationData,
+          )
+        }
+        if (clientNotificationMethods.includes("sms") && clientUser.phone) {
+          await notificationManager.sendNotification(
+            { type: "phone", value: clientUser.phone, language: clientLang },
+            notificationData,
+          )
+        }
+      }
+    } catch (notificationError) {
+      logger.error("Failed to send booking completed notification to client:", { error: notificationError, bookingId })
+    }
+
+    return { success: true, booking: booking.toObject() }
+  } catch (error) {
+    logger.error("Error in professionalMarkCompleted:", { error, bookingId, professionalId })
+    return { success: false, error: "bookings.errors.markCompletedFailed" }
   }
 }

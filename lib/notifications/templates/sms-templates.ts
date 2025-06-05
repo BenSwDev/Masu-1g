@@ -4,6 +4,9 @@ import type {
   PurchaseSuccessSubscriptionNotificationData,
   BookingSuccessNotificationData, // New
   NewBookingAvailableNotificationData, // New
+  BookingConfirmedClientNotificationData,
+  ProfessionalEnRouteClientNotificationData,
+  BookingCompletedClientNotificationData,
 } from "../notification-types" // Ensure new types are imported or compatible
 
 // Define Language type locally to avoid importing from client-side i18n
@@ -51,6 +54,15 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
         data as NewBookingAvailableNotificationData, // Cast to specific type
         language,
       )
+
+    case "BOOKING_CONFIRMED_CLIENT":
+      return getBookingConfirmedClientSmsTemplate(data as BookingConfirmedClientNotificationData, language)
+
+    case "PROFESSIONAL_EN_ROUTE_CLIENT":
+      return getProfessionalEnRouteClientSmsTemplate(data as ProfessionalEnRouteClientNotificationData, language)
+
+    case "BOOKING_COMPLETED_CLIENT":
+      return getBookingCompletedClientSmsTemplate(data as BookingCompletedClientNotificationData, language)
 
     case "PURCHASE_SUCCESS_SUBSCRIPTION":
       return getPurchaseSuccessSubscriptionSmsTemplate(
@@ -219,7 +231,7 @@ function getBookingSuccessSmsTemplate(data: BookingSuccessNotificationData, lang
   }
 }
 
-// New Booking Available SMS Template (for professionals)
+// New Booking Available SMS Template (for professionals) - Updated
 function getNewBookingAvailableSmsTemplate(data: NewBookingAvailableNotificationData, language: SMSLanguage): string {
   const dateTime = new Date(data.bookingDateTime).toLocaleTimeString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
@@ -239,10 +251,63 @@ function getNewBookingAvailableSmsTemplate(data: NewBookingAvailableNotification
 
   switch (language) {
     case "he":
-      return `הזמנה חדשה: ${data.treatmentName} ב-${dateDate} ${dateTime}${locationInfo} (מס' ${data.bookingId}). לשיבוץ: ${data.adminBookingDetailsLink} ${appName}`
+      return `הזמנה חדשה: ${data.treatmentName} ב-${dateDate} ${dateTime}${locationInfo} (מס' ${data.bookingId}). לניהול: ${data.professionalActionLink} ${appName}`
     case "ru":
-      return `Новый заказ: ${data.treatmentName} ${dateDate} в ${dateTime}${locationInfo} (№${data.bookingId}). Назначить: ${data.adminBookingDetailsLink} ${appName}`
+      return `Новый заказ: ${data.treatmentName} ${dateDate} в ${dateTime}${locationInfo} (№${data.bookingId}). Управлять: ${data.professionalActionLink} ${appName}`
     default: // English
-      return `New booking: ${data.treatmentName} on ${dateDate} at ${dateTime}${locationInfo} (#${data.bookingId}). Assign: ${data.adminBookingDetailsLink} ${appName}`
+      return `New booking: ${data.treatmentName} on ${dateDate} at ${dateTime}${locationInfo} (#${data.bookingId}). Manage: ${data.professionalActionLink} ${appName}`
+  }
+}
+
+// Booking Confirmed by Professional SMS Template (for client)
+function getBookingConfirmedClientSmsTemplate(
+  data: BookingConfirmedClientNotificationData,
+  language: SMSLanguage,
+): string {
+  const dateTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { hour: "2-digit", minute: "2-digit" },
+  )
+  const dateDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { day: "2-digit", month: "2-digit", year: "numeric" },
+  )
+  switch (language) {
+    case "he":
+      return `הזמנתך ל${data.treatmentName} ב-${dateDate} ${dateTime} אושרה ע"י ${data.professionalName}! פרטים: ${data.bookingDetailsLink} ${appName}`
+    case "ru":
+      return `Ваш заказ на ${data.treatmentName} ${dateDate} в ${dateTime} подтвержден ${data.professionalName}! Детали: ${data.bookingDetailsLink} ${appName}`
+    default: // English
+      return `Your booking for ${data.treatmentName} on ${dateDate} at ${dateTime} is confirmed by ${data.professionalName}! Details: ${data.bookingDetailsLink} ${appName}`
+  }
+}
+
+// Professional En Route SMS Template (for client)
+function getProfessionalEnRouteClientSmsTemplate(
+  data: ProfessionalEnRouteClientNotificationData,
+  language: SMSLanguage,
+): string {
+  switch (language) {
+    case "he":
+      return `${data.professionalName} בדרך אליך לטיפול ${data.treatmentName}. ${appName}`
+    case "ru":
+      return `${data.professionalName} уже в пути для процедуры ${data.treatmentName}. ${appName}`
+    default: // English
+      return `${data.professionalName} is on the way for your ${data.treatmentName} treatment. ${appName}`
+  }
+}
+
+// Booking Completed by Professional SMS Template (for client)
+function getBookingCompletedClientSmsTemplate(
+  data: BookingCompletedClientNotificationData,
+  language: SMSLanguage,
+): string {
+  switch (language) {
+    case "he":
+      return `הטיפול ${data.treatmentName} עם ${data.professionalName} הושלם. נשמח למשוב! ${appName}`
+    case "ru":
+      return `Процедура ${data.treatmentName} со специалистом ${data.professionalName} завершена. Будем рады вашему отзыву! ${appName}`
+    default: // English
+      return `Your ${data.treatmentName} treatment with ${data.professionalName} is complete. We'd love your feedback! ${appName}`
   }
 }

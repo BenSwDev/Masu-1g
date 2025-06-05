@@ -125,7 +125,14 @@
     "summary": "סיכום",
     "priceSummary": "סיכום מחיר",
     "purchaseSuccessful": "הרכישה הושלמה בהצלחה",
-    "purchaseSuccessMessage": "הרכישה שלך הושלמה בהצלחה."
+    "purchaseSuccessMessage": "הרכישה שלך הושלמה בהצלחה.",
+    "unauthorized": "גישה לא מורשית.",
+    "forbidden": "אין לך הרשאה לבצע פעולה זו על הזמנה זו.",
+    "status": {
+      "unknown": "סטטוס לא ידוע"
+    },
+    "anotherProfessional": "מטפל/ת אחר/ת",
+    "invalidInput": "קלט לא תקין."
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -1469,7 +1476,15 @@
       "initialDataFetchFailed": "שליפת נתונים ראשוניים להזמנה נכשלה. אנא רענן את הדף.",
       "subscriptionTreatmentMismatch": "הטיפול שנבחר אינו תואם לטיפול המכוסה במנוי שלך.",
       "subscriptionDurationMismatch": "משך הזמן שנבחר אינו תואם למשך המכוסה במנוי שלך.",
-      "priceCalculationUnavailable": "פרטי המחיר אינם זמינים כעת. אנא ודא שכל השלבים הקודמים הושלמו כראוי."
+      "priceCalculationUnavailable": "פרטי המחיר אינם זמינים כעת. אנא ודא שכל השלבים הקודמים הושלמו כראוי.",
+      "invalidBookingId": "פורמט מזהה הזמנה שגוי.",
+      "bookingNotAvailableForAcceptance": "הזמנה זו אינה זמינה עוד לאישור או אינה במצב המתאים.",
+      "acceptBookingFailed": "אישור ההזמנה נכשל. אנא נסה שוב.",
+      "bookingNotInCorrectStateForEnRoute": "לא ניתן לעדכן את ההזמנה לסטטוס 'בדרך' ממצבה הנוכחי.",
+      "markEnRouteFailed": "עדכון סטטוס 'בדרך' נכשל.",
+      "bookingNotInCorrectStateForCompletion": "לא ניתן לעדכן את ההזמנה לסטטוס 'הושלם' ממצבה הנוכחי.",
+      "markCompletedFailed": "עדכון סטטוס 'הושלם' נכשל.",
+      "fetchBookingForProFailed": "שליפת פרטי ההזמנה עבור תצוגת מטפל נכשלה."
     },
     "messages": {
       "closedOnSelectedDate": "אנו סגורים בתאריך הנבחר."
@@ -1495,6 +1510,16 @@
     "subscriptions": {
       "remaining": "נותרו",
       "expiry": "תוקף"
+    },
+    "status": {
+      "pending_professional_assignment": "ממתין לשיבוץ מטפל",
+      "professional_en_route": "מטפל בדרך",
+      "pending_professional_assignment": "ממתין לשיבוץ מטפל/ת",
+      "confirmed": "מאושרת",
+      "completed": "הושלמה",
+      "cancelled_by_user": "בוטלה על ידך",
+      "cancelled_by_admin": "בוטלה על ידי המערכת",
+      "no_show": "לא הופעת"
     }
   },
   "memberBookings": {
@@ -1543,5 +1568,71 @@
     "cancelSuccess": "ההזמנה בוטלה בהצלחה.",
     "cancelConfirmDescription": "האם אתה בטוח שברצונך לבטל הזמנה זו? ייתכן שלא ניתן יהיה לבטל פעולה זו בהתאם למדיניות הביטולים.",
     "tryAdjustingFilters": "נסה לשנות את המסננים שלך או בדוק שוב מאוחר יותר."
+  },
+  "professionalBookingManagement": {
+    "title": "ניהול הזמנה",
+    "bookingId": "מזהה הזמנה",
+    "details": {
+      "title": "פרטי ההזמנה",
+      "status": "סטטוס",
+      "dateTime": "תאריך ושעה",
+      "duration": "משך הטיפול",
+      "address": "כתובת",
+      "notes": "הערות לקוח",
+      "anonymousClient": "לקוח אנונימי"
+    },
+    "clientDetails": {
+      "title": "פרטי לקוח",
+      "name": "שם",
+      "phone": "טלפון",
+      "email": "אימייל"
+    },
+    "actions": {
+      "acceptBooking": "אשר קבלת הזמנה",
+      "markEnRoute": "אני בדרך",
+      "markCompleted": "סמן כהושלם"
+    },
+    "status": {
+      "pendingAssignment": {
+        "title": "ממתין לשיבוץ",
+        "description": "הזמנה זו ממתינה לאישור מטפל/ת. אם הנך פנוי/ה, באפשרותך לאשר קבלת הזמנה זו."
+      },
+      "alreadyAssigned": {
+        "title": "הזמנה שובצה",
+        "description": "הזמנה זו כבר שובצה ל{{professionalName}}."
+      },
+      "completed": {
+        "title": "הזמנה הושלמה",
+        "description": "הזמנה זו הושלמה בהצלחה."
+      },
+      "noBookingFound": {
+        "title": "הזמנה לא נמצאה",
+        "description": "ההזמנה המבוקשת לא נמצאה או שאין לך הרשאה לצפות בה."
+      }
+    },
+    "errors": {
+      "fetchFailed": "שליפת פרטי ההזמנה נכשלה.",
+      "unexpectedError": "אירעה שגיאה בלתי צפויה.",
+      "acceptFailed": "אישור קבלת ההזמנה נכשל.",
+      "enRouteFailed": "עדכון סטטוס 'בדרך' נכשל.",
+      "completedFailed": "עדכון סטטוס 'הושלם' נכשל."
+    },
+    "toasts": {
+      "accepted": {
+        "title": "ההזמנה אושרה!",
+        "description": "אישרת בהצלחה את קבלת ההזמנה. הלקוח עודכן."
+      },
+      "enRoute": {
+        "title": "סטטוס עודכן: בדרך!",
+        "description": "סטטוס ההזמנה עודכן ל'בדרך'. הלקוח עודכן."
+      },
+      "completed": {
+        "title": "ההזמנה הושלמה!",
+        "description": "ההזמנה סומנה כהושלמה."
+      },
+      "actionFailed": {
+        "title": "הפעולה נכשלה"
+      }
+    }
   }
 }

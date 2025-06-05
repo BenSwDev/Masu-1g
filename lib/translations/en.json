@@ -120,7 +120,14 @@
     "priceSummary": "Price Summary",
     "purchaseSuccessful": "Purchase Successful",
     "purchaseSuccessMessage": "Your purchase has been completed successfully.",
-    "months": "months"
+    "months": "months",
+    "unauthorized": "Unauthorized access.",
+    "forbidden": "You do not have permission to perform this action on this booking.",
+    "status": {
+      "unknown": "Unknown Status"
+    },
+    "anotherProfessional": "another professional",
+    "invalidInput": "Invalid input provided."
   },
   "dashboard": {
     "sidebar": {
@@ -1273,7 +1280,15 @@
       "initialDataFetchFailed": "Failed to fetch initial data for booking. Please refresh the page.",
       "subscriptionTreatmentMismatch": "The selected treatment does not match the one covered by your subscription.",
       "subscriptionDurationMismatch": "The selected duration does not match the one covered by your subscription.",
-      "priceCalculationUnavailable": "Price details are currently unavailable. Please ensure all previous steps are completed correctly."
+      "priceCalculationUnavailable": "Price details are currently unavailable. Please ensure all previous steps are completed correctly.",
+      "invalidBookingId": "Invalid booking ID format.",
+      "bookingNotAvailableForAcceptance": "This booking is no longer available for acceptance or is not in the correct state.",
+      "acceptBookingFailed": "Failed to accept the booking. Please try again.",
+      "bookingNotInCorrectStateForEnRoute": "Booking cannot be marked as 'en route' from its current state.",
+      "markEnRouteFailed": "Failed to mark booking as 'en route'.",
+      "bookingNotInCorrectStateForCompletion": "Booking cannot be marked as 'completed' from its current state.",
+      "markCompletedFailed": "Failed to mark booking as 'completed'.",
+      "fetchBookingForProFailed": "Failed to retrieve booking details for professional view."
     },
     "messages": {
       "closedOnSelectedDate": "We are closed on the selected date."
@@ -1299,6 +1314,16 @@
     "subscriptions": {
       "remaining": "Remaining",
       "expiry": "Expires"
+    },
+    "status": {
+      "pending_professional_assignment": "Pending Professional Assignment",
+      "professional_en_route": "Professional En Route",
+      "pending_professional_assignment": "Pending Assignment",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled_by_user": "Cancelled by You",
+      "cancelled_by_admin": "Cancelled by Admin",
+      "no_show": "No Show"
     }
   },
   "memberBookings": {
@@ -1347,5 +1372,71 @@
     "cancelSuccess": "Booking cancelled successfully.",
     "cancelConfirmDescription": "Are you sure you want to cancel this booking? This action may not be reversible depending on the cancellation policy.",
     "tryAdjustingFilters": "Try adjusting your filters or check back later."
+  },
+  "professionalBookingManagement": {
+    "title": "Booking Management",
+    "bookingId": "Booking ID",
+    "details": {
+      "title": "Booking Details",
+      "status": "Status",
+      "dateTime": "Date & Time",
+      "duration": "Duration",
+      "address": "Address",
+      "notes": "Client Notes",
+      "anonymousClient": "Anonymous Client"
+    },
+    "clientDetails": {
+      "title": "Client Details",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email"
+    },
+    "actions": {
+      "acceptBooking": "Accept Booking",
+      "markEnRoute": "I'm On My Way",
+      "markCompleted": "Mark as Completed"
+    },
+    "status": {
+      "pendingAssignment": {
+        "title": "Pending Assignment",
+        "description": "This booking is awaiting a professional to accept it. If you are available, you can accept this booking."
+      },
+      "alreadyAssigned": {
+        "title": "Booking Assigned",
+        "description": "This booking has already been assigned to {{professionalName}}."
+      },
+      "completed": {
+        "title": "Booking Completed",
+        "description": "This booking has been successfully completed."
+      },
+      "noBookingFound": {
+        "title": "Booking Not Found",
+        "description": "The requested booking could not be found or you do not have permission to view it."
+      }
+    },
+    "errors": {
+      "fetchFailed": "Failed to fetch booking details.",
+      "unexpectedError": "An unexpected error occurred.",
+      "acceptFailed": "Failed to accept the booking.",
+      "enRouteFailed": "Failed to mark as en route.",
+      "completedFailed": "Failed to mark as completed."
+    },
+    "toasts": {
+      "accepted": {
+        "title": "Booking Accepted!",
+        "description": "You have successfully accepted this booking. The client has been notified."
+      },
+      "enRoute": {
+        "title": "Status Updated: En Route!",
+        "description": "You are now marked as on your way. The client has been notified."
+      },
+      "completed": {
+        "title": "Booking Completed!",
+        "description": "The booking has been marked as completed."
+      },
+      "actionFailed": {
+        "title": "Action Failed"
+      }
+    }
   }
 }

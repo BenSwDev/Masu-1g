@@ -3,6 +3,7 @@ import mongoose, { Schema, type Document, type Model, type Types } from "mongoos
 export type BookingStatus =
   | "pending_professional_assignment" // ממתין למציאת מטפל
   | "confirmed" // אושר, שובץ מטפל
+  | "professional_en_route" // מטפל בדרך
   | "completed" // הושלם
   | "cancelled_by_user" // בוטל ע"י משתמש
   | "cancelled_by_admin" // בוטל ע"י מנהל
@@ -120,6 +121,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
       enum: [
         "pending_professional_assignment",
         "confirmed",
+        "professional_en_route",
         "completed",
         "cancelled_by_user",
         "cancelled_by_admin",

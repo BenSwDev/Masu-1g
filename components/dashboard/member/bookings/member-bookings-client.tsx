@@ -1,196 +1,119 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { useTranslation } from "@/lib/translations/i18n"
-import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import { getUserBookings, type PopulatedBooking } from "@/actions/booking-actions"
+import { useSearchParams } from "next/navigation"
+
+import { getUserBookings } from "@/actions/booking-actions"
+import { useSession } from "next-auth/react"
+import { Skeleton } from "@/components/ui/skeleton"
 import BookingCard from "./booking-card"
-import { MemberBookingsClientSkeleton } from "./booking-card-skeleton"
-import { Button } from "@/components/common/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/common/ui/pagination"
-import { AlertTriangle, ListX } from "lucide-react"
-import { Loader2 } from "lucide-react"
+import { Pagination } from "@/components/ui/pagination"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
 
 interface MemberBookingsClientProps {
-  userId: string
+  defaultPage?: number
+  defaultStatus?: string
+  defaultSortBy?: string
+  defaultSortDirection?: "asc" | "desc"
 }
 
-const BOOKINGS_PER_PAGE = 6
-
-export default function MemberBookingsClient({ userId }: MemberBookingsClientProps) {
-  const { t } = useTranslation()
-  const router = useRouter()
-  const pathname = usePathname()
+const MemberBookingsClient = ({
+  defaultPage = 1,
+  defaultStatus = "all",
+  defaultSortBy = "createdAt",
+  defaultSortDirection = "desc",
+}: MemberBookingsClientProps) => {
   const searchParams = useSearchParams()
+  const { data: session } = useSession()
+  const currentUserId = session?.user?.id as string
 
-  const [filters, setFilters] = useState({
-    status: searchParams.get("status") || "all",
-    sortBy: searchParams.get("sortBy") || "newest",
-    page: Number.parseInt(searchParams.get("page") || "1", 10),
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get("page")) || defaultPage)
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || defaultStatus)
+  const [sortBy, setSortBy] = useState(searchParams.get("sort_by") || defaultSortBy)
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(
+    (searchParams.get("sort_direction") as "asc" | "desc") || defaultSortDirection,
+  )
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["member-bookings", currentUserId, currentPage, statusFilter, sortBy, sortDirection],
+    queryFn: () => getUserBookings(currentUserId, { page: currentPage, status: statusFilter, sortBy, sortDirection }),
+    enabled: !!currentUserId,
   })
 
-  const queryKey = useMemo(() => ["userBookings", userId, filters], [userId, filters])
-
-  const { data, isLoading, error, isFetching } = useQuery<{
-    bookings: PopulatedBooking[]
-    totalPages: number
-    totalBookings: number
-  }>({
-    queryKey,
-    queryFn: () =>
-      getUserBookings(userId, {
-        status: filters.status === "all" ? undefined : filters.status,
-        page: filters.page,
-        limit: BOOKINGS_PER_PAGE,
-        sortBy: filters.sortBy === "newest" ? "bookingDateTime" : "bookingDateTime",
-        sortDirection: filters.sortBy === "newest" ? "desc" : "asc",
-      }),
-    placeholderData: (previousData) => previousData, // Keep previous data while fetching new
-    refetchOnWindowFocus: false,
-  })
-
-  const handleFilterChange = (type: "status" | "sortBy", value: string) => {
-    const newFilters = { ...filters, [type]: value, page: 1 }
-    setFilters(newFilters)
-    updateURL(newFilters)
+  if (!currentUserId) {
+    return <div>Loading...</div>
   }
 
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || (data && newPage > data.totalPages)) return
-    const newFilters = { ...filters, page: newPage }
-    setFilters(newFilters)
-    updateURL(newFilters)
+  if (isError) {
+    return <div>Error fetching bookings</div>
   }
-
-  const updateURL = (currentFilters: typeof filters) => {
-    const params = new URLSearchParams()
-    if (currentFilters.status !== "all") params.set("status", currentFilters.status)
-    if (currentFilters.sortBy !== "newest") params.set("sortBy", currentFilters.sortBy)
-    if (currentFilters.page > 1) params.set("page", currentFilters.page.toString())
-    router.push(`${pathname}?${params.toString()}`, { scroll: false })
-  }
-
-  if (isLoading && !data) {
-    // Show skeleton only on initial load
-    return <MemberBookingsClientSkeleton />
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-8 text-center text-destructive">
-        <AlertTriangle className="mb-4 h-12 w-12" />
-        <h3 className="mb-2 text-xl font-semibold">{t("common.error")}</h3>
-        <p>{t("memberBookings.fetchError")}</p>
-        <Button onClick={() => window.location.reload()} className="mt-4">
-          {t("common.refresh")}
-        </Button>
-      </div>
-    )
-  }
-
-  const bookings = data?.bookings || []
-  const totalPages = data?.totalPages || 1
-  const totalBookings = data?.totalBookings || 0
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-          <Select value={filters.status} onValueChange={(value) => handleFilterChange("status", value)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder={t("memberBookings.filterByStatus")} />
+    <div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">My Bookings</h2>
+        <div className="flex items-center gap-2">
+          <Select onValueChange={setStatusFilter} defaultValue={statusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t("memberBookings.statusAll")}</SelectItem>
-              <SelectItem value="upcoming">{t("memberBookings.statusUpcoming")}</SelectItem>
-              <SelectItem value="past">{t("memberBookings.statusPast")}</SelectItem>
-              <SelectItem value="cancelled">{t("memberBookings.statusCancelled")}</SelectItem>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={filters.sortBy} onValueChange={(value) => handleFilterChange("sortBy", value)}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder={t("memberBookings.sortByDate")} />
+
+          <Select
+            onValueChange={(value) => {
+              const [newSortBy, newSortDirection] = value.split(".") as [string, "asc" | "desc"]
+              setSortBy(newSortBy)
+              setSortDirection(newSortDirection)
+            }}
+            defaultValue={`${sortBy}.${sortDirection}`}
+          >
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">{t("memberBookings.sortNewestFirst")}</SelectItem>
-              <SelectItem value="oldest">{t("memberBookings.sortOldestFirst")}</SelectItem>
+              <SelectItem value={`createdAt.asc`}>Date (Oldest first)</SelectItem>
+              <SelectItem value={`createdAt.desc`}>Date (Newest first)</SelectItem>
+              <SelectItem value={`totalPrice.asc`}>Price (Lowest first)</SelectItem>
+              <SelectItem value={`totalPrice.desc`}>Price (Highest first)</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        {isFetching && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
       </div>
 
-      {bookings.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card p-12 text-center">
-          <ListX className="mb-4 h-16 w-16 text-muted-foreground" />
-          <h3 className="mb-2 text-xl font-semibold text-card-foreground">
-            {filters.status === "all" && filters.sortBy === "newest" && totalBookings === 0
-              ? t("memberBookings.noBookingsFound")
-              : t("memberBookings.noBookingsFoundFiltered")}
-          </h3>
-          <p className="text-muted-foreground">{t("memberBookings.tryAdjustingFilters")}</p>
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {[...Array(8)].map((_, i) => (
+            <Skeleton key={i} className="h-40 w-full" />
+          ))}
         </div>
+      ) : data?.bookings.length === 0 ? (
+        <p>No bookings found.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
-          {bookings.map((booking) => (
-            <BookingCard key={booking._id.toString()} booking={booking} currentUserId={userId} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {data?.bookings.map((booking) => (
+            <BookingCard key={booking.id} booking={booking} />
           ))}
         </div>
       )}
 
-      {totalPages > 1 && (
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handlePageChange(filters.page - 1)
-                }}
-                disabled={filters.page === 1}
-                className={filters.page === 1 ? "cursor-not-allowed opacity-50" : ""}
-              />
-            </PaginationItem>
-            {[...Array(totalPages)].map((_, i) => (
-              <PaginationItem key={i}>
-                <PaginationLink
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    handlePageChange(i + 1)
-                  }}
-                  isActive={filters.page === i + 1}
-                >
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  handlePageChange(filters.page + 1)
-                }}
-                disabled={filters.page === totalPages}
-                className={filters.page === totalPages ? "cursor-not-allowed opacity-50" : ""}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      )}
+      <Pagination
+        currentPage={currentPage}
+        totalCount={data?.totalCount || 0}
+        pageSize={data?.pageSize || 8}
+        onPageChange={setCurrentPage}
+        className={cn(isLoading && "opacity-50 pointer-events-none")}
+      />
     </div>
   )
 }
 
-MemberBookingsClient.Skeleton = MemberBookingsClientSkeleton
+export default MemberBookingsClient

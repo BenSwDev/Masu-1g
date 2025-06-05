@@ -151,8 +151,7 @@
       "userMenu": {
         "treatmentPreferences": "Предпочтения по процедурам",
         "notifications": "Уведомления"
-      },
-      "myBookings": "Мои Записи"
+      }
     }
   },
   "subscriptions": {
@@ -1304,76 +1303,6 @@
     "subscriptions": {
       "remaining": "Осталось",
       "expiry": "Истекает"
-    }
-  },
-  "bookings": {
-    "title": "Мои Записи",
-    "description": "Просмотр и управление вашими записями на процедуры.",
-    "bookNew": "Записаться на новую процедуру",
-    "bookNewShort": "Новая Запись",
-    "upcomingBookings": "Предстоящие",
-    "pastBookings": "Прошедшие",
-    "noBookings": "У вас пока нет записей.",
-    "noUpcomingBookings": "Предстоящие записи не найдены.",
-    "noPastBookings": "Прошедшие записи не найдены.",
-    "noBookingsYetTitle": "У вас пока нет записей",
-    "noBookingsYetDescription": "Похоже, вы еще не записывались на процедуры. Начните с бронирования вашей первой процедуры!",
-    "status": {
-      "pending": "Ожидает подтверждения",
-      "confirmed": "Подтверждено",
-      "professional_assigned": "Специалист назначен",
-      "completed": "Завершено",
-      "cancelled_by_user": "Отменено вами",
-      "cancelled_by_admin": "Отменено администратором",
-      "no_show": "Неявка",
-      "rescheduled": "Перенесено",
-      "unknown": "Неизвестный статус"
-    },
-    "card": {
-      "treatment": "Процедура",
-      "duration": "Длительность",
-      "date": "Дата",
-      "time": "Время",
-      "professional": "Специалист",
-      "address": "Адрес",
-      "addressNotSet": "Адрес не указан",
-      "price": "Цена",
-      "priceNotSet": "Цена не указана",
-      "priceDetails": "Детали оплаты",
-      "status": "Статус",
-      "notes": "Ваши заметки",
-      "viewDetails": "Посмотреть детали",
-      "cancelBooking": "Отменить запись",
-      "contactSupport": "Связаться с поддержкой",
-      "notAssignedYet": "Еще не назначен",
-      "coveredBySubscription": "Покрывается подпиской",
-      "coveredByVoucher": "Покрывается сертификатом"
-    },
-    "filters": {
-      "filterByStatus": "Фильтр по статусу",
-      "allStatuses": "Все статусы",
-      "sortBy": "Сортировать по",
-      "dateAsc": "Дата (старые сначала)",
-      "dateDesc": "Дата (новые сначала)"
-    },
-    "cancelDialog": {
-      "title": "Отменить запись",
-      "description": "Вы уверены, что хотите отменить эту запись? Это действие может быть необратимым в зависимости от политики отмены.",
-      "confirm": "Да, отменить запись",
-      "processing": "Отмена..."
-    },
-    "notifications": {
-      "cancelSuccess": "Запись успешно отменена.",
-      "cancelError": "Не удалось отменить запись. Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой."
-    },
-    "errors": {
-      "fetchErrorTitle": "Ошибка загрузки записей",
-      "fetchErrorGeneric": "В данный момент мы не смогли загрузить ваши записи. Пожалуйста, повторите попытку позже."
-    }
-  },
-  "dashboard": {
-    "sidebar": {
-      "myBookings": "Мои Записи"
     }
   }
 }

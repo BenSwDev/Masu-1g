@@ -281,7 +281,6 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       member: [
         { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },
         { titleKey: "paymentMethods", icon: CreditCard, hrefSuffix: "payment-methods" },
-        { titleKey: "myBookings", icon: CreditCard, hrefSuffix: "bookings" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
       ],

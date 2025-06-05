@@ -270,7 +270,6 @@
       "categories": "קטגוריות",
       "orders": "הזמנות",
       "support": "תמיכה",
-      "myBookings": "ההזמנות שלי",
       "settings": "הגדרות",
       "userMenu": {
         "treatmentPreferences": "העדפות טיפול",
@@ -1495,76 +1494,6 @@
     "subscriptions": {
       "remaining": "נותרו",
       "expiry": "תוקף"
-    }
-  },
-  "bookings": {
-    "title": "ההזמנות שלי",
-    "description": "צפה ונהל את הזמנות הטיפולים שלך.",
-    "bookNew": "הזמן טיפול חדש",
-    "bookNewShort": "הזמנה חדשה",
-    "upcomingBookings": "הזמנות עתידיות",
-    "pastBookings": "הזמנות קודמות",
-    "noBookings": "אין לך הזמנות עדיין.",
-    "noUpcomingBookings": "לא נמצאו הזמנות עתידיות.",
-    "noPastBookings": "לא נמצאו הזמנות קודמות.",
-    "noBookingsYetTitle": "אין לך הזמנות עדיין",
-    "noBookingsYetDescription": "נראה שעדיין לא הזמנת טיפולים. התחל על ידי הזמנת הטיפול הראשון שלך!",
-    "status": {
-      "pending": "ממתין לאישור",
-      "confirmed": "מאושר",
-      "professional_assigned": "מטפל שובץ",
-      "completed": "הושלם",
-      "cancelled_by_user": "בוטל על ידך",
-      "cancelled_by_admin": "בוטל על ידי מנהל",
-      "no_show": "לא הופעת",
-      "rescheduled": "נקבע מחדש",
-      "unknown": "סטטוס לא ידוע"
-    },
-    "card": {
-      "treatment": "טיפול",
-      "duration": "משך",
-      "date": "תאריך",
-      "time": "שעה",
-      "professional": "מטפל/ת",
-      "address": "כתובת",
-      "addressNotSet": "כתובת לא הוגדרה",
-      "price": "מחיר",
-      "priceNotSet": "מחיר לא הוגדר",
-      "priceDetails": "פרטי תשלום",
-      "status": "סטטוס",
-      "notes": "ההערות שלך",
-      "viewDetails": "צפה בפרטים",
-      "cancelBooking": "בטל הזמנה",
-      "contactSupport": "צור קשר עם התמיכה",
-      "notAssignedYet": "טרם שובץ",
-      "coveredBySubscription": "מכוסה על ידי מנוי",
-      "coveredByVoucher": "מכוסה על ידי שובר"
-    },
-    "filters": {
-      "filterByStatus": "סנן לפי סטטוס",
-      "allStatuses": "כל הסטטוסים",
-      "sortBy": "מיין לפי",
-      "dateAsc": "תאריך (ישן לחדש)",
-      "dateDesc": "תאריך (חדש לישן)"
-    },
-    "cancelDialog": {
-      "title": "ביטול הזמנה",
-      "description": "האם אתה בטוח שברצונך לבטל הזמנה זו? ייתכן שלא ניתן יהיה לבטל פעולה זו בהתאם למדיניות הביטולים.",
-      "confirm": "כן, בטל הזמנה",
-      "processing": "מבטל..."
-    },
-    "notifications": {
-      "cancelSuccess": "ההזמנה בוטלה בהצלחה.",
-      "cancelError": "נכשל בביטול ההזמנה. אנא נסה שוב או פנה לתמיכה."
-    },
-    "errors": {
-      "fetchErrorTitle": "שגיאה בטעינת הזמנות",
-      "fetchErrorGeneric": "לא הצלחנו לטעון את ההזמנות שלך כרגע. אנא נסה שוב מאוחר יותר."
-    }
-  },
-  "dashboard": {
-    "sidebar": {
-      "myBookings": "ההזמנות שלי"
     }
   }
 }

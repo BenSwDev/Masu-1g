@@ -160,6 +160,7 @@
       "giftVouchers": "Gift Vouchers",
       "support": "Support",
       "settings": "Settings",
+      "bookings": "Bookings",
       "userMenu": {
         "treatmentPreferences": "Treatment Preferences",
         "notifications": "Notifications"
@@ -1318,7 +1319,6 @@
     "status": {
       "pending_professional_assignment": "Pending Professional Assignment",
       "professional_en_route": "Professional En Route",
-      "pending_professional_assignment": "Pending Assignment",
       "confirmed": "Confirmed",
       "completed": "Completed",
       "cancelled_by_user": "Cancelled by You",
@@ -1372,6 +1372,112 @@
     "cancelSuccess": "Booking cancelled successfully.",
     "cancelConfirmDescription": "Are you sure you want to cancel this booking? This action may not be reversible depending on the cancellation policy.",
     "tryAdjustingFilters": "Try adjusting your filters or check back later."
+  },
+  "adminBookings": {
+    "title": "Bookings Management",
+    "description": "View and manage all bookings in the system.",
+    "filters": {
+      "title": "Filters",
+      "userIdPlaceholder": "Filter by User ID...",
+      "professionalIdPlaceholder": "Filter by Professional ID...",
+      "dateRangePlaceholder": "Filter by Date Range",
+      "statusPlaceholder": "Filter by Status"
+    },
+    "table": {
+      "noBookings": "No bookings found.",
+      "noBookingsWithFilters": "No bookings match the current filters.",
+      "actions": {
+        "viewDetails": "View/Edit Details"
+      },
+      "columns": {
+        "bookingId": "Booking ID",
+        "user": "User",
+        "professional": "Professional",
+        "treatment": "Treatment",
+        "dateTime": "Date & Time",
+        "status": "Status",
+        "price": "Price",
+        "source": "Source",
+        "actions": "Actions"
+      },
+      "loading": "Loading bookings...",
+      "refresh": "Refresh Data"
+    }
+  },
+  "adminBookingDetails": {
+    "modalTitleView": "Booking Details",
+    "modalTitleEdit": "Edit Booking",
+    "toggleEditMode": "Edit Booking",
+    "toggleViewMode": "View Details",
+    "sections": {
+      "bookingInfo": "Booking Information",
+      "clientInfo": "Client Information",
+      "professionalInfo": "Professional Information",
+      "treatmentInfo": "Treatment Information",
+      "addressInfo": "Address Information",
+      "priceInfo": "Price & Payment Information",
+      "adminActions": "Admin Actions & Notes"
+    },
+    "fields": {
+      "bookingId": "Booking ID",
+      "status": "Status",
+      "bookingDateTime": "Date & Time",
+      "isFlexibleTime": "Flexible Time",
+      "source": "Source",
+      "userNotes": "Client Notes",
+      "adminNotes": "Admin Notes",
+      "adminNotesPlaceholder": "Add internal notes for this booking...",
+      "assignProfessional": "Assign Professional",
+      "noProfessionalAssigned": "No professional assigned",
+      "selectProfessionalPlaceholder": "Select a professional...",
+      "noProfessionalsAvailable": "No professionals available",
+      "clientName": "Client Name",
+      "clientPhone": "Client Phone",
+      "clientEmail": "Client Email",
+      "professionalName": "Professional Name",
+      "professionalPhone": "Professional Phone",
+      "professionalEmail": "Professional Email",
+      "treatmentName": "Treatment",
+      "duration": "Duration",
+      "fullAddress": "Full Address",
+      "addressNotes": "Address Notes",
+      "totalPrice": "Total Price",
+      "paymentStatus": "Payment Status",
+      "paymentMethod": "Payment Method",
+      "transactionId": "Transaction ID",
+      "couponApplied": "Coupon Applied",
+      "subscriptionRedeemed": "Subscription Redeemed",
+      "voucherRedeemed": "Voucher Redeemed",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At"
+    },
+    "actions": {
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "cancelBooking": "Cancel Booking",
+      "cancelling": "Cancelling..."
+    },
+    "toasts": {
+      "updateSuccess": "Booking updated successfully.",
+      "updateError": "Failed to update booking.",
+      "cancelSuccess": "Booking cancelled successfully.",
+      "cancelError": "Failed to cancel booking."
+    },
+    "confirmCancelTitle": "Confirm Booking Cancellation",
+    "confirmCancelDescription": "Are you sure you want to cancel this booking? This action may notify the client and professional.",
+    "cancellationReason": "Cancellation Reason (Admin)",
+    "cancellationReasonPlaceholder": "Enter reason for cancellation..."
+  },
+  "datePicker": {
+    "placeholder": "Pick a date",
+    "selectDate": "Select Date",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "goToToday": "Go to today"
+  },
+  "dateRangePicker": {
+    "placeholder": "Pick a date range",
+    "selectDateRange": "Select Date Range"
   },
   "professionalBookingManagement": {
     "title": "Booking Management",

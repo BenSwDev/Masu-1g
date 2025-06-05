@@ -158,7 +158,8 @@
       "userMenu": {
         "treatmentPreferences": "Предпочтения по процедурам",
         "notifications": "Уведомления"
-      }
+      },
+      "bookings": "Бронирования"
     }
   },
   "subscriptions": {
@@ -462,6 +463,101 @@
     "pricePaid": "Уплаченная цена",
     "paymentMethod": "Способ оплаты",
     "treatmentName": "Процедура"
+  },
+  "adminBookings": {
+    "title": "Управление бронированиями",
+    "description": "Просмотр и управление всеми бронированиями в системе.",
+    "filters": {
+      "title": "Фильтры",
+      "userIdPlaceholder": "Фильтр по ID пользователя...",
+      "professionalIdPlaceholder": "Фильтр по ID специалиста...",
+      "dateRangePlaceholder": "Фильтр по диапазону дат",
+      "statusPlaceholder": "Фильтр по статусу"
+    },
+    "table": {
+      "noBookings": "Бронирования не найдены.",
+      "noBookingsWithFilters": "Нет бронирований, соответствующих текущим фильтрам.",
+      "actions": {
+        "viewDetails": "Просмотр/Редактирование деталей"
+      },
+      "columns": {
+        "bookingId": "ID бронирования",
+        "user": "Пользователь",
+        "professional": "Специалист",
+        "treatment": "Процедура",
+        "dateTime": "Дата и время",
+        "status": "Статус",
+        "price": "Цена",
+        "source": "Источник",
+        "actions": "Действия"
+      },
+      "loading": "Загрузка бронирований...",
+      "refresh": "Обновить данные"
+    }
+  },
+  "adminBookingDetails": {
+    "modalTitleView": "Детали бронирования",
+    "modalTitleEdit": "Редактировать бронирование",
+    "toggleEditMode": "Редактировать бронирование",
+    "toggleViewMode": "Просмотр деталей",
+    "sections": {
+      "bookingInfo": "Информация о бронировании",
+      "clientInfo": "Информация о клиенте",
+      "professionalInfo": "Информация о специалисте",
+      "treatmentInfo": "Информация о процедуре",
+      "addressInfo": "Информация об адресе",
+      "priceInfo": "Информация о цене и оплате",
+      "adminActions": "Действия администратора и заметки"
+    },
+    "fields": {
+      "bookingId": "ID бронирования",
+      "status": "Статус",
+      "bookingDateTime": "Дата и время",
+      "isFlexibleTime": "Гибкое время",
+      "source": "Источник",
+      "userNotes": "Примечания клиента",
+      "adminNotes": "Примечания администратора",
+      "adminNotesPlaceholder": "Добавить внутренние заметки для этого бронирования...",
+      "assignProfessional": "Назначить специалиста",
+      "noProfessionalAssigned": "Специалист не назначен",
+      "selectProfessionalPlaceholder": "Выберите специалиста...",
+      "noProfessionalsAvailable": "Нет доступных специалистов",
+      "clientName": "Имя клиента",
+      "clientPhone": "Телефон клиента",
+      "clientEmail": "Email клиента",
+      "professionalName": "Имя специалиста",
+      "professionalPhone": "Телефон специалиста",
+      "professionalEmail": "Email специалиста",
+      "treatmentName": "Процедура",
+      "duration": "Продолжительность",
+      "fullAddress": "Полный адрес",
+      "addressNotes": "Примечания к адресу",
+      "totalPrice": "Общая стоимость",
+      "paymentStatus": "Статус оплаты",
+      "paymentMethod": "Способ оплаты",
+      "transactionId": "ID транзакции",
+      "couponApplied": "Применен купон",
+      "subscriptionRedeemed": "Использована подписка",
+      "voucherRedeemed": "Использован сертификат",
+      "createdAt": "Создано",
+      "updatedAt": "Обновлено"
+    },
+    "actions": {
+      "saveChanges": "Сохранить изменения",
+      "saving": "Сохранение...",
+      "cancelBooking": "Отменить бронирование",
+      "cancelling": "Отмена..."
+    },
+    "toasts": {
+      "updateSuccess": "Бронирование успешно обновлено.",
+      "updateError": "Не удалось обновить бронирование.",
+      "cancelSuccess": "Бронирование успешно отменено.",
+      "cancelError": "Не удалось отменить бронирование."
+    },
+    "confirmCancelTitle": "Подтвердить отмену бронирования",
+    "confirmCancelDescription": "Вы уверены, что хотите отменить это бронирование? Это действие может уведомить клиента и специалиста.",
+    "cancellationReason": "Причина отмены (Администратор)",
+    "cancellationReasonPlaceholder": "Введите причину отмены..."
   },
   "errors": {
     "unknown": "unknown",
@@ -1321,9 +1417,12 @@
     },
     "status": {
       "pending_professional_assignment": "Ожидает назначения специалиста",
+      "confirmed": "Подтверждено",
       "professional_en_route": "Специалист в пути",
-      "pending_professional_assignment": "Ожидает назначения специалиста",
-      "professional_en_route": "Специалист в пути"
+      "completed": "Завершено",
+      "cancelled_by_user": "Отменено пользователем",
+      "cancelled_by_admin": "Отменено администратором",
+      "no_show": "Неявка"
     }
   },
   "memberBookings": {
@@ -1438,5 +1537,16 @@
         "title": "Действие не удалось"
       }
     }
+  },
+  "datePicker": {
+    "placeholder": "Выберите дату",
+    "selectDate": "Выбрать дату",
+    "previousMonth": "Предыдущий месяц",
+    "nextMonth": "Следующий месяц",
+    "goToToday": "К сегодняшнему дню"
+  },
+  "dateRangePicker": {
+    "placeholder": "Выберите диапазон дат",
+    "selectDateRange": "Выбрать диапазон дат"
   }
 }

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { useTranslations } from "next-intl"
+import { useTranslation } from "@/lib/translations/i18n"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { getUserBookings, type PopulatedBooking } from "@/actions/booking-actions"
 import BookingCard from "./booking-card"
@@ -27,8 +27,7 @@ interface MemberBookingsClientProps {
 const BOOKINGS_PER_PAGE = 6
 
 export default function MemberBookingsClient({ userId }: MemberBookingsClientProps) {
-  const t = useTranslations("memberBookings")
-  const tCommon = useTranslations("common")
+  const { t } = useTranslation()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -89,10 +88,10 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-destructive/50 bg-destructive/10 p-8 text-center text-destructive">
         <AlertTriangle className="mb-4 h-12 w-12" />
-        <h3 className="mb-2 text-xl font-semibold">{tCommon("error")}</h3>
-        <p>{t("fetchError")}</p>
+        <h3 className="mb-2 text-xl font-semibold">{t("common.error")}</h3>
+        <p>{t("memberBookings.fetchError")}</p>
         <Button onClick={() => window.location.reload()} className="mt-4">
-          {tCommon("refresh")}
+          {t("common.refresh")}
         </Button>
       </div>
     )
@@ -108,22 +107,22 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
         <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
           <Select value={filters.status} onValueChange={(value) => handleFilterChange("status", value)}>
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder={t("filterByStatus")} />
+              <SelectValue placeholder={t("memberBookings.filterByStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t("statusAll")}</SelectItem>
-              <SelectItem value="upcoming">{t("statusUpcoming")}</SelectItem>
-              <SelectItem value="past">{t("statusPast")}</SelectItem>
-              <SelectItem value="cancelled">{t("statusCancelled")}</SelectItem>
+              <SelectItem value="all">{t("memberBookings.statusAll")}</SelectItem>
+              <SelectItem value="upcoming">{t("memberBookings.statusUpcoming")}</SelectItem>
+              <SelectItem value="past">{t("memberBookings.statusPast")}</SelectItem>
+              <SelectItem value="cancelled">{t("memberBookings.statusCancelled")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filters.sortBy} onValueChange={(value) => handleFilterChange("sortBy", value)}>
             <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder={t("sortByDate")} />
+              <SelectValue placeholder={t("memberBookings.sortByDate")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">{t("sortNewestFirst")}</SelectItem>
-              <SelectItem value="oldest">{t("sortOldestFirst")}</SelectItem>
+              <SelectItem value="newest">{t("memberBookings.sortNewestFirst")}</SelectItem>
+              <SelectItem value="oldest">{t("memberBookings.sortOldestFirst")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -135,10 +134,10 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
           <ListX className="mb-4 h-16 w-16 text-muted-foreground" />
           <h3 className="mb-2 text-xl font-semibold text-card-foreground">
             {filters.status === "all" && filters.sortBy === "newest" && totalBookings === 0
-              ? t("noBookingsFound")
-              : t("noBookingsFoundFiltered")}
+              ? t("memberBookings.noBookingsFound")
+              : t("memberBookings.noBookingsFoundFiltered")}
           </h3>
-          <p className="text-muted-foreground">{t("tryAdjustingFilters")}</p>
+          <p className="text-muted-foreground">{t("memberBookings.tryAdjustingFilters")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">

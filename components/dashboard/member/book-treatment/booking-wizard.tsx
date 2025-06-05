@@ -157,7 +157,7 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
   ])
 
   useEffect(() => {
-    if (currentStep >= 3) {
+    if (currentStep >= 3 && currentStep <= TOTAL_STEPS_WITH_PAYMENT) {
       triggerPriceCalculation()
     }
   }, [

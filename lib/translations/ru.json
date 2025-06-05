@@ -152,7 +152,7 @@
         "treatmentPreferences": "Предпочтения по процедурам",
         "notifications": "Уведомления"
       },
-      "bookings": "Мои Записи"
+      "myBookings": "Мои Записи"
     }
   },
   "subscriptions": {
@@ -1278,9 +1278,7 @@
       "initialDataFetchFailed": "Не удалось получить начальные данные для записи. Пожалуйста, обновите страницу.",
       "subscriptionTreatmentMismatch": "Выбранная процедура не соответствует процедуре, покрываемой вашим абонементом.",
       "subscriptionDurationMismatch": "Выбранная продолжительность не соответствует продолжительности, покрываемой вашим абонементом.",
-      "priceCalculationUnavailable": "Информация о цене в данный момент недоступна. Убедитесь, что все предыдущие шаги выполнены корректно.",
-      "fetchBookingsFailed": "Не удалось загрузить ваши записи. Пожалуйста, попробуйте еще раз.",
-      "invalidUserId": "Неверный идентификатор пользователя."
+      "priceCalculationUnavailable": "Информация о цене в данный момент недоступна. Убедитесь, что все предыдущие шаги выполнены корректно."
     },
     "messages": {
       "closedOnSelectedDate": "Мы закрыты в выбранную дату."
@@ -1308,72 +1306,74 @@
       "expiry": "Истекает"
     }
   },
-  "memberBookings": {
+  "bookings": {
     "title": "Мои Записи",
-    "description": "Просмотр и управление вашими прошлыми и предстоящими записями.",
-    "noBookings": "У вас пока нет записей. Готовы запланировать следующий момент расслабления?",
-    "noBookingsFoundTitle": "Записи не найдены",
-    "noBookingsFoundFiltered": "Нет записей, соответствующих вашим текущим фильтрам. Попробуйте изменить их или просмотреть все записи.",
-    "showAllBookings": "Показать все записи",
-    "filterByStatus": "Фильтр по статусу",
-    "statusFilter": {
-      "all": "Все записи",
-      "upcoming": "Предстоящие",
-      "past": "Прошедшие",
-      "cancelled": "Отмененные"
-    },
+    "description": "Просмотр и управление вашими записями на процедуры.",
+    "bookNew": "Записаться на новую процедуру",
+    "bookNewShort": "Новая Запись",
+    "upcomingBookings": "Предстоящие",
+    "pastBookings": "Прошедшие",
+    "noBookings": "У вас пока нет записей.",
+    "noUpcomingBookings": "Предстоящие записи не найдены.",
+    "noPastBookings": "Прошедшие записи не найдены.",
+    "noBookingsYetTitle": "У вас пока нет записей",
+    "noBookingsYetDescription": "Похоже, вы еще не записывались на процедуры. Начните с бронирования вашей первой процедуры!",
     "status": {
-      "pending_professional_assignment": "Ожидание специалиста",
+      "pending": "Ожидает подтверждения",
       "confirmed": "Подтверждено",
+      "professional_assigned": "Специалист назначен",
       "completed": "Завершено",
       "cancelled_by_user": "Отменено вами",
       "cancelled_by_admin": "Отменено администратором",
-      "no_show": "Неявка"
+      "no_show": "Неявка",
+      "rescheduled": "Перенесено",
+      "unknown": "Неизвестный статус"
     },
-    "treatment": "Процедура",
-    "duration": "Длительность",
-    "date": "Дата",
-    "time": "Время",
-    "professional": "Специалист",
-    "address": "Адрес",
-    "addressNotSet": "Адрес не указан",
-    "addressInstructions": "Инструкции",
-    "price": "Цена",
-    "viewDetails": "Посмотреть детали",
-    "cancelBooking": "Отменить запись",
-    "cancelConfirmTitle": "Подтвердить отмену",
-    "cancelConfirmMessage": "Вы уверены, что хотите отменить эту запись? Это действие может быть необратимым в зависимости от политики отмены.",
-    "cancelSuccess": "Запись успешно отменена.",
-    "cancelError": "Не удалось отменить запись. Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой.",
-    "detailsModal": {
-      "title": "Детали записи",
-      "bookingId": "ID Записи",
-      "treatmentInfo": "Информация о процедуре",
-      "scheduleInfo": "Расписание и местоположение",
-      "priceInfo": "Цена и оплата",
-      "notes": "Ваши заметки"
+    "card": {
+      "treatment": "Процедура",
+      "duration": "Длительность",
+      "date": "Дата",
+      "time": "Время",
+      "professional": "Специалист",
+      "address": "Адрес",
+      "addressNotSet": "Адрес не указан",
+      "price": "Цена",
+      "priceNotSet": "Цена не указана",
+      "priceDetails": "Детали оплаты",
+      "status": "Статус",
+      "notes": "Ваши заметки",
+      "viewDetails": "Посмотреть детали",
+      "cancelBooking": "Отменить запись",
+      "contactSupport": "Связаться с поддержкой",
+      "notAssignedYet": "Еще не назначен",
+      "coveredBySubscription": "Покрывается подпиской",
+      "coveredByVoucher": "Покрывается сертификатом"
     },
-    "upcoming": "Предстоящие",
-    "past": "Прошедшие",
-    "all": "Все",
-    "loadMore": "Загрузить еще записи",
-    "flexibleTime": "Гибкое время",
-    "notes": "Заметки",
-    "coveredBySubscription": "Покрыто подпиской",
-    "coveredByVoucher": "Покрыто подарочным сертификатом",
-    "coveredBySubscriptionFull": "Покрытие подпиской",
-    "coveredByTreatmentVoucherFull": "Покрытие сертификатом на процедуру",
-    "voucherApplied": "Применен подарочный сертификат",
-    "couponDiscount": "Скидка по купону",
-    "basePrice": "Базовая цена",
-    "finalAmount": "Итоговая сумма",
-    "therapistPreference": "Предпочтение специалиста",
-    "cancellationReason": "Причина отмены"
-  },
-  "memberBookings": {
+    "filters": {
+      "filterByStatus": "Фильтр по статусу",
+      "allStatuses": "Все статусы",
+      "sortBy": "Сортировать по",
+      "dateAsc": "Дата (старые сначала)",
+      "dateDesc": "Дата (новые сначала)"
+    },
+    "cancelDialog": {
+      "title": "Отменить запись",
+      "description": "Вы уверены, что хотите отменить эту запись? Это действие может быть необратимым в зависимости от политики отмены.",
+      "confirm": "Да, отменить запись",
+      "processing": "Отмена..."
+    },
+    "notifications": {
+      "cancelSuccess": "Запись успешно отменена.",
+      "cancelError": "Не удалось отменить запись. Пожалуйста, попробуйте еще раз или свяжитесь с поддержкой."
+    },
     "errors": {
-      "fetchBookingsFailed": "Не удалось загрузить ваши записи. Пожалуйста, попробуйте еще раз.",
-      "invalidUserId": "Неверный идентификатор пользователя."
+      "fetchErrorTitle": "Ошибка загрузки записей",
+      "fetchErrorGeneric": "В данный момент мы не смогли загрузить ваши записи. Пожалуйста, повторите попытку позже."
+    }
+  },
+  "dashboard": {
+    "sidebar": {
+      "myBookings": "Мои Записи"
     }
   }
 }

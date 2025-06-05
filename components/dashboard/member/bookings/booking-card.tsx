@@ -1,189 +1,277 @@
 "use client"
 
-import type React from "react"
-
-import type { PopulatedBooking } from "@/types/booking"
+import type { PopulatedBooking } from "@/actions/booking-actions"
 import { useTranslation } from "@/lib/translations/i18n"
-import { cn, formatCurrency, formatDate } from "@/lib/utils/utils"
-import { Card, CardContent, CardHeader, CardFooter, CardTitle } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
+import { format } from "date-fns"
+import { he, ru } from "date-fns/locale" // For localized date formatting
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
+import { Button } from "@/components/common/ui/button"
+import { Separator } from "@/components/common/ui/separator"
 import {
   CalendarDays,
   Clock,
   MapPin,
-  UserCircle,
-  CreditCard,
-  Sparkles,
   Tag,
   Info,
-  CheckCircle2,
   XCircle,
-  AlertCircle,
+  CheckCircle2,
   Hourglass,
+  FileText,
+  ShoppingCart,
+  Gift,
+  UserCircle2,
 } from "lucide-react"
-import { format, parseISO } from "date-fns" // For time formatting
+import { useState } from "react"
+import { cancelUserBooking } from "@/actions/booking-actions"
+import { toast } from "@/components/common/ui/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/common/ui/alert-dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/common/ui/avatar"
 
 interface BookingCardProps {
   booking: PopulatedBooking
-  onViewDetails: (booking: PopulatedBooking) => void
-  // onCancelBooking: (bookingId: string) => void; // If cancel is directly on card
 }
 
-export default function BookingCard({ booking, onViewDetails }: BookingCardProps) {
-  const { t, dir, language } = useTranslation()
+export function BookingCard({ booking }: BookingCardProps) {
+  const { t, language, dir } = useTranslation()
+  const [isCancelling, setIsCancelling] = useState(false)
 
-  const getStatusInfo = (
+  const dateLocale = language === "he" ? he : language === "ru" ? ru : undefined
+
+  const formattedDate = format(new Date(booking.bookingDate), "PPP", { locale: dateLocale })
+  const formattedTime = format(new Date(booking.bookingDate), "p", { locale: dateLocale })
+
+  const getStatusVariant = (
     status: PopulatedBooking["status"],
-  ): { labelKey: string; colorClass: string; icon: React.ElementType } => {
+  ): "default" | "destructive" | "outline" | "secondary" | "warning" | "success" | "info" => {
     switch (status) {
-      case "pending_professional_assignment":
-        return {
-          labelKey: "memberBookings.status.pending_professional_assignment",
-          colorClass:
-            "bg-yellow-400/20 text-yellow-700 border-yellow-400/50 dark:text-yellow-300 dark:bg-yellow-500/10 dark:border-yellow-500/30",
-          icon: Hourglass,
-        }
+      case "pending":
+        return "warning"
       case "confirmed":
-        return {
-          labelKey: "memberBookings.status.confirmed",
-          colorClass:
-            "bg-sky-400/20 text-sky-700 border-sky-400/50 dark:text-sky-300 dark:bg-sky-500/10 dark:border-sky-500/30",
-          icon: CheckCircle2,
-        }
+        return "info"
+      case "professional_assigned":
+        return "success"
       case "completed":
-        return {
-          labelKey: "memberBookings.status.completed",
-          colorClass:
-            "bg-green-400/20 text-green-700 border-green-400/50 dark:text-green-300 dark:bg-green-500/10 dark:border-green-500/30",
-          icon: CheckCircle2,
-        }
+        return "default"
       case "cancelled_by_user":
-        return {
-          labelKey: "memberBookings.status.cancelled_by_user",
-          colorClass:
-            "bg-red-400/20 text-red-700 border-red-400/50 dark:text-red-300 dark:bg-red-500/10 dark:border-red-500/30",
-          icon: XCircle,
-        }
       case "cancelled_by_admin":
-        return {
-          labelKey: "memberBookings.status.cancelled_by_admin",
-          colorClass:
-            "bg-red-400/20 text-red-700 border-red-400/50 dark:text-red-300 dark:bg-red-500/10 dark:border-red-500/30",
-          icon: XCircle,
-        }
       case "no_show":
-        return {
-          labelKey: "memberBookings.status.no_show",
-          colorClass:
-            "bg-gray-400/20 text-gray-700 border-gray-400/50 dark:text-gray-300 dark:bg-gray-500/10 dark:border-gray-500/30",
-          icon: AlertCircle,
-        }
+        return "destructive"
       default:
-        return { labelKey: "common.unknown", colorClass: "bg-gray-400/20 text-gray-700 border-gray-400/50", icon: Info }
+        return "outline"
     }
   }
 
-  const statusInfo = getStatusInfo(booking.status)
-  const StatusIcon = statusInfo.icon
+  const getStatusIcon = (status: PopulatedBooking["status"]) => {
+    switch (status) {
+      case "pending":
+        return <Hourglass className="h-4 w-4" />
+      case "confirmed":
+        return <CheckCircle2 className="h-4 w-4 text-blue-500" />
+      case "professional_assigned":
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />
+      case "completed":
+        return <CheckCircle2 className="h-4 w-4 text-gray-500" />
+      case "cancelled_by_user":
+      case "cancelled_by_admin":
+      case "no_show":
+        return <XCircle className="h-4 w-4 text-red-500" />
+      default:
+        return <Info className="h-4 w-4" />
+    }
+  }
 
-  const bookingDate = parseISO(booking.bookingDateTime)
-  const formattedDate = formatDate(bookingDate)
-  const formattedTime = format(bookingDate, "HH:mm")
+  const addressString = booking.addressId
+    ? `${booking.addressId.street} ${booking.addressId.streetNumber}, ${booking.addressId.city}`
+    : t("bookings.card.addressNotSet")
 
-  const treatmentName = booking.treatmentId?.name || t("common.unknown")
-  const durationMinutes = booking.selectedDuration?.minutes
+  const professionalName = booking.professionalId?.name || t("bookings.card.notAssignedYet")
+  const professionalInitials = booking.professionalId?.name
+    ? booking.professionalId.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+    : "?"
 
-  const addressLine = booking.addressId
-    ? `${booking.addressId.street || ""} ${booking.addressId.streetNumber || ""}, ${booking.addressId.city || ""}`
-        .trim()
-        .replace(/^,|,$/, "")
-    : booking.customAddressDetails
-      ? `${booking.customAddressDetails.street || ""} ${booking.customAddressDetails.streetNumber || ""}, ${booking.customAddressDetails.city || ""}`
-          .trim()
-          .replace(/^,|,$/, "")
-      : t("memberBookings.addressNotSet")
+  const isUpcoming =
+    new Date(booking.bookingDate) >= new Date() &&
+    booking.status !== "completed" &&
+    booking.status !== "cancelled_by_user" &&
+    booking.status !== "cancelled_by_admin" &&
+    booking.status !== "no_show"
+  const isCancellable =
+    isUpcoming && !["completed", "cancelled_by_user", "cancelled_by_admin", "no_show"].includes(booking.status)
 
-  const priceDisplay = booking.priceDetails.isFullyCoveredByVoucherOrSubscription
-    ? booking.priceDetails.isBaseTreatmentCoveredBySubscription
-      ? t("memberBookings.coveredBySubscription")
-      : t("memberBookings.coveredByVoucher")
-    : formatCurrency(booking.priceDetails.finalAmount, t("common.currency"), language)
+  const handleCancelBooking = async () => {
+    setIsCancelling(true)
+    const result = await cancelUserBooking(booking._id.toString())
+    if (result.success) {
+      toast({
+        title: t("bookings.notifications.cancelSuccess"),
+        variant: "default",
+      })
+      // Revalidation is handled by server action, client state might need update or rely on full page reload/refetch
+    } else {
+      toast({
+        title: t("bookings.notifications.cancelError"),
+        description: result.error || t("common.unexpectedError"),
+        variant: "destructive",
+      })
+    }
+    setIsCancelling(false)
+  }
+
+  const getBookingSourceIcon = () => {
+    switch (booking.bookingSource) {
+      case "subscription":
+        return <ShoppingCart className="h-4 w-4 text-purple-500" />
+      case "voucher":
+        return <Gift className="h-4 w-4 text-orange-500" />
+      default:
+        return <Tag className="h-4 w-4 text-gray-500" />
+    }
+  }
+
+  const getBookingSourceText = () => {
+    switch (booking.bookingSource) {
+      case "subscription":
+        return t("bookings.card.coveredBySubscription")
+      case "voucher":
+        return t("bookings.card.coveredByVoucher")
+      default:
+        return booking.price ? `${booking.price} ${booking.currency || "ILS"}` : t("bookings.card.priceNotSet")
+    }
+  }
 
   return (
-    <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200 bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700">
-      <CardHeader className="p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-        <div className="flex justify-between items-start gap-2">
-          <CardTitle className="text-base font-semibold text-turquoise-700 dark:text-turquoise-400 leading-tight">
-            {treatmentName}
-            {durationMinutes && (
-              <span className="text-xs text-gray-500 dark:text-gray-400 font-normal block sm:inline sm:ms-1">
-                ({durationMinutes} {t("common.minutes")})
-              </span>
-            )}
+    <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white border border-gray-200 rounded-xl">
+      <CardHeader className="p-4 sm:p-5 bg-gradient-to-br from-turquoise-50 via-cyan-50 to-teal-50 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <CardTitle className="text-lg sm:text-xl font-semibold text-turquoise-700">
+            {booking.treatmentId?.name || t("treatments.unknownTreatment")}
           </CardTitle>
           <Badge
-            variant="outline"
-            className={cn("text-xs px-2 py-1 whitespace-nowrap capitalize", statusInfo.colorClass)}
+            variant={getStatusVariant(booking.status)}
+            className="flex items-center gap-1.5 py-1 px-2.5 text-xs sm:text-sm rounded-full"
           >
-            <StatusIcon
-              className={cn(
-                "h-3.5 w-3.5 me-1.5 rtl:ms-1.5 rtl:me-0",
-                statusInfo.colorClass.includes("text-") ? "" : "text-current",
-              )}
-            />
-            {t(statusInfo.labelKey)}
+            {getStatusIcon(booking.status)}
+            {t(`bookings.status.${booking.status}` as any, booking.status.replace(/_/g, " "))}
           </Badge>
         </div>
+        {booking.treatmentDuration && (
+          <p className="text-sm text-gray-500 mt-1">
+            {t("bookings.card.duration")}: {booking.treatmentDuration} {t("common.minutes")}
+          </p>
+        )}
       </CardHeader>
+      <CardContent className="p-4 sm:p-5 space-y-3 sm:space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+          <div className="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-lg">
+            <CalendarDays className="h-5 w-5 text-turquoise-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <strong className="block text-gray-700">{t("bookings.card.date")}:</strong>
+              <span className="text-gray-600">{formattedDate}</span>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-lg">
+            <Clock className="h-5 w-5 text-turquoise-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <strong className="block text-gray-700">{t("bookings.card.time")}:</strong>
+              <span className="text-gray-600">{formattedTime}</span>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-lg col-span-1 sm:col-span-2">
+            <UserCircle2 className="h-5 w-5 text-turquoise-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <strong className="block text-gray-700">{t("bookings.card.professional")}:</strong>
+              <div className="flex items-center gap-2">
+                {booking.professionalId?.profilePictureUrl ? (
+                  <Avatar className="h-6 w-6 text-xs">
+                    <AvatarImage
+                      src={booking.professionalId.profilePictureUrl || "/placeholder.svg"}
+                      alt={professionalName}
+                    />
+                    <AvatarFallback className="bg-turquoise-100 text-turquoise-700">
+                      {professionalInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Avatar className="h-6 w-6 text-xs">
+                    <AvatarFallback className="bg-gray-200 text-gray-600">{professionalInitials}</AvatarFallback>
+                  </Avatar>
+                )}
+                <span className="text-gray-600">{professionalName}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-start gap-2.5 p-2.5 bg-slate-50 rounded-lg col-span-1 sm:col-span-2">
+            <MapPin className="h-5 w-5 text-turquoise-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <strong className="block text-gray-700">{t("bookings.card.address")}:</strong>
+              <span className="text-gray-600">{addressString}</span>
+            </div>
+          </div>
+        </div>
 
-      <CardContent className="p-4 space-y-2.5 text-sm text-gray-700 dark:text-gray-300 flex-grow">
-        <div className="flex items-center">
-          <CalendarDays className="h-4 w-4 me-2 rtl:ms-2 rtl:me-0 text-turquoise-600 dark:text-turquoise-500 flex-shrink-0" />
-          <span>{formattedDate}</span>
+        <Separator className="my-3 sm:my-4" />
+
+        <div className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-lg">
+          {getBookingSourceIcon()}
+          <div>
+            <strong className="block text-gray-700">{t("bookings.card.priceDetails")}:</strong>
+            <span className="text-gray-600">{getBookingSourceText()}</span>
+          </div>
         </div>
-        <div className="flex items-center">
-          <Clock className="h-4 w-4 me-2 rtl:ms-2 rtl:me-0 text-turquoise-600 dark:text-turquoise-500 flex-shrink-0" />
-          <span>
-            {formattedTime} {booking.isFlexibleTime && `(${t("memberBookings.flexibleTime")})`}
-          </span>
-        </div>
-        <div className="flex items-start">
-          <MapPin className="h-4 w-4 me-2 rtl:ms-2 rtl:me-0 text-turquoise-600 dark:text-turquoise-500 flex-shrink-0 mt-0.5" />
-          <span className="break-words">{addressLine}</span>
-        </div>
-        {booking.professionalId?.name && (
-          <div className="flex items-center">
-            <UserCircle className="h-4 w-4 me-2 rtl:ms-2 rtl:me-0 text-turquoise-600 dark:text-turquoise-500 flex-shrink-0" />
-            <span>
-              {t("memberBookings.professional")}: {booking.professionalId.name}
-            </span>
+
+        {booking.notes && (
+          <div className="flex items-start gap-2.5 p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+            <FileText className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <strong className="block text-gray-700">{t("bookings.card.notes")}:</strong>
+              <p className="text-gray-600 text-xs whitespace-pre-wrap">{booking.notes}</p>
+            </div>
           </div>
         )}
       </CardContent>
-
-      <CardFooter className="p-4 bg-gray-50 dark:bg-gray-700/30 border-t dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
-        <div className="flex items-center text-sm font-medium text-gray-800 dark:text-gray-100">
-          {booking.priceDetails.isFullyCoveredByVoucherOrSubscription ? (
-            booking.priceDetails.isBaseTreatmentCoveredBySubscription ? (
-              <Tag className="h-4 w-4 me-1.5 rtl:ms-1.5 rtl:me-0 text-green-600 dark:text-green-500" />
-            ) : (
-              <Sparkles className="h-4 w-4 me-1.5 rtl:ms-1.5 rtl:me-0 text-purple-600 dark:text-purple-500" />
-            )
-          ) : (
-            <CreditCard className="h-4 w-4 me-1.5 rtl:ms-1.5 rtl:me-0 text-gray-500 dark:text-gray-400" />
-          )}
-          <span>{priceDisplay}</span>
-        </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onViewDetails(booking)}
-          className="w-full sm:w-auto border-turquoise-500 text-turquoise-600 hover:bg-turquoise-50 hover:text-turquoise-700 dark:border-turquoise-600 dark:text-turquoise-400 dark:hover:bg-turquoise-700/20 dark:hover:text-turquoise-300"
-        >
-          {t("memberBookings.viewDetails")}
-        </Button>
-      </CardFooter>
+      {isCancellable && (
+        <CardFooter className="p-4 sm:p-5 bg-gray-50 border-t border-gray-200">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm" className="w-full sm:w-auto" disabled={isCancelling}>
+                <XCircle className="mr-2 h-4 w-4" />
+                {isCancelling ? t("common.cancelling") : t("bookings.card.cancelBooking")}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent dir={dir}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("bookings.cancelDialog.title")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("bookings.cancelDialog.description")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleCancelBooking}
+                  disabled={isCancelling}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {isCancelling ? t("bookings.cancelDialog.processing") : t("bookings.cancelDialog.confirm")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardFooter>
+      )}
     </Card>
   )
 }

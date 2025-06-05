@@ -12,8 +12,8 @@ import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
-import User from "@/lib/db/models/user"
-import Address from "@/lib/db/models/address"
+import User, { type IUser } from "@/lib/db/models/user"
+import Address, { type IAddress } from "@/lib/db/models/address"
 import {
   WorkingHoursSettings,
   type IWorkingHoursSettings,
@@ -27,9 +27,18 @@ import { add, format, set, addMinutes, isBefore, isAfter } from "date-fns"
 import { CalculatePricePayloadSchema, CreateBookingPayloadSchema } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
 import type { CreateBookingPayload as CreateBookingPayloadSchemaType } from "@/lib/validation/booking-schemas"
-// Add to existing imports
-import type { PopulatedBooking } from "@/types/booking" // Assuming you'll create/update this type
-import { isValidObjectId } from "mongoose"
+
+// Helper type for populated booking
+export type PopulatedBooking = IBooking & {
+  treatmentId: ITreatment | null
+  professionalId: Pick<IUser, "_id" | "name" | "email" | "profilePictureUrl"> | null
+  addressId: IAddress | null
+}
+
+interface GetUserBookingsResponse {
+  upcomingBookings: PopulatedBooking[]
+  pastBookings: PopulatedBooking[]
+}
 
 // Helper to compare if two Date objects represent the same calendar day in UTC
 function isSameUTCDay(dateLeft: Date, dateRight: Date): boolean {
@@ -576,168 +585,6 @@ export async function createBooking(
   }
 }
 
-// Add new function getUserBookings
-export async function getUserBookings(params: {
-  userId: string
-  page?: number
-  limit?: number
-  status?: string[] // Allow multiple statuses
-  sortBy?: string
-  sortDirection?: "asc" | "desc"
-  dateFrom?: string
-  dateTo?: string
-}): Promise<{
-  success: boolean
-  bookings?: PopulatedBooking[]
-  totalBookings?: number
-  totalPages?: number
-  error?: string
-}> {
-  const {
-    userId,
-    page = 1,
-    limit = 10,
-    status,
-    sortBy = "bookingDateTime",
-    sortDirection = "desc",
-    dateFrom,
-    dateTo,
-  } = params
-
-  if (!userId || !isValidObjectId(userId)) {
-    return { success: false, error: "common.invalidUserId" }
-  }
-
-  try {
-    await dbConnect()
-    const session = await getServerSession(authOptions)
-    if (!session || session.user.id !== userId) {
-      return { success: false, error: "common.unauthorized" }
-    }
-
-    const query: any = { userId: new mongoose.Types.ObjectId(userId) }
-
-    if (status && status.length > 0) {
-      query.status = { $in: status }
-    }
-
-    if (dateFrom || dateTo) {
-      query.bookingDateTime = {}
-      if (dateFrom) query.bookingDateTime.$gte = new Date(dateFrom)
-      if (dateTo) {
-        const endDate = new Date(dateTo)
-        endDate.setHours(23, 59, 59, 999) // Include the whole day
-        query.bookingDateTime.$lte = endDate
-      }
-    }
-
-    const sortDirectionNum = sortDirection === "asc" ? 1 : -1
-    const skip = (page - 1) * limit
-
-    const totalBookings = await Booking.countDocuments(query)
-    const totalPages = Math.ceil(totalBookings / limit)
-
-    const bookingsData = await Booking.find(query)
-      .populate<{ treatmentId: ITreatment }>({
-        path: "treatmentId",
-        select: "name category pricingType defaultDurationMinutes durations",
-      })
-      .populate<{ professionalId: Pick<typeof User.schema.obj, "name" | "email"> }>({
-        path: "professionalId",
-        select: "name email",
-      })
-      .populate<{ addressId: InstanceType<typeof Address> }>("addressId")
-      .sort({ [sortBy]: sortDirectionNum })
-      .skip(skip)
-      .limit(limit)
-      .lean()
-
-    const bookings = bookingsData.map((booking) => {
-      let selectedDurationDetails
-      const treatment = booking.treatmentId as ITreatment | null
-      if (
-        treatment &&
-        treatment.pricingType === "duration_based" &&
-        booking.selectedDurationId &&
-        treatment.durations
-      ) {
-        const foundDuration = treatment.durations.find(
-          (d) => d._id?.toString() === booking.selectedDurationId?.toString(),
-        )
-        if (foundDuration) {
-          selectedDurationDetails = {
-            minutes: foundDuration.minutes,
-            price: foundDuration.price,
-          }
-        }
-      } else if (treatment && treatment.pricingType === "fixed") {
-        selectedDurationDetails = {
-          minutes: treatment.defaultDurationMinutes || 0,
-          price: treatment.fixedPrice || 0, // Assuming fixedPrice is on ITreatment
-        }
-      }
-
-      return {
-        ...booking,
-        _id: booking._id.toString(),
-        userId: {
-          _id: booking.userId.toString(),
-          // Populate user name/email if needed, but it's the current user
-        },
-        treatmentId: treatment
-          ? {
-              _id: treatment._id.toString(),
-              name: treatment.name,
-              category: treatment.category,
-              pricingType: treatment.pricingType,
-              defaultDurationMinutes: treatment.defaultDurationMinutes,
-              durations: treatment.durations?.map((d) => ({
-                _id: d._id?.toString(),
-                minutes: d.minutes,
-                price: d.price,
-                isActive: d.isActive,
-              })),
-            }
-          : undefined,
-        selectedDurationId: booking.selectedDurationId?.toString(),
-        selectedDuration: selectedDurationDetails,
-        professionalId: booking.professionalId
-          ? {
-              _id: (booking.professionalId as any)._id.toString(),
-              name: (booking.professionalId as any).name,
-              email: (booking.professionalId as any).email,
-            }
-          : undefined,
-        addressId: booking.addressId
-          ? {
-              ...((booking.addressId as any).toObject ? (booking.addressId as any).toObject() : booking.addressId),
-              _id: (booking.addressId as any)._id.toString(),
-            }
-          : undefined,
-        priceDetails: {
-          ...booking.priceDetails,
-          appliedCouponId: booking.priceDetails.appliedCouponId?.toString(),
-          appliedGiftVoucherId: booking.priceDetails.appliedGiftVoucherId?.toString(),
-          redeemedUserSubscriptionId: booking.priceDetails.redeemedUserSubscriptionId?.toString(),
-        },
-        paymentDetails: {
-          ...booking.paymentDetails,
-          paymentMethodId: booking.paymentDetails.paymentMethodId?.toString(),
-        },
-        // Ensure all ObjectId fields are converted to strings if necessary for client
-        appliedCouponId: booking.appliedCouponId?.toString(),
-        redeemedGiftVoucherId: booking.redeemedGiftVoucherId?.toString(),
-        redeemedUserSubscriptionId: booking.redeemedUserSubscriptionId?.toString(),
-      } as PopulatedBooking
-    })
-
-    return { success: true, bookings, totalBookings, totalPages }
-  } catch (error) {
-    logger.error("Error fetching user bookings:", { error, userId, params })
-    return { success: false, error: "bookings.errors.fetchBookingsFailed" }
-  }
-}
-
 export async function cancelBooking(
   bookingId: string,
   userId: string,
@@ -829,9 +676,8 @@ export async function cancelBooking(
     })
 
     if (success) {
-      revalidatePath("/dashboard/member/bookings") // ADD THIS LINE or ensure it's covered
-      revalidatePath("/dashboard/member/book-treatment") // This might be less relevant now or could be kept
-      revalidatePath("/dashboard/admin/bookings")
+      revalidatePath("/dashboard/member/book-treatment")
+      revalidatePath("/dashboard/admin/bookings") // Assuming admin might view bookings
       revalidatePath("/dashboard/member/subscriptions")
       revalidatePath("/dashboard/member/gift-vouchers")
       return { success: true }
@@ -990,5 +836,107 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
   } catch (error) {
     logger.error("Error fetching initial booking data (enhanced):", { error, userId })
     return { success: false, error: "bookings.errors.initialDataFetchFailed" }
+  }
+}
+
+export async function getUserBookings(): Promise<{ success: boolean; data?: GetUserBookingsResponse; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return { success: false, error: "User not authenticated" }
+    }
+    await dbConnect()
+
+    const now = new Date()
+    const allBookings = (await Booking.find({ userId: session.user.id })
+      .populate<{ treatmentId: ITreatment | null }>({
+        path: "treatmentId",
+        model: Treatment,
+        select: "name category baseDuration durations",
+      })
+      .populate<{ professionalId: Pick<IUser, "_id" | "name" | "email" | "profilePictureUrl"> | null }>({
+        path: "professionalId",
+        model: User,
+        select: "_id name email profilePictureUrl",
+      })
+      .populate<{ addressId: IAddress | null }>({ path: "addressId", model: Address })
+      .sort({ bookingDate: -1 }) // Most recent/upcoming first
+      .lean()) as PopulatedBooking[]
+
+    const upcomingBookings: PopulatedBooking[] = []
+    const pastBookings: PopulatedBooking[] = []
+
+    allBookings.forEach((booking) => {
+      if (
+        new Date(booking.bookingDate) >= now &&
+        booking.status !== "completed" &&
+        booking.status !== "cancelled_by_user" &&
+        booking.status !== "cancelled_by_admin" &&
+        booking.status !== "no_show"
+      ) {
+        upcomingBookings.push(booking)
+      } else {
+        pastBookings.push(booking)
+      }
+    })
+
+    // Sort upcoming bookings ascending by date, past bookings descending by date
+    upcomingBookings.sort((a, b) => new Date(a.bookingDate).getTime() - new Date(b.bookingDate).getTime())
+    // pastBookings are already sorted descending by the initial query sort.
+
+    return { success: true, data: { upcomingBookings, pastBookings } }
+  } catch (error) {
+    console.error("Error fetching user bookings:", error)
+    return { success: false, error: "Failed to fetch bookings" }
+  }
+}
+
+export async function cancelUserBooking(
+  bookingId: string,
+): Promise<{ success: boolean; error?: string; message?: string }> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return { success: false, error: "User not authenticated" }
+    }
+
+    await dbConnect()
+
+    const booking = await Booking.findOne({ _id: bookingId, userId: session.user.id })
+
+    if (!booking) {
+      return { success: false, error: "Booking not found or access denied" }
+    }
+
+    // Define statuses that cannot be cancelled
+    const nonCancellableStatuses: IBooking["status"][] = [
+      "completed",
+      "cancelled_by_user",
+      "cancelled_by_admin",
+      "no_show",
+    ]
+    if (nonCancellableStatuses.includes(booking.status)) {
+      return { success: false, error: `Booking is already ${booking.status} and cannot be cancelled.` }
+    }
+
+    // Add more cancellation policy logic here (e.g., time-based restrictions) if needed
+
+    booking.status = "cancelled_by_user"
+    booking.cancellationDetails = {
+      cancelledBy: session.user.id,
+      cancellationDate: new Date(),
+      reason: "Cancelled by user via dashboard", // Default reason
+    }
+    await booking.save()
+
+    revalidatePath("/dashboard/member/bookings")
+    // Potentially revalidate other paths if needed, e.g., professional's schedule
+
+    return { success: true, message: "Booking cancelled successfully" }
+  } catch (error) {
+    console.error("Error cancelling booking:", error)
+    // Check for specific Mongoose validation errors or other known errors if necessary
+    const errorMessage = error instanceof Error ? error.message : "Failed to cancel booking due to an unexpected error."
+    return { success: false, error: errorMessage }
   }
 }

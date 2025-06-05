@@ -398,9 +398,8 @@ export async function calculateBookingPrice(
             })
           }
         } else if (voucher.voucherType === "monetary" && voucher.remainingAmount && voucher.remainingAmount > 0) {
-          // ... (existing monetary voucher logic - ensure it correctly interacts if base is already covered) ...
-          // This part should be fine as it reduces currentTotalDue later.
-          // The key is that amountToPayForBaseTreatment is correctly 0 if covered by treatment voucher.
+          priceDetails.isBaseTreatmentCoveredByTreatmentVoucher = false // Explicitly ensure this is false for monetary vouchers
+
           let coverageForBase = 0
           if (amountToPayForBaseTreatment > 0) {
             // If base treatment not yet covered by subscription or another treatment voucher

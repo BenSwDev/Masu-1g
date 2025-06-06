@@ -1,6 +1,17 @@
 "use client"
 
+// Extend the Window interface for development-time debugging
+declare global {
+  interface Window {
+    getMissingTranslations?: () => void
+  }
+}
+
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+
+// A Set to store missing translation keys across the application session.
+// Using a Set automatically handles duplicates.
+const missingKeys = new Set<string>()
 
 // Supported languages
 export type Language = "he" | "en" | "ru"
@@ -50,6 +61,39 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
   const [language, setLanguage] = useState<Language>(defaultLanguage)
   const [dir, setDir] = useState<"rtl" | "ltr">(getDirection(defaultLanguage))
 
+  // In development mode, expose a global function to get and copy missing keys.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      window.getMissingTranslations = () => {
+        if (missingKeys.size === 0) {
+          console.log("[i18n] No missing translation keys found.")
+          return
+        }
+
+        const keys = Array.from(missingKeys).join("\n")
+        console.log("----- Missing Translation Keys -----")
+        console.log(keys)
+        console.log("------------------------------------")
+
+        navigator.clipboard
+          .writeText(keys)
+          .then(() => {
+            console.log("[i18n] Missing keys copied to clipboard!")
+          })
+          .catch((err) => {
+            console.error("[i18n] Failed to copy missing keys: ", err)
+          })
+      }
+    }
+
+    // Cleanup the global function when the component unmounts.
+    return () => {
+      if (window.getMissingTranslations) {
+        delete window.getMissingTranslations
+      }
+    }
+  }, []) // Empty dependency array ensures this runs only once.
+
   // Update direction when language changes
   useEffect(() => {
     const newDir = getDirection(language)
@@ -91,17 +135,10 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
 
     // After the loop, if the key was not fully found or if the final result is not a string
     // (meaning the key might be a prefix to a deeper object, not a leaf translation string)
-    if (!keyFound) {
-      console.warn(
-        `[i18n] Missing translation for key: "${key}" (path "${pathTraversed}" not fully resolved) in language: "${language}"`,
-      )
-      return key // Fallback to the original key
-    }
-
-    if (typeof current !== "string") {
-      console.warn(
-        `[i18n] Translation for key: "${key}" in language: "${language}" is not a string (type: ${typeof current}). This might be an incomplete key or an object.`,
-      )
+    if (!keyFound || typeof current !== "string") {
+      if (process.env.NODE_ENV === "development") {
+        missingKeys.add(key)
+      }
       return key // Fallback to the original key
     }
 

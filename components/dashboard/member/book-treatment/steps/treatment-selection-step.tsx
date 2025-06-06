@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import type { ITreatment } from "@/lib/db/models"
-import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
+import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher" // Ensure this type aligns with what getBookingInitialData provides after stringify/parse
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { TreatmentSelectionSchema, type TreatmentSelectionFormValues } from "@/lib/validation/booking-schemas"
@@ -53,7 +53,7 @@ export default function TreatmentSelectionStep({
   })
 
   const treatmentCategories = useMemo(() => {
-    const categories = new Set(initialData.activeTreatments.map((t) => t.category || "Uncategorized"))
+    const categories = new Set((initialData.activeTreatments || []).map((t) => t.category || "Uncategorized"))
     return Array.from(categories)
   }, [initialData.activeTreatments])
 
@@ -77,7 +77,6 @@ export default function TreatmentSelectionStep({
     return () => subscription.unsubscribe()
   }, [form, setBookingOptions])
 
-  // Reset logic when source changes
   useEffect(() => {
     const currentSource = bookingOptions.source
     setIsTreatmentLockedBySource(false)
@@ -101,11 +100,10 @@ export default function TreatmentSelectionStep({
     }
   }, [bookingOptions.source, initialData.activeTreatments, form])
 
-  // Logic for subscription selection
   useEffect(() => {
     if (bookingOptions.source === "subscription_redemption" && form.getValues("selectedUserSubscriptionId")) {
       const subId = form.getValues("selectedUserSubscriptionId")
-      const sub = initialData.activeUserSubscriptions.find((s) => s._id.toString() === subId) as
+      const sub = (initialData.activeUserSubscriptions || []).find((s) => s._id.toString() === subId) as
         | PopulatedUserSubscription
         | undefined
       setSelectedUserSubscription(sub || null)
@@ -125,15 +123,16 @@ export default function TreatmentSelectionStep({
     }
   }, [form.watch("selectedUserSubscriptionId"), bookingOptions.source, initialData.activeUserSubscriptions, form])
 
-  // Logic for gift voucher selection
   useEffect(() => {
     const formVoucherId = form.getValues("selectedGiftVoucherId")
     if (formVoucherId && bookingOptions.source === "gift_voucher_redemption") {
-      const voucher = initialData.usableGiftVouchers.find((v) => v._id.toString() === formVoucherId)
+      const voucher = (initialData.usableGiftVouchers || []).find((v) => v._id.toString() === formVoucherId)
       setSelectedVoucherDetails(voucher || null)
 
       if (voucher?.voucherType === "treatment" && voucher.treatmentId) {
-        const treatmentFromVoucher = initialData.activeTreatments.find((t) => t._id.toString() === voucher.treatmentId)
+        const treatmentFromVoucher = (initialData.activeTreatments || []).find(
+          (t) => t._id.toString() === voucher.treatmentId?.toString(), // Ensure treatmentId on voucher is string
+        )
         if (treatmentFromVoucher) {
           setAvailableTreatmentsForStep([treatmentFromVoucher])
           setSelectedCategory(treatmentFromVoucher.category || "Uncategorized")
@@ -144,7 +143,6 @@ export default function TreatmentSelectionStep({
           }
         }
       } else {
-        // Monetary voucher or no specific treatment
         setAvailableTreatmentsForStep(initialData.activeTreatments || [])
         setIsTreatmentLockedBySource(false)
       }
@@ -169,6 +167,13 @@ export default function TreatmentSelectionStep({
     onNext()
   }
 
+  const validGiftVouchers = useMemo(() => {
+    return (initialData.usableGiftVouchers || []).filter(
+      (voucher): voucher is IGiftVoucher & { _id: string } =>
+        voucher && typeof voucher._id === "string" && voucher._id.length > 0,
+    )
+  }, [initialData.usableGiftVouchers])
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
@@ -177,7 +182,6 @@ export default function TreatmentSelectionStep({
           <p className="text-muted-foreground mt-1">{t("bookings.steps.treatment.description")}</p>
         </div>
 
-        {/* Source-specific selection (Subscription/Voucher) */}
         {bookingOptions.source === "subscription_redemption" && (
           <FormField
             control={form.control}
@@ -191,7 +195,26 @@ export default function TreatmentSelectionStep({
                       <SelectValue placeholder={t("bookings.steps.treatment.selectSubscriptionPlaceholder")} />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>{/* ... options ... */}</SelectContent>
+                  <SelectContent>
+                    {(initialData.activeUserSubscriptions || []).map((sub) => {
+                      let subDisplay = `${(sub.subscriptionId as any)?.name || t("bookings.unknownSubscription")}`
+                      subDisplay += ` (${t("bookings.subscriptions.remaining")}: ${sub.remainingQuantity})`
+                      if (sub.treatmentId) {
+                        subDisplay += ` - ${(sub.treatmentId as ITreatment).name}`
+                        if (
+                          (sub.treatmentId as ITreatment).pricingType === "duration_based" &&
+                          sub.selectedDurationDetails
+                        ) {
+                          subDisplay += ` (${sub.selectedDurationDetails.minutes} ${t("common.minutes")})`
+                        }
+                      }
+                      return (
+                        <SelectItem key={sub._id.toString()} value={sub._id.toString()}>
+                          {subDisplay}
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
@@ -208,13 +231,55 @@ export default function TreatmentSelectionStep({
                   <GiftIcon className="mr-2 h-5 w-5 text-primary" />
                   {t("bookings.steps.treatment.selectVoucher")}
                 </FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={(value) => {
+                    field.onChange(value)
+                    form.setValue("selectedTreatmentId", undefined, { shouldValidate: true })
+                    form.setValue("selectedDurationId", undefined, { shouldValidate: true })
+                  }}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder={t("bookings.steps.treatment.selectVoucherPlaceholder")} />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent>{/* ... options ... */}</SelectContent>
+                  <SelectContent>
+                    {validGiftVouchers.map((voucher) => {
+                      const codeDisplay =
+                        typeof voucher.code === "string" && voucher.code.trim() !== ""
+                          ? voucher.code
+                          : t("bookings.steps.treatment.unknownVoucherCode")
+                      let voucherDisplayLabel = codeDisplay
+
+                      if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+                        const treatmentDetails = (initialData.activeTreatments || []).find(
+                          (t) => t && typeof t._id === "string" && t._id === voucher.treatmentId?.toString(),
+                        )
+                        if (treatmentDetails) {
+                          voucherDisplayLabel += ` - ${treatmentDetails.name || t("bookings.unknownTreatment")}`
+                          if (treatmentDetails.pricingType === "duration_based" && voucher.selectedDurationId) {
+                            const durationDetails = treatmentDetails.durations?.find(
+                              (d) => d && typeof d._id === "string" && d._id === voucher.selectedDurationId?.toString(),
+                            )
+                            if (durationDetails) {
+                              voucherDisplayLabel += ` (${durationDetails.minutes ?? "?"} ${t("common.minutes")})`
+                            }
+                          }
+                        } else {
+                          voucherDisplayLabel += ` - ${t("bookings.unknownTreatment")}`
+                        }
+                      } else if (voucher.voucherType === "monetary") {
+                        const amountDisplay = voucher.remainingAmount ?? voucher.amount ?? 0
+                        voucherDisplayLabel += ` - ${amountDisplay} ${t("common.currency")}`
+                      }
+                      return (
+                        <SelectItem key={voucher._id} value={voucher._id}>
+                          {voucherDisplayLabel}
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
@@ -222,7 +287,6 @@ export default function TreatmentSelectionStep({
           />
         )}
 
-        {/* Category Selection */}
         {showCategorySelection && (
           <FormItem>
             <FormLabel>{t("treatments.category")}</FormLabel>
@@ -250,7 +314,6 @@ export default function TreatmentSelectionStep({
           </FormItem>
         )}
 
-        {/* Treatment Selection */}
         {((showCategorySelection && selectedCategory) || !showCategorySelection) && (
           <FormField
             control={form.control}
@@ -319,7 +382,7 @@ export default function TreatmentSelectionStep({
                                           <FormLabel className="text-sm font-medium">
                                             {t("bookings.steps.treatment.selectDuration")}
                                           </FormLabel>
-                                          {treatment.durations
+                                          {(treatment.durations || [])
                                             ?.filter((d) => d.isActive)
                                             .map((duration) => (
                                               <FormItem
@@ -372,7 +435,6 @@ export default function TreatmentSelectionStep({
           />
         )}
 
-        {/* Therapist Gender Preference */}
         <FormField
           control={form.control}
           name="therapistGenderPreference"

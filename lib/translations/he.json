@@ -132,7 +132,10 @@
       "unknown": "סטטוס לא ידוע"
     },
     "anotherProfessional": "מטפל/ת אחר/ת",
-    "invalidInput": "קלט לא תקין."
+    "invalidInput": "קלט לא תקין.",
+    "currencySymbol": "₪",
+    "cardEndingIn": "כרטיס המסתיים בספרות",
+    "orderSummary": "סיכום הזמנה"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -281,8 +284,10 @@
       "settings": "הגדרות",
       "userMenu": {
         "treatmentPreferences": "העדפות טיפול",
-        "notifications": "התראות"
-      }
+        "notifications": "התראות",
+        "toggleTooltip": "פתח/סגור תפריט משתמש"
+      },
+      "roleSwitcherTooltip": "החלף תפקיד משתמש"
     },
     "roles": {
       "member": "חבר",
@@ -338,7 +343,14 @@
     "deleted": "הכתובת נמחקה",
     "defaultSet": "כתובת ברירת מחדל עודכנה",
     "created": "הכתובת נוצרה",
-    "updated": "הכתובת עודכנה"
+    "updated": "הכתובת עודכנה",
+    "addNewShort": "הוסף חדש",
+    "addAddressDialogTitle": "הוספת כתובת חדשה",
+    "fields": {
+      "hasPrivateParkingFull": "קיימת חניה פרטית",
+      "addressTypePlaceholder": "בחר סוג כתובת"
+    },
+    "selectedAddressDetails": "פרטי הכתובת שנבחרה"
   },
   "paymentMethods": {
     "title": "ניהול אמצעי תשלום",
@@ -472,7 +484,9 @@
       "pricingType": "סוג תמחור",
       "price": "מחיר",
       "duration": "משך זמן"
-    }
+    },
+    "category": "קטגוריה",
+    "selectCategoryPlaceholder": "בחר קטגוריה"
   },
   "bundles": {
     "title": "ניהול חבילות",
@@ -1014,7 +1028,8 @@
     "minimumAmount": "סכום מינימלי",
     "minimumAmountDetails": "סכום מינימלי {{amount}} {{currency}}",
     "defaultCard": "ברירת מחדל",
-    "addNewCard": "הוסף כרטיס חדש"
+    "addNewCard": "הוסף כרטיס חדש",
+    "selectTypeDescription": "בחר אם ברצונך להעניק טיפול ספציפי או שובר כספי."
   },
   "Roles": {
     "admin": "מנהל",
@@ -1043,7 +1058,11 @@
     "usedVouchers": "שוברים שנוצלו",
     "expiredVouchers": "שוברים שפג תוקפם",
     "totalVouchers": "סה\"כ שוברים",
-    "purchaseVoucher": "רכישת שובר"
+    "purchaseVoucher": "רכישת שובר",
+    "owned": "שוברים בבעלותי",
+    "purchased": "שוברים שרכשתי",
+    "noGiftVouchersDescription": "אין לך כרגע שוברי מתנה.",
+    "noPurchasedVouchersDescription": "שוברים שתרכוש עבור אחרים יופיעו כאן."
   },
   "memberSubscriptions": {
     "title": "המנויים שלי",
@@ -1370,7 +1389,9 @@
         "redeemVoucher": "שימוש בשובר מתנה",
         "redeemVoucherDesc": "השתמש בשובר מתנה עבור ההזמנה שלך.",
         "newBooking": "הזמנה חדשה / תשלום",
-        "newBookingDesc": "הזמן טיפול חדש ושלם ישירות."
+        "newBookingDesc": "הזמן טיפול חדש ושלם ישירות.",
+        "newBookingOnlyTitle": "הזמנת טיפול חדש",
+        "newBookingOnlyDesc": "בחר באפשרות זו להזמנת טיפול ללא שימוש במנוי או שובר."
       },
       "treatment": {
         "title": "בחר את הטיפול שלך",
@@ -1403,7 +1424,11 @@
         "noSavedAddresses": "אין לך כתובות שמורות. אנא הוסף כתובת.",
         "therapistPreference": "העדפת מגדר מטפל/ת",
         "notes": "הערות נוספות (אופציונלי)",
-        "notesPlaceholder": "בקשות מיוחדות או מידע למטפל/ת..."
+        "notesPlaceholder": "בקשות מיוחדות או מידע למטפל/ת...",
+        "flexibleTimeDesc": "אם אתה גמיש, ננסה למצוא לך תור בטווח של +/- שעתיים מהשעה שבחרת.",
+        "forSomeoneElseLabel": "הזמנה זו עבור מישהו אחר",
+        "recipientName": "שם מלא של המקבל/ת",
+        "recipientPhone": "מספר טלפון של המקבל/ת"
       },
       "summary": {
         "title": "בדוק את הזמנתך",
@@ -1426,7 +1451,14 @@
         "totalAmount": "סכום כולל",
         "fullyCovered": "הזמנה זו מכוסה במלואה.",
         "confirmBooking": "אשר הזמנה",
-        "usingSubscription": "בשימוש ממנוי"
+        "usingSubscription": "בשימוש ממנוי",
+        "bookingForTitle": "הזמנה עבור",
+        "recipientName": "שם המקבל/ת",
+        "recipientPhone": "טלפון המקבל/ת",
+        "bookedBy": "הוזמן על ידי",
+        "treatmentDetails": "פרטי הטיפול",
+        "addressTitle": "כתובת",
+        "couponDesc": "אם יש לך קוד קופון, הזן אותו כאן."
       },
       "payment": {
         "title": "תשלום",
@@ -1437,7 +1469,10 @@
         "confirmBooking": "אשר הזמנה",
         "selectPaymentMethod": "בחר אמצעי תשלום",
         "noSavedPaymentMethods": "אין לך אמצעי תשלום שמורים.",
-        "payAndConfirm": "שלם ואשר"
+        "payAndConfirm": "שלם ואשר",
+        "agreeToTermsLabel": "אני מסכים/ה ל",
+        "agreeToTermsDesc": "בהמשך, הינך מסכים/ה לתנאי השירות ומדיניות הפרטיות שלנו.",
+        "agreeToMarketingLabel": "אני מסכים/ה לקבל הודעות שיווקיות (אופציונלי)"
       },
       "confirmation": {
         "title": "ההזמנה אושרה!",
@@ -1447,6 +1482,47 @@
         "viewMyBookings": "צפה בהזמנות שלי",
         "bookAnotherTreatment": "הזמן טיפול נוסף"
       }
+    },
+    "success": {
+      "bookingCreatedTitle": "ההזמנה נוצרה בהצלחה!",
+      "bookingCreatedDescription": "הזמנתך נוצרה בהצלחה. אנו נודיע לך ברגע שישובץ מטפל/ת."
+    },
+    "confirmation": {
+      "sourceNewPurchase": "רכישה חדשה",
+      "professionalToBeAssigned": "מטפל/ת ישובץ בהמשך",
+      "title": "אישור הזמנה",
+      "thankYou": "תודה על הזמנתך!",
+      "bookingNumber": "מספר הזמנה",
+      "status": "סטטוס",
+      "status": {
+        "confirmed": "מאושרת - ממתין לשיבוץ מטפל/ת"
+      },
+      "bookedFor": "הוזמן עבור",
+      "recipientName": "שם המקבל/ת",
+      "recipientPhone": "טלפון המקבל/ת",
+      "bookedBy": "הוזמן על ידי",
+      "treatmentDetails": "פרטי הטיפול",
+      "treatment": "טיפול",
+      "dateTime": "תאריך ושעה",
+      "flexibleTimeInfo": "זמן גמיש (+/- שעתיים)",
+      "therapistPreference": "העדפת מטפל/ת",
+      "notes": "הערות",
+      "professionalDetails": "פרטי המטפל/ת",
+      "professionalName": "שם המטפל/ת",
+      "addressDetails": "פרטי הכתובת",
+      "priceSummary": "סיכום מחיר",
+      "bookingSource": "מקור הזמנה",
+      "basePrice": "מחיר בסיס",
+      "couponDiscount": "הנחת קופון",
+      "totalAmount": "סכום כולל",
+      "paymentDetails": "פרטי תשלום",
+      "paymentStatus": "סטטוס תשלום",
+      "paymentStatus": {
+        "pending": "ממתין"
+      },
+      "paymentMethod": "אמצעי תשלום",
+      "viewBookingsLink": "צפה בהזמנות שלי",
+      "contactSupport": "צור קשר עם התמיכה"
     },
     "errors": {
       "invalidDate": "התאריך שנבחר אינו תקין.",

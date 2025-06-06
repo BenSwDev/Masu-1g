@@ -122,7 +122,10 @@
       "unknown": "Неизвестный статус"
     },
     "anotherProfessional": "другой специалист",
-    "invalidInput": "Предоставлены неверные данные."
+    "invalidInput": "Предоставлены неверные данные.",
+    "currencySymbol": "₪",
+    "cardEndingIn": "Карта, заканчивающаяся на",
+    "orderSummary": "Сводка заказа"
   },
   "dashboard": {
     "sidebar": {
@@ -157,8 +160,10 @@
       "settings": "Настройки",
       "userMenu": {
         "treatmentPreferences": "Предпочтения по процедурам",
-        "notifications": "Уведомления"
-      }
+        "notifications": "Уведомления",
+        "toggleTooltip": "Переключить меню пользователя"
+      },
+      "roleSwitcherTooltip": "Переключить роль пользователя"
     }
   },
   "subscriptions": {
@@ -385,7 +390,8 @@
       "cancelled": "Отмененные",
       "voucherDetailsTitle": "Детали сертификата",
       "voucherDetailsDescription": "Подробная информация о вашем подарочном сертификате.",
-      "errorLoading": "Ошибка загрузки ваших сертификатов. Пожалуйста, попробуйте обновить."
+      "errorLoading": "Ошибка загрузки ваших сертификатов. Пожалуйста, попробуйте обновить.",
+      "basicInfo": "Основная информация"
     },
     "admin": {
       "assignToUser": "Назначить пользователю",
@@ -438,7 +444,11 @@
     "usedVouchers": "Использованные сертификаты",
     "expiredVouchers": "Просроченные сертификаты",
     "totalVouchers": "Всего сертификатов",
-    "purchaseVoucher": "Купить сертификат"
+    "purchaseVoucher": "Купить сертификат",
+    "owned": "Мои сертификаты",
+    "purchased": "Купленные сертификаты",
+    "noGiftVouchersDescription": "У вас пока нет подарочных сертификатов.",
+    "noPurchasedVouchersDescription": "Сертификаты, которые вы покупаете для других, появятся здесь."
   },
   "memberSubscriptions": {
     "title": "Мои подписки",
@@ -506,7 +516,9 @@
       "instructions": "Инструкции",
       "hasPrivateParking": "Есть парковка",
       "isDefault": "По умолчанию",
-      "additionalNotes": "Дополнительные заметки"
+      "additionalNotes": "Дополнительные заметки",
+      "hasPrivateParkingFull": "Имеется частная парковка",
+      "addressTypePlaceholder": "Выберите тип адреса"
     },
     "types": {
       "apartment": "Квартира",
@@ -521,7 +533,10 @@
     "deleteError": "Ошибка удаления адреса",
     "noDetails": "Нет деталей",
     "deleteConfirm": "Вы уверены, что хотите удалить этот адрес?",
-    "deleteConfirmDescription": "Это действие нельзя отменить"
+    "deleteConfirmDescription": "Это действие нельзя отменить",
+    "addNewShort": "Добавить",
+    "addAddressDialogTitle": "Добавить новый адрес",
+    "selectedAddressDetails": "Детали выбранного адреса"
   },
   ",": ",",
   "login": {
@@ -824,7 +839,11 @@
       "expiry": "Срок действия",
       "expiryMonth": "Месяц окончания",
       "expiryYear": "Год окончания",
-      "cvv": "CVV"
+      "cvv": "CVV",
+      "monthPlaceholder": "ММ",
+      "yearPlaceholder": "ГГ",
+      "cardHolderNamePlaceholder": "Имя как на карте",
+      "cardNamePlaceholder": "например, Моя Visa"
     },
     "deleted": "Удалено",
     "deleteError": "Ошибка удаления",
@@ -925,7 +944,9 @@
     "selectDurationError": "Пожалуйста, выберите продолжительность",
     "noActiveDurations": "Нет доступных вариантов продолжительности для этой процедуры",
     "name": "Название процедуры",
-    "details": "Детали процедуры"
+    "details": "Детали процедуры",
+    "category": "Категория",
+    "selectCategoryPlaceholder": "Выберите категорию"
   },
   "giftCertificates": {
     "title": "Подарочные сертификаты для участников",
@@ -1091,7 +1112,8 @@
     "stepPayment": "Оплата",
     "stepComplete": "Подтверждение",
     "minimumAmount": "Минимальная сумма",
-    "minimumAmountDetails": "Минимальная сумма {{amount}} {{currency}}"
+    "minimumAmountDetails": "Минимальная сумма {{amount}} {{currency}}",
+    "selectTypeDescription": "Выберите, хотите ли вы подарить конкретную процедуру или денежную сумму."
   },
   "gender": {
     "male": "Мужской",
@@ -1178,7 +1200,9 @@
         "redeemVoucher": "Использовать подарочный сертификат",
         "redeemVoucherDesc": "Примените подарочный сертификат к вашей записи.",
         "newBooking": "Новая запись / Оплатить сейчас",
-        "newBookingDesc": "Запишитесь на новую процедуру и оплатите напрямую."
+        "newBookingDesc": "Запишитесь на новую процедуру и оплатите напрямую.",
+        "newBookingOnlyTitle": "Забронировать новую процедуру",
+        "newBookingOnlyDesc": "Выберите эту опцию, чтобы забронировать процедуру без использования подписки или сертификата."
       },
       "treatment": {
         "title": "Выберите процедуру",
@@ -1211,7 +1235,11 @@
         "noSavedAddresses": "У вас нет сохраненных адресов. Пожалуйста, добавьте адрес.",
         "therapistPreference": "Предпочтительный пол терапевта",
         "notes": "Дополнительные примечания (необязательно)",
-        "notesPlaceholder": "Любые особые пожелания или информация для терапевта..."
+        "notesPlaceholder": "Любые особые пожелания или информация для терапевта...",
+        "flexibleTimeDesc": "Если вы гибки, мы постараемся найти слот в пределах +/- 2 часов от выбранного вами времени.",
+        "forSomeoneElseLabel": "Это бронирование для другого человека",
+        "recipientName": "Полное имя получателя",
+        "recipientPhone": "Номер телефона получателя"
       },
       "summary": {
         "title": "Проверьте вашу запись",
@@ -1234,7 +1262,14 @@
         "totalAmount": "Итоговая сумма",
         "fullyCovered": "Эта запись полностью покрыта.",
         "confirmBooking": "Подтвердить запись",
-        "usingSubscription": "Используется абонемент"
+        "usingSubscription": "Используется абонемент",
+        "bookingForTitle": "Бронирование для",
+        "recipientName": "Имя получателя",
+        "recipientPhone": "Телефон получателя",
+        "bookedBy": "Забронировано",
+        "treatmentDetails": "Детали процедуры",
+        "addressTitle": "Адрес",
+        "couponDesc": "Если у вас есть код купона, введите его здесь."
       },
       "payment": {
         "title": "Оплата",
@@ -1245,15 +1280,14 @@
         "confirmBooking": "Подтвердить запись",
         "selectPaymentMethod": "Выберите способ оплаты",
         "noSavedPaymentMethods": "У вас нет сохраненных способов оплаты.",
-        "payAndConfirm": "Оплатить и подтвердить"
+        "payAndConfirm": "Оплатить и подтвердить",
+        "agreeToTermsLabel": "Я согласен с",
+        "agreeToTermsDesc": "Продолжая, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности.",
+        "agreeToMarketingLabel": "Я согласен получать маркетинговые сообщения (необязательно)"
       },
       "confirmation": {
         "title": "Запись подтверждена!",
-        "successMessage": "Ваша процедура успешно забронирована. Мы подбираем для вас лучшего специалиста.",
-        "bookingId": "ID записи",
-        "detailsSentToEmail": "Подтверждение с деталями вашей записи отправлено на ваш email.",
-        "viewMyBookings": "Просмотреть мои записи",
-        "bookAnotherTreatment": "Записаться на другую процедуру"
+        "successMessage": "Ваша процедура успешно забронирована. Мы подбираем для вас лучшего специалиста."
       }
     },
     "errors": {
@@ -1324,6 +1358,47 @@
       "professional_en_route": "Специалист в пути",
       "pending_professional_assignment": "Ожидает назначения специалиста",
       "professional_en_route": "Специалист в пути"
+    },
+    "success": {
+      "bookingCreatedTitle": "Бронирование успешно создано!",
+      "bookingCreatedDescription": "Ваше бронирование успешно создано. Мы уведомим вас, как только будет назначен специалист."
+    },
+    "confirmation": {
+      "sourceNewPurchase": "Новая покупка",
+      "professionalToBeAssigned": "Специалист будет назначен",
+      "title": "Подтверждение бронирования",
+      "thankYou": "Спасибо за ваше бронирование!",
+      "bookingNumber": "Номер бронирования",
+      "status": "Статус",
+      "status": {
+        "confirmed": "Подтверждено - Ожидается назначение специалиста"
+      },
+      "bookedFor": "Забронировано для",
+      "recipientName": "Имя получателя",
+      "recipientPhone": "Телефон получателя",
+      "bookedBy": "Забронировал(а)",
+      "treatmentDetails": "Детали процедуры",
+      "treatment": "Процедура",
+      "dateTime": "Дата и время",
+      "flexibleTimeInfo": "Гибкое время (+/- 2 часа)",
+      "therapistPreference": "Предпочтение по специалисту",
+      "notes": "Примечания",
+      "professionalDetails": "Данные специалиста",
+      "professionalName": "Имя специалиста",
+      "addressDetails": "Детали адреса",
+      "priceSummary": "Сводка по цене",
+      "bookingSource": "Источник бронирования",
+      "basePrice": "Базовая цена",
+      "couponDiscount": "Скидка по купону",
+      "totalAmount": "Итоговая сумма",
+      "paymentDetails": "Детали платежа",
+      "paymentStatus": "Статус платежа",
+      "paymentStatus": {
+        "pending": "Ожидание"
+      },
+      "paymentMethod": "Способ оплаты",
+      "viewBookingsLink": "Просмотреть мои бронирования",
+      "contactSupport": "Связаться с поддержкой"
     }
   },
   "memberBookings": {

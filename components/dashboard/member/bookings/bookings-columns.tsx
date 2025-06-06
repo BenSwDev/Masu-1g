@@ -3,9 +3,28 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
-import { MoreHorizontal, ArrowUpDown, Eye, XCircle, Loader2, Hourglass, CheckCircle, User, Info } from "lucide-react"
+import {
+  MoreHorizontal,
+  ArrowUpDown,
+  Eye,
+  XCircle,
+  Loader2,
+  Hourglass,
+  CheckCircle,
+  Info,
+  CalendarDays,
+  MapPin,
+  Users,
+  Briefcase,
+  Gift,
+  ShoppingBag,
+  Ticket,
+  Clock,
+  UserCheck,
+  UserX,
+} from "lucide-react"
 
-import type { PopulatedBooking } from "@/actions/booking-actions"
+import type { PopulatedBooking, ITreatmentDuration } from "@/lib/db/models/booking" // Assuming ITreatmentDuration is exported
 import { cancelBooking as cancelBookingAction } from "@/actions/booking-actions"
 import { Button } from "@/components/common/ui/button"
 import {
@@ -35,7 +54,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { cn, formatDate, formatCurrency } from "@/lib/utils/utils"
 import BookingDetailsView from "./booking-details-view"
 
-// Helper component for actions to manage state within the cell
+// Helper component for actions to manage state within the cell (largely unchanged)
 const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -75,7 +94,7 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
 
   const isCancellable =
     (booking.status === "pending_professional_assignment" || booking.status === "confirmed") &&
-    new Date(booking.bookingDateTime) > new Date()
+    new Date(booking.bookingDateTime) > new Date(Date.now() + 2 * 60 * 60 * 1000) // Example: cancellable if more than 2 hours in future
 
   return (
     <Drawer>
@@ -87,11 +106,11 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="bg-card border shadow-lg rounded-md">
             <DropdownMenuLabel>{t("common.actions")}</DropdownMenuLabel>
             <DrawerTrigger asChild>
-              <DropdownMenuItem>
-                <Eye className="mr-2 h-4 w-4" />
+              <DropdownMenuItem className="flex items-center hover:bg-muted/50">
+                <Eye className="mr-2 h-4 w-4 text-primary" />
                 {t("memberBookings.viewDetailsButton")}
               </DropdownMenuItem>
             </DrawerTrigger>
@@ -99,7 +118,7 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
               <>
                 <DropdownMenuSeparator />
                 <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="text-red-600 focus:text-red-600">
+                  <DropdownMenuItem className="flex items-center text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive">
                     {isCancelPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -127,7 +146,7 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <DrawerContent className="max-h-[90vh]">
+      <DrawerContent className="max-h-[90vh] bg-card">
         <ScrollArea className="h-full p-4">
           <BookingDetailsView booking={booking} />
         </ScrollArea>
@@ -141,88 +160,130 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
   )
 }
 
-// Status component for reusability
-const BookingStatus = ({ status }: { status: PopulatedBooking["status"] }) => {
+// Status component for reusability (enhanced with more icons)
+const BookingStatusBadge = ({ status }: { status: PopulatedBooking["status"] }) => {
   const { t } = useTranslation()
   const getStatusInfo = (statusKey: PopulatedBooking["status"]) => {
     switch (statusKey) {
       case "pending_professional_assignment":
         return {
-          label: t("memberBookings.status.pending_professional_assignment"),
-          icon: <Hourglass className="mr-1.5 h-4 w-4 text-amber-600" />,
+          label: t("memberBookings.status.pending_professional_assignment_short", "Pending Assign."),
+          icon: <Hourglass className="mr-1.5 h-3.5 w-3.5 text-amber-600" />,
           badgeClass: "bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200",
         }
       case "confirmed":
         return {
-          label: t("memberBookings.status.confirmed"),
-          icon: <CheckCircle className="mr-1.5 h-4 w-4 text-green-600" />,
+          label: t("memberBookings.status.confirmed_short", "Confirmed"),
+          icon: <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-green-600" />,
           badgeClass: "bg-green-100 text-green-700 border-green-300 hover:bg-green-200",
+        }
+      case "professional_en_route":
+        return {
+          label: t("memberBookings.status.professional_en_route_short", "En Route"),
+          icon: <UserCheck className="mr-1.5 h-3.5 w-3.5 text-blue-600" />,
+          badgeClass: "bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200",
         }
       case "completed":
         return {
-          label: t("memberBookings.status.completed"),
-          icon: <CheckCircle className="mr-1.5 h-4 w-4 text-sky-600" />,
+          label: t("memberBookings.status.completed_short", "Completed"),
+          icon: <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-sky-600" />,
           badgeClass: "bg-sky-100 text-sky-700 border-sky-300 hover:bg-sky-200",
         }
       case "cancelled_by_user":
       case "cancelled_by_admin":
         return {
-          label: t(`memberBookings.status.${statusKey}`),
-          icon: <XCircle className="mr-1.5 h-4 w-4 text-red-600" />,
+          label: t(`memberBookings.status.${statusKey}_short`, "Cancelled"),
+          icon: <XCircle className="mr-1.5 h-3.5 w-3.5 text-red-600" />,
           badgeClass: "bg-red-100 text-red-700 border-red-300 hover:bg-red-200",
         }
       case "no_show":
         return {
-          label: t("memberBookings.status.no_show"),
-          icon: <User className="mr-1.5 h-4 w-4 text-orange-600" />,
+          label: t("memberBookings.status.no_show_short", "No Show"),
+          icon: <UserX className="mr-1.5 h-3.5 w-3.5 text-orange-600" />,
           badgeClass: "bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200",
         }
       default:
         return {
-          label: t(`memberBookings.status.${statusKey}`) || statusKey,
-          icon: <Info className="mr-1.5 h-4 w-4 text-gray-600" />,
+          label: t(`memberBookings.status.${statusKey}_short`, statusKey) || statusKey,
+          icon: <Info className="mr-1.5 h-3.5 w-3.5 text-gray-600" />,
           badgeClass: "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200",
         }
     }
   }
   const statusInfo = getStatusInfo(status)
   return (
-    <Badge variant="outline" className={cn("text-xs font-medium whitespace-nowrap", statusInfo.badgeClass)}>
+    <Badge variant="outline" className={cn("text-xs font-medium whitespace-nowrap py-1 px-2", statusInfo.badgeClass)}>
       {statusInfo.icon}
       {statusInfo.label}
     </Badge>
   )
 }
 
+const BookingSourceIcon = ({ source }: { source: PopulatedBooking["source"] }) => {
+  const { t } = useTranslation()
+  switch (source) {
+    case "subscription_redemption":
+      return <Ticket className="h-4 w-4 text-purple-600" titleAccess={t("bookings.source.subscription")} />
+    case "gift_voucher_redemption":
+      return <Gift className="h-4 w-4 text-pink-600" titleAccess={t("bookings.source.giftVoucher")} />
+    case "new_purchase":
+    default:
+      return <ShoppingBag className="h-4 w-4 text-teal-600" titleAccess={t("bookings.source.newPurchase")} />
+  }
+}
+
 export const columns: ColumnDef<PopulatedBooking>[] = [
   {
     accessorKey: "bookingNumber",
-    header: () => {
+    header: ({ column }) => {
       const { t } = useTranslation()
-      return <div className="whitespace-nowrap">{t("bookings.table.header.bookingNumber")}</div>
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="px-1 hover:bg-muted/50"
+        >
+          {t("bookings.table.header.bookingId")}
+          <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
+        </Button>
+      )
     },
-    cell: ({ row }) => <div className="font-mono">#{row.original.bookingNumber}</div>,
+    cell: ({ row }) => <div className="font-mono text-xs">#{row.original.bookingNumber}</div>,
+    size: 120,
   },
   {
-    accessorKey: "treatment",
+    accessorKey: "treatmentDetails", // Composite key for sorting if needed, or sort by treatmentName
     header: () => {
       const { t } = useTranslation()
-      return <div className="whitespace-nowrap">{t("bookings.table.header.treatment")}</div>
+      return <div className="whitespace-nowrap">{t("bookings.table.header.treatmentDetails")}</div>
     },
     cell: ({ row }) => {
       const { t } = useTranslation()
       const booking = row.original
       const treatment = booking.treatmentId
-      const duration =
-        booking.treatmentId?.durations?.find((d) => d._id.toString() === booking.selectedDurationId?.toString())
-          ?.minutes ||
-        booking.treatmentId?.selectedDuration?.minutes ||
-        booking.treatmentId?.defaultDurationMinutes
+      let durationDisplay = ""
+      if (treatment?.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
+        const selectedDuration = treatment.durations.find(
+          (d: ITreatmentDuration) => d._id.toString() === booking.selectedDurationId?.toString(),
+        )
+        if (selectedDuration) {
+          durationDisplay = `${selectedDuration.minutes} ${t("common.minutes_short", "min")}`
+        }
+      } else if (treatment?.pricingType === "fixed" && treatment.defaultDurationMinutes) {
+        durationDisplay = `${treatment.defaultDurationMinutes} ${t("common.minutes_short", "min")}`
+      }
+
       return (
         <div className="flex flex-col">
-          <span className="font-medium">{treatment?.name || t("common.notAvailable")}</span>
-          {duration && (
-            <span className="text-xs text-muted-foreground">{t("memberBookings.duration", { minutes: duration })}</span>
+          <span className="font-medium text-sm truncate max-w-[200px] group-hover:max-w-none">
+            {treatment?.name || t("common.unknownTreatment")}
+          </span>
+          {durationDisplay && <span className="text-xs text-muted-foreground">{durationDisplay}</span>}
+          {booking.recipientName && booking.recipientName !== booking.bookedByUserName && (
+            <span className="text-xs text-primary flex items-center mt-0.5">
+              <Users className="h-3 w-3 mr-1" />
+              {t("bookings.table.forRecipient", { name: booking.recipientName })}
+            </span>
           )}
         </div>
       )
@@ -233,43 +294,92 @@ export const columns: ColumnDef<PopulatedBooking>[] = [
     header: ({ column }) => {
       const { t } = useTranslation()
       return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="px-1 hover:bg-muted/50"
+        >
           {t("bookings.table.header.dateTime")}
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
         </Button>
       )
     },
     cell: ({ row }) => {
-      const { locale } = useTranslation()
-      const date = new Date(row.getValue("bookingDateTime"))
+      const { locale, t } = useTranslation()
+      const booking = row.original
+      const date = new Date(booking.bookingDateTime)
       return (
-        <div className="flex flex-col whitespace-nowrap">
-          <span>{formatDate(date, locale)}</span>
-          <span className="text-sm text-muted-foreground">
+        <div className="flex flex-col text-sm whitespace-nowrap">
+          <div className="flex items-center">
+            <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+            {formatDate(date, locale, { day: "2-digit", month: "short", year: "numeric" })}
+          </div>
+          <div className="flex items-center text-muted-foreground">
+            <Clock className="h-3.5 w-3.5 mr-1.5" />
             {date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+          </div>
+          {booking.isFlexibleTime && (
+            <Badge
+              variant="outline"
+              className="mt-1 text-xs py-0.5 px-1.5 border-dashed border-primary/50 text-primary/80"
+            >
+              {t("bookings.table.flexibleTime")}
+            </Badge>
+          )}
+        </div>
+      )
+    },
+    size: 180,
+  },
+  {
+    accessorKey: "professionalId.name", // For sorting
+    header: () => {
+      const { t } = useTranslation()
+      return <div className="whitespace-nowrap hidden md:table-cell">{t("bookings.table.header.professional")}</div>
+    },
+    cell: ({ row }) => {
+      const { t } = useTranslation()
+      const booking = row.original
+      return (
+        <div className="text-sm hidden md:flex items-center">
+          <Briefcase className="h-3.5 w-3.5 mr-1.5 text-muted-foreground flex-shrink-0" />
+          <span className="truncate max-w-[150px]">{booking.professionalId?.name || t("bookings.toBeAssigned")}</span>
+        </div>
+      )
+    },
+    enableHiding: true,
+  },
+  {
+    accessorKey: "bookingAddressSnapshot.city", // For sorting
+    header: () => {
+      const { t } = useTranslation()
+      return <div className="whitespace-nowrap hidden lg:table-cell">{t("bookings.table.header.location")}</div>
+    },
+    cell: ({ row }) => {
+      const booking = row.original
+      return (
+        <div className="text-sm hidden lg:flex items-center">
+          <MapPin className="h-3.5 w-3.5 mr-1.5 text-muted-foreground flex-shrink-0" />
+          <span className="truncate max-w-[150px]">
+            {booking.bookingAddressSnapshot?.city || booking.customAddressDetails?.city || t("common.notAvailable")}
           </span>
         </div>
       )
     },
-  },
-  {
-    accessorKey: "professional",
-    header: () => {
-      const { t } = useTranslation()
-      return <div className="whitespace-nowrap">{t("bookings.table.header.professional")}</div>
-    },
-    cell: ({ row }) => {
-      const { t } = useTranslation()
-      return <div>{row.original.professionalId?.name || t("bookings.toBeAssigned")}</div>
-    },
+    enableHiding: true,
   },
   {
     accessorKey: "status",
     header: () => {
       const { t } = useTranslation()
-      return <div className="whitespace-nowrap">{t("bookings.table.header.status")}</div>
+      return <div className="text-center whitespace-nowrap">{t("bookings.table.header.status")}</div>
     },
-    cell: ({ row }) => <BookingStatus status={row.original.status} />,
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <BookingStatusBadge status={row.original.status} />
+      </div>
+    ),
+    size: 150,
   },
   {
     accessorKey: "priceDetails.finalAmount",
@@ -277,22 +387,40 @@ export const columns: ColumnDef<PopulatedBooking>[] = [
       const { t } = useTranslation()
       return (
         <div className="text-right">
-          <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-1 hover:bg-muted/50"
+          >
             {t("bookings.table.header.total")}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
           </Button>
         </div>
       )
     },
     cell: ({ row }) => {
       const { t, locale } = useTranslation()
-      const amount = Number.parseFloat(row.getValue("priceDetails_finalAmount"))
-      const formatted = formatCurrency(amount, t("common.currency"), locale)
-      return <div className="text-right font-medium whitespace-nowrap">{formatted}</div>
+      const booking = row.original
+      const amount = booking.priceDetails.finalAmount
+      const formatted = booking.priceDetails.isFullyCoveredByVoucherOrSubscription
+        ? t("bookings.confirmation.gift")
+        : formatCurrency(amount, t("common.currency"), locale)
+      return (
+        <div className="text-right font-medium text-sm whitespace-nowrap flex items-center justify-end">
+          <BookingSourceIcon source={booking.source} />
+          <span className="ms-1.5">{formatted}</span>
+        </div>
+      )
     },
+    size: 130,
   },
   {
     id: "actions",
-    cell: ({ row }) => <BookingActions booking={row.original} />,
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <BookingActions booking={row.original} />
+      </div>
+    ),
+    size: 60,
   },
 ]

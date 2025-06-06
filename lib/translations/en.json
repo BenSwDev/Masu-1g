@@ -1399,7 +1399,7 @@
     },
     "success": {
       "bookingCreatedTitle": "Booking Created Successfully!",
-      "bookingCreatedDescription": "Your booking has been successfully created. We will notify you once a professional is assigned."
+      "bookingCreatedDescription": "Your booking has been successfully created. We will notify you once professional is assigned."
     },
     "confirmation": {
       "sourceNewPurchase": "New Purchase",

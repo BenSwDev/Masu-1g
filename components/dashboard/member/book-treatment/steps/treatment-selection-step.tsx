@@ -169,90 +169,6 @@ export default function TreatmentSelectionStep({
     onNext()
   }
 
-  const renderTreatmentCard = (treatment: ITreatment) => {
-    const isSelected = form.watch("selectedTreatmentId") === treatment._id.toString()
-    const isLocked = isTreatmentLockedBySource && !isSelected
-    const isDurationBased =
-      treatment.pricingType === "duration_based" && treatment.durations && treatment.durations.length > 0
-
-    return (
-      <FormItem key={treatment._id.toString()}>
-        <FormControl>
-          <RadioGroupItem
-            value={treatment._id.toString()}
-            id={`treatment-${treatment._id.toString()}`}
-            className="peer sr-only"
-            disabled={isLocked}
-            onClick={() => {
-              if (!isLocked) {
-                form.setValue("selectedTreatmentId", treatment._id.toString())
-                form.setValue("selectedDurationId", undefined, { shouldValidate: true })
-              }
-            }}
-          />
-        </FormControl>
-        <Label
-          htmlFor={`treatment-${treatment._id.toString()}`}
-          className={`block h-full ${isLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-        >
-          <Card
-            className={`flex flex-col hover:shadow-lg transition-all h-full ${isSelected ? "ring-2 ring-primary border-primary shadow-lg" : "border-border hover:border-muted-foreground/50"}`}
-          >
-            <CardHeader>
-              <CardTitle>{treatment.name}</CardTitle>
-              {treatment.description && (
-                <CardDescription className="text-xs line-clamp-3">{treatment.description}</CardDescription>
-              )}
-            </CardHeader>
-            <CardContent className="flex-grow">
-              {isSelected && isDurationBased && (
-                <Controller
-                  control={form.control}
-                  name="selectedDurationId"
-                  render={({ field }) => (
-                    <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-2">
-                      <FormLabel className="text-sm font-medium">
-                        {t("bookings.steps.treatment.selectDuration")}
-                      </FormLabel>
-                      {treatment.durations
-                        ?.filter((d) => d.isActive)
-                        .map((duration) => (
-                          <FormItem key={duration._id.toString()} className="flex items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value={duration._id.toString()} id={`${treatment._id}-${duration._id}`} />
-                            </FormControl>
-                            <Label
-                              htmlFor={`${treatment._id}-${duration._id}`}
-                              className="font-normal w-full flex justify-between"
-                            >
-                              <span>
-                                {duration.minutes} {t("common.minutes")}
-                              </span>
-                              <span className="font-semibold text-primary/90">
-                                {duration.price} {t("common.currency")}
-                              </span>
-                            </Label>
-                          </FormItem>
-                        ))}
-                      <FormMessage>{form.formState.errors.selectedDurationId?.message}</FormMessage>
-                    </RadioGroup>
-                  )}
-                />
-              )}
-            </CardContent>
-            <CardFooter className="mt-auto">
-              {!isDurationBased && (
-                <p className="font-semibold text-primary text-sm">
-                  {treatment.fixedPrice} {t("common.currency")}
-                </p>
-              )}
-            </CardFooter>
-          </Card>
-        </Label>
-      </FormItem>
-    )
-  }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
@@ -335,15 +251,126 @@ export default function TreatmentSelectionStep({
         )}
 
         {/* Treatment Selection */}
-        <div className="space-y-4">
-          {((showCategorySelection && selectedCategory) || !showCategorySelection) && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {(showCategorySelection ? filteredTreatmentsByCategory : availableTreatmentsForStep).map(
-                renderTreatmentCard,
-              )}
-            </div>
-          )}
-        </div>
+        {((showCategorySelection && selectedCategory) || !showCategorySelection) && (
+          <FormField
+            control={form.control}
+            name="selectedTreatmentId"
+            render={({ field }) => (
+              <FormItem className="space-y-4">
+                <FormLabel className="text-lg font-semibold">{t("bookings.steps.treatment.selectTreatment")}</FormLabel>
+                <FormControl>
+                  <RadioGroup
+                    onValueChange={(value) => {
+                      field.onChange(value)
+                      form.setValue("selectedDurationId", undefined, { shouldValidate: true })
+                    }}
+                    value={field.value}
+                    className="grid grid-cols-1 gap-4 md:grid-cols-2"
+                  >
+                    {(showCategorySelection ? filteredTreatmentsByCategory : availableTreatmentsForStep).map(
+                      (treatment) => {
+                        const isSelected = field.value === treatment._id.toString()
+                        const isLocked = isTreatmentLockedBySource && !isSelected
+                        const isDurationBased =
+                          treatment.pricingType === "duration_based" &&
+                          treatment.durations &&
+                          treatment.durations.length > 0
+
+                        return (
+                          <FormItem key={treatment._id.toString()}>
+                            <FormControl>
+                              <RadioGroupItem
+                                value={treatment._id.toString()}
+                                id={`treatment-${treatment._id.toString()}`}
+                                className="peer sr-only"
+                                disabled={isLocked}
+                              />
+                            </FormControl>
+                            <Label
+                              htmlFor={`treatment-${treatment._id.toString()}`}
+                              className={`block h-full ${isLocked ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            >
+                              <Card
+                                className={`flex flex-col hover:shadow-lg transition-all h-full ${
+                                  isSelected
+                                    ? "ring-2 ring-primary border-primary shadow-lg"
+                                    : "border-border hover:border-muted-foreground/50"
+                                }`}
+                              >
+                                <CardHeader>
+                                  <CardTitle>{treatment.name}</CardTitle>
+                                  {treatment.description && (
+                                    <CardDescription className="text-xs line-clamp-3">
+                                      {treatment.description}
+                                    </CardDescription>
+                                  )}
+                                </CardHeader>
+                                <CardContent className="flex-grow">
+                                  {isSelected && isDurationBased && (
+                                    <Controller
+                                      control={form.control}
+                                      name="selectedDurationId"
+                                      render={({ field: durationField }) => (
+                                        <RadioGroup
+                                          onValueChange={durationField.onChange}
+                                          value={durationField.value}
+                                          className="space-y-2"
+                                        >
+                                          <FormLabel className="text-sm font-medium">
+                                            {t("bookings.steps.treatment.selectDuration")}
+                                          </FormLabel>
+                                          {treatment.durations
+                                            ?.filter((d) => d.isActive)
+                                            .map((duration) => (
+                                              <FormItem
+                                                key={duration._id.toString()}
+                                                className="flex items-center space-x-3 space-y-0"
+                                              >
+                                                <FormControl>
+                                                  <RadioGroupItem
+                                                    value={duration._id.toString()}
+                                                    id={`${treatment._id}-${duration._id}`}
+                                                  />
+                                                </FormControl>
+                                                <Label
+                                                  htmlFor={`${treatment._id}-${duration._id}`}
+                                                  className="font-normal w-full flex justify-between"
+                                                >
+                                                  <span>
+                                                    {duration.minutes} {t("common.minutes")}
+                                                  </span>
+                                                  <span className="font-semibold text-primary/90">
+                                                    {duration.price} {t("common.currency")}
+                                                  </span>
+                                                </Label>
+                                              </FormItem>
+                                            ))}
+                                          <FormMessage>{form.formState.errors.selectedDurationId?.message}</FormMessage>
+                                        </RadioGroup>
+                                      )}
+                                    />
+                                  )}
+                                </CardContent>
+                                <CardFooter className="mt-auto">
+                                  {!isDurationBased && (
+                                    <p className="font-semibold text-primary text-sm">
+                                      {treatment.fixedPrice} {t("common.currency")}
+                                    </p>
+                                  )}
+                                </CardFooter>
+                              </Card>
+                            </Label>
+                          </FormItem>
+                        )
+                      },
+                    )}
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* Therapist Gender Preference */}
         <FormField

@@ -130,7 +130,8 @@
     "invalidInput": "Invalid input provided.",
     "currencySymbol": "₪",
     "cardEndingIn": "Card ending in",
-    "orderSummary": "Order Summary"
+    "orderSummary": "Order Summary",
+    "termsOfService": "Terms of Service"
   },
   "dashboard": {
     "sidebar": {
@@ -523,7 +524,14 @@
       "isDefault": "Default Address",
       "additionalNotes": "Additional Notes",
       "hasPrivateParkingFull": "Private parking available",
-      "addressTypePlaceholder": "Select address type"
+      "addressTypePlaceholder": "Select address type",
+      "isDefault": "Default Address",
+      "floor": "Floor",
+      "apartmentNumber": "Apartment Number",
+      "city": "City",
+      "street": "Street",
+      "streetNumber": "Street Number",
+      "apartment": "Apartment"
     },
     "types": {
       "apartment": "Apartment",
@@ -848,6 +856,12 @@
       "expiry": "Expiry",
       "monthPlaceholder": "MM",
       "yearPlaceholder": "YY",
+      "cardHolderName": "Card Holder Name",
+      "cardHolderNamePlaceholder": "Name as it appears on card",
+      "cardNamePlaceholder": "e.g., My Visa",
+      "isDefault": "Set as default payment method",
+      "monthPlaceholder": "MM",
+      "yearPlaceholder": "YY",
       "cardHolderNamePlaceholder": "Name as it appears on card",
       "cardNamePlaceholder": "e.g., My Visa"
     },
@@ -867,7 +881,8 @@
     "selectPaymentMethodError": "Please select a payment method.",
     "unknown": "Unknown",
     "details": "Payment Method Details",
-    "defaultCard": "Default"
+    "defaultCard": "Default",
+    "defaultCard": "Default Card"
   },
   "city": "City",
   "street": "Street",
@@ -916,6 +931,8 @@
     },
     "selectCategory": "Select Category",
     "categories": {
+      "massages": "Massages",
+      "facial_treatments": "Facial Treatments",
       "massages": "Massages",
       "facial_treatments": "Facial Treatments"
     },
@@ -1287,7 +1304,9 @@
         "bookingId": "Booking ID",
         "detailsSentToEmail": "A confirmation with your booking details has been sent to your email.",
         "viewMyBookings": "View My Bookings",
-        "bookAnotherTreatment": "Book Another Treatment"
+        "bookAnotherTreatment": "Book Another Treatment",
+        "status": "Status",
+        "paymentStatus": "Payment Status"
       }
     },
     "errors": {
@@ -1519,6 +1538,10 @@
     }
   },
   "users": {
+    "fields": {
+      "namePlaceholder": "Enter full name",
+      "phonePlaceholder": "Enter phone number"
+    },
     "fields": {
       "namePlaceholder": "Enter full name",
       "phonePlaceholder": "Enter phone number"

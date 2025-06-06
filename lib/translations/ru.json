@@ -125,7 +125,8 @@
     "invalidInput": "Предоставлены неверные данные.",
     "currencySymbol": "₪",
     "cardEndingIn": "Карта, заканчивающаяся на",
-    "orderSummary": "Сводка заказа"
+    "orderSummary": "Сводка заказа",
+    "termsOfService": "Условия обслуживания"
   },
   "dashboard": {
     "sidebar": {
@@ -515,10 +516,11 @@
       "roomNumber": "Номер комнаты",
       "instructions": "Инструкции",
       "hasPrivateParking": "Есть парковка",
-      "isDefault": "По умолчанию",
+      "isDefault": "Адрес по умолчанию",
       "additionalNotes": "Дополнительные заметки",
       "hasPrivateParkingFull": "Имеется частная парковка",
-      "addressTypePlaceholder": "Выберите тип адреса"
+      "addressTypePlaceholder": "Выберите тип адреса",
+      "apartment": "Квартира"
     },
     "types": {
       "apartment": "Квартира",
@@ -842,8 +844,10 @@
       "cvv": "CVV",
       "monthPlaceholder": "ММ",
       "yearPlaceholder": "ГГ",
+      "cardHolderName": "Имя владельца карты",
       "cardHolderNamePlaceholder": "Имя как на карте",
-      "cardNamePlaceholder": "например, Моя Visa"
+      "cardNamePlaceholder": "напр., Моя Visa",
+      "isDefault": "Установить как способ оплаты по умолчанию"
     },
     "deleted": "Удалено",
     "deleteError": "Ошибка удаления",
@@ -860,7 +864,8 @@
     "addNewLink": "Добавить новый способ оплаты",
     "managePaymentMethods": "Управление способами оплаты",
     "unknown": "Неизвестно",
-    "details": "Детали способа оплаты"
+    "details": "Детали способа оплаты",
+    "defaultCard": "По умолчанию"
   },
   "city": "city",
   "street": "street",
@@ -913,7 +918,9 @@
       "body": "Уход за телом",
       "hair": "Уход за волосами",
       "nails": "Уход за ногтями",
-      "other": "Другое"
+      "other": "Другое",
+      "massages": "Массажи",
+      "facial_treatments": "Процедуры для лица"
     },
     "activeDescription": "Активные процедуры будут показаны",
     "pricing": "Ценообразование",
@@ -1287,7 +1294,9 @@
       },
       "confirmation": {
         "title": "Запись подтверждена!",
-        "successMessage": "Ваша процедура успешно забронирована. Мы подбираем для вас лучшего специалиста."
+        "successMessage": "Ваша процедура успешно забронирована. Мы подбираем для вас лучшего специалиста.",
+        "status": "Статус",
+        "paymentStatus": "Статус платежа"
       }
     },
     "errors": {

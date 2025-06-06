@@ -135,7 +135,8 @@
     "invalidInput": "קלט לא תקין.",
     "currencySymbol": "₪",
     "cardEndingIn": "כרטיס המסתיים בספרות",
-    "orderSummary": "סיכום הזמנה"
+    "orderSummary": "סיכום הזמנה",
+    "termsOfService": "תנאי שימוש"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -325,7 +326,10 @@
       "instructions": "הוראות הגעה",
       "hasPrivateParking": "חניה פרטית",
       "isDefault": "כתובת ברירת מחדל",
-      "additionalNotes": "הערות נוספות"
+      "additionalNotes": "הערות נוספות",
+      "hasPrivateParkingFull": "קיימת חניה פרטית",
+      "addressTypePlaceholder": "בחר סוג כתובת",
+      "apartment": "דירה"
     },
     "createSuccess": "הכתובת נוצרה בהצלחה",
     "createError": "שגיאה ביצירת הכתובת",
@@ -346,10 +350,6 @@
     "updated": "הכתובת עודכנה",
     "addNewShort": "הוסף חדש",
     "addAddressDialogTitle": "הוספת כתובת חדשה",
-    "fields": {
-      "hasPrivateParkingFull": "קיימת חניה פרטית",
-      "addressTypePlaceholder": "בחר סוג כתובת"
-    },
     "selectedAddressDetails": "פרטי הכתובת שנבחרה"
   },
   "paymentMethods": {
@@ -365,7 +365,12 @@
       "cvv": "CVV",
       "cardHolderName": "שם בעל הכרטיס",
       "cardName": "שם הכרטיס (לדוגמה: ויזה שלי)",
-      "isDefault": "ברירת מחדל"
+      "isDefault": "ברירת מחדל",
+      "monthPlaceholder": "חודש",
+      "yearPlaceholder": "שנה",
+      "cardHolderNamePlaceholder": "השם כפי שמופיע על הכרטיס",
+      "cardNamePlaceholder": "לדוגמה: ויזה שלי",
+      "isDefault": "הגדר כאמצעי תשלום ברירת מחדל"
     },
     "createSuccess": "אמצעי התשלום נוצר בהצלחה",
     "createError": "שגיאה ביצירת אמצעי התשלום",
@@ -392,14 +397,7 @@
     "selectPaymentMethodError": "אנא בחר אמצעי תשלום.",
     "unknown": "לא ידוע",
     "details": "פרטי אמצעי תשלום",
-    "fields": {
-      "cardName": "שם הכרטיס",
-      "cardNumber": "מספר כרטיס",
-      "expiry": "תאריך תפוגה",
-      "expiryMonth": "חודש תפוגה",
-      "expiryYear": "שנת תפוגה",
-      "cvv": "CVV"
-    }
+    "defaultCard": "ברירת מחדל"
   },
   "treatments": {
     "title": "ניהול טיפולים",
@@ -423,7 +421,13 @@
     "minutes": "דקות",
     "categories": {
       "massages": "עיסויים",
-      "facial_treatments": "טיפולי פנים"
+      "facial_treatments": "טיפולי פנים",
+      "massage": "עיסוי",
+      "facial": "טיפול פנים",
+      "body": "טיפול גוף",
+      "hair": "טיפול שיער",
+      "nails": "טיפול ציפורניים",
+      "other": "אחר"
     },
     "fields": {
       "name": "שם הטיפול",
@@ -435,11 +439,18 @@
       "professionalPrice": "מחיר למטפל",
       "durations": "משכי זמן",
       "minutes": "דקות",
+      "duration": "משך זמן",
+      "name": "שם",
+      "description": "תיאור",
+      "category": "קטגוריה",
+      "pricingType": "סוג תמחור",
+      "price": "מחיר",
       "duration": "משך זמן"
     },
     "pricingTypes": {
       "fixed": "מחיר קבוע",
-      "durationBased": "מחיר לפי משך"
+      "durationBased": "מחיר לפי משך",
+      "durationBased": "מבוסס משך זמן"
     },
     "selectCategory": "בחר קטגוריה",
     "activeDescription": "טיפול פעיל יוצג ללקוחות",
@@ -465,26 +476,6 @@
     "noActiveDurations": "אין משכי זמן פעילים זמינים לטיפול זה.",
     "name": "שם הטיפול",
     "details": "פרטי הטיפול",
-    "categories": {
-      "massage": "עיסוי",
-      "facial": "טיפול פנים",
-      "body": "טיפול גוף",
-      "hair": "טיפול שיער",
-      "nails": "טיפול ציפורניים",
-      "other": "אחר"
-    },
-    "pricingTypes": {
-      "fixed": "מחיר קבוע",
-      "durationBased": "מבוסס משך זמן"
-    },
-    "fields": {
-      "name": "שם",
-      "description": "תיאור",
-      "category": "קטגוריה",
-      "pricingType": "סוג תמחור",
-      "price": "מחיר",
-      "duration": "משך זמן"
-    },
     "category": "קטגוריה",
     "selectCategoryPlaceholder": "בחר קטגוריה"
   },
@@ -1494,9 +1485,7 @@
       "thankYou": "תודה על הזמנתך!",
       "bookingNumber": "מספר הזמנה",
       "status": "סטטוס",
-      "status": {
-        "confirmed": "מאושרת - ממתין לשיבוץ מטפל/ת"
-      },
+      "paymentStatus": "סטטוס תשלום",
       "bookedFor": "הוזמן עבור",
       "recipientName": "שם המקבל/ת",
       "recipientPhone": "טלפון המקבל/ת",
@@ -1517,9 +1506,6 @@
       "totalAmount": "סכום כולל",
       "paymentDetails": "פרטי תשלום",
       "paymentStatus": "סטטוס תשלום",
-      "paymentStatus": {
-        "pending": "ממתין"
-      },
       "paymentMethod": "אמצעי תשלום",
       "viewBookingsLink": "צפה בהזמנות שלי",
       "contactSupport": "צור קשר עם התמיכה"

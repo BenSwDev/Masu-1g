@@ -18,6 +18,7 @@ import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/
 import { Progress } from "@/components/common/ui/progress" // Added Progress
 import { AlertCircle } from "lucide-react" // For error messages
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert" // For error messages
+import type { IBooking } from "@/lib/db/models/booking" // Add this import
 
 interface BookingWizardProps {
   initialData: BookingInitialData
@@ -43,7 +44,7 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
   const [calculatedPrice, setCalculatedPrice] = useState<CalculatedPriceDetails | null>(null)
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false)
-  const [bookingResult, setBookingResult] = useState<any>(null)
+  const [bookingResult, setBookingResult] = useState<IBooking | null>(null)
   const [workingHoursNote, setWorkingHoursNote] = useState<string | undefined>(undefined)
 
   const { toast } = useToast()
@@ -303,7 +304,9 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
           />
         )
       case CONFIRMATION_STEP_NUMBER:
-        return <BookingConfirmation bookingResult={bookingResult} />
+        return (
+          <BookingConfirmation bookingResult={bookingResult!} initialData={initialData} currentUser={currentUser} />
+        )
       default:
         return (
           <Alert variant="destructive">

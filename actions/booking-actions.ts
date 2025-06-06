@@ -20,7 +20,7 @@ import {
   type IFixedHours,
   type ISpecialDate,
 } from "@/lib/db/models/working-hours"
-import { getNextSequenceValue } from "@/lib/db/models/counter" // Import the new counter function
+import { getNextSequenceValue } from "@/lib/db/models/counter"
 
 import { logger } from "@/lib/logs/logger"
 import type { TimeSlot, CalculatedPriceDetails as ClientCalculatedPriceDetails } from "@/types/booking"
@@ -130,11 +130,8 @@ export async function getAvailableTimeSlots(
     })
     const dayEndTime = set(selectedDateUTC, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 })
 
-    // const now = new Date(); // This might have been the old way or implicitly server local
-    // const minimumBookingLeadTimeHours = settings.minimumBookingLeadTimeHours || 2;
-    // const minimumBookingTime = add(now, { hours: minimumBookingLeadTimeHours });
-    const nowUtc = new Date(Date.now()) // Get current time as UTC
-    const minimumBookingLeadTimeHours = settings.minimumBookingLeadTimeHours || 2 // Assuming settings is defined
+    const nowUtc = new Date(Date.now())
+    const minimumBookingLeadTimeHours = settings.minimumBookingLeadTimeHours || 2
     const minimumBookingTime = add(nowUtc, { hours: minimumBookingLeadTimeHours })
 
     while (isBefore(currentTimeSlotStart, dayEndTime)) {
@@ -425,48 +422,72 @@ export async function createBooking(
   try {
     await dbConnect()
 
-    // Fetch user details for denormalization
     const bookingUser = await User.findById(validatedPayload.userId).select("name email phone").lean()
     if (!bookingUser) {
       return { success: false, error: "bookings.errors.userNotFound" }
     }
 
-    // Determine address snapshot
     let bookingAddressSnapshot: IBookingAddressSnapshot | undefined
+
     if (validatedPayload.customAddressDetails) {
       bookingAddressSnapshot = validatedPayload.customAddressDetails
     } else if (validatedPayload.selectedAddressId) {
-      const selectedAddressDoc = await Address.findById(validatedPayload.selectedAddressId).lean()
-      if (selectedAddressDoc) {
-        bookingAddressSnapshot = {
-          fullAddress: selectedAddressDoc.fullAddress,
-          city: selectedAddressDoc.city,
-          street: selectedAddressDoc.street,
-          streetNumber: selectedAddressDoc.streetNumber,
-          apartment: selectedAddressDoc.apartment,
-          entrance: selectedAddressDoc.entrance,
-          floor: selectedAddressDoc.floor,
-          notes: selectedAddressDoc.notes,
-        }
-      } else {
+      const selectedAddressDoc = (await Address.findById(validatedPayload.selectedAddressId).lean()) as IAddress | null
+
+      if (!selectedAddressDoc) {
+        logger.error("Selected address not found during booking creation", {
+          selectedAddressId: validatedPayload.selectedAddressId,
+          userId: validatedPayload.userId,
+        })
         return { success: false, error: "bookings.errors.addressNotFound" }
       }
+
+      // Construct the snapshot from the selected address document
+      // Ensure all fields required by IBookingAddressSnapshot are populated
+      bookingAddressSnapshot = {
+        fullAddress: selectedAddressDoc.fullAddress, // This is the critical field from the error
+        city: selectedAddressDoc.city,
+        street: selectedAddressDoc.street,
+        streetNumber: selectedAddressDoc.streetNumber,
+        apartment: selectedAddressDoc.apartmentDetails?.apartmentNumber,
+        entrance:
+          selectedAddressDoc.addressType === "apartment"
+            ? selectedAddressDoc.apartmentDetails?.entrance
+            : selectedAddressDoc.addressType === "house"
+              ? selectedAddressDoc.houseDetails?.entrance
+              : undefined,
+        floor:
+          selectedAddressDoc.addressType === "apartment"
+            ? selectedAddressDoc.apartmentDetails?.floor?.toString()
+            : undefined,
+        notes: selectedAddressDoc.additionalNotes, // Assuming 'additionalNotes' from IAddress maps to 'notes' in snapshot
+      }
+
+      // Validate that all required fields for the snapshot are present
+      if (!bookingAddressSnapshot.fullAddress || !bookingAddressSnapshot.city || !bookingAddressSnapshot.street) {
+        logger.error("Failed to construct a valid bookingAddressSnapshot from selectedAddressDoc", {
+          selectedAddressDoc,
+          constructedSnapshot: bookingAddressSnapshot,
+        })
+        return { success: false, error: "bookings.errors.addressSnapshotCreationFailed" }
+      }
     } else {
-      return { success: false, error: "bookings.errors.addressRequired" } // Should be caught by validation
+      // This case should ideally be caught by Zod validation if address is always required
+      logger.warn("No address provided for booking", { userId: validatedPayload.userId })
+      return { success: false, error: "bookings.errors.addressRequired" }
     }
 
     await mongooseDbSession.withTransaction(async () => {
-      // Generate unique 6-digit booking number
       const nextBookingNum = await getNextSequenceValue("bookingNumber")
       const bookingNumber = nextBookingNum.toString().padStart(6, "0")
 
       const newBooking = new Booking({
         ...validatedPayload,
-        bookingNumber, // Add the generated booking number
+        bookingNumber,
         bookedByUserName: bookingUser.name,
         bookedByUserEmail: bookingUser.email,
         bookedByUserPhone: bookingUser.phone,
-        bookingAddressSnapshot, // Add the address snapshot
+        bookingAddressSnapshot, // Use the fully populated snapshot
         status: "confirmed",
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
@@ -501,13 +522,12 @@ export async function createBooking(
               : validatedPayload.paymentDetails.paymentStatus || "pending",
           transactionId: validatedPayload.paymentDetails.transactionId,
         },
-        professionalId: null, // Explicitly set to null as per requirement
+        professionalId: null,
       })
 
       await newBooking.save({ session: mongooseDbSession })
       bookingResult = newBooking
 
-      // ... (rest of the transaction logic for subscriptions, vouchers, coupons)
       if (
         validatedPayload.priceDetails.redeemedUserSubscriptionId &&
         validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription
@@ -593,7 +613,6 @@ export async function createBooking(
         ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
       }
 
-      // --- START: Send Notifications ---
       try {
         const userForNotification = await User.findById(finalBookingObject.userId)
           .select("name email phone notificationPreferences")
@@ -607,7 +626,7 @@ export async function createBooking(
           const bookingSuccessData: BookingSuccessNotificationData = {
             type: "BOOKING_SUCCESS",
             userName: finalBookingObject.recipientName || userForNotification.name || "User",
-            bookingId: finalBookingObject.bookingNumber, // Use bookingNumber for display
+            bookingId: finalBookingObject.bookingNumber,
             treatmentName: treatment.name,
             bookingDateTime: finalBookingObject.bookingDateTime,
             orderDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${finalBookingObject._id.toString()}`,
@@ -643,7 +662,6 @@ export async function createBooking(
           bookingId: finalBookingObject._id.toString(),
         })
       }
-      // --- END: Send Notifications ---
 
       return { success: true, booking: finalBookingObject }
     } else {
@@ -660,10 +678,6 @@ export async function createBooking(
     await mongooseDbSession.endSession()
   }
 }
-
-// ... (rest of the actions: getUserBookings, cancelBooking, getBookingInitialData, etc. remain largely the same,
-// but getBookingInitialData already returns currentUser which has name, email, phone)
-// Make sure getBookingInitialData returns all necessary address fields if not already.
 
 export async function getUserBookings(
   userId: string,
@@ -726,9 +740,7 @@ export async function getUserBookings(
         populate: { path: "durations" },
       })
       .populate<{ addressId: IAddress | null }>({
-        // Populate full address for snapshot if needed, or use bookingAddressSnapshot
         path: "addressId",
-        // select: "city street streetNumber fullAddress apartment entrance floor notes", // Select all needed fields
       })
       .populate<{ professionalId: Pick<IUser, "_id" | "name"> | null }>({
         path: "professionalId",
@@ -741,14 +753,12 @@ export async function getUserBookings(
 
     const bookings: PopulatedBooking[] = rawBookings.map((booking) => {
       const populatedBooking: PopulatedBooking = {
-        ...(booking as any), // Cast to any to spread, then override
+        ...(booking as any),
         _id: booking._id as Types.ObjectId,
         treatmentId: null,
-        // addressId is now bookingAddressSnapshot or populated from addressId
         addressId: booking.bookingAddressSnapshot
           ? {
-              // Prefer snapshot
-              _id: booking.addressId || new mongoose.Types.ObjectId(), // Use original addressId if exists, else dummy
+              _id: booking.addressId || new mongoose.Types.ObjectId(),
               city: booking.bookingAddressSnapshot.city,
               street: booking.bookingAddressSnapshot.street,
               streetNumber: booking.bookingAddressSnapshot.streetNumber,
@@ -940,7 +950,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         isActive: true,
       }).lean(),
       User.findById(userId).select("preferences name email phone notificationPreferences treatmentPreferences").lean(),
-      Address.find({ userId, isArchived: { $ne: true } }).lean(), // Fetch all address fields
+      Address.find({ userId, isArchived: { $ne: true } }).lean(),
       fetchUserActivePaymentMethods(),
       Treatment.find({ isActive: true }).populate("durations").lean(),
       WorkingHoursSettings.findOne().lean(),
@@ -1034,12 +1044,11 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         notificationMethods: notificationPrefs.methods || ["email"],
         notificationLanguage: notificationPrefs.language || "he",
       },
-      userAddresses, // This now contains full address objects
+      userAddresses,
       userPaymentMethods,
       activeTreatments,
       workingHoursSettings,
       currentUser: {
-        // This already contains the necessary user details
         id: user._id.toString(),
         name: user.name,
         email: user.email,
@@ -1073,14 +1082,11 @@ export async function professionalAcceptBooking(
       if (!booking) {
         throw new Error("bookings.errors.bookingNotFound")
       }
-      // A booking is 'confirmed' upon creation by user.
-      // Professional "accepts" by assigning themselves if professionalId is null.
       if (booking.status !== "confirmed" || booking.professionalId) {
         throw new Error("bookings.errors.bookingNotAvailableForProfessionalAssignment")
       }
 
       booking.professionalId = new mongoose.Types.ObjectId(professionalId)
-      // Status remains 'confirmed', but now with a professional.
       await booking.save({ session: mongooseDbSession })
       acceptedBooking = booking.toObject()
     })
@@ -1101,8 +1107,7 @@ export async function professionalAcceptBooking(
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
 
           const notificationData: BookingConfirmedClientNotificationData = {
-            // This notification type might need adjustment or a new one for "Professional Assigned"
-            type: "BOOKING_CONFIRMED_CLIENT", // Or a new type like "PROFESSIONAL_ASSIGNED_CLIENT"
+            type: "BOOKING_CONFIRMED_CLIENT",
             userName: clientUser.name || "לקוח/ה",
             professionalName: professional.name || "מטפל/ת",
             bookingDateTime: acceptedBooking.bookingDateTime,
@@ -1163,7 +1168,6 @@ export async function professionalMarkEnRoute(
       return { success: false, error: "common.forbidden" }
     }
     if (booking.status !== "confirmed") {
-      // Professional can only mark en-route if booking is confirmed (and assigned to them)
       return { success: false, error: "bookings.errors.bookingNotInCorrectStateForEnRoute" }
     }
 

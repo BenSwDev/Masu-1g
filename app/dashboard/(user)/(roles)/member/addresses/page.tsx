@@ -9,10 +9,12 @@ import type { IAddress } from "@/lib/db/models/address"
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
+import { PlusCircle } from "lucide-react"
 
 export default function AddressesPage() {
   const { t } = useTranslation()
-  const [isAddingAddress, setIsAddingAddress] = useState(false)
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [editingAddress, setEditingAddress] = useState<IAddress | undefined>()
 
   const {
@@ -24,7 +26,7 @@ export default function AddressesPage() {
     queryFn: async () => {
       const result = await getUserAddresses()
       if (!result.success) {
-        throw new Error(result.error || "Failed to fetch addresses")
+        throw new Error(result.error || t("errors.fetchFailed", { context: "addresses" }))
       }
       return result.addresses || []
     },
@@ -32,12 +34,17 @@ export default function AddressesPage() {
 
   const handleEdit = (address: IAddress) => {
     setEditingAddress(address)
-    setIsAddingAddress(false)
+    setIsAddressModalOpen(true)
   }
 
-  const handleCancel = () => {
+  const handleAddNew = () => {
     setEditingAddress(undefined)
-    setIsAddingAddress(false)
+    setIsAddressModalOpen(true)
+  }
+
+  const handleModalClose = () => {
+    setIsAddressModalOpen(false)
+    setEditingAddress(undefined) // Ensure editingAddress is cleared when modal closes
   }
 
   if (error) {
@@ -55,24 +62,34 @@ export default function AddressesPage() {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">{t("addresses.title")}</h1>
-        {!isAddingAddress && !editingAddress && (
-          <Button onClick={() => setIsAddingAddress(true)}>{t("addresses.addNew")}</Button>
-        )}
+        <Button onClick={handleAddNew}>
+          <PlusCircle className="mr-2 rtl:ml-2 h-4 w-4" />
+          {t("addresses.addNew")}
+        </Button>
       </div>
 
-      {isAddingAddress && (
-        <div className="bg-card rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">{t("addresses.addNew")}</h2>
-          <AddressForm onCancel={handleCancel} />
-        </div>
-      )}
-
-      {editingAddress && (
-        <div className="bg-card rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-semibold mb-4">{t("addresses.edit")}</h2>
-          <AddressForm address={editingAddress} onCancel={handleCancel} />
-        </div>
-      )}
+      <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
+        {/* DialogTrigger is handled by the button above and onEdit calls */}
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingAddress
+                ? t("addresses.editAddressDialogTitle", "Edit Address")
+                : t("addresses.addAddressDialogTitle", "Add New Address")}
+            </DialogTitle>
+          </DialogHeader>
+          {/* Render AddressForm only when modal is open and ready to avoid premature form state issues */}
+          {isAddressModalOpen && (
+            <AddressForm
+              address={editingAddress}
+              onCancel={handleModalClose}
+              // onSuccess is not strictly needed here as invalidation + onCancel handles it
+              // but if AddressForm requires it or for consistency:
+              // onSuccess={handleModalClose}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -88,14 +105,18 @@ export default function AddressesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {addresses?.map((address) => (
-            <AddressCard key={address._id} address={address} onEdit={handleEdit} />
+            <AddressCard key={address._id.toString()} address={address} onEdit={handleEdit} />
           ))}
         </div>
       )}
 
-      {!isLoading && !isAddingAddress && !editingAddress && addresses?.length === 0 && (
+      {!isLoading && addresses?.length === 0 && (
         <div className="text-center py-12 bg-card rounded-lg shadow-sm">
           <p className="text-muted-foreground">{t("addresses.noAddresses")}</p>
+          <Button onClick={handleAddNew} className="mt-4">
+            <PlusCircle className="mr-2 rtl:ml-2 h-4 w-4" />
+            {t("addresses.addFirstAddress", "Add your first address")}
+          </Button>
         </div>
       )}
     </div>

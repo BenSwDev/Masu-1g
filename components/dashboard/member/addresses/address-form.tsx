@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { IAddress } from "@/lib/db/models/address"
@@ -13,18 +12,17 @@ import { Checkbox } from "@/components/common/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { createAddress, updateAddress } from "@/actions/address-actions"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
 
 interface AddressFormProps {
   address?: IAddress
   onCancel: () => void
+  onSuccess?: (newAddress: IAddress) => void // New prop
 }
 
-export function AddressForm({ address, onCancel }: AddressFormProps) {
-  const { t, dir } = useTranslation()
-  const router = useRouter()
+export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) {
+  const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [isLoading, setIsLoading] = useState(false)
   const [addressType, setAddressType] = useState(address?.addressType || "apartment")
@@ -35,7 +33,8 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
 
     try {
       const formData = new FormData(e.currentTarget)
-      const data = {
+      const data: Partial<IAddress> & { addressType: IAddress["addressType"] } = {
+        // Ensure addressType is always present
         city: formData.get("city")?.toString() || "",
         street: formData.get("street")?.toString() || "",
         streetNumber: formData.get("streetNumber")?.toString() || "",
@@ -49,7 +48,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
       switch (data.addressType) {
         case "apartment":
           data.apartmentDetails = {
-            floor: Number.parseInt(formData.get("floor") as string),
+            floor: formData.get("floor") ? Number.parseInt(formData.get("floor") as string) : undefined,
             apartmentNumber: formData.get("apartmentNumber") as string,
             entrance: formData.get("entrance") as string,
           }
@@ -64,7 +63,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
           data.officeDetails = {
             buildingName: formData.get("buildingName") as string,
             entrance: formData.get("entrance") as string,
-            floor: Number.parseInt(formData.get("floor") as string),
+            floor: formData.get("floor") ? Number.parseInt(formData.get("floor") as string) : undefined,
           }
           break
         case "hotel":
@@ -80,25 +79,33 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
           break
       }
 
-      const result = address ? await updateAddress(address._id.toString(), data) : await createAddress(data)
+      const result = address
+        ? await updateAddress(address._id.toString(), data as IAddress) // Cast needed due to partial nature for creation
+        : await createAddress(data as IAddress) // Cast needed
 
-      if (result.success) {
+      if (result.success && result.address) {
         toast.success(address ? t("addresses.updateSuccess") : t("addresses.createSuccess"))
         queryClient.invalidateQueries({ queryKey: ["addresses"] })
-        onCancel()
-        // Reset form state
-        setIsLoading(false)
+
+        if (onSuccess) {
+          onSuccess(result.address)
+        } else {
+          onCancel() // Fallback to close if no onSuccess (e.g. from main addresses page)
+        }
+        // Reset form state if needed (though component might unmount)
         setAddressType("apartment")
       } else {
         toast.error(result.error || (address ? t("addresses.updateError") : t("addresses.createError")))
       }
     } catch (error) {
       toast.error(address ? t("addresses.updateError") : t("addresses.createError"))
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 py-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="city">{t("addresses.fields.city")}</Label>
@@ -131,7 +138,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
           <Label htmlFor="addressType">{t("addresses.fields.addressType")}</Label>
           <Select name="addressType" defaultValue={addressType} onValueChange={setAddressType}>
             <SelectTrigger className="focus:ring-turquoise-500">
-              <SelectValue />
+              <SelectValue placeholder={t("addresses.fields.addressTypePlaceholder", "Select address type")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="apartment">{t("addresses.types.apartment")}</SelectItem>
@@ -153,8 +160,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
               id="floor"
               name="floor"
               type="number"
-              defaultValue={address?.apartmentDetails?.floor}
-              required
+              defaultValue={address?.apartmentDetails?.floor?.toString()}
               className="focus:ring-turquoise-500"
             />
           </div>
@@ -164,7 +170,6 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
               id="apartmentNumber"
               name="apartmentNumber"
               defaultValue={address?.apartmentDetails?.apartmentNumber}
-              required
               className="focus:ring-turquoise-500"
             />
           </div>
@@ -188,7 +193,6 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
               id="doorName"
               name="doorName"
               defaultValue={address?.houseDetails?.doorName}
-              required
               className="focus:ring-turquoise-500"
             />
           </div>
@@ -230,7 +234,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
               id="floor"
               name="floor"
               type="number"
-              defaultValue={address?.officeDetails?.floor}
+              defaultValue={address?.officeDetails?.floor?.toString()}
               className="focus:ring-turquoise-500"
             />
           </div>
@@ -245,7 +249,6 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
               id="hotelName"
               name="hotelName"
               defaultValue={address?.hotelDetails?.hotelName}
-              required
               className="focus:ring-turquoise-500"
             />
           </div>
@@ -255,7 +258,6 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
               id="roomNumber"
               name="roomNumber"
               defaultValue={address?.hotelDetails?.roomNumber}
-              required
               className="focus:ring-turquoise-500"
             />
           </div>
@@ -275,7 +277,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
       )}
 
       <div className="space-y-4">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 rtl:space-x-reverse">
           <Checkbox
             id="hasPrivateParking"
             name="hasPrivateParking"
@@ -285,7 +287,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
           <Label htmlFor="hasPrivateParking">{t("addresses.fields.hasPrivateParking")}</Label>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 rtl:space-x-reverse">
           <Checkbox
             id="isDefault"
             name="isDefault"
@@ -306,7 +308,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
         />
       </div>
 
-      <div className="flex justify-end space-x-4">
+      <div className="flex justify-end space-x-4 rtl:space-x-reverse">
         <Button
           type="button"
           variant="outline"
@@ -319,7 +321,7 @@ export function AddressForm({ address, onCancel }: AddressFormProps) {
         <Button type="submit" disabled={isLoading} className="bg-turquoise-500 hover:bg-turquoise-600">
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 rtl:ml-2 h-4 w-4 animate-spin" />
               {t("common.loading")}
             </>
           ) : address ? (

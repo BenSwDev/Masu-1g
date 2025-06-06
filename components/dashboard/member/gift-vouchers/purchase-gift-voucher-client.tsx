@@ -45,6 +45,7 @@ import { PurchaseSummary } from "@/components/common/purchase/purchase-summary"
 import { AnimatedContainer } from "@/components/common/purchase/animated-container"
 import { PurchaseSuccess } from "@/components/common/purchase/purchase-success"
 import { PaymentMethodSelector } from "@/components/common/purchase/payment-method-selector"
+import { PhoneInput } from "@/components/common/phone-input"
 
 interface TreatmentDuration {
   _id: string
@@ -629,11 +630,22 @@ export default function PurchaseGiftVoucherClient({
                     <Label htmlFor="recipientPhone" className="text-base font-medium">
                       {t("purchaseGiftVoucher.recipientPhone")}
                     </Label>
-                    <Input
-                      id="recipientPhone"
-                      {...giftForm.register("recipientPhone")}
-                      placeholder={t("purchaseGiftVoucher.phonePlaceholder")}
-                      className="h-11"
+                    <Controller
+                      name="recipientPhone"
+                      control={giftForm.control}
+                      render={({ field }) => (
+                        <PhoneInput
+                          id="recipientPhone"
+                          name={field.name}
+                          placeholder={t("purchaseGiftVoucher.phonePlaceholder")}
+                          className="h-11" // PhoneInput itself doesn't take h-11 directly, it styles its internal input.
+                          // The overall height might differ slightly. We can wrap or adjust if needed.
+                          fullNumberValue={field.value || ""}
+                          onPhoneChange={field.onChange}
+                          defaultCountryCode="+972"
+                          ref={field.ref}
+                        />
+                      )}
                     />
                   </div>
                 </div>

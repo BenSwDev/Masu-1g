@@ -30,6 +30,7 @@ import type { IAddress } from "@/lib/db/models/address"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/common/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
+import { PhoneInput } from "@/components/common/phone-input"
 
 interface SchedulingStepProps {
   initialData: BookingInitialData
@@ -434,7 +435,14 @@ export default function SchedulingStep({
                 <FormItem>
                   <FormLabel>{t("bookings.steps.scheduling.recipientPhone")}</FormLabel>
                   <FormControl>
-                    <Input placeholder={t("users.fields.phonePlaceholder")} {...field} />
+                    <PhoneInput
+                      id="recipientPhone" // Or field.name
+                      name={field.name}
+                      placeholder={t("users.fields.phonePlaceholder")}
+                      fullNumberValue={field.value || ""}
+                      onPhoneChange={field.onChange}
+                      ref={field.ref}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

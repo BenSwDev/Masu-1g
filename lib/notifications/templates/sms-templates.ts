@@ -133,6 +133,7 @@ function getAppointmentSmsTemplate(date: Date, serviceName: string, language: SM
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Jerusalem", // Added timezone
   }
   const localizedDate = date.toLocaleDateString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
@@ -214,11 +215,11 @@ function getPurchaseSuccessGiftVoucherSmsTemplate(
 function getBookingSuccessSmsTemplate(data: BookingSuccessNotificationData, language: SMSLanguage): string {
   const dateTime = new Date(data.bookingDateTime).toLocaleTimeString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { hour: "2-digit", minute: "2-digit" },
+    { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" },
   )
   const dateDate = new Date(data.bookingDateTime).toLocaleDateString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { day: "2-digit", month: "2-digit", year: "numeric" },
+    { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" },
   )
 
   switch (language) {
@@ -235,11 +236,11 @@ function getBookingSuccessSmsTemplate(data: BookingSuccessNotificationData, lang
 function getNewBookingAvailableSmsTemplate(data: NewBookingAvailableNotificationData, language: SMSLanguage): string {
   const dateTime = new Date(data.bookingDateTime).toLocaleTimeString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { hour: "2-digit", minute: "2-digit" },
+    { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" },
   )
   const dateDate = new Date(data.bookingDateTime).toLocaleDateString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { day: "2-digit", month: "2-digit", year: "numeric" },
+    { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" },
   )
   const locationInfo = data.bookingAddress
     ? language === "he"
@@ -266,11 +267,11 @@ function getBookingConfirmedClientSmsTemplate(
 ): string {
   const dateTime = new Date(data.bookingDateTime).toLocaleTimeString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { hour: "2-digit", minute: "2-digit" },
+    { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" },
   )
   const dateDate = new Date(data.bookingDateTime).toLocaleDateString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
-    { day: "2-digit", month: "2-digit", year: "numeric" },
+    { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" },
   )
   switch (language) {
     case "he":

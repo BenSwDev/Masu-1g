@@ -20,7 +20,7 @@ import {
   type IFixedHours,
   type ISpecialDate,
 } from "@/lib/db/models/working-hours"
-import { getNextSequenceValue } from "@/lib/db/models/counter"
+import { getNextSequenceValue } from "@/lib/db/models/counter" // Import the new counter function
 
 import { logger } from "@/lib/logs/logger"
 import type { TimeSlot, CalculatedPriceDetails as ClientCalculatedPriceDetails } from "@/types/booking"
@@ -48,34 +48,25 @@ export interface PopulatedBooking
     name: string
     selectedDuration?: ITreatmentDuration
   } | null
-  addressId?: Pick<
-    IAddress,
-    "_id" | "city" | "street" | "streetNumber" | "fullAddress" | "apartment" | "entrance" | "floor" | "notes"
-  > | null
+  addressId?: Pick<IAddress, "_id" | "city" | "street" | "streetNumber" | "fullAddress"> | null
   professionalId?: Pick<IUser, "_id" | "name"> | null
 }
 
-function getDayWorkingHours(anchorDateUTC: Date, settings: IWorkingHoursSettings): IFixedHours | ISpecialDate | null {
-  const specialDateSetting = settings.specialDates?.find((sd) => {
-    const sdDateObj = new Date(sd.date)
-    return (
-      sdDateObj.getUTCFullYear() === anchorDateUTC.getUTCFullYear() &&
-      sdDateObj.getUTCMonth() === anchorDateUTC.getUTCMonth() &&
-      sdDateObj.getUTCDate() === anchorDateUTC.getUTCDate()
-    )
-  })
+function isSameUTCDay(dateLeft: Date, dateRight: Date): boolean {
+  return (
+    dateLeft.getUTCFullYear() === dateRight.getUTCFullYear() &&
+    dateLeft.getUTCMonth() === dateRight.getUTCMonth() &&
+    dateLeft.getUTCDate() === dateRight.getUTCDate()
+  )
+}
 
+function getDayWorkingHours(dateUTC: Date, settings: IWorkingHoursSettings): IFixedHours | ISpecialDate | null {
+  const specialDateSetting = settings.specialDates?.find((sd) => isSameUTCDay(new Date(sd.date), dateUTC))
   if (specialDateSetting) {
     return specialDateSetting
   }
-
-  const year = anchorDateUTC.getUTCFullYear()
-  const month = anchorDateUTC.getUTCMonth()
-  const day = anchorDateUTC.getUTCDate()
-  const dateForDowCalc = new Date(Date.UTC(year, month, day, 12, 0, 0))
-  const dayOfWeekInIsrael = dateForDowCalc.getUTCDay()
-
-  const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeekInIsrael)
+  const dayOfWeekUTC = dateUTC.getUTCDay()
+  const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeekUTC)
   return fixedDaySetting || null
 }
 
@@ -86,13 +77,13 @@ export async function getAvailableTimeSlots(
 ): Promise<{ success: boolean; timeSlots?: TimeSlot[]; error?: string; workingHoursNote?: string }> {
   try {
     await dbConnect()
-    const selectedDateAnchorUTC = new Date(`${dateString}T12:00:00.000Z`)
+    const selectedDateUTC = new Date(`${dateString}T12:00:00.000Z`)
 
-    if (isNaN(selectedDateAnchorUTC.getTime())) {
+    if (isNaN(selectedDateUTC.getTime())) {
       return { success: false, error: "bookings.errors.invalidDate" }
     }
 
-    const treatment = await Treatment.findById(treatmentId).lean<ITreatment>()
+    const treatment = (await Treatment.findById(treatmentId).lean()) as ITreatment | null
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "bookings.errors.treatmentNotFound" }
     }
@@ -111,13 +102,12 @@ export async function getAvailableTimeSlots(
       return { success: false, error: "bookings.errors.invalidTreatmentDuration" }
     }
 
-    const settings = await WorkingHoursSettings.findOne().lean<IWorkingHoursSettings>()
+    const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
     if (!settings) {
       return { success: false, error: "bookings.errors.workingHoursNotSet" }
     }
 
-    const daySettings = getDayWorkingHours(selectedDateAnchorUTC, settings)
-
+    const daySettings = getDayWorkingHours(selectedDateUTC, settings)
     if (!daySettings || !daySettings.isActive) {
       return {
         success: true,
@@ -132,18 +122,13 @@ export async function getAvailableTimeSlots(
     const [startHour, startMinute] = daySettings.startTime.split(":").map(Number)
     const [endHour, endMinute] = daySettings.endTime.split(":").map(Number)
 
-    let currentTimeSlotStart = set(selectedDateAnchorUTC, {
+    let currentTimeSlotStart = set(selectedDateUTC, {
       hours: startHour,
       minutes: startMinute,
       seconds: 0,
       milliseconds: 0,
     })
-    const dayEndTime = set(selectedDateAnchorUTC, {
-      hours: endHour,
-      minutes: endMinute,
-      seconds: 0,
-      milliseconds: 0,
-    })
+    const dayEndTime = set(selectedDateUTC, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 })
 
     const now = new Date()
     const minimumBookingLeadTimeHours = settings.minimumBookingLeadTimeHours || 2
@@ -162,7 +147,10 @@ export async function getAvailableTimeSlots(
 
       if (isSlotAvailable) {
         const slot: TimeSlot = {
-          time: format(currentTimeSlotStart, "HH:mm"),
+          time: format(currentTimeSlotStart, "HH:mm", {
+            useAdditionalWeekYearTokens: false,
+            useAdditionalDayOfYearTokens: false,
+          }),
           isAvailable: true,
         }
 
@@ -192,7 +180,7 @@ export async function getAvailableTimeSlots(
     }
     return { success: true, timeSlots, workingHoursNote: daySettings.notes }
   } catch (error) {
-    logger.error("Error fetching available time slots:", { error, dateString, treatmentId })
+    logger.error("Error fetching available time slots:", { error })
     return { success: false, error: "bookings.errors.fetchTimeSlotsFailed" }
   }
 }
@@ -219,7 +207,7 @@ export async function calculateBookingPrice(
       userId,
     } = validatedPayload
 
-    const bookingDateAnchorUTC = new Date(
+    const bookingDatePartUTC = new Date(
       Date.UTC(
         bookingDateTime.getUTCFullYear(),
         bookingDateTime.getUTCMonth(),
@@ -231,7 +219,7 @@ export async function calculateBookingPrice(
       ),
     )
 
-    const treatment = await Treatment.findById(treatmentId).populate("durations").lean<ITreatment>()
+    const treatment = (await Treatment.findById(treatmentId).populate("durations").lean()) as ITreatment | null
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "bookings.errors.treatmentNotFound" }
     }
@@ -259,9 +247,9 @@ export async function calculateBookingPrice(
       isFullyCoveredByVoucherOrSubscription: false,
     }
 
-    const settings = await WorkingHoursSettings.findOne().lean<IWorkingHoursSettings>()
+    const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
     if (settings) {
-      const daySettings = getDayWorkingHours(bookingDateAnchorUTC, settings)
+      const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
       if (
         daySettings?.isActive &&
         daySettings.hasPriceAddition &&
@@ -288,14 +276,10 @@ export async function calculateBookingPrice(
     }
 
     if (userSubscriptionId) {
-      const userSub = await UserSubscription.findById(userSubscriptionId)
+      const userSub = (await UserSubscription.findById(userSubscriptionId)
         .populate("subscriptionId")
-        .populate<{ treatmentId: ITreatment }>({
-          path: "treatmentId",
-          model: "Treatment",
-          populate: { path: "durations" },
-        })
-        .lean<IUserSubscription & { treatmentId: ITreatment }>()
+        .populate({ path: "treatmentId", model: "Treatment", populate: { path: "durations" } })
+        .lean()) as (IUserSubscription & { treatmentId: ITreatment }) | null
 
       if (
         userSub &&
@@ -303,7 +287,7 @@ export async function calculateBookingPrice(
         userSub.status === "active" &&
         userSub.remainingQuantity > 0
       ) {
-        const subTreatment = userSub.treatmentId
+        const subTreatment = userSub.treatmentId as ITreatment
         const isTreatmentMatch = subTreatment && subTreatment._id.toString() === treatmentId
         let isDurationMatch = true
         if (isTreatmentMatch && subTreatment.pricingType === "duration_based") {
@@ -321,31 +305,25 @@ export async function calculateBookingPrice(
     }
 
     if (giftVoucherCode) {
-      const voucher = await GiftVoucher.findOne({
+      const voucher = (await GiftVoucher.findOne({
         code: giftVoucherCode,
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() },
-      }).lean<IGiftVoucher>()
+      }).lean()) as IGiftVoucher | null
 
       if (voucher && voucher.isActive) {
         priceDetails.appliedGiftVoucherId = voucher._id.toString()
 
         if (voucher.voucherType === "treatment") {
           const treatmentMatches = voucher.treatmentId?.toString() === treatmentId
-          let durationMatches = false
+          let durationMatches = true
 
           if (treatment.pricingType === "duration_based") {
-            if (treatment.durations && treatment.durations.length > 0) {
-              if (voucher.selectedDurationId) {
-                durationMatches = voucher.selectedDurationId.toString() === selectedDurationId
-              } else {
-                durationMatches = false
-              }
-            } else {
-              durationMatches = false
-            }
+            durationMatches = voucher.selectedDurationId
+              ? voucher.selectedDurationId.toString() === selectedDurationId
+              : true
+            if (!voucher.selectedDurationId) durationMatches = false
           } else {
-            // Treatment is fixed price
             durationMatches = !voucher.selectedDurationId
           }
 
@@ -362,18 +340,19 @@ export async function calculateBookingPrice(
       priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher + priceDetails.totalSurchargesAmount
 
     if (priceDetails.appliedGiftVoucherId && subtotalBeforeGeneralReductions > 0) {
-      const voucherToApply = await GiftVoucher.findById(priceDetails.appliedGiftVoucherId).lean<IGiftVoucher>()
+      const voucherToApply = (await GiftVoucher.findById(
+        priceDetails.appliedGiftVoucherId,
+      ).lean()) as IGiftVoucher | null
       if (
         voucherToApply &&
         voucherToApply.isActive &&
         voucherToApply.voucherType === "monetary" &&
         voucherToApply.remainingAmount &&
-        voucherToApply.remainingAmount > 0 &&
-        !priceDetails.isBaseTreatmentCoveredByTreatmentVoucher
+        voucherToApply.remainingAmount > 0
       ) {
         const amountToApplyFromMonetary = Math.min(subtotalBeforeGeneralReductions, voucherToApply.remainingAmount)
         if (amountToApplyFromMonetary > 0) {
-          priceDetails.voucherAppliedAmount += amountToApplyFromMonetary
+          priceDetails.voucherAppliedAmount = amountToApplyFromMonetary
           subtotalBeforeGeneralReductions -= amountToApplyFromMonetary
         }
       }
@@ -382,7 +361,7 @@ export async function calculateBookingPrice(
     let currentTotalDue = subtotalBeforeGeneralReductions
 
     if (currentTotalDue > 0 && couponCode) {
-      const coupon = await Coupon.findOne({ code: couponCode }).lean<Coupon>()
+      const coupon = await Coupon.findOne({ code: couponCode }).lean()
       const now = new Date()
       if (
         coupon &&
@@ -443,52 +422,21 @@ export async function createBooking(
   try {
     await dbConnect()
 
-    const bookingUser = await User.findById(validatedPayload.userId).select("name email phone").lean<IUser>()
+    // Fetch user details for denormalization
+    const bookingUser = await User.findById(validatedPayload.userId).select("name email phone").lean()
     if (!bookingUser) {
       return { success: false, error: "bookings.errors.userNotFound" }
     }
 
+    // Determine address snapshot
     let bookingAddressSnapshot: IBookingAddressSnapshot | undefined
     if (validatedPayload.customAddressDetails) {
-      if (
-        !validatedPayload.customAddressDetails.fullAddress ||
-        !validatedPayload.customAddressDetails.city ||
-        !validatedPayload.customAddressDetails.street
-      ) {
-        logger.error("Custom address details missing required fields", {
-          payload: validatedPayload.customAddressDetails,
-        })
-        return { success: false, error: "bookings.errors.customAddressIncomplete" }
-      }
       bookingAddressSnapshot = validatedPayload.customAddressDetails
     } else if (validatedPayload.selectedAddressId) {
-      const selectedAddressDoc = await Address.findById(validatedPayload.selectedAddressId).lean<IAddress>()
+      const selectedAddressDoc = await Address.findById(validatedPayload.selectedAddressId).lean()
       if (selectedAddressDoc) {
-        let fullAddress = selectedAddressDoc.fullAddress
-        if (!fullAddress && selectedAddressDoc.city && selectedAddressDoc.street) {
-          const parts = [
-            selectedAddressDoc.street,
-            selectedAddressDoc.streetNumber,
-            selectedAddressDoc.apartment,
-            selectedAddressDoc.city,
-          ]
-            .filter(Boolean)
-            .join(", ")
-          fullAddress = parts
-          logger.warn(
-            `Constructed fullAddress for snapshot as it was missing in Address doc ${selectedAddressDoc._id}: "${fullAddress}"`,
-          )
-        }
-
-        if (!fullAddress || !selectedAddressDoc.city || !selectedAddressDoc.street) {
-          logger.error(
-            `Critical address data missing for Address ID: ${validatedPayload.selectedAddressId}. FullAddress: ${fullAddress}, City: ${selectedAddressDoc.city}, Street: ${selectedAddressDoc.street}`,
-          )
-          return { success: false, error: "bookings.errors.addressDataIncomplete" }
-        }
-
         bookingAddressSnapshot = {
-          fullAddress: fullAddress,
+          fullAddress: selectedAddressDoc.fullAddress,
           city: selectedAddressDoc.city,
           street: selectedAddressDoc.street,
           streetNumber: selectedAddressDoc.streetNumber,
@@ -501,20 +449,21 @@ export async function createBooking(
         return { success: false, error: "bookings.errors.addressNotFound" }
       }
     } else {
-      return { success: false, error: "bookings.errors.addressRequired" }
+      return { success: false, error: "bookings.errors.addressRequired" } // Should be caught by validation
     }
 
     await mongooseDbSession.withTransaction(async () => {
+      // Generate unique 6-digit booking number
       const nextBookingNum = await getNextSequenceValue("bookingNumber")
       const bookingNumber = nextBookingNum.toString().padStart(6, "0")
 
       const newBooking = new Booking({
         ...validatedPayload,
-        bookingNumber,
+        bookingNumber, // Add the generated booking number
         bookedByUserName: bookingUser.name,
         bookedByUserEmail: bookingUser.email,
         bookedByUserPhone: bookingUser.phone,
-        bookingAddressSnapshot,
+        bookingAddressSnapshot, // Add the address snapshot
         status: "confirmed",
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
@@ -549,12 +498,13 @@ export async function createBooking(
               : validatedPayload.paymentDetails.paymentStatus || "pending",
           transactionId: validatedPayload.paymentDetails.transactionId,
         },
-        professionalId: null,
+        professionalId: null, // Explicitly set to null as per requirement
       })
 
       await newBooking.save({ session: mongooseDbSession })
-      bookingResult = newBooking.toObject<IBooking>() // Get plain object after save
+      bookingResult = newBooking
 
+      // ... (rest of the transaction logic for subscriptions, vouchers, coupons)
       if (
         validatedPayload.priceDetails.redeemedUserSubscriptionId &&
         validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription
@@ -574,9 +524,9 @@ export async function createBooking(
         validatedPayload.priceDetails.appliedGiftVoucherId &&
         validatedPayload.priceDetails.voucherAppliedAmount > 0
       ) {
-        const voucher = await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(
+        const voucher = (await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(
           mongooseDbSession,
-        )
+        )) as IGiftVoucher | null
         if (!voucher) throw new Error("bookings.errors.voucherNotFoundDuringCreation")
         if (!voucher.isActive && voucher.status !== "sent")
           throw new Error("bookings.errors.voucherRedemptionFailedInactive")
@@ -604,12 +554,12 @@ export async function createBooking(
         voucher.usageHistory.push({
           date: new Date(),
           amountUsed: validatedPayload.priceDetails.voucherAppliedAmount,
-          orderId: bookingResult!._id, // bookingResult is now IBooking, so _id is available
+          orderId: bookingResult!._id,
           description: `bookings.voucherUsage.redeemedForBooking ${bookingResult!._id.toString()}`,
           userId: new mongoose.Types.ObjectId(validatedPayload.userId),
-        } as any) // Cast to any for usageHistory item if its type is complex
+        } as any)
         await voucher.save({ session: mongooseDbSession })
-        updatedVoucherDetails = voucher.toObject<IGiftVoucher>()
+        updatedVoucherDetails = voucher.toObject() as IGiftVoucher
       }
 
       if (validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
@@ -619,13 +569,12 @@ export async function createBooking(
         await coupon.save({ session: mongooseDbSession })
       }
 
-      // If bookingResult was updated (e.g. by voucher logic), ensure it's saved
-      // However, newBooking already contains all details, and bookingResult is its plain object version.
-      // We need to ensure the Mongoose document `newBooking` has the final paymentStatus if it changed.
-      if (newBooking.priceDetails.finalAmount === 0 && newBooking.paymentDetails.paymentStatus !== "not_required") {
-        newBooking.paymentDetails.paymentStatus = "not_required"
-        await newBooking.save({ session: mongooseDbSession })
-        bookingResult = newBooking.toObject<IBooking>() // Update bookingResult if changed
+      if (bookingResult) {
+        if (bookingResult.priceDetails.finalAmount === 0) {
+          bookingResult.paymentDetails.paymentStatus = "not_required"
+        }
+        bookingResult.priceDetails = newBooking.priceDetails
+        await bookingResult.save({ session: mongooseDbSession })
       }
     })
 
@@ -636,28 +585,27 @@ export async function createBooking(
       revalidatePath("/dashboard/member/bookings")
       revalidatePath("/dashboard/admin/bookings")
 
-      const finalBookingObject = bookingResult // Already an IBooking plain object
+      const finalBookingObject = bookingResult.toObject() as IBooking
       if (updatedVoucherDetails) {
         ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
       }
 
+      // --- START: Send Notifications ---
       try {
         const userForNotification = await User.findById(finalBookingObject.userId)
           .select("name email phone notificationPreferences")
-          .lean<IUser>()
-        const treatmentForNotification = await Treatment.findById(finalBookingObject.treatmentId)
-          .select("name")
-          .lean<ITreatment>()
+          .lean()
+        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
-        if (userForNotification && treatmentForNotification) {
+        if (userForNotification && treatment) {
           const userLang = (userForNotification.notificationPreferences?.language as NotificationLanguage) || "he"
           const userNotificationMethods = userForNotification.notificationPreferences?.methods || ["email"]
 
           const bookingSuccessData: BookingSuccessNotificationData = {
             type: "BOOKING_SUCCESS",
             userName: finalBookingObject.recipientName || userForNotification.name || "User",
-            bookingId: finalBookingObject.bookingNumber,
-            treatmentName: treatmentForNotification.name,
+            bookingId: finalBookingObject.bookingNumber, // Use bookingNumber for display
+            treatmentName: treatment.name,
             bookingDateTime: finalBookingObject.bookingDateTime,
             orderDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${finalBookingObject._id.toString()}`,
           }
@@ -679,6 +627,8 @@ export async function createBooking(
             }
             await notificationManager.sendNotification(phoneRecipient, bookingSuccessData)
           }
+
+          logger.info(`Booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
         } else {
           logger.warn("Could not send booking notifications: User or Treatment not found", {
             bookingId: finalBookingObject._id.toString(),
@@ -690,6 +640,7 @@ export async function createBooking(
           bookingId: finalBookingObject._id.toString(),
         })
       }
+      // --- END: Send Notifications ---
 
       return { success: true, booking: finalBookingObject }
     } else {
@@ -706,6 +657,10 @@ export async function createBooking(
     await mongooseDbSession.endSession()
   }
 }
+
+// ... (rest of the actions: getUserBookings, cancelBooking, getBookingInitialData, etc. remain largely the same,
+// but getBookingInitialData already returns currentUser which has name, email, phone)
+// Make sure getBookingInitialData returns all necessary address fields if not already.
 
 export async function getUserBookings(
   userId: string,
@@ -731,7 +686,7 @@ export async function getUserBookings(
 
     const { status, page = 1, limit = 10, sortBy = "bookingDateTime", sortDirection = "desc" } = filters
 
-    const query: mongoose.FilterQuery<IBooking> = { userId: new mongoose.Types.ObjectId(userId) }
+    const query: any = { userId: new mongoose.Types.ObjectId(userId) }
 
     if (status && status !== "all") {
       switch (status) {
@@ -764,10 +719,14 @@ export async function getUserBookings(
     const rawBookings = await Booking.find(query)
       .populate<{ treatmentId: ITreatment | null }>({
         path: "treatmentId",
-        select: "name durations defaultDurationMinutes pricingType fixedPrice",
+        select: "name durations defaultDurationMinutes pricingType",
         populate: { path: "durations" },
       })
-      .populate<{ addressId: IAddress | null }>("addressId") // Populate the referenced addressId
+      .populate<{ addressId: IAddress | null }>({
+        // Populate full address for snapshot if needed, or use bookingAddressSnapshot
+        path: "addressId",
+        // select: "city street streetNumber fullAddress apartment entrance floor notes", // Select all needed fields
+      })
       .populate<{ professionalId: Pick<IUser, "_id" | "name"> | null }>({
         path: "professionalId",
         select: "name",
@@ -775,51 +734,36 @@ export async function getUserBookings(
       .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit)
-      .lean<
-        Array<
-          IBooking & {
-            treatmentId: ITreatment | null
-            addressId: IAddress | null
-            professionalId: Pick<IUser, "_id" | "name"> | null
-          }
-        >
-      >()
+      .lean()
 
     const bookings: PopulatedBooking[] = rawBookings.map((booking) => {
       const populatedBooking: PopulatedBooking = {
-        ...(booking as Omit<IBooking, "treatmentId" | "addressId" | "professionalId" | "selectedDurationId">), // More specific cast
+        ...(booking as any), // Cast to any to spread, then override
         _id: booking._id as Types.ObjectId,
         treatmentId: null,
+        // addressId is now bookingAddressSnapshot or populated from addressId
         addressId: booking.bookingAddressSnapshot
           ? {
-              _id: booking.addressId?._id || new mongoose.Types.ObjectId(), // Use original addressId if exists
+              // Prefer snapshot
+              _id: booking.addressId || new mongoose.Types.ObjectId(), // Use original addressId if exists, else dummy
               city: booking.bookingAddressSnapshot.city,
               street: booking.bookingAddressSnapshot.street,
               streetNumber: booking.bookingAddressSnapshot.streetNumber,
               fullAddress: booking.bookingAddressSnapshot.fullAddress,
-              apartment: booking.bookingAddressSnapshot.apartment,
-              entrance: booking.bookingAddressSnapshot.entrance,
-              floor: booking.bookingAddressSnapshot.floor,
-              notes: booking.bookingAddressSnapshot.notes,
             }
-          : booking.addressId // Fallback to populated addressId if snapshot somehow wasn't on the queried doc
+          : booking.addressId
             ? {
-                _id: booking.addressId._id,
-                city: booking.addressId.city,
-                street: booking.addressId.street,
-                streetNumber: booking.addressId.streetNumber,
-                fullAddress: booking.addressId.fullAddress,
-                apartment: booking.addressId.apartment,
-                entrance: booking.addressId.entrance,
-                floor: booking.addressId.floor,
-                notes: booking.addressId.notes,
+                _id: (booking.addressId as IAddress)._id,
+                city: (booking.addressId as IAddress).city,
+                street: (booking.addressId as IAddress).street,
+                streetNumber: (booking.addressId as IAddress).streetNumber,
+                fullAddress: (booking.addressId as IAddress).fullAddress,
               }
             : null,
-        professionalId: null,
       }
 
       if (booking.treatmentId) {
-        const treatmentDoc = booking.treatmentId
+        const treatmentDoc = booking.treatmentId as ITreatment
         populatedBooking.treatmentId = {
           _id: treatmentDoc._id as Types.ObjectId,
           name: treatmentDoc.name,
@@ -831,22 +775,22 @@ export async function getUserBookings(
           if (selectedDuration) {
             populatedBooking.treatmentId.selectedDuration = selectedDuration
           }
-        } else if (treatmentDoc.pricingType === "fixed") {
+        } else if (treatmentDoc.pricingType === "fixed" && treatmentDoc.defaultDurationMinutes) {
           populatedBooking.treatmentId.selectedDuration = {
-            _id: new mongoose.Types.ObjectId(),
-            minutes: treatmentDoc.defaultDurationMinutes || 0,
+            minutes: treatmentDoc.defaultDurationMinutes,
             price: treatmentDoc.fixedPrice || 0,
             isActive: true,
           } as ITreatmentDuration
         }
       }
 
-      if (booking.professionalId) {
-        populatedBooking.professionalId = {
-          _id: booking.professionalId._id,
-          name: booking.professionalId.name,
-        }
-      }
+      populatedBooking.professionalId = booking.professionalId
+        ? {
+            _id: (booking.professionalId as any)._id as Types.ObjectId,
+            name: (booking.professionalId as any).name,
+          }
+        : null
+
       return populatedBooking
     })
 
@@ -876,16 +820,16 @@ export async function cancelBooking(
   try {
     await dbConnect()
     await mongooseDbSession.withTransaction(async () => {
-      const booking = await Booking.findById(bookingId).session(mongooseDbSession)
+      const booking = (await Booking.findById(bookingId).session(mongooseDbSession)) as IBooking | null
       if (!booking) throw new Error("bookings.errors.bookingNotFound")
       if (booking.userId.toString() !== userId && cancelledByRole !== "admin") throw new Error("common.unauthorized")
-      if (["completed", "cancelled_by_user", "cancelled_by_admin", "no_show"].includes(booking.status)) {
+      if (["completed", "cancelled_by_user", "cancelled_by_admin"].includes(booking.status)) {
         throw new Error("bookings.errors.cannotCancelAlreadyProcessed")
       }
 
       booking.status = cancelledByRole === "user" ? "cancelled_by_user" : "cancelled_by_admin"
       booking.cancellationReason = reason
-      booking.cancelledBy = cancelledByRole as "user" | "admin" // Ensure type correctness
+      booking.cancelledBy = cancelledByRole
 
       if (
         booking.priceDetails.redeemedUserSubscriptionId &&
@@ -902,7 +846,9 @@ export async function cancelBooking(
       }
 
       if (booking.priceDetails.appliedGiftVoucherId && booking.priceDetails.voucherAppliedAmount > 0) {
-        const voucher = await GiftVoucher.findById(booking.priceDetails.appliedGiftVoucherId).session(mongooseDbSession)
+        const voucher = (await GiftVoucher.findById(booking.priceDetails.appliedGiftVoucherId).session(
+          mongooseDbSession,
+        )) as IGiftVoucher | null
         if (voucher) {
           if (voucher.voucherType === "treatment" && booking.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
             voucher.status = "active"
@@ -943,11 +889,10 @@ export async function cancelBooking(
     })
 
     if (success) {
-      revalidatePath(`/dashboard/member/bookings`)
-      revalidatePath(`/dashboard/member/book-treatment`)
-      revalidatePath(`/dashboard/admin/bookings`)
-      revalidatePath(`/dashboard/member/subscriptions`)
-      revalidatePath(`/dashboard/member/gift-vouchers`)
+      revalidatePath("/dashboard/member/book-treatment")
+      revalidatePath("/dashboard/admin/bookings")
+      revalidatePath("/dashboard/member/subscriptions")
+      revalidatePath("/dashboard/member/gift-vouchers")
       return { success: true }
     } else {
       return { success: false, error: "bookings.errors.cancellationFailedUnknown" }
@@ -983,59 +928,50 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
     ] = await Promise.allSettled([
       UserSubscription.find({ userId, status: "active", remainingQuantity: { $gt: 0 } })
         .populate("subscriptionId")
-        .populate<{ treatmentId: ITreatment }>({
-          path: "treatmentId",
-          model: Treatment,
-          populate: { path: "durations" },
-        })
-        .lean<Array<IUserSubscription & { treatmentId: ITreatment }>>(),
+        .populate({ path: "treatmentId", model: Treatment, populate: { path: "durations" } })
+        .lean(),
       GiftVoucher.find({
         $or: [{ ownerUserId: userId }, { recipientEmail: authSession.user.email }],
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() },
         isActive: true,
-      })
-        .populate<{ treatmentId?: ITreatment }>(
-          "treatmentId",
-          "name pricingType durations fixedPrice defaultDurationMinutes",
-        )
-        .lean<Array<IGiftVoucher & { treatmentId?: ITreatment }>>(),
-      User.findById(userId)
-        .select("preferences name email phone notificationPreferences treatmentPreferences")
-        .lean<IUser>(),
-      Address.find({ userId, isArchived: { $ne: true } }).lean<IAddress[]>(),
+      }).lean(),
+      User.findById(userId).select("preferences name email phone notificationPreferences treatmentPreferences").lean(),
+      Address.find({ userId, isArchived: { $ne: true } }).lean(), // Fetch all address fields
       fetchUserActivePaymentMethods(),
-      Treatment.find({ isActive: true }).populate("durations").lean<ITreatment[]>(),
-      WorkingHoursSettings.findOne().lean<IWorkingHoursSettings>(),
+      Treatment.find({ isActive: true }).populate("durations").lean(),
+      WorkingHoursSettings.findOne().lean(),
     ])
 
-    const getFulfilledValue = <T,>(result: PromiseSettledResult<T>, defaultValue: T): T =>
+    const getFulfilledValue = (result: PromiseSettledResult<any>, defaultValue: any = null) =>
       result.status === "fulfilled" ? result.value : defaultValue
 
     const activeUserSubscriptions = getFulfilledValue(userSubscriptionsResult, [])
     const usableGiftVouchers = getFulfilledValue(giftVouchersResult, [])
-    const user = getFulfilledValue(userResult, null)
+    const user = getFulfilledValue(userResult)
     const userAddresses = getFulfilledValue(addressesResult, [])
 
-    const paymentMethodsResponse = paymentMethodsResult.status === "fulfilled" ? paymentMethodsResult.value : null
+    const paymentMethodsSettledResult = paymentMethodsResult.status === "fulfilled" ? paymentMethodsResult.value : null
     let userPaymentMethods: any[] = []
-    if (paymentMethodsResponse && paymentMethodsResponse.success && paymentMethodsResponse.paymentMethods) {
-      userPaymentMethods = paymentMethodsResponse.paymentMethods
-    } else if (paymentMethodsResponse && paymentMethodsResponse.error) {
+    if (
+      paymentMethodsSettledResult &&
+      paymentMethodsSettledResult.success &&
+      paymentMethodsSettledResult.paymentMethods
+    ) {
+      userPaymentMethods = paymentMethodsSettledResult.paymentMethods
+    } else if (paymentMethodsSettledResult && paymentMethodsSettledResult.error) {
       logger.warn(
-        `Failed to fetch payment methods for user ${userId} in getBookingInitialData: ${paymentMethodsResponse.error}`,
+        `Failed to fetch payment methods for user ${userId} in getBookingInitialData: ${paymentMethodsSettledResult.error}`,
       )
     } else if (paymentMethodsResult.status === "rejected") {
-      logger.error(
-        `Failed to fetch payment methods for user ${userId} in getBookingInitialData: ${paymentMethodsResult.reason}`,
-      )
+      logger.error(`Failed to fetch payment methods for user ${userId}: ${paymentMethodsResult.reason}`)
     }
 
     const activeTreatments = getFulfilledValue(treatmentsResult, [])
-    const workingHoursSettings = getFulfilledValue(workingHoursResult, null)
+    const workingHoursSettings = getFulfilledValue(workingHoursResult)
 
     if (!user || !activeTreatments || !workingHoursSettings) {
-      logger.error("Failed to load critical initial data for booking:", {
+      logger.error("Failed to load critical initial data for booking (enhanced):", {
         userId,
         userFound: !!user,
         treatmentsFound: !!activeTreatments,
@@ -1047,12 +983,12 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
     const notificationPrefs = user.notificationPreferences || {}
     const treatmentPrefs = user.treatmentPreferences || {}
 
-    const populatedUserSubscriptions = activeUserSubscriptions.map((sub) => {
+    const populatedUserSubscriptions = activeUserSubscriptions.map((sub: any) => {
       if (sub.treatmentId && sub.treatmentId.pricingType === "duration_based" && sub.selectedDurationId) {
-        const treatmentDoc = sub.treatmentId
+        const treatmentDoc = sub.treatmentId as ITreatment
         if (treatmentDoc.durations) {
           const selectedDuration = treatmentDoc.durations.find(
-            (d: ITreatmentDuration) => d._id.toString() === sub.selectedDurationId!.toString(),
+            (d: any) => d._id.toString() === sub.selectedDurationId.toString(),
           )
           return { ...sub, selectedDurationDetails: selectedDuration }
         }
@@ -1060,41 +996,30 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       return sub
     })
 
-    const enhancedUsableGiftVouchers = usableGiftVouchers.map((voucher) => {
-      let displayTreatmentName = voucher.treatmentName
-      let displaySelectedDurationName = voucher.selectedDurationName
+    const enhancedUsableGiftVouchers = usableGiftVouchers.map((voucher: IGiftVoucher) => {
+      let treatmentName = voucher.treatmentName
+      let selectedDurationName = voucher.selectedDurationName
 
       if (voucher.voucherType === "treatment" && voucher.treatmentId) {
-        const treatmentDetails = voucher.treatmentId
+        const treatmentDetails = activeTreatments.find(
+          (t: ITreatment) => t._id.toString() === voucher.treatmentId?.toString(),
+        )
         if (treatmentDetails) {
-          if (!displayTreatmentName) displayTreatmentName = treatmentDetails.name
-
+          treatmentName = treatmentDetails.name
           if (treatmentDetails.pricingType === "duration_based" && voucher.selectedDurationId) {
-            if (!displaySelectedDurationName && treatmentDetails.durations) {
-              const durationDetails = treatmentDetails.durations.find(
-                (d) => d._id.toString() === voucher.selectedDurationId!.toString(),
-              )
-              if (durationDetails) displaySelectedDurationName = `${durationDetails.minutes} min`
-            }
+            const durationDetails = treatmentDetails.durations?.find(
+              (d) => d._id.toString() === voucher.selectedDurationId?.toString(),
+            )
+            if (durationDetails) selectedDurationName = `${durationDetails.minutes} ${"min"}`
           } else {
-            displaySelectedDurationName = ""
+            selectedDurationName = ""
           }
         }
       }
       return {
         ...voucher,
-        treatmentName: displayTreatmentName,
-        selectedDurationName: displaySelectedDurationName,
-        treatmentId: voucher.treatmentId
-          ? {
-              _id: voucher.treatmentId._id,
-              name: voucher.treatmentId.name,
-              pricingType: voucher.treatmentId.pricingType,
-              durations: voucher.treatmentId.durations,
-              fixedPrice: voucher.treatmentId.fixedPrice,
-              defaultDurationMinutes: voucher.treatmentId.defaultDurationMinutes,
-            }
-          : undefined,
+        treatmentName,
+        selectedDurationName,
       }
     })
 
@@ -1106,11 +1031,12 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         notificationMethods: notificationPrefs.methods || ["email"],
         notificationLanguage: notificationPrefs.language || "he",
       },
-      userAddresses,
+      userAddresses, // This now contains full address objects
       userPaymentMethods,
       activeTreatments,
       workingHoursSettings,
       currentUser: {
+        // This already contains the necessary user details
         id: user._id.toString(),
         name: user.name,
         email: user.email,
@@ -1144,13 +1070,16 @@ export async function professionalAcceptBooking(
       if (!booking) {
         throw new Error("bookings.errors.bookingNotFound")
       }
+      // A booking is 'confirmed' upon creation by user.
+      // Professional "accepts" by assigning themselves if professionalId is null.
       if (booking.status !== "confirmed" || booking.professionalId) {
         throw new Error("bookings.errors.bookingNotAvailableForProfessionalAssignment")
       }
 
       booking.professionalId = new mongoose.Types.ObjectId(professionalId)
+      // Status remains 'confirmed', but now with a professional.
       await booking.save({ session: mongooseDbSession })
-      acceptedBooking = booking.toObject<IBooking>()
+      acceptedBooking = booking.toObject()
     })
 
     if (acceptedBooking) {
@@ -1160,22 +1089,21 @@ export async function professionalAcceptBooking(
       try {
         const clientUser = await User.findById(acceptedBooking.userId)
           .select("name email phone notificationPreferences")
-          .lean<IUser>()
-        const treatmentForNotification = await Treatment.findById(acceptedBooking.treatmentId)
-          .select("name")
-          .lean<ITreatment>()
-        const professionalUser = await User.findById(professionalId).select("name").lean<IUser>()
+          .lean()
+        const treatment = await Treatment.findById(acceptedBooking.treatmentId).select("name").lean()
+        const professional = await User.findById(professionalId).select("name").lean()
 
-        if (clientUser && treatmentForNotification && professionalUser) {
+        if (clientUser && treatment && professional) {
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
 
           const notificationData: BookingConfirmedClientNotificationData = {
-            type: "BOOKING_CONFIRMED_CLIENT",
+            // This notification type might need adjustment or a new one for "Professional Assigned"
+            type: "BOOKING_CONFIRMED_CLIENT", // Or a new type like "PROFESSIONAL_ASSIGNED_CLIENT"
             userName: clientUser.name || "לקוח/ה",
-            professionalName: professionalUser.name || "מטפל/ת",
+            professionalName: professional.name || "מטפל/ת",
             bookingDateTime: acceptedBooking.bookingDateTime,
-            treatmentName: treatmentForNotification.name,
+            treatmentName: treatment.name,
             bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${acceptedBooking._id.toString()}`,
           }
 
@@ -1232,32 +1160,28 @@ export async function professionalMarkEnRoute(
       return { success: false, error: "common.forbidden" }
     }
     if (booking.status !== "confirmed") {
+      // Professional can only mark en-route if booking is confirmed (and assigned to them)
       return { success: false, error: "bookings.errors.bookingNotInCorrectStateForEnRoute" }
     }
 
     booking.status = "professional_en_route"
     await booking.save()
-    const updatedBooking = booking.toObject<IBooking>()
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
 
     try {
-      const clientUser = await User.findById(updatedBooking.userId)
-        .select("name email phone notificationPreferences")
-        .lean<IUser>()
-      const treatmentForNotification = await Treatment.findById(updatedBooking.treatmentId)
-        .select("name")
-        .lean<ITreatment>()
-      const professionalUser = await User.findById(professionalId).select("name").lean<IUser>()
+      const clientUser = await User.findById(booking.userId).select("name email phone notificationPreferences").lean()
+      const treatment = await Treatment.findById(booking.treatmentId).select("name").lean()
+      const professional = await User.findById(professionalId).select("name").lean()
 
-      if (clientUser && treatmentForNotification && professionalUser) {
+      if (clientUser && treatment && professional) {
         const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
         const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
         const notificationData: ProfessionalEnRouteClientNotificationData = {
           type: "PROFESSIONAL_EN_ROUTE_CLIENT",
           userName: clientUser.name || "לקוח/ה",
-          professionalName: professionalUser.name || "מטפל/ת",
-          bookingDateTime: updatedBooking.bookingDateTime,
-          treatmentName: treatmentForNotification.name,
+          professionalName: professional.name || "מטפל/ת",
+          bookingDateTime: booking.bookingDateTime,
+          treatmentName: treatment.name,
         }
         if (clientNotificationMethods.includes("email") && clientUser.email) {
           await notificationManager.sendNotification(
@@ -1279,7 +1203,7 @@ export async function professionalMarkEnRoute(
       })
     }
 
-    return { success: true, booking: updatedBooking }
+    return { success: true, booking: booking.toObject() }
   } catch (error) {
     logger.error("Error in professionalMarkEnRoute:", { error, bookingId, professionalId })
     return { success: false, error: "bookings.errors.markEnRouteFailed" }
@@ -1310,27 +1234,22 @@ export async function professionalMarkCompleted(
 
     booking.status = "completed"
     await booking.save()
-    const updatedBooking = booking.toObject<IBooking>()
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
     revalidatePath("/dashboard/admin/bookings")
 
     try {
-      const clientUser = await User.findById(updatedBooking.userId)
-        .select("name email phone notificationPreferences")
-        .lean<IUser>()
-      const treatmentForNotification = await Treatment.findById(updatedBooking.treatmentId)
-        .select("name")
-        .lean<ITreatment>()
-      const professionalUser = await User.findById(professionalId).select("name").lean<IUser>()
+      const clientUser = await User.findById(booking.userId).select("name email phone notificationPreferences").lean()
+      const treatment = await Treatment.findById(booking.treatmentId).select("name").lean()
+      const professional = await User.findById(professionalId).select("name").lean()
 
-      if (clientUser && treatmentForNotification && professionalUser) {
+      if (clientUser && treatment && professional) {
         const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
         const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
         const notificationData: BookingCompletedClientNotificationData = {
           type: "BOOKING_COMPLETED_CLIENT",
           userName: clientUser.name || "לקוח/ה",
-          professionalName: professionalUser.name || "מטפל/ת",
-          treatmentName: treatmentForNotification.name,
+          professionalName: professional.name || "מטפל/ת",
+          treatmentName: treatment.name,
         }
         if (clientNotificationMethods.includes("email") && clientUser.email) {
           await notificationManager.sendNotification(
@@ -1349,7 +1268,7 @@ export async function professionalMarkCompleted(
       logger.error("Failed to send booking completed notification to client:", { error: notificationError, bookingId })
     }
 
-    return { success: true, booking: updatedBooking }
+    return { success: true, booking: booking.toObject() }
   } catch (error) {
     logger.error("Error in professionalMarkCompleted:", { error, bookingId, professionalId })
     return { success: false, error: "bookings.errors.markCompletedFailed" }

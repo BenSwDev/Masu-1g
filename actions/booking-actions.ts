@@ -70,13 +70,6 @@ function getDayWorkingHours(dateUTC: Date, settings: IWorkingHoursSettings): IFi
   return fixedDaySetting || null
 }
 
-function parseDateStringToUTCDate(dateString: string): Date {
-  const [year, month, day] = dateString.split("-").map(Number)
-  const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
-  date.setUTCHours(12, 0, 0, 0) // Adjust to noon UTC to avoid DST/timezone day boundary issues
-  return date
-}
-
 export async function getAvailableTimeSlots(
   dateString: string,
   treatmentId: string,
@@ -84,7 +77,7 @@ export async function getAvailableTimeSlots(
 ): Promise<{ success: boolean; timeSlots?: TimeSlot[]; error?: string; workingHoursNote?: string }> {
   try {
     await dbConnect()
-    const selectedDateUTC = parseDateStringToUTCDate(dateString)
+    const selectedDateUTC = new Date(`${dateString}T12:00:00.000Z`)
 
     if (isNaN(selectedDateUTC.getTime())) {
       return { success: false, error: "bookings.errors.invalidDate" }
@@ -219,7 +212,7 @@ export async function calculateBookingPrice(
         bookingDateTime.getUTCFullYear(),
         bookingDateTime.getUTCMonth(),
         bookingDateTime.getUTCDate(),
-        12, // Use noon to avoid DST issues with getDayWorkingHours
+        12,
         0,
         0,
         0,

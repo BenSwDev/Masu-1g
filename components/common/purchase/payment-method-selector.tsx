@@ -8,21 +8,13 @@ import { PurchaseCard } from "./purchase-card"
 import { PaymentMethodForm } from "@/components/dashboard/member/payment-methods/payment-method-form"
 import { CreditCard, PlusCircle } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
-
-interface PaymentMethod {
-  _id: string
-  cardName?: string
-  cardNumber: string
-  expiryMonth: string
-  expiryYear: string
-  isDefault?: boolean
-}
+import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 
 interface PaymentMethodSelectorProps {
-  paymentMethods: PaymentMethod[]
+  paymentMethods: IPaymentMethod[]
   selectedPaymentMethodId: string
   onPaymentMethodSelect: (id: string) => void
-  onPaymentMethodAdded?: () => void
+  onPaymentMethodUpserted?: (method: IPaymentMethod) => void
   showAddButton?: boolean
   className?: string
 }
@@ -31,16 +23,16 @@ export function PaymentMethodSelector({
   paymentMethods,
   selectedPaymentMethodId,
   onPaymentMethodSelect,
-  onPaymentMethodAdded,
+  onPaymentMethodUpserted,
   showAddButton = true,
   className,
 }: PaymentMethodSelectorProps) {
   const { t, dir } = useTranslation()
   const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false)
 
-  const handlePaymentMethodAdded = () => {
+  const handlePaymentMethodAdded = (method: IPaymentMethod) => {
     setShowPaymentMethodForm(false)
-    onPaymentMethodAdded?.()
+    onPaymentMethodUpserted?.(method)
   }
 
   if (paymentMethods.length === 0 && !showAddButton) {
@@ -53,7 +45,7 @@ export function PaymentMethodSelector({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {paymentMethods.length === 0 && showAddButton && (
+      {paymentMethods.length === 0 && !showAddButton && (
         <Alert>
           <AlertDescription>{t("paymentMethods.noPaymentMethods")}</AlertDescription>
         </Alert>
@@ -62,12 +54,12 @@ export function PaymentMethodSelector({
       <div className="space-y-3">
         {paymentMethods.map((pm) => (
           <PurchaseCard
-            key={pm._id}
+            key={pm._id.toString()}
             title={pm.cardName || `${t("paymentMethods.card")} **** ${pm.cardNumber.slice(-4)}`}
             description={`${t("paymentMethods.fields.expiry")}: ${pm.expiryMonth}/${pm.expiryYear}`}
             icon={<CreditCard className="w-5 h-5" />}
-            isSelected={selectedPaymentMethodId === pm._id}
-            onClick={() => onPaymentMethodSelect(pm._id)}
+            isSelected={selectedPaymentMethodId === pm._id.toString()}
+            onClick={() => onPaymentMethodSelect(pm._id.toString())}
             badge={pm.isDefault ? t("paymentMethods.defaultCard") : undefined}
             badgeVariant="outline"
           />
@@ -85,7 +77,7 @@ export function PaymentMethodSelector({
         <PaymentMethodForm
           open={showPaymentMethodForm}
           onOpenChange={setShowPaymentMethodForm}
-          onSuccessCallback={handlePaymentMethodAdded}
+          onPaymentMethodUpserted={handlePaymentMethodAdded}
         />
       )}
     </div>

@@ -18,12 +18,12 @@ import {
   FormMessage,
   FormDescription,
 } from "@/components/common/ui/form"
-import { PaymentMethodForm } from "@/components/dashboard/member/payment-methods/payment-method-form"
 import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Input } from "@/components/common/ui/input"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import Link from "next/link"
+import { PaymentMethodSelector } from "@/components/common/purchase/payment-method-selector"
 
 interface PaymentStepProps {
   initialData: BookingInitialData
@@ -46,7 +46,6 @@ export default function PaymentStep({
 }: PaymentStepProps) {
   const { t } = useTranslation()
   const [isClientLoading, setIsClientLoading] = useState(true)
-  const [showAddPaymentMethodForm, setShowAddPaymentMethodForm] = useState(false)
   const [localPaymentMethods, setLocalPaymentMethods] = useState<IPaymentMethod[]>(initialData.userPaymentMethods || [])
 
   const form = useForm<PaymentFormValues>({
@@ -100,7 +99,6 @@ export default function PaymentStep({
       return newMethods
     })
     form.setValue("selectedPaymentMethodId", upsertedMethod._id.toString())
-    setShowAddPaymentMethodForm(false)
   }
 
   const onSubmitValidated = async (data: PaymentFormValues) => {
@@ -160,13 +158,26 @@ export default function PaymentStep({
               {t("bookings.steps.payment.selectPaymentMethod")}
             </CardTitle>
           </CardHeader>
-          <CardContent>{/* Payment method selection UI */}</CardContent>
+          <CardContent>
+            <FormField
+              control={form.control}
+              name="selectedPaymentMethodId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <PaymentMethodSelector
+                      paymentMethods={localPaymentMethods}
+                      selectedPaymentMethodId={field.value || ""}
+                      onPaymentMethodSelect={field.onChange}
+                      onPaymentMethodUpserted={handlePaymentMethodUpserted}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
         </Card>
-        <PaymentMethodForm
-          open={showAddPaymentMethodForm}
-          onOpenChange={setShowAddPaymentMethodForm}
-          onPaymentMethodUpserted={handlePaymentMethodUpserted}
-        />
 
         <Card className="shadow-md">
           <CardHeader>

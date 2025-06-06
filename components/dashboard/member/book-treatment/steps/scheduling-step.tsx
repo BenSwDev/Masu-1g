@@ -65,6 +65,7 @@ export default function SchedulingStep({
       isBookingForSomeoneElse: bookingOptions.isBookingForSomeoneElse || false,
       recipientName: bookingOptions.recipientName || "",
       recipientPhone: bookingOptions.recipientPhone || "",
+      customAddressDetails: bookingOptions.customAddressDetails || undefined,
     },
   })
 
@@ -261,11 +262,13 @@ export default function SchedulingStep({
           <PlusCircle className="mr-2 h-4 w-4" />
           {localAddresses.length > 0 ? t("addresses.addNew") : t("addresses.addFirstAddress")}
         </Button>
-        <AddressForm
-          open={showAddressModal}
-          onOpenChange={setShowAddressModal}
-          onAddressUpserted={handleAddressUpserted}
-        />
+        {showAddressModal && (
+          <AddressForm
+            open={showAddressModal}
+            onOpenChange={setShowAddressModal}
+            onAddressUpserted={handleAddressUpserted}
+          />
+        )}
 
         <FormField
           control={form.control}

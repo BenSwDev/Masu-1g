@@ -1,142 +1,109 @@
 "use client"
 import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { CheckCircle, GiftIcon, Ticket } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/common/ui/card"
+import { CheckCircle, CalendarDays, MapPin, User, Tag } from "lucide-react"
 import Link from "next/link"
-import { format } from "date-fns"
-import type { IBooking } from "@/lib/db/models/booking" // Assuming IBooking is correctly typed
-import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import { useTranslation } from "@/lib/translations/i18n"
+import type { IBooking } from "@/lib/db/models/booking" // Assuming IBooking is the type for bookingResult
+import { format } from "date-fns"
 
 interface BookingConfirmationProps {
-  bookingResult: (IBooking & { updatedVoucherDetails?: IGiftVoucher }) | null
+  bookingResult: IBooking | null // Use the IBooking type
 }
 
 export default function BookingConfirmation({ bookingResult }: BookingConfirmationProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
+
   if (!bookingResult) {
     return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-semibold text-destructive">{t("bookings.confirmation.errorTitle")}</h2>
-        <p className="text-muted-foreground mt-2">{t("bookings.confirmation.errorDesc")}</p>
-        <Button asChild className="mt-6">
-          <Link href="/dashboard/member/bookings">{t("bookings.confirmation.viewMyBookings")}</Link>
-        </Button>
-      </div>
+      <Card className="w-full max-w-lg mx-auto">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl">{t("bookings.confirmation.errorTitle")}</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <p>{t("bookings.confirmation.errorMessage")}</p>
+          <Button asChild className="mt-6">
+            <Link href="/dashboard/member/book-treatment">{t("bookings.confirmation.tryAgain")}</Link>
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 
-  const {
-    treatmentId,
-    bookingDateTime,
-    selectedAddressId,
-    priceDetails,
-    _id: bookingId,
-    updatedVoucherDetails, // Destructure this
-  } = bookingResult
-
-  // For display, you might want to fetch actual names/details based on IDs
-  // For simplicity, we'll just show what's available in bookingResult or use placeholders
+  const bookingDateTime = new Date(bookingResult.bookingDateTime)
+  const formattedDate = format(bookingDateTime, "PPP", {
+    locale: language === "he" ? require("date-fns/locale/he") : undefined,
+  })
+  const formattedTime = format(bookingDateTime, "p", {
+    locale: language === "he" ? require("date-fns/locale/he") : undefined,
+  })
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-xl">
-      <CardHeader className="text-center bg-primary/5 rounded-t-lg py-8">
-        <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-        <CardTitle className="text-3xl font-bold text-primary">{t("bookings.confirmation.title")}</CardTitle>
-        <CardDescription className="text-lg text-muted-foreground mt-2">
+    <Card className="w-full max-w-lg mx-auto shadow-xl">
+      <CardHeader className="items-center text-center bg-green-50 dark:bg-green-900/30 p-6 rounded-t-lg">
+        <CheckCircle className="h-16 w-16 text-green-500 mb-3" />
+        <CardTitle className="text-3xl font-bold text-green-700 dark:text-green-400">
+          {t("bookings.confirmation.title")}
+        </CardTitle>
+        <CardDescription className="text-base text-muted-foreground">
           {t("bookings.confirmation.description")}
         </CardDescription>
       </CardHeader>
-      <CardContent className="p-6 sm:p-8 space-y-6">
-        <div className="space-y-3 text-sm">
-          <h3 className="text-lg font-semibold text-foreground mb-3 border-b pb-2">
-            {t("bookings.confirmation.summaryTitle")}
-          </h3>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t("bookings.confirmation.bookingId")}:</span>
-            <span className="font-medium text-foreground">{bookingId.toString()}</span>
+      <CardContent className="p-6 space-y-4">
+        {bookingResult.bookingNumber && (
+          <div className="flex items-center text-lg">
+            <Tag className="mr-3 h-5 w-5 text-primary" />
+            <strong>{t("bookings.confirmation.bookingNumberLabel")}:</strong>
+            <span className="ml-2 font-mono bg-muted px-2 py-1 rounded">{bookingResult.bookingNumber}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t("bookings.confirmation.treatment")}:</span>
-            <span className="font-medium text-foreground">{(treatmentId as any)?.name || "Treatment Name"}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t("bookings.confirmation.dateTime")}:</span>
-            <span className="font-medium text-foreground">{format(new Date(bookingDateTime), "PPPp")}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">{t("bookings.confirmation.address")}:</span>
-            <span className="font-medium text-foreground">
-              {(selectedAddressId as any)?.street || "Selected Address"}
-            </span>
+        )}
+        <div className="flex items-center">
+          <CalendarDays className="mr-3 h-5 w-5 text-primary" />
+          <div>
+            <span className="font-semibold">{t("bookings.confirmation.dateTimeLabel")}:</span> {formattedDate}{" "}
+            {t("common.atTime")} {formattedTime}
           </div>
         </div>
-
-        <div className="space-y-3 text-sm">
-          <h3 className="text-lg font-semibold text-foreground mb-3 border-b pb-2">
-            {t("bookings.confirmation.paymentTitle")}
-          </h3>
-          {priceDetails.isBaseTreatmentCoveredBySubscription && (
-            <div className="flex items-center text-green-600">
-              <Ticket className="h-5 w-5 mr-2" />
-              <span>{t("bookings.confirmation.coveredBySubscription")}</span>
+        {bookingResult.bookingAddressSnapshot?.fullAddress && (
+          <div className="flex items-start">
+            <MapPin className="mr-3 h-5 w-5 text-primary mt-1" />
+            <div>
+              <span className="font-semibold">{t("bookings.confirmation.addressLabel")}:</span>{" "}
+              {bookingResult.bookingAddressSnapshot.fullAddress}
             </div>
-          )}
-          {priceDetails.isBaseTreatmentCoveredByTreatmentVoucher &&
-            !priceDetails.isBaseTreatmentCoveredBySubscription && (
-              <div className="flex items-center text-green-600">
-                <GiftIcon className="h-5 w-5 mr-2" />
-                <span>{t("bookings.confirmation.coveredByTreatmentVoucher")}</span>
-              </div>
-            )}
-          {priceDetails.appliedGiftVoucherId &&
-            priceDetails.voucherAppliedAmount > 0 &&
-            updatedVoucherDetails?.voucherType === "monetary" && (
-              <div className="flex flex-col text-green-600">
-                <div className="flex items-center">
-                  <GiftIcon className="h-5 w-5 mr-2" />
-                  <span>
-                    {t("bookings.confirmation.paidWithMonetaryVoucher")}: {priceDetails.voucherAppliedAmount.toFixed(2)}{" "}
-                    {t("common.currency")}
-                  </span>
-                </div>
-                {typeof updatedVoucherDetails.remainingAmount === "number" && (
-                  <span className="text-xs ml-7">
-                    ({t("bookings.confirmation.voucherRemainingBalance")}:{" "}
-                    {updatedVoucherDetails.remainingAmount.toFixed(2)} {t("common.currency")})
-                  </span>
-                )}
-              </div>
-            )}
-          {priceDetails.couponDiscount > 0 && (
-            <div className="flex items-center text-green-600">
-              {/* Icon for coupon if available */}
-              <span>
-                {t("bookings.confirmation.couponApplied")}: -{priceDetails.couponDiscount.toFixed(2)}{" "}
-                {t("common.currency")}
-              </span>
-            </div>
-          )}
-
-          <div className="flex justify-between font-semibold text-lg text-foreground pt-2">
-            <span>{t("bookings.confirmation.totalPaid")}:</span>
-            <span>
-              {priceDetails.finalAmount === 0 && priceDetails.isFullyCoveredByVoucherOrSubscription
-                ? t("bookings.confirmation.covered")
-                : `${priceDetails.finalAmount.toFixed(2)} ${t("common.currency")}`}
-            </span>
           </div>
-          {priceDetails.paymentDetails?.paymentStatus === "not_required" && priceDetails.finalAmount === 0 && (
-            <p className="text-sm text-muted-foreground">{t("bookings.confirmation.noPaymentRequired")}</p>
-          )}
-        </div>
+        )}
+        {bookingResult.recipientName ? (
+          <div className="flex items-center">
+            <User className="mr-3 h-5 w-5 text-primary" />
+            <div>
+              <span className="font-semibold">{t("bookings.confirmation.recipientLabel")}:</span>{" "}
+              {bookingResult.recipientName}
+              {bookingResult.recipientPhone && ` (${bookingResult.recipientPhone})`}
+            </div>
+          </div>
+        ) : (
+          bookingResult.bookedByUserName && (
+            <div className="flex items-center">
+              <User className="mr-3 h-5 w-5 text-primary" />
+              <div>
+                <span className="font-semibold">{t("bookings.confirmation.bookedByLabel")}:</span>{" "}
+                {bookingResult.bookedByUserName}
+              </div>
+            </div>
+          )
+        )}
 
-        <div className="pt-6 text-center">
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+        <p className="text-sm text-muted-foreground pt-2">{t("bookings.confirmation.emailConfirmation")}</p>
+
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <Button asChild className="flex-1" size="lg">
             <Link href="/dashboard/member/bookings">{t("bookings.confirmation.viewMyBookings")}</Link>
           </Button>
+          <Button asChild variant="outline" className="flex-1" size="lg">
+            <Link href="/dashboard/member/book-treatment">{t("bookings.confirmation.bookAnother")}</Link>
+          </Button>
         </div>
-        <p className="text-xs text-muted-foreground text-center pt-4">{t("bookings.confirmation.contactSupport")}</p>
       </CardContent>
     </Card>
   )

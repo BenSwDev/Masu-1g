@@ -156,6 +156,19 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
     triggerPriceCalculation,
   ])
 
+  // Effect to auto-select the first available time slot
+  useEffect(() => {
+    if (timeSlots.length > 0 && !bookingOptions.bookingTime) {
+      const firstAvailableSlot = timeSlots.find((slot) => slot.isAvailable)
+      if (firstAvailableSlot) {
+        setBookingOptions((prev) => ({
+          ...prev,
+          bookingTime: firstAvailableSlot.time,
+        }))
+      }
+    }
+  }, [timeSlots, bookingOptions.bookingTime])
+
   const nextStep = () => {
     if (
       currentStep === TOTAL_STEPS_WITH_PAYMENT - 1 && // Summary step
@@ -223,6 +236,9 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       appliedCouponId: calculatedPrice.appliedCouponId,
       isFlexibleTime: bookingOptions.isFlexibleTime || false,
       flexibilityRangeHours: bookingOptions.flexibilityRangeHours,
+      // Add new fields for "book for someone else"
+      recipientName: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientName : undefined,
+      recipientPhone: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientPhone : undefined,
     }
 
     const result = await createBooking(payload)

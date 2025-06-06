@@ -31,20 +31,29 @@ export interface IPaymentDetails {
   paymentStatus: "pending" | "paid" | "failed" | "not_required" // not_required for full redemption
 }
 
+export interface IBookingAddressSnapshot {
+  fullAddress: string
+  city: string
+  street: string
+  streetNumber?: string
+  apartment?: string
+  entrance?: string
+  floor?: string
+  notes?: string
+}
+
 export interface IBooking extends Document {
+  bookingNumber: string // New: Unique 6-digit booking number
   userId: Types.ObjectId
+  bookedByUserName?: string // New: Name of the user who made the booking
+  bookedByUserEmail?: string // New: Email of the user who made the booking
+  bookedByUserPhone?: string // New: Phone of the user who made the booking
   treatmentId: Types.ObjectId
   selectedDurationId?: Types.ObjectId // If treatment is duration-based
   bookingDateTime: Date // Date and time of the appointment
-  addressId?: Types.ObjectId // Could be denormalized address details too
-  customAddressDetails?: {
-    // If user provided a one-time address not saved
-    fullAddress: string
-    city: string
-    street: string
-    streetNumber?: string
-    notes?: string
-  }
+  addressId?: Types.ObjectId
+  customAddressDetails?: IBookingAddressSnapshot // If user provided a one-time address not saved
+  bookingAddressSnapshot?: IBookingAddressSnapshot // New: Snapshot of the address used for the booking
   therapistGenderPreference: "male" | "female" | "any"
   notes?: string // User notes for the booking
   status: BookingStatus
@@ -58,7 +67,9 @@ export interface IBooking extends Document {
   flexibilityRangeHours?: number // e.g., 1 or 2 hours before/after
   cancellationReason?: string // If cancelled
   cancelledBy?: "user" | "admin"
-  professionalId?: Types.ObjectId // Assigned professional
+  professionalId?: Types.ObjectId // Assigned professional (can be null)
+  recipientName?: string // Name of the person receiving the treatment if not the user
+  recipientPhone?: string // Phone of the person receiving the treatment
   createdAt: Date
   updatedAt: Date
 }
@@ -100,20 +111,33 @@ const PaymentDetailsSchema = new Schema<IPaymentDetails>(
   { _id: false },
 )
 
+const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
+  {
+    fullAddress: { type: String, required: true },
+    city: { type: String, required: true },
+    street: { type: String, required: true },
+    streetNumber: { type: String },
+    apartment: { type: String },
+    entrance: { type: String },
+    floor: { type: String },
+    notes: { type: String },
+  },
+  { _id: false },
+)
+
 const BookingSchema: Schema<IBooking> = new Schema(
   {
+    bookingNumber: { type: String, required: true, unique: true, index: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    bookedByUserName: { type: String },
+    bookedByUserEmail: { type: String },
+    bookedByUserPhone: { type: String },
     treatmentId: { type: Schema.Types.ObjectId, ref: "Treatment", required: true },
-    selectedDurationId: { type: Schema.Types.ObjectId }, // No direct ref, validated in logic
+    selectedDurationId: { type: Schema.Types.ObjectId },
     bookingDateTime: { type: Date, required: true, index: true },
     addressId: { type: Schema.Types.ObjectId, ref: "Address" },
-    customAddressDetails: {
-      fullAddress: String,
-      city: String,
-      street: String,
-      streetNumber: String,
-      notes: String,
-    },
+    customAddressDetails: BookingAddressSnapshotSchema,
+    bookingAddressSnapshot: BookingAddressSnapshotSchema,
     therapistGenderPreference: { type: String, enum: ["male", "female", "any"], required: true },
     notes: { type: String, trim: true },
     status: {
@@ -127,7 +151,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
         "cancelled_by_admin",
         "no_show",
       ],
-      default: "pending_professional_assignment",
+      default: "pending_professional_assignment", // Will be overridden to 'confirmed' in createBooking
       required: true,
       index: true,
     },
@@ -145,7 +169,9 @@ const BookingSchema: Schema<IBooking> = new Schema(
     flexibilityRangeHours: { type: Number, min: 0 },
     cancellationReason: { type: String },
     cancelledBy: { type: String, enum: ["user", "admin"] },
-    professionalId: { type: Schema.Types.ObjectId, ref: "User" }, // Assuming professionals are Users
+    professionalId: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    recipientName: { type: String, trim: true },
+    recipientPhone: { type: String, trim: true },
   },
   { timestamps: true },
 )

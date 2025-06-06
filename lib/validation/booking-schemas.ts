@@ -13,22 +13,67 @@ export const TreatmentSelectionSchema = z.object({
   selectedGiftVoucherId: z.string().optional(),
   selectedTreatmentId: z.string({ required_error: "bookings.validation.treatmentRequired" }),
   selectedDurationId: z.string().optional(), // Required if treatment is duration-based and not covered by sub/voucher
+  therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),
 })
 
 // Schema for scheduling details
-export const SchedulingDetailsSchema = z.object({
-  bookingDate: z.date({ required_error: "bookings.validation.dateRequired" }),
-  bookingTime: z.string({ required_error: "bookings.validation.timeRequired" }),
-  selectedAddressId: z.string({ required_error: "bookings.validation.addressRequired" }),
-  therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),
-  notes: z.string().max(500, "bookings.validation.notesTooLong").optional(),
-  isFlexibleTime: z.boolean().default(false),
-  flexibilityRangeHours: z.number().min(1).max(12).optional(),
-})
+export const SchedulingDetailsSchema = z
+  .object({
+    bookingDate: z.date({ required_error: "bookings.validation.dateRequired" }),
+    bookingTime: z.string({ required_error: "bookings.validation.timeRequired" }),
+    selectedAddressId: z.string().optional(), // Made optional, will validate that either this or customAddress is present
+    customAddressDetails: z // New: for one-time address
+      .object({
+        fullAddress: z.string({ required_error: "bookings.validation.address.fullAddressRequired" }),
+        city: z.string({ required_error: "bookings.validation.address.cityRequired" }),
+        street: z.string({ required_error: "bookings.validation.address.streetRequired" }),
+        streetNumber: z.string().optional(),
+        apartment: z.string().optional(),
+        entrance: z.string().optional(),
+        floor: z.string().optional(),
+        notes: z.string().max(200, "bookings.validation.address.notesTooLong").optional(),
+      })
+      .optional(),
+    notes: z.string().max(500, "bookings.validation.notesTooLong").optional(),
+    isFlexibleTime: z.boolean().default(false),
+    flexibilityRangeHours: z.number().min(1).max(12).optional(),
+    isBookingForSomeoneElse: z.boolean().default(false),
+    recipientName: z.string().optional(),
+    recipientPhone: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.isBookingForSomeoneElse) {
+        return !!data.recipientName && data.recipientName.trim().length > 1
+      }
+      return true
+    },
+    {
+      message: "bookings.validation.recipientNameRequired",
+      path: ["recipientName"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.isBookingForSomeoneElse) {
+        // Basic phone validation, can be enhanced
+        return !!data.recipientPhone && data.recipientPhone.trim().length >= 9
+      }
+      return true
+    },
+    {
+      message: "bookings.validation.recipientPhoneRequired",
+      path: ["recipientPhone"],
+    },
+  )
+  .refine((data) => !!data.selectedAddressId || !!data.customAddressDetails, {
+    message: "bookings.validation.addressOrCustomRequired",
+    path: ["selectedAddressId"], // Or path: ["customAddressDetails"]
+  })
 
 // Schema for the summary/coupon step
 export const SummarySchema = z.object({
-  appliedCouponCode: z.string().optional(),
+  // This schema is now effectively empty but kept for structure.
 })
 
 // Schema for payment details
@@ -36,28 +81,18 @@ export const PaymentDetailsSchema = z.object({
   selectedPaymentMethodId: z.string({
     required_error: "bookings.validation.paymentMethodRequired",
   }),
+  appliedCouponCode: z.string().optional(),
+  agreedToTerms: z.boolean().refine((val) => val === true, {
+    message: "bookings.validation.termsRequired",
+  }),
+  agreedToMarketing: z.boolean().default(true),
 })
 
 // Combined schema for the entire booking wizard state (can be used for context or final validation)
 export const BookingWizardSchema = BookingSourceSchema.merge(TreatmentSelectionSchema)
   .merge(SchedulingDetailsSchema)
   .merge(SummarySchema)
-  .merge(PaymentDetailsSchema) // Merge payment only if finalAmount > 0
-  .refine(
-    (data) => {
-      // If treatment is duration-based and not fully covered by a subscription/voucher that dictates duration,
-      // then selectedDurationId is required.
-      // This logic is complex to represent purely in Zod without fetching treatment data.
-      // For now, we assume client-side logic handles this, or it's part of a more complex server-side validation.
-      // A simpler check: if selectedTreatmentId is present and it's known to be duration-based, selectedDurationId must be present.
-      // This refinement might be better handled in the component or action.
-      return true // Placeholder for more complex cross-field validation
-    },
-    {
-      message: "bookings.validation.durationRequiredForType",
-      path: ["selectedDurationId"],
-    },
-  )
+  .merge(PaymentDetailsSchema)
 
 // Schema for the payload of calculateBookingPrice action
 export const CalculatePricePayloadSchema = z.object({
@@ -71,13 +106,24 @@ export const CalculatePricePayloadSchema = z.object({
 })
 
 // Schema for the payload of createBooking action
-// This largely mirrors the IBooking structure but focuses on input validation
 export const CreateBookingPayloadSchema = z.object({
   userId: z.string(),
   treatmentId: z.string(),
   selectedDurationId: z.string().optional(),
   bookingDateTime: z.date(),
-  selectedAddressId: z.string(),
+  selectedAddressId: z.string().optional(), // Can be undefined if customAddressDetails is provided
+  customAddressDetails: z // New: for one-time address
+    .object({
+      fullAddress: z.string(),
+      city: z.string(),
+      street: z.string(),
+      streetNumber: z.string().optional(),
+      apartment: z.string().optional(),
+      entrance: z.string().optional(),
+      floor: z.string().optional(),
+      notes: z.string().optional(),
+    })
+    .optional(),
   therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),
   notes: z.string().max(500).optional(),
   priceDetails: z.any(), // Assuming priceDetails is pre-calculated and validated
@@ -89,9 +135,11 @@ export const CreateBookingPayloadSchema = z.object({
   source: z.enum(["new_purchase", "subscription_redemption", "gift_voucher_redemption"]),
   redeemedUserSubscriptionId: z.string().optional(),
   redeemedGiftVoucherId: z.string().optional(),
-  appliedCouponId: z.string().optional(), // This should be ID, not code, after validation
+  appliedCouponId: z.string().optional(),
   isFlexibleTime: z.boolean().optional(),
   flexibilityRangeHours: z.number().optional(),
+  recipientName: z.string().optional(),
+  recipientPhone: z.string().optional(),
 })
 
 export type BookingSourceFormValues = z.infer<typeof BookingSourceSchema>

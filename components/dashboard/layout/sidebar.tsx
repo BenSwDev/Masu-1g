@@ -29,6 +29,7 @@ import {
   Calendar,
   Bell,
   SlidersHorizontal,
+  ClipboardList,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
@@ -277,6 +278,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions" },
         { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
+        { titleKey: "bookings", icon: ClipboardList, hrefSuffix: "bookings" },
       ],
       member: [
         { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },

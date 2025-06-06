@@ -1,25 +1,26 @@
-import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
+import mongoose, { Schema, type Document, type Types } from "mongoose"
 
 export type BookingStatus =
-  | "pending_professional_assignment" // ממתין למציאת מטפל
-  | "confirmed" // אושר, שובץ מטפל
-  | "professional_en_route" // מטפל בדרך
-  | "completed" // הושלם
-  | "cancelled_by_user" // בוטל ע"י משתמש
-  | "cancelled_by_admin" // בוטל ע"י מנהל
-  | "no_show" // לא הופיע
+  | "pending_professional_assignment" // New booking, needs a professional
+  | "confirmed" // Professional assigned, client notified
+  | "professional_en_route" // Professional on the way
+  | "completed" // Service rendered
+  | "cancelled_by_user"
+  | "cancelled_by_admin"
+  | "no_show" // Client did not show up
+  | "rescheduled" // Booking was rescheduled
 
 export interface IPriceDetails {
   basePrice: number
   surcharges: { description: string; amount: number }[]
   totalSurchargesAmount: number
-  treatmentPriceAfterSubscriptionOrTreatmentVoucher: number
+  treatmentPriceAfterSubscriptionOrTreatmentVoucher: number // Price of treatment after subscription/treatment voucher (can be 0)
   discountAmount: number // From coupon
-  voucherAppliedAmount: number // From gift voucher
-  finalAmount: number
-  isBaseTreatmentCoveredBySubscription?: boolean
-  isBaseTreatmentCoveredByTreatmentVoucher?: boolean
-  isFullyCoveredByVoucherOrSubscription?: boolean
+  voucherAppliedAmount: number // Monetary amount from gift voucher or value of treatment voucher
+  finalAmount: number // Actual amount to be paid
+  isBaseTreatmentCoveredBySubscription: boolean
+  isBaseTreatmentCoveredByTreatmentVoucher: boolean
+  isFullyCoveredByVoucherOrSubscription: boolean // If finalAmount is 0 due to voucher/subscription
   appliedCouponId?: Types.ObjectId
   appliedGiftVoucherId?: Types.ObjectId
   redeemedUserSubscriptionId?: Types.ObjectId
@@ -27,37 +28,42 @@ export interface IPriceDetails {
 
 export interface IPaymentDetails {
   paymentMethodId?: Types.ObjectId
-  transactionId?: string
-  paymentStatus: "pending" | "paid" | "failed" | "not_required" // not_required for full redemption
+  paymentStatus: "pending" | "paid" | "failed" | "refunded" | "not_required"
+  transactionId?: string // From payment gateway
+  paymentDate?: Date
 }
 
 export interface IBooking extends Document {
   userId: Types.ObjectId
   treatmentId: Types.ObjectId
-  selectedDurationId?: Types.ObjectId // If treatment is duration-based
-  bookingDateTime: Date // Date and time of the appointment
-  addressId?: Types.ObjectId // Could be denormalized address details too
+  selectedDurationId?: Types.ObjectId // For duration-based treatments
+  bookingDateTime: Date
+  addressId?: Types.ObjectId // If user selected a saved address
   customAddressDetails?: {
-    // If user provided a one-time address not saved
+    // If user entered a new address
     fullAddress: string
     city: string
     street: string
     streetNumber?: string
-    notes?: string
+    apartment?: string
+    entryCode?: string
+    floor?: string
+    notes?: string // e.g., "ring bell twice"
   }
   therapistGenderPreference: "male" | "female" | "any"
   notes?: string // User notes for the booking
+  adminNotes?: string // Internal notes for admin/staff
   status: BookingStatus
   priceDetails: IPriceDetails
   paymentDetails: IPaymentDetails
-  source: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
-  redeemedUserSubscriptionId?: Types.ObjectId // If sourced from user's subscription
-  redeemedGiftVoucherId?: Types.ObjectId // If sourced from gift voucher
-  appliedCouponId?: Types.ObjectId // If a coupon was applied
-  isFlexibleTime: boolean
-  flexibilityRangeHours?: number // e.g., 1 or 2 hours before/after
-  cancellationReason?: string // If cancelled
-  cancelledBy?: "user" | "admin"
+  source: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption" // How the booking was initiated
+  redeemedUserSubscriptionId?: Types.ObjectId // If paid via user's subscription
+  redeemedGiftVoucherId?: Types.ObjectId // If paid via gift voucher
+  appliedCouponId?: Types.ObjectId // If a coupon was used
+  isFlexibleTime: boolean // If user is flexible with time
+  flexibilityRangeHours?: number // e.g., +/- 2 hours
+  cancellationReason?: string
+  cancelledBy?: "user" | "admin" | "professional"
   professionalId?: Types.ObjectId // Assigned professional
   createdAt: Date
   updatedAt: Date
@@ -65,24 +71,27 @@ export interface IBooking extends Document {
 
 const PriceDetailsSchema = new Schema<IPriceDetails>(
   {
-    basePrice: { type: Number, required: true, min: 0 },
+    basePrice: { type: Number, required: true, default: 0 },
     surcharges: [
       {
         description: { type: String, required: true },
-        amount: { type: Number, required: true, min: 0 },
+        amount: { type: Number, required: true },
       },
     ],
-    totalSurchargesAmount: { type: Number, default: 0, min: 0 },
-    treatmentPriceAfterSubscriptionOrTreatmentVoucher: { type: Number, default: 0, min: 0 },
-    discountAmount: { type: Number, default: 0, min: 0 },
-    voucherAppliedAmount: { type: Number, default: 0, min: 0 },
-    finalAmount: { type: Number, required: true, min: 0 },
+    totalSurchargesAmount: { type: Number, required: true, default: 0 },
+    treatmentPriceAfterSubscriptionOrTreatmentVoucher: { type: Number, required: true, default: 0 },
+    discountAmount: { type: Number, required: true, default: 0 },
+    voucherAppliedAmount: { type: Number, required: true, default: 0 },
+    finalAmount: { type: Number, required: true, default: 0 },
     isBaseTreatmentCoveredBySubscription: { type: Boolean, default: false },
     isBaseTreatmentCoveredByTreatmentVoucher: { type: Boolean, default: false },
     isFullyCoveredByVoucherOrSubscription: { type: Boolean, default: false },
     appliedCouponId: { type: Schema.Types.ObjectId, ref: "Coupon" },
     appliedGiftVoucherId: { type: Schema.Types.ObjectId, ref: "GiftVoucher" },
-    redeemedUserSubscriptionId: { type: Schema.Types.ObjectId, ref: "UserSubscription" },
+    redeemedUserSubscriptionId: {
+      type: Schema.Types.ObjectId,
+      ref: "UserSubscription",
+    },
   },
   { _id: false },
 )
@@ -90,32 +99,42 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
 const PaymentDetailsSchema = new Schema<IPaymentDetails>(
   {
     paymentMethodId: { type: Schema.Types.ObjectId, ref: "PaymentMethod" },
-    transactionId: { type: String },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed", "not_required"],
+      enum: ["pending", "paid", "failed", "refunded", "not_required"],
       required: true,
+      default: "pending",
     },
+    transactionId: { type: String },
+    paymentDate: { type: Date },
   },
   { _id: false },
 )
 
-const BookingSchema: Schema<IBooking> = new Schema(
+const BookingSchema = new Schema<IBooking>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     treatmentId: { type: Schema.Types.ObjectId, ref: "Treatment", required: true },
-    selectedDurationId: { type: Schema.Types.ObjectId }, // No direct ref, validated in logic
+    selectedDurationId: { type: Schema.Types.ObjectId }, // Refers to a sub-document ID within Treatment.durations
     bookingDateTime: { type: Date, required: true, index: true },
     addressId: { type: Schema.Types.ObjectId, ref: "Address" },
     customAddressDetails: {
-      fullAddress: String,
-      city: String,
-      street: String,
-      streetNumber: String,
-      notes: String,
+      fullAddress: { type: String },
+      city: { type: String },
+      street: { type: String },
+      streetNumber: { type: String },
+      apartment: { type: String },
+      entryCode: { type: String },
+      floor: { type: String },
+      notes: { type: String },
     },
-    therapistGenderPreference: { type: String, enum: ["male", "female", "any"], required: true },
-    notes: { type: String, trim: true },
+    therapistGenderPreference: {
+      type: String,
+      enum: ["male", "female", "any"],
+      default: "any",
+    },
+    notes: { type: String },
+    adminNotes: { type: String }, // New field for admin internal notes
     status: {
       type: String,
       enum: [
@@ -126,9 +145,10 @@ const BookingSchema: Schema<IBooking> = new Schema(
         "cancelled_by_user",
         "cancelled_by_admin",
         "no_show",
+        "rescheduled",
       ],
-      default: "pending_professional_assignment",
       required: true,
+      default: "pending_professional_assignment",
       index: true,
     },
     priceDetails: { type: PriceDetailsSchema, required: true },
@@ -138,22 +158,24 @@ const BookingSchema: Schema<IBooking> = new Schema(
       enum: ["new_purchase", "subscription_redemption", "gift_voucher_redemption"],
       required: true,
     },
-    redeemedUserSubscriptionId: { type: Schema.Types.ObjectId, ref: "UserSubscription" },
+    redeemedUserSubscriptionId: {
+      type: Schema.Types.ObjectId,
+      ref: "UserSubscription",
+    },
     redeemedGiftVoucherId: { type: Schema.Types.ObjectId, ref: "GiftVoucher" },
     appliedCouponId: { type: Schema.Types.ObjectId, ref: "Coupon" },
     isFlexibleTime: { type: Boolean, default: false },
-    flexibilityRangeHours: { type: Number, min: 0 },
+    flexibilityRangeHours: { type: Number },
     cancellationReason: { type: String },
-    cancelledBy: { type: String, enum: ["user", "admin"] },
-    professionalId: { type: Schema.Types.ObjectId, ref: "User" }, // Assuming professionals are Users
+    cancelledBy: { type: String, enum: ["user", "admin", "professional"] },
+    professionalId: { type: Schema.Types.ObjectId, ref: "User", index: true }, // Professional is also a User
   },
   { timestamps: true },
 )
 
+// Indexes
 BookingSchema.index({ userId: 1, bookingDateTime: -1 })
-BookingSchema.index({ status: 1, bookingDateTime: 1 })
-BookingSchema.index({ professionalId: 1, bookingDateTime: 1, status: 1 })
+BookingSchema.index({ professionalId: 1, bookingDateTime: -1 })
+BookingSchema.index({ status: 1, bookingDateTime: -1 })
 
-const Booking: Model<IBooking> = mongoose.models.Booking || mongoose.model<IBooking>("Booking", BookingSchema)
-
-export default Booking
+export default mongoose.models.Booking || mongoose.model<IBooking>("Booking", BookingSchema)

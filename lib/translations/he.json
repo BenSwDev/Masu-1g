@@ -1068,6 +1068,101 @@
     "paymentMethod": "אמצעי תשלום",
     "treatmentName": "טיפול"
   },
+  "adminBookings": {
+    "title": "ניהול הזמנות",
+    "description": "צפה ונהל את כל ההזמנות במערכת.",
+    "filters": {
+      "title": "מסננים",
+      "userIdPlaceholder": "סנן לפי מזהה משתמש...",
+      "professionalIdPlaceholder": "סנן לפי מזהה מטפל...",
+      "dateRangePlaceholder": "סנן לפי טווח תאריכים",
+      "statusPlaceholder": "סנן לפי סטטוס"
+    },
+    "table": {
+      "noBookings": "לא נמצאו הזמנות.",
+      "noBookingsWithFilters": "לא נמצאו הזמנות התואמות למסננים הנוכחיים.",
+      "actions": {
+        "viewDetails": "צפה/ערוך פרטים"
+      },
+      "columns": {
+        "bookingId": "מזהה הזמנה",
+        "user": "משתמש",
+        "professional": "מטפל",
+        "treatment": "טיפול",
+        "dateTime": "תאריך ושעה",
+        "status": "סטטוס",
+        "price": "מחיר",
+        "source": "מקור",
+        "actions": "פעולות"
+      },
+      "loading": "טוען הזמנות...",
+      "refresh": "רענן נתונים"
+    }
+  },
+  "adminBookingDetails": {
+    "modalTitleView": "פרטי הזמנה",
+    "modalTitleEdit": "עריכת הזמנה",
+    "toggleEditMode": "ערוך הזמנה",
+    "toggleViewMode": "צפה בפרטים",
+    "sections": {
+      "bookingInfo": "פרטי הזמנה",
+      "clientInfo": "פרטי לקוח",
+      "professionalInfo": "פרטי מטפל",
+      "treatmentInfo": "פרטי טיפול",
+      "addressInfo": "פרטי כתובת",
+      "priceInfo": "פרטי מחיר ותשלום",
+      "adminActions": "פעולות מנהל והערות"
+    },
+    "fields": {
+      "bookingId": "מזהה הזמנה",
+      "status": "סטטוס",
+      "bookingDateTime": "תאריך ושעה",
+      "isFlexibleTime": "זמן גמיש",
+      "source": "מקור",
+      "userNotes": "הערות לקוח",
+      "adminNotes": "הערות מנהל",
+      "adminNotesPlaceholder": "הוסף הערות פנימיות להזמנה זו...",
+      "assignProfessional": "שייך מטפל",
+      "noProfessionalAssigned": "לא שויך מטפל",
+      "selectProfessionalPlaceholder": "בחר מטפל...",
+      "noProfessionalsAvailable": "אין מטפלים זמינים",
+      "clientName": "שם לקוח",
+      "clientPhone": "טלפון לקוח",
+      "clientEmail": "אימייל לקוח",
+      "professionalName": "שם מטפל",
+      "professionalPhone": "טלפון מטפל",
+      "professionalEmail": "אימייל מטפל",
+      "treatmentName": "טיפול",
+      "duration": "משך",
+      "fullAddress": "כתובת מלאה",
+      "addressNotes": "הערות לכתובת",
+      "totalPrice": "מחיר כולל",
+      "paymentStatus": "סטטוס תשלום",
+      "paymentMethod": "אמצעי תשלום",
+      "transactionId": "מזהה עסקה",
+      "couponApplied": "קופון הוחל",
+      "subscriptionRedeemed": "מנוי מומש",
+      "voucherRedeemed": "שובר מומש",
+      "createdAt": "נוצר ב",
+      "updatedAt": "עודכן ב"
+    },
+    "actions": {
+      "saveChanges": "שמור שינויים",
+      "saving": "שומר...",
+      "cancelBooking": "בטל הזמנה",
+      "cancelling": "מבטל..."
+    },
+    "toasts": {
+      "updateSuccess": "ההזמנה עודכנה בהצלחה.",
+      "updateError": "שגיאה בעדכון ההזמנה.",
+      "cancelSuccess": "ההזמנה בוטלה בהצלחה.",
+      "cancelError": "שגיאה בביטול ההזמנה."
+    },
+    "confirmCancelTitle": "אישור ביטול הזמנה",
+    "confirmCancelDescription": "האם אתה בטוח שברצונך לבטל הזמנה זו? פעולה זו עשויה לעדכן את הלקוח והמטפל.",
+    "cancellationReason": "סיבת ביטול (מנהל)",
+    "cancellationReasonPlaceholder": "הזן סיבת ביטול..."
+  },
   "validFrom": "בתוקף מ-",
   "validUntil": "בתוקף עד",
   "identifier": "מזהה",
@@ -1513,13 +1608,12 @@
     },
     "status": {
       "pending_professional_assignment": "ממתין לשיבוץ מטפל",
-      "professional_en_route": "מטפל בדרך",
-      "pending_professional_assignment": "ממתין לשיבוץ מטפל/ת",
       "confirmed": "מאושרת",
+      "professional_en_route": "מטפל בדרך",
       "completed": "הושלמה",
-      "cancelled_by_user": "בוטלה על ידך",
-      "cancelled_by_admin": "בוטלה על ידי המערכת",
-      "no_show": "לא הופעת"
+      "cancelled_by_user": "בוטלה על ידי המשתמש",
+      "cancelled_by_admin": "בוטלה על ידי המנהל",
+      "no_show": "לא הופיע"
     }
   },
   "memberBookings": {
@@ -1569,70 +1663,110 @@
     "cancelConfirmDescription": "האם אתה בטוח שברצונך לבטל הזמנה זו? ייתכן שלא ניתן יהיה לבטל פעולה זו בהתאם למדיניות הביטולים.",
     "tryAdjustingFilters": "נסה לשנות את המסננים שלך או בדוק שוב מאוחר יותר."
   },
-  "professionalBookingManagement": {
-    "title": "ניהול הזמנה",
-    "bookingId": "מזהה הזמנה",
-    "details": {
-      "title": "פרטי ההזמנה",
-      "status": "סטטוס",
-      "dateTime": "תאריך ושעה",
-      "duration": "משך הטיפול",
-      "address": "כתובת",
-      "notes": "הערות לקוח",
-      "anonymousClient": "לקוח אנונימי"
+  "adminBookings": {
+    "title": "ניהול הזמנות",
+    "description": "צפה ונהל את כל ההזמנות במערכת.",
+    "filters": {
+      "title": "מסננים",
+      "userIdPlaceholder": "סנן לפי מזהה משתמש...",
+      "professionalIdPlaceholder": "סנן לפי מזהה מטפל...",
+      "dateRangePlaceholder": "סנן לפי טווח תאריכים",
+      "statusPlaceholder": "סנן לפי סטטוס"
     },
-    "clientDetails": {
-      "title": "פרטי לקוח",
-      "name": "שם",
-      "phone": "טלפון",
-      "email": "אימייל"
+    "table": {
+      "noBookings": "לא נמצאו הזמנות.",
+      "noBookingsWithFilters": "לא נמצאו הזמנות התואמות למסננים הנוכחיים.",
+      "actions": {
+        "viewDetails": "צפה/ערוך פרטים"
+      },
+      "columns": {
+        "bookingId": "מזהה הזמנה",
+        "user": "משתמש",
+        "professional": "מטפל",
+        "treatment": "טיפול",
+        "dateTime": "תאריך ושעה",
+        "status": "סטטוס",
+        "price": "מחיר",
+        "source": "מקור",
+        "actions": "פעולות"
+      },
+      "loading": "טוען הזמנות...",
+      "refresh": "רענן נתונים"
+    }
+  },
+  "adminBookingDetails": {
+    "modalTitleView": "פרטי הזמנה",
+    "modalTitleEdit": "עריכת הזמנה",
+    "toggleEditMode": "ערוך הזמנה",
+    "toggleViewMode": "צפה בפרטים",
+    "sections": {
+      "bookingInfo": "פרטי הזמנה",
+      "clientInfo": "פרטי לקוח",
+      "professionalInfo": "פרטי מטפל",
+      "treatmentInfo": "פרטי טיפול",
+      "addressInfo": "פרטי כתובת",
+      "priceInfo": "פרטי מחיר ותשלום",
+      "adminActions": "פעולות מנהל והערות"
+    },
+    "fields": {
+      "bookingId": "מזהה הזמנה",
+      "status": "סטטוס",
+      "bookingDateTime": "תאריך ושעה",
+      "isFlexibleTime": "זמן גמיש",
+      "source": "מקור",
+      "userNotes": "הערות לקוח",
+      "adminNotes": "הערות מנהל",
+      "adminNotesPlaceholder": "הוסף הערות פנימיות להזמנה זו...",
+      "assignProfessional": "שייך מטפל",
+      "noProfessionalAssigned": "לא שויך מטפל",
+      "selectProfessionalPlaceholder": "בחר מטפל...",
+      "noProfessionalsAvailable": "אין מטפלים זמינים",
+      "clientName": "שם לקוח",
+      "clientPhone": "טלפון לקוח",
+      "clientEmail": "אימייל לקוח",
+      "professionalName": "שם מטפל",
+      "professionalPhone": "טלפון מטפל",
+      "professionalEmail": "אימייל מטפל",
+      "treatmentName": "טיפול",
+      "duration": "משך",
+      "fullAddress": "כתובת מלאה",
+      "addressNotes": "הערות לכתובת",
+      "totalPrice": "מחיר כולל",
+      "paymentStatus": "סטטוס תשלום",
+      "paymentMethod": "אמצעי תשלום",
+      "transactionId": "מזהה עסקה",
+      "couponApplied": "קופון הוחל",
+      "subscriptionRedeemed": "מנוי מומש",
+      "voucherRedeemed": "שובר מומש",
+      "createdAt": "נוצר ב",
+      "updatedAt": "עודכן ב"
     },
     "actions": {
-      "acceptBooking": "אשר קבלת הזמנה",
-      "markEnRoute": "אני בדרך",
-      "markCompleted": "סמן כהושלם"
-    },
-    "status": {
-      "pendingAssignment": {
-        "title": "ממתין לשיבוץ",
-        "description": "הזמנה זו ממתינה לאישור מטפל/ת. אם הנך פנוי/ה, באפשרותך לאשר קבלת הזמנה זו."
-      },
-      "alreadyAssigned": {
-        "title": "הזמנה שובצה",
-        "description": "הזמנה זו כבר שובצה ל{{professionalName}}."
-      },
-      "completed": {
-        "title": "הזמנה הושלמה",
-        "description": "הזמנה זו הושלמה בהצלחה."
-      },
-      "noBookingFound": {
-        "title": "הזמנה לא נמצאה",
-        "description": "ההזמנה המבוקשת לא נמצאה או שאין לך הרשאה לצפות בה."
-      }
-    },
-    "errors": {
-      "fetchFailed": "שליפת פרטי ההזמנה נכשלה.",
-      "unexpectedError": "אירעה שגיאה בלתי צפויה.",
-      "acceptFailed": "אישור קבלת ההזמנה נכשל.",
-      "enRouteFailed": "עדכון סטטוס 'בדרך' נכשל.",
-      "completedFailed": "עדכון סטטוס 'הושלם' נכשל."
+      "saveChanges": "שמור שינויים",
+      "saving": "שומר...",
+      "cancelBooking": "בטל הזמנה",
+      "cancelling": "מבטל..."
     },
     "toasts": {
-      "accepted": {
-        "title": "ההזמנה אושרה!",
-        "description": "אישרת בהצלחה את קבלת ההזמנה. הלקוח עודכן."
-      },
-      "enRoute": {
-        "title": "סטטוס עודכן: בדרך!",
-        "description": "סטטוס ההזמנה עודכן ל'בדרך'. הלקוח עודכן."
-      },
-      "completed": {
-        "title": "ההזמנה הושלמה!",
-        "description": "ההזמנה סומנה כהושלמה."
-      },
-      "actionFailed": {
-        "title": "הפעולה נכשלה"
-      }
-    }
+      "updateSuccess": "ההזמנה עודכנה בהצלחה.",
+      "updateError": "שגיאה בעדכון ההזמנה.",
+      "cancelSuccess": "ההזמנה בוטלה בהצלחה.",
+      "cancelError": "שגיאה בביטול ההזמנה."
+    },
+    "confirmCancelTitle": "אישור ביטול הזמנה",
+    "confirmCancelDescription": "האם אתה בטוח שברצונך לבטל הזמנה זו? פעולה זו עשויה לעדכן את הלקוח והמטפל.",
+    "cancellationReason": "סיבת ביטול (מנהל)",
+    "cancellationReasonPlaceholder": "הזן סיבת ביטול..."
+  },
+  "datePicker": {
+    "placeholder": "בחר תאריך",
+    "selectDate": "בחר תאריך",
+    "previousMonth": "חודש קודם",
+    "nextMonth": "חודש הבא",
+    "goToToday": "עבור להיום"
+  },
+  "dateRangePicker": {
+    "placeholder": "בחר טווח תאריכים",
+    "selectDateRange": "בחר טווח תאריכים"
   }
 }

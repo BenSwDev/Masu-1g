@@ -72,18 +72,40 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
   // Translation function
   const t = (key: string): string => {
     const keys = key.split(".")
-    let result: any = translations[language]
+    let current: any = translations[language]
+    let pathTraversed = "" // To keep track of the path being traversed for better error messages
+    let keyFound = true
 
-    for (const k of keys) {
-      if (result && result[k]) {
-        result = result[k]
+    for (let i = 0; i < keys.length; i++) {
+      const k = keys[i]
+      pathTraversed += (i > 0 ? "." : "") + k // Build the path as we go
+
+      if (current && typeof current === "object" && k in current) {
+        current = current[k]
       } else {
-        // Fallback to key if translation not found
-        return key
+        // Part of the key path was not found
+        keyFound = false
+        break
       }
     }
 
-    return result
+    // After the loop, if the key was not fully found or if the final result is not a string
+    // (meaning the key might be a prefix to a deeper object, not a leaf translation string)
+    if (!keyFound) {
+      console.warn(
+        `[i18n] Missing translation for key: "${key}" (path "${pathTraversed}" not fully resolved) in language: "${language}"`,
+      )
+      return key // Fallback to the original key
+    }
+
+    if (typeof current !== "string") {
+      console.warn(
+        `[i18n] Translation for key: "${key}" in language: "${language}" is not a string (type: ${typeof current}). This might be an incomplete key or an object.`,
+      )
+      return key // Fallback to the original key
+    }
+
+    return current
   }
 
   return <I18nContext.Provider value={{ language, setLanguage, t, dir }}>{children}</I18nContext.Provider>

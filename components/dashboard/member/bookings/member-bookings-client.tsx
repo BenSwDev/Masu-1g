@@ -3,115 +3,87 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useSearchParams } from "next/navigation"
+import type { SortingState } from "@tanstack/react-table"
 
 import { getUserBookings } from "@/actions/booking-actions"
-import { useSession } from "next-auth/react"
-import { Skeleton } from "@/components/ui/skeleton"
-import BookingCard from "./booking-card"
-import { Pagination } from "@/components/ui/pagination"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
+import { useTranslation } from "@/lib/translations/i18n"
+import { columns } from "./bookings-columns"
+import { DataTable } from "@/components/common/ui/data-table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { BookingsTableSkeleton } from "./bookings-table-skeleton"
+import { Heading } from "@/components/common/ui/heading"
 
 interface MemberBookingsClientProps {
-  defaultPage?: number
-  defaultStatus?: string
-  defaultSortBy?: string
-  defaultSortDirection?: "asc" | "desc"
+  userId: string
 }
 
-const MemberBookingsClient = ({
-  defaultPage = 1,
-  defaultStatus = "all",
-  defaultSortBy = "createdAt",
-  defaultSortDirection = "desc",
-}: MemberBookingsClientProps) => {
+const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
+  const { t, dir } = useTranslation()
   const searchParams = useSearchParams()
-  const { data: session } = useSession()
-  const currentUserId = session?.user?.id as string
 
-  const [currentPage, setCurrentPage] = useState(Number(searchParams.get("page")) || defaultPage)
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || defaultStatus)
-  const [sortBy, setSortBy] = useState(searchParams.get("sort_by") || defaultSortBy)
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(
-    (searchParams.get("sort_direction") as "asc" | "desc") || defaultSortDirection,
-  )
+  const [pagination, setPagination] = useState({
+    pageIndex: Number(searchParams.get("page") || 1) - 1,
+    pageSize: 10,
+  })
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "all")
+  const [sorting, setSorting] = useState<SortingState>([{ id: "bookingDateTime", desc: true }])
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["member-bookings", currentUserId, currentPage, statusFilter, sortBy, sortDirection],
-    queryFn: () => getUserBookings(currentUserId, { page: currentPage, status: statusFilter, sortBy, sortDirection }),
-    enabled: !!currentUserId,
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["member-bookings", userId, pagination, statusFilter, sorting],
+    queryFn: () =>
+      getUserBookings(userId, {
+        page: pagination.pageIndex + 1,
+        limit: pagination.pageSize,
+        status: statusFilter,
+        sortBy: sorting[0]?.id,
+        sortDirection: sorting[0]?.desc ? "desc" : "asc",
+      }),
+    enabled: !!userId,
   })
 
-  if (!currentUserId) {
-    return <div>Loading...</div>
-  }
+  const bookingsData = data?.bookings || []
+  const pageCount = data?.totalPages || 0
 
   if (isError) {
-    return <div>Error fetching bookings</div>
+    return <div>{`${t("common.error")}: ${error.message}`}</div>
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">My Bookings</h2>
-        <div className="flex items-center gap-2">
+    <div dir={dir} className="space-y-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <Heading title={t("memberBookings.pageTitle")} description={t("memberBookings.pageDescription")} />
+        <div className="flex items-center gap-2 w-full md:w-auto">
           <Select onValueChange={setStatusFilter} defaultValue={statusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder={t("memberBookings.filterByStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            onValueChange={(value) => {
-              const [newSortBy, newSortDirection] = value.split(".") as [string, "asc" | "desc"]
-              setSortBy(newSortBy)
-              setSortDirection(newSortDirection)
-            }}
-            defaultValue={`${sortBy}.${sortDirection}`}
-          >
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={`createdAt.asc`}>Date (Oldest first)</SelectItem>
-              <SelectItem value={`createdAt.desc`}>Date (Newest first)</SelectItem>
-              <SelectItem value={`totalPrice.asc`}>Price (Lowest first)</SelectItem>
-              <SelectItem value={`totalPrice.desc`}>Price (Highest first)</SelectItem>
+              <SelectItem value="all">{t("memberBookings.status.all")}</SelectItem>
+              <SelectItem value="pending_professional_assignment">
+                {t("memberBookings.status.pending_professional_assignment")}
+              </SelectItem>
+              <SelectItem value="confirmed">{t("memberBookings.status.confirmed")}</SelectItem>
+              <SelectItem value="cancelled">{t("memberBookings.status.cancelled")}</SelectItem>
+              <SelectItem value="completed">{t("memberBookings.status.completed")}</SelectItem>
+              <SelectItem value="no_show">{t("memberBookings.status.no_show")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {[...Array(8)].map((_, i) => (
-            <Skeleton key={i} className="h-40 w-full" />
-          ))}
-        </div>
-      ) : data?.bookings.length === 0 ? (
-        <p>No bookings found.</p>
+        <BookingsTableSkeleton />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {data?.bookings.map((booking) => (
-            <BookingCard key={booking.id} booking={booking} />
-          ))}
-        </div>
+        <DataTable
+          columns={columns}
+          data={bookingsData}
+          pageCount={pageCount}
+          pagination={pagination}
+          setPagination={setPagination}
+          sorting={sorting}
+          setSorting={setSorting}
+        />
       )}
-
-      <Pagination
-        currentPage={currentPage}
-        totalCount={data?.totalCount || 0}
-        pageSize={data?.pageSize || 8}
-        onPageChange={setCurrentPage}
-        className={cn(isLoading && "opacity-50 pointer-events-none")}
-      />
     </div>
   )
 }

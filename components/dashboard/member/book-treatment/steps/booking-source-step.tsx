@@ -15,13 +15,13 @@ import { useEffect } from "react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
 import { format } from "date-fns" // For formatting expiry date
 import type { ITreatment } from "@/types"
+import { useTranslation } from "@/lib/translations/i18n"
 
 interface BookingSourceStepProps {
   initialData: BookingInitialData
   bookingOptions: Partial<SelectedBookingOptions>
   setBookingOptions: React.Dispatch<React.SetStateAction<Partial<SelectedBookingOptions>>>
   onNext: () => void
-  translations: Record<string, string>
 }
 
 export default function BookingSourceStep({
@@ -29,8 +29,8 @@ export default function BookingSourceStep({
   bookingOptions,
   setBookingOptions,
   onNext,
-  translations,
 }: BookingSourceStepProps) {
+  const { t } = useTranslation()
   const hasSubscriptions = initialData.activeUserSubscriptions && initialData.activeUserSubscriptions.length > 0
   const hasVouchers = initialData.usableGiftVouchers && initialData.usableGiftVouchers.length > 0
 
@@ -68,8 +68,8 @@ export default function BookingSourceStep({
 
   // Helper to get subscription display details
   const getSubscriptionDisplayDetails = (sub: any) => {
-    let details = `${(sub.subscriptionId as any)?.name || translations["bookings.unknownSubscription"] || "Unknown Subscription"}`
-    details += ` (${translations["bookings.subscriptions.remaining"] || "Remaining"}: ${sub.remainingQuantity})`
+    let details = `${(sub.subscriptionId as any)?.name || t("bookings.unknownSubscription") || "Unknown Subscription"}`
+    details += ` (${t("bookings.subscriptions.remaining")}: ${sub.remainingQuantity})`
 
     const treatmentFromSub = sub.treatmentId as ITreatment | undefined
     if (treatmentFromSub) {
@@ -77,12 +77,12 @@ export default function BookingSourceStep({
       if (treatmentFromSub.pricingType === "duration_based" && sub.selectedDurationId) {
         const duration = treatmentFromSub.durations?.find((d) => d._id.toString() === sub.selectedDurationId.toString())
         if (duration) {
-          details += ` (${duration.minutes} ${translations["common.minutes"] || "min"})`
+          details += ` (${duration.minutes} ${t("common.minutes")})`
         }
       }
     }
     if (sub.expiryDate) {
-      details += ` (${translations["subscriptions.expiry"] || "Expires"}: ${format(new Date(sub.expiryDate), "PP")})`
+      details += ` (${t("subscriptions.expiry")}: ${format(new Date(sub.expiryDate), "PP")})`
     }
     return details
   }
@@ -91,12 +91,8 @@ export default function BookingSourceStep({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {translations["bookings.steps.source.title"] || "How would you like to book?"}
-          </h2>
-          <p className="text-muted-foreground mt-1">
-            {translations["bookings.steps.source.description"] || "Choose your booking method."}
-          </p>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.source.title")}</h2>
+          <p className="text-muted-foreground mt-1">{t("bookings.steps.source.description")}</p>
         </div>
 
         <FormField
@@ -104,7 +100,7 @@ export default function BookingSourceStep({
           name="source"
           render={({ field }) => (
             <FormItem className="space-y-4">
-              <FormLabel className="sr-only">{translations["bookings.steps.source.title"]}</FormLabel>
+              <FormLabel className="sr-only">{t("bookings.steps.source.title")}</FormLabel>
               <FormControl>
                 <RadioGroup
                   onValueChange={field.onChange}
@@ -126,13 +122,11 @@ export default function BookingSourceStep({
                         >
                           <Star className="w-12 h-12 mb-3 text-primary" />
                           <CardTitle className="mb-1 text-lg">
-                            {translations["bookings.steps.source.redeemSubscription"] || "Use Subscription"}
+                            {t("bookings.steps.source.redeemSubscription")}
                           </CardTitle>
                           <CardDescription className="text-xs">
-                            {translations["bookings.steps.source.redeemSubscriptionDesc"] ||
-                              "Redeem one of your active subscription sessions."}{" "}
-                            ({initialData.activeUserSubscriptions.length}{" "}
-                            {translations["bookings.steps.source.available"] || "available"})
+                            {t("bookings.steps.source.redeemSubscriptionDesc")} (
+                            {initialData.activeUserSubscriptions.length} {t("bookings.steps.source.available")})
                           </CardDescription>
                           {/* Display more details about subscriptions if needed, or in the next step */}
                         </Card>
@@ -150,14 +144,10 @@ export default function BookingSourceStep({
                           className={`flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:shadow-lg transition-all h-full ${field.value === "gift_voucher_redemption" ? "ring-2 ring-primary border-primary shadow-lg" : "border-border hover:border-muted-foreground/50"}`}
                         >
                           <Gift className="w-12 h-12 mb-3 text-primary" />
-                          <CardTitle className="mb-1 text-lg">
-                            {translations["bookings.steps.source.redeemVoucher"] || "Use Gift Voucher"}
-                          </CardTitle>
+                          <CardTitle className="mb-1 text-lg">{t("bookings.steps.source.redeemVoucher")}</CardTitle>
                           <CardDescription className="text-xs">
-                            {translations["bookings.steps.source.redeemVoucherDesc"] ||
-                              "Apply a gift voucher towards your booking."}{" "}
-                            ({initialData.usableGiftVouchers.length}{" "}
-                            {translations["bookings.steps.source.available"] || "available"})
+                            {t("bookings.steps.source.redeemVoucherDesc")} ({initialData.usableGiftVouchers.length}{" "}
+                            {t("bookings.steps.source.available")})
                           </CardDescription>
                         </Card>
                       </Label>
@@ -174,12 +164,9 @@ export default function BookingSourceStep({
                         className={`flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:shadow-lg transition-all h-full ${field.value === "new_purchase" || noOptionsAvailable ? "ring-2 ring-primary border-primary shadow-lg" : "border-border hover:border-muted-foreground/50"}`}
                       >
                         <CalendarPlus className="w-12 h-12 mb-3 text-primary" />
-                        <CardTitle className="mb-1 text-lg">
-                          {translations["bookings.steps.source.newBooking"] || "New Booking"}
-                        </CardTitle>
+                        <CardTitle className="mb-1 text-lg">{t("bookings.steps.source.newBooking")}</CardTitle>
                         <CardDescription className="text-xs">
-                          {translations["bookings.steps.source.newBookingDesc"] ||
-                            "Make a new booking and pay as you go."}
+                          {t("bookings.steps.source.newBookingDesc")}
                         </CardDescription>
                       </Card>
                     </Label>
@@ -194,17 +181,14 @@ export default function BookingSourceStep({
         {!hasSubscriptions && !hasVouchers && (
           <Alert variant="default" className="mt-6">
             <Info className="h-4 w-4" />
-            <AlertTitle>{translations["bookings.steps.source.newBookingOnlyTitle"] || "New Booking"}</AlertTitle>
-            <AlertDescription>
-              {translations["bookings.steps.source.newBookingOnlyDesc"] ||
-                "Currently, only new bookings are available. You can purchase subscriptions or gift vouchers from their respective sections in the dashboard."}
-            </AlertDescription>
+            <AlertTitle>{t("bookings.steps.source.newBookingOnlyTitle")}</AlertTitle>
+            <AlertDescription>{t("bookings.steps.source.newBookingOnlyDesc")}</AlertDescription>
           </Alert>
         )}
 
         <div className="flex justify-end pt-6">
           <Button type="submit" disabled={!form.formState.isValid || form.formState.isSubmitting} size="lg">
-            {translations["common.next"] || "Next"}
+            {t("common.next")}
           </Button>
         </div>
       </form>

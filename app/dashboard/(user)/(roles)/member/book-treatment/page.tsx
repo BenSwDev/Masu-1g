@@ -3,7 +3,6 @@ import { authOptions } from "@/lib/auth/auth"
 import { getBookingInitialData } from "@/actions/booking-actions"
 import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
 import type { UserSessionData } from "@/types/next-auth"
-import type { Language } from "@/lib/translations/i18n" // Assuming Language type is exported
 
 // Import translations directly for server-side use
 import heTranslations from "@/lib/translations/he.json"
@@ -21,7 +20,7 @@ const allServerTranslationsData = {
 // If your app structure includes locale in the path (e.g., /en/dashboard),
 // you could get it from `params.lang`. Otherwise, we'll use a default.
 // The custom I18nProvider defaults to 'he', so we'll use that as a fallback here.
-function getSsrTranslation(key: string, lang: Language = "he"): string {
+function getSsrTranslation(key: string, lang = "he"): string {
   const keys = key.split(".")
   let result: any = allServerTranslationsData[lang]
 
@@ -41,7 +40,7 @@ function getSsrTranslation(key: string, lang: Language = "he"): string {
   return result
 }
 
-export default async function BookTreatmentPage({ params }: { params?: { lang?: Language } }) {
+export default async function BookTreatmentPage({ params }: { params?: { lang?: string } }) {
   // Determine language for SSR: from URL params if available, else default.
   const currentLang = params?.lang || "he"
 
@@ -74,7 +73,7 @@ export default async function BookTreatmentPage({ params }: { params?: { lang?: 
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-center">{getSsrTranslation("bookings.title", currentLang)}</h1>
       <BookingWizard
-        initialData={initialDataResult.data} // Pass data without the explicit 'translations' bundle
+        initialData={initialDataResult.data} // initialDataResult.data should not contain translations
         currentUser={session.user as UserSessionData}
       />
     </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import * as React from "react" // Aliased to avoid conflict if React namespace is used elsewhere
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils/utils"
@@ -33,14 +33,17 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background max-w-md mx-auto",
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex flex-col rounded-t-[10px] border bg-background max-w-md mx-auto",
+        "max-h-[calc(100vh-theme(spacing.24))]", // Ensure drawer itself doesn't overflow viewport height considering mt-24
         className,
       )}
       dir="auto"
       {...props}
     >
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
-      {children}
+      {/* Grabber handle */}
+      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted flex-shrink-0" />
+      {/* Scrollable content area */}
+      <div className="flex-1 overflow-y-auto p-4 pb-6">{children}</div>
     </DrawerPrimitive.Content>
   </DrawerPortal>
 ))
@@ -48,14 +51,24 @@ DrawerContent.displayName = "DrawerContent"
 
 const DrawerHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("grid gap-1.5 p-4 text-center sm:text-left rtl:text-right", className)} {...props} />
+    <div
+      ref={ref}
+      // Removed p-4, padding is now handled by the scrollable wrapper in DrawerContent
+      className={cn("grid gap-1.5 text-center sm:text-left rtl:text-right", className)}
+      {...props}
+    />
   ),
 )
 DrawerHeader.displayName = "DrawerHeader"
 
 const DrawerFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("mt-auto flex flex-col gap-2 p-4", className)} {...props} />
+    <div
+      ref={ref}
+      // Removed p-4, padding is now handled by the scrollable wrapper in DrawerContent
+      className={cn("mt-auto flex flex-col gap-2", className)}
+      {...props}
+    />
   ),
 )
 DrawerFooter.displayName = "DrawerFooter"

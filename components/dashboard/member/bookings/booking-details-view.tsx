@@ -33,7 +33,6 @@ import type { IGiftVoucherUsageHistory } from "@/lib/db/models/gift-voucher"
 
 interface BookingDetailsViewProps {
   booking: PopulatedBooking
-  // currentUser: UserSessionData // May not be needed if all info is in booking
 }
 
 export default function BookingDetailsView({ booking }: BookingDetailsViewProps) {
@@ -47,7 +46,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
     bookedByUserName,
     bookedByUserEmail,
     bookedByUserPhone,
-    treatmentId: populatedTreatment, // Renamed for clarity
+    treatmentId: populatedTreatment,
     selectedDurationId,
     bookingDateTime,
     isFlexibleTime,
@@ -74,7 +73,6 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
   }, [populatedTreatment, selectedDurationId])
 
   const getBookingStatusInfo = (statusKey: PopulatedBooking["status"]) => {
-    // Reusing logic from BookingCard, can be centralized if needed
     switch (statusKey) {
       case "pending_professional_assignment":
         return {
@@ -143,7 +141,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
   const redeemedSubscriptionName = useMemo(() => {
     if (priceDetails.redeemedUserSubscriptionId && typeof priceDetails.redeemedUserSubscriptionId === "object") {
       const sub = priceDetails.redeemedUserSubscriptionId
-      // @ts-ignore // Assuming subscriptionId might be populated with name
+      // @ts-ignore
       return sub.subscriptionId?.name || t("bookings.unknownSubscription")
     }
     return null
@@ -198,7 +196,8 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
   }, [paymentDetails.paymentMethodId, priceDetails.finalAmount, t])
 
   return (
-    <div className="space-y-4 p-4 pb-6 bg-background text-foreground">
+    // Removed p-4 pb-6 from this div, as padding is now handled by the scrollable wrapper in DrawerContent
+    <div className="space-y-4 bg-background text-foreground">
       {/* Booking Info Header */}
       <div className="text-center mb-4">
         <h2 className="text-xl font-semibold text-primary">

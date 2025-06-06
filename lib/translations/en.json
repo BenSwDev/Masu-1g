@@ -50,7 +50,7 @@
     "depleted": "Depleted",
     "cancelled": "Cancelled",
     "creating": "Creating...",
-    "minutes": "minutes",
+    "minutes": "min",
     "step": "Step",
     "of": "of",
     "applyFilters": "Apply Filters",
@@ -129,9 +129,17 @@
     "anotherProfessional": "another professional",
     "invalidInput": "Invalid input provided.",
     "currencySymbol": "₪",
-    "cardEndingIn": "Card ending in",
+    "cardEndingIn": "Card ending in {last4}",
     "orderSummary": "Order Summary",
-    "termsOfService": "Terms of Service"
+    "termsOfService": "Terms of Service",
+    "errors": {
+      "unknown": "An unknown error occurred.",
+      "bookingNotFound": "Booking not found.",
+      "unauthorized": "Unauthorized access.",
+      "cancellationFailed": "Failed to cancel booking.",
+      "userNotBookingOwner": "You are not authorized to cancel this booking.",
+      "cancellationWindowExpired": "The cancellation window for this booking has expired."
+    }
   },
   "dashboard": {
     "sidebar": {
@@ -531,7 +539,13 @@
       "city": "City",
       "street": "Street",
       "streetNumber": "Street Number",
-      "apartment": "Apartment"
+      "apartment": "Apartment/Unit",
+      "entrance": "Entrance",
+      "doorName": "Door Name/Code",
+      "buildingName": "Building Name",
+      "hotelName": "Hotel Name",
+      "roomNumber": "Room Number",
+      "otherInstructions": "Other Instructions"
     },
     "types": {
       "apartment": "Apartment",
@@ -858,6 +872,7 @@
       "yearPlaceholder": "YY",
       "cardHolderName": "Card Holder Name",
       "cardHolderNamePlaceholder": "Name as it appears on card",
+      "cardName": "Card Name (e.g., My Visa)",
       "cardNamePlaceholder": "e.g., My Visa",
       "isDefault": "Set as default payment method",
       "monthPlaceholder": "MM",
@@ -1182,7 +1197,7 @@
       "therapistGenderLabel": "Preferred Therapist Gender",
       "genderMale": "Male",
       "genderFemale": "Female",
-      "genderAny": "No Preference",
+      "genderAny": "Any",
       "saveSuccess": "Treatment preferences saved successfully.",
       "saveError": "Failed to save treatment preferences."
     },
@@ -1389,166 +1404,6 @@
     "confirmation": {
       "sourceNewPurchase": "New Purchase",
       "professionalToBeAssigned": "Professional to be assigned",
-      "title": "Booking Confirmation",
-      "thankYou": "Thank you for your booking!",
-      "bookingNumber": "Booking Number",
-      "status": "Status",
-      "status": {
-        "confirmed": "Confirmed - Awaiting Professional Assignment"
-      },
-      "bookedFor": "Booked For",
-      "recipientName": "Recipient Name",
-      "recipientPhone": "Recipient Phone",
-      "bookedBy": "Booked By",
-      "treatmentDetails": "Treatment Details",
-      "treatment": "Treatment",
-      "dateTime": "Date & Time",
-      "flexibleTimeInfo": "Flexible time (+/- 2 hours)",
-      "therapistPreference": "Therapist Preference",
-      "notes": "Notes",
-      "professionalDetails": "Professional Details",
-      "professionalName": "Professional Name",
-      "addressDetails": "Address Details",
-      "priceSummary": "Price Summary",
-      "bookingSource": "Booking Source",
-      "basePrice": "Base Price",
-      "couponDiscount": "Coupon Discount",
-      "totalAmount": "Total Amount",
-      "paymentDetails": "Payment Details",
-      "paymentStatus": "Payment Status",
-      "paymentStatus": {
-        "pending": "Pending"
-      },
-      "paymentMethod": "Payment Method",
-      "viewBookingsLink": "View My Bookings",
-      "contactSupport": "Contact Support"
+      "title": "Booking Confirmation"
     }
-  },
-  "memberBookings": {
-    "title": "My Bookings",
-    "description": "View and manage your past and upcoming bookings.",
-    "noBookingsFound": "You have no bookings yet.",
-    "noBookingsFoundFiltered": "No bookings match your current filters.",
-    "fetchError": "Failed to load your bookings. Please try again.",
-    "filterByStatus": "Filter by Status",
-    "sortByDate": "Sort by Date",
-    "statusAll": "All Statuses",
-    "statusUpcoming": "Upcoming",
-    "statusPast": "Past",
-    "statusCancelled": "Cancelled",
-    "sortNewestFirst": "Newest First",
-    "sortOldestFirst": "Oldest First",
-    "treatment": "Treatment",
-    "duration": "{minutes} minutes",
-    "dateTime": "Date & Time",
-    "address": "Address",
-    "professional": "Professional",
-    "price": "Price",
-    "statusLabel": "Status",
-    "viewDetails": "View Details",
-    "cancelBooking": "Cancel Booking",
-    "customAddress": "Custom Address",
-    "professionalNotAssigned": "Not Assigned Yet",
-    "bookingId": "Booking ID",
-    "source": "Source",
-    "sourceNewPurchase": "New Purchase",
-    "sourceSubscription": "Subscription",
-    "sourceGiftVoucher": "Gift Voucher",
-    "status": {
-      "pending_professional_assignment": "Pending Assignment",
-      "confirmed": "Confirmed",
-      "completed": "Completed",
-      "cancelled_by_user": "Cancelled by You",
-      "cancelled_by_admin": "Cancelled by Admin",
-      "no_show": "No Show"
-    },
-    "cancellationReason": "Cancellation Reason",
-    "userCancellationReason": "Cancelled by user request.",
-    "cancelledBy": "Cancelled By",
-    "flexibleTime": "Flexible Time",
-    "notes": "Notes",
-    "cancelSuccess": "Booking cancelled successfully.",
-    "cancelConfirmDescription": "Are you sure you want to cancel this booking? This action may not be reversible depending on the cancellation policy.",
-    "tryAdjustingFilters": "Try adjusting your filters or check back later."
-  },
-  "professionalBookingManagement": {
-    "title": "Booking Management",
-    "bookingId": "Booking ID",
-    "details": {
-      "title": "Booking Details",
-      "status": "Status",
-      "dateTime": "Date & Time",
-      "duration": "Duration",
-      "address": "Address",
-      "notes": "Client Notes",
-      "anonymousClient": "Anonymous Client"
-    },
-    "clientDetails": {
-      "title": "Client Details",
-      "name": "Name",
-      "phone": "Phone",
-      "email": "Email"
-    },
-    "actions": {
-      "acceptBooking": "Accept Booking",
-      "markEnRoute": "I'm On My Way",
-      "markCompleted": "Mark as Completed"
-    },
-    "status": {
-      "pendingAssignment": {
-        "title": "Pending Assignment",
-        "description": "This booking is awaiting a professional to accept it. If you are available, you can accept this booking."
-      },
-      "alreadyAssigned": {
-        "title": "Booking Assigned",
-        "description": "This booking has already been assigned to {{professionalName}}."
-      },
-      "completed": {
-        "title": "Booking Completed",
-        "description": "This booking has been successfully completed."
-      },
-      "noBookingFound": {
-        "title": "Booking Not Found",
-        "description": "The requested booking could not be found or you do not have permission to view it."
-      }
-    },
-    "errors": {
-      "fetchFailed": "Failed to fetch booking details.",
-      "unexpectedError": "An unexpected error occurred.",
-      "acceptFailed": "Failed to accept the booking.",
-      "enRouteFailed": "Failed to mark as en route.",
-      "completedFailed": "Failed to mark as completed."
-    },
-    "toasts": {
-      "accepted": {
-        "title": "Booking Accepted!",
-        "description": "You have successfully accepted this booking. The client has been notified."
-      },
-      "enRoute": {
-        "title": "Status Updated: En Route!",
-        "description": "You are now marked as on your way. The client has been notified."
-      },
-      "completed": {
-        "title": "Booking Completed!",
-        "description": "The booking has been marked as completed."
-      },
-      "actionFailed": {
-        "title": "Action Failed"
-      }
-    }
-  },
-  "users": {
-    "fields": {
-      "namePlaceholder": "Enter full name",
-      "phonePlaceholder": "Enter phone number"
-    },
-    "fields": {
-      "namePlaceholder": "Enter full name",
-      "phonePlaceholder": "Enter phone number"
-    }
-  },
-  "giftVoucher": {
-    "voucherCode": "Voucher Code",
-    "useCode": "Use this code at checkout"
   }
-}

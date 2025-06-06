@@ -13,12 +13,13 @@ import {
   Gift,
   Ticket,
   Hourglass,
+  Eye,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
 import { cn, formatDate, formatCurrency } from "@/lib/utils/utils"
-import type { PopulatedBooking } from "@/actions/booking-actions" // We'll define this type in booking-actions
+import type { PopulatedBooking } from "@/actions/booking-actions"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { cancelBooking as cancelBookingAction } from "@/actions/booking-actions"
 import { toast } from "@/components/common/ui/use-toast"
@@ -33,8 +34,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/common/ui/alert-dialog"
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from "@/components/common/ui/drawer"
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
+import BookingDetailsView from "./booking-details-view" // Import the new component
+import { ScrollArea } from "@/components/common/ui/scroll-area"
 
 interface BookingCardProps {
   booking: PopulatedBooking
@@ -42,7 +46,7 @@ interface BookingCardProps {
 }
 
 export default function BookingCard({ booking, currentUserId }: BookingCardProps) {
-  const { t, locale } = useTranslation() // Using custom hook
+  const { t, locale } = useTranslation()
   const queryClient = useQueryClient()
   const [isCancelling, setIsCancelling] = useState(false)
 
@@ -120,7 +124,7 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
         }
       default:
         return {
-          label: status, // This might need a generic translation if status can be arbitrary
+          label: t(`memberBookings.status.${status}`) || status,
           icon: <Info className="mr-1.5 h-4 w-4 text-gray-600" />,
           badgeClass: "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200",
           textColor: "text-gray-700",
@@ -161,26 +165,36 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
             {statusInfo.label}
           </Badge>
         </div>
-        {booking.treatmentId?.selectedDuration?.minutes && (
+        {booking.treatmentId?.selectedDuration?.minutes ? (
           <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
             {t("memberBookings.duration", { minutes: booking.treatmentId.selectedDuration.minutes })}
           </CardDescription>
-        )}
+        ) : booking.selectedDurationId && booking.treatmentId?.durations ? (
+          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+            {t("memberBookings.duration", {
+              minutes:
+                booking.treatmentId.durations.find((d) => d._id.toString() === booking.selectedDurationId.toString())
+                  ?.minutes || "N/A",
+            })}
+          </CardDescription>
+        ) : booking.treatmentId?.defaultDurationMinutes ? (
+          <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
+            {t("memberBookings.duration", { minutes: booking.treatmentId.defaultDurationMinutes })}
+          </CardDescription>
+        ) : null}
       </CardHeader>
 
       <CardContent className="flex-grow space-y-3 p-4">
         <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
-          <CalendarDays className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
-          {/* locale is now from custom useTranslation hook */}
+          <CalendarDays className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-primary dark:text-primary-foreground/80" />
           <span>{formatDate(bookingDateTime, locale)}</span>
         </div>
         <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
-          <Clock className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
-          {/* locale is now from custom useTranslation hook */}
+          <Clock className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-primary dark:text-primary-foreground/80" />
           <span>{bookingDateTime.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}</span>
         </div>
         <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
-          <MapPin className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
+          <MapPin className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-primary dark:text-primary-foreground/80" />
           <span>
             {booking.addressId
               ? `${booking.addressId.street || ""} ${booking.addressId.streetNumber || ""}, ${booking.addressId.city || ""}`
@@ -189,7 +203,7 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
         </div>
         {booking.professionalId?.name && (
           <div className="flex items-start text-sm text-slate-600 dark:text-slate-300">
-            <User className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600 dark:text-teal-400" />
+            <User className="mr-2 mt-0.5 h-4 w-4 flex-shrink-0 text-primary dark:text-primary-foreground/80" />
             <span>
               {t("memberBookings.professional")}: {booking.professionalId.name}
             </span>
@@ -211,36 +225,68 @@ export default function BookingCard({ booking, currentUserId }: BookingCardProps
         )}
       </CardContent>
 
-      <CardFooter className="flex flex-col items-stretch gap-2 border-t bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-700/50 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-lg font-semibold text-teal-700 dark:text-teal-400">
+      <CardFooter className="flex flex-col items-stretch gap-3 border-t bg-slate-50 p-4 dark:border-gray-700 dark:bg-gray-700/50 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-lg font-semibold text-primary dark:text-primary-foreground">
           {formatCurrency(booking.priceDetails.finalAmount, t("common.currency"), locale)}
         </div>
-        {isCancellable && (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" disabled={isCancelPending || isCancelling}>
-                {isCancelPending || isCancelling ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <XCircle className="mr-2 h-4 w-4" />
-                )}
-                {t("memberBookings.cancelBooking")}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Eye className="mr-2 h-4 w-4" />
+                {t("memberBookings.viewDetailsButton")}
               </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("common.deleteConfirm")}</AlertDialogTitle>
-                <AlertDialogDescription>{t("memberBookings.cancelConfirmDescription")}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-                <AlertDialogAction onClick={() => cancelBooking()} className="bg-destructive hover:bg-destructive/90">
-                  {t("common.confirm")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+            </DrawerTrigger>
+            <DrawerContent className="max-h-[90vh]">
+              {" "}
+              {/* DrawerContent from components/common/ui/drawer.tsx */}
+              {/* The default DrawerContent has max-w-md mx-auto. If full width is needed, this needs adjustment in the core component or via className prop. */}
+              {/* For now, using default styling. */}
+              <ScrollArea className="h-full">
+                {" "}
+                {/* Make content scrollable if it overflows */}
+                <BookingDetailsView booking={booking} />
+              </ScrollArea>
+              <DrawerFooter className="pt-2 sticky bottom-0 bg-background border-t">
+                <DrawerClose asChild>
+                  <Button variant="outline">{t("common.close")}</Button>
+                </DrawerClose>
+              </DrawerFooter>
+            </DrawerContent>
+          </Drawer>
+
+          {isCancellable && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={isCancelPending || isCancelling}
+                  className="w-full sm:w-auto"
+                >
+                  {isCancelPending || isCancelling ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <XCircle className="mr-2 h-4 w-4" />
+                  )}
+                  {t("memberBookings.cancelBooking")}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t("common.deleteConfirm")}</AlertDialogTitle>
+                  <AlertDialogDescription>{t("memberBookings.cancelConfirmDescription")}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => cancelBooking()} className="bg-destructive hover:bg-destructive/90">
+                    {t("common.confirm")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </CardFooter>
     </Card>
   )

@@ -21,7 +21,7 @@
     "createdAt": "Создано",
     "updatedAt": "Обновлено",
     "notSet": "Не установлено",
-    "notApplicable": "Н/Д",
+    "notApplicable": "Не применимо",
     "yes": "Да",
     "no": "Нет",
     "active": "Активный",
@@ -49,7 +49,7 @@
     "depleted": "Исчерпан",
     "cancelled": "Отменен",
     "creating": "Создание...",
-    "minutes": "минут",
+    "minutes": "мин",
     "step": "Шаг",
     "of": "из",
     "applyFilters": "Применить фильтры",
@@ -124,9 +124,20 @@
     "anotherProfessional": "другой специалист",
     "invalidInput": "Предоставлены неверные данные.",
     "currencySymbol": "₪",
-    "cardEndingIn": "Карта, заканчивающаяся на",
+    "cardEndingIn": "Карта, заканчивающаяся на {last4}",
     "orderSummary": "Сводка заказа",
-    "termsOfService": "Условия обслуживания"
+    "termsOfService": "Условия обслуживания",
+    "unknown": "Неизвестно",
+    "unknownTreatment": "Неизвестная процедура",
+    "confirm": "Подтвердить",
+    "errors": {
+      "unknown": "Произошла неизвестная ошибка.",
+      "bookingNotFound": "Бронирование не найдено.",
+      "unauthorized": "Несанкционированный доступ.",
+      "cancellationFailed": "Не удалось отменить бронирование.",
+      "userNotBookingOwner": "Вы не авторизованы для отмены этого бронирования.",
+      "cancellationWindowExpired": "Окно отмены для этого бронирования истекло."
+    }
   },
   "dashboard": {
     "sidebar": {
@@ -520,7 +531,7 @@
       "additionalNotes": "Дополнительные заметки",
       "hasPrivateParkingFull": "Имеется частная парковка",
       "addressTypePlaceholder": "Выберите тип адреса",
-      "apartment": "Квартира"
+      "apartment": "Квартира/Помещение"
     },
     "types": {
       "apartment": "Квартира",
@@ -1176,7 +1187,7 @@
       "therapistGenderLabel": "Предпочитаемый пол терапевта",
       "genderMale": "Мужской",
       "genderFemale": "Женский",
-      "genderAny": "Без предпочтений",
+      "genderAny": "Любой",
       "saveSuccess": "Предпочтения по процедурам успешно сохранены.",
       "saveError": "Не удалось сохранить предпочтения по процедурам."
     },
@@ -1376,7 +1387,7 @@
       "sourceNewPurchase": "Новая покупка",
       "professionalToBeAssigned": "Специалист будет назначен",
       "title": "Подтверждение бронирования",
-      "thankYou": "Спасибо за ваше бронирование!",
+      "thankYou": "Спасибо за ваше бронирование! Мы получили ваш запрос.",
       "bookingNumber": "Номер бронирования",
       "status": "Статус",
       "status": {
@@ -1389,73 +1400,77 @@
       "treatmentDetails": "Детали процедуры",
       "treatment": "Процедура",
       "dateTime": "Дата и время",
-      "flexibleTimeInfo": "Гибкое время (+/- 2 часа)",
+      "flexibleTimeInfo": "Гибкое: Да (±{hours} ч.)",
       "therapistPreference": "Предпочтение по специалисту",
       "notes": "Примечания",
       "professionalDetails": "Данные специалиста",
-      "professionalName": "Имя специалиста",
-      "addressDetails": "Детали адреса",
-      "priceSummary": "Сводка по цене",
+      "professionalName": "Специалист",
+      "addressDetails": "Адрес",
+      "fullAddress": "Полный адрес",
+      "addressNotes": "Примечания к адресу",
+      "priceSummary": "Итоговая стоимость",
       "bookingSource": "Источник бронирования",
+      "sourceSubscription": "Использование абонемента",
+      "sourceGiftVoucher": "Использование подарочного сертификата",
+      "sourceNewPurchase": "Новая покупка",
+      "usedSubscription": "Использованный абонемент",
+      "usedGiftVoucher": "Использованный подарочный сертификат",
       "basePrice": "Базовая цена",
+      "treatmentCoveredBySubscription": "Процедура покрыта абонементом",
+      "treatmentCoveredByVoucher": "Процедура покрыта сертификатом",
+      "monetaryVoucherApplied": "Применен денежный сертификат",
       "couponDiscount": "Скидка по купону",
-      "totalAmount": "Итоговая сумма",
-      "paymentDetails": "Детали платежа",
-      "paymentStatus": "Статус платежа",
-      "paymentStatus": {
-        "pending": "Ожидание"
-      },
+      "totalAmount": "Общая сумма",
+      "gift": "Подарок",
+      "paymentDetails": "Детали оплаты",
+      "paymentStatus": "Статус оплаты",
       "paymentMethod": "Способ оплаты",
-      "viewBookingsLink": "Просмотреть мои бронирования",
-      "contactSupport": "Связаться с поддержкой"
+      "voucherUsageTitle": "Обновление использования сертификата",
+      "voucherCodeUsed": "Детали для сертификата {code}:",
+      "voucherRemainingBalance": "Оставшийся баланс: {balance} {currency}",
+      "viewBookingsLink": "Посмотреть мои бронирования",
+      "contactSupport": "Если у вас есть вопросы или нужно внести изменения, пожалуйста, свяжитесь со службой поддержки или посетите страницу ваших бронирований.",
+      "errorLoading": "Ошибка загрузки подтверждения бронирования. Пожалуйста, попробуйте еще раз или обратитесь в поддержку.",
+      "paymentStatus.pending": "Ожидает",
+      "paymentStatus.paid": "Оплачено",
+      "paymentStatus.failed": "Не удалось",
+      "paymentStatus.not_required": "Не требуется"
+    },
+    "unknownSubscription": "Неизвестный абонемент",
+    "monetaryVoucher": "Денежный сертификат",
+    "balance": "Баланс",
+    "steps": {
+      "summary": {
+        "flexibleTime": "Гибкое время"
+      }
     }
   },
   "memberBookings": {
-    "title": "Мои Записи",
-    "description": "Просмотр и управление вашими прошлыми и предстоящими записями.",
-    "noBookingsFound": "У вас пока нет записей.",
-    "noBookingsFoundFiltered": "Нет записей, соответствующих вашим текущим фильтрам.",
-    "fetchError": "Не удалось загрузить ваши записи. Пожалуйста, попробуйте еще раз.",
-    "filterByStatus": "Фильтр по статусу",
-    "sortByDate": "Сортировать по дате",
-    "statusAll": "Все статусы",
-    "statusUpcoming": "Предстоящие",
-    "statusPast": "Прошедшие",
-    "statusCancelled": "Отмененные",
-    "sortNewestFirst": "Сначала новые",
-    "sortOldestFirst": "Сначала старые",
-    "treatment": "Процедура",
-    "duration": "{minutes} минут",
-    "dateTime": "Дата и время",
-    "address": "Адрес",
-    "professional": "Специалист",
-    "price": "Цена",
-    "statusLabel": "Статус",
-    "viewDetails": "Посмотреть детали",
-    "cancelBooking": "Отменить запись",
-    "customAddress": "Пользовательский адрес",
-    "professionalNotAssigned": "Специалист еще не назначен",
-    "bookingId": "ID Записи",
-    "source": "Источник",
-    "sourceNewPurchase": "Новая покупка",
-    "sourceSubscription": "По абонементу",
-    "sourceGiftVoucher": "По подарочному сертификату",
+    "title": "Мои бронирования",
+    "noBookings": "У вас пока нет бронирований.",
+    "bookNow": "Забронировать процедуру",
     "status": {
       "pending_professional_assignment": "Ожидает назначения специалиста",
-      "confirmed": "Подтверждена",
-      "completed": "Завершена",
-      "cancelled_by_user": "Отменена вами",
-      "cancelled_by_admin": "Отменена администратором",
+      "confirmed": "Подтверждено",
+      "professional_en_route": "Специалист в пути",
+      "completed": "Завершено",
+      "cancelled_by_user": "Отменено вами",
+      "cancelled_by_admin": "Отменено администратором",
       "no_show": "Неявка"
     },
-    "cancellationReason": "Причина отмены",
-    "userCancellationReason": "Отменено по запросу пользователя.",
-    "cancelledBy": "Отменено",
+    "duration": "{minutes} мин",
+    "customAddress": "Пользовательский адрес",
+    "professional": "Специалист",
     "flexibleTime": "Гибкое время",
-    "notes": "Примечания",
-    "cancelSuccess": "Запись успешно отменена.",
-    "cancelConfirmDescription": "Вы уверены, что хотите отменить эту запись? Это действие может быть необратимым в зависимости от политики отмены.",
-    "tryAdjustingFilters": "Попробуйте изменить фильтры или проверьте позже."
+    "source": "Источник",
+    "sourceNewPurchase": "Новая покупка",
+    "sourceSubscription": "Абонемент",
+    "sourceGiftVoucher": "Подарочный сертификат",
+    "cancelBooking": "Отменить бронирование",
+    "viewDetailsButton": "Посмотреть детали",
+    "userCancellationReason": "Отменено пользователем из панели управления.",
+    "cancelSuccess": "Бронирование успешно отменено.",
+    "cancelConfirmDescription": "Вы уверены, что хотите отменить это бронирование? Это действие нельзя будет отменить."
   },
   "professionalBookingManagement": {
     "title": "Управление бронированием",
@@ -1521,6 +1536,31 @@
       "actionFailed": {
         "title": "Действие не удалось"
       }
+    }
+  },
+  "bookingDetails": {
+    "drawerTitle": "Детали бронирования"
+  },
+  "preferences": {
+    "treatment": {
+      "genderAny": "Любой",
+      "genderMale": "Мужчина",
+      "genderFemale": "Женщина"
+    }
+  },
+  "addresses": {
+    "fields": {
+      "city": "Город",
+      "street": "Улица",
+      "streetNumber": "Номер дома",
+      "apartment": "Квартира/Помещение",
+      "entrance": "Подъезд",
+      "floor": "Этаж",
+      "doorName": "Название/код на двери",
+      "buildingName": "Название здания",
+      "hotelName": "Название отеля",
+      "roomNumber": "Номер комнаты",
+      "otherInstructions": "Другие инструкции"
     }
   }
 }

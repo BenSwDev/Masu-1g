@@ -6,8 +6,9 @@ export interface IAddress extends Document {
   city: string
   street: string
   streetNumber: string
-  addressType: 'apartment' | 'house' | 'private' | 'office' | 'hotel' | 'other'
-  
+  fullAddress: string // Added fullAddress field
+  addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other"
+
   // Specific fields based on address type
   apartmentDetails?: {
     floor: number
@@ -15,7 +16,7 @@ export interface IAddress extends Document {
     entrance?: string
   }
   houseDetails?: {
-    doorName: string
+    doorName: string // For 'private' or 'house'
     entrance?: string
   }
   officeDetails?: {
@@ -30,11 +31,11 @@ export interface IAddress extends Document {
   otherDetails?: {
     instructions?: string
   }
-  
+
   hasPrivateParking: boolean
   additionalNotes?: string
   isDefault: boolean
-  
+
   createdAt: Date
   updatedAt: Date
 }
@@ -64,9 +65,15 @@ const AddressSchema: Schema = new Schema(
       type: String,
       required: true,
     },
+    fullAddress: {
+      // Added fullAddress field definition
+      type: String,
+      required: true,
+      trim: true,
+    },
     addressType: {
       type: String,
-      enum: ['apartment', 'house', 'private', 'office', 'hotel', 'other'],
+      enum: ["apartment", "house", "private", "office", "hotel", "other"],
       required: true,
     },
     apartmentDetails: {
@@ -75,6 +82,7 @@ const AddressSchema: Schema = new Schema(
       entrance: String,
     },
     houseDetails: {
+      // Renamed from privateDetails for clarity if it was meant for house/private
       doorName: String,
       entrance: String,
     },
@@ -105,13 +113,68 @@ const AddressSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 )
+
+// Helper function to construct fullAddress
+// This can be called before saving or updating an address
+export function constructFullAddress(data: Partial<IAddress>): string {
+  const parts: string[] = []
+  if (data.street) parts.push(data.street)
+  if (data.streetNumber) parts.push(data.streetNumber)
+
+  if (data.addressType === "apartment" && data.apartmentDetails?.apartmentNumber) {
+    parts.push(`דירה ${data.apartmentDetails.apartmentNumber}`)
+    if (data.apartmentDetails.floor !== undefined && data.apartmentDetails.floor !== null) {
+      parts.push(`קומה ${data.apartmentDetails.floor}`)
+    }
+    if (data.apartmentDetails.entrance) {
+      parts.push(`כניסה ${data.apartmentDetails.entrance}`)
+    }
+  } else if ((data.addressType === "house" || data.addressType === "private") && data.houseDetails?.doorName) {
+    parts.push(data.houseDetails.doorName)
+    if (data.houseDetails.entrance) {
+      parts.push(`כניסה ${data.houseDetails.entrance}`)
+    }
+  } else if (data.addressType === "office") {
+    if (data.officeDetails?.buildingName) parts.push(data.officeDetails.buildingName)
+    if (data.officeDetails?.floor !== undefined && data.officeDetails.floor !== null) {
+      parts.push(`קומה ${data.officeDetails.floor}`)
+    }
+    if (data.officeDetails?.entrance) parts.push(`כניסה ${data.officeDetails.entrance}`)
+  } else if (data.addressType === "hotel" && data.hotelDetails?.hotelName) {
+    parts.push(data.hotelDetails.hotelName)
+    if (data.hotelDetails.roomNumber) parts.push(`חדר ${data.hotelDetails.roomNumber}`)
+  }
+
+  if (data.city) parts.push(data.city)
+  // if (data.country) parts.push(data.country); // Country might be too verbose for a typical fullAddress string
+
+  return parts.filter(Boolean).join(", ")
+}
+
+// Pre-save hook to automatically generate fullAddress
+AddressSchema.pre<IAddress>("save", function (next) {
+  if (
+    this.isModified("street") ||
+    this.isModified("streetNumber") ||
+    this.isModified("city") ||
+    this.isModified("addressType") ||
+    this.isModified("apartmentDetails") ||
+    this.isModified("houseDetails") ||
+    this.isModified("officeDetails") ||
+    this.isModified("hotelDetails")
+  ) {
+    this.fullAddress = constructFullAddress(this)
+  }
+  next()
+})
 
 // Create indexes
 AddressSchema.index({ userId: 1 })
 AddressSchema.index({ userId: 1, isDefault: 1 })
 AddressSchema.index({ createdAt: -1 })
+AddressSchema.index({ fullAddress: "text" }) // Optional: for text search on fullAddress
 
 const Address: Model<IAddress> = mongoose.models.Address || mongoose.model<IAddress>("Address", AddressSchema)
 

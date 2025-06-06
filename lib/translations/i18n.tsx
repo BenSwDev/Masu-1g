@@ -63,8 +63,7 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
 
   // In development mode, expose a global function to get and copy missing keys.
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      window.getMissingTranslations = () => {
+       window.getMissingTranslations = () => {
         if (missingKeys.size === 0) {
           console.log("[i18n] No missing translation keys found.")
           return
@@ -83,7 +82,6 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
           .catch((err) => {
             console.error("[i18n] Failed to copy missing keys: ", err)
           })
-      }
     }
 
     // Cleanup the global function when the component unmounts.
@@ -136,9 +134,8 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
     // After the loop, if the key was not fully found or if the final result is not a string
     // (meaning the key might be a prefix to a deeper object, not a leaf translation string)
     if (!keyFound || typeof current !== "string") {
-      if (process.env.NODE_ENV === "development") {
         missingKeys.add(key)
-      }
+
       return key // Fallback to the original key
     }
 

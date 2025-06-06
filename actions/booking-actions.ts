@@ -13,7 +13,7 @@ import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-s
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
 import User, { type IUser } from "@/lib/db/models/user"
-import Address, { type IAddress } from "@/lib/db/models/address"
+import Address, { type IAddress, constructFullAddress as constructFullAddressHelper } from "@/lib/db/models/address" // Import IAddress and constructFullAddress helper
 import {
   WorkingHoursSettings,
   type IWorkingHoursSettings,
@@ -430,6 +430,13 @@ export async function createBooking(
     let bookingAddressSnapshot: IBookingAddressSnapshot | undefined
 
     if (validatedPayload.customAddressDetails) {
+      // Ensure customAddressDetails includes a fullAddress or construct it
+      if (!validatedPayload.customAddressDetails.fullAddress) {
+        // Assuming customAddressDetails has the same structure as IAddress for construction
+        validatedPayload.customAddressDetails.fullAddress = constructFullAddressHelper(
+          validatedPayload.customAddressDetails as Partial<IAddress>,
+        )
+      }
       bookingAddressSnapshot = validatedPayload.customAddressDetails
     } else if (validatedPayload.selectedAddressId) {
       const selectedAddressDoc = (await Address.findById(validatedPayload.selectedAddressId).lean()) as IAddress | null
@@ -442,10 +449,13 @@ export async function createBooking(
         return { success: false, error: "bookings.errors.addressNotFound" }
       }
 
-      // Construct the snapshot from the selected address document
-      // Ensure all fields required by IBookingAddressSnapshot are populated
+      // The selectedAddressDoc should now have a `fullAddress` field due to schema changes and pre-save hook.
+      // If it's an older document that hasn't been re-saved, fullAddress might be missing.
+      // For robustness, we can reconstruct it if missing, or rely on it being present.
+      const currentFullAddress = selectedAddressDoc.fullAddress || constructFullAddressHelper(selectedAddressDoc)
+
       bookingAddressSnapshot = {
-        fullAddress: selectedAddressDoc.fullAddress, // This is the critical field from the error
+        fullAddress: currentFullAddress, // Use existing or reconstructed
         city: selectedAddressDoc.city,
         street: selectedAddressDoc.street,
         streetNumber: selectedAddressDoc.streetNumber,
@@ -453,26 +463,41 @@ export async function createBooking(
         entrance:
           selectedAddressDoc.addressType === "apartment"
             ? selectedAddressDoc.apartmentDetails?.entrance
-            : selectedAddressDoc.addressType === "house"
+            : selectedAddressDoc.addressType === "house" || selectedAddressDoc.addressType === "private"
               ? selectedAddressDoc.houseDetails?.entrance
-              : undefined,
+              : selectedAddressDoc.addressType === "office"
+                ? selectedAddressDoc.officeDetails?.entrance
+                : undefined,
         floor:
           selectedAddressDoc.addressType === "apartment"
             ? selectedAddressDoc.apartmentDetails?.floor?.toString()
+            : selectedAddressDoc.addressType === "office"
+              ? selectedAddressDoc.officeDetails?.floor?.toString()
+              : undefined,
+        notes: selectedAddressDoc.additionalNotes,
+        // Include other relevant fields for the snapshot if IBookingAddressSnapshot defines them
+        doorName:
+          selectedAddressDoc.addressType === "house" || selectedAddressDoc.addressType === "private"
+            ? selectedAddressDoc.houseDetails?.doorName
             : undefined,
-        notes: selectedAddressDoc.additionalNotes, // Assuming 'additionalNotes' from IAddress maps to 'notes' in snapshot
+        buildingName:
+          selectedAddressDoc.addressType === "office" ? selectedAddressDoc.officeDetails?.buildingName : undefined,
+        hotelName: selectedAddressDoc.addressType === "hotel" ? selectedAddressDoc.hotelDetails?.hotelName : undefined,
+        roomNumber:
+          selectedAddressDoc.addressType === "hotel" ? selectedAddressDoc.hotelDetails?.roomNumber : undefined,
+        otherInstructions:
+          selectedAddressDoc.addressType === "other" ? selectedAddressDoc.otherDetails?.instructions : undefined,
       }
 
-      // Validate that all required fields for the snapshot are present
-      if (!bookingAddressSnapshot.fullAddress || !bookingAddressSnapshot.city || !bookingAddressSnapshot.street) {
-        logger.error("Failed to construct a valid bookingAddressSnapshot from selectedAddressDoc", {
+      if (!bookingAddressSnapshot.fullAddress) {
+        // Check again after potential reconstruction
+        logger.error("Failed to construct a valid bookingAddressSnapshot (fullAddress still missing)", {
           selectedAddressDoc,
           constructedSnapshot: bookingAddressSnapshot,
         })
         return { success: false, error: "bookings.errors.addressSnapshotCreationFailed" }
       }
     } else {
-      // This case should ideally be caught by Zod validation if address is always required
       logger.warn("No address provided for booking", { userId: validatedPayload.userId })
       return { success: false, error: "bookings.errors.addressRequired" }
     }
@@ -487,7 +512,7 @@ export async function createBooking(
         bookedByUserName: bookingUser.name,
         bookedByUserEmail: bookingUser.email,
         bookedByUserPhone: bookingUser.phone,
-        bookingAddressSnapshot, // Use the fully populated snapshot
+        bookingAddressSnapshot,
         status: "confirmed",
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
@@ -766,11 +791,12 @@ export async function getUserBookings(
             }
           : booking.addressId
             ? {
+                // Fallback if snapshot somehow wasn't created, though it should be
                 _id: (booking.addressId as IAddress)._id,
                 city: (booking.addressId as IAddress).city,
                 street: (booking.addressId as IAddress).street,
                 streetNumber: (booking.addressId as IAddress).streetNumber,
-                fullAddress: (booking.addressId as IAddress).fullAddress,
+                fullAddress: (booking.addressId as IAddress).fullAddress, // Assumes IAddress now has fullAddress
               }
             : null,
       }

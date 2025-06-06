@@ -6,32 +6,43 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { logger } from "@/lib/logs/logger"
 import AddressQueries from "@/lib/db/queries/address-queries"
-import { IAddress } from "@/lib/db/models/address"
+import { type IAddress, constructFullAddress } from "@/lib/db/models/address" // Import model and helper
 
-// Validation schemas
+// Validation schemas (ensure they align with IAddress, especially for details objects)
 const addressBaseSchema = z.object({
   street: z.string().min(1, "Street is required"),
   streetNumber: z.string().min(1, "Street number is required"),
   city: z.string().min(1, "City is required"),
   addressType: z.enum(["apartment", "house", "private", "office", "hotel", "other"]),
-  hasPrivateParking: z.boolean(),
+  hasPrivateParking: z.boolean().default(false),
   additionalNotes: z.string().optional(),
-  isDefault: z.boolean(),
+  isDefault: z.boolean().default(false),
+  // country is not part of the form, defaults in schema
 })
 
 const apartmentSchema = addressBaseSchema.extend({
   addressType: z.literal("apartment"),
   apartmentDetails: z.object({
-    floor: z.number().min(0),
-    apartmentNumber: z.string().min(1),
+    floor: z.number().min(0, "Floor cannot be negative").optional(), // Made optional to align with typical UI
+    apartmentNumber: z.string().min(1, "Apartment number is required"),
     entrance: z.string().optional(),
   }),
 })
 
 const houseSchema = addressBaseSchema.extend({
-  addressType: z.literal("house"),
+  addressType: z.literal("house"), // Assuming 'private' might also use this or have its own
   houseDetails: z.object({
-    doorName: z.string().min(1),
+    doorName: z.string().min(1, "Door/House name is required"),
+    entrance: z.string().optional(),
+  }),
+})
+
+// Added 'private' type to use houseDetails for simplicity, can be separated if needed
+const privateSchema = addressBaseSchema.extend({
+  addressType: z.literal("private"),
+  houseDetails: z.object({
+    // Re-using houseDetails for 'private' type
+    doorName: z.string().min(1, "Door/House name is required"),
     entrance: z.string().optional(),
   }),
 })
@@ -48,8 +59,8 @@ const officeSchema = addressBaseSchema.extend({
 const hotelSchema = addressBaseSchema.extend({
   addressType: z.literal("hotel"),
   hotelDetails: z.object({
-    hotelName: z.string().min(1),
-    roomNumber: z.string().min(1),
+    hotelName: z.string().min(1, "Hotel name is required"),
+    roomNumber: z.string().min(1, "Room number is required"),
   }),
 })
 
@@ -63,30 +74,38 @@ const otherSchema = addressBaseSchema.extend({
 const addressSchema = z.discriminatedUnion("addressType", [
   apartmentSchema,
   houseSchema,
+  privateSchema, // Added private schema
   officeSchema,
   hotelSchema,
   otherSchema,
 ])
 
 // Helper to convert address doc to plain object with string fields
-function addressToPlain(address: any) {
-  if (!address) return null;
-  const obj = address.toObject ? address.toObject() : address;
-  return {
+function addressToPlain(address: any): IAddress | null {
+  if (!address) return null
+  const obj = address.toObject ? address.toObject() : { ...address } // Handle both Mongoose docs and plain objects
+
+  // Ensure all nested detail objects are present or undefined, not null
+  const plainObj: any = {
     ...obj,
     _id: obj._id?.toString?.() ?? obj._id,
     userId: obj.userId?.toString?.() ?? obj.userId,
     createdAt: obj.createdAt?.toISOString?.() ?? obj.createdAt,
     updatedAt: obj.updatedAt?.toISOString?.() ?? obj.updatedAt,
-    // Convert nested fields if needed
     apartmentDetails: obj.apartmentDetails ? { ...obj.apartmentDetails } : undefined,
     houseDetails: obj.houseDetails ? { ...obj.houseDetails } : undefined,
     officeDetails: obj.officeDetails ? { ...obj.officeDetails } : undefined,
     hotelDetails: obj.hotelDetails ? { ...obj.hotelDetails } : undefined,
     otherDetails: obj.otherDetails ? { ...obj.otherDetails } : undefined,
-    // Remove country if not needed
-    // country: undefined,
-  };
+  }
+
+  // Remove country if not needed for client, or ensure it's a string
+  // delete plainObj.country;
+  if (typeof plainObj.country !== "string" && plainObj.country !== undefined) {
+    plainObj.country = String(plainObj.country)
+  }
+
+  return plainObj as IAddress
 }
 
 // Get user addresses
@@ -98,8 +117,7 @@ export async function getUserAddresses() {
     }
 
     const addresses = await AddressQueries.getUserAddresses(session.user.id)
-    // Convert all to plain objects
-    const plainAddresses = addresses.map(addressToPlain)
+    const plainAddresses = addresses.map(addressToPlain).filter(Boolean) as IAddress[]
     return { success: true, addresses: plainAddresses }
   } catch (error) {
     logger.error("Error getting user addresses:", error)
@@ -115,22 +133,25 @@ export async function createAddress(data: z.infer<typeof addressSchema>) {
       throw new Error("Unauthorized")
     }
 
-    // Validate data
     const validatedData = addressSchema.parse(data)
 
-    // Create address
-    const address = await AddressQueries.createAddress({
+    const fullAddress = constructFullAddress(validatedData as Partial<IAddress>)
+
+    const addressDataWithUserAndFullAddress = {
       ...validatedData,
       userId: session.user.id,
-      country: "ישראל", // Default country
-    })
+      country: "ישראל", // Default country from schema is fine, but can be explicit
+      fullAddress: fullAddress, // Add the constructed fullAddress
+    }
+
+    const address = await AddressQueries.createAddress(addressDataWithUserAndFullAddress)
 
     revalidatePath("/dashboard/member/addresses")
     return { success: true, address: addressToPlain(address) }
   } catch (error) {
     logger.error("Error creating address:", error)
     if (error instanceof z.ZodError) {
-      const msg = error.errors.map(e => e.message).join(" | ")
+      const msg = error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(" | ")
       return { success: false, error: msg }
     }
     return { success: false, error: (error as Error)?.message || "Failed to create address" }
@@ -145,18 +166,22 @@ export async function updateAddress(id: string, data: z.infer<typeof addressSche
       throw new Error("Unauthorized")
     }
 
-    // Validate data
     const validatedData = addressSchema.parse(data)
+    const fullAddress = constructFullAddress(validatedData as Partial<IAddress>)
 
-    // Update address
-    const address = await AddressQueries.updateAddress(id, session.user.id, validatedData)
+    const addressDataWithFullAddress = {
+      ...validatedData,
+      fullAddress: fullAddress, // Add the constructed fullAddress
+    }
+
+    const address = await AddressQueries.updateAddress(id, session.user.id, addressDataWithFullAddress)
 
     revalidatePath("/dashboard/member/addresses")
     return { success: true, address: addressToPlain(address) }
   } catch (error) {
     logger.error("Error updating address:", error)
     if (error instanceof z.ZodError) {
-      const msg = error.errors.map(e => e.message).join(" | ")
+      const msg = error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(" | ")
       return { success: false, error: msg }
     }
     return { success: false, error: (error as Error)?.message || "Failed to update address" }
@@ -190,9 +215,12 @@ export async function setDefaultAddress(id: string) {
     }
 
     const address = await AddressQueries.setDefaultAddress(id, session.user.id)
-
+    // The address returned from setDefaultAddress might not be a plain object yet
+    // and might not have the latest fullAddress if it was part of the update logic there.
+    // For consistency, re-fetch or re-plain it if necessary, or ensure setDefaultAddress returns plain.
+    // Assuming AddressQueries.setDefaultAddress returns a Mongoose document:
     revalidatePath("/dashboard/member/addresses")
-    return { success: true, address }
+    return { success: true, address: addressToPlain(address) }
   } catch (error) {
     logger.error("Error setting default address:", error)
     return { success: false, error: "Failed to set default address" }

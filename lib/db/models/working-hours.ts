@@ -9,12 +9,13 @@ export interface IFixedHours {
   priceAddition?: {
     amount: number
     type: "fixed" | "percentage" // 'fixed' for ₪, 'percentage' for %
+    description?: string // Optional description for the surcharge
   }
   notes?: string
 }
 
 export interface ISpecialDate {
-  name: string // הוסף שדה name שחסר
+  name: string
   date: Date
   isActive: boolean
   startTime: string // Format: "HH:mm"
@@ -23,6 +24,7 @@ export interface ISpecialDate {
   priceAddition?: {
     amount: number
     type: "fixed" | "percentage" // 'fixed' for ₪, 'percentage' for %
+    description?: string // Optional description for the surcharge
   }
   notes?: string
 }
@@ -30,9 +32,32 @@ export interface ISpecialDate {
 export interface IWorkingHoursSettings extends Document {
   fixedHours: IFixedHours[]
   specialDates: ISpecialDate[]
+  slotIntervalMinutes?: number // Added for configuring time slot generation
+  minimumBookingLeadTimeHours?: number // Added for booking lead time
   createdAt: Date
   updatedAt: Date
 }
+
+const PriceAdditionSchema = new Schema(
+  {
+    amount: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+    type: {
+      type: String,
+      enum: ["fixed", "percentage"],
+      default: "fixed",
+    },
+    description: {
+      // Added description to schema
+      type: String,
+      maxlength: 100,
+    },
+  },
+  { _id: false },
+)
 
 const FixedHoursSchema = new Schema<IFixedHours>({
   dayOfWeek: {
@@ -65,18 +90,7 @@ const FixedHoursSchema = new Schema<IFixedHours>({
     type: Boolean,
     default: false,
   },
-  priceAddition: {
-    amount: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-    type: {
-      type: String,
-      enum: ["fixed", "percentage"],
-      default: "fixed",
-    },
-  },
+  priceAddition: PriceAdditionSchema, // Used the sub-schema
   notes: {
     type: String,
     maxlength: 500,
@@ -84,13 +98,15 @@ const FixedHoursSchema = new Schema<IFixedHours>({
   },
 })
 
-// אני אוסיף pre-save hook שמוודא שpriceAddition מאותחל נכון
 FixedHoursSchema.pre("save", function (next) {
   if (this.isActive && !this.priceAddition) {
     this.priceAddition = { amount: 0, type: "fixed" }
   }
   if (!this.hasPriceAddition) {
     this.priceAddition = { amount: 0, type: "fixed" }
+  } else if (this.hasPriceAddition && this.priceAddition && this.priceAddition.amount === 0) {
+    // If hasPriceAddition is true but amount is 0, maybe it should be false?
+    // Or ensure description is set if amount > 0. For now, just ensure object exists.
   }
   next()
 })
@@ -104,7 +120,7 @@ const SpecialDateSchema = new Schema<ISpecialDate>({
   date: {
     type: Date,
     required: true,
-    index: true, // הוסף אינדקס לביצועים טובים יותר
+    // index: true, // Removed inline index to avoid duplication
   },
   isActive: {
     type: Boolean,
@@ -130,18 +146,7 @@ const SpecialDateSchema = new Schema<ISpecialDate>({
     type: Boolean,
     default: false,
   },
-  priceAddition: {
-    amount: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-    type: {
-      type: String,
-      enum: ["fixed", "percentage"],
-      default: "fixed",
-    },
-  },
+  priceAddition: PriceAdditionSchema, // Used the sub-schema
   notes: {
     type: String,
     maxlength: 500,
@@ -149,7 +154,6 @@ const SpecialDateSchema = new Schema<ISpecialDate>({
   },
 })
 
-// הוסף pre-save hook גם לתאריכים מיוחדים
 SpecialDateSchema.pre("save", function (next) {
   if (!this.priceAddition) {
     this.priceAddition = { amount: 0, type: "fixed" }
@@ -174,49 +178,59 @@ const WorkingHoursSettingsSchema = new Schema<IWorkingHoursSettings>(
       type: [SpecialDateSchema],
       default: [],
     },
+    slotIntervalMinutes: {
+      // Added field
+      type: Number,
+      default: 30,
+      min: 5,
+      max: 120,
+    },
+    minimumBookingLeadTimeHours: {
+      // Added field
+      type: Number,
+      default: 2,
+      min: 0,
+    },
   },
   {
     timestamps: true,
   },
 )
 
-// Pre-save hook to ensure we always have 7 days in fixedHours
 WorkingHoursSettingsSchema.pre("save", function (next) {
-  if (this.fixedHours.length === 0) {
-    // Initialize with 7 days (Sunday = 0 to Saturday = 6)
+  if (this.isNew && this.fixedHours.length === 0) {
+    // Only initialize if new and empty
     for (let i = 0; i < 7; i++) {
       this.fixedHours.push({
         dayOfWeek: i,
-        isActive: false,
+        isActive: false, // Default to inactive
         startTime: "09:00",
         endTime: "17:00",
         hasPriceAddition: false,
         priceAddition: { amount: 0, type: "fixed" },
         notes: "",
-      })
+      } as IFixedHours) // Cast to IFixedHours
+    }
+  } else if (this.fixedHours.length > 0) {
+    // Ensure all days 0-6 exist if not new or not empty
+    for (let i = 0; i < 7; i++) {
+      const existingDay = this.fixedHours.find((day) => day.dayOfWeek === i)
+      if (!existingDay) {
+        this.fixedHours.push({
+          dayOfWeek: i,
+          isActive: false,
+          startTime: "09:00",
+          endTime: "17:00",
+          hasPriceAddition: false,
+          priceAddition: { amount: 0, type: "fixed" },
+          notes: "",
+        } as IFixedHours)
+      }
     }
   }
 
-  // Ensure all days 0-6 exist
-  for (let i = 0; i < 7; i++) {
-    const existingDay = this.fixedHours.find((day) => day.dayOfWeek === i)
-    if (!existingDay) {
-      this.fixedHours.push({
-        dayOfWeek: i,
-        isActive: false,
-        startTime: "09:00",
-        endTime: "17:00",
-        hasPriceAddition: false,
-        priceAddition: { amount: 0, type: "fixed" },
-        notes: "",
-      })
-    }
-  }
-
-  // Sort by dayOfWeek
   this.fixedHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
 
-  // בדוק תאריכים כפולים
   const dates = this.specialDates.map((sd) => sd.date.toISOString().split("T")[0])
   const uniqueDates = [...new Set(dates)]
   if (dates.length !== uniqueDates.length) {
@@ -226,9 +240,8 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
   next()
 })
 
-// Add index for better performance
 WorkingHoursSettingsSchema.index({ createdAt: -1 })
-WorkingHoursSettingsSchema.index({ "specialDates.date": 1 })
+WorkingHoursSettingsSchema.index({ "specialDates.date": 1 }) // This is the correct way to index array sub-documents
 
 export const WorkingHoursSettings =
   mongoose.models.WorkingHoursSettings ||

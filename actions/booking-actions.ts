@@ -130,9 +130,12 @@ export async function getAvailableTimeSlots(
     })
     const dayEndTime = set(selectedDateUTC, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 })
 
-    const now = new Date()
-    const minimumBookingLeadTimeHours = settings.minimumBookingLeadTimeHours || 2
-    const minimumBookingTime = add(now, { hours: minimumBookingLeadTimeHours })
+    // const now = new Date(); // This might have been the old way or implicitly server local
+    // const minimumBookingLeadTimeHours = settings.minimumBookingLeadTimeHours || 2;
+    // const minimumBookingTime = add(now, { hours: minimumBookingLeadTimeHours });
+    const nowUtc = new Date(Date.now()) // Get current time as UTC
+    const minimumBookingLeadTimeHours = settings.minimumBookingLeadTimeHours || 2 // Assuming settings is defined
+    const minimumBookingTime = add(nowUtc, { hours: minimumBookingLeadTimeHours })
 
     while (isBefore(currentTimeSlotStart, dayEndTime)) {
       const potentialSlotEnd = addMinutes(currentTimeSlotStart, treatmentDurationMinutes)

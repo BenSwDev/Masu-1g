@@ -56,7 +56,12 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
         setIsTimeSlotsLoading(true)
         setTimeSlots([])
         setWorkingHoursNote(undefined)
-        const dateStr = bookingOptions.bookingDate!.toISOString().split("T")[0]
+        // Construct dateStr from local date parts to ensure it represents the user's selected day
+        const localDate = bookingOptions.bookingDate!
+        const year = localDate.getFullYear()
+        const month = (localDate.getMonth() + 1).toString().padStart(2, "0") // getMonth() is 0-indexed
+        const day = localDate.getDate().toString().padStart(2, "0")
+        const dateStr = `${year}-${month}-${day}`
         const result = await getAvailableTimeSlots(
           dateStr,
           bookingOptions.selectedTreatmentId!,

@@ -24,7 +24,7 @@ import {
   UserX,
 } from "lucide-react"
 
-import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking" // Updated import path
+import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking"
 import { cancelBooking as cancelBookingAction } from "@/actions/booking-actions"
 import { Button } from "@/components/common/ui/button"
 import {
@@ -50,13 +50,13 @@ import {
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from "@/components/common/ui/drawer"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { toast } from "@/components/common/ui/use-toast"
-import { useTranslation } from "@/lib/translations/i18n"
 import { cn, formatDate, formatCurrency } from "@/lib/utils/utils"
 import BookingDetailsView from "./booking-details-view"
 
-// Helper component for actions
-const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
-  const { t } = useTranslation()
+type TFunction = (key: string, options?: any) => string
+
+// Helper component for actions - accepts `t` as a prop
+const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   const queryClient = useQueryClient()
   const { data: session } = useSession()
   const currentUserId = session?.user?.id
@@ -71,7 +71,9 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
         t("memberBookings.userCancellationReason"),
       )
       if (!result.success) {
-        throw new Error(result.error ? t(`common.errors.${result.error}`) : t("common.errors.unknown"))
+        throw new Error(
+          result.error ? t(`bookings.errors.${result.error}`, t("common.errors.unknown")) : t("common.errors.unknown"),
+        )
       }
       return result
     },
@@ -94,7 +96,7 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
 
   const isCancellable =
     (booking.status === "pending_professional_assignment" || booking.status === "confirmed") &&
-    new Date(booking.bookingDateTime) > new Date(Date.now() + 2 * 60 * 60 * 1000) // Example: cancellable if more than 2 hours in future
+    new Date(booking.bookingDateTime) > new Date(Date.now() + 2 * 60 * 60 * 1000)
 
   return (
     <Drawer>
@@ -109,7 +111,7 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
           <DropdownMenuContent align="end" className="bg-card border shadow-lg rounded-md">
             <DropdownMenuLabel>{t("common.actions")}</DropdownMenuLabel>
             <DrawerTrigger asChild>
-              <DropdownMenuItem className="flex items-center hover:bg-muted/50">
+              <DropdownMenuItem className="flex items-center hover:bg-muted/50 cursor-pointer">
                 <Eye className="mr-2 h-4 w-4 text-primary" />
                 {t("memberBookings.viewDetailsButton")}
               </DropdownMenuItem>
@@ -118,7 +120,7 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
               <>
                 <DropdownMenuSeparator />
                 <AlertDialogTrigger asChild>
-                  <DropdownMenuItem className="flex items-center text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive">
+                  <DropdownMenuItem className="flex items-center text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive cursor-pointer">
                     {isCancelPending ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -160,67 +162,72 @@ const BookingActions = ({ booking }: { booking: PopulatedBooking }) => {
   )
 }
 
-// Status component for reusability
-const BookingStatusBadge = ({ status }: { status: PopulatedBooking["status"] }) => {
-  const { t } = useTranslation()
+// Status component for reusability - accepts `t` as a prop
+const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"]; t: TFunction }) => {
   const getStatusInfo = (statusKey: PopulatedBooking["status"]) => {
-    switch (statusKey) {
-      case "pending_professional_assignment":
-        return {
-          label: t("memberBookings.status.pending_professional_assignment_short", "Pending Assign."),
-          icon: <Hourglass className="mr-1.5 h-3.5 w-3.5 text-amber-600" />,
-          badgeClass: "bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200",
-        }
-      case "confirmed":
-        return {
-          label: t("memberBookings.status.confirmed_short", "Confirmed"),
-          icon: <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-green-600" />,
-          badgeClass: "bg-green-100 text-green-700 border-green-300 hover:bg-green-200",
-        }
-      case "professional_en_route":
-        return {
-          label: t("memberBookings.status.professional_en_route_short", "En Route"),
-          icon: <UserCheck className="mr-1.5 h-3.5 w-3.5 text-blue-600" />,
-          badgeClass: "bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200",
-        }
-      case "completed":
-        return {
-          label: t("memberBookings.status.completed_short", "Completed"),
-          icon: <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-sky-600" />,
-          badgeClass: "bg-sky-100 text-sky-700 border-sky-300 hover:bg-sky-200",
-        }
-      case "cancelled_by_user":
-      case "cancelled_by_admin":
-        return {
-          label: t(`memberBookings.status.${statusKey}_short`, "Cancelled"),
-          icon: <XCircle className="mr-1.5 h-3.5 w-3.5 text-red-600" />,
-          badgeClass: "bg-red-100 text-red-700 border-red-300 hover:bg-red-200",
-        }
-      case "no_show":
-        return {
-          label: t("memberBookings.status.no_show_short", "No Show"),
-          icon: <UserX className="mr-1.5 h-3.5 w-3.5 text-orange-600" />,
-          badgeClass: "bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200",
-        }
-      default:
-        return {
-          label: t(`memberBookings.status.${statusKey}_short`, statusKey) || statusKey,
-          icon: <Info className="mr-1.5 h-3.5 w-3.5 text-gray-600" />,
-          badgeClass: "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200",
-        }
+    const statusMap = {
+      pending_professional_assignment: {
+        labelKey: "memberBookings.status.pending_professional_assignment_short",
+        defaultLabel: "Pending Assign.",
+        icon: <Hourglass className="mr-1.5 h-3.5 w-3.5 text-amber-600" />,
+        badgeClass: "bg-amber-100 text-amber-700 border-amber-300 hover:bg-amber-200",
+      },
+      confirmed: {
+        labelKey: "memberBookings.status.confirmed_short",
+        defaultLabel: "Confirmed",
+        icon: <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-green-600" />,
+        badgeClass: "bg-green-100 text-green-700 border-green-300 hover:bg-green-200",
+      },
+      professional_en_route: {
+        labelKey: "memberBookings.status.professional_en_route_short",
+        defaultLabel: "En Route",
+        icon: <UserCheck className="mr-1.5 h-3.5 w-3.5 text-blue-600" />,
+        badgeClass: "bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200",
+      },
+      completed: {
+        labelKey: "memberBookings.status.completed_short",
+        defaultLabel: "Completed",
+        icon: <CheckCircle className="mr-1.5 h-3.5 w-3.5 text-sky-600" />,
+        badgeClass: "bg-sky-100 text-sky-700 border-sky-300 hover:bg-sky-200",
+      },
+      cancelled_by_user: {
+        labelKey: "memberBookings.status.cancelled_by_user_short",
+        defaultLabel: "Cancelled",
+        icon: <XCircle className="mr-1.5 h-3.5 w-3.5 text-red-600" />,
+        badgeClass: "bg-red-100 text-red-700 border-red-300 hover:bg-red-200",
+      },
+      cancelled_by_admin: {
+        labelKey: "memberBookings.status.cancelled_by_admin_short",
+        defaultLabel: "Cancelled",
+        icon: <XCircle className="mr-1.5 h-3.5 w-3.5 text-red-600" />,
+        badgeClass: "bg-red-100 text-red-700 border-red-300 hover:bg-red-200",
+      },
+      no_show: {
+        labelKey: "memberBookings.status.no_show_short",
+        defaultLabel: "No Show",
+        icon: <UserX className="mr-1.5 h-3.5 w-3.5 text-orange-600" />,
+        badgeClass: "bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200",
+      },
     }
+    return (
+      statusMap[statusKey] || {
+        labelKey: `memberBookings.status.${statusKey}_short`,
+        defaultLabel: statusKey,
+        icon: <Info className="mr-1.5 h-3.5 w-3.5 text-gray-600" />,
+        badgeClass: "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200",
+      }
+    )
   }
   const statusInfo = getStatusInfo(status)
   return (
     <Badge variant="outline" className={cn("text-xs font-medium whitespace-nowrap py-1 px-2", statusInfo.badgeClass)}>
       {statusInfo.icon}
-      {statusInfo.label}
+      {t(statusInfo.labelKey, statusInfo.defaultLabel)}
     </Badge>
   )
 }
 
-const BookingSourceIcon = ({ source }: { source: PopulatedBooking["source"] }) => {
-  const { t } = useTranslation()
+const BookingSourceIcon = ({ source, t }: { source: PopulatedBooking["source"]; t: TFunction }) => {
   switch (source) {
     case "subscription_redemption":
       return <Ticket className="h-4 w-4 text-purple-600" title={t("bookings.source.subscription")} />
@@ -232,39 +239,31 @@ const BookingSourceIcon = ({ source }: { source: PopulatedBooking["source"] }) =
   }
 }
 
-export const getBookingColumns = (
-  t: (key: string, options?: any) => string,
-  locale: string,
-): ColumnDef<PopulatedBooking>[] => {
+export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<PopulatedBooking>[] => {
   return [
     {
       accessorKey: "bookingNumber",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="px-1 hover:bg-muted/50"
-          >
-            {t("bookings.table.header.bookingId")}
-            <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
-          </Button>
-        )
-      },
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="px-1 hover:bg-muted/50"
+        >
+          {t("bookings.table.header.bookingId")}
+          <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
+        </Button>
+      ),
       cell: ({ row }) => <div className="font-mono text-xs">#{row.original.bookingNumber}</div>,
       size: 120,
     },
     {
-      accessorKey: "treatmentDetails", // This accessor might need adjustment if treatmentId is an object
-      header: () => {
-        return <div className="whitespace-nowrap">{t("bookings.table.header.treatmentDetails")}</div>
-      },
+      accessorKey: "treatmentId.name",
+      header: () => <div className="whitespace-nowrap">{t("bookings.table.header.treatmentDetails")}</div>,
       cell: ({ row }) => {
         const booking = row.original
-        const treatment = booking.treatmentId // Now PopulatedBookingTreatment | null
+        const treatment = booking.treatmentId
         let durationDisplay = ""
         if (treatment?.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
-          // Ensure selectedDurationId (string) is compared correctly with ITreatmentDuration._id (Types.ObjectId)
           const selectedDuration = treatment.durations.find(
             (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString(),
           )
@@ -293,21 +292,18 @@ export const getBookingColumns = (
     },
     {
       accessorKey: "bookingDateTime",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="px-1 hover:bg-muted/50"
-          >
-            {t("bookings.table.header.dateTime")}
-            <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
-          </Button>
-        )
-      },
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="px-1 hover:bg-muted/50"
+        >
+          {t("bookings.table.header.dateTime")}
+          <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
+        </Button>
+      ),
       cell: ({ row }) => {
-        const booking = row.original
-        const date = new Date(booking.bookingDateTime)
+        const date = new Date(row.original.bookingDateTime)
         return (
           <div className="flex flex-col text-sm whitespace-nowrap">
             <div className="flex items-center">
@@ -316,9 +312,9 @@ export const getBookingColumns = (
             </div>
             <div className="flex items-center text-muted-foreground">
               <Clock className="h-3.5 w-3.5 mr-1.5" />
-              {new Date(booking.bookingDateTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+              {date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
             </div>
-            {booking.isFlexibleTime && (
+            {row.original.isFlexibleTime && (
               <Badge
                 variant="outline"
                 className="mt-1 text-xs py-0.5 px-1.5 border-dashed border-primary/50 text-primary/80"
@@ -333,75 +329,66 @@ export const getBookingColumns = (
     },
     {
       accessorKey: "professionalId.name",
-      header: () => {
-        return <div className="whitespace-nowrap hidden md:table-cell">{t("bookings.table.header.professional")}</div>
-      },
-      cell: ({ row }) => {
-        const booking = row.original
-        return (
-          <div className="text-sm hidden md:flex items-center">
-            <Briefcase className="h-3.5 w-3.5 mr-1.5 text-muted-foreground flex-shrink-0" />
-            <span className="truncate max-w-[150px]">{booking.professionalId?.name || t("bookings.toBeAssigned")}</span>
-          </div>
-        )
-      },
+      header: () => (
+        <div className="whitespace-nowrap hidden md:table-cell">{t("bookings.table.header.professional")}</div>
+      ),
+      cell: ({ row }) => (
+        <div className="text-sm hidden md:flex items-center">
+          <Briefcase className="h-3.5 w-3.5 mr-1.5 text-muted-foreground flex-shrink-0" />
+          <span className="truncate max-w-[150px]">
+            {row.original.professionalId?.name || t("bookings.toBeAssigned")}
+          </span>
+        </div>
+      ),
       enableHiding: true,
     },
     {
-      accessorKey: "bookingAddressSnapshot.city", // bookingAddressSnapshot is part of IBooking, not addressId
-      header: () => {
-        return <div className="whitespace-nowrap hidden lg:table-cell">{t("bookings.table.header.location")}</div>
-      },
-      cell: ({ row }) => {
-        const booking = row.original
-        return (
-          <div className="text-sm hidden lg:flex items-center">
-            <MapPin className="h-3.5 w-3.5 mr-1.5 text-muted-foreground flex-shrink-0" />
-            <span className="truncate max-w-[150px]">
-              {booking.bookingAddressSnapshot?.city || booking.customAddressDetails?.city || t("common.notAvailable")}
-            </span>
-          </div>
-        )
-      },
+      accessorKey: "bookingAddressSnapshot.city",
+      header: () => <div className="whitespace-nowrap hidden lg:table-cell">{t("bookings.table.header.location")}</div>,
+      cell: ({ row }) => (
+        <div className="text-sm hidden lg:flex items-center">
+          <MapPin className="h-3.5 w-3.5 mr-1.5 text-muted-foreground flex-shrink-0" />
+          <span className="truncate max-w-[150px]">
+            {row.original.bookingAddressSnapshot?.city ||
+              row.original.customAddressDetails?.city ||
+              t("common.notAvailable")}
+          </span>
+        </div>
+      ),
       enableHiding: true,
     },
     {
       accessorKey: "status",
-      header: () => {
-        return <div className="text-center whitespace-nowrap">{t("bookings.table.header.status")}</div>
-      },
+      header: () => <div className="text-center whitespace-nowrap">{t("bookings.table.header.status")}</div>,
       cell: ({ row }) => (
         <div className="flex justify-center">
-          <BookingStatusBadge status={row.original.status} />
+          <BookingStatusBadge status={row.original.status} t={t} />
         </div>
       ),
       size: 150,
     },
     {
       accessorKey: "priceDetails.finalAmount",
-      header: ({ column }) => {
-        return (
-          <div className="text-right">
-            <Button
-              variant="ghost"
-              onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-              className="px-1 hover:bg-muted/50"
-            >
-              {t("bookings.table.header.total")}
-              <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
-            </Button>
-          </div>
-        )
-      },
+      header: ({ column }) => (
+        <div className="text-right">
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="px-1 hover:bg-muted/50"
+          >
+            {t("bookings.table.header.total")}
+            <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ),
       cell: ({ row }) => {
-        const booking = row.original
-        const amount = booking.priceDetails.finalAmount
-        const formatted = booking.priceDetails.isFullyCoveredByVoucherOrSubscription
+        const { priceDetails, source } = row.original
+        const formatted = priceDetails.isFullyCoveredByVoucherOrSubscription
           ? t("bookings.confirmation.gift")
-          : formatCurrency(amount, t("common.currency"), locale)
+          : formatCurrency(priceDetails.finalAmount, t("common.currency"), locale)
         return (
           <div className="text-right font-medium text-sm whitespace-nowrap flex items-center justify-end">
-            <BookingSourceIcon source={booking.source} />
+            <BookingSourceIcon source={source} t={t} />
             <span className="ms-1.5">{formatted}</span>
           </div>
         )
@@ -412,7 +399,7 @@ export const getBookingColumns = (
       id: "actions",
       cell: ({ row }) => (
         <div className="flex justify-center">
-          <BookingActions booking={row.original} />
+          <BookingActions booking={row.original} t={t} />
         </div>
       ),
       size: 60,

@@ -3,6 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useTranslation } from "@/lib/translations/i18n"
 
 export function BookingsTableSkeleton() {
+  // Changed to NAMED export
   const { t, dir } = useTranslation()
   const skeletonRows = 5
 

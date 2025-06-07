@@ -137,7 +137,8 @@
       "cancellationFailed": "Не удалось отменить бронирование.",
       "userNotBookingOwner": "Вы не авторизованы для отмены этого бронирования.",
       "cancellationWindowExpired": "Окно отмены для этого бронирования истекло."
-    }
+    },
+    "toggleColumns": "Переключить колонки"
   },
   "dashboard": {
     "sidebar": {
@@ -1442,11 +1443,28 @@
     "steps": {
       "summary": {
         "flexibleTime": "Гибкое время"
+      },
+      "table": {
+        "header": {
+          "professional": "Специалист",
+          "location": "Местоположение",
+          "bookingId": "ID бронирования",
+          "treatmentDetails": "Процедура",
+          "dateTime": "Дата и время",
+          "status": "Статус",
+          "total": "Итого"
+        },
+        "flexibleTime": "Гибкое время",
+        "toBeAssigned": "Будет назначен"
       }
     }
   },
   "memberBookings": {
     "title": "Мои бронирования",
+    "pageTitle": "Мои бронирования",
+    "pageDescription": "Просматривайте и управляйте предстоящими и прошлыми бронированиями.",
+    "searchPlaceholder": "Поиск по процедуре, специалисту, ID бронирования...",
+    "filterByStatus": "Фильтр по статусу",
     "noBookings": "У вас пока нет бронирований.",
     "bookNow": "Забронировать процедуру",
     "status": {
@@ -1456,8 +1474,11 @@
       "completed": "Завершено",
       "cancelled_by_user": "Отменено вами",
       "cancelled_by_admin": "Отменено администратором",
-      "no_show": "Неявка"
+      "no_show": "Неявка",
+      "all": "Все статусы",
+      "cancelled": "Отменено"
     },
+    "noBookingsFound": "Бронирования, соответствующие вашим критериям, не найдены.",
     "duration": "{minutes} мин",
     "customAddress": "Пользовательский адрес",
     "professional": "Специалист",

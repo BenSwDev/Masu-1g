@@ -1,16 +1,16 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useState, useMemo, useEffect, useCallback } from "react" // Added useEffect, useCallback
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query" // Added useMutation, useQueryClient
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import type { SortingState, ColumnFiltersState, VisibilityState } from "@tanstack/react-table"
 
-import { getUserBookings } from "@/actions/booking-actions"
+import { getUserBookings, cancelBooking as cancelBookingAction } from "@/actions/booking-actions" // Added cancelBookingAction
 import { useTranslation } from "@/lib/translations/i18n"
-import { columns } from "./bookings-columns"
+import { getBookingColumns } from "./bookings-columns" // Corrected to getBookingColumns
 import { DataTable } from "@/components/common/ui/data-table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { BookingsTableSkeleton } from "./bookings-table-skeleton"
+import { BookingsTableSkeleton } from "./bookings-table-skeleton" // Ensure this is a NAMED import
 import { Heading } from "@/components/common/ui/heading"
 import { Input } from "@/components/common/ui/input"
 import {
@@ -22,7 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
 import { Button } from "@/components/common/ui/button"
-import { ListFilter } from "lucide-react"
+import { ListFilter, RefreshCwIcon as ReloadIcon, XCircle } from "lucide-react" // Added ReloadIcon, XCircle
+import { toast } from "sonner" // Assuming sonner is used for toast
 
 interface MemberBookingsClientProps {
   userId: string
@@ -33,66 +34,146 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const queryClient = useQueryClient() // Added
 
-  const initialPage = Number(searchParams.get("page") || 1)
-  const initialStatus = searchParams.get("status") || "all"
-  const initialSearch = searchParams.get("search") || ""
-  const initialSortBy = searchParams.get("sortBy") || "bookingDateTime"
-  const initialSortDir = searchParams.get("sortDir") === "asc"
-
-  const [pagination, setPagination] = useState({
-    pageIndex: initialPage - 1,
-    pageSize: 10,
-  })
-  const [statusFilter, setStatusFilter] = useState(initialStatus)
-  const [globalFilter, setGlobalFilter] = useState(initialSearch) // For text search
-  const [sorting, setSorting] = useState<SortingState>([{ id: initialSortBy, desc: !initialSortDir }])
+  // State for DataTable
+  const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = useState({})
+  const [globalFilter, setGlobalFilter] = useState("") // For search input
 
-  const debouncedSetGlobalFilter = useMemo(() => {
-    let timeoutId: NodeJS.Timeout
-    return (value: string) => {
-      clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => {
-        setGlobalFilter(value)
-      }, 500)
+  const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1
+  const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : 10
+  const status = searchParams.get("status") || "all"
+  const sortBy = searchParams.get("sortBy") || "bookingDateTime"
+  const sortDir = searchParams.get("sortDir") || "desc"
+
+  const createQueryString = useCallback(
+    (paramsToUpdate: Record<string, string | number | undefined>) => {
+      const currentParams = new URLSearchParams(searchParams.toString())
+      Object.entries(paramsToUpdate).forEach(([name, value]) => {
+        if (value !== undefined) {
+          currentParams.set(name, String(value))
+        } else {
+          currentParams.delete(name)
+        }
+      })
+      return currentParams.toString()
+    },
+    [searchParams],
+  )
+
+  useEffect(() => {
+    const newSorting: SortingState = sortBy ? [{ id: sortBy, desc: sortDir === "desc" }] : []
+    if (JSON.stringify(sorting) !== JSON.stringify(newSorting)) {
+      setSorting(newSorting)
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy, sortDir]) // Do not add sorting to dependencies to avoid loop
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["member-bookings", userId, pagination, statusFilter, sorting, globalFilter],
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch, // Added refetch
+  } = useQuery({
+    queryKey: ["member-bookings", userId, page, limit, status, globalFilter, sorting],
     queryFn: () => {
-      const params = new URLSearchParams()
-      params.set("page", (pagination.pageIndex + 1).toString())
-      params.set("limit", pagination.pageSize.toString())
-      if (statusFilter !== "all") params.set("status", statusFilter)
-      if (sorting[0]) {
-        params.set("sortBy", sorting[0].id)
-        params.set("sortDirection", sorting[0].desc ? "desc" : "asc")
-      }
-      if (globalFilter) params.set("search", globalFilter)
-
-      // Update URL without re-fetching, TanStack Query handles fetching
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+      // Update URL from query states before fetching
+      const queryParams = createQueryString({
+        page,
+        limit,
+        status: status === "all" ? undefined : status,
+        search: globalFilter || undefined,
+        sortBy: sorting[0]?.id,
+        sortDir: sorting[0] ? (sorting[0].desc ? "desc" : "asc") : undefined,
+      })
+      router.replace(`${pathname}?${queryParams}`, { scroll: false })
 
       return getUserBookings(userId, {
-        page: pagination.pageIndex + 1,
-        limit: pagination.pageSize,
-        status: statusFilter,
+        page,
+        limit,
+        status: status === "all" ? undefined : status,
+        search: globalFilter || undefined,
         sortBy: sorting[0]?.id,
-        sortDirection: sorting[0]?.desc ? "desc" : "asc",
-        search: globalFilter,
+        sortDirection: sorting[0] ? (sorting[0].desc ? "desc" : "asc") : undefined,
       })
     },
     enabled: !!userId,
-    placeholderData: (previousData) => previousData, // Keep previous data while loading new
+    placeholderData: (previousData) => previousData,
   })
 
   const bookingsData = data?.bookings || []
   const pageCount = data?.totalPages || 0
 
-  if (isError) {
+  // Mutations
+  const { mutate: cancelBookingMutate, isPending: isCancelLoading } = useMutation({
+    // Renamed to avoid conflict
+    mutationFn: async (bookingId: string) => {
+      if (!userId) throw new Error("User not authenticated")
+      const result = await cancelBookingAction(bookingId, userId, "user", t("memberBookings.userCancellationReason"))
+      if (!result.success) {
+        throw new Error(result.error ? t(`common.errors.${result.error}`) : t("common.errors.unknown"))
+      }
+      return result
+    },
+    onSuccess: () => {
+      toast.success(t("memberBookings.cancelSuccess"))
+      queryClient.invalidateQueries({ queryKey: ["member-bookings"] })
+      setRowSelection({})
+    },
+    onError: (error: Error) => {
+      toast.error(t("common.error") + ": " + error.message)
+    },
+  })
+
+  const handleCancelSelectedBookings = () => {
+    const selectedBookingIds = Object.keys(rowSelection).filter((id) => rowSelection[id])
+    if (selectedBookingIds.length === 0) {
+      toast.info(t("memberBookings.noBookingSelectedToCancel"))
+      return
+    }
+    selectedBookingIds.forEach((bookingId) => {
+      cancelBookingMutate(bookingId)
+    })
+  }
+
+  const onViewDetails = useCallback((bookingId: string) => {
+    // Implement view details logic, e.g., open a modal or navigate
+    console.log("View details for booking:", bookingId)
+    // router.push(`/dashboard/member/bookings/${bookingId}`); // Example navigation
+  }, [])
+
+  const onCancelBooking = useCallback(
+    (bookingId: string) => {
+      cancelBookingMutate(bookingId)
+    },
+    [cancelBookingMutate],
+  )
+
+  const columns = useMemo(
+    () => getBookingColumns({ t, dir, onCancelBooking, onViewDetails }),
+    [t, dir, onCancelBooking, onViewDetails],
+  )
+
+  // Debounced search handler
+  const debouncedSetGlobalFilter = useMemo(() => {
+    let timeoutId: NodeJS.Timeout
+    return (value: string) => {
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        router.replace(`${pathname}?${createQueryString({ search: value || undefined, page: 1 })}`, { scroll: false })
+      }, 500)
+    }
+  }, [router, pathname, createQueryString])
+
+  useEffect(() => {
+    setGlobalFilter(searchParams.get("search") || "")
+  }, [searchParams])
+
+  if (isError && error) {
     return (
       <div className="text-destructive p-4 bg-destructive/10 rounded-md">{`${t("common.error")}: ${error.message}`}</div>
     )
@@ -102,17 +183,29 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
     <div dir={dir} className="space-y-6 bg-background p-4 sm:p-6 rounded-lg shadow-sm border">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <Heading title={t("memberBookings.pageTitle")} description={t("memberBookings.pageDescription")} />
+        <Button onClick={() => refetch()} disabled={isLoading}>
+          {isLoading ? <ReloadIcon className="mr-2 h-4 w-4 animate-spin" /> : <ReloadIcon className="mr-2 h-4 w-4" />}
+          {t("common.refresh")}
+        </Button>
       </div>
 
       <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
         <Input
           placeholder={t("memberBookings.searchPlaceholder")}
-          defaultValue={globalFilter}
-          onChange={(event) => debouncedSetGlobalFilter(event.target.value)}
+          value={globalFilter}
+          onChange={(event) => {
+            setGlobalFilter(event.target.value) // Update local state immediately for responsiveness
+            debouncedSetGlobalFilter(event.target.value)
+          }}
           className="max-w-xs h-9"
         />
-        <Select onValueChange={setStatusFilter} defaultValue={statusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px] h-9">
+        <Select
+          value={status}
+          onValueChange={(value) =>
+            router.replace(`${pathname}?${createQueryString({ status: value, page: 1 })}`, { scroll: false })
+          }
+        >
+          <SelectTrigger className="w-full sm:w-[200px] h-9">
             <SelectValue placeholder={t("memberBookings.filterByStatus")} />
           </SelectTrigger>
           <SelectContent>
@@ -122,7 +215,8 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
             </SelectItem>
             <SelectItem value="confirmed">{t("memberBookings.status.confirmed")}</SelectItem>
             <SelectItem value="professional_en_route">{t("memberBookings.status.professional_en_route")}</SelectItem>
-            <SelectItem value="cancelled">{t("memberBookings.status.cancelled")}</SelectItem>
+            <SelectItem value="cancelled_by_user">{t("memberBookings.status.cancelled_by_user")}</SelectItem>
+            <SelectItem value="cancelled_by_admin">{t("memberBookings.status.cancelled_by_admin")}</SelectItem>
             <SelectItem value="completed">{t("memberBookings.status.completed")}</SelectItem>
             <SelectItem value="no_show">{t("memberBookings.status.no_show")}</SelectItem>
           </SelectContent>
@@ -136,21 +230,17 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{t("common.toggleColumns")}</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* This requires DataTable to be aware of its columns to toggle visibility */}
-            {/* For simplicity, this part is illustrative. Actual implementation in DataTable is needed. */}
             <DropdownMenuCheckboxItem
-              checked={!columnVisibility["professionalId.name"]} // Example, assuming default is visible
-              onCheckedChange={(value) => setColumnVisibility((prev) => ({ ...prev, "professionalId.name": !value }))}
-              disabled={!isLoading && !bookingsData.length}
+              checked={columnVisibility["professionalId.name"] !== false}
+              onCheckedChange={(value) => setColumnVisibility((prev) => ({ ...prev, "professionalId.name": value }))}
             >
               {t("bookings.table.header.professional")}
             </DropdownMenuCheckboxItem>
             <DropdownMenuCheckboxItem
-              checked={!columnVisibility["bookingAddressSnapshot.city"]}
+              checked={columnVisibility["bookingAddressSnapshot.city"] !== false}
               onCheckedChange={(value) =>
-                setColumnVisibility((prev) => ({ ...prev, "bookingAddressSnapshot.city": !value }))
+                setColumnVisibility((prev) => ({ ...prev, "bookingAddressSnapshot.city": value }))
               }
-              disabled={!isLoading && !bookingsData.length}
             >
               {t("bookings.table.header.location")}
             </DropdownMenuCheckboxItem>
@@ -158,26 +248,59 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
         </DropdownMenu>
       </div>
 
-      {isLoading && !data ? ( // Show skeleton only on initial load
+      {isLoading && !data?.bookings?.length ? (
         <BookingsTableSkeleton />
       ) : (
         <DataTable
           columns={columns}
           data={bookingsData}
           pageCount={pageCount}
-          pagination={pagination}
-          setPagination={setPagination}
           sorting={sorting}
-          setSorting={setSorting}
-          columnFilters={columnFilters}
+          setSorting={(newSortingUpdater) => {
+            const newSort = typeof newSortingUpdater === "function" ? newSortingUpdater(sorting) : newSortingUpdater
+            const sortByField = newSort[0]?.id
+            const sortDirField = newSort[0] ? (newSort[0].desc ? "desc" : "asc") : undefined
+            router.replace(
+              `${pathname}?${createQueryString({ sortBy: sortByField, sortDir: sortDirField, page: 1 })}`,
+              { scroll: false },
+            )
+          }}
+          columnFilters={columnFilters} // Not directly used for filtering API, but can be for client-side
           setColumnFilters={setColumnFilters}
-          globalFilter={globalFilter}
-          setGlobalFilter={setGlobalFilter} // Pass the state, not the debounced function
+          globalFilter={globalFilter} // Not directly used by DataTable for API filtering
+          // setGlobalFilter: handled by Input onChange
           columnVisibility={columnVisibility}
           setColumnVisibility={setColumnVisibility}
-          isLoading={isLoading} // Pass loading state for DataTable to handle overlays or styles
+          rowSelection={rowSelection}
+          setRowSelection={setRowSelection}
+          pagination={{ pageIndex: page - 1, pageSize: limit }}
+          setPagination={(updater) => {
+            const newPagination =
+              typeof updater === "function" ? updater({ pageIndex: page - 1, pageSize: limit }) : updater
+            router.replace(
+              `${pathname}?${createQueryString({ page: newPagination.pageIndex + 1, limit: newPagination.pageSize })}`,
+              { scroll: false },
+            )
+          }}
+          isLoading={isLoading}
           noResultsText={t("memberBookings.noBookingsFound")}
+          enableRowSelection
         />
+      )}
+      {Object.keys(rowSelection).filter((id) => rowSelection[id]).length > 0 && (
+        <div className="flex items-center justify-end space-x-2 py-4 sticky bottom-0 bg-background/95 p-2 border-t">
+          <span className="text-sm text-muted-foreground">
+            {t("common.selectedCount", { count: Object.keys(rowSelection).filter((id) => rowSelection[id]).length })}
+          </span>
+          <Button variant="destructive" size="sm" onClick={handleCancelSelectedBookings} disabled={isCancelLoading}>
+            {isCancelLoading ? (
+              <ReloadIcon className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <XCircle className="mr-2 h-4 w-4" />
+            )}
+            {t("memberBookings.cancelSelectedBookings")}
+          </Button>
+        </div>
       )}
     </div>
   )

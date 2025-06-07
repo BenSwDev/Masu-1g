@@ -147,7 +147,8 @@
       "cancellationFailed": "ביטול ההזמנה נכשל.",
       "userNotBookingOwner": "אינך מורשה לבטל הזמנה זו.",
       "cancellationWindowExpired": "חלון הביטולים עבור הזמנה זו פג."
-    }
+    },
+    "toggleColumns": "החלף עמודות"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -1547,6 +1548,19 @@
       "summary": {
         "flexibleTime": "זמן גמיש"
       }
+    },
+    "table": {
+      "header": {
+        "professional": "מטפל/ת",
+        "location": "מיקום",
+        "bookingId": "מזהה הזמנה",
+        "treatmentDetails": "טיפול",
+        "dateTime": "תאריך ושעה",
+        "status": "סטטוס",
+        "total": "סה\"כ"
+      },
+      "flexibleTime": "זמן גמיש",
+      "toBeAssigned": "יוקצה"
     }
   },
   "preferences": {
@@ -1573,7 +1587,12 @@
   },
   "memberBookings": {
     "title": "ההזמנות שלי",
+    "pageTitle": "ההזמנות שלי",
+    "pageDescription": "צפה ונהל את ההזמנות הקרובות והקודמות שלך.",
+    "searchPlaceholder": "חפש לפי טיפול, מטפל, מזהה הזמנה...",
+    "filterByStatus": "סנן לפי סטטוס",
     "noBookings": "אין לך הזמנות עדיין.",
+    "noBookingsFound": "לא נמצאו הזמנות התואמות לקריטריונים שלך.",
     "bookNow": "הזמן טיפול",
     "status": {
       "pending_professional_assignment": "ממתין לשיבוץ מטפל",
@@ -1582,7 +1601,9 @@
       "completed": "הושלמה",
       "cancelled_by_user": "בוטלה על ידך",
       "cancelled_by_admin": "בוטלה על ידי המערכת",
-      "no_show": "לא הופעת"
+      "no_show": "לא הופעת",
+      "all": "כל הסטטוסים",
+      "cancelled": "בוטל"
     },
     "duration": "{minutes} דק'",
     "customAddress": "כתובת מותאמת",

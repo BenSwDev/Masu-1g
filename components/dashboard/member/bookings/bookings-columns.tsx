@@ -24,7 +24,7 @@ import {
   UserX,
 } from "lucide-react"
 
-import type { PopulatedBooking, ITreatmentDuration } from "@/lib/db/models/booking"
+import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking" // Updated import path
 import { cancelBooking as cancelBookingAction } from "@/actions/booking-actions"
 import { Button } from "@/components/common/ui/button"
 import {
@@ -255,17 +255,18 @@ export const getBookingColumns = (
       size: 120,
     },
     {
-      accessorKey: "treatmentDetails",
+      accessorKey: "treatmentDetails", // This accessor might need adjustment if treatmentId is an object
       header: () => {
         return <div className="whitespace-nowrap">{t("bookings.table.header.treatmentDetails")}</div>
       },
       cell: ({ row }) => {
         const booking = row.original
-        const treatment = booking.treatmentId
+        const treatment = booking.treatmentId // Now PopulatedBookingTreatment | null
         let durationDisplay = ""
         if (treatment?.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
+          // Ensure selectedDurationId (string) is compared correctly with ITreatmentDuration._id (Types.ObjectId)
           const selectedDuration = treatment.durations.find(
-            (d: ITreatmentDuration) => d._id.toString() === booking.selectedDurationId?.toString(),
+            (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString(),
           )
           if (selectedDuration) {
             durationDisplay = `${selectedDuration.minutes} ${t("common.minutes_short", "min")}`
@@ -347,7 +348,7 @@ export const getBookingColumns = (
       enableHiding: true,
     },
     {
-      accessorKey: "bookingAddressSnapshot.city",
+      accessorKey: "bookingAddressSnapshot.city", // bookingAddressSnapshot is part of IBooking, not addressId
       header: () => {
         return <div className="whitespace-nowrap hidden lg:table-cell">{t("bookings.table.header.location")}</div>
       },

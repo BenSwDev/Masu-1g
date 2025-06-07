@@ -22,15 +22,18 @@ import {
   Info,
   CheckCircle,
   XCircle,
+  UserCheck,
+  UserX,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Separator } from "@/components/common/ui/separator"
 import { Badge } from "@/components/common/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
-import type { PopulatedBooking } from "@/actions/booking-actions"
-import type { IBookingAddressSnapshot, ITreatmentDuration } from "@/lib/db/models/booking"
+import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking" // Updated import path
+import type { IBookingAddressSnapshot } from "@/lib/db/models/booking" // Keep this if IBookingAddressSnapshot is not part of PopulatedBooking directly
 import { cn, formatCurrency } from "@/lib/utils/utils"
 import type { IGiftVoucherUsageHistory } from "@/lib/db/models/gift-voucher"
+import type { IAddress } from "@/types/address"
 
 interface BookingDetailsViewProps {
   booking: PopulatedBooking
@@ -47,18 +50,18 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
     bookedByUserName,
     bookedByUserEmail,
     bookedByUserPhone,
-    treatmentId: populatedTreatment, // This is now PopulatedBooking['treatmentId']
-    selectedDurationId,
+    treatmentId: populatedTreatment, // This is now PopulatedBooking['treatmentId'] which is PopulatedBookingTreatment | null
+    selectedDurationId, // Still available from IBooking base
     bookingDateTime,
     isFlexibleTime,
     flexibilityRangeHours,
     therapistGenderPreference,
     notes,
-    professionalId,
-    bookingAddressSnapshot,
+    professionalId, // Populated
+    bookingAddressSnapshot, // Directly from IBooking base
     source,
-    priceDetails, // This is now PopulatedBooking['priceDetails'] (deeply populated)
-    paymentDetails, // This is now PopulatedBooking['paymentDetails'] (deeply populated)
+    priceDetails, // PopulatedPriceDetails
+    paymentDetails, // PopulatedPaymentDetails
   } = booking
 
   const selectedTreatmentName = populatedTreatment?.name || t("common.unknownTreatment")
@@ -89,6 +92,14 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
           badgeClass: "bg-green-100 text-green-700 border-green-300",
           textColor: "text-green-700",
         }
+      // Add professional_en_route case
+      case "professional_en_route":
+        return {
+          label: t("memberBookings.status.professional_en_route"),
+          icon: <UserCheck className="mr-1.5 h-4 w-4 text-blue-600" />,
+          badgeClass: "bg-blue-100 text-blue-700 border-blue-300",
+          textColor: "text-blue-700",
+        }
       case "completed":
         return {
           label: t("memberBookings.status.completed"),
@@ -107,7 +118,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
       case "no_show":
         return {
           label: t("memberBookings.status.no_show"),
-          icon: <User className="mr-1.5 h-4 w-4 text-orange-600" />,
+          icon: <UserX className="mr-1.5 h-4 w-4 text-orange-600" />, // Changed icon to UserX
           badgeClass: "bg-orange-100 text-orange-700 border-orange-300",
           textColor: "text-orange-700",
         }
@@ -124,13 +135,13 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
 
   const getPaymentStatusText = (statusKey: string) => {
     const key = `bookings.confirmation.paymentStatus.${statusKey.toLowerCase()}`
-    return t(key) || statusKey
+    return t(key, statusKey) // Provide fallback
   }
 
   const getGenderPreferenceText = (preferenceKey?: string) => {
     if (!preferenceKey) return t("preferences.treatment.genderAny")
     const key = `preferences.treatment.gender${preferenceKey.charAt(0).toUpperCase()}${preferenceKey.slice(1)}`
-    return t(key) || preferenceKey
+    return t(key, preferenceKey) // Provide fallback
   }
 
   const bookingSourceText = useMemo(() => {
@@ -140,7 +151,6 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
   }, [source, t])
 
   const redeemedSubscriptionName = useMemo(() => {
-    // Now access the populated subscriptionId's name
     if (priceDetails.redeemedUserSubscriptionId?.subscriptionId) {
       return priceDetails.redeemedUserSubscriptionId.subscriptionId.name || t("bookings.unknownSubscription")
     }
@@ -148,21 +158,29 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
   }, [priceDetails.redeemedUserSubscriptionId, t])
 
   const redeemedGiftVoucherInfo = useMemo(() => {
-    // Now access the populated gift voucher details
     if (priceDetails.appliedGiftVoucherId) {
       const voucher = priceDetails.appliedGiftVoucherId
-      const treatmentNameForVoucher = voucher.treatmentName || selectedTreatmentName
-      const durationNameForVoucher = voucher.selectedDurationName
-        ? ` - ${voucher.selectedDurationName}`
-        : voucher.voucherType === "treatment" &&
-            populatedTreatment?.pricingType === "duration_based" &&
-            voucher.selectedDurationId &&
-            populatedTreatment.durations
-          ? ` - ${
-              populatedTreatment.durations.find((d) => d._id?.toString() === voucher.selectedDurationId?.toString())
-                ?.minutes
-            } ${t("common.minutes_short", "min")}`
-          : ""
+      // Ensure populatedTreatment is available for treatment voucher details
+      const treatmentForVoucher = voucher.voucherType === "treatment" ? populatedTreatment : null
+
+      const treatmentNameForVoucher =
+        voucher.treatmentName || (treatmentForVoucher ? treatmentForVoucher.name : selectedTreatmentName)
+
+      let durationNameForVoucher = voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""
+      if (
+        !durationNameForVoucher &&
+        voucher.voucherType === "treatment" &&
+        treatmentForVoucher?.pricingType === "duration_based" &&
+        voucher.selectedDurationId &&
+        treatmentForVoucher.durations
+      ) {
+        const durationDetail = treatmentForVoucher.durations.find(
+          (d) => d._id?.toString() === voucher.selectedDurationId?.toString(),
+        )
+        if (durationDetail) {
+          durationNameForVoucher = ` - ${durationDetail.minutes} ${t("common.minutes_short", "min")}`
+        }
+      }
 
       return voucher.voucherType === "treatment"
         ? `${voucher.code} (${treatmentNameForVoucher}${durationNameForVoucher})`
@@ -173,13 +191,18 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
 
   const professionalName = professionalId?.name || t("bookings.confirmation.professionalToBeAssigned")
 
-  const renderDetailItem = (labelKey: string, value?: string | number | null, icon?: React.ReactNode) =>
+  const renderDetailItem = (
+    labelKey: string,
+    value?: string | number | null,
+    icon?: React.ReactNode,
+    valueClassName?: string,
+  ) =>
     value || value === 0 ? (
       <div className="flex items-start py-1">
         {icon && <span className="mr-2 mt-1 flex-shrink-0 text-muted-foreground">{icon}</span>}
         <p className="text-sm">
-          <span className="text-muted-foreground">{t(labelKey)}:</span>{" "}
-          <span className="font-medium text-foreground">{value}</span>
+          <span className="text-muted-foreground">{labelKey.includes(".") ? t(labelKey) : labelKey}:</span>{" "}
+          <span className={cn("font-medium text-foreground", valueClassName)}>{value}</span>
         </p>
       </div>
     ) : null
@@ -201,36 +224,41 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
   }
 
   const paymentMethodDisplayName = useMemo(() => {
-    if (priceDetails.finalAmount === 0) return t("common.notApplicable")
-    // Now access the populated paymentMethodId's displayName
+    if (priceDetails.isFullyCoveredByVoucherOrSubscription || priceDetails.finalAmount === 0)
+      return t("common.notApplicable")
     if (paymentDetails.paymentMethodId) {
-      return paymentDetails.paymentMethodId.displayName || t("common.unknown")
+      return (
+        paymentDetails.paymentMethodId.displayName ||
+        (paymentDetails.paymentMethodId.type && paymentDetails.paymentMethodId.last4
+          ? `${t(`paymentMethods.type.${paymentDetails.paymentMethodId.type}`, paymentDetails.paymentMethodId.type)} **** ${paymentDetails.paymentMethodId.last4}`
+          : t("common.unknown"))
+      )
     }
-    return t("common.unknown")
-  }, [paymentDetails.paymentMethodId, priceDetails.finalAmount, t])
+    return t("common.notSpecified")
+  }, [paymentDetails.paymentMethodId, priceDetails.finalAmount, priceDetails.isFullyCoveredByVoucherOrSubscription, t])
 
   const dateFnsLocaleMap: Record<string, Locale> = {
     en: enUS,
     he: he,
     ru: ru,
   }
-  const currentDateFnsLocale = dateFnsLocaleMap[language]
+  const currentDateFnsLocale = dateFnsLocaleMap[language] || he // Fallback to 'he'
+
+  // Address details from bookingAddressSnapshot
+  const addressDisplay = bookingAddressSnapshot || booking.addressId // Use snapshot first, then fallback to populated addressId if snapshot is missing
 
   return (
-    // Removed p-4 pb-6 from this div, as padding is now handled by the scrollable wrapper in DrawerContent
     <div className="space-y-4 bg-background text-foreground">
-      {/* Booking Info Header */}
       <div className="text-center mb-4">
         <h2 className="text-xl font-semibold text-primary">
           {t("bookingDetails.drawerTitle")} #{bookingNumber}
         </h2>
-        <Badge variant="outline" className={cn("mt-1 text-xs font-medium", getBookingStatusInfo(status).badgeClass)}>
-          {getBookingStatusInfo(status).icon}
-          {getBookingStatusInfo(status).label}
+        <Badge variant="outline" className={cn("mt-1 text-sm font-medium", statusInfo.badgeClass)}>
+          {statusInfo.icon}
+          {statusInfo.label}
         </Badge>
       </div>
 
-      {/* Booking For Section */}
       <Card className="shadow-md">
         <CardHeader className="bg-muted/30">
           <CardTitle className="text-md flex items-center text-primary">
@@ -241,24 +269,27 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
         <CardContent className="pt-4 space-y-1">
           {recipientName ? (
             <>
-              {renderDetailItem("bookings.confirmation.recipientName", recipientName)}
+              {renderDetailItem(t("bookings.confirmation.recipientName"), recipientName)}
               {recipientPhone &&
-                renderDetailItem("bookings.confirmation.recipientPhone", recipientPhone, <Phone className="h-4 w-4" />)}
+                renderDetailItem(
+                  t("bookings.confirmation.recipientPhone"),
+                  recipientPhone,
+                  <Phone className="h-4 w-4" />,
+                )}
               <Separator className="my-2" />
               <p className="text-xs text-muted-foreground pt-1">{t("bookings.confirmation.bookedBy")}:</p>
-              {renderDetailItem("", bookedByUserName, <User className="h-4 w-4" />)}
+              {renderDetailItem(bookedByUserName || "", "", <User className="h-4 w-4" />)}
             </>
           ) : (
             <>
-              {renderDetailItem("", bookedByUserName, <User className="h-4 w-4" />)}
-              {bookedByUserEmail && renderDetailItem("", bookedByUserEmail, <Mail className="h-4 w-4" />)}
-              {bookedByUserPhone && renderDetailItem("", bookedByUserPhone, <Phone className="h-4 w-4" />)}
+              {renderDetailItem(bookedByUserName || "", "", <User className="h-4 w-4" />)}
+              {bookedByUserEmail && renderDetailItem(bookedByUserEmail, "", <Mail className="h-4 w-4" />)}
+              {bookedByUserPhone && renderDetailItem(bookedByUserPhone, "", <Phone className="h-4 w-4" />)}
             </>
           )}
         </CardContent>
       </Card>
 
-      {/* Treatment Details Section */}
       <Card className="shadow-md">
         <CardHeader className="bg-muted/30">
           <CardTitle className="text-md flex items-center text-primary">
@@ -285,7 +316,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             <span className="text-sm text-muted-foreground">{t("bookings.confirmation.dateTime")}:</span>
             <span className="text-sm font-semibold text-right">
               {bookingDateTime
-                ? format(new Date(bookingDateTime), "PPP HH:mm", { locale: currentDateFnsLocale })
+                ? format(new Date(bookingDateTime), "PPPp", { locale: currentDateFnsLocale }) // Using PPPp for date and time
                 : t("common.notAvailable")}
             </span>
           </div>
@@ -319,11 +350,10 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
         </CardContent>
       </Card>
 
-      {/* Professional Details Section */}
       <Card className="shadow-md">
         <CardHeader className="bg-muted/30">
           <CardTitle className="text-md flex items-center text-primary">
-            <User className="mr-2 h-5 w-5" />
+            <User className="mr-2 h-5 w-5" /> {/* Icon for professional */}
             {t("bookings.confirmation.professionalDetails")}
           </CardTitle>
         </CardHeader>
@@ -332,41 +362,66 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
         </CardContent>
       </Card>
 
-      {/* Address Details Section */}
-      {bookingAddressSnapshot && (
+      {addressDisplay && (
         <Card className="shadow-md">
           <CardHeader className="bg-muted/30">
             <CardTitle className="text-md flex items-center text-primary">
-              {getAddressIcon(
-                (bookingAddressSnapshot as IBookingAddressSnapshot & { addressType?: string }).addressType,
-              )}
+              {getAddressIcon((addressDisplay as IBookingAddressSnapshot & { addressType?: string }).addressType)}
               <span className="ml-2">{t("bookings.confirmation.addressDetails")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4 space-y-0.5">
-            <p className="text-sm font-semibold">{bookingAddressSnapshot.fullAddress || t("common.notAvailable")}</p>
-            {renderDetailItem("addresses.fields.city", bookingAddressSnapshot.city)}
-            {renderDetailItem("addresses.fields.street", bookingAddressSnapshot.street)}
-            {renderDetailItem("addresses.fields.streetNumber", bookingAddressSnapshot.streetNumber)}
-            {renderDetailItem("addresses.fields.apartment", bookingAddressSnapshot.apartment)}
-            {renderDetailItem("addresses.fields.entrance", bookingAddressSnapshot.entrance)}
-            {renderDetailItem("addresses.fields.floor", bookingAddressSnapshot.floor)}
-            {bookingAddressSnapshot.doorName &&
-              renderDetailItem("addresses.fields.doorName", bookingAddressSnapshot.doorName)}
-            {bookingAddressSnapshot.buildingName &&
-              renderDetailItem("addresses.fields.buildingName", bookingAddressSnapshot.buildingName)}
-            {bookingAddressSnapshot.hotelName &&
-              renderDetailItem("addresses.fields.hotelName", bookingAddressSnapshot.hotelName)}
-            {bookingAddressSnapshot.roomNumber &&
-              renderDetailItem("addresses.fields.roomNumber", bookingAddressSnapshot.roomNumber)}
-            {bookingAddressSnapshot.otherInstructions &&
-              renderDetailItem("addresses.fields.otherInstructions", bookingAddressSnapshot.otherInstructions)}
-            {bookingAddressSnapshot.notes && (
+            <p className="text-sm font-semibold">{addressDisplay.fullAddress || t("common.notAvailable")}</p>
+            {renderDetailItem(t("addresses.fields.city"), addressDisplay.city)}
+            {renderDetailItem(t("addresses.fields.street"), addressDisplay.street)}
+            {renderDetailItem(t("addresses.fields.streetNumber"), addressDisplay.streetNumber)}
+            {renderDetailItem(
+              t("addresses.fields.apartment"),
+              (addressDisplay as IBookingAddressSnapshot).apartment ||
+                (addressDisplay as IAddress).apartmentDetails?.apartmentNumber,
+            )}
+            {renderDetailItem(
+              t("addresses.fields.entrance"),
+              (addressDisplay as IBookingAddressSnapshot).entrance /* Add more specific fallbacks if needed */,
+            )}
+            {renderDetailItem(
+              t("addresses.fields.floor"),
+              (addressDisplay as IBookingAddressSnapshot).floor /* Add more specific fallbacks if needed */,
+            )}
+
+            {/* Displaying new address fields from IBookingAddressSnapshot if they exist */}
+            {(addressDisplay as IBookingAddressSnapshot & IAddress).doorName &&
+              renderDetailItem(
+                t("addresses.fields.doorName"),
+                (addressDisplay as IBookingAddressSnapshot & IAddress).doorName,
+              )}
+            {(addressDisplay as IBookingAddressSnapshot & IAddress).buildingName &&
+              renderDetailItem(
+                t("addresses.fields.buildingName"),
+                (addressDisplay as IBookingAddressSnapshot & IAddress).buildingName,
+              )}
+            {(addressDisplay as IBookingAddressSnapshot & IAddress).hotelName &&
+              renderDetailItem(
+                t("addresses.fields.hotelName"),
+                (addressDisplay as IBookingAddressSnapshot & IAddress).hotelName,
+              )}
+            {(addressDisplay as IBookingAddressSnapshot & IAddress).roomNumber &&
+              renderDetailItem(
+                t("addresses.fields.roomNumber"),
+                (addressDisplay as IBookingAddressSnapshot & IAddress).roomNumber,
+              )}
+            {(addressDisplay as IBookingAddressSnapshot & IAddress).otherInstructions &&
+              renderDetailItem(
+                t("addresses.fields.otherInstructions"),
+                (addressDisplay as IBookingAddressSnapshot & IAddress).otherInstructions,
+              )}
+
+            {addressDisplay.notes && ( // This notes is from IBookingAddressSnapshot
               <>
                 <Separator className="my-2" />
                 <p className="text-xs">
                   <span className="text-muted-foreground">{t("bookings.confirmation.addressNotes")}:</span>{" "}
-                  {bookingAddressSnapshot.notes}
+                  {addressDisplay.notes}
                 </p>
               </>
             )}
@@ -374,7 +429,6 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
         </Card>
       )}
 
-      {/* Booking Source & Price Summary Section */}
       <Card className="shadow-md">
         <CardHeader className="bg-muted/30">
           <CardTitle className="text-md flex items-center text-primary">
@@ -422,7 +476,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             </div>
           )}
           {priceDetails.isBaseTreatmentCoveredByTreatmentVoucher &&
-            !priceDetails.isBaseTreatmentCoveredBySubscription && (
+            !priceDetails.isBaseTreatmentCoveredBySubscription && ( // Only show if not already covered by sub
               <div className="flex justify-between items-center font-medium text-green-600 dark:text-green-400">
                 <span className="flex items-center">
                   <GiftIcon className="mr-2 h-4 w-4" />
@@ -435,16 +489,16 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             )}
           {priceDetails.surcharges?.map((surcharge, index) => (
             <div key={index} className="flex justify-between">
-              <span>{t(surcharge.description) || surcharge.description}:</span>
+              <span>{t(surcharge.description, surcharge.description)}:</span>
               <span className="text-orange-600 dark:text-orange-400">
                 + {formatCurrency(surcharge.amount, t("common.currency"), language)}
               </span>
             </div>
           ))}
-          {priceDetails.appliedGiftVoucherId && // Check if a gift voucher was applied
-            priceDetails.appliedGiftVoucherId.voucherType === "monetary" && // Check if it's a monetary voucher
-            priceDetails.voucherAppliedAmount > 0 && // Check if any amount was actually applied from it
-            !priceDetails.isBaseTreatmentCoveredByTreatmentVoucher && ( // Ensure it's not the same voucher used for treatment coverage
+          {priceDetails.appliedGiftVoucherId &&
+            priceDetails.appliedGiftVoucherId.voucherType === "monetary" &&
+            priceDetails.voucherAppliedAmount > 0 &&
+            !priceDetails.isBaseTreatmentCoveredByTreatmentVoucher && ( // Ensure not double counting if treatment voucher was monetary and covered base
               <div className="flex justify-between items-center font-medium text-green-600 dark:text-green-400">
                 <span className="flex items-center">
                   <GiftIcon className="mr-2 h-4 w-4" />
@@ -453,11 +507,11 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                 <span>- {formatCurrency(priceDetails.voucherAppliedAmount, t("common.currency"), language)}</span>
               </div>
             )}
-          {priceDetails.discountAmount > 0 && (
+          {priceDetails.discountAmount > 0 && priceDetails.appliedCouponId && (
             <div className="flex justify-between items-center font-medium text-green-600 dark:text-green-400">
               <span className="flex items-center">
                 <Tag className="mr-2 h-4 w-4" />
-                {priceDetails.appliedCouponId?.code
+                {priceDetails.appliedCouponId.code
                   ? t("bookings.confirmation.couponDiscountWithCode", { code: priceDetails.appliedCouponId.code })
                   : t("bookings.confirmation.couponDiscount")}
                 :
@@ -477,7 +531,6 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
         </CardContent>
       </Card>
 
-      {/* Payment Details Section */}
       <Card className="shadow-md">
         <CardHeader className="bg-muted/30">
           <CardTitle className="text-md flex items-center text-primary">
@@ -490,12 +543,13 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             <span className="text-muted-foreground">{t("bookings.confirmation.paymentStatus")}:</span>
             <span className="font-semibold">{getPaymentStatusText(paymentDetails.paymentStatus)}</span>
           </div>
-          {paymentDetails.paymentMethodId && priceDetails.finalAmount > 0 && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t("bookings.confirmation.paymentMethod")}:</span>
-              <span className="font-semibold">{paymentMethodDisplayName}</span>
-            </div>
-          )}
+          {paymentDetails.paymentMethodId &&
+            (priceDetails.finalAmount > 0 || !priceDetails.isFullyCoveredByVoucherOrSubscription) && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t("bookings.confirmation.paymentMethod")}:</span>
+                <span className="font-semibold">{paymentMethodDisplayName}</span>
+              </div>
+            )}
           {paymentDetails.transactionId && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t("bookings.confirmation.transactionId")}:</span>
@@ -505,7 +559,6 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
         </CardContent>
       </Card>
 
-      {/* Voucher Usage History if applicable and populated */}
       {priceDetails.appliedGiftVoucherId &&
         priceDetails.appliedGiftVoucherId.usageHistory &&
         priceDetails.appliedGiftVoucherId.usageHistory.length > 0 && (
@@ -526,9 +579,9 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               </p>
               {priceDetails.appliedGiftVoucherId.usageHistory.map((entry: IGiftVoucherUsageHistory, index: number) => (
                 <div key={index} className="text-xs text-muted-foreground">
-                  <span>{format(new Date(entry.date), "PPP HH:mm", { locale: currentDateFnsLocale })}: </span>
+                  <span>{format(new Date(entry.date), "PPPp", { locale: currentDateFnsLocale })}: </span>
                   <span>
-                    {t(entry.description) || entry.description} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
+                    {t(entry.description, entry.description)} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
                   </span>
                 </div>
               ))}

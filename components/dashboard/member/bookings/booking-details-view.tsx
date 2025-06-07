@@ -47,7 +47,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
     bookedByUserName,
     bookedByUserEmail,
     bookedByUserPhone,
-    treatmentId: populatedTreatment,
+    treatmentId: populatedTreatment, // This is now PopulatedBooking['treatmentId']
     selectedDurationId,
     bookingDateTime,
     isFlexibleTime,
@@ -57,8 +57,8 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
     professionalId,
     bookingAddressSnapshot,
     source,
-    priceDetails,
-    paymentDetails,
+    priceDetails, // This is now PopulatedBooking['priceDetails'] (deeply populated)
+    paymentDetails, // This is now PopulatedBooking['paymentDetails'] (deeply populated)
   } = booking
 
   const selectedTreatmentName = populatedTreatment?.name || t("common.unknownTreatment")
@@ -67,7 +67,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
   const selectedDuration = useMemo(() => {
     if (populatedTreatment?.pricingType === "duration_based" && selectedDurationId && populatedTreatment.durations) {
       return populatedTreatment.durations.find(
-        (d: ITreatmentDuration) => d._id.toString() === selectedDurationId.toString(),
+        (d: ITreatmentDuration) => d._id?.toString() === selectedDurationId.toString(),
       )
     }
     return null
@@ -140,23 +140,36 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
   }, [source, t])
 
   const redeemedSubscriptionName = useMemo(() => {
-    if (priceDetails.redeemedUserSubscriptionId && typeof priceDetails.redeemedUserSubscriptionId === "object") {
-      const sub = priceDetails.redeemedUserSubscriptionId
-      // @ts-ignore
-      return sub.subscriptionId?.name || t("bookings.unknownSubscription")
+    // Now access the populated subscriptionId's name
+    if (priceDetails.redeemedUserSubscriptionId?.subscriptionId) {
+      return priceDetails.redeemedUserSubscriptionId.subscriptionId.name || t("bookings.unknownSubscription")
     }
     return null
   }, [priceDetails.redeemedUserSubscriptionId, t])
 
   const redeemedGiftVoucherInfo = useMemo(() => {
-    if (priceDetails.appliedGiftVoucherId && typeof priceDetails.appliedGiftVoucherId === "object") {
+    // Now access the populated gift voucher details
+    if (priceDetails.appliedGiftVoucherId) {
       const voucher = priceDetails.appliedGiftVoucherId
+      const treatmentNameForVoucher = voucher.treatmentName || selectedTreatmentName
+      const durationNameForVoucher = voucher.selectedDurationName
+        ? ` - ${voucher.selectedDurationName}`
+        : voucher.voucherType === "treatment" &&
+            populatedTreatment?.pricingType === "duration_based" &&
+            voucher.selectedDurationId &&
+            populatedTreatment.durations
+          ? ` - ${
+              populatedTreatment.durations.find((d) => d._id?.toString() === voucher.selectedDurationId?.toString())
+                ?.minutes
+            } ${t("common.minutes_short", "min")}`
+          : ""
+
       return voucher.voucherType === "treatment"
-        ? `${voucher.code} (${voucher.treatmentName || selectedTreatmentName}${voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""})`
+        ? `${voucher.code} (${treatmentNameForVoucher}${durationNameForVoucher})`
         : `${voucher.code} (${t("bookings.monetaryVoucher")} - ${t("bookings.balance")}: ${voucher.remainingAmount?.toFixed(2)} ${t("common.currency")})`
     }
     return null
-  }, [priceDetails.appliedGiftVoucherId, selectedTreatmentName, t])
+  }, [priceDetails.appliedGiftVoucherId, selectedTreatmentName, populatedTreatment, t])
 
   const professionalName = professionalId?.name || t("bookings.confirmation.professionalToBeAssigned")
 
@@ -189,8 +202,8 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
 
   const paymentMethodDisplayName = useMemo(() => {
     if (priceDetails.finalAmount === 0) return t("common.notApplicable")
-    if (paymentDetails.paymentMethodId && typeof paymentDetails.paymentMethodId === "object") {
-      // @ts-ignore
+    // Now access the populated paymentMethodId's displayName
+    if (paymentDetails.paymentMethodId) {
       return paymentDetails.paymentMethodId.displayName || t("common.unknown")
     }
     return t("common.unknown")
@@ -211,9 +224,9 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
         <h2 className="text-xl font-semibold text-primary">
           {t("bookingDetails.drawerTitle")} #{bookingNumber}
         </h2>
-        <Badge variant="outline" className={cn("mt-1 text-xs font-medium", statusInfo.badgeClass)}>
-          {statusInfo.icon}
-          {statusInfo.label}
+        <Badge variant="outline" className={cn("mt-1 text-xs font-medium", getBookingStatusInfo(status).badgeClass)}>
+          {getBookingStatusInfo(status).icon}
+          {getBookingStatusInfo(status).label}
         </Badge>
       </div>
 
@@ -389,7 +402,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                 <GiftIcon className="mr-2 h-4 w-4" />
                 {t("bookings.confirmation.usedGiftVoucher")}:
               </span>
-              <span className="font-medium">{redeemedGiftVoucherInfo}</span>
+              <span className="font-medium text-right">{redeemedGiftVoucherInfo}</span>
             </div>
           )}
           <Separator />
@@ -428,9 +441,10 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               </span>
             </div>
           ))}
-          {priceDetails.appliedGiftVoucherId &&
-            priceDetails.voucherAppliedAmount > 0 &&
-            !priceDetails.isBaseTreatmentCoveredByTreatmentVoucher && (
+          {priceDetails.appliedGiftVoucherId && // Check if a gift voucher was applied
+            priceDetails.appliedGiftVoucherId.voucherType === "monetary" && // Check if it's a monetary voucher
+            priceDetails.voucherAppliedAmount > 0 && // Check if any amount was actually applied from it
+            !priceDetails.isBaseTreatmentCoveredByTreatmentVoucher && ( // Ensure it's not the same voucher used for treatment coverage
               <div className="flex justify-between items-center font-medium text-green-600 dark:text-green-400">
                 <span className="flex items-center">
                   <GiftIcon className="mr-2 h-4 w-4" />
@@ -443,7 +457,10 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             <div className="flex justify-between items-center font-medium text-green-600 dark:text-green-400">
               <span className="flex items-center">
                 <Tag className="mr-2 h-4 w-4" />
-                {t("bookings.confirmation.couponDiscount")}:
+                {priceDetails.appliedCouponId?.code
+                  ? t("bookings.confirmation.couponDiscountWithCode", { code: priceDetails.appliedCouponId.code })
+                  : t("bookings.confirmation.couponDiscount")}
+                :
               </span>
               <span>- {formatCurrency(priceDetails.discountAmount, t("common.currency"), language)}</span>
             </div>
@@ -479,12 +496,17 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               <span className="font-semibold">{paymentMethodDisplayName}</span>
             </div>
           )}
+          {paymentDetails.transactionId && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{t("bookings.confirmation.transactionId")}:</span>
+              <span className="font-semibold truncate max-w-[150px] text-right">{paymentDetails.transactionId}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Voucher Usage History if applicable and populated */}
       {priceDetails.appliedGiftVoucherId &&
-        typeof priceDetails.appliedGiftVoucherId === "object" &&
         priceDetails.appliedGiftVoucherId.usageHistory &&
         priceDetails.appliedGiftVoucherId.usageHistory.length > 0 && (
           <Card className="shadow-md">

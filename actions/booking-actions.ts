@@ -5,9 +5,13 @@ import { getServerSession } from "next-auth"
 import mongoose, { type Types } from "mongoose"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import { getActivePaymentMethods as fetchUserActivePaymentMethods } from "@/actions/payment-method-actions"
 
-import Booking, { type IBooking, type IPriceDetails, type IBookingAddressSnapshot } from "@/lib/db/models/booking"
+import Booking, {
+  type IBooking,
+  type IPriceDetails,
+  type IBookingAddressSnapshot,
+  type IPaymentDetails,
+} from "@/lib/db/models/booking"
 import Treatment, { type ITreatment, type ITreatmentDuration } from "@/lib/db/models/treatment"
 import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
@@ -34,22 +38,49 @@ import type {
   EmailRecipient,
   PhoneRecipient,
   BookingSuccessNotificationData,
-  BookingConfirmedClientNotificationData,
-  ProfessionalEnRouteClientNotificationData,
-  BookingCompletedClientNotificationData,
   NotificationLanguage,
 } from "@/lib/notifications/notification-types"
 
+// Import necessary types for deep population
+import type { ICoupon } from "@/lib/db/models/coupon"
+import type { ISubscription } from "@/lib/db/models/subscription"
+import type { IPaymentMethod } from "@/lib/db/models/payment-method"
+// IUserSubscription and ITreatment are already imported
+
+// Make sure fetchUserActivePaymentMethods is imported if it's used in getBookingInitialData
+import { getActivePaymentMethods as fetchUserActivePaymentMethods } from "@/actions/payment-method-actions"
+// These should also be at the top.
+
+// Update PopulatedBooking interface to reflect deeper population
 export interface PopulatedBooking
-  extends Omit<IBooking, "treatmentId" | "addressId" | "professionalId" | "selectedDurationId"> {
+  extends Omit<
+    IBooking,
+    "treatmentId" | "addressId" | "professionalId" | "selectedDurationId" | "priceDetails" | "paymentDetails"
+  > {
   _id: Types.ObjectId
   treatmentId?: {
     _id: Types.ObjectId
     name: string
-    selectedDuration?: ITreatmentDuration
+    pricingType?: "fixed" | "duration_based" // Added pricingType
+    defaultDurationMinutes?: number // Added defaultDurationMinutes
+    durations?: ITreatmentDuration[] // Ensure durations is part of the populated treatment
+    fixedPrice?: number // Added fixedPrice
   } | null
   addressId?: Pick<IAddress, "_id" | "city" | "street" | "streetNumber" | "fullAddress"> | null
   professionalId?: Pick<IUser, "_id" | "name"> | null
+  priceDetails: Omit<IPriceDetails, "appliedCouponId" | "appliedGiftVoucherId" | "redeemedUserSubscriptionId"> & {
+    appliedCouponId?: ICoupon | null
+    appliedGiftVoucherId?: IGiftVoucher | null
+    redeemedUserSubscriptionId?:
+      | (IUserSubscription & {
+          subscriptionId: ISubscription
+          treatmentId: ITreatment // Ensure treatmentId within subscription is populated if needed, or just use its ID
+        })
+      | null
+  }
+  paymentDetails: Omit<IPaymentDetails, "paymentMethodId"> & {
+    paymentMethodId?: IPaymentMethod | null
+  }
 }
 
 function isSameUTCDay(dateLeft: Date, dateRight: Date): boolean {
@@ -758,77 +789,126 @@ export async function getUserBookings(
     const totalBookings = await Booking.countDocuments(query)
     const totalPages = Math.ceil(totalBookings / limit)
 
-    const rawBookings = await Booking.find(query)
+    const rawBookings = (await Booking.find(query)
       .populate<{ treatmentId: ITreatment | null }>({
         path: "treatmentId",
-        select: "name durations defaultDurationMinutes pricingType",
+        select: "name durations defaultDurationMinutes pricingType fixedPrice", // Ensure all needed fields are selected
         populate: { path: "durations" },
       })
       .populate<{ addressId: IAddress | null }>({
-        path: "addressId",
+        path: "addressId", // This populates the original addressId if present
       })
       .populate<{ professionalId: Pick<IUser, "_id" | "name"> | null }>({
         path: "professionalId",
         select: "name",
       })
+      .populate<{ "priceDetails.appliedCouponId": ICoupon | null }>({
+        path: "priceDetails.appliedCouponId",
+      })
+      .populate<{ "priceDetails.appliedGiftVoucherId": IGiftVoucher | null }>({
+        path: "priceDetails.appliedGiftVoucherId",
+      })
+      .populate<{
+        "priceDetails.redeemedUserSubscriptionId":
+          | (IUserSubscription & {
+              subscriptionId: ISubscription
+              treatmentId: ITreatment
+            })
+          | null
+      }>({
+        path: "priceDetails.redeemedUserSubscriptionId",
+        populate: [
+          { path: "subscriptionId", select: "name" }, // Populate subscription name
+          { path: "treatmentId", select: "name durations" }, // Populate treatment details within subscription
+        ],
+      })
+      .populate<{ "paymentDetails.paymentMethodId": IPaymentMethod | null }>({
+        path: "paymentDetails.paymentMethodId",
+      })
       .sort(sortOptions)
       .skip((page - 1) * limit)
       .limit(limit)
-      .lean()
+      .lean()) as Array<
+      IBooking & {
+        treatmentId: ITreatment | null
+        addressId: IAddress | null
+        professionalId: Pick<IUser, "_id" | "name"> | null
+        priceDetails: IPriceDetails & {
+          appliedCouponId?: ICoupon | null
+          appliedGiftVoucherId?: IGiftVoucher | null
+          redeemedUserSubscriptionId?:
+            | (IUserSubscription & {
+                subscriptionId: ISubscription
+                treatmentId: ITreatment
+              })
+            | null
+        }
+        paymentDetails: IPaymentDetails & {
+          paymentMethodId?: IPaymentMethod | null
+        }
+      }
+    >
 
     const bookings: PopulatedBooking[] = rawBookings.map((booking) => {
       const populatedBooking: PopulatedBooking = {
-        ...(booking as any),
+        ...(booking as any), // Cast to any to handle the complex populated type initially
         _id: booking._id as Types.ObjectId,
-        treatmentId: null,
-        addressId: booking.bookingAddressSnapshot
-          ? {
-              _id: booking.addressId || new mongoose.Types.ObjectId(),
-              city: booking.bookingAddressSnapshot.city,
-              street: booking.bookingAddressSnapshot.street,
-              streetNumber: booking.bookingAddressSnapshot.streetNumber,
-              fullAddress: booking.bookingAddressSnapshot.fullAddress,
-            }
-          : booking.addressId
-            ? {
-                // Fallback if snapshot somehow wasn't created, though it should be
-                _id: (booking.addressId as IAddress)._id,
-                city: (booking.addressId as IAddress).city,
-                street: (booking.addressId as IAddress).street,
-                streetNumber: (booking.addressId as IAddress).streetNumber,
-                fullAddress: (booking.addressId as IAddress).fullAddress, // Assumes IAddress now has fullAddress
-              }
-            : null,
+        // treatmentId, addressId, professionalId will be re-assigned below with correct typing
+        // priceDetails and paymentDetails are now deeply populated, so we can cast them
+        priceDetails: booking.priceDetails as PopulatedBooking["priceDetails"],
+        paymentDetails: booking.paymentDetails as PopulatedBooking["paymentDetails"],
       }
 
+      // Handle treatmentId population
       if (booking.treatmentId) {
-        const treatmentDoc = booking.treatmentId as ITreatment
+        const treatmentDoc = booking.treatmentId
         populatedBooking.treatmentId = {
           _id: treatmentDoc._id as Types.ObjectId,
           name: treatmentDoc.name,
+          pricingType: treatmentDoc.pricingType,
+          defaultDurationMinutes: treatmentDoc.defaultDurationMinutes,
+          durations: treatmentDoc.durations,
+          fixedPrice: treatmentDoc.fixedPrice,
         }
-        if (treatmentDoc.pricingType === "duration_based" && booking.selectedDurationId && treatmentDoc.durations) {
-          const selectedDuration = treatmentDoc.durations.find(
-            (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString(),
-          )
-          if (selectedDuration) {
-            populatedBooking.treatmentId.selectedDuration = selectedDuration
-          }
-        } else if (treatmentDoc.pricingType === "fixed" && treatmentDoc.defaultDurationMinutes) {
-          populatedBooking.treatmentId.selectedDuration = {
-            minutes: treatmentDoc.defaultDurationMinutes,
-            price: treatmentDoc.fixedPrice || 0,
-            isActive: true,
-          } as ITreatmentDuration
-        }
+        // The selectedDuration logic inside treatmentId was a bit complex,
+        // it's better to handle it directly in the component based on booking.selectedDurationId
+        // and populatedBooking.treatmentId.durations or defaultDurationMinutes.
+      } else {
+        populatedBooking.treatmentId = null
       }
 
-      populatedBooking.professionalId = booking.professionalId
-        ? {
-            _id: (booking.professionalId as any)._id as Types.ObjectId,
-            name: (booking.professionalId as any).name,
-          }
-        : null
+      // Handle addressId population (using bookingAddressSnapshot primarily)
+      if (booking.bookingAddressSnapshot) {
+        populatedBooking.addressId = {
+          _id: booking.addressId?._id || new mongoose.Types.ObjectId(), // Use original addressId if available, else new
+          city: booking.bookingAddressSnapshot.city,
+          street: booking.bookingAddressSnapshot.street,
+          streetNumber: booking.bookingAddressSnapshot.streetNumber,
+          fullAddress: booking.bookingAddressSnapshot.fullAddress,
+        }
+      } else if (booking.addressId) {
+        // Fallback if snapshot somehow wasn't created (should not happen with current logic)
+        const addressDoc = booking.addressId
+        populatedBooking.addressId = {
+          _id: addressDoc._id,
+          city: addressDoc.city,
+          street: addressDoc.street,
+          streetNumber: addressDoc.streetNumber,
+          fullAddress: addressDoc.fullAddress,
+        }
+      } else {
+        populatedBooking.addressId = null
+      }
+
+      // Handle professionalId population
+      if (booking.professionalId) {
+        populatedBooking.professionalId = {
+          _id: booking.professionalId._id as Types.ObjectId,
+          name: booking.professionalId.name,
+        }
+      } else {
+        populatedBooking.professionalId = null
+      }
 
       return populatedBooking
     })
@@ -977,7 +1057,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       }).lean(),
       User.findById(userId).select("preferences name email phone notificationPreferences treatmentPreferences").lean(),
       Address.find({ userId, isArchived: { $ne: true } }).lean(),
-      fetchUserActivePaymentMethods(),
+      fetchUserActivePaymentMethods(), // Assuming fetchUserActivePaymentMethods is imported from payment-method-actions
       Treatment.find({ isActive: true }).populate("durations").lean(),
       WorkingHoursSettings.findOne().lean(),
     ])
@@ -1049,7 +1129,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
             const durationDetails = treatmentDetails.durations?.find(
               (d) => d._id.toString() === voucher.selectedDurationId?.toString(),
             )
-            if (durationDetails) selectedDurationName = `${durationDetails.minutes} ${"min"}`
+            if (durationDetails) selectedDurationName = `${durationDetails.minutes} ${"min"}` // Assuming "min" is a key or direct string
           } else {
             selectedDurationName = ""
           }
@@ -1109,10 +1189,13 @@ export async function professionalAcceptBooking(
         throw new Error("bookings.errors.bookingNotFound")
       }
       if (booking.status !== "confirmed" || booking.professionalId) {
+        // Assuming 'confirmed' is the status before assignment
         throw new Error("bookings.errors.bookingNotAvailableForProfessionalAssignment")
       }
 
       booking.professionalId = new mongoose.Types.ObjectId(professionalId)
+      // Optionally, update booking status if needed, e.g., to 'professional_assigned' or keep as 'confirmed'
+      // booking.status = "professional_assigned";
       await booking.save({ session: mongooseDbSession })
       acceptedBooking = booking.toObject()
     })
@@ -1132,8 +1215,9 @@ export async function professionalAcceptBooking(
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
 
-          const notificationData: BookingConfirmedClientNotificationData = {
-            type: "BOOKING_CONFIRMED_CLIENT",
+          const notificationData = {
+            // Define appropriate notification data type
+            type: "BOOKING_CONFIRMED_CLIENT", // Example type
             userName: clientUser.name || "לקוח/ה",
             professionalName: professional.name || "מטפל/ת",
             bookingDateTime: acceptedBooking.bookingDateTime,
@@ -1194,6 +1278,7 @@ export async function professionalMarkEnRoute(
       return { success: false, error: "common.forbidden" }
     }
     if (booking.status !== "confirmed") {
+      // Or whatever status indicates it's ready to be marked en route
       return { success: false, error: "bookings.errors.bookingNotInCorrectStateForEnRoute" }
     }
 
@@ -1209,8 +1294,9 @@ export async function professionalMarkEnRoute(
       if (clientUser && treatment && professional) {
         const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
         const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
-        const notificationData: ProfessionalEnRouteClientNotificationData = {
-          type: "PROFESSIONAL_EN_ROUTE_CLIENT",
+        const notificationData = {
+          // Define appropriate notification data type
+          type: "PROFESSIONAL_EN_ROUTE_CLIENT", // Example type
           userName: clientUser.name || "לקוח/ה",
           professionalName: professional.name || "מטפל/ת",
           bookingDateTime: booking.bookingDateTime,
@@ -1262,6 +1348,7 @@ export async function professionalMarkCompleted(
       return { success: false, error: "common.forbidden" }
     }
     if (!["confirmed", "professional_en_route"].includes(booking.status)) {
+      // Or relevant statuses
       return { success: false, error: "bookings.errors.bookingNotInCorrectStateForCompletion" }
     }
 
@@ -1278,8 +1365,9 @@ export async function professionalMarkCompleted(
       if (clientUser && treatment && professional) {
         const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
         const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
-        const notificationData: BookingCompletedClientNotificationData = {
-          type: "BOOKING_COMPLETED_CLIENT",
+        const notificationData = {
+          // Define appropriate notification data type
+          type: "BOOKING_COMPLETED_CLIENT", // Example type
           userName: clientUser.name || "לקוח/ה",
           professionalName: professional.name || "מטפל/ת",
           treatmentName: treatment.name,

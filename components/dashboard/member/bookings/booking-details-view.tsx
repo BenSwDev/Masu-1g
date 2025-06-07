@@ -2,7 +2,8 @@
 
 import type React from "react"
 import { useMemo } from "react"
-import { format } from "date-fns"
+import { format, type Locale } from "date-fns"
+import { enUS, he, ru } from "date-fns/locale"
 import {
   User,
   Phone,
@@ -36,7 +37,7 @@ interface BookingDetailsViewProps {
 }
 
 export default function BookingDetailsView({ booking }: BookingDetailsViewProps) {
-  const { t, locale } = useTranslation()
+  const { t, language } = useTranslation()
 
   const {
     bookingNumber,
@@ -195,6 +196,13 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
     return t("common.unknown")
   }, [paymentDetails.paymentMethodId, priceDetails.finalAmount, t])
 
+  const dateFnsLocaleMap: Record<string, Locale> = {
+    en: enUS,
+    he: he,
+    ru: ru,
+  }
+  const currentDateFnsLocale = dateFnsLocaleMap[language]
+
   return (
     // Removed p-4 pb-6 from this div, as padding is now handled by the scrollable wrapper in DrawerContent
     <div className="space-y-4 bg-background text-foreground">
@@ -263,7 +271,9 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">{t("bookings.confirmation.dateTime")}:</span>
             <span className="text-sm font-semibold text-right">
-              {bookingDateTime ? format(new Date(bookingDateTime), "PPP HH:mm", { locale }) : t("common.notAvailable")}
+              {bookingDateTime
+                ? format(new Date(bookingDateTime), "PPP HH:mm", { locale: currentDateFnsLocale })
+                : t("common.notAvailable")}
             </span>
           </div>
           {isFlexibleTime && (
@@ -385,7 +395,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
           <Separator />
           <div className="flex justify-between">
             <span>{t("bookings.confirmation.basePrice")}:</span>
-            <span>{formatCurrency(priceDetails.basePrice, t("common.currency"), locale)}</span>
+            <span>{formatCurrency(priceDetails.basePrice, t("common.currency"), language)}</span>
           </div>
           {priceDetails.isBaseTreatmentCoveredBySubscription && (
             <div className="flex justify-between items-center font-medium text-green-600 dark:text-green-400">
@@ -394,7 +404,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                 {t("bookings.confirmation.treatmentCoveredBySubscription")}
               </span>
               <span className="line-through text-muted-foreground">
-                (-{formatCurrency(priceDetails.basePrice, t("common.currency"), locale)})
+                (-{formatCurrency(priceDetails.basePrice, t("common.currency"), language)})
               </span>
             </div>
           )}
@@ -406,7 +416,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                   {t("bookings.confirmation.treatmentCoveredByVoucher")}
                 </span>
                 <span className="line-through text-muted-foreground">
-                  (-{formatCurrency(priceDetails.basePrice, t("common.currency"), locale)})
+                  (-{formatCurrency(priceDetails.basePrice, t("common.currency"), language)})
                 </span>
               </div>
             )}
@@ -414,7 +424,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             <div key={index} className="flex justify-between">
               <span>{t(surcharge.description) || surcharge.description}:</span>
               <span className="text-orange-600 dark:text-orange-400">
-                + {formatCurrency(surcharge.amount, t("common.currency"), locale)}
+                + {formatCurrency(surcharge.amount, t("common.currency"), language)}
               </span>
             </div>
           ))}
@@ -426,7 +436,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                   <GiftIcon className="mr-2 h-4 w-4" />
                   {t("bookings.confirmation.monetaryVoucherApplied")}
                 </span>
-                <span>- {formatCurrency(priceDetails.voucherAppliedAmount, t("common.currency"), locale)}</span>
+                <span>- {formatCurrency(priceDetails.voucherAppliedAmount, t("common.currency"), language)}</span>
               </div>
             )}
           {priceDetails.discountAmount > 0 && (
@@ -435,7 +445,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                 <Tag className="mr-2 h-4 w-4" />
                 {t("bookings.confirmation.couponDiscount")}:
               </span>
-              <span>- {formatCurrency(priceDetails.discountAmount, t("common.currency"), locale)}</span>
+              <span>- {formatCurrency(priceDetails.discountAmount, t("common.currency"), language)}</span>
             </div>
           )}
           <Separator className="my-2" />
@@ -444,7 +454,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             <span className="text-primary">
               {priceDetails.isFullyCoveredByVoucherOrSubscription
                 ? t("bookings.confirmation.gift")
-                : formatCurrency(priceDetails.finalAmount, t("common.currency"), locale)}
+                : formatCurrency(priceDetails.finalAmount, t("common.currency"), language)}
             </span>
           </div>
         </CardContent>
@@ -494,7 +504,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               </p>
               {priceDetails.appliedGiftVoucherId.usageHistory.map((entry: IGiftVoucherUsageHistory, index: number) => (
                 <div key={index} className="text-xs text-muted-foreground">
-                  <span>{format(new Date(entry.date), "PPP HH:mm", { locale })}: </span>
+                  <span>{format(new Date(entry.date), "PPP HH:mm", { locale: currentDateFnsLocale })}: </span>
                   <span>
                     {t(entry.description) || entry.description} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
                   </span>

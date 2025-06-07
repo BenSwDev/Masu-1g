@@ -29,17 +29,9 @@ interface MemberBookingsClientProps {
   userId: string // Assuming userId is passed as a prop
 }
 
-// Helper function to get columns, now receives t and dir as arguments
-const getColumns = (
-  t: (key: string, options?: any) => string,
-  dir: string,
-  onCancelBooking: (bookingId: string) => void,
-  onViewDetails: (bookingId: string) => void,
-) => getBookingColumns({ t, dir, onCancelBooking, onViewDetails })
-
 export default function MemberBookingsClient({ userId }: MemberBookingsClientProps) {
   // Changed to default export
-  const { t, dir } = useTranslation() // Call useTranslation here
+  const { t, language, dir } = useTranslation() // Call useTranslation here
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -152,10 +144,7 @@ export default function MemberBookingsClient({ userId }: MemberBookingsClientPro
   )
 
   // Now call getColumns with t and dir
-  const columns = useMemo(
-    () => getColumns(t, dir, onCancelBooking, onViewDetails),
-    [t, dir, onCancelBooking, onViewDetails],
-  )
+  const columns = useMemo(() => getBookingColumns(t, language), [t, language])
 
   const debouncedSetGlobalFilter = useMemo(() => {
     let timeoutId: NodeJS.Timeout

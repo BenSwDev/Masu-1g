@@ -223,12 +223,12 @@ const BookingSourceIcon = ({ source }: { source: PopulatedBooking["source"] }) =
   const { t } = useTranslation()
   switch (source) {
     case "subscription_redemption":
-      return <Ticket className="h-4 w-4 text-purple-600" titleAccess={t("bookings.source.subscription")} />
+      return <Ticket className="h-4 w-4 text-purple-600" title={t("bookings.source.subscription")} />
     case "gift_voucher_redemption":
-      return <Gift className="h-4 w-4 text-pink-600" titleAccess={t("bookings.source.giftVoucher")} />
+      return <Gift className="h-4 w-4 text-pink-600" title={t("bookings.source.giftVoucher")} />
     case "new_purchase":
     default:
-      return <ShoppingBag className="h-4 w-4 text-teal-600" titleAccess={t("bookings.source.newPurchase")} />
+      return <ShoppingBag className="h-4 w-4 text-teal-600" title={t("bookings.source.newPurchase")} />
   }
 }
 
@@ -311,11 +311,11 @@ export const getBookingColumns = (
           <div className="flex flex-col text-sm whitespace-nowrap">
             <div className="flex items-center">
               <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-              {formatDate(date, locale, { day: "2-digit", month: "short", year: "numeric" })}
+              {formatDate(date, locale)}
             </div>
             <div className="flex items-center text-muted-foreground">
               <Clock className="h-3.5 w-3.5 mr-1.5" />
-              {date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+              {new Date(booking.bookingDateTime).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
             </div>
             {booking.isFlexibleTime && (
               <Badge

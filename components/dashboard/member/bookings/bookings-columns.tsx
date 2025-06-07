@@ -232,12 +232,14 @@ const BookingSourceIcon = ({ source }: { source: PopulatedBooking["source"] }) =
   }
 }
 
-export const getBookingColumns = (): ColumnDef<PopulatedBooking>[] => {
+export const getBookingColumns = (
+  t: (key: string, options?: any) => string,
+  locale: string,
+): ColumnDef<PopulatedBooking>[] => {
   return [
     {
       accessorKey: "bookingNumber",
       header: ({ column }) => {
-        const { t } = useTranslation()
         return (
           <Button
             variant="ghost"
@@ -255,11 +257,9 @@ export const getBookingColumns = (): ColumnDef<PopulatedBooking>[] => {
     {
       accessorKey: "treatmentDetails",
       header: () => {
-        const { t } = useTranslation()
         return <div className="whitespace-nowrap">{t("bookings.table.header.treatmentDetails")}</div>
       },
       cell: ({ row }) => {
-        const { t } = useTranslation()
         const booking = row.original
         const treatment = booking.treatmentId
         let durationDisplay = ""
@@ -293,7 +293,6 @@ export const getBookingColumns = (): ColumnDef<PopulatedBooking>[] => {
     {
       accessorKey: "bookingDateTime",
       header: ({ column }) => {
-        const { t } = useTranslation()
         return (
           <Button
             variant="ghost"
@@ -306,7 +305,6 @@ export const getBookingColumns = (): ColumnDef<PopulatedBooking>[] => {
         )
       },
       cell: ({ row }) => {
-        const { locale, t } = useTranslation()
         const booking = row.original
         const date = new Date(booking.bookingDateTime)
         return (
@@ -335,11 +333,9 @@ export const getBookingColumns = (): ColumnDef<PopulatedBooking>[] => {
     {
       accessorKey: "professionalId.name",
       header: () => {
-        const { t } = useTranslation()
         return <div className="whitespace-nowrap hidden md:table-cell">{t("bookings.table.header.professional")}</div>
       },
       cell: ({ row }) => {
-        const { t } = useTranslation()
         const booking = row.original
         return (
           <div className="text-sm hidden md:flex items-center">
@@ -353,11 +349,9 @@ export const getBookingColumns = (): ColumnDef<PopulatedBooking>[] => {
     {
       accessorKey: "bookingAddressSnapshot.city",
       header: () => {
-        const { t } = useTranslation()
         return <div className="whitespace-nowrap hidden lg:table-cell">{t("bookings.table.header.location")}</div>
       },
       cell: ({ row }) => {
-        const { t } = useTranslation()
         const booking = row.original
         return (
           <div className="text-sm hidden lg:flex items-center">
@@ -373,7 +367,6 @@ export const getBookingColumns = (): ColumnDef<PopulatedBooking>[] => {
     {
       accessorKey: "status",
       header: () => {
-        const { t } = useTranslation()
         return <div className="text-center whitespace-nowrap">{t("bookings.table.header.status")}</div>
       },
       cell: ({ row }) => (
@@ -386,7 +379,6 @@ export const getBookingColumns = (): ColumnDef<PopulatedBooking>[] => {
     {
       accessorKey: "priceDetails.finalAmount",
       header: ({ column }) => {
-        const { t } = useTranslation()
         return (
           <div className="text-right">
             <Button
@@ -401,7 +393,6 @@ export const getBookingColumns = (): ColumnDef<PopulatedBooking>[] => {
         )
       },
       cell: ({ row }) => {
-        const { t, locale } = useTranslation()
         const booking = row.original
         const amount = booking.priceDetails.finalAmount
         const formatted = booking.priceDetails.isFullyCoveredByVoucherOrSubscription

@@ -1,16 +1,16 @@
 "use client"
 
-import { useState, useMemo, useEffect, useCallback } from "react" // Added useEffect, useCallback
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query" // Added useMutation, useQueryClient
+import { useMemo, useState, useEffect, useCallback } from "react" // Added useEffect, useCallback
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import type { SortingState, ColumnFiltersState, VisibilityState } from "@tanstack/react-table"
 
-import { getUserBookings, cancelBooking as cancelBookingAction } from "@/actions/booking-actions" // Added cancelBookingAction
-import { useTranslation } from "@/lib/translations/i18n"
-import { getBookingColumns } from "./bookings-columns" // Corrected to getBookingColumns
+import { getUserBookings, cancelBooking as cancelBookingAction } from "@/actions/booking-actions"
+import { useTranslation } from "@/lib/translations/i18n" // Keep this import
+import { getBookingColumns } from "./bookings-columns"
 import { DataTable } from "@/components/common/ui/data-table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { BookingsTableSkeleton } from "./bookings-table-skeleton" // Ensure this is a NAMED import
+import { BookingsTableSkeleton } from "./bookings-table-skeleton"
 import { Heading } from "@/components/common/ui/heading"
 import { Input } from "@/components/common/ui/input"
 import {
@@ -22,26 +22,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
 import { Button } from "@/components/common/ui/button"
-import { ListFilter, RefreshCwIcon as ReloadIcon, XCircle } from "lucide-react" // Added ReloadIcon, XCircle
-import { toast } from "sonner" // Assuming sonner is used for toast
+import { ListFilter, RefreshCwIcon as ReloadIcon, XCircle } from "lucide-react"
+import { toast } from "sonner"
 
 interface MemberBookingsClientProps {
-  userId: string
+  userId: string // Assuming userId is passed as a prop
 }
 
-const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
-  const { t, dir } = useTranslation()
+// Helper function to get columns, now receives t and dir as arguments
+const getColumns = (
+  t: (key: string, options?: any) => string,
+  dir: string,
+  onCancelBooking: (bookingId: string) => void,
+  onViewDetails: (bookingId: string) => void,
+) => getBookingColumns({ t, dir, onCancelBooking, onViewDetails })
+
+export default function MemberBookingsClient({ userId }: MemberBookingsClientProps) {
+  // Changed to default export
+  const { t, dir } = useTranslation() // Call useTranslation here
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const queryClient = useQueryClient() // Added
+  const queryClient = useQueryClient()
 
   // State for DataTable
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const [globalFilter, setGlobalFilter] = useState("") // For search input
+  const [globalFilter, setGlobalFilter] = useState("")
 
   const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1
   const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : 10
@@ -69,19 +78,11 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
     if (JSON.stringify(sorting) !== JSON.stringify(newSorting)) {
       setSorting(newSorting)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortBy, sortDir]) // Do not add sorting to dependencies to avoid loop
+  }, [sortBy, sortDir, sorting]) // Added sorting to dependency array
 
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch, // Added refetch
-  } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["member-bookings", userId, page, limit, status, globalFilter, sorting],
     queryFn: () => {
-      // Update URL from query states before fetching
       const queryParams = createQueryString({
         page,
         limit,
@@ -108,11 +109,9 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
   const bookingsData = data?.bookings || []
   const pageCount = data?.totalPages || 0
 
-  // Mutations
   const { mutate: cancelBookingMutate, isPending: isCancelLoading } = useMutation({
-    // Renamed to avoid conflict
     mutationFn: async (bookingId: string) => {
-      if (!userId) throw new Error("User not authenticated")
+      if (!userId) throw new Error("User not authenticated") // Or handle appropriately
       const result = await cancelBookingAction(bookingId, userId, "user", t("memberBookings.userCancellationReason"))
       if (!result.success) {
         throw new Error(result.error ? t(`common.errors.${result.error}`) : t("common.errors.unknown"))
@@ -141,9 +140,8 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
   }
 
   const onViewDetails = useCallback((bookingId: string) => {
-    // Implement view details logic, e.g., open a modal or navigate
     console.log("View details for booking:", bookingId)
-    // router.push(`/dashboard/member/bookings/${bookingId}`); // Example navigation
+    // Example: router.push(`/dashboard/member/bookings/${bookingId}`);
   }, [])
 
   const onCancelBooking = useCallback(
@@ -153,12 +151,12 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
     [cancelBookingMutate],
   )
 
+  // Now call getColumns with t and dir
   const columns = useMemo(
-    () => getBookingColumns({ t, dir, onCancelBooking, onViewDetails }),
+    () => getColumns(t, dir, onCancelBooking, onViewDetails),
     [t, dir, onCancelBooking, onViewDetails],
   )
 
-  // Debounced search handler
   const debouncedSetGlobalFilter = useMemo(() => {
     let timeoutId: NodeJS.Timeout
     return (value: string) => {
@@ -194,7 +192,7 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
           placeholder={t("memberBookings.searchPlaceholder")}
           value={globalFilter}
           onChange={(event) => {
-            setGlobalFilter(event.target.value) // Update local state immediately for responsiveness
+            setGlobalFilter(event.target.value)
             debouncedSetGlobalFilter(event.target.value)
           }}
           className="max-w-xs h-9"
@@ -244,6 +242,7 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
             >
               {t("bookings.table.header.location")}
             </DropdownMenuCheckboxItem>
+            {/* Add more column toggles as needed */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -265,10 +264,10 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
               { scroll: false },
             )
           }}
-          columnFilters={columnFilters} // Not directly used for filtering API, but can be for client-side
+          columnFilters={columnFilters}
           setColumnFilters={setColumnFilters}
-          globalFilter={globalFilter} // Not directly used by DataTable for API filtering
-          // setGlobalFilter: handled by Input onChange
+          // globalFilter={globalFilter} // DataTable doesn't need this if API handles search
+          // setGlobalFilter: Handled by Input
           columnVisibility={columnVisibility}
           setColumnVisibility={setColumnVisibility}
           rowSelection={rowSelection}
@@ -305,5 +304,3 @@ const MemberBookingsClient = ({ userId }: MemberBookingsClientProps) => {
     </div>
   )
 }
-
-export default MemberBookingsClient

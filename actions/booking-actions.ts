@@ -46,6 +46,8 @@ import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 
 import { getActivePaymentMethods as fetchUserActivePaymentMethods } from "@/actions/payment-method-actions"
 
+export type { IGiftVoucherUsageHistory } from "@/types/booking"
+
 function isSameUTCDay(dateLeft: Date, dateRight: Date): boolean {
   return (
     dateLeft.getUTCFullYear() === dateRight.getUTCFullYear() &&

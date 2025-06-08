@@ -44,16 +44,21 @@ export interface GiftVoucherPlain {
 
 // This is the Mongoose Document interface, representing the data structure in MongoDB.
 export interface IGiftVoucher extends Document {
+  _id: mongoose.Types.ObjectId
   code: string
   voucherType: "treatment" | "monetary"
   amount: number // The primary value of the voucher, required.
   treatmentId?: mongoose.Types.ObjectId
+  treatmentName?: string // Add for display purposes
   selectedDurationId?: mongoose.Types.ObjectId
+  selectedDurationName?: string // Add for display purposes
   monetaryValue?: number // If monetary, this is the value. If treatment, could store the price at time of purchase.
   originalAmount?: number // For monetary vouchers, often same as 'amount' initially.
   remainingAmount?: number // For monetary vouchers, tracks current balance.
   purchaserUserId: mongoose.Types.ObjectId
+  purchaserName?: string // For display
   ownerUserId: mongoose.Types.ObjectId
+  ownerName?: string // For display
   isGift: boolean
   recipientName?: string
   recipientPhone?: string
@@ -72,7 +77,7 @@ export interface IGiftVoucher extends Document {
   validFrom: Date
   validUntil: Date
   paymentId?: string
-  usageHistory: { date: Date; amountUsed: number; orderId?: mongoose.Types.ObjectId; description?: string }[]
+  usageHistory: { date: Date; amountUsed: number; orderId?: mongoose.Types.ObjectId; description?: string; userId?: mongoose.Types.ObjectId }[]
   isActive: boolean
   createdAt: Date
   updatedAt: Date

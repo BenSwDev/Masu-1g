@@ -5,10 +5,29 @@ import type { IAddress } from "@/lib/db/models/address"
 import type { IUser } from "@/lib/db/models/user"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { ICoupon } from "@/lib/db/models/coupon"
-import type { IGiftVoucher, IGiftVoucherUsageHistory } from "@/lib/db/models/gift-voucher"
+import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { IPaymentMethod } from "@/lib/db/models/payment-method"
+
+// Add missing TimeSlot interface
+export interface TimeSlot {
+  time: string // Format "HH:mm"
+  isAvailable: boolean
+  surcharge?: {
+    description: string
+    amount: number
+  }
+}
+
+// Add missing IGiftVoucherUsageHistory type
+export interface IGiftVoucherUsageHistory {
+  date: Date
+  amountUsed: number
+  orderId?: Types.ObjectId
+  description?: string
+  userId?: Types.ObjectId
+}
 
 export interface CalculatedPriceDetails {
   basePrice: number
@@ -54,6 +73,7 @@ export interface PopulatedBooking
   > {
   _id: Types.ObjectId
   treatmentId?: PopulatedBookingTreatment | null
+  selectedDurationId?: Types.ObjectId // Add this back to interface
   // addressId is the original DB ref, bookingAddressSnapshot is used for display details
   addressId?: Pick<
     IAddress,
@@ -78,3 +98,44 @@ export interface PopulatedBooking
 
 // Ensure ITreatmentDuration is also available if not already globally typed or re-exported
 export type { ITreatmentDuration }
+
+// Additional types for booking workflow
+export interface BookingInitialData {
+  activeUserSubscriptions: any[]
+  usableGiftVouchers: any[]
+  userPreferences: {
+    therapistGender: "male" | "female" | "any"
+    notificationMethods: string[]
+    notificationLanguage: string
+  }
+  userAddresses: any[]
+  userPaymentMethods: any[]
+  activeTreatments: any[]
+  workingHoursSettings: any
+  currentUser: {
+    id: string
+    name: string
+    email: string
+    phone?: string
+  }
+}
+
+export interface SelectedBookingOptions {
+  selectedTreatmentId?: string
+  selectedDurationId?: string
+  bookingDate?: string
+  bookingTime?: string
+  therapistGenderPreference: "male" | "female" | "any"
+  isFlexibleTime: boolean
+  flexibilityRangeHours?: number
+  notes?: string
+  source: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
+  selectedUserSubscriptionId?: string
+  selectedGiftVoucherId?: string
+  appliedCouponCode?: string
+  recipientName?: string
+  recipientPhone?: string
+  selectedAddressId?: string
+  customAddressDetails?: any
+  paymentMethodId?: string
+}

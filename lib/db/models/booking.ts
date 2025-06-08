@@ -40,6 +40,11 @@ export interface IBookingAddressSnapshot {
   entrance?: string
   floor?: string
   notes?: string
+  doorName?: string
+  buildingName?: string
+  hotelName?: string
+  roomNumber?: string
+  otherInstructions?: string
 }
 
 export interface IBooking extends Document {
@@ -121,6 +126,11 @@ const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
     entrance: { type: String },
     floor: { type: String },
     notes: { type: String },
+    doorName: { type: String },
+    buildingName: { type: String },
+    hotelName: { type: String },
+    roomNumber: { type: String },
+    otherInstructions: { type: String },
   },
   { _id: false },
 )

@@ -18,6 +18,7 @@ export interface INotificationPreferences {
 }
 
 export interface IUser extends Document {
+  _id: mongoose.Types.ObjectId
   name: string
   email: string
   phone?: string

@@ -39,8 +39,38 @@ export interface BookingCompletedClientNotificationData extends BaseNotification
   // feedbackLink?: string; // Consider adding later
 }
 
+// Add missing BookingSuccessNotificationData
+export interface BookingSuccessNotificationData extends BaseNotificationData {
+  type: "BOOKING_SUCCESS"
+  userName: string
+  bookingId: string
+  treatmentName: string
+  bookingDateTime: Date
+  orderDetailsLink: string
+}
+
 export type NotificationData =
   | NewBookingAvailableNotificationData
   | BookingConfirmedClientNotificationData
   | ProfessionalEnRouteClientNotificationData
   | BookingCompletedClientNotificationData
+  | BookingSuccessNotificationData
+
+// Add missing recipient types
+export interface EmailRecipient {
+  type: "email"
+  value: string
+  name?: string
+  language: NotificationLanguage
+}
+
+export interface PhoneRecipient {
+  type: "phone"
+  value: string
+  language: NotificationLanguage
+}
+
+export type NotificationRecipient = EmailRecipient | PhoneRecipient
+
+// Add missing language type
+export type NotificationLanguage = "he" | "en" | "ru"

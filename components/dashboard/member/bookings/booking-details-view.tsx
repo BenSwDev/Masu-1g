@@ -29,10 +29,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Separator } from "@/components/common/ui/separator"
 import { Badge } from "@/components/common/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
-import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking" // Updated import path
-import type { IBookingAddressSnapshot } from "@/lib/db/models/booking" // Keep this if IBookingAddressSnapshot is not part of PopulatedBooking directly
+import type { PopulatedBooking, ITreatmentDuration, IGiftVoucherUsageHistory } from "@/types/booking"
+import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
 import { cn, formatCurrency } from "@/lib/utils/utils"
-import type { IGiftVoucherUsageHistory } from "@/lib/db/models/gift-voucher"
 import type { IAddress } from "@/types/address"
 
 interface BookingDetailsViewProps {
@@ -50,18 +49,18 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
     bookedByUserName,
     bookedByUserEmail,
     bookedByUserPhone,
-    treatmentId: populatedTreatment, // This is now PopulatedBooking['treatmentId'] which is PopulatedBookingTreatment | null
-    selectedDurationId, // Still available from IBooking base
+    treatmentId: populatedTreatment,
+    selectedDurationId,
     bookingDateTime,
     isFlexibleTime,
     flexibilityRangeHours,
     therapistGenderPreference,
     notes,
-    professionalId, // Populated
-    bookingAddressSnapshot, // Directly from IBooking base
+    professionalId,
+    bookingAddressSnapshot,
     source,
-    priceDetails, // PopulatedPriceDetails
-    paymentDetails, // PopulatedPaymentDetails
+    priceDetails,
+    paymentDetails,
   } = booking
 
   const selectedTreatmentName = populatedTreatment?.name || t("common.unknownTreatment")

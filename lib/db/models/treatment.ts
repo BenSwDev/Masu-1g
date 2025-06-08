@@ -18,6 +18,7 @@ export interface ITreatment extends Document {
   // For fixed pricing
   fixedPrice?: number // This will be price for a single session
   fixedProfessionalPrice?: number
+  defaultDurationMinutes?: number
   // For duration-based pricing
   durations?: ITreatmentDuration[]
   createdAt: Date
@@ -94,6 +95,10 @@ const TreatmentSchema = new Schema<ITreatment>(
         },
         message: "Fixed professional price is required for fixed pricing type.",
       },
+    },
+    defaultDurationMinutes: {
+      type: Number,
+      min: 0,
     },
     durations: [TreatmentDurationSchema],
   },

@@ -154,7 +154,7 @@ export function constructFullAddress(data: Partial<IAddress>): string {
 }
 
 // Pre-save hook to automatically generate fullAddress
-AddressSchema.pre<IAddress>("save", function (next) {
+AddressSchema.pre<IAddress>("save", function (next: () => void) {
   if (
     this.isModified("street") ||
     this.isModified("streetNumber") ||
@@ -165,7 +165,7 @@ AddressSchema.pre<IAddress>("save", function (next) {
     this.isModified("officeDetails") ||
     this.isModified("hotelDetails")
   ) {
-    this.fullAddress = constructFullAddress(this)
+    this.fullAddress = constructFullAddress(this as any)
   }
   next()
 })

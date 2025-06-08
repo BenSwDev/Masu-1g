@@ -123,8 +123,14 @@ export default function ComprehensiveBookingEditModal({
     email: booking.bookedByUserEmail || (booking.userId as any)?.email,
     phone: booking.bookedByUserPhone || (booking.userId as any)?.phone
   }
+  const bookedForUser = booking.userId as any
   const treatment = booking.treatmentId as any
   const professional = booking.professionalId as any
+  const appliedCoupon = booking.priceDetails?.appliedCouponId as any
+  const appliedGiftVoucher = booking.priceDetails?.appliedGiftVoucherId as any
+  const redeemedSubscription = booking.priceDetails?.redeemedUserSubscriptionId as any
+  const addressSnapshot = booking.bookingAddressSnapshot || booking.customAddressDetails
+  const paymentMethod = booking.paymentDetails?.paymentMethodId as any
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -136,11 +142,13 @@ export default function ComprehensiveBookingEditModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="details">{t("adminBookings.tabs.details")}</TabsTrigger>
             <TabsTrigger value="client">{t("adminBookings.tabs.client")}</TabsTrigger>
+            <TabsTrigger value="recipient">{t("adminBookings.tabs.recipient")}</TabsTrigger>
             <TabsTrigger value="professional">{t("adminBookings.tabs.professional")}</TabsTrigger>
             <TabsTrigger value="payment">{t("adminBookings.tabs.payment")}</TabsTrigger>
+            <TabsTrigger value="address">{t("adminBookings.tabs.address")}</TabsTrigger>
             <TabsTrigger value="notes">{t("adminBookings.tabs.notes")}</TabsTrigger>
           </TabsList>
 
@@ -213,15 +221,35 @@ export default function ComprehensiveBookingEditModal({
                 <div className="space-y-2">
                   <Label>{t("adminBookings.treatment")}</Label>
                   <Input value={treatment?.name || t("common.unknown")} disabled />
+                  {treatment?.pricingType && (
+                    <div className="text-xs text-muted-foreground">
+                      {t("adminBookings.pricingType")}: {treatment.pricingType}
+                    </div>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label>{t("adminBookings.address")}</Label>
-                  <Textarea 
-                    value={editedBooking.address || booking.address || ""}
-                    onChange={(e) => setEditedBooking(prev => ({ ...prev, address: e.target.value }))}
-                    rows={3}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t("adminBookings.source")}</Label>
+                    <Input value={booking.source} disabled />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("adminBookings.therapistGenderPreference")}</Label>
+                    <Input value={booking.therapistGenderPreference} disabled />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t("adminBookings.isFlexibleTime")}</Label>
+                    <Input value={booking.isFlexibleTime ? t("common.yes") : t("common.no")} disabled />
+                  </div>
+                  {booking.flexibilityRangeHours && (
+                    <div className="space-y-2">
+                      <Label>{t("adminBookings.flexibilityRangeHours")}</Label>
+                      <Input value={`${booking.flexibilityRangeHours} ${t("adminBookings.hours")}`} disabled />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -275,6 +303,85 @@ export default function ComprehensiveBookingEditModal({
             </Card>
           </TabsContent>
 
+          {/* Recipient Information */}
+          <TabsContent value="recipient" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  {t("adminBookings.recipientInfo")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {booking.recipientName || booking.recipientPhone ? (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-800 mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-medium">{t("adminBookings.bookedForSomeoneElse")}</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="space-y-2">
+                        <Label>{t("adminBookings.recipientName")}</Label>
+                        <Input 
+                          value={editedBooking.recipientName || booking.recipientName || ""}
+                          onChange={(e) => setEditedBooking(prev => ({ ...prev, recipientName: e.target.value }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>{t("adminBookings.recipientPhone")}</Label>
+                        <Input 
+                          type="tel"
+                          value={editedBooking.recipientPhone || booking.recipientPhone || ""}
+                          onChange={(e) => setEditedBooking(prev => ({ ...prev, recipientPhone: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-gray-600 mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-medium">{t("adminBookings.bookedForSelf")}</span>
+                    </div>
+                    <p className="text-sm text-gray-600">{t("adminBookings.treatmentForBooker")}</p>
+                  </div>
+                )}
+
+                <div className="space-y-4 mt-6">
+                  <h4 className="font-medium text-gray-900">{t("adminBookings.originalBookerDetails")}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <Label className="text-xs text-gray-500">{t("adminBookings.userIdInSystem")}</Label>
+                      <div className="font-mono text-sm">{bookedForUser?._id?.toString() || booking.userId?.toString()}</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500">{t("adminBookings.userRoles")}</Label>
+                      <div className="text-sm">{bookedForUser?.roles?.join(", ") || t("common.unknown")}</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500">{t("adminBookings.userGender")}</Label>
+                      <div className="text-sm">{bookedForUser?.gender || t("common.unknown")}</div>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-gray-500">{t("adminBookings.dateOfBirth")}</Label>
+                      <div className="text-sm">
+                        {bookedForUser?.dateOfBirth ? format(new Date(bookedForUser.dateOfBirth), "dd/MM/yyyy") : t("common.unknown")}
+                      </div>
+                    </div>
+                    {bookedForUser?.treatmentPreferences && (
+                      <div className="col-span-2">
+                        <Label className="text-xs text-gray-500">{t("adminBookings.treatmentPreferences")}</Label>
+                        <div className="text-sm">
+                          {t("adminBookings.preferredTherapistGender")}: {bookedForUser.treatmentPreferences.therapistGender}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Professional Information */}
           <TabsContent value="professional" className="space-y-6">
             <Card>
@@ -313,7 +420,7 @@ export default function ComprehensiveBookingEditModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                                      <div className="space-y-4">
                     <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex items-center gap-2 text-green-800 mb-2">
                         <Star className="h-4 w-4" />
@@ -322,12 +429,35 @@ export default function ComprehensiveBookingEditModal({
                       <div className="text-lg font-semibold text-green-900">
                         {professional?.name || t("common.unknown")}
                       </div>
-                      {professional?.phone && (
-                        <div className="flex items-center gap-2 text-sm text-green-700 mt-1">
-                          <Phone className="h-3 w-3" />
-                          <span>{professional.phone}</span>
-                        </div>
-                      )}
+                      <div className="grid grid-cols-2 gap-4 mt-3 text-sm">
+                        {professional?.phone && (
+                          <div className="flex items-center gap-2 text-green-700">
+                            <Phone className="h-3 w-3" />
+                            <span>{professional.phone}</span>
+                          </div>
+                        )}
+                        {professional?.email && (
+                          <div className="flex items-center gap-2 text-green-700">
+                            <Mail className="h-3 w-3" />
+                            <span>{professional.email}</span>
+                          </div>
+                        )}
+                        {professional?.gender && (
+                          <div className="text-green-700">
+                            {t("adminBookings.gender")}: {professional.gender === "male" ? t("common.male") : t("common.female")}
+                          </div>
+                        )}
+                        {professional?.roles && (
+                          <div className="text-green-700">
+                            {t("adminBookings.roles")}: {professional.roles.join(", ")}
+                          </div>
+                        )}
+                        {professional?._id && (
+                          <div className="col-span-2 text-xs text-green-600 font-mono">
+                            ID: {professional._id.toString()}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -365,90 +495,255 @@ export default function ComprehensiveBookingEditModal({
                   {t("adminBookings.paymentInfo")}
                 </CardTitle>
               </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Price Breakdown */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900">{t("adminBookings.priceBreakdown")}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t("adminBookings.basePrice")}</Label>
+                      <Input 
+                        type="number"
+                        step="0.01"
+                        value={booking.priceDetails?.basePrice || 0}
+                        disabled
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("adminBookings.treatmentPriceAfterSubscription")}</Label>
+                      <Input 
+                        type="number"
+                        step="0.01"
+                        value={booking.priceDetails?.treatmentPriceAfterSubscriptionOrTreatmentVoucher || 0}
+                        disabled
+                      />
+                    </div>
+                  </div>
+
+                  {booking.priceDetails?.surcharges && booking.priceDetails.surcharges.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>{t("adminBookings.surcharges")}</Label>
+                      <div className="space-y-2">
+                        {booking.priceDetails.surcharges.map((surcharge, index) => (
+                          <div key={index} className="flex justify-between items-center p-2 bg-yellow-50 rounded">
+                            <span className="text-sm">{surcharge.description}</span>
+                            <span className="font-medium">₪{surcharge.amount}</span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between items-center p-2 bg-yellow-100 rounded font-medium">
+                          <span>{t("adminBookings.totalSurcharges")}</span>
+                          <span>₪{booking.priceDetails.totalSurchargesAmount}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t("adminBookings.discountAmount")}</Label>
+                      <Input 
+                        type="number"
+                        step="0.01"
+                        value={booking.priceDetails?.discountAmount || 0}
+                        disabled
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("adminBookings.voucherAppliedAmount")}</Label>
+                      <Input 
+                        type="number"
+                        step="0.01"
+                        value={booking.priceDetails?.voucherAppliedAmount || 0}
+                        disabled
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-green-800">{t("adminBookings.finalAmount")}</span>
+                      <span className="text-xl font-bold text-green-900">₪{booking.priceDetails?.finalAmount || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Applied Discounts & Vouchers */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900">{t("adminBookings.appliedDiscountsAndVouchers")}</h4>
+                  
+                  {appliedCoupon && (
+                    <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-purple-800 mb-2">
+                        <span className="font-medium">{t("adminBookings.appliedCoupon")}</span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div><strong>{t("adminBookings.couponCode")}:</strong> {appliedCoupon.code}</div>
+                        <div><strong>{t("adminBookings.couponName")}:</strong> {appliedCoupon.name}</div>
+                        <div><strong>{t("adminBookings.discountType")}:</strong> {appliedCoupon.discountType}</div>
+                        <div><strong>{t("adminBookings.discountValue")}:</strong> {appliedCoupon.discountValue}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {appliedGiftVoucher && (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-orange-800 mb-2">
+                        <span className="font-medium">{t("adminBookings.appliedGiftVoucher")}</span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div><strong>{t("adminBookings.voucherCode")}:</strong> {appliedGiftVoucher.code}</div>
+                        <div><strong>{t("adminBookings.originalAmount")}:</strong> ₪{appliedGiftVoucher.originalAmount}</div>
+                        <div><strong>{t("adminBookings.remainingAmount")}:</strong> ₪{appliedGiftVoucher.remainingAmount}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {redeemedSubscription && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-blue-800 mb-2">
+                        <span className="font-medium">{t("adminBookings.redeemedSubscription")}</span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div><strong>{t("adminBookings.subscriptionName")}:</strong> {redeemedSubscription.subscriptionId?.name}</div>
+                        <div><strong>{t("adminBookings.treatmentName")}:</strong> {redeemedSubscription.treatmentId?.name}</div>
+                        <div><strong>{t("adminBookings.usedQuantity")}:</strong> {redeemedSubscription.usedQuantity}</div>
+                        <div><strong>{t("adminBookings.remainingQuantity")}:</strong> {redeemedSubscription.remainingQuantity}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Payment Details */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900">{t("adminBookings.paymentDetails")}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t("adminBookings.paymentStatus")}</Label>
+                      <Select 
+                        value={editedBooking.paymentDetails?.paymentStatus || booking.paymentDetails?.paymentStatus || "pending"}
+                        onValueChange={(value) => setEditedBooking(prev => ({ 
+                          ...prev, 
+                          paymentDetails: { 
+                            ...prev.paymentDetails, 
+                            paymentStatus: value as any 
+                          } 
+                        }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">{t("adminBookings.paymentStatuses.pending")}</SelectItem>
+                          <SelectItem value="paid">{t("adminBookings.paymentStatuses.paid")}</SelectItem>
+                          <SelectItem value="failed">{t("adminBookings.paymentStatuses.failed")}</SelectItem>
+                          <SelectItem value="not_required">{t("adminBookings.paymentStatuses.notRequired")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {booking.paymentDetails?.transactionId && (
+                      <div className="space-y-2">
+                        <Label>{t("adminBookings.transactionId")}</Label>
+                        <Input value={booking.paymentDetails.transactionId} disabled />
+                      </div>
+                    )}
+                  </div>
+
+                  {paymentMethod && (
+                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-gray-800 mb-2">
+                        <CreditCard className="h-4 w-4" />
+                        <span className="font-medium">{t("adminBookings.paymentMethod")}</span>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div><strong>{t("adminBookings.paymentType")}:</strong> {paymentMethod.type}</div>
+                        {paymentMethod.brand && <div><strong>{t("adminBookings.cardBrand")}:</strong> {paymentMethod.brand}</div>}
+                        {paymentMethod.last4 && <div><strong>{t("adminBookings.last4Digits")}:</strong> **** {paymentMethod.last4}</div>}
+                        <div><strong>{t("adminBookings.displayName")}:</strong> {paymentMethod.displayName}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Address Information */}
+          <TabsContent value="address" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  {t("adminBookings.addressInfo")}
+                </CardTitle>
+              </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t("adminBookings.baseAmount")}</Label>
-                    <Input 
-                      type="number"
-                      step="0.01"
-                      value={editedBooking.priceDetails?.baseAmount || booking.priceDetails?.baseAmount || 0}
-                      onChange={(e) => setEditedBooking(prev => ({ 
-                        ...prev, 
-                        priceDetails: { 
-                          ...prev.priceDetails, 
-                          baseAmount: parseFloat(e.target.value) || 0 
-                        } 
-                      }))}
-                    />
+                {addressSnapshot ? (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-medium text-blue-800 mb-3">{t("adminBookings.bookingAddress")}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <Label className="text-xs text-blue-600">{t("adminBookings.fullAddress")}</Label>
+                          <div className="font-medium">{addressSnapshot.fullAddress}</div>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-blue-600">{t("adminBookings.city")}</Label>
+                          <div>{addressSnapshot.city}</div>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-blue-600">{t("adminBookings.street")}</Label>
+                          <div>{addressSnapshot.street} {addressSnapshot.streetNumber}</div>
+                        </div>
+                        {addressSnapshot.apartment && (
+                          <div>
+                            <Label className="text-xs text-blue-600">{t("adminBookings.apartment")}</Label>
+                            <div>{addressSnapshot.apartment}</div>
+                          </div>
+                        )}
+                        {addressSnapshot.entrance && (
+                          <div>
+                            <Label className="text-xs text-blue-600">{t("adminBookings.entrance")}</Label>
+                            <div>{addressSnapshot.entrance}</div>
+                          </div>
+                        )}
+                        {addressSnapshot.floor && (
+                          <div>
+                            <Label className="text-xs text-blue-600">{t("adminBookings.floor")}</Label>
+                            <div>{addressSnapshot.floor}</div>
+                          </div>
+                        )}
+                        {addressSnapshot.hotelName && (
+                          <div>
+                            <Label className="text-xs text-blue-600">{t("adminBookings.hotelName")}</Label>
+                            <div>{addressSnapshot.hotelName}</div>
+                          </div>
+                        )}
+                        {addressSnapshot.roomNumber && (
+                          <div>
+                            <Label className="text-xs text-blue-600">{t("adminBookings.roomNumber")}</Label>
+                            <div>{addressSnapshot.roomNumber}</div>
+                          </div>
+                        )}
+                        {addressSnapshot.notes && (
+                          <div className="col-span-2">
+                            <Label className="text-xs text-blue-600">{t("adminBookings.addressNotes")}</Label>
+                            <div>{addressSnapshot.notes}</div>
+                          </div>
+                        )}
+                        {addressSnapshot.otherInstructions && (
+                          <div className="col-span-2">
+                            <Label className="text-xs text-blue-600">{t("adminBookings.otherInstructions")}</Label>
+                            <div>{addressSnapshot.otherInstructions}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>{t("adminBookings.discount")}</Label>
-                    <Input 
-                      type="number"
-                      step="0.01"
-                      value={editedBooking.priceDetails?.discount || booking.priceDetails?.discount || 0}
-                      onChange={(e) => setEditedBooking(prev => ({ 
-                        ...prev, 
-                        priceDetails: { 
-                          ...prev.priceDetails, 
-                          discount: parseFloat(e.target.value) || 0 
-                        } 
-                      }))}
-                    />
+                ) : (
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                    <p className="text-gray-600">{t("adminBookings.noAddressInfo")}</p>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t("adminBookings.tax")}</Label>
-                    <Input 
-                      type="number"
-                      step="0.01"
-                      value={editedBooking.priceDetails?.tax || booking.priceDetails?.tax || 0}
-                      onChange={(e) => setEditedBooking(prev => ({ 
-                        ...prev, 
-                        priceDetails: { 
-                          ...prev.priceDetails, 
-                          tax: parseFloat(e.target.value) || 0 
-                        } 
-                      }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("adminBookings.finalAmount")}</Label>
-                    <Input 
-                      type="number"
-                      step="0.01"
-                      value={editedBooking.priceDetails?.finalAmount || booking.priceDetails?.finalAmount || 0}
-                      onChange={(e) => setEditedBooking(prev => ({ 
-                        ...prev, 
-                        priceDetails: { 
-                          ...prev.priceDetails, 
-                          finalAmount: parseFloat(e.target.value) || 0 
-                        } 
-                      }))}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>{t("adminBookings.paymentStatus")}</Label>
-                  <Select 
-                    value={editedBooking.paymentStatus || booking.paymentStatus || "pending"}
-                    onValueChange={(value) => setEditedBooking(prev => ({ ...prev, paymentStatus: value as any }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">{t("adminBookings.paymentStatuses.pending")}</SelectItem>
-                      <SelectItem value="completed">{t("adminBookings.paymentStatuses.completed")}</SelectItem>
-                      <SelectItem value="failed">{t("adminBookings.paymentStatuses.failed")}</SelectItem>
-                      <SelectItem value="refunded">{t("adminBookings.paymentStatuses.refunded")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

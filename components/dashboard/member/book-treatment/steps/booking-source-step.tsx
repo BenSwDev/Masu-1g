@@ -30,7 +30,7 @@ export default function BookingSourceStep({
   setBookingOptions,
   onNext,
 }: BookingSourceStepProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const hasSubscriptions = initialData.activeUserSubscriptions && initialData.activeUserSubscriptions.length > 0
   const hasVouchers = initialData.usableGiftVouchers && initialData.usableGiftVouchers.length > 0
 
@@ -52,7 +52,7 @@ export default function BookingSourceStep({
       }))
     })
     return () => subscription.unsubscribe()
-  }, [form, setBookingOptions])
+  }, [form, setBookingOptions, language])
 
   useEffect(() => {
     if (!hasSubscriptions && !hasVouchers && !form.getValues("source")) {
@@ -66,7 +66,7 @@ export default function BookingSourceStep({
 
   const noOptionsAvailable = !hasSubscriptions && !hasVouchers
 
-  // Helper to get subscription display details
+  // Helper to get subscription displayDetails
   const getSubscriptionDisplayDetails = (sub: any) => {
     let details = `${(sub.subscriptionId as any)?.name || t("bookings.unknownSubscription") || "Unknown Subscription"}`
     details += ` (${t("bookings.subscriptions.remaining")}: ${sub.remainingQuantity})`

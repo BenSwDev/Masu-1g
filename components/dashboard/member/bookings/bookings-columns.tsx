@@ -1,8 +1,6 @@
 "use client"
 
 import type { ColumnDef } from "@tanstack/react-table"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useSession } from "next-auth/react"
 import {
   MoreHorizontal,
   ArrowUpDown,
@@ -49,7 +47,7 @@ import {
 } from "@/components/common/ui/alert-dialog"
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from "@/components/common/ui/drawer"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
-import { toast } from "@/components/common/ui/use-toast"
+import { toast } from "sonner"
 import { cn, formatDate, formatCurrency } from "@/lib/utils/utils"
 import BookingDetailsView from "./booking-details-view"
 import {
@@ -58,6 +56,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/common/ui/dialog"
+import { Button } from "@/components/common/ui/button"
 
 import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking"
 

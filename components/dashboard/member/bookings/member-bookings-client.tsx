@@ -23,19 +23,19 @@ const StatusTabs = ({
   const tabs = [
     { 
       key: "all", 
-      label: t("memberBookings.filters.all") || "הכל"
+      label: t("memberBookings.filters.all")
     },
     { 
       key: "upcoming", 
-      label: t("memberBookings.filters.upcoming") || "קרובות"
+      label: t("memberBookings.filters.upcoming")
     },
     { 
       key: "past", 
-      label: t("memberBookings.filters.past") || "עברו"
+      label: t("memberBookings.filters.past")
     },
     { 
       key: "cancelled", 
-      label: t("memberBookings.filters.cancelled") || "בוטלו"
+      label: t("memberBookings.filters.cancelled")
     },
   ]
 
@@ -111,11 +111,11 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
           {/* Mobile Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:hidden">
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">סה״כ הזמנות</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t("common.total")} {t("memberBookings.title")}</div>
               <div className="text-2xl font-semibold text-gray-900 mt-1">{data?.totalBookings || 0}</div>
             </div>
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">פעילות</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t("common.active")}</div>
               <div className="text-2xl font-semibold text-gray-900 mt-1">
                 {data?.bookings?.filter(b => 
                   ['pending_professional_assignment', 'confirmed', 'professional_en_route'].includes(b.status)
@@ -123,13 +123,13 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">הושלמו</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t("memberBookings.status.completed")}</div>
               <div className="text-2xl font-semibold text-gray-900 mt-1">
                 {data?.bookings?.filter(b => b.status === 'completed').length || 0}
               </div>
             </div>
             <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">ממתינות</div>
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t("memberBookings.status.pending_professional_assignment")}</div>
               <div className="text-2xl font-semibold text-gray-900 mt-1">
                 {data?.bookings?.filter(b => 
                   ['pending_professional_assignment'].includes(b.status)
@@ -149,15 +149,15 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
             
             {/* Scroll indicator for mobile */}
             <div className="flex items-center justify-center py-3 text-xs text-gray-500 lg:hidden border-t border-gray-100">
-              גלול לצפייה בכל הפרטים
+              {t("common.showMore")}
             </div>
           </div>
 
           {/* Enhanced Pagination */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white border border-gray-200 rounded-lg">
             <div className="flex-1 text-sm text-gray-600 text-center sm:text-right">
-              עמוד <span className="font-medium text-gray-900">{pagination.pageIndex + 1}</span> מתוך <span className="font-medium text-gray-900">{data?.totalPages || 0}</span> 
-              (<span className="font-medium text-gray-900">{data?.totalBookings || 0}</span> הזמנות סה״כ)
+              {t("common.page")} <span className="font-medium text-gray-900">{pagination.pageIndex + 1}</span> {t("common.of")} <span className="font-medium text-gray-900">{data?.totalPages || 0}</span> 
+              (<span className="font-medium text-gray-900">{data?.totalBookings || 0}</span> {t("memberBookings.title")} {t("common.total")})
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -167,7 +167,7 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                          disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-gray-50 enabled:hover:border-gray-400
                          transition-colors duration-200"
               >
-                ← הקודם
+                ← {t("common.previous")}
               </button>
               
               {/* Page numbers */}
@@ -197,7 +197,7 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                          disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-gray-50 enabled:hover:border-gray-400
                          transition-colors duration-200"
               >
-                הבא →
+                {t("common.next")} →
               </button>
             </div>
           </div>

@@ -9,6 +9,7 @@ import {
   Loader2,
   MapPin,
   Phone,
+  MessageSquare,
 } from "lucide-react"
 import { useState, useMemo } from "react"
 import {
@@ -29,6 +30,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/common/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/common/ui/tooltip"
 import { Button } from "@/components/common/ui/button"
 
 import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking"
@@ -56,9 +63,9 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
     setIsCancelling(true)
     try {
       console.log("Cancelling booking:", booking._id)
-      toast.success(t("memberBookings.cancelSuccess") || "ההזמנה בוטלה בהצלחה")
+      toast.success(t("memberBookings.cancelSuccess"))
     } catch (error) {
-      toast.error("שגיאה בביטול ההזמנה")
+      toast.error(t("common.errors.cancellationFailed"))
     } finally {
       setIsCancelling(false)
       setIsOpen(false)
@@ -72,7 +79,7 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
           <Button
             variant="ghost"
             className="h-8 w-8 p-0"
-            aria-label={t("common.openMenu") || "פתח תפריט"}
+            aria-label={t("common.openMenu")}
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
@@ -80,8 +87,10 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">פעולות</p>
-              <p className="text-xs text-muted-foreground">הזמנה #{booking.bookingNumber}</p>
+              <p className="text-sm font-medium">{t("common.actions")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("memberBookings.columns.bookingNumber")} #{booking.bookingNumber}
+              </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -91,7 +100,7 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
             className="cursor-pointer"
           >
             <Eye className="mr-2 h-4 w-4" />
-            <span>{t("common.viewDetails") || "צפה בפרטים"}</span>
+            <span>{t("common.viewDetails")}</span>
           </DropdownMenuItem>
 
           {canCancel && (
@@ -105,12 +114,12 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
                 {isCancelling ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    <span>{t("common.cancelling") || "מבטל..."}</span>
+                    <span>{t("common.cancelling")}</span>
                   </>
                 ) : (
                   <>
                     <X className="mr-2 h-4 w-4" />
-                    <span>{t("memberBookings.cancelBooking") || "בטל הזמנה"}</span>
+                    <span>{t("memberBookings.cancelBooking")}</span>
                   </>
                 )}
               </DropdownMenuItem>
@@ -123,7 +132,7 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-right">
-              {t("bookingDetails.drawerTitle") || "פרטי הזמנה"} #{booking.bookingNumber}
+              {t("bookingDetails.drawerTitle")} #{booking.bookingNumber}
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4">
@@ -183,6 +192,59 @@ const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"];
   )
 }
 
+// Notes Display Component
+const NotesDisplay = ({ notes, t }: { notes?: string; t: TFunction }) => {
+  const [showDialog, setShowDialog] = useState(false)
+
+  if (!notes || notes.trim().length === 0) return null
+
+  const isLong = notes.length > 50
+
+  if (!isLong) {
+    return (
+      <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
+        {notes}
+      </div>
+    )
+  }
+
+  const truncated = notes.substring(0, 50) + "..."
+
+  return (
+    <>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div 
+              className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded cursor-pointer hover:bg-gray-100 flex items-center gap-1"
+              onClick={() => setShowDialog(true)}
+            >
+              <MessageSquare className="w-3 h-3" />
+              {truncated}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p className="max-w-xs">{t("memberBookings.table.clickToShowNotes")}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("memberBookings.notesDialog.title")}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-700">
+              {notes || t("memberBookings.notesDialog.noNotes")}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
 export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<PopulatedBooking>[] => {
   return [
     {
@@ -193,7 +255,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-1 text-right hover:bg-gray-50"
         >
-          מספר הזמנה
+          {t("memberBookings.columns.bookingNumber")}
           <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
         </Button>
       ),
@@ -203,7 +265,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             #{row.original.bookingNumber}
           </div>
           <div className="text-xs text-gray-500">
-            נוצרה: {formatDateIsraeli(row.original.createdAt || row.original.bookingDateTime)}
+            {t("memberBookings.table.createdAt")}: {formatDateIsraeli(row.original.createdAt || row.original.bookingDateTime)}
           </div>
         </div>
       ),
@@ -211,7 +273,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
     },
     {
       accessorKey: "treatmentId.name",
-      header: () => <div className="text-right">טיפול</div>,
+      header: () => <div className="text-right">{t("memberBookings.columns.treatment")}</div>,
       cell: ({ row }) => {
         const booking = row.original
         const treatment = booking.treatmentId
@@ -223,18 +285,18 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString(),
           )
           if (selectedDuration) {
-            durationDisplay = `${selectedDuration.minutes} דק'`
+            durationDisplay = t("memberBookings.table.duration", { minutes: selectedDuration.minutes })
             priceDisplay = `₪${selectedDuration.price?.toFixed(0) || "0"}`
           }
         } else if (treatment?.pricingType === "fixed" && treatment.defaultDurationMinutes) {
-          durationDisplay = `${treatment.defaultDurationMinutes} דק'`
+          durationDisplay = t("memberBookings.table.duration", { minutes: treatment.defaultDurationMinutes })
           priceDisplay = `₪${treatment.fixedPrice?.toFixed(0) || "0"}`
         }
 
         return (
           <div className="text-right space-y-2">
             <div className="font-medium text-gray-900">
-              {treatment?.name || "טיפול לא ידוע"}
+              {treatment?.name || t("common.unknownTreatment")}
             </div>
             
             <div className="flex justify-end gap-2 text-xs">
@@ -250,18 +312,14 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
               )}
             </div>
 
-            {booking.notes && (
-              <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                יש הערות
-              </div>
-            )}
+            <NotesDisplay notes={booking.notes} t={t} />
           </div>
         )
       },
     },
     {
       accessorKey: "recipientName",
-      header: () => <div className="text-right hidden sm:block">הוזמן עבור</div>,
+      header: () => <div className="text-right hidden sm:block">{t("memberBookings.columns.recipientDetails")}</div>,
       cell: ({ row }) => {
         const booking = row.original
         const isForSomeoneElse = booking.recipientName && booking.recipientName !== booking.bookedByUserName
@@ -275,11 +333,11 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
                   <div className="text-xs text-gray-600">{booking.recipientPhone}</div>
                 )}
                 <div className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
-                  הזמנה עבור אדם אחר
+                  {t("memberBookings.table.bookingForOther")}
                 </div>
               </div>
             ) : (
-              <div className="text-gray-500 text-sm">עצמי</div>
+              <div className="text-gray-500 text-sm">{t("memberBookings.table.selfBooking")}</div>
             )}
           </div>
         )
@@ -294,7 +352,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="px-1 text-right hover:bg-gray-50"
         >
-          תאריך ושעה
+          {t("memberBookings.columns.dateTime")}
           <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
         </Button>
       ),
@@ -308,19 +366,23 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         
         if (diffDays < 0) {
           urgencyClass = "text-gray-500"
-          urgencyText = "עבר"
+          urgencyText = t("memberBookings.table.past")
         } else if (diffDays === 0) {
           urgencyClass = "text-red-600 font-semibold"
-          urgencyText = "היום"
+          urgencyText = t("memberBookings.table.today")
         } else if (diffDays === 1) {
           urgencyClass = "text-orange-600 font-medium"
-          urgencyText = "מחר"
+          urgencyText = t("memberBookings.table.tomorrow")
         } else if (diffDays <= 7) {
           urgencyClass = "text-blue-600"
-          urgencyText = `בעוד ${diffDays} ימים`
+          urgencyText = t("memberBookings.table.daysRemaining", { days: diffDays })
         } else {
           urgencyClass = "text-gray-600"
         }
+
+        const timeDisplay = row.original.isFlexibleTime 
+          ? `${formatTimeIsraeli(date)} ${t("memberBookings.table.flexibleTime")}`
+          : formatTimeIsraeli(date)
 
         return (
           <div className="text-right space-y-1">
@@ -328,16 +390,11 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
               {formatDateIsraeli(date)}
             </div>
             <div className="font-mono text-sm text-gray-600">
-              {formatTimeIsraeli(date)}
+              {timeDisplay}
             </div>
             {urgencyText && (
               <div className={`text-xs ${urgencyClass}`}>
                 {urgencyText}
-              </div>
-            )}
-            {row.original.isFlexibleTime && (
-              <div className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
-                זמן גמיש
               </div>
             )}
           </div>
@@ -347,30 +404,32 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
     },
     {
       accessorKey: "bookingAddressSnapshot.city",
-      header: () => <div className="text-right hidden md:block">כתובת מלאה</div>,
+      header: () => <div className="text-right hidden md:block">{t("memberBookings.columns.fullAddress")}</div>,
       cell: ({ row }) => {
         const address = row.original.bookingAddressSnapshot || row.original.customAddressDetails
         
         if (!address) {
           return (
             <div className="text-right hidden md:block">
-              <div className="text-gray-500 text-sm">מיקום לא זמין</div>
+              <div className="text-gray-500 text-sm">{t("memberBookings.table.locationNotAvailable")}</div>
             </div>
           )
         }
 
-        const fullAddress = address?.fullAddress
         const city = address?.city
         const street = address?.street
         const streetNumber = address?.streetNumber
-        const apartment = (address as any)?.apartment
+        const apartment = (address as any)?.apartment || (address as any)?.apartmentNumber
         const floor = (address as any)?.floor
         const entrance = (address as any)?.entrance
+        const addressNotes = (address as any)?.instructions || (address as any)?.additionalNotes
+        const hasPrivateParking = (address as any)?.hasPrivateParking
+        const isAccessible = (address as any)?.isAccessible
         
         return (
           <div className="text-right hidden md:block space-y-1 max-w-[250px]">
             <div className="font-medium text-gray-900">
-              {city || "עיר לא צוינה"}
+              {city || t("memberBookings.table.cityNotSpecified")}
             </div>
             
             {street && streetNumber && (
@@ -380,20 +439,31 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             )}
             
             <div className="text-xs text-gray-600 space-y-1">
-              {apartment && <div>דירה: {apartment}</div>}
-              {floor && <div>קומה: {floor}</div>}
-              {entrance && <div>כניסה: {entrance}</div>}
+              {apartment && <div>{t("memberBookings.table.apartment")}: {apartment}</div>}
+              {floor && <div>{t("memberBookings.table.floor")}: {floor}</div>}
+              {entrance && <div>{t("memberBookings.table.entrance")}: {entrance}</div>}
             </div>
 
+            {addressNotes && (
+              <div className="text-xs text-gray-600 bg-yellow-50 border border-yellow-200 px-2 py-1 rounded">
+                {addressNotes}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-1 text-xs">
-              {(address as any)?.hasPrivateParking && (
+              {hasPrivateParking && (
                 <span className="text-green-700 bg-green-50 px-2 py-1 rounded">
-                  חנייה
+                  {t("memberBookings.table.privateParking")}
                 </span>
               )}
-              {(address as any)?.isAccessible && (
+              {!hasPrivateParking && hasPrivateParking !== undefined && (
+                <span className="text-red-700 bg-red-50 px-2 py-1 rounded">
+                  {t("common.no")} {t("memberBookings.table.privateParking")}
+                </span>
+              )}
+              {isAccessible && (
                 <span className="text-blue-700 bg-blue-50 px-2 py-1 rounded">
-                  נגיש
+                  {t("memberBookings.table.accessible")}
                 </span>
               )}
             </div>
@@ -404,7 +474,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
     },
     {
       accessorKey: "status",
-      header: () => <div className="text-center">סטטוס</div>,
+      header: () => <div className="text-center">{t("memberBookings.columns.status")}</div>,
       cell: ({ row }) => (
         <div className="flex justify-center">
           <BookingStatusBadge status={row.original.status} t={t} />
@@ -421,7 +491,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="px-1 hover:bg-gray-50"
           >
-            פרטי תשלום
+            {t("memberBookings.columns.paymentDetails")}
             <ArrowUpDown className="mr-2 h-3.5 w-3.5" />
           </Button>
         </div>
@@ -435,42 +505,42 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         return (
           <div className="text-right space-y-1">
             <div className="font-semibold text-lg text-gray-900">
-              {isFreeCovered ? "ללא תשלום" : `₪${finalAmount.toFixed(0)}`}
+              {isFreeCovered ? t("memberBookings.table.paymentFree") : `₪${finalAmount.toFixed(0)}`}
             </div>
             
             {/* Source */}
             <div className="text-xs text-gray-600">
-              {source === "subscription_redemption" && "מנוי"}
-              {source === "gift_voucher_redemption" && "שובר מתנה"}
-              {source === "new_purchase" && "רכישה חדשה"}
+              {source === "subscription_redemption" && t("memberBookings.table.paymentSubscription")}
+              {source === "gift_voucher_redemption" && t("memberBookings.table.paymentVoucher")}
+              {source === "new_purchase" && t("memberBookings.table.paymentNew")}
             </div>
             
             {/* Price breakdown */}
             {basePrice > 0 && (
               <div className="text-xs text-gray-500">
-                מחיר בסיס: ₪{basePrice.toFixed(0)}
+                {t("memberBookings.table.basePrice")}: ₪{basePrice.toFixed(0)}
               </div>
             )}
             
             {priceDetails.discountAmount > 0 && (
               <div className="text-xs text-green-600">
-                הנחה: -₪{priceDetails.discountAmount.toFixed(0)}
+                {t("memberBookings.table.discount")}: -₪{priceDetails.discountAmount.toFixed(0)}
               </div>
             )}
             
             {priceDetails.surcharges && priceDetails.surcharges.length > 0 && (
               <div className="text-xs text-orange-600">
-                תוספות: +₪{priceDetails.totalSurchargesAmount?.toFixed(0) || "0"}
+                {t("memberBookings.table.surcharges")}: +₪{priceDetails.totalSurchargesAmount?.toFixed(0) || "0"}
               </div>
             )}
             
             {/* Payment status */}
             {paymentDetails?.paymentStatus && (
               <div className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                {paymentDetails.paymentStatus === 'paid' ? 'שולם' :
-                 paymentDetails.paymentStatus === 'pending' ? 'ממתין לתשלום' :
-                 paymentDetails.paymentStatus === 'failed' ? 'תשלום נכשל' :
-                 'לא נדרש תשלום'}
+                {paymentDetails.paymentStatus === 'paid' ? t("memberBookings.table.paymentPaid") :
+                 paymentDetails.paymentStatus === 'pending' ? t("memberBookings.table.paymentPending") :
+                 paymentDetails.paymentStatus === 'failed' ? t("memberBookings.table.paymentFailed") :
+                 t("memberBookings.table.paymentNotRequired")}
               </div>
             )}
           </div>
@@ -480,6 +550,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
     },
     {
       id: "actions",
+      header: () => <div className="text-center">{t("memberBookings.columns.actions")}</div>,
       cell: ({ row }) => (
         <div className="flex justify-center">
           <BookingActions booking={row.original} t={t} />

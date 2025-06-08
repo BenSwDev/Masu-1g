@@ -368,7 +368,8 @@
     "updated": "הכתובת עודכנה",
     "addNewShort": "הוסף חדש",
     "addAddressDialogTitle": "הוספת כתובת חדשה",
-    "selectedAddressDetails": "פרטי הכתובת שנבחרה"
+    "selectedAddressDetails": "פרטי הכתובת שנבחרה",
+    "addFirstAddressShort": "הוסף כתובת"
   },
   "paymentMethods": {
     "title": "ניהול אמצעי תשלום",
@@ -1600,6 +1601,26 @@
     },
     "voucherUsage": {
       "redeemedForBooking": "מומש עבור הזמנה מס':"
+    },
+    "validation": {
+      "sourceRequired": "אנא בחר כיצד ברצונך להזמין.",
+      "treatmentRequired": "אנא בחר טיפול.",
+      "dateRequired": "אנא בחר תאריך להזמנה.",
+      "timeRequired": "אנא בחר שעה להזמנה.",
+      "addressRequired": "אנא בחר כתובת לשירות.",
+      "notesTooLong": "הערות לא יכולות לעלות על 500 תווים.",
+      "paymentMethodRequired": "אנא בחר אמצעי תשלום.",
+      "durationRequiredForType": "נדרש משך זמן עבור הטיפול שנבחר."
+    },
+    "errors": {
+      "missingInfoTitle": "מידע חסר",
+      "missingInfoSubmit": "אנא מלא את כל שדות החובה.",
+      "paymentMethodRequiredTitle": "נדרש אמצעי תשלום",
+      "paymentMethodRequired": "אנא בחר אמצעי תשלום.",
+      "bookingFailedTitle": "ההזמנה נכשלה",
+      "unknownBookingError": "אירעה שגיאה לא ידועה.",
+      "fetchTimeSlotsFailedTitle": "שגיאה בטעינת זמנים פנויים",
+      "calculatePriceFailedTitle": "שגיאה בחישוב המחיר"
     }
   },
   "preferences": {

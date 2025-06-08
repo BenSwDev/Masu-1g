@@ -552,7 +552,8 @@
     "deleteConfirmDescription": "Это действие нельзя отменить",
     "addNewShort": "Добавить",
     "addAddressDialogTitle": "Добавить новый адрес",
-    "selectedAddressDetails": "Детали выбранного адреса"
+    "selectedAddressDetails": "Детали выбранного адреса",
+    "addFirstAddressShort": "Добавить адрес"
   },
   ",": ",",
   "login": {
@@ -1295,6 +1296,26 @@
     },
     "voucherUsage": {
       "redeemedForBooking": "Использовано для бронирования №:"
+    },
+    "validation": {
+      "sourceRequired": "Пожалуйста, выберите способ бронирования.",
+      "treatmentRequired": "Пожалуйста, выберите процедуру.",
+      "dateRequired": "Пожалуйста, выберите дату бронирования.",
+      "timeRequired": "Пожалуйста, выберите время бронирования.",
+      "addressRequired": "Пожалуйста, выберите адрес для услуги.",
+      "notesTooLong": "Примечания не могут превышать 500 символов.",
+      "paymentMethodRequired": "Пожалуйста, выберите способ оплаты.",
+      "durationRequiredForType": "Для выбранной процедуры требуется указать продолжительность."
+    },
+    "errors": {
+      "missingInfoTitle": "Отсутствует информация",
+      "missingInfoSubmit": "Пожалуйста, заполните все обязательные поля.",
+      "paymentMethodRequiredTitle": "Требуется способ оплаты",
+      "paymentMethodRequired": "Пожалуйста, выберите способ оплаты.",
+      "bookingFailedTitle": "Бронирование не удалось",
+      "unknownBookingError": "Произошла неизвестная ошибка.",
+      "fetchTimeSlotsFailedTitle": "Ошибка загрузки доступного времени",
+      "calculatePriceFailedTitle": "Ошибка расчета цены"
     }
   },
   "memberBookings": {

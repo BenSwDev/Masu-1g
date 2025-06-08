@@ -568,7 +568,8 @@
     "deleteConfirmDescription": "This action cannot be undone",
     "addNewShort": "Add New",
     "addAddressDialogTitle": "Add New Address",
-    "selectedAddressDetails": "Selected Address Details"
+    "selectedAddressDetails": "Selected Address Details",
+    "addFirstAddressShort": "Add Address"
   },
   "login": {
     "languageSelector": "Language Selection",
@@ -1246,7 +1247,10 @@
         "selectSubscription": "Select Your Subscription",
         "selectSubscriptionPlaceholder": "Choose subscription...",
         "selectVoucher": "Select Your Gift Voucher",
-        "selectVoucherPlaceholder": "Choose voucher..."
+        "selectVoucherPlaceholder": "Choose voucher...",
+        "unknownVoucherCode": "Unknown voucher code",
+        "selectTreatment": "Select Treatment",
+        "selectDuration": "Select Duration"
       },
       "scheduling": {
         "title": "Schedule Your Appointment",
@@ -1265,7 +1269,9 @@
         "noSlotsAvailable": "No time slots available for the selected date. Please try another date.",
         "selectTimePlaceholder": "Select time slot...",
         "recipientName": "Recipient's Full Name",
-        "recipientPhone": "Recipient's Phone Number"
+        "recipientPhone": "Recipient's Phone Number",
+        "noSavedAddressesTitle": "No Saved Addresses",
+        "noSavedAddressesDesc": "Please add an address to continue."
       },
       "summary": {
         "title": "Review Your Booking",
@@ -1286,7 +1292,13 @@
         "couponPlaceholder": "Enter coupon code",
         "couponDesc": "If you have a coupon code, enter it here.",
         "usingGiftVoucher": "Using Gift Voucher",
-        "monetaryVoucherApplied": "Monetary voucher applied"
+        "monetaryVoucherApplied": "Monetary voucher applied",
+        "bookingCovered": "Booking Fully Covered",
+        "noAdditionalPayment": "No additional payment is required.",
+        "gift": "Gift",
+        "treatmentCoveredBySubscription": "Treatment covered by subscription",
+        "treatmentCoveredByVoucher": "Treatment covered by voucher",
+        "confirmBooking": "Confirm Booking"
       },
       "payment": {
         "title": "Payment",
@@ -1296,7 +1308,11 @@
         "payAndConfirm": "Pay & Confirm",
         "agreeToTermsLabel": "I agree to the",
         "agreeToTermsDesc": "By proceeding, you agree to our terms of service and privacy policy.",
-        "agreeToMarketingLabel": "I agree to receive marketing messages (optional)"
+        "agreeToMarketingLabel": "I agree to receive marketing messages (optional)",
+        "confirmTitleNoPayment": "Confirm Your Booking",
+        "confirmDescNoPayment": "Your booking is fully covered. Please confirm to finalize.",
+        "confirmBooking": "Confirm Booking",
+        "loadingPrice": "Loading price details..."
       }
     },
     "errors": {
@@ -1334,7 +1350,15 @@
       "bookingNotInCorrectStateForEnRoute": "Booking cannot be marked as 'en route' from its current state.",
       "markEnRouteFailed": "Failed to mark booking as 'en route'.",
       "bookingNotInCorrectStateForCompletion": "Booking cannot be marked as 'completed' from its current state.",
-      "markCompletedFailed": "Failed to mark booking as 'completed'."
+      "markCompletedFailed": "Failed to mark booking as 'completed'.",
+      "missingInfoTitle": "Missing Information",
+      "missingInfoSubmit": "Please fill all required fields.",
+      "paymentMethodRequiredTitle": "Payment Method Required",
+      "paymentMethodRequired": "Please select a payment method.",
+      "bookingFailedTitle": "Booking Failed",
+      "unknownBookingError": "An unknown error occurred.",
+      "fetchTimeSlotsFailedTitle": "Error fetching time slots",
+      "calculatePriceFailedTitle": "Error calculating price"
     },
     "messages": {
       "closedOnSelectedDate": "We are closed on the selected date."

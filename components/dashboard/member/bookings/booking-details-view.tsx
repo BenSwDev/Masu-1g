@@ -34,7 +34,7 @@ import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { IUser } from "@/lib/db/models/user"
-import { cn, formatCurrency } from "@/lib/utils/utils"
+import { cn, formatCurrency, formatDateTimeIsraeli } from "@/lib/utils/utils"
 import type { IAddress } from "@/types/address"
 
 interface BookingDetailsViewProps {
@@ -318,7 +318,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             <span className="text-sm text-muted-foreground">{t("bookings.confirmation.dateTime")}:</span>
             <span className="text-sm font-semibold text-right">
               {bookingDateTime
-                ? format(new Date(bookingDateTime), "PPPp", { locale: currentDateFnsLocale }) // Using PPPp for date and time
+                ? formatDateTimeIsraeli(bookingDateTime)
                 : t("common.notAvailable")}
             </span>
           </div>
@@ -372,60 +372,128 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               <span className="ml-2">{t("bookings.confirmation.addressDetails")}</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 space-y-0.5">
-            <p className="text-sm font-semibold">{addressDisplay.fullAddress || t("common.notAvailable")}</p>
-            {renderDetailItem(t("addresses.fields.city"), addressDisplay.city)}
-            {renderDetailItem(t("addresses.fields.street"), addressDisplay.street)}
-            {renderDetailItem(t("addresses.fields.streetNumber"), addressDisplay.streetNumber)}
-            {renderDetailItem(
-              t("addresses.fields.apartment"),
-              (addressDisplay as IBookingAddressSnapshot).apartment ||
-                (addressDisplay as IAddress).apartmentDetails?.apartmentNumber,
-            )}
-            {renderDetailItem(
-              t("addresses.fields.entrance"),
-              (addressDisplay as IBookingAddressSnapshot).entrance /* Add more specific fallbacks if needed */,
-            )}
-            {renderDetailItem(
-              t("addresses.fields.floor"),
-              (addressDisplay as IBookingAddressSnapshot).floor /* Add more specific fallbacks if needed */,
-            )}
+          <CardContent className="pt-4 space-y-2">
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <p className="text-sm font-semibold text-blue-900">{addressDisplay.fullAddress || t("common.notAvailable")}</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {renderDetailItem(t("addresses.fields.city"), addressDisplay.city)}
+              {renderDetailItem(t("addresses.fields.street"), addressDisplay.street)}
+              {renderDetailItem(t("addresses.fields.streetNumber"), addressDisplay.streetNumber)}
+              {renderDetailItem(
+                t("addresses.fields.apartment"),
+                (addressDisplay as IBookingAddressSnapshot).apartment ||
+                  (addressDisplay as IAddress).apartmentDetails?.apartmentNumber,
+              )}
+              {renderDetailItem(
+                t("addresses.fields.entrance"),
+                (addressDisplay as IBookingAddressSnapshot).entrance,
+              )}
+              {renderDetailItem(
+                t("addresses.fields.floor"),
+                (addressDisplay as IBookingAddressSnapshot).floor,
+              )}
+            </div>
 
-            {/* Displaying new address fields from IBookingAddressSnapshot if they exist */}
-            {(addressDisplay as IBookingAddressSnapshot & IAddress).doorName &&
-              renderDetailItem(
-                t("addresses.fields.doorName"),
-                (addressDisplay as IBookingAddressSnapshot & IAddress).doorName,
+            {/* Additional address details from snapshot */}
+            <div className="mt-4 space-y-2">
+              {(addressDisplay as IBookingAddressSnapshot & IAddress).doorName &&
+                <div className="bg-purple-50 p-2 rounded border border-purple-200">
+                  🚪 <strong>{t("addresses.fields.doorName")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).doorName}
+                </div>
+              }
+              
+              {(addressDisplay as IBookingAddressSnapshot & IAddress).buildingName &&
+                <div className="bg-indigo-50 p-2 rounded border border-indigo-200">
+                  🏢 <strong>{t("addresses.fields.buildingName")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).buildingName}
+                </div>
+              }
+              
+              {(addressDisplay as IBookingAddressSnapshot & IAddress).hotelName &&
+                <div className="bg-pink-50 p-2 rounded border border-pink-200">
+                  🏨 <strong>{t("addresses.fields.hotelName")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).hotelName}
+                </div>
+              }
+              
+              {(addressDisplay as IBookingAddressSnapshot & IAddress).roomNumber &&
+                <div className="bg-yellow-50 p-2 rounded border border-yellow-200">
+                  🗝️ <strong>{t("addresses.fields.roomNumber")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).roomNumber}
+                </div>
+              }
+
+              {/* Parking information */}
+              {(addressDisplay as any)?.hasPrivateParking !== undefined && (
+                <div className={`p-2 rounded border ${
+                  (addressDisplay as any).hasPrivateParking 
+                    ? 'bg-green-50 border-green-200 text-green-800' 
+                    : 'bg-red-50 border-red-200 text-red-800'
+                }`}>
+                  {(addressDisplay as any).hasPrivateParking ? '✅ 🚗' : '❌ 🚗'} 
+                  <strong> חנייה פרטית:</strong> {(addressDisplay as any).hasPrivateParking ? 'זמינה' : 'לא זמינה'}
+                </div>
               )}
-            {(addressDisplay as IBookingAddressSnapshot & IAddress).buildingName &&
-              renderDetailItem(
-                t("addresses.fields.buildingName"),
-                (addressDisplay as IBookingAddressSnapshot & IAddress).buildingName,
+
+              {/* Accessibility information */}
+              {(addressDisplay as any)?.isAccessible !== undefined && (
+                <div className={`p-2 rounded border ${
+                  (addressDisplay as any).isAccessible 
+                    ? 'bg-green-50 border-green-200 text-green-800' 
+                    : 'bg-red-50 border-red-200 text-red-800'
+                }`}>
+                  {(addressDisplay as any).isAccessible ? '♿ ✅' : '♿ ❌'} 
+                  <strong> נגישות:</strong> {(addressDisplay as any).isAccessible ? 'נגיש' : 'לא נגיש'}
+                </div>
               )}
-            {(addressDisplay as IBookingAddressSnapshot & IAddress).hotelName &&
-              renderDetailItem(
-                t("addresses.fields.hotelName"),
-                (addressDisplay as IBookingAddressSnapshot & IAddress).hotelName,
+
+              {/* Elevator information */}
+              {(addressDisplay as any)?.hasElevator !== undefined && (
+                <div className={`p-2 rounded border ${
+                  (addressDisplay as any).hasElevator 
+                    ? 'bg-green-50 border-green-200 text-green-800' 
+                    : 'bg-orange-50 border-orange-200 text-orange-800'
+                }`}>
+                  {(addressDisplay as any).hasElevator ? '🛗 ✅' : '🛗 ❌'} 
+                  <strong> מעלית:</strong> {(addressDisplay as any).hasElevator ? 'יש מעלית' : 'אין מעלית'}
+                </div>
               )}
-            {(addressDisplay as IBookingAddressSnapshot & IAddress).roomNumber &&
-              renderDetailItem(
-                t("addresses.fields.roomNumber"),
-                (addressDisplay as IBookingAddressSnapshot & IAddress).roomNumber,
+
+              {/* Security information */}
+              {(addressDisplay as any)?.hasSecurityCode && (
+                <div className="bg-amber-50 p-2 rounded border border-amber-200 text-amber-800">
+                  🔐 <strong>קוד אבטחה:</strong> נדרש קוד כניסה
+                </div>
               )}
-            {(addressDisplay as IBookingAddressSnapshot & IAddress).otherInstructions &&
-              renderDetailItem(
-                t("addresses.fields.otherInstructions"),
-                (addressDisplay as IBookingAddressSnapshot & IAddress).otherInstructions,
+
+              {/* Intercom information */}
+              {(addressDisplay as any)?.intercomCode && (
+                <div className="bg-cyan-50 p-2 rounded border border-cyan-200 text-cyan-800">
+                  📞 <strong>אינטרקום:</strong> {(addressDisplay as any).intercomCode}
+                </div>
               )}
+              
+              {(addressDisplay as IBookingAddressSnapshot & IAddress).otherInstructions &&
+                <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                  📝 <strong>{t("addresses.fields.otherInstructions")}:</strong>
+                  <div className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
+                    {(addressDisplay as IBookingAddressSnapshot & IAddress).otherInstructions}
+                  </div>
+                </div>
+              }
+            </div>
 
             {/* Address notes if available */}
             {(addressDisplay as any)?.additionalNotes && (
               <>
-                <Separator className="my-2" />
-                <p className="text-xs">
-                  <span className="text-muted-foreground">{t("bookings.confirmation.addressNotes")}:</span>{" "}
-                  {(addressDisplay as any)?.additionalNotes}
-                </p>
+                <Separator className="my-3" />
+                <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                  <p className="text-sm">
+                    <span className="text-orange-800 font-semibold">{t("bookings.confirmation.addressNotes")}:</span>
+                  </p>
+                  <p className="text-sm text-orange-700 mt-1 whitespace-pre-wrap">
+                    {(addressDisplay as any)?.additionalNotes}
+                  </p>
+                </div>
               </>
             )}
           </CardContent>
@@ -579,7 +647,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               </p>
               {priceDetails.appliedGiftVoucherId.usageHistory.map((entry: IGiftVoucherUsageHistory, index: number) => (
                 <div key={index} className="text-xs text-muted-foreground">
-                  <span>{format(new Date(entry.date), "PPPp", { locale: currentDateFnsLocale })}: </span>
+                  <span>{formatDateTimeIsraeli(entry.date)}: </span>
                   <span>
                     {entry.description ? t(entry.description) || entry.description : "שימוש"} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
                   </span>

@@ -65,3 +65,29 @@ export function formatCurrency(amount: number, currency = "ILS", language = "en-
     return `${amount.toFixed(2)} ${currency}`
   }
 }
+
+// Israeli date formatting functions
+export const formatDateIsraeli = (date: Date | string): string => {
+  const d = typeof date === 'string' ? new Date(date) : date
+  if (isNaN(d.getTime())) return 'תאריך לא תקין'
+  
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const year = d.getFullYear()
+  
+  return `${day}/${month}/${year}`
+}
+
+export const formatTimeIsraeli = (date: Date | string): string => {
+  const d = typeof date === 'string' ? new Date(date) : date
+  if (isNaN(d.getTime())) return 'שעה לא תקינה'
+  
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  
+  return `${hours}:${minutes}`
+}
+
+export const formatDateTimeIsraeli = (date: Date | string): string => {
+  return `${formatDateIsraeli(date)} ${formatTimeIsraeli(date)}`
+}

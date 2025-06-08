@@ -48,7 +48,7 @@ import {
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerTrigger } from "@/components/common/ui/drawer"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { toast } from "sonner"
-import { cn, formatDate, formatCurrency } from "@/lib/utils/utils"
+import { cn, formatDateIsraeli, formatTimeIsraeli } from "@/lib/utils/utils"
 import BookingDetailsView from "./booking-details-view"
 import {
   Dialog,
@@ -273,25 +273,28 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="px-1 hover:bg-muted/50"
+          className="px-1 hover:bg-muted/50 text-right"
         >
           {t("bookings.table.header.bookingId") || "מזהה הזמנה"}
           <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
         </Button>
       ),
       cell: ({ row }) => (
-        <div className="font-mono text-xs">
-          <span className="text-primary font-bold">#{row.original.bookingNumber}</span>
+        <div className="font-mono text-xs text-right">
+          <span className="text-primary font-bold block">#{row.original.bookingNumber}</span>
           <div className="text-xs text-muted-foreground mt-1">
-            {new Date(row.original.createdAt || row.original.bookingDateTime).toLocaleDateString(locale)}
+            {formatDateIsraeli(row.original.createdAt || row.original.bookingDateTime)}
+          </div>
+          <div className="text-xs text-blue-600 mt-0.5">
+            {formatTimeIsraeli(row.original.createdAt || row.original.bookingDateTime)}
           </div>
         </div>
       ),
-      size: 130,
+      size: 120,
     },
     {
       accessorKey: "treatmentId.name",
-      header: () => <div className="whitespace-nowrap">{t("bookings.table.header.treatmentDetails") || "פרטי טיפול"}</div>,
+      header: () => <div className="whitespace-nowrap text-right">{t("bookings.table.header.treatmentDetails") || "פרטי טיפול"}</div>,
       cell: ({ row }) => {
         const booking = row.original
         const treatment = booking.treatmentId
@@ -313,32 +316,56 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         }
 
         return (
-          <div className="flex flex-col min-w-[180px]">
-            <span className="font-medium text-sm truncate max-w-[200px] group-hover:max-w-none">
+          <div className="flex flex-col min-w-[200px] max-w-[300px]">
+            <span className="font-bold text-sm text-right truncate max-w-full hover:max-w-none hover:whitespace-normal">
               {treatment?.name || t("common.unknownTreatment") || "טיפול לא ידוע"}
             </span>
-            <div className="flex items-center gap-2 mt-1">
+            
+            {/* Duration and Price tags */}
+            <div className="flex items-center gap-1 mt-2 flex-wrap justify-end">
               {durationDisplay && (
-                <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                <span className="text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded-full border border-blue-200">
                   ⏱️ {durationDisplay}
                 </span>
               )}
               {priceDisplay && (
-                <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                <span className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full border border-green-200">
                   💰 {priceDisplay}
                 </span>
               )}
             </div>
+
+            {/* Recipient info */}
             {booking.recipientName && booking.recipientName !== booking.bookedByUserName && (
-              <span className="text-xs text-primary flex items-center mt-1 bg-purple-50 px-2 py-1 rounded">
-                <Users className="h-3 w-3 mr-1" />
-                {t("bookings.table.forRecipient") || "עבור: "}{booking.recipientName}
-              </span>
+              <div className="text-xs text-purple-700 bg-purple-50 px-2 py-1.5 rounded mt-2 border border-purple-200">
+                <Users className="h-3 w-3 inline-block ml-1" />
+                <span className="font-medium">{t("bookings.table.forRecipient") || "עבור: "}</span>
+                <span className="font-bold">{booking.recipientName}</span>
+                {booking.recipientPhone && (
+                  <div className="text-xs text-purple-600 mt-0.5">
+                    📱 {booking.recipientPhone}
+                  </div>
+                )}
+              </div>
             )}
+
+            {/* Notes indicator */}
             {booking.notes && (
-              <span className="text-xs text-orange-600 flex items-center mt-1">
-                📝 יש הערות
-              </span>
+              <div className="text-xs text-orange-700 bg-orange-50 px-2 py-1 rounded mt-1 border border-orange-200">
+                📝 <span className="font-medium">יש הערות</span>
+                <div className="text-xs text-orange-600 mt-0.5 line-clamp-2">
+                  {booking.notes.substring(0, 50)}{booking.notes.length > 50 && "..."}
+                </div>
+              </div>
+            )}
+
+            {/* Gender preference */}
+            {booking.therapistGenderPreference && (
+              <div className="text-xs text-indigo-700 bg-indigo-50 px-2 py-1 rounded mt-1 border border-indigo-200">
+                👤 <span className="font-medium">העדפה: </span>
+                {booking.therapistGenderPreference === 'male' ? 'גבר' : 
+                 booking.therapistGenderPreference === 'female' ? 'אישה' : 'ללא העדפה'}
+              </div>
             )}
           </div>
         )
@@ -350,7 +377,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="px-1 hover:bg-muted/50"
+          className="px-1 hover:bg-muted/50 text-right"
         >
           {t("bookings.table.header.dateTime") || "תאריך ושעה"}
           <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
@@ -363,74 +390,98 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         
         let dateColorClass = ""
         let datePrefix = ""
+        let urgencyIcon = ""
+        
         if (diffDays < 0) {
           dateColorClass = "text-gray-500"
-          datePrefix = "עבר לפני "
+          datePrefix = "עבר "
+          urgencyIcon = "⏪"
         } else if (diffDays === 0) {
-          dateColorClass = "text-red-600 font-bold"
+          dateColorClass = "text-red-600 font-bold animate-pulse"
           datePrefix = "היום! "
+          urgencyIcon = "🔥"
         } else if (diffDays === 1) {
-          dateColorClass = "text-orange-600 font-medium"
+          dateColorClass = "text-orange-600 font-bold"
           datePrefix = "מחר "
+          urgencyIcon = "⚡"
+        } else if (diffDays <= 3) {
+          dateColorClass = "text-yellow-600 font-medium"
+          datePrefix = `בעוד ${diffDays} ימים `
+          urgencyIcon = "⚠️"
         } else if (diffDays <= 7) {
           dateColorClass = "text-blue-600"
           datePrefix = `בעוד ${diffDays} ימים `
+          urgencyIcon = "📅"
+        } else {
+          dateColorClass = "text-gray-600"
+          urgencyIcon = "📆"
         }
 
         return (
-          <div className="flex flex-col text-sm whitespace-nowrap min-w-[160px]">
-            <div className={`flex items-center ${dateColorClass}`}>
-              <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-              <span className="font-medium">
-                {datePrefix}{formatDate(date, locale)}
+          <div className="flex flex-col text-sm whitespace-nowrap min-w-[140px] text-right">
+            <div className={`flex items-center justify-end ${dateColorClass}`}>
+              <span className="font-bold text-base">
+                {urgencyIcon} {datePrefix}{formatDateIsraeli(date)}
               </span>
             </div>
-            <div className="flex items-center text-muted-foreground mt-1">
-              <Clock className="h-3.5 w-3.5 mr-1.5" />
-              <span className="font-mono">
-                {date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
+            <div className="flex items-center justify-end text-muted-foreground mt-1">
+              <span className="font-mono text-lg font-medium">
+                🕐 {formatTimeIsraeli(date)}
               </span>
             </div>
+            
+            {/* Flexible time badge */}
             {row.original.isFlexibleTime && (
               <Badge
                 variant="outline"
-                className="mt-1 text-xs py-0.5 px-1.5 border-dashed border-amber-400 text-amber-700 bg-amber-50"
+                className="mt-2 text-xs py-1 px-2 border-dashed border-amber-400 text-amber-800 bg-amber-50 self-end"
               >
                 ⚡ {t("bookings.table.flexibleTime") || "זמן גמיש"}
+                {row.original.flexibilityRangeHours && (
+                  <span className="text-xs mr-1">±{row.original.flexibilityRangeHours}ש'</span>
+                )}
               </Badge>
+            )}
+
+            {/* Time until booking */}
+            {diffDays >= 0 && diffDays <= 7 && (
+              <div className="text-xs text-gray-500 mt-1 bg-gray-50 px-2 py-1 rounded border">
+                ⏳ {diffDays === 0 ? 'היום' : diffDays === 1 ? 'מחר' : `בעוד ${diffDays} ימים`}
+              </div>
             )}
           </div>
         )
       },
-      size: 180,
+      size: 160,
     },
     {
       accessorKey: "professionalId.name",
       header: () => (
-        <div className="whitespace-nowrap hidden md:table-cell">{t("bookings.table.header.professional") || "מטפל/ת"}</div>
+        <div className="whitespace-nowrap text-right hidden sm:block">{t("bookings.table.header.professional") || "מטפל/ת"}</div>
       ),
       cell: ({ row }) => {
         const professionalName = row.original.professionalId?.name
         const hasAssigned = !!professionalName
         
         return (
-          <div className="text-sm hidden md:flex flex-col min-w-[140px]">
-            <div className="flex items-center">
-              <Briefcase className={`h-3.5 w-3.5 mr-1.5 flex-shrink-0 ${hasAssigned ? 'text-green-600' : 'text-orange-500'}`} />
-              <span className={`truncate max-w-[120px] ${hasAssigned ? 'text-green-700 font-medium' : 'text-orange-600'}`}>
-                {professionalName || t("bookings.toBeAssigned") || "יוקצה"}
+          <div className="text-sm hidden sm:flex flex-col min-w-[160px] text-right">
+            <div className="flex items-center justify-end">
+              <span className={`truncate max-w-[140px] font-medium ${hasAssigned ? 'text-green-700' : 'text-orange-600'}`}>
+                {professionalName || t("bookings.toBeAssigned") || "ממתין להקצאה"}
               </span>
+              <Briefcase className={`h-4 w-4 mr-2 flex-shrink-0 ${hasAssigned ? 'text-green-600' : 'text-orange-500'}`} />
             </div>
+            
             {!hasAssigned && (
-              <span className="text-xs text-orange-500 mt-1 bg-orange-50 px-2 py-1 rounded">
-                🔍 מחפשים מטפל
-              </span>
+              <div className="text-xs text-orange-700 bg-orange-100 px-2 py-1.5 rounded mt-2 border border-orange-200">
+                🔍 <span className="font-medium">מחפשים מטפל מתאים</span>
+              </div>
             )}
-            {row.original.therapistGenderPreference && (
-              <span className="text-xs text-purple-600 mt-1">
-                👤 העדפה: {row.original.therapistGenderPreference === 'male' ? 'גבר' : 
-                         row.original.therapistGenderPreference === 'female' ? 'אישה' : 'ללא העדפה'}
-              </span>
+            
+            {hasAssigned && (
+              <div className="text-xs text-green-700 bg-green-100 px-2 py-1 rounded mt-1 border border-green-200">
+                ✅ <span className="font-medium">מטפל משובץ</span>
+              </div>
             )}
           </div>
         )
@@ -439,30 +490,59 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
     },
     {
       accessorKey: "bookingAddressSnapshot.city",
-      header: () => <div className="whitespace-nowrap hidden lg:table-cell">{t("bookings.table.header.location") || "מיקום"}</div>,
+      header: () => <div className="whitespace-nowrap text-right hidden md:block">{t("bookings.table.header.location") || "מיקום ופרטים"}</div>,
       cell: ({ row }) => {
         const address = row.original.bookingAddressSnapshot || row.original.customAddressDetails
         const city = address?.city
         const fullAddress = address?.fullAddress
         
         return (
-          <div className="text-sm hidden lg:flex flex-col min-w-[150px]">
-            <div className="flex items-center">
-              <MapPin className="h-3.5 w-3.5 mr-1.5 text-blue-600 flex-shrink-0" />
-              <span className="truncate max-w-[130px] font-medium text-blue-700">
+          <div className="text-sm hidden md:flex flex-col min-w-[180px] text-right max-w-[220px]">
+            <div className="flex items-center justify-end">
+              <span className="truncate max-w-[150px] font-bold text-blue-700">
                 {city || t("common.notAvailable") || "לא זמין"}
               </span>
+              <MapPin className="h-4 w-4 mr-2 text-blue-600 flex-shrink-0" />
             </div>
+            
             {fullAddress && (
-              <span className="text-xs text-muted-foreground mt-1 truncate max-w-[130px]" title={fullAddress}>
-                📍 {fullAddress}
-              </span>
+              <div className="text-xs text-gray-600 mt-1 bg-gray-50 px-2 py-1 rounded border max-w-full">
+                📍 <span className="break-words">{fullAddress}</span>
+              </div>
             )}
-            {address?.notes && (
-              <span className="text-xs text-amber-600 mt-1">
-                📝 יש הערות לכתובת
-              </span>
-            )}
+
+            {/* Address details */}
+            <div className="mt-2 space-y-1">
+              {(address as any)?.hasPrivateParking && (
+                <div className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded border border-green-200">
+                  🚗 חנייה פרטית זמינה
+                </div>
+              )}
+              
+              {(address as any)?.entrance && (
+                <div className="text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded border border-blue-200">
+                  🚪 כניסה: {(address as any).entrance}
+                </div>
+              )}
+              
+              {(address as any)?.floor && (
+                <div className="text-xs text-purple-700 bg-purple-50 px-2 py-1 rounded border border-purple-200">
+                  🏢 קומה: {(address as any).floor}
+                </div>
+              )}
+              
+              {(address as any)?.apartmentNumber && (
+                <div className="text-xs text-indigo-700 bg-indigo-50 px-2 py-1 rounded border border-indigo-200">
+                  🏠 דירה: {(address as any).apartmentNumber}
+                </div>
+              )}
+              
+              {(address as any)?.additionalNotes && (
+                <div className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded border border-amber-200">
+                  📝 הערות נוספות
+                </div>
+              )}
+            </div>
           </div>
         )
       },
@@ -487,13 +567,13 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="px-1 hover:bg-muted/50"
           >
-            {t("bookings.table.header.total") || "סה\"כ"}
+            {t("bookings.table.header.total") || "סה\"כ ותשלום"}
             <ArrowUpDown className="ms-2 h-3.5 w-3.5" />
           </Button>
         </div>
       ),
       cell: ({ row }) => {
-        const { priceDetails, source } = row.original
+        const { priceDetails, source, paymentDetails } = row.original
         const isFreeCovered = priceDetails.isFullyCoveredByVoucherOrSubscription
         const finalAmount = priceDetails.finalAmount || 0
         
@@ -517,39 +597,60 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         }
 
         return (
-          <div className="text-right font-medium text-sm whitespace-nowrap flex flex-col items-end min-w-[120px]">
+          <div className="text-right font-medium text-sm whitespace-nowrap flex flex-col items-end min-w-[140px]">
             <div className="flex items-center">
+              <span className={`font-bold text-base ${paymentColor}`}>{paymentInfo}</span>
               <BookingSourceIcon source={source} t={t} />
-              <span className={`ms-1.5 font-bold ${paymentColor}`}>{paymentInfo}</span>
             </div>
+            
+            {/* Original price if different */}
             {priceDetails.basePrice > 0 && priceDetails.basePrice !== finalAmount && (
-              <span className="text-xs text-muted-foreground line-through mt-1">
+              <span className="text-xs text-muted-foreground line-through mt-1 bg-gray-50 px-2 py-1 rounded">
                 מקורי: ₪{priceDetails.basePrice.toFixed(0)}
               </span>
             )}
+            
+            {/* Surcharges */}
             {priceDetails.surcharges && priceDetails.surcharges.length > 0 && (
-              <span className="text-xs text-orange-600 mt-1">
+              <span className="text-xs text-orange-700 bg-orange-50 px-2 py-1 rounded mt-1 border border-orange-200">
                 + תוספות: ₪{priceDetails.totalSurchargesAmount?.toFixed(0) || "0"}
               </span>
             )}
-            {row.original.paymentDetails?.paymentStatus && (
-              <span className={`text-xs px-2 py-1 rounded-full mt-1 ${
-                row.original.paymentDetails.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
-                row.original.paymentDetails.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                row.original.paymentDetails.paymentStatus === 'failed' ? 'bg-red-100 text-red-700' :
-                'bg-gray-100 text-gray-700'
-              }`}>
-                💳 {row.original.paymentDetails.paymentStatus === 'paid' ? 'שולם' :
-                     row.original.paymentDetails.paymentStatus === 'pending' ? 'ממתין' :
-                     row.original.paymentDetails.paymentStatus === 'failed' ? 'נכשל' :
-                     row.original.paymentDetails.paymentStatus === 'not_required' ? 'לא נדרש' :
-                     row.original.paymentDetails.paymentStatus}
+            
+            {/* Discounts */}
+            {priceDetails.discountAmount > 0 && (
+              <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded mt-1 border border-green-200">
+                - הנחה: ₪{priceDetails.discountAmount.toFixed(0)}
               </span>
+            )}
+            
+            {/* Payment status */}
+            {paymentDetails?.paymentStatus && (
+              <span className={`text-xs px-2 py-1 rounded-full mt-2 font-medium ${
+                paymentDetails.paymentStatus === 'paid' ? 'bg-green-100 text-green-800 border border-green-200' :
+                paymentDetails.paymentStatus === 'pending' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+                paymentDetails.paymentStatus === 'failed' ? 'bg-red-100 text-red-800 border border-red-200' :
+                'bg-gray-100 text-gray-800 border border-gray-200'
+              }`}>
+                💳 {paymentDetails.paymentStatus === 'paid' ? 'שולם' :
+                     paymentDetails.paymentStatus === 'pending' ? 'ממתין לתשלום' :
+                     paymentDetails.paymentStatus === 'failed' ? 'תשלום נכשל' :
+                     paymentDetails.paymentStatus === 'not_required' ? 'לא נדרש תשלום' :
+                     paymentDetails.paymentStatus}
+              </span>
+            )}
+            
+            {/* Payment method */}
+            {paymentDetails?.paymentMethodId && finalAmount > 0 && (
+              <div className="text-xs text-gray-600 mt-1 bg-gray-50 px-2 py-1 rounded border">
+                💳 {String(paymentDetails.paymentMethodId.displayName) || 
+                     `${paymentDetails.paymentMethodId.type} ****${paymentDetails.paymentMethodId.last4}`}
+              </div>
             )}
           </div>
         )
       },
-      size: 160,
+      size: 180,
     },
     {
       id: "actions",

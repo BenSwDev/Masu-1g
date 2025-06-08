@@ -23,6 +23,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -30,9 +31,10 @@ interface DataTableProps<TData, TValue> {
   searchKey?: string
   hideDefaultPagination?: boolean
   hideColumnsSelector?: boolean
+  onRowClick?: (row: TData) => void
 }
 
-export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefaultPagination = false, hideColumnsSelector = false }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefaultPagination = false, hideColumnsSelector = false, onRowClick }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -116,7 +118,11 @@ export function DataTable<TData, TValue>({ columns, data, searchKey, hideDefault
                 <TableRow 
                   key={row.id} 
                   data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100"
+                  className={cn(
+                    "hover:bg-gray-50 transition-colors duration-150 border-b border-gray-100",
+                    onRowClick && "cursor-pointer hover:bg-blue-50"
+                  )}
+                  onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-4">

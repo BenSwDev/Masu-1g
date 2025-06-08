@@ -10,7 +10,6 @@ import { useState, useMemo } from "react"
 import { 
   ArrowUpDown, 
   MoreHorizontal, 
-  Eye, 
   UserPlus, 
   X,
   Loader2,
@@ -41,7 +40,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { toast } from "sonner"
-import BookingDetailsView from "../../member/bookings/booking-details-view"
 import type { PopulatedBooking } from "@/types/booking"
 import { assignProfessionalToBooking, getAvailableProfessionals } from "@/actions/booking-actions"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -148,9 +146,16 @@ const ProfessionalAssignmentDialog = ({
 }
 
 // Admin Actions Component
-const AdminBookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+const AdminBookingActions = ({ 
+  booking, 
+  t, 
+  onRowClick 
+}: { 
+  booking: PopulatedBooking; 
+  t: TFunction;
+  onRowClick?: (e: React.MouseEvent) => void;
+}) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
   const [showAssignModal, setShowAssignModal] = useState(false)
 
@@ -165,6 +170,10 @@ const AdminBookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFu
     canAssignProfessional
   })
 
+  const handleDropdownClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click when clicking dropdown
+  }
+
   return (
     <>
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
@@ -173,6 +182,7 @@ const AdminBookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFu
             variant="ghost"
             className="h-8 w-8 p-0"
             aria-label={t("common.openMenu")}
+            onClick={handleDropdownClick}
           >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
@@ -187,14 +197,6 @@ const AdminBookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFu
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          
-          <DropdownMenuItem
-            onClick={() => setShowDetailsModal(true)}
-            className="cursor-pointer"
-          >
-            <Eye className="mr-2 h-4 w-4" />
-            <span>{t("common.viewDetails")}</span>
-          </DropdownMenuItem>
 
           {hasNotes && (
             <DropdownMenuItem
@@ -220,19 +222,6 @@ const AdminBookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFu
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-right">
-              {t("bookingDetails.drawerTitle")} #{booking.bookingNumber}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="mt-4">
-            <BookingDetailsView booking={booking} />
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
         <DialogContent className="max-w-md">
@@ -383,7 +372,34 @@ const getLocale = (locale: string) => {
   }
 }
 
-export const getAdminBookingColumns = (t: TFunction, locale: string): ColumnDef<PopulatedBooking>[] => [
+// Create a clickable row component
+const ClickableRow = ({ 
+  children, 
+  onClick, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  onClick: () => void; 
+  className?: string;
+}) => {
+  return (
+    <tr 
+      className={cn(
+        "cursor-pointer hover:bg-muted/50 transition-colors", 
+        className
+      )}
+      onClick={onClick}
+    >
+      {children}
+    </tr>
+  )
+}
+
+export const getAdminBookingColumns = (
+  t: TFunction, 
+  locale: string,
+  onRowClick?: (booking: PopulatedBooking) => void
+): ColumnDef<PopulatedBooking>[] => [
   {
     accessorKey: "bookingNumber",
     header: ({ column }) => (
@@ -488,6 +504,12 @@ export const getAdminBookingColumns = (t: TFunction, locale: string): ColumnDef<
   {
     id: "actions",
     header: t("common.actions"),
-    cell: ({ row }) => <AdminBookingActions booking={row.original} t={t} />,
+    cell: ({ row }) => (
+      <AdminBookingActions 
+        booking={row.original} 
+        t={t} 
+        onRowClick={onRowClick ? () => onRowClick(row.original) : undefined}
+      />
+    ),
   },
 ] 

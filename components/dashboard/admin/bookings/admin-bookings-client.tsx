@@ -6,6 +6,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { getAdminBookingColumns } from "./admin-bookings-columns"
 import { DataTable } from "@/components/common/ui/data-table"
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
+import ComprehensiveBookingEditModal from "./comprehensive-booking-edit-modal"
 import type { PopulatedBooking } from "@/types/booking"
 import { Heading } from "@/components/common/ui/heading"
 import { getAllBookings } from "@/actions/booking-actions"
@@ -23,6 +24,8 @@ export default function AdminBookingsClient() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
+  const [selectedBooking, setSelectedBooking] = useState<PopulatedBooking | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
   const {
     data,
@@ -43,7 +46,17 @@ export default function AdminBookingsClient() {
       }),
   })
 
-  const columns = useMemo(() => getAdminBookingColumns(t, language), [t, language])
+  const handleRowClick = (booking: PopulatedBooking) => {
+    setSelectedBooking(booking)
+    setIsEditModalOpen(true)
+  }
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    setSelectedBooking(null)
+  }
+
+  const columns = useMemo(() => getAdminBookingColumns(t, language, handleRowClick), [t, language])
 
   const handleSearch = () => {
     setCurrentPage(1)
@@ -189,7 +202,18 @@ export default function AdminBookingsClient() {
         })}
       </div>
 
-      <DataTable columns={columns} data={data.bookings} />
+      {/* Helpful instruction for clicking rows */}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-800 text-center">
+          💡 {t("adminBookings.clickRowToEdit")}
+        </p>
+      </div>
+
+      <DataTable 
+        columns={columns} 
+        data={data.bookings}
+        onRowClick={handleRowClick}
+      />
       
       {/* Pagination */}
       {data.totalPages > 1 && (
@@ -215,6 +239,14 @@ export default function AdminBookingsClient() {
           </Button>
         </div>
       )}
+
+      {/* Comprehensive Booking Edit Modal */}
+      <ComprehensiveBookingEditModal
+        booking={selectedBooking}
+        isOpen={isEditModalOpen}
+        onClose={handleCloseEditModal}
+        t={t}
+      />
     </div>
   )
 } 

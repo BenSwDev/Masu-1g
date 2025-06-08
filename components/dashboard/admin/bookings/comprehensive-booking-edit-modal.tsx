@@ -64,10 +64,27 @@ export default function ComprehensiveBookingEditModal({
   if (!booking) return null
 
   const formatDateTime = (date: string | Date) => {
-    const d = new Date(date)
-    return {
-      date: format(d, "dd/MM/yyyy"),
-      time: format(d, "HH:mm")
+    if (!date) return { date: "", time: "" }
+    try {
+      const d = new Date(date)
+      if (isNaN(d.getTime())) return { date: "", time: "" }
+      return {
+        date: format(d, "dd/MM/yyyy"),
+        time: format(d, "HH:mm")
+      }
+    } catch (error) {
+      return { date: "", time: "" }
+    }
+  }
+
+  const safeFormatDate = (date: string | Date | null | undefined, formatStr: string = "dd/MM/yyyy") => {
+    if (!date) return t("adminBookings.notSpecified")
+    try {
+      const d = new Date(date)
+      if (isNaN(d.getTime())) return t("adminBookings.notSpecified")
+      return format(d, formatStr)
+    } catch (error) {
+      return t("adminBookings.notSpecified")
     }
   }
 
@@ -193,32 +210,36 @@ export default function ComprehensiveBookingEditModal({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>{t("adminBookings.date")}</Label>
-                    <Input 
-                      type="date"
-                      value={format(new Date(booking.bookingDateTime), "yyyy-MM-dd")}
-                      onChange={(e) => {
-                        const newDate = new Date(e.target.value)
-                        const currentTime = new Date(booking.bookingDateTime)
-                        newDate.setHours(currentTime.getHours(), currentTime.getMinutes())
-                        setEditedBooking((prev: any) => ({ ...prev, bookingDateTime: newDate.toISOString() }))
-                      }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t("adminBookings.time")}</Label>
-                    <Input 
-                      type="time"
-                      value={format(new Date(booking.bookingDateTime), "HH:mm")}
-                      onChange={(e) => {
-                        const currentDate = new Date(booking.bookingDateTime)
-                        const [hours, minutes] = e.target.value.split(':')
-                        currentDate.setHours(parseInt(hours), parseInt(minutes))
-                        setEditedBooking((prev: any) => ({ ...prev, bookingDateTime: currentDate.toISOString() }))
-                      }}
-                    />
-                  </div>
+                                      <div className="space-y-2">
+                      <Label>{t("adminBookings.date")}</Label>
+                      <Input 
+                        type="date"
+                        value={safeFormatDate(booking.bookingDateTime, "yyyy-MM-dd") !== t("adminBookings.notSpecified") ? safeFormatDate(booking.bookingDateTime, "yyyy-MM-dd") : ""}
+                        onChange={(e) => {
+                          if (e.target.value && booking.bookingDateTime) {
+                            const newDate = new Date(e.target.value)
+                            const currentTime = new Date(booking.bookingDateTime)
+                            newDate.setHours(currentTime.getHours(), currentTime.getMinutes())
+                            setEditedBooking((prev: any) => ({ ...prev, bookingDateTime: newDate.toISOString() }))
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t("adminBookings.time")}</Label>
+                      <Input 
+                        type="time"
+                        value={safeFormatDate(booking.bookingDateTime, "HH:mm") !== t("adminBookings.notSpecified") ? safeFormatDate(booking.bookingDateTime, "HH:mm") : ""}
+                        onChange={(e) => {
+                          if (e.target.value && booking.bookingDateTime) {
+                            const currentDate = new Date(booking.bookingDateTime)
+                            const [hours, minutes] = e.target.value.split(':')
+                            currentDate.setHours(parseInt(hours), parseInt(minutes))
+                            setEditedBooking((prev: any) => ({ ...prev, bookingDateTime: currentDate.toISOString() }))
+                          }
+                        }}
+                      />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -376,18 +397,18 @@ export default function ComprehensiveBookingEditModal({
                       </div>
                       <div className="space-y-2">
                         <Label>{t("adminBookings.birthDate")}</Label>
-                        <Input value={client.birthDate ? format(new Date(client.birthDate), "dd/MM/yyyy") : t("adminBookings.notSpecified")} disabled />
+                        <Input value={safeFormatDate(client.birthDate)} disabled />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>{t("adminBookings.accountCreated")}</Label>
-                        <Input value={format(new Date(client.createdAt), "dd/MM/yyyy HH:mm")} disabled />
+                        <Input value={safeFormatDate(client.createdAt, "dd/MM/yyyy HH:mm")} disabled />
                       </div>
                       <div className="space-y-2">
                         <Label>{t("adminBookings.lastUpdate")}</Label>
-                        <Input value={format(new Date(client.updatedAt), "dd/MM/yyyy HH:mm")} disabled />
+                        <Input value={safeFormatDate(client.updatedAt, "dd/MM/yyyy HH:mm")} disabled />
                       </div>
                     </div>
 

@@ -18,7 +18,9 @@
     "name": "שם",
     "email": "אימייל",
     "phone": "טלפון",
-    "status": "סטטוס",
+    "status": {
+      "unknown": "סטטוס לא ידוע"
+    },
     "createdAt": "נוצר ב",
     "updatedAt": "עודכן ב",
     "notSet": "לא הוגדר",
@@ -131,9 +133,6 @@
     "purchaseSuccessMessage": "הרכישה שלך הושלמה בהצלחה.",
     "unauthorized": "גישה לא מורשית.",
     "forbidden": "אין לך הרשאה לבצע פעולה זו על הזמנה זו.",
-    "status": {
-      "unknown": "סטטוס לא ידוע"
-    },
     "anotherProfessional": "מטפל/ת אחר/ת",
     "invalidInput": "קלט לא תקין.",
     "currencySymbol": "₪",
@@ -142,7 +141,6 @@
     "termsOfService": "תנאי שימוש",
     "unknown": "לא ידוע",
     "unknownTreatment": "טיפול לא ידוע",
-    "notApplicable": "לא רלוונטי",
     "errors": {
       "unknown": "אירעה שגיאה לא ידועה.",
       "bookingNotFound": "ההזמנה לא נמצאה.",
@@ -153,7 +151,11 @@
     },
     "toggleColumns": "החלף עמודות",
     "export": "ייצוא",
-    "included": "כלול"
+    "included": "כלול",
+    "anonymousUser": "משתמש אנונימי",
+    "more": "עוד",
+    "unknownStep": "שלב לא ידוע",
+    "validationError": "שגיאת אימות"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -263,7 +265,8 @@
     "invalidDateOfBirth": "אנא הזן תאריך לידה תקין",
     "invalidInput": "קלט לא תקין",
     "otpSendFailed": "שליחת קוד האימות נכשלה",
-    "otpVerificationFailed": "אימות הקוד נכשל"
+    "otpVerificationFailed": "אימות הקוד נכשל",
+    "fetchFailed": "שגיאה בטעינת נתונים"
   },
   "success": {
     "registrationComplete": "ההרשמה הושלמה בהצלחה! מעביר לדף ההתחברות..."
@@ -316,10 +319,32 @@
     }
   },
   "addresses": {
-    "title": "כתובות",
-    "addNew": "הוסף חדש",
-    "edit": "ערוך כתובת",
-    "noAddresses": "אין כתובות",
+    "title": "ניהול כתובות",
+    "addNew": "הוסף כתובת חדשה",
+    "addNewShort": "הוסף חדשה",
+    "addAddressDialogTitle": "הוסף כתובת חדשה",
+    "fields": {
+      "apartmentNumber": "מספר דירה",
+      "hasPrivateParking": "חניה פרטית",
+      "hasPrivateParkingFull": "יש חניה פרטית",
+      "additionalNotes": "הערות נוספות",
+      "isDefault": "כתובת ברירת מחדל",
+      "addressType": "סוג כתובת",
+      "addressTypePlaceholder": "בחר סוג כתובת",
+      "apartment": "דירה",
+      "buildingName": "שם הבניין",
+      "city": "עיר",
+      "doorName": "שם הדלת",
+      "entrance": "כניסה",
+      "floor": "קומה",
+      "hotelName": "שם המלון",
+      "instructions": "הוראות הגעה",
+      "notes": "הערות",
+      "otherInstructions": "הוראות אחרות",
+      "roomNumber": "מספר חדר",
+      "street": "רחוב",
+      "streetNumber": "מספר בית"
+    },
     "types": {
       "apartment": "דירה",
       "house": "בית פרטי",
@@ -327,49 +352,22 @@
       "hotel": "מלון",
       "other": "אחר"
     },
-    "fields": {
-      "country": "מדינה",
-      "city": "עיר",
-      "street": "רחוב",
-      "streetNumber": "מספר בית",
-      "addressType": "סוג כתובת",
-      "floor": "קומה",
-      "apartmentNumber": "מספר דירה",
-      "entrance": "כניסה",
-      "doorName": "שם דלת",
-      "buildingName": "שם בניין",
-      "hotelName": "שם מלון",
-      "roomNumber": "מספר חדר",
-      "instructions": "הוראות הגעה",
-      "hasPrivateParking": "חניה פרטית",
-      "isDefault": "כתובת ברירת מחדל",
-      "additionalNotes": "הערות נוספות",
-      "hasPrivateParkingFull": "קיימת חניה פרטית",
-      "addressTypePlaceholder": "בחר סוג כתובת",
-      "apartment": "דירה/יחידה",
-      "otherInstructions": "הוראות נוספות"
-    },
-    "createSuccess": "הכתובת נוצרה בהצלחה",
-    "createError": "שגיאה ביצירת הכתובת",
-    "updateSuccess": "הכתובת עודכנה בהצלחה",
-    "updateError": "שגיאה בעדכון הכתובת",
-    "deleteSuccess": "הכתובת נמחקה בהצלחה",
-    "deleteError": "שגיאה במחיקת הכתובת",
-    "setDefaultSuccess": "הכתובת הוגדרה כברירת מחדל",
-    "setDefaultError": "שגיאה בהגדרת כתובת כברירת מחדל",
-    "error": "אירעה שגיאה",
     "deleteConfirm": "האם אתה בטוח שברצונך למחוק כתובת זו?",
-    "deleteConfirmDescription": "לא ניתן לבטל פעולה זו",
-    "noDetails": "אין פרטים נוספים",
-    "setDefault": "הגדר כברירת מחדל",
-    "deleted": "הכתובת נמחקה",
-    "defaultSet": "כתובת ברירת מחדל עודכנה",
-    "created": "הכתובת נוצרה",
-    "updated": "הכתובת עודכנה",
-    "addNewShort": "הוסף חדש",
-    "addAddressDialogTitle": "הוספת כתובת חדשה",
-    "selectedAddressDetails": "פרטי הכתובת שנבחרה",
-    "addFirstAddressShort": "הוסף כתובת"
+    "deleteConfirmDescription": "לא ניתן לשחזר כתובת שנמחקה",
+    "selectedAddressDetails": "פרטי הכתובת הנבחרת",
+    "addFirstAddress": "הוסף כתובת ראשונה",
+    "addFirstAddressShort": "הוסף ראשונה",
+    "createError": "שגיאה ביצירת כתובת",
+    "createSuccess": "כתובת נוצרה בהצלחה",
+    "deleteError": "שגיאה במחיקת כתובת",
+    "deleteSuccess": "כתובת נמחקה בהצלחה",
+    "editAddressDialogTitle": "ערוך כתובת",
+    "noAddresses": "אין כתובות שמורות",
+    "noDetails": "אין פרטים",
+    "setDefaultError": "שגיאה בהגדרת כתובת ברירת מחדל",
+    "setDefaultSuccess": "כתובת ברירת מחדל הוגדרה בהצלחה",
+    "updateError": "שגיאה בעדכון כתובת",
+    "updateSuccess": "כתובת עודכנה בהצלחה"
   },
   "paymentMethods": {
     "title": "ניהול אמצעי תשלום",
@@ -384,12 +382,11 @@
       "cvv": "CVV",
       "cardHolderName": "שם בעל הכרטיס",
       "cardName": "שם הכרטיס (לדוגמה: ויזה שלי)",
-      "isDefault": "ברירת מחדל",
+      "isDefault": "הגדר כאמצעי תשלום ברירת מחדל",
       "monthPlaceholder": "חודש",
       "yearPlaceholder": "שנה",
       "cardHolderNamePlaceholder": "השם כפי שמופיע על הכרטיס",
-      "cardNamePlaceholder": "לדוגמה: ויזה שלי",
-      "isDefault": "הגדר כאמצעי תשלום ברירת מחדל"
+      "cardNamePlaceholder": "לדוגמה: ויזה שלי"
     },
     "createSuccess": "אמצעי התשלום נוצר בהצלחה",
     "createError": "שגיאה ביצירת אמצעי התשלום",
@@ -449,7 +446,7 @@
       "other": "אחר"
     },
     "fields": {
-      "name": "שם הטיפול",
+      "name": "שם",
       "category": "קטגוריה",
       "description": "תיאור",
       "isActive": "פעיל",
@@ -458,17 +455,10 @@
       "professionalPrice": "מחיר למטפל",
       "durations": "משכי זמן",
       "minutes": "דקות",
-      "duration": "משך זמן",
-      "name": "שם",
-      "description": "תיאור",
-      "category": "קטגוריה",
-      "pricingType": "סוג תמחור",
-      "price": "מחיר",
       "duration": "משך זמן"
     },
     "pricingTypes": {
       "fixed": "מחיר קבוע",
-      "durationBased": "מחיר לפי משך",
       "durationBased": "מבוסס משך זמן"
     },
     "selectCategory": "בחר קטגוריה",
@@ -568,18 +558,20 @@
     },
     "purchase": {
       "title": "רכישת מנוי",
-      "description": "בחר תוכנית מנוי וטיפול כדי להתחיל.",
-      "noSubscriptions": "אין מנויים זמינים לרכישה כרגע.",
-      "selectSubscription": "בחר תוכנית מנוי",
-      "selectSubscriptionDesc": "בחר את התוכנית המתאימה ביותר לצרכים שלך.",
-      "selectSubscriptionPlaceholder": "בחר מנוי...",
-      "selectAllFields": "אנא מלא את כל השדות הנדרשים.",
-      "success": "המנוי נרכש בהצלחה!",
-      "error": "רכישת המנוי נכשלה. אנא נסה שוב.",
-      "summary": "סיכום רכישה",
+      "description": "בחר חבילת מנוי המתאימה לצרכים שלך",
+      "selectSubscription": "בחר מנוי",
+      "selectSubscriptionDesc": "בחר חבילת מנוי מהאפשרויות למטה",
+      "selectSubscriptionPlaceholder": "בחר חבילת מנוי",
+      "selectSubscriptionError": "אנא בחר חבילת מנוי",
+      "selectAllFields": "אנא מלא את כל השדות הנדרשים",
+      "success": "המנוי נרכש בהצלחה",
+      "successMessage": "המנוי שלך נרכש בהצלחה. כעת תוכל להזמין טיפולים.",
+      "error": "הרכישה נכשלה",
       "confirm": "אשר רכישה",
       "confirmAndPay": "אשר ושלם",
-      "selectSubscriptionError": "אנא בחר תוכנית מנוי.",
+      "summary": "סיכום הזמנה",
+      "reviewBeforePurchase": "אנא בדוק את ההזמנה שלך לפני השלמת הרכישה",
+      "noSubscriptions": "אין חבילות מנוי זמינות כרגע",
       "new": "רכישת מנוי חדש"
     },
     "title": "ניהול מנויים",
@@ -601,14 +593,12 @@
     "sortAscending": "עולה",
     "sortDescending": "יורד",
     "fields": {
-      "name": "שם המנוי",
+      "name": "שם",
       "description": "תיאור",
-      "isActive": "פעיל",
-      "quantity": "כמות (בתשלום)",
-      "bonusQuantity": "כמות בונוס",
-      "validityMonths": "תוקף (חודשים)",
-      "treatments": "טיפולים",
-      "price": "מחיר"
+      "quantity": "כמות",
+      "bonusQuantity": "בונוס",
+      "validityMonths": "תקופת תוקף",
+      "isActive": "פעיל"
     },
     "activeDescription": "מנויים פעילים יוצגו ללקוחות",
     "quantityDescription": "מספר הטיפולים הכלולים במנוי",
@@ -658,10 +648,10 @@
     "bonus": "בונוס",
     "validity": "תוקף",
     "price": "מחיר",
-    "totalQuantity": "כמות כוללת",
-    "paidQuantity": "כמות בתשלום",
+    "totalQuantity": "סה\"כ טיפולים",
+    "paidQuantity": "טיפולים בתשלום",
     "pricePaid": "מחיר ששולם",
-    "pricePerSession": "מחיר למפגש",
+    "pricePerSession": "מחיר לטיפול",
     "useTreatment": "מימוש טיפול",
     "purchaseDate": "תאריך רכישה",
     "expiryDate": "תאריך תפוגה",
@@ -669,40 +659,10 @@
     "use": "מימוש מנוי",
     "useSuccess": "המנוי מומש בהצלחה",
     "useError": "שגיאה במימוש המנוי",
-    "purchase": {
-      "title": "רכישת מנוי",
-      "description": "בחר חבילת מנוי המתאימה לצרכים שלך",
-      "selectSubscription": "בחר מנוי",
-      "selectSubscriptionDesc": "בחר חבילת מנוי מהאפשרויות למטה",
-      "selectSubscriptionPlaceholder": "בחר חבילת מנוי",
-      "selectSubscriptionError": "אנא בחר חבילת מנוי",
-      "selectAllFields": "אנא מלא את כל השדות הנדרשים",
-      "success": "המנוי נרכש בהצלחה",
-      "successMessage": "המנוי שלך נרכש בהצלחה. כעת תוכל להזמין טיפולים.",
-      "error": "הרכישה נכשלה",
-      "confirm": "אשר רכישה",
-      "confirmAndPay": "אשר ושלם",
-      "summary": "סיכום הזמנה",
-      "reviewBeforePurchase": "אנא בדוק את ההזמנה שלך לפני השלמת הרכישה",
-      "noSubscriptions": "אין חבילות מנוי זמינות כרגע",
-      "new": "רכישת מנוי חדש"
-    },
-    "fields": {
-      "name": "שם",
-      "description": "תיאור",
-      "quantity": "כמות",
-      "bonusQuantity": "בונוס",
-      "validityMonths": "תקופת תוקף",
-      "isActive": "פעיל"
-    },
-    "quantity": "כמות",
-    "bonus": "בונוס",
-    "totalQuantity": "סה\"כ טיפולים",
-    "paidQuantity": "טיפולים בתשלום",
     "bonusQuantity": "טיפולי בונוס",
-    "pricePerSession": "מחיר לטיפול",
     "details": "פרטי המנוי",
-    "viewSubscriptions": "צפה במנויים שלי"
+    "viewSubscriptions": "צפה במנויים שלי",
+    "cancelError": "שגיאה בביטול מנוי"
   },
   "userSubscriptions": {
     "title": "מנויי משתמשים",
@@ -859,7 +819,9 @@
     "value": "ערך",
     "validFrom": "תקף מ",
     "validUntil": "תקף עד",
-    "status": "סטטוס",
+    "status": {
+      "active": "פעיל"
+    },
     "editVoucher": "ערוך שובר",
     "deleteConfirmTitle": "מחיקת שובר מתנה",
     "types": {
@@ -875,10 +837,6 @@
       "pending_send": "ממתין לשליחה",
       "sent": "נשלח",
       "cancelled": "בוטל"
-    },
-    "status": {
-      "pending_payment": "ממתין לתשלום",
-      "fully_used": "נוצל במלואו"
     },
     "purchase": {
       "title": "רכישת שובר מתנה",
@@ -958,7 +916,8 @@
       "cancelled": "בוטל",
       "voucherDetailsTitle": "פרטי השובר",
       "voucherDetailsDescription": "מידע מפורט על שובר המתנה שלך.",
-      "errorLoading": "שגיאה בטעינת השוברים שלך. אנא נסה לרענן."
+      "errorLoading": "שגיאה בטעינת השוברים שלך. אנא נסה לרענן.",
+      "basicInfo": "מידע בסיסי"
     },
     "admin": {
       "assignToUser": "הקצה למשתמש",
@@ -982,11 +941,9 @@
       "errorApplying": "שגיאה בהחלת השובר."
     },
     "useCode": "השתמש בקוד זה בקופה או בעת הזמנה",
-    "status": {
-      "active": "פעיל"
-    },
     "adminDisabled": "מושבת ע\"י מנהל",
-    "isGiftBadge": "מתנה"
+    "isGiftBadge": "מתנה",
+    "expiredShort": "פג תוקף"
   },
   "purchaseGiftVoucher": {
     "failedToLoadData": "שגיאה בטעינת הנתונים הנדרשים לרכישה",
@@ -1048,10 +1005,9 @@
     "stepComplete": "אישור",
     "minimumAmount": "סכום מינימלי",
     "minimumAmountDetails": "סכום מינימלי {{amount}} {{currency}}",
-    "defaultCard": "ברירת מחדל",
-    "addNewCard": "הוסף כרטיס חדש",
     "selectTypeDescription": "בחר אם ברצונך להעניק טיפול ספציפי או שובר כספי.",
-    "giftWrapping": "אריזת מתנה"
+    "giftWrapping": "אריזת מתנה",
+    "selectDuration": "בחר משך זמן"
   },
   "Roles": {
     "admin": "מנהל",
@@ -1084,7 +1040,9 @@
     "owned": "שוברים בבעלותי",
     "purchased": "שוברים שרכשתי",
     "noGiftVouchersDescription": "אין לך כרגע שוברי מתנה.",
-    "noPurchasedVouchers": "עדיין לא רכשת או שלחת שוברי מתנה."
+    "noPurchasedVouchers": "עדיין לא רכשת או שלחת שוברי מתנה.",
+    "errorLoading": "שגיאה בטעינת שוברים",
+    "noPurchasedVouchersDescription": "לא רכשת שוברי מתנה עדיין"
   },
   "memberSubscriptions": {
     "title": "המנויים שלי",
@@ -1238,7 +1196,8 @@
       "active": "פעיל",
       "scheduled": "מתוזמן",
       "expired": "פג תוקף",
-      "inactiveManual": "לא פעיל"
+      "inactiveManual": "לא פעיל",
+      "inactive": "לא פעיל"
     },
     "deleteDialog": {
       "title": "האם אתה בטוח?",
@@ -1265,7 +1224,8 @@
       "next": "הבא",
       "pageInfo": "עמוד {{currentPage}} מתוך {{totalPages}}",
       "rowsSelected": "{{count}} מתוך {{total}} שורות נבחרו"
-    }
+    },
+    "noCouponsFound": "לא נמצאו קופונים"
   },
   "partnerAssignedCoupons": {
     "title": "הקופונים שהוקצו לי",
@@ -1383,7 +1343,12 @@
     "treatment": {
       "title": "העדפות טיפול",
       "description": "הגדר את העדפות הטיפול שלך עבור הזמנות עתידיות",
-      "therapistGenderLabel": "העדפת מגדר מטפל/ת"
+      "therapistGenderLabel": "העדפת מגדר מטפל/ת",
+      "genderAny": "ללא העדפה",
+      "genderFemale": "נקבה",
+      "genderMale": "זכר",
+      "saveError": "שגיאה בשמירת העדפות טיפול",
+      "saveSuccess": "העדפות טיפול נשמרו בהצלחה"
     },
     "notifications": {
       "title": "הגדרות התראות",
@@ -1394,7 +1359,10 @@
       "languageLabel": "שפת התראות",
       "langHe": "עברית",
       "langEn": "אנגלית",
-      "langRu": "רוסית"
+      "langRu": "רוסית",
+      "errorMinMethods": "יש לבחור לפחות שיטת התראה אחת",
+      "saveError": "שגיאה בשמירת הגדרות התראות",
+      "saveSuccess": "הגדרות התראות נשמרו בהצלחה"
     }
   },
   "bookings": {
@@ -1416,71 +1384,97 @@
         "total": "סה\"כ"
       },
       "flexibleTime": "זמן גמיש",
-      "toBeAssigned": "יוקצה",
-      "forRecipient": "עבור: "
+      "toBeAssigned": "יוקצה"
     },
     "steps": {
+      "summary": {
+        "flexibleTime": "זמן גמיש",
+        "addressTitle": "כתובת הטיפול",
+        "basePrice": "מחיר בסיס",
+        "bookedBy": "הוזמן על ידי",
+        "bookingCovered": "הזמנה מכוסה",
+        "bookingForTitle": "הזמנה עבור",
+        "calculatingPrice": "מחשב מחיר...",
+        "confirmBooking": "אשר הזמנה",
+        "couponCode": "קוד קופון",
+        "couponDesc": "יש לך קוד הנחה? הכנס אותו כאן",
+        "couponDiscount": "הנחת קופון",
+        "couponPlaceholder": "הכנס קוד קופון",
+        "dateTime": "תאריך ושעה",
+        "description": "בדוק את פרטי ההזמנה לפני האישור",
+        "gift": "מתנה",
+        "monetaryVoucherApplied": "שובר כספי הוחל",
+        "noAdditionalPayment": "ללא תשלום נוסף",
+        "notes": "הערות",
+        "recipientName": "שם המקבל",
+        "recipientPhone": "טלפון המקבל",
+        "therapistPreference": "העדפת מטפל/ת",
+        "title": "סיכום ההזמנה",
+        "totalAmount": "סכום כולל",
+        "treatment": "טיפול",
+        "treatmentCoveredBySubscription": "טיפול מכוסה על ידי מנוי",
+        "treatmentCoveredByVoucher": "טיפול מכוסה על ידי שובר",
+        "treatmentDetails": "פרטי הטיפול",
+        "usingGiftVoucher": "שימוש בשובר מתנה",
+        "usingSubscription": "שימוש במנוי"
+      },
+      "payment": {
+        "agreeToMarketingLabel": "אני מסכים/ה לקבל חומר שיווקי",
+        "agreeToTermsDesc": "קרא ואשר את תנאי השימוש",
+        "agreeToTermsLabel": "אני מסכים/ה לתנאי השימוש",
+        "confirmBooking": "אשר הזמנה",
+        "confirmDescNoPayment": "אישור ללא תשלום נדרש",
+        "confirmTitleNoPayment": "אישור הזמנה",
+        "description": "בחר אמצעי תשלום ואשר את ההזמנה",
+        "loadingPrice": "טוען מחיר...",
+        "payAndConfirm": "שלם ואשר",
+        "selectPaymentMethod": "בחר אמצעי תשלום",
+        "title": "תשלום ואישור"
+      },
+      "scheduling": {
+        "description": "בחר תאריך, שעה וכתובת עבור הטיפול",
+        "flexibleTimeDesc": "אני גמיש/ה בזמן הטיפול",
+        "flexibleTimeLabel": "גמישות בזמן",
+        "forSomeoneElseLabel": "הזמנה עבור מישהו אחר",
+        "noSavedAddressesDesc": "לא נמצאו כתובות שמורות. אנא הוסף כתובת חדשה.",
+        "noSavedAddressesTitle": "אין כתובות שמורות",
+        "noSlotsAvailable": "אין זמנים פנויים",
+        "notes": "הערות נוספות",
+        "notesPlaceholder": "הערות למטפל/ת (אופציונלי)",
+        "recipientName": "שם המקבל",
+        "recipientPhone": "טלפון המקבל",
+        "selectAddress": "בחר כתובת",
+        "selectAddressPlaceholder": "בחר כתובת לטיפול",
+        "selectDate": "בחר תאריך",
+        "selectDateFirst": "בחר תאריך תחילה",
+        "selectTime": "בחר שעה",
+        "selectTimePlaceholder": "בחר שעת טיפול",
+        "therapistPreference": "העדפת מטפל/ת",
+        "title": "קביעת זמן ומיקום"
+      },
       "source": {
-        "title": "בחר מקור ההזמנה",
+        "available": "זמין",
         "description": "בחר איך ברצונך לבצע את ההזמנה",
+        "newBooking": "הזמנה חדשה",
+        "newBookingDesc": "תשלום ישיר עבור הטיפול",
+        "newBookingOnlyDesc": "רכישה ישירה בלבד",
+        "newBookingOnlyTitle": "רכישה חדשה בלבד",
         "redeemSubscription": "ניצול מנוי קיים",
         "redeemSubscriptionDesc": "השתמש בטיפולים מהמנוי שלך",
-        "available": "זמין",
-        "newBooking": "הזמנה חדשה",
-        "newBookingDesc": "תשלום ישיר עבור הטיפול"
+        "redeemVoucher": "מימוש שובר מתנה",
+        "redeemVoucherDesc": "השתמש בשובר מתנה קיים",
+        "title": "בחר מקור ההזמנה"
       },
       "treatment": {
-        "title": "בחר טיפול",
         "description": "בחר את סוג הטיפול, משך הזמן והמטפל/ת",
+        "selectDuration": "בחר משך זמן",
         "selectSubscription": "בחר מנוי",
         "selectSubscriptionPlaceholder": "בחר מנוי לניצול",
         "selectTreatment": "בחר טיפול",
-        "selectDuration": "בחר משך זמן"
-      },
-      "scheduling": {
-        "title": "קביעת זמן ומיקום",
-        "description": "בחר תאריך, שעה וכתובת עבור הטיפול",
-        "selectDate": "בחר תאריך",
-        "selectTime": "בחר שעה",
-        "selectDateFirst": "בחר תאריך תחילה",
-        "flexibleTimeLabel": "גמישות בזמן",
-        "flexibleTimeDesc": "אני גמיש/ה בזמן הטיפול",
-        "selectAddress": "בחר כתובת",
-        "selectAddressPlaceholder": "בחר כתובת לטיפול",
-        "forSomeoneElseLabel": "הזמנה עבור מישהו אחר",
-        "notes": "הערות נוספות",
-        "notesPlaceholder": "הערות למטפל/ת (אופציונלי)",
-        "noSlotsAvailable": "אין זמנים פנויים",
-        "selectTimePlaceholder": "בחר שעת טיפול",
-        "recipientName": "שם המקבל",
-        "recipientPhone": "טלפון המקבל",
-        "therapistPreference": "העדפת מטפל/ת"
-      },
-      "summary": {
-        "title": "סיכום ההזמנה",
-        "description": "בדוק את פרטי ההזמנה לפני האישור",
-        "bookingForTitle": "הזמנה עבור",
-        "treatmentDetails": "פרטי הטיפול",
-        "treatment": "טיפול",
-        "dateTime": "תאריך ושעה",
-        "therapistPreference": "העדפת מטפל/ת",
-        "addressTitle": "כתובת הטיפול",
-        "calculatingPrice": "מחשב מחיר...",
-        "basePrice": "מחיר בסיס",
-        "totalAmount": "סכום כולל",
-        "couponCode": "קוד קופון",
-        "couponPlaceholder": "הכנס קוד קופון",
-        "couponDesc": "יש לך קוד הנחה? הכנס אותו כאן"
-      },
-      "payment": {
-        "title": "תשלום ואישור",
-        "description": "בחר אמצעי תשלום ואשר את ההזמנה",
-        "selectPaymentMethod": "בחר אמצעי תשלום",
-        "loadingPrice": "טוען מחיר...",
-        "payAndConfirm": "שלם ואשר",
-        "agreeToTermsLabel": "אני מסכים/ה לתנאי השימוש",
-        "agreeToTermsDesc": "קרא ואשר את תנאי השימוש",
-        "agreeToMarketingLabel": "אני מסכים/ה לקבל חומר שיווקי"
+        "selectVoucher": "בחר שובר מתנה",
+        "selectVoucherPlaceholder": "בחר שובר מתנה...",
+        "title": "בחר טיפול",
+        "unknownVoucherCode": "קוד שובר לא ידוע"
       }
     },
     "success": {
@@ -1492,9 +1486,7 @@
       "thankYou": "תודה על הזמנתך! קיבלנו את בקשתך.",
       "bookingNumber": "מספר הזמנה",
       "status": "סטטוס",
-      "paymentStatus": {
-        "pending": "ממתין לתשלום"
-      },
+      "paymentStatus": "סטטוס תשלום",
       "bookedFor": "הוזמן עבור",
       "recipientName": "שם המקבל",
       "recipientPhone": "טלפון המקבל",
@@ -1526,7 +1518,6 @@
       "totalAmount": "סכום כולל",
       "gift": "מתנה",
       "paymentDetails": "פרטי תשלום",
-      "paymentStatus": "סטטוס תשלום",
       "paymentMethod": "אמצעי תשלום",
       "voucherUsageTitle": "עדכון שימוש בשובר",
       "voucherCodeUsed": "פרטים עבור שובר {code}:",
@@ -1537,29 +1528,13 @@
       "paymentStatus.pending": "ממתין",
       "paymentStatus.paid": "שולם",
       "paymentStatus.failed": "נכשל",
-      "paymentStatus.not_required": "לא נדרש"
+      "paymentStatus.not_required": "לא נדרש",
+      "couponDiscountWithCode": "הנחת קופון ({{code}})",
+      "transactionId": "מזהה עסקה"
     },
     "unknownSubscription": "מינוי לא ידוע",
     "monetaryVoucher": "שובר כספי",
     "balance": "יתרה",
-    "steps": {
-      "summary": {
-        "flexibleTime": "זמן גמיש"
-      }
-    },
-    "table": {
-      "header": {
-        "professional": "מטפל/ת",
-        "location": "מיקום",
-        "bookingId": "מזהה הזמנה",
-        "treatmentDetails": "טיפול",
-        "dateTime": "תאריך ושעה",
-        "status": "סטטוס",
-        "total": "סה\"כ"
-      },
-      "flexibleTime": "זמן גמיש",
-      "toBeAssigned": "יוקצה"
-    },
     "subscriptions": {
       "remaining": "נותרו"
     },
@@ -1584,41 +1559,20 @@
       "bookingFailedTitle": "ההזמנה נכשלה",
       "unknownBookingError": "אירעה שגיאה לא ידועה.",
       "fetchTimeSlotsFailedTitle": "שגיאה בטעינת זמנים פנויים",
-      "calculatePriceFailedTitle": "שגיאה בחישוב המחיר"
+      "calculatePriceFailedTitle": "שגיאה בחישוב המחיר",
+      "priceCalculationUnavailable": "חישוב מחיר אינו זמין כרגע"
     },
     "surcharges": {
       "specialTime": "תוספת שעות מיוחדות"
-    }
-  },
-  "addresses": {
-    "title": "ניהול כתובות",
-    "addNew": "הוסף כתובת חדשה",
-    "addNewShort": "הוסף חדשה",
-    "addAddressDialogTitle": "הוסף כתובת חדשה",
-    "fields": {
-      "apartmentNumber": "מספר דירה",
-      "hasPrivateParking": "חניה פרטית",
-      "hasPrivateParkingFull": "יש חניה פרטית",
-      "additionalNotes": "הערות נוספות",
-      "isDefault": "כתובת ברירת מחדל",
-      "addressType": "סוג כתובת",
-      "addressTypePlaceholder": "בחר סוג כתובת"
     },
-    "types": {
-      "apartment": "דירה",
-      "house": "בית פרטי",
-      "office": "משרד",
-      "hotel": "מלון",
-      "other": "אחר"
-    },
-    "deleteConfirm": "האם אתה בטוח שברצונך למחוק כתובת זו?",
-    "deleteConfirmDescription": "לא ניתן לשחזר כתובת שנמחקה",
-    "selectedAddressDetails": "פרטי הכתובת הנבחרת"
+    "unknownTreatment": "טיפול לא ידוע"
   },
   "memberBookings": {
     "client": {
       "title": "ההזמנות שלי",
-      "loading": "טוען הזמנות..."
+      "loading": "טוען הזמנות...",
+      "error": "שגיאה",
+      "noBookings": "אין הזמנות"
     },
     "title": "ההזמנות שלי",
     "description": "נהל וצפה בכל ההזמנות שלך",
@@ -1786,5 +1740,35 @@
   },
   "translations": {
     "normalizationNote": "קוד השפה מנורמל כדי להבטיח התאמה למפתחות התרגום הקיימים."
+  },
+  "giftVoucher": {
+    "useCode": "השתמש בקוד זה",
+    "voucherCode": "קוד שובר"
+  },
+  "notifications": {
+    "roleSwitchError": "שגיאה בהחלפת תפקיד",
+    "roleSwitchSuccess": "התפקיד הוחלף בהצלחה"
+  },
+  "profile": {
+    "bio": "ביוגרפיה",
+    "bioPlaceholder": "ספר קצת על עצמך",
+    "email": "אימייל",
+    "emailPlaceholder": "הכנס כתובת אימייל",
+    "name": "שם",
+    "namePlaceholder": "הכנס שם מלא",
+    "phone": "טלפון",
+    "phonePlaceholder": "הכנס מספר טלפון",
+    "saveChanges": "שמור שינויים"
+  },
+  "users": {
+    "addUser": "הוסף משתמש",
+    "addUserDescription": "צור משתמש חדש במערכת",
+    "fields": {
+      "email": "אימייל",
+      "emailPlaceholder": "הכנס כתובת אימייל",
+      "name": "שם",
+      "namePlaceholder": "הכנס שם מלא",
+      "phonePlaceholder": "הכנס מספר טלפון"
+    }
   }
 }

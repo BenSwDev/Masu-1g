@@ -235,7 +235,8 @@
       "expired": "Expired",
       "depleted": "Depleted",
       "cancelled": "Cancelled",
-      "all": "All Statuses"
+      "all": "All Statuses",
+      "active": "Active"
     },
     "unknownSubscription": "Unknown Subscription",
     "purchasedOn": "Purchased On",
@@ -465,7 +466,8 @@
     "owned": "Owned Vouchers",
     "purchased": "Purchased Vouchers",
     "noGiftVouchersDescription": "You currently don't have any gift vouchers.",
-    "noPurchasedVouchersDescription": "Vouchers you purchase for others will appear here."
+    "noPurchasedVouchers": "You haven't purchased or gifted any vouchers yet.",
+    "noPurchasedVouchersDescription": "You haven't purchased or gifted any vouchers yet."
   },
   "memberSubscriptions": {
     "title": "My Subscriptions",
@@ -1332,8 +1334,7 @@
       "bookingNotInCorrectStateForEnRoute": "Booking cannot be marked as 'en route' from its current state.",
       "markEnRouteFailed": "Failed to mark booking as 'en route'.",
       "bookingNotInCorrectStateForCompletion": "Booking cannot be marked as 'completed' from its current state.",
-      "markCompletedFailed": "Failed to mark booking as 'completed'.",
-      "fetchBookingForProFailed": "Failed to retrieve booking details for professional view."
+      "markCompletedFailed": "Failed to mark booking as 'completed'."
     },
     "messages": {
       "closedOnSelectedDate": "We are closed on the selected date."

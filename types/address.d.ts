@@ -39,4 +39,4 @@ export interface IAddress {
 
   createdAt: Date
   updatedAt: Date
-} 
+}

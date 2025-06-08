@@ -152,7 +152,7 @@
       "cancellationWindowExpired": "חלון הביטולים עבור הזמנה זו פג."
     },
     "toggleColumns": "החלף עמודות",
-    "export": "ייצא",
+    "export": "ייצוא",
     "included": "כלול"
   },
   "login": {
@@ -316,8 +316,8 @@
     }
   },
   "addresses": {
-    "title": "ניהול כתובות",
-    "addNew": "הוסף כתובת חדשה",
+    "title": "כתובות",
+    "addNew": "הוסף חדש",
     "edit": "ערוך כתובת",
     "noAddresses": "אין כתובות",
     "types": {
@@ -627,7 +627,8 @@
       "expired": "פג תוקף",
       "depleted": "נוצל במלואו",
       "cancelled": "בוטל",
-      "all": "כל הסטטוסים"
+      "all": "כל הסטטוסים",
+      "active": "פעיל"
     },
     "unknownSubscription": "מנוי לא ידוע",
     "purchasedOn": "נרכש ב",
@@ -678,14 +679,16 @@
       "confirmAndPay": "אשר ושלם",
       "summary": "סיכום הזמנה",
       "reviewBeforePurchase": "אנא בדוק את ההזמנה שלך לפני השלמת הרכישה",
-      "noSubscriptions": "אין חבילות מנוי זמינות כרגע"
+      "noSubscriptions": "אין חבילות מנוי זמינות כרגע",
+      "new": "רכישת מנוי חדש"
     },
     "fields": {
       "name": "שם",
       "description": "תיאור",
       "quantity": "כמות",
       "bonusQuantity": "בונוס",
-      "validityMonths": "תקופת תוקף"
+      "validityMonths": "תקופת תוקף",
+      "isActive": "פעיל"
     },
     "quantity": "כמות",
     "bonus": "בונוס",
@@ -1038,7 +1041,8 @@
     "minimumAmountDetails": "סכום מינימלי {{amount}} {{currency}}",
     "defaultCard": "ברירת מחדל",
     "addNewCard": "הוסף כרטיס חדש",
-    "selectTypeDescription": "בחר אם ברצונך להעניק טיפול ספציפי או שובר כספי."
+    "selectTypeDescription": "בחר אם ברצונך להעניק טיפול ספציפי או שובר כספי.",
+    "giftWrapping": "אריזת מתנה"
   },
   "Roles": {
     "admin": "מנהל",
@@ -1071,7 +1075,7 @@
     "owned": "שוברים בבעלותי",
     "purchased": "שוברים שרכשתי",
     "noGiftVouchersDescription": "אין לך כרגע שוברי מתנה.",
-    "noPurchasedVouchersDescription": "שוברים שתרכוש עבור אחרים יופיעו כאן."
+    "noPurchasedVouchers": "עדיין לא רכשת או שלחת שוברי מתנה."
   },
   "memberSubscriptions": {
     "title": "המנויים שלי",
@@ -1164,6 +1168,10 @@
         "genderPlaceholder": "בחר מין",
         "dateOfBirth": "תאריך לידה",
         "dateOfBirthPlaceholder": "בחר תאריך לידה"
+      },
+      "fields": {
+        "namePlaceholder": "הכנס שם מלא",
+        "phonePlaceholder": "הכנס מספר טלפון"
       }
     }
   },
@@ -1586,6 +1594,12 @@
       },
       "flexibleTime": "זמן גמיש",
       "toBeAssigned": "יוקצה"
+    },
+    "subscriptions": {
+      "remaining": "נותרו"
+    },
+    "voucherUsage": {
+      "redeemedForBooking": "מומש עבור הזמנה מס':"
     }
   },
   "preferences": {
@@ -1770,6 +1784,9 @@
       "actionFailed": {
         "title": "הפעולה נכשלה"
       }
+    },
+    "notifications": {
+      "roleSwitchSuccess": "התפקיד הוחלף בהצלחה"
     }
   }
 }

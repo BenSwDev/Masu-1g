@@ -143,6 +143,8 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                 <DataTable
                   columns={columns}
                   data={data?.bookings ?? []}
+                  hideDefaultPagination={true}
+                  hideColumnsSelector={true}
                 />
               </div>
             </div>

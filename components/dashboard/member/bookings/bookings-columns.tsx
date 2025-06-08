@@ -325,39 +325,6 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
       size: 140,
     },
     {
-      accessorKey: "professionalId.name",
-      header: () => (
-        <div className="text-right hidden sm:block">מטפל/ת</div>
-      ),
-      cell: ({ row }) => {
-        const professionalName = row.original.professionalId?.name
-        
-        return (
-          <div className="text-right hidden sm:block">
-            {professionalName ? (
-              <div className="space-y-1">
-                <div className="font-medium text-green-700">
-                  {professionalName}
-                </div>
-                <div className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded">
-                  משובץ
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <div className="text-amber-600 font-medium">
-                  ממתין להקצאה
-                </div>
-                <div className="text-xs bg-amber-50 text-amber-600 px-2 py-1 rounded">
-                  בחיפוש
-                </div>
-              </div>
-            )}
-          </div>
-        )
-      },
-    },
-    {
       accessorKey: "bookingAddressSnapshot.city",
       header: () => <div className="text-right hidden md:block">מיקום</div>,
       cell: ({ row }) => {

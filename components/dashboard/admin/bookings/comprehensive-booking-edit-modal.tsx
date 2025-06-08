@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
-import { CalendarDays, Clock, User, Phone, Mail, MapPin, CreditCard, FileText, Star, AlertTriangle } from "lucide-react"
+import { CalendarDays, Clock, User, Phone, Mail, MapPin, CreditCard, FileText, Star, AlertTriangle, Stethoscope } from "lucide-react"
 import { 
   Dialog, 
   DialogContent, 

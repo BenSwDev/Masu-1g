@@ -22,6 +22,8 @@ import {
   Clock,
   UserCheck,
   UserX,
+  CreditCard,
+  GiftIcon,
 } from "lucide-react"
 
 import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking"
@@ -268,10 +270,10 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             (d: ITreatmentDuration) => d._id?.toString() === booking.selectedDurationId?.toString(),
           )
           if (selectedDuration) {
-            durationDisplay = `${selectedDuration.minutes} ${t("common.minutes_short", "min")}`
+            durationDisplay = `${selectedDuration.minutes} ${t("common.minutes_short") || "min"}`
           }
         } else if (treatment?.pricingType === "fixed" && treatment.defaultDurationMinutes) {
-          durationDisplay = `${treatment.defaultDurationMinutes} ${t("common.minutes_short", "min")}`
+          durationDisplay = `${treatment.defaultDurationMinutes} ${t("common.minutes_short") || "min"}`
         }
 
         return (
@@ -283,7 +285,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
             {booking.recipientName && booking.recipientName !== booking.bookedByUserName && (
               <span className="text-xs text-primary flex items-center mt-0.5">
                 <Users className="h-3 w-3 mr-1" />
-                {t("bookings.table.forRecipient", { name: booking.recipientName })}
+                {t("bookings.table.forRecipient") || `For: ${booking.recipientName}`}
               </span>
             )}
           </div>

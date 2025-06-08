@@ -140,44 +140,53 @@ const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"];
   const statusConfig = {
     pending_professional_assignment: {
       label: t("memberBookings.status.pending_professional_assignment_short") || "ממתין להקצאה",
-      className: "bg-amber-50 text-amber-700 border-amber-200",
+      className: "bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 border border-amber-300 shadow-sm",
+      icon: "⏳"
     },
     confirmed: {
       label: t("memberBookings.status.confirmed_short") || "מאושר",
-      className: "bg-green-50 text-green-700 border-green-200",
+      className: "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300 shadow-sm",
+      icon: "✅"
     },
     professional_en_route: {
       label: t("memberBookings.status.professional_en_route_short") || "בדרך",
-      className: "bg-blue-50 text-blue-700 border-blue-200",
+      className: "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300 shadow-sm",
+      icon: "🚗"
     },
     completed: {
       label: t("memberBookings.status.completed_short") || "הושלם",
-      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      className: "bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 border border-emerald-300 shadow-sm",
+      icon: "🎉"
     },
     cancelled_by_user: {
       label: t("memberBookings.status.cancelled_by_user_short") || "בוטל",
-      className: "bg-red-50 text-red-700 border-red-200",
+      className: "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300 shadow-sm",
+      icon: "❌"
     },
     cancelled_by_admin: {
       label: t("memberBookings.status.cancelled_by_admin_short") || "בוטל",
-      className: "bg-red-50 text-red-700 border-red-200",
+      className: "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300 shadow-sm",
+      icon: "⛔"
     },
     no_show: {
       label: t("memberBookings.status.no_show_short") || "לא הופיע",
-      className: "bg-orange-50 text-orange-700 border-orange-200",
+      className: "bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border border-orange-300 shadow-sm",
+      icon: "👻"
     },
   }
 
   const config = statusConfig[status] || {
     label: status,
-    className: "bg-gray-50 text-gray-700 border-gray-200",
+    className: "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300 shadow-sm",
+    icon: "❓"
   }
 
   return (
     <Badge
       variant="outline"
-      className={`text-xs font-medium px-2 py-1 ${config.className}`}
+      className={`text-xs font-semibold px-3 py-2 rounded-full transition-all duration-200 hover:scale-105 ${config.className}`}
     >
+      <span className="mr-1.5">{config.icon}</span>
       {config.label}
     </Badge>
   )
@@ -199,10 +208,12 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
       ),
       cell: ({ row }) => (
         <div className="text-right">
-          <div className="font-bold text-lg text-primary">
-            #{row.original.bookingNumber}
+          <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-3 rounded-xl mb-2">
+            <div className="font-bold text-xl text-primary bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+              #{row.original.bookingNumber}
+            </div>
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-lg">
             נוצרה: {formatDateIsraeli(row.original.createdAt || row.original.bookingDateTime)}
           </div>
         </div>
@@ -232,33 +243,33 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         }
 
         return (
-          <div className="text-right space-y-2">
-            <div className="font-medium">
+          <div className="text-right space-y-3">
+            <div className="font-bold text-lg text-gray-800 leading-tight">
               {treatment?.name || "טיפול לא ידוע"}
             </div>
             
             <div className="flex justify-end gap-2 text-xs">
               {durationDisplay && (
-                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                  {durationDisplay}
+                <span className="bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 px-3 py-1.5 rounded-full font-semibold border border-blue-300 shadow-sm">
+                  ⏱️ {durationDisplay}
                 </span>
               )}
               {priceDisplay && (
-                <span className="bg-green-50 text-green-700 px-2 py-1 rounded">
-                  {priceDisplay}
+                <span className="bg-gradient-to-r from-green-100 to-green-200 text-green-800 px-3 py-1.5 rounded-full font-semibold border border-green-300 shadow-sm">
+                  💰 {priceDisplay}
                 </span>
               )}
             </div>
 
             {booking.recipientName && booking.recipientName !== booking.bookedByUserName && (
-              <div className="text-xs bg-purple-50 text-purple-700 px-2 py-1 rounded">
-                עבור: {booking.recipientName}
+              <div className="text-xs bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 px-3 py-2 rounded-xl border border-purple-300 shadow-sm">
+                <span className="font-semibold">👤 עבור:</span> {booking.recipientName}
               </div>
             )}
 
             {booking.notes && (
-              <div className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded">
-                יש הערות
+              <div className="text-xs bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-3 py-2 rounded-xl border border-gray-300 shadow-sm">
+                <span className="font-semibold">📝</span> יש הערות
               </div>
             )}
           </div>
@@ -302,21 +313,31 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         }
 
         return (
-          <div className="text-right space-y-1">
-            <div className={`font-medium ${urgencyClass}`}>
+          <div className="text-right space-y-2">
+            <div className={`font-bold text-lg px-3 py-2 rounded-xl ${urgencyClass} ${
+              diffDays === 0 ? 'bg-red-50 border border-red-200' :
+              diffDays === 1 ? 'bg-orange-50 border border-orange-200' :
+              diffDays <= 7 ? 'bg-blue-50 border border-blue-200' :
+              'bg-gray-50 border border-gray-200'
+            }`}>
               {formatDateIsraeli(date)}
             </div>
-            <div className="font-mono text-sm text-muted-foreground">
+            <div className="font-mono text-base text-gray-600 bg-gray-50 px-2 py-1 rounded-lg">
               {formatTimeIsraeli(date)}
             </div>
             {urgencyText && (
-              <div className={`text-xs ${urgencyClass}`}>
+              <div className={`text-xs font-medium px-2 py-1 rounded-full ${urgencyClass} ${
+                diffDays === 0 ? 'bg-red-100' :
+                diffDays === 1 ? 'bg-orange-100' :
+                diffDays <= 7 ? 'bg-blue-100' :
+                'bg-gray-100'
+              }`}>
                 {urgencyText}
               </div>
             )}
             {row.original.isFlexibleTime && (
-              <div className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded">
-                זמן גמיש
+              <div className="text-xs bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800 px-2 py-1 rounded-full border border-amber-300">
+                ⚡ זמן גמיש
               </div>
             )}
           </div>

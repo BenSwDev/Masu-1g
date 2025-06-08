@@ -24,42 +24,54 @@ const StatusTabs = ({
     { 
       key: "all", 
       label: t("memberBookings.filters.all") || "הכל", 
-      color: "text-gray-600 hover:text-gray-800"
+      gradient: "from-gray-400 to-gray-600",
+      activeGradient: "from-gray-500 to-gray-700",
+      icon: "📋"
     },
     { 
       key: "upcoming", 
       label: t("memberBookings.filters.upcoming") || "קרובות", 
-      color: "text-blue-600 hover:text-blue-800"
+      gradient: "from-blue-400 to-blue-600",
+      activeGradient: "from-blue-500 to-blue-700",
+      icon: "⏰"
     },
     { 
       key: "past", 
       label: t("memberBookings.filters.past") || "עברו", 
-      color: "text-green-600 hover:text-green-800"
+      gradient: "from-green-400 to-green-600",
+      activeGradient: "from-green-500 to-green-700",
+      icon: "✅"
     },
     { 
       key: "cancelled", 
       label: t("memberBookings.filters.cancelled") || "בוטלו", 
-      color: "text-red-600 hover:text-red-800"
+      gradient: "from-red-400 to-red-600",
+      activeGradient: "from-red-500 to-red-700",
+      icon: "❌"
     },
   ]
 
   return (
-    <div className="border-b border-border mb-6">
-      <nav className="flex space-x-1">
+    <div className="mb-8">
+      <div className="flex gap-3 p-2 bg-gray-100 rounded-2xl">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => onStatusChange(tab.key)}
-            className={`py-3 px-6 border-b-2 font-medium text-sm transition-all duration-200 ${
+            className={`relative flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 transform hover:scale-105 ${
               currentStatus === tab.key
-                ? "border-primary text-primary bg-primary/5"
-                : `border-transparent ${tab.color}`
+                ? `bg-gradient-to-r ${tab.activeGradient} text-white shadow-lg`
+                : `text-gray-600 hover:text-gray-800 hover:bg-white/50`
             }`}
           >
-            {tab.label}
+            <span className="text-lg">{tab.icon}</span>
+            <span className="font-semibold">{tab.label}</span>
+            {currentStatus === tab.key && (
+              <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-xl"></div>
+            )}
           </button>
         ))}
-      </nav>
+      </div>
     </div>
   )
 }
@@ -97,9 +109,15 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      <div className="px-1">
-        <h1 className="text-2xl font-bold tracking-tight text-right">{t("memberBookings.title")}</h1>
-        <p className="text-muted-foreground text-right">{t("memberBookings.description")}</p>
+      <div className="mb-8">
+        <div className="text-center mb-6">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
+            {t("memberBookings.title")}
+          </h1>
+          <p className="text-lg text-gray-600 font-medium">
+            {t("memberBookings.description")}
+          </p>
+        </div>
       </div>
       <StatusTabs currentStatus={statusFilter} onStatusChange={setStatusFilter} t={t} />
       {isLoading && !data ? (
@@ -107,28 +125,40 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
       ) : (
         <div className="space-y-4">
           {/* Mobile Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:hidden">
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-              <div className="text-sm font-medium text-blue-700">סה״כ הזמנות</div>
-              <div className="text-2xl font-bold text-blue-900">{data?.totalBookings || 0}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:hidden mb-6">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-2xl border border-blue-200/50 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <div className="text-sm font-medium text-blue-700">סה״כ הזמנות</div>
+              </div>
+              <div className="text-3xl font-bold text-blue-900">{data?.totalBookings || 0}</div>
             </div>
-            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-              <div className="text-sm font-medium text-green-700">פעילות</div>
-              <div className="text-2xl font-bold text-green-900">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-2xl border border-green-200/50 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="text-sm font-medium text-green-700">פעילות</div>
+              </div>
+              <div className="text-3xl font-bold text-green-900">
                 {data?.bookings?.filter(b => 
                   ['pending_professional_assignment', 'confirmed', 'professional_en_route'].includes(b.status)
                 ).length || 0}
               </div>
             </div>
-            <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-              <div className="text-sm font-medium text-purple-700">הושלמו</div>
-              <div className="text-2xl font-bold text-purple-900">
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-2xl border border-purple-200/50 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <div className="text-sm font-medium text-purple-700">הושלמו</div>
+              </div>
+              <div className="text-3xl font-bold text-purple-900">
                 {data?.bookings?.filter(b => b.status === 'completed').length || 0}
               </div>
             </div>
-            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
-              <div className="text-sm font-medium text-amber-700">ממתינות</div>
-              <div className="text-2xl font-bold text-amber-900">
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-4 rounded-2xl border border-amber-200/50 shadow-sm hover:shadow-md transition-all duration-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                <div className="text-sm font-medium text-amber-700">ממתינות</div>
+              </div>
+              <div className="text-3xl font-bold text-amber-900">
                 {data?.bookings?.filter(b => 
                   ['pending_professional_assignment'].includes(b.status)
                 ).length || 0}
@@ -138,8 +168,8 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
 
           {/* Responsive Table Container */}
           <div className="relative">
-            <div className="overflow-x-auto border rounded-lg bg-card shadow-sm">
-              <div className="min-w-full inline-block align-middle">
+            <div className="overflow-hidden rounded-2xl bg-white shadow-lg border border-gray-200/50 backdrop-blur-sm">
+              <div className="overflow-x-auto">
                 <DataTable
                   columns={columns}
                   data={data?.bookings ?? []}
@@ -150,25 +180,30 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
             </div>
             
             {/* Scroll indicator for mobile */}
-            <div className="flex items-center justify-center mt-2 text-xs text-muted-foreground lg:hidden">
-              גלול לצפייה בכל הפרטים
+            <div className="flex items-center justify-center mt-3 text-xs text-gray-500 lg:hidden">
+              <div className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded-full">
+                <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></div>
+                גלול לצפייה בכל הפרטים
+                <div className="w-1 h-1 bg-gray-400 rounded-full animate-pulse"></div>
+              </div>
             </div>
           </div>
 
           {/* Enhanced Pagination */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 bg-muted/20 rounded-lg border">
-            <div className="flex-1 text-sm text-muted-foreground text-center sm:text-right">
-              עמוד <strong>{pagination.pageIndex + 1}</strong> מתוך <strong>{data?.totalPages || 0}</strong> 
-              (<strong>{data?.totalBookings || 0}</strong> הזמנות סה״כ)
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border border-gray-200/50 shadow-sm">
+            <div className="flex-1 text-sm text-gray-600 text-center sm:text-right font-medium">
+              עמוד <span className="font-bold text-gray-800">{pagination.pageIndex + 1}</span> מתוך <span className="font-bold text-gray-800">{data?.totalPages || 0}</span> 
+              (<span className="font-bold text-primary">{data?.totalBookings || 0}</span> הזמנות סה״כ)
             </div>
-            <div className="flex items-center space-x-2 gap-2">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setPagination(prev => ({ ...prev, pageIndex: Math.max(0, prev.pageIndex - 1) }))}
                 disabled={pagination.pageIndex === 0}
-                className="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed 
-                         hover:bg-muted/50 transition-colors bg-background shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl border border-gray-300 bg-white
+                         disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-gray-50 enabled:hover:border-gray-400
+                         enabled:hover:shadow-md transition-all duration-200 enabled:hover:scale-105"
               >
-                הקודם
+                ← הקודם
               </button>
               
               {/* Page numbers */}
@@ -179,10 +214,10 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                     <button
                       key={pageNum}
                       onClick={() => setPagination(prev => ({ ...prev, pageIndex: pageNum }))}
-                      className={`w-8 h-8 text-sm rounded ${
+                      className={`w-10 h-10 text-sm font-medium rounded-xl transition-all duration-200 hover:scale-105 ${
                         pageNum === pagination.pageIndex
-                          ? 'bg-primary text-primary-foreground font-bold'
-                          : 'hover:bg-muted/50 border'
+                          ? 'bg-gradient-to-r from-primary to-primary/80 text-white shadow-lg'
+                          : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:shadow-md'
                       }`}
                     >
                       {pageNum + 1}
@@ -194,10 +229,11 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
               <button
                 onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
                 disabled={pagination.pageIndex >= (data?.totalPages ?? 0) - 1}
-                className="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed 
-                         hover:bg-muted/50 transition-colors bg-background shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl border border-gray-300 bg-white
+                         disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:bg-gray-50 enabled:hover:border-gray-400
+                         enabled:hover:shadow-md transition-all duration-200 enabled:hover:scale-105"
               >
-                הבא
+                הבא →
               </button>
             </div>
           </div>

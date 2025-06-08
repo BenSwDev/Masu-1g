@@ -24,44 +24,39 @@ const StatusTabs = ({
     { 
       key: "all", 
       label: t("memberBookings.filters.all") || "הכל", 
-      icon: "📋",
-      color: "text-gray-600 border-gray-300 hover:text-gray-800 hover:border-gray-400"
+      color: "text-gray-600 hover:text-gray-800"
     },
     { 
       key: "upcoming", 
       label: t("memberBookings.filters.upcoming") || "קרובות", 
-      icon: "⏰",
-      color: "text-blue-600 border-blue-300 hover:text-blue-800 hover:border-blue-400"
+      color: "text-blue-600 hover:text-blue-800"
     },
     { 
       key: "past", 
       label: t("memberBookings.filters.past") || "עברו", 
-      icon: "✅",
-      color: "text-green-600 border-green-300 hover:text-green-800 hover:border-green-400"
+      color: "text-green-600 hover:text-green-800"
     },
     { 
       key: "cancelled", 
       label: t("memberBookings.filters.cancelled") || "בוטלו", 
-      icon: "❌",
-      color: "text-red-600 border-red-300 hover:text-red-800 hover:border-red-400"
+      color: "text-red-600 hover:text-red-800"
     },
   ]
 
   return (
-    <div className="border-b border-border mb-6 bg-muted/30 rounded-t-lg">
-      <nav className="flex space-x-1 p-1 bg-background/50 rounded-t-lg">
+    <div className="border-b border-border mb-6">
+      <nav className="flex space-x-1">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => onStatusChange(tab.key)}
-            className={`flex items-center gap-2 py-3 px-4 border-b-3 font-medium text-sm transition-all duration-200 rounded-t-lg flex-1 justify-center ${
+            className={`py-3 px-6 border-b-2 font-medium text-sm transition-all duration-200 ${
               currentStatus === tab.key
-                ? "border-primary text-primary bg-primary/10 shadow-sm"
-                : `border-transparent ${tab.color} bg-transparent hover:bg-muted/30`
+                ? "border-primary text-primary bg-primary/5"
+                : `border-transparent ${tab.color}`
             }`}
           >
-            <span className="text-lg">{tab.icon}</span>
-            <span className="font-bold">{tab.label}</span>
+            {tab.label}
           </button>
         ))}
       </nav>
@@ -113,27 +108,27 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
         <div className="space-y-4">
           {/* Mobile Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 lg:hidden">
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-3 rounded-lg border border-blue-200">
-              <div className="text-sm font-medium text-blue-600">סה״כ הזמנות</div>
-              <div className="text-lg font-bold text-blue-900">{data?.totalBookings || 0}</div>
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <div className="text-sm font-medium text-blue-700">סה״כ הזמנות</div>
+              <div className="text-2xl font-bold text-blue-900">{data?.totalBookings || 0}</div>
             </div>
-            <div className="bg-gradient-to-r from-green-50 to-green-100 p-3 rounded-lg border border-green-200">
-              <div className="text-sm font-medium text-green-600">הזמנות פעילות</div>
-              <div className="text-lg font-bold text-green-900">
+            <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+              <div className="text-sm font-medium text-green-700">פעילות</div>
+              <div className="text-2xl font-bold text-green-900">
                 {data?.bookings?.filter(b => 
                   ['pending_professional_assignment', 'confirmed', 'professional_en_route'].includes(b.status)
                 ).length || 0}
               </div>
             </div>
-            <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-3 rounded-lg border border-purple-200">
-              <div className="text-sm font-medium text-purple-600">הושלמו</div>
-              <div className="text-lg font-bold text-purple-900">
+            <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+              <div className="text-sm font-medium text-purple-700">הושלמו</div>
+              <div className="text-2xl font-bold text-purple-900">
                 {data?.bookings?.filter(b => b.status === 'completed').length || 0}
               </div>
             </div>
-            <div className="bg-gradient-to-r from-amber-50 to-amber-100 p-3 rounded-lg border border-amber-200">
-              <div className="text-sm font-medium text-amber-600">בטיפול</div>
-              <div className="text-lg font-bold text-amber-900">
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200">
+              <div className="text-sm font-medium text-amber-700">ממתינות</div>
+              <div className="text-2xl font-bold text-amber-900">
                 {data?.bookings?.filter(b => 
                   ['pending_professional_assignment'].includes(b.status)
                 ).length || 0}
@@ -154,14 +149,14 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
             
             {/* Scroll indicator for mobile */}
             <div className="flex items-center justify-center mt-2 text-xs text-muted-foreground lg:hidden">
-              👈 גלול לצפייה בכל הפרטים 👉
+              גלול לצפייה בכל הפרטים
             </div>
           </div>
 
           {/* Enhanced Pagination */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 bg-muted/20 rounded-lg border">
             <div className="flex-1 text-sm text-muted-foreground text-center sm:text-right">
-              📊 <strong>עמוד {pagination.pageIndex + 1}</strong> מתוך <strong>{data?.totalPages || 0}</strong> 
+              עמוד <strong>{pagination.pageIndex + 1}</strong> מתוך <strong>{data?.totalPages || 0}</strong> 
               (<strong>{data?.totalBookings || 0}</strong> הזמנות סה״כ)
             </div>
             <div className="flex items-center space-x-2 gap-2">
@@ -171,7 +166,7 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                 className="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed 
                          hover:bg-muted/50 transition-colors bg-background shadow-sm"
               >
-                ⬅️ <span className="hidden sm:inline">הקודם</span>
+                הקודם
               </button>
               
               {/* Page numbers */}
@@ -200,7 +195,7 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                 className="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed 
                          hover:bg-muted/50 transition-colors bg-background shadow-sm"
               >
-                <span className="hidden sm:inline">הבא</span> ➡️
+                הבא
               </button>
             </div>
           </div>

@@ -400,25 +400,25 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             <div className="mt-4 space-y-2">
               {(addressDisplay as IBookingAddressSnapshot & IAddress).doorName &&
                 <div className="bg-purple-50 p-2 rounded border border-purple-200">
-                  🚪 <strong>{t("addresses.fields.doorName")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).doorName}
+                  <strong>{t("addresses.fields.doorName")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).doorName}
                 </div>
               }
               
               {(addressDisplay as IBookingAddressSnapshot & IAddress).buildingName &&
                 <div className="bg-indigo-50 p-2 rounded border border-indigo-200">
-                  🏢 <strong>{t("addresses.fields.buildingName")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).buildingName}
+                  <strong>{t("addresses.fields.buildingName")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).buildingName}
                 </div>
               }
               
               {(addressDisplay as IBookingAddressSnapshot & IAddress).hotelName &&
                 <div className="bg-pink-50 p-2 rounded border border-pink-200">
-                  🏨 <strong>{t("addresses.fields.hotelName")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).hotelName}
+                  <strong>{t("addresses.fields.hotelName")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).hotelName}
                 </div>
               }
               
               {(addressDisplay as IBookingAddressSnapshot & IAddress).roomNumber &&
                 <div className="bg-yellow-50 p-2 rounded border border-yellow-200">
-                  🗝️ <strong>{t("addresses.fields.roomNumber")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).roomNumber}
+                  <strong>{t("addresses.fields.roomNumber")}:</strong> {(addressDisplay as IBookingAddressSnapshot & IAddress).roomNumber}
                 </div>
               }
 
@@ -429,8 +429,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                     ? 'bg-green-50 border-green-200 text-green-800' 
                     : 'bg-red-50 border-red-200 text-red-800'
                 }`}>
-                  {(addressDisplay as any).hasPrivateParking ? '✅ 🚗' : '❌ 🚗'} 
-                  <strong> חנייה פרטית:</strong> {(addressDisplay as any).hasPrivateParking ? 'זמינה' : 'לא זמינה'}
+                  <strong>חנייה פרטית:</strong> {(addressDisplay as any).hasPrivateParking ? 'זמינה' : 'לא זמינה'}
                 </div>
               )}
 
@@ -441,8 +440,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                     ? 'bg-green-50 border-green-200 text-green-800' 
                     : 'bg-red-50 border-red-200 text-red-800'
                 }`}>
-                  {(addressDisplay as any).isAccessible ? '♿ ✅' : '♿ ❌'} 
-                  <strong> נגישות:</strong> {(addressDisplay as any).isAccessible ? 'נגיש' : 'לא נגיש'}
+                  <strong>נגישות:</strong> {(addressDisplay as any).isAccessible ? 'נגיש' : 'לא נגיש'}
                 </div>
               )}
 
@@ -453,28 +451,27 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                     ? 'bg-green-50 border-green-200 text-green-800' 
                     : 'bg-orange-50 border-orange-200 text-orange-800'
                 }`}>
-                  {(addressDisplay as any).hasElevator ? '🛗 ✅' : '🛗 ❌'} 
-                  <strong> מעלית:</strong> {(addressDisplay as any).hasElevator ? 'יש מעלית' : 'אין מעלית'}
+                  <strong>מעלית:</strong> {(addressDisplay as any).hasElevator ? 'יש מעלית' : 'אין מעלית'}
                 </div>
               )}
 
               {/* Security information */}
               {(addressDisplay as any)?.hasSecurityCode && (
                 <div className="bg-amber-50 p-2 rounded border border-amber-200 text-amber-800">
-                  🔐 <strong>קוד אבטחה:</strong> נדרש קוד כניסה
+                  <strong>קוד אבטחה:</strong> נדרש קוד כניסה
                 </div>
               )}
 
               {/* Intercom information */}
               {(addressDisplay as any)?.intercomCode && (
                 <div className="bg-cyan-50 p-2 rounded border border-cyan-200 text-cyan-800">
-                  📞 <strong>אינטרקום:</strong> {(addressDisplay as any).intercomCode}
+                  <strong>אינטרקום:</strong> {(addressDisplay as any).intercomCode}
                 </div>
               )}
               
               {(addressDisplay as IBookingAddressSnapshot & IAddress).otherInstructions &&
                 <div className="bg-gray-50 p-3 rounded border border-gray-200">
-                  📝 <strong>{t("addresses.fields.otherInstructions")}:</strong>
+                  <strong>{t("addresses.fields.otherInstructions")}:</strong>
                   <div className="mt-1 text-sm text-gray-700 whitespace-pre-wrap">
                     {(addressDisplay as IBookingAddressSnapshot & IAddress).otherInstructions}
                   </div>

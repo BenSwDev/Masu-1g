@@ -135,18 +135,30 @@ export default function ComprehensiveBookingEditModal({
   }
 
   const dateTime = formatDateTime(booking.bookingDateTime)
-  const client = {
-    name: booking.bookedByUserName || (booking.userId as any)?.name || t("common.unknown"),
-    email: booking.bookedByUserEmail || (booking.userId as any)?.email,
-    phone: booking.bookedByUserPhone || (booking.userId as any)?.phone
+  
+  // Client data - directly from booking fields or populated userId
+  const client = booking.userId as any || {}
+  const bookedByInfo = {
+    name: booking.bookedByUserName || client?.name || t("common.unknown"),
+    email: booking.bookedByUserEmail || client?.email || "",
+    phone: booking.bookedByUserPhone || client?.phone || ""
   }
-  const bookedForUser = booking.userId as any
+  
+  // Treatment data - populated treatmentId
   const treatment = booking.treatmentId as any
+  
+  // Professional data - populated professionalId
   const professional = booking.professionalId as any
+  
+  // Price details populated references
   const appliedCoupon = booking.priceDetails?.appliedCouponId as any
   const appliedGiftVoucher = booking.priceDetails?.appliedGiftVoucherId as any
   const redeemedSubscription = booking.priceDetails?.redeemedUserSubscriptionId as any
+  
+  // Address data
   const addressSnapshot = booking.bookingAddressSnapshot || booking.customAddressDetails
+  
+  // Payment data
   const paymentMethod = booking.paymentDetails?.paymentMethodId as any
 
   return (
@@ -286,7 +298,7 @@ export default function ComprehensiveBookingEditModal({
                   </div>
                   <div className="space-y-2">
                     <Label>{t("adminBookings.treatmentId")}</Label>
-                    <Input value={booking.treatmentId} disabled />
+                    <Input value={treatment?._id?.toString() || booking.treatmentId?.toString()} disabled />
                   </div>
                 </div>
 
@@ -296,41 +308,59 @@ export default function ComprehensiveBookingEditModal({
                     <Input value={treatment?.category || t("adminBookings.notSpecified")} disabled />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t("adminBookings.subcategory")}</Label>
-                    <Input value={treatment?.subcategory || t("adminBookings.notSpecified")} disabled />
+                    <Label>{t("adminBookings.pricingType")}</Label>
+                    <Input value={treatment?.pricingType || t("adminBookings.notSpecified")} disabled />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>{t("adminBookings.duration")}</Label>
-                    <Input value={`${booking.estimatedDuration || treatment?.duration || 0} ${t("adminBookings.minutes")}`} disabled />
+                    <Input value={`${treatment?.defaultDurationMinutes || 60} ${t("adminBookings.minutes")}`} disabled />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t("adminBookings.pricingType")}</Label>
-                    <Input value={treatment?.pricingType || t("adminBookings.notSpecified")} disabled />
+                    <Label>{t("adminBookings.basePrice")}</Label>
+                    <Input value={`₪${booking.priceDetails?.basePrice || treatment?.fixedPrice || 0}`} disabled />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>{t("adminBookings.description")}</Label>
-                  <textarea
-                    className="w-full p-2 border rounded-md bg-gray-50"
-                    value={treatment?.description || t("adminBookings.noDescription")}
-                    disabled
-                    rows={3}
-                  />
-                </div>
+                {treatment?.description && (
+                  <div className="space-y-2">
+                    <Label>{t("adminBookings.description")}</Label>
+                    <textarea
+                      className="w-full p-2 border rounded-md bg-gray-50"
+                      value={treatment.description}
+                      disabled
+                      rows={3}
+                    />
+                  </div>
+                )}
+
+                {treatment?.durations && treatment.durations.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>{t("adminBookings.availableDurations")}</Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {treatment.durations.map((duration: any, index: number) => (
+                        <div key={index} className="p-2 bg-gray-50 rounded border">
+                          <div className="text-sm font-medium">{duration.minutes} {t("adminBookings.minutes")}</div>
+                          <div className="text-xs text-gray-600">₪{duration.price}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>{t("adminBookings.basePrice")}</Label>
-                    <Input value={`₪${treatment?.basePrice || 0}`} disabled />
-                  </div>
-                  <div className="space-y-2">
                     <Label>{t("adminBookings.finalPrice")}</Label>
-                    <Input value={`₪${booking.totalAmount}`} disabled className="font-semibold" />
+                    <Input value={`₪${booking.priceDetails?.finalAmount || 0}`} disabled className="font-semibold" />
                   </div>
+                  {booking.selectedDurationId && (
+                    <div className="space-y-2">
+                      <Label>{t("adminBookings.selectedDuration")}</Label>
+                      <Input value={booking.selectedDurationId.toString()} disabled />
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -353,7 +383,7 @@ export default function ComprehensiveBookingEditModal({
                       {t("adminBookings.clientName")}
                     </Label>
                     <Input 
-                      value={editedBooking.bookedByUserName || booking.bookedByUserName || client.name}
+                      value={editedBooking.bookedByUserName || bookedByInfo.name}
                       onChange={(e) => setEditedBooking((prev: any) => ({ ...prev, bookedByUserName: e.target.value }))}
                     />
                   </div>
@@ -364,7 +394,7 @@ export default function ComprehensiveBookingEditModal({
                     </Label>
                     <Input 
                       type="email"
-                      value={editedBooking.bookedByUserEmail || booking.bookedByUserEmail || client.email || ""}
+                      value={editedBooking.bookedByUserEmail || bookedByInfo.email}
                       onChange={(e) => setEditedBooking((prev: any) => ({ ...prev, bookedByUserEmail: e.target.value }))}
                     />
                   </div>
@@ -378,17 +408,17 @@ export default function ComprehensiveBookingEditModal({
                     </Label>
                     <Input 
                       type="tel"
-                      value={editedBooking.bookedByUserPhone || booking.bookedByUserPhone || client.phone || ""}
+                      value={editedBooking.bookedByUserPhone || bookedByInfo.phone}
                       onChange={(e) => setEditedBooking((prev: any) => ({ ...prev, bookedByUserPhone: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>{t("adminBookings.userId")}</Label>
-                    <Input value={booking.bookedByUserId} disabled />
+                    <Input value={client?._id?.toString() || booking.userId?.toString()} disabled />
                   </div>
                 </div>
 
-                {client && (
+                {client && client._id && (
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -397,7 +427,7 @@ export default function ComprehensiveBookingEditModal({
                       </div>
                       <div className="space-y-2">
                         <Label>{t("adminBookings.birthDate")}</Label>
-                        <Input value={safeFormatDate(client.birthDate)} disabled />
+                        <Input value={safeFormatDate(client.dateOfBirth)} disabled />
                       </div>
                     </div>
 
@@ -412,27 +442,39 @@ export default function ComprehensiveBookingEditModal({
                       </div>
                     </div>
 
-                    {client.preferences && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>{t("adminBookings.roles")}</Label>
+                        <Input value={client.roles?.join(", ") || t("adminBookings.notSpecified")} disabled />
+                      </div>
+                      {client.activeRole && (
+                        <div className="space-y-2">
+                          <Label>{t("adminBookings.activeRole")}</Label>
+                          <Input value={client.activeRole} disabled />
+                        </div>
+                      )}
+                    </div>
+
+                    {client.treatmentPreferences && (
                       <div className="space-y-2">
                         <Label>{t("adminBookings.treatmentPreferences")}</Label>
-                        <textarea
-                          className="w-full p-2 border rounded-md bg-gray-50"
-                          value={JSON.stringify(client.preferences, null, 2)}
-                          disabled
-                          rows={4}
-                        />
+                        <div className="p-3 bg-gray-50 rounded border">
+                          <div className="text-sm">
+                            <strong>{t("adminBookings.preferredTherapistGender")}:</strong> {client.treatmentPreferences.therapistGender || t("adminBookings.notSpecified")}
+                          </div>
+                        </div>
                       </div>
                     )}
 
-                    {client.medicalInfo && (
+                    {client.notificationPreferences && (
                       <div className="space-y-2">
-                        <Label>{t("adminBookings.medicalInfo")}</Label>
-                        <textarea
-                          className="w-full p-2 border rounded-md bg-gray-50"
-                          value={client.medicalInfo}
-                          disabled
-                          rows={3}
-                        />
+                        <Label>{t("adminBookings.notificationPreferences")}</Label>
+                        <div className="p-3 bg-gray-50 rounded border">
+                          <div className="text-sm space-y-1">
+                            <div><strong>{t("adminBookings.methods")}:</strong> {client.notificationPreferences.methods?.join(", ") || t("adminBookings.notSpecified")}</div>
+                            <div><strong>{t("adminBookings.language")}:</strong> {client.notificationPreferences.language || t("adminBookings.notSpecified")}</div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>

@@ -134,13 +134,13 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
 
   const getPaymentStatusText = (statusKey: string) => {
     const key = `bookings.confirmation.paymentStatus.${statusKey.toLowerCase()}`
-    return t(key, statusKey) // Provide fallback
+    return t(key) || statusKey
   }
 
   const getGenderPreferenceText = (preferenceKey?: string) => {
     if (!preferenceKey) return t("preferences.treatment.genderAny")
     const key = `preferences.treatment.gender${preferenceKey.charAt(0).toUpperCase()}${preferenceKey.slice(1)}`
-    return t(key, preferenceKey) // Provide fallback
+    return t(key) || preferenceKey
   }
 
   const bookingSourceText = useMemo(() => {
@@ -177,7 +177,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
           (d) => d._id?.toString() === voucher.selectedDurationId?.toString(),
         )
         if (durationDetail) {
-          durationNameForVoucher = ` - ${durationDetail.minutes} ${t("common.minutes_short", "min")}`
+          durationNameForVoucher = ` - ${durationDetail.minutes} ${t("common.minutes_short") || "min"}`
         }
       }
 
@@ -229,7 +229,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
       return (
         paymentDetails.paymentMethodId.displayName ||
         (paymentDetails.paymentMethodId.type && paymentDetails.paymentMethodId.last4
-          ? `${t(`paymentMethods.type.${paymentDetails.paymentMethodId.type}`, paymentDetails.paymentMethodId.type)} **** ${paymentDetails.paymentMethodId.last4}`
+          ? `${t(`paymentMethods.type.${paymentDetails.paymentMethodId.type}`) || paymentDetails.paymentMethodId.type} **** ${paymentDetails.paymentMethodId.last4}`
           : t("common.unknown"))
       )
     }
@@ -325,7 +325,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">{t("bookings.steps.summary.flexibleTime")}:</span>
                 <span className="text-sm font-semibold text-primary text-right">
-                  {t("bookings.confirmation.flexibleTimeInfo", { hours: flexibilityRangeHours || 2 })}
+                  {t("bookings.confirmation.flexibleTimeInfo") || `Flexible ${flexibilityRangeHours || 2} hours`}
                 </span>
               </div>
             </>
@@ -420,7 +420,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                 <Separator className="my-2" />
                 <p className="text-xs">
                   <span className="text-muted-foreground">{t("bookings.confirmation.addressNotes")}:</span>{" "}
-                  {addressDisplay.notes}
+                  {(addressDisplay as any).notes || (addressDisplay as any).additionalNotes}
                 </p>
               </>
             )}
@@ -488,7 +488,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             )}
           {priceDetails.surcharges?.map((surcharge, index) => (
             <div key={index} className="flex justify-between">
-              <span>{t(surcharge.description, surcharge.description)}:</span>
+              <span>{t(surcharge.description) || surcharge.description}:</span>
               <span className="text-orange-600 dark:text-orange-400">
                 + {formatCurrency(surcharge.amount, t("common.currency"), language)}
               </span>
@@ -511,7 +511,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               <span className="flex items-center">
                 <Tag className="mr-2 h-4 w-4" />
                 {priceDetails.appliedCouponId.code
-                  ? t("bookings.confirmation.couponDiscountWithCode", { code: priceDetails.appliedCouponId.code })
+                  ? `${t("bookings.confirmation.couponDiscountWithCode") || "Coupon discount"} (${priceDetails.appliedCouponId.code})`
                   : t("bookings.confirmation.couponDiscount")}
                 :
               </span>
@@ -569,18 +569,15 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-4 text-sm space-y-2">
-              <p>{t("bookings.confirmation.voucherCodeUsed", { code: priceDetails.appliedGiftVoucherId.code })}</p>
+              <p>{t("bookings.confirmation.voucherCodeUsed") || `Voucher code used: ${priceDetails.appliedGiftVoucherId.code}`}</p>
               <p>
-                {t("bookings.confirmation.voucherRemainingBalance", {
-                  balance: priceDetails.appliedGiftVoucherId.remainingAmount?.toFixed(2) || "0.00",
-                  currency: t("common.currency"),
-                })}
+                {`Remaining balance: ${priceDetails.appliedGiftVoucherId.remainingAmount?.toFixed(2) || "0.00"} ${t("common.currency")}`}
               </p>
               {priceDetails.appliedGiftVoucherId.usageHistory.map((entry: IGiftVoucherUsageHistory, index: number) => (
                 <div key={index} className="text-xs text-muted-foreground">
                   <span>{format(new Date(entry.date), "PPPp", { locale: currentDateFnsLocale })}: </span>
                   <span>
-                    {t(entry.description, entry.description)} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
+                    {t(entry.description) || entry.description} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
                   </span>
                 </div>
               ))}

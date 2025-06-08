@@ -46,8 +46,8 @@ const StatusTabs = ({
 }
 
 export default function MemberBookingsClient({ userId }: { userId: string }) {
-  const { t, i18n } = useTranslation()
-  const locale = i18n.language
+  const { t, language } = useTranslation()
+  const locale = language
   const [statusFilter, setStatusFilter] = useState("upcoming")
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
 
@@ -85,13 +85,34 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
       {isLoading && !data ? (
         <BookingsTableSkeleton />
       ) : (
-        <DataTable
-          columns={columns}
-          data={data?.bookings ?? []}
-          pageCount={data?.totalPages ?? 0}
-          pagination={pagination}
-          onPaginationChange={setPagination}
-        />
+        <>
+          <DataTable
+            columns={columns}
+            data={data?.bookings ?? []}
+          />
+          {/* Custom pagination controls */}
+          <div className="flex items-center justify-between px-2">
+            <div className="flex-1 text-sm text-muted-foreground">
+              Page {pagination.pageIndex + 1} of {data?.totalPages ?? 0} ({data?.totalBookings ?? 0} results)
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, pageIndex: Math.max(0, prev.pageIndex - 1) }))}
+                disabled={pagination.pageIndex === 0}
+                className="px-3 py-2 text-sm border rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+                disabled={pagination.pageIndex >= (data?.totalPages ?? 1) - 1}
+                className="px-3 py-2 text-sm border rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

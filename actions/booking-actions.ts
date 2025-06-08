@@ -1406,8 +1406,12 @@ export async function assignProfessionalToBooking(
         throw new Error("bookings.errors.bookingNotFound")
       }
 
-      if (booking.status !== "pending_professional_assignment") {
-        throw new Error("bookings.errors.bookingNotPendingAssignment")
+      if (booking.professionalId) {
+        throw new Error("bookings.errors.bookingAlreadyHasProfessional")
+      }
+
+      if (["completed", "cancelled_by_user", "cancelled_by_admin", "no_show"].includes(booking.status)) {
+        throw new Error("bookings.errors.bookingCannotBeAssigned")
       }
 
       booking.professionalId = new mongoose.Types.ObjectId(professionalId)

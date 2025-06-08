@@ -81,7 +81,10 @@ const ProfessionalAssignmentDialog = ({
         queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
         onClose()
       } else {
-        toast.error(t("adminBookings.assignError"))
+        const errorMessage = result.error && result.error.startsWith("bookings.errors.") 
+          ? t(result.error) 
+          : t("adminBookings.assignError")
+        toast.error(errorMessage)
       }
     } catch (error) {
       toast.error(t("adminBookings.assignError"))
@@ -151,8 +154,16 @@ const AdminBookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFu
   const [showNotesModal, setShowNotesModal] = useState(false)
   const [showAssignModal, setShowAssignModal] = useState(false)
 
-  const canAssignProfessional = booking.status === "pending_professional_assignment"
+  const canAssignProfessional = !booking.professionalId && !["completed", "cancelled_by_user", "cancelled_by_admin", "no_show"].includes(booking.status)
   const hasNotes = booking.notes && booking.notes.trim().length > 0
+
+  // Debug logging
+  console.log('Booking debug:', {
+    bookingNumber: booking.bookingNumber,
+    professionalId: booking.professionalId,
+    status: booking.status,
+    canAssignProfessional
+  })
 
   return (
     <>

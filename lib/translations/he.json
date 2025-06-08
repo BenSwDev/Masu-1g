@@ -147,7 +147,9 @@
       "unauthorized": "גישה לא מורשית.",
       "cancellationFailed": "ביטול ההזמנה נכשל.",
       "userNotBookingOwner": "אינך מורשה לבטל הזמנה זו.",
-      "cancellationWindowExpired": "חלון הביטולים עבור הזמנה זו פג."
+      "cancellationWindowExpired": "חלון הביטולים עבור הזמנה זו פג.",
+      "bookingAlreadyHasProfessional": "להזמנה זו כבר יש מטפל משויך.",
+      "bookingCannotBeAssigned": "לא ניתן לשייך מטפל להזמנה זו בסטטוס הנוכחי."
     },
     "toggleColumns": "החלף עמודות",
     "export": "ייצוא",
@@ -1811,6 +1813,17 @@
       "professional": "מטפל",
       "status": "סטטוס",
       "amount": "סכום"
+    }
+  },
+  "bookings": {
+    "errors": {
+      "fetchBookingsFailed": "שגיאה בטעינת ההזמנות",
+      "assignProfessionalFailed": "שגיאה בשיוך המטפל להזמנה",
+      "professionalNotFound": "המטפל לא נמצא במערכת",
+      "bookingNotFound": "ההזמנה לא נמצאה",
+      "bookingAlreadyHasProfessional": "להזמנה זו כבר יש מטפל משויך",
+      "bookingCannotBeAssigned": "לא ניתן לשייך מטפל להזמנה זו בסטטוס הנוכחי",
+      "fetchProfessionalsFailed": "שגיאה בטעינת רשימת המטפלים"
     }
   }
 }

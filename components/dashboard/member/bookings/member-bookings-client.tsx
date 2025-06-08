@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "@/lib/translations/i18n"
 import { getUserBookings } from "@/actions/booking-actions"
@@ -11,34 +11,38 @@ import type { PopulatedBooking } from "@/types/booking"
 import { Button } from "@/components/common/ui/button"
 import { cn } from "@/lib/utils/utils"
 
-// A simple tab component for filtering
-const StatusTabs = ({
-  currentStatus,
-  onStatusChange,
-  t,
-}: {
+// Status Tabs Component
+const StatusTabs = ({ 
+  currentStatus, 
+  onStatusChange, 
+  t 
+}: { 
   currentStatus: string
   onStatusChange: (status: string) => void
-  t: (key: string) => string
+  t: (key: string) => string 
 }) => {
-  const statuses = ["all", "upcoming", "past", "cancelled"]
+  const tabs = [
+    { key: "all", label: t("memberBookings.filters.all") },
+    { key: "upcoming", label: t("memberBookings.filters.upcoming") },
+    { key: "past", label: t("memberBookings.filters.past") },
+    { key: "cancelled", label: t("memberBookings.filters.cancelled") },
+  ]
+
   return (
-    <div className="border-b">
-      <nav className="-mb-px flex space-x-4 sm:space-x-8 px-1 overflow-x-auto" aria-label="Tabs">
-        {statuses.map((status) => (
-          <Button
-            key={status}
-            variant="ghost"
-            onClick={() => onStatusChange(status)}
-            className={cn(
-              "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm h-auto rounded-none",
-              status === currentStatus
+    <div className="border-b border-border mb-4">
+      <nav className="-mb-px flex space-x-8">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => onStatusChange(tab.key)}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              currentStatus === tab.key
                 ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300",
-            )}
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300"
+            }`}
           >
-            {t(`memberBookings.filters.${status}`)}
-          </Button>
+            {tab.label}
+          </button>
         ))}
       </nav>
     </div>
@@ -50,6 +54,9 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
   const locale = language
   const [statusFilter, setStatusFilter] = useState("upcoming")
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
+
+  // Create columns with useMemo to avoid recreation and ensure client-side only
+  const columns = useMemo(() => getBookingColumns(t, locale), [t, locale])
 
   const { data, isLoading, isError, error } = useQuery<{
     bookings: PopulatedBooking[]
@@ -66,13 +73,11 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
         sortDirection: "desc",
       }),
     placeholderData: (previousData) => previousData,
+    staleTime: 30000, // 30 seconds
   })
 
-  // Pass the `t` function down to getBookingColumns
-  const columns = getBookingColumns(t, locale)
-
   if (isError) {
-    return <div className="text-red-500 p-4">Error loading bookings: {error.message}</div>
+    return <div className="text-red-500 p-4">Error loading bookings: {error?.message}</div>
   }
 
   return (
@@ -105,7 +110,7 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
               </button>
               <button
                 onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
-                disabled={pagination.pageIndex >= (data?.totalPages ?? 1) - 1}
+                disabled={pagination.pageIndex >= (data?.totalPages ?? 0) - 1}
                 className="px-3 py-2 text-sm border rounded disabled:opacity-50"
               >
                 Next

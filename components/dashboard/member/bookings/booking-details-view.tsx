@@ -31,6 +31,9 @@ import { Badge } from "@/components/common/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { PopulatedBooking, ITreatmentDuration, IGiftVoucherUsageHistory } from "@/types/booking"
 import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
+import type { ITreatment } from "@/lib/db/models/treatment"
+import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
+import type { IUser } from "@/lib/db/models/user"
 import { cn, formatCurrency } from "@/lib/utils/utils"
 import type { IAddress } from "@/types/address"
 
@@ -415,12 +418,13 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                 (addressDisplay as IBookingAddressSnapshot & IAddress).otherInstructions,
               )}
 
-            {addressDisplay.notes && ( // This notes is from IBookingAddressSnapshot
+            {/* Address notes if available */}
+            {(addressDisplay.notes || (addressDisplay as any).additionalNotes) && (
               <>
                 <Separator className="my-2" />
                 <p className="text-xs">
                   <span className="text-muted-foreground">{t("bookings.confirmation.addressNotes")}:</span>{" "}
-                  {(addressDisplay as any).notes || (addressDisplay as any).additionalNotes}
+                  {addressDisplay.notes || (addressDisplay as any).additionalNotes}
                 </p>
               </>
             )}

@@ -18,6 +18,25 @@ if (!cached) {
   cached = (global as any).mongooseConnection = { conn: null, promise: null }
 }
 
+// Import all models to ensure they're registered
+async function loadModels() {
+  // Import all models to register them with mongoose
+  await import("@/lib/db/models/user")
+  await import("@/lib/db/models/address")
+  await import("@/lib/db/models/booking")
+  await import("@/lib/db/models/counter")
+  await import("@/lib/db/models/coupon")
+  await import("@/lib/db/models/coupon-usage")
+  await import("@/lib/db/models/gift-voucher")
+  await import("@/lib/db/models/password-reset-token")
+  await import("@/lib/db/models/payment-method")
+  await import("@/lib/db/models/subscription")
+  await import("@/lib/db/models/treatment")
+  await import("@/lib/db/models/user-subscription")
+  await import("@/lib/db/models/verification-token")
+  await import("@/lib/db/models/working-hours")
+}
+
 async function dbConnect() {
   if (cached.conn) {
     return cached.conn
@@ -27,7 +46,9 @@ async function dbConnect() {
     const mongooseOptions = { compressors: ["zlib"] } // Specify zlib compressor
     cached.promise = mongoose
       .connect(MONGODB_URI, mongooseOptions) // Pass options here
-      .then((mongoose) => {
+      .then(async (mongoose) => {
+        // Load all models after connection
+        await loadModels()
         return mongoose
       })
       .catch((error) => {

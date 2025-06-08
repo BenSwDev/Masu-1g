@@ -173,7 +173,7 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
                       {format(typeof usage.date === "string" ? parseISO(usage.date) : usage.date, "MMM d")}
                     </span>
                     <span className="font-medium text-destructive">
-                      -{usage.amount.toFixed(2)} {t("common.currency")}
+                      -{usage.amountUsed?.toFixed(2) ?? "0.00"} {t("common.currency")}
                     </span>
                   </div>
                 ))}

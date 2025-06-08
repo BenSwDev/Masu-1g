@@ -273,4 +273,4 @@ module.exports = {
   fixPlaceholderTranslations,
   replacePlaceholders,
   translations
-}; 
+};

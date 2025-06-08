@@ -285,7 +285,7 @@ export default function MemberGiftVoucherDetailsModal({
                       <div key={index} className="p-3 border rounded-lg bg-muted/20">
                         <div className="flex justify-between items-start mb-2">
                           <span className="font-medium text-sm">
-                            {t("giftVouchers.myVouchers.amountUsed")}: {item.amountUsed.toFixed(2)}{" "}
+                            {t("giftVouchers.myVouchers.amountUsed")}: {item.amountUsed?.toFixed(2) ?? "0.00"}{" "}
                             {t("common.currency")}
                           </span>
                           <span className="text-xs text-muted-foreground">

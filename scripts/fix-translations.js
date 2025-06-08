@@ -482,4 +482,4 @@ module.exports = {
   generateTranslation,
   buildNestedFromFlat,
   mergeDeep
-}; 
+};

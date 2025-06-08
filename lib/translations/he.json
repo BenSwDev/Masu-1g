@@ -14,6 +14,7 @@
     "clear": "נקה",
     "clearAll": "נקה הכל",
     "actions": "פעולות",
+    image.png    "openMenu": "פתח תפריט",
     "name": "שם",
     "email": "אימייל",
     "phone": "טלפון",
@@ -56,6 +57,7 @@
     "cancelled": "בוטל",
     "creating": "יוצר...",
     "minutes": "דק'",
+    "minutes_short": "דק'",
     "step": "שלב",
     "of": "מתוך",
     "applyFilters": "החל מסננים",
@@ -88,6 +90,7 @@
     "savePreferences": "שמור העדפות",
     "card": "כרטיס",
     "notAvailable": "לא זמין",
+    "notSpecified": "לא צוין",
     "pagination": {
       "pageInfo": "עמוד {{page}} מתוך {{totalPages}} ({{totalResults}} תוצאות)",
       "showPerPage": "הצג {{count}}"
@@ -1383,6 +1386,26 @@
   },
   "bookings": {
     "title": "הזמנת טיפול",
+    "toBeAssigned": "יוקצה",
+    "source": {
+      "subscription": "מנוי",
+      "giftVoucher": "שובר מתנה",
+      "newPurchase": "רכישה חדשה"
+    },
+    "table": {
+      "header": {
+        "professional": "מטפל/ת",
+        "location": "מיקום",
+        "bookingId": "מזהה הזמנה",
+        "treatmentDetails": "טיפול",
+        "dateTime": "תאריך ושעה",
+        "status": "סטטוס",
+        "total": "סה\"כ"
+      },
+      "flexibleTime": "זמן גמיש",
+      "toBeAssigned": "יוקצה",
+      "forRecipient": "עבור: "
+    },
     "steps": {
       "source": {
         "title": "איך תרצה להזמין?",
@@ -1587,6 +1610,7 @@
   },
   "memberBookings": {
     "title": "ההזמנות שלי",
+    "description": "נהל וצפה בכל ההזמנות שלך",
     "pageTitle": "ההזמנות שלי",
     "pageDescription": "צפה ונהל את ההזמנות הקרובות והקודמות שלך.",
     "searchPlaceholder": "חפש לפי טיפול, מטפל, מזהה הזמנה...",
@@ -1594,16 +1618,28 @@
     "noBookings": "אין לך הזמנות עדיין.",
     "noBookingsFound": "לא נמצאו הזמנות התואמות לקריטריונים שלך.",
     "bookNow": "הזמן טיפול",
+    "filters": {
+      "all": "הכל",
+      "upcoming": "קרובות",
+      "past": "עברו",
+      "cancelled": "בוטלו"
+    },
     "status": {
       "pending_professional_assignment": "ממתין לשיבוץ מטפל",
+      "pending_professional_assignment_short": "ממתין להקצאה",
       "confirmed": "מאושרת",
+      "confirmed_short": "מאושר",
       "professional_en_route": "מטפל בדרך",
+      "professional_en_route_short": "בדרך",
       "completed": "הושלמה",
+      "completed_short": "הושלם",
       "cancelled_by_user": "בוטלה על ידך",
+      "cancelled_by_user_short": "בוטל",
       "cancelled_by_admin": "בוטלה על ידי המערכת",
+      "cancelled_by_admin_short": "בוטל",
       "no_show": "לא הופעת",
-      "all": "כל הסטטוסים",
-      "cancelled": "בוטל"
+      "no_show_short": "לא הופיע",
+      "all": "כל הסטטוסים"
     },
     "duration": "{minutes} דק'",
     "customAddress": "כתובת מותאמת",
@@ -1611,7 +1647,7 @@
     "flexibleTime": "זמן גמיש",
     "source": "מקור",
     "sourceNewPurchase": "רכישה חדשה",
-    "sourceSubscription": "מינוי",
+    "sourceSubscription": "מנוי",
     "sourceGiftVoucher": "שובר מתנה",
     "cancelBooking": "בטל הזמנה",
     "viewDetailsButton": "צפה בפרטים",

@@ -419,12 +419,12 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               )}
 
             {/* Address notes if available */}
-            {(addressDisplay.notes || (addressDisplay as any).additionalNotes) && (
+            {(addressDisplay as any)?.additionalNotes && (
               <>
                 <Separator className="my-2" />
                 <p className="text-xs">
                   <span className="text-muted-foreground">{t("bookings.confirmation.addressNotes")}:</span>{" "}
-                  {addressDisplay.notes || (addressDisplay as any).additionalNotes}
+                  {(addressDisplay as any)?.additionalNotes}
                 </p>
               </>
             )}
@@ -550,7 +550,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
             (priceDetails.finalAmount > 0 || !priceDetails.isFullyCoveredByVoucherOrSubscription) && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("bookings.confirmation.paymentMethod")}:</span>
-                <span className="font-semibold">{paymentMethodDisplayName}</span>
+                <span className="font-semibold">{String(paymentMethodDisplayName || "")}</span>
               </div>
             )}
           {paymentDetails.transactionId && (
@@ -581,7 +581,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                 <div key={index} className="text-xs text-muted-foreground">
                   <span>{format(new Date(entry.date), "PPPp", { locale: currentDateFnsLocale })}: </span>
                   <span>
-                    {t(entry.description) || entry.description} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
+                    {entry.description ? t(entry.description) || entry.description : "שימוש"} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
                   </span>
                 </div>
               ))}

@@ -644,6 +644,10 @@
     "cancelConfirmDescription": "לא ניתן לבטל פעולה זו. הטיפולים שנותרו יאבדו.",
     "cancelConfirmDescriptionAdmin": "האם אתה בטוח שברצונך לבטל מנוי זה עבור {{userName}}? לא ניתן לבטל פעולה זו.",
     "users": {
+      "fields": {
+        "namePlaceholder": "הכנס שם מלא",
+        "phonePlaceholder": "הכנס מספר טלפון"
+      },
       "title": "משתמשים",
       "description": "ניהול משתמשים"
     },
@@ -871,6 +875,10 @@
       "pending_send": "ממתין לשליחה",
       "sent": "נשלח",
       "cancelled": "בוטל"
+    },
+    "status": {
+      "pending_payment": "ממתין לתשלום",
+      "fully_used": "נוצל במלואו"
     },
     "purchase": {
       "title": "רכישת שובר מתנה",
@@ -1370,29 +1378,23 @@
     "noSpecialDatesHint": "לחץ על 'הוסף תאריך מיוחד' כדי ליצור אחד."
   },
   "preferences": {
+    "title": "העדפות",
+    "generalPreferences": "העדפות כלליות",
     "treatment": {
       "title": "העדפות טיפול",
-      "description": "הגדר את מגדר המטפל המועדף עליך.",
-      "therapistGenderLabel": "מגדר מטפל מועדף",
-      "genderMale": "גבר",
-      "genderFemale": "אישה",
-      "genderAny": "כל העדפה",
-      "saveSuccess": "העדפות הטיפול נשמרו בהצלחה.",
-      "saveError": "שגיאה בשמירת העדפות הטיפול."
+      "description": "הגדר את העדפות הטיפול שלך עבור הזמנות עתידיות",
+      "therapistGenderLabel": "העדפת מגדר מטפל/ת"
     },
     "notifications": {
       "title": "הגדרות התראות",
-      "description": "נהל כיצד ברצונך לקבל התראות ובאיזו שפה.",
-      "methodsLabel": "קבל התראות באמצעות:",
+      "description": "בחר כיצד ברצונך לקבל עדכונים והתראות",
+      "methodsLabel": "שיטות התראה",
       "methodEmail": "אימייל",
       "methodSms": "SMS",
-      "languageLabel": "שפה מועדפת להתראות",
+      "languageLabel": "שפת התראות",
       "langHe": "עברית",
       "langEn": "אנגלית",
-      "langRu": "רוסית",
-      "errorMinMethods": "אנא בחר לפחות אמצעי התראה אחד.",
-      "saveSuccess": "הגדרות ההתראות נשמרו בהצלחה.",
-      "saveError": "שגיאה בשמירת הגדרות ההתראות."
+      "langRu": "רוסית"
     }
   },
   "bookings": {
@@ -1419,106 +1421,66 @@
     },
     "steps": {
       "source": {
-        "title": "איך תרצה להזמין?",
-        "description": "בחר את שיטת ההזמנה שלך.",
-        "redeemSubscription": "שימוש במנוי שלי",
-        "redeemSubscriptionDesc": "ממש טיפול מהמנויים הפעילים שלך.",
-        "available": "זמין/ים",
-        "redeemVoucher": "שימוש בשובר מתנה",
-        "redeemVoucherDesc": "השתמש בשובר מתנה עבור ההזמנה שלך.",
-        "newBooking": "הזמנה חדשה / תשלום",
-        "newBookingDesc": "הזמן טיפול חדש ושלם ישירות.",
-        "newBookingOnlyTitle": "הזמנת טיפול חדש",
-        "newBookingOnlyDesc": "בחר באפשרות זו להזמנת טיפול ללא שימוש במנוי או שובר."
+        "title": "בחר מקור ההזמנה",
+        "description": "בחר איך ברצונך לבצע את ההזמנה",
+        "redeemSubscription": "ניצול מנוי קיים",
+        "redeemSubscriptionDesc": "השתמש בטיפולים מהמנוי שלך",
+        "available": "זמין",
+        "newBooking": "הזמנה חדשה",
+        "newBookingDesc": "תשלום ישיר עבור הטיפול"
       },
       "treatment": {
-        "title": "בחר את הטיפול שלך",
-        "description": "בחר את השירות ומשך הזמן המועדפים עליך.",
-        "selectSubscription": "בחר את המנוי שלך",
-        "selectSubscriptionPlaceholder": "בחר מנוי...",
-        "selectVoucher": "בחר את שובר המתנה שלך",
-        "selectVoucherPlaceholder": "בחר שובר...",
+        "title": "בחר טיפול",
+        "description": "בחר את סוג הטיפול, משך הזמן והמטפל/ת",
+        "selectSubscription": "בחר מנוי",
+        "selectSubscriptionPlaceholder": "בחר מנוי לניצול",
         "selectTreatment": "בחר טיפול",
-        "noDescription": "אין תיאור זמין.",
-        "priceVariesByDuration": "המחיר משתנה לפי משך הטיפול",
-        "noTreatmentsForSelection": "אין טיפולים זמינים לבחירה זו. אנא בדוק את המנוי/שובר שלך או בחר שיטת הזמנה אחרת.",
-        "selectDuration": "בחר משך טיפול",
-        "selectDurationPlaceholder": "בחר משך...",
-        "treatmentLockedBySource": "הטיפול נקבע על פי המנוי/שובר שבחרת:",
-        "durationLockedBySource": "משך הזמן נקבע על פי המנוי/שובר שבחרת:",
-        "noDurationsForTreatment": "אין משכי זמן זמינים לטיפול הנבחר."
+        "selectDuration": "בחר משך זמן"
       },
       "scheduling": {
-        "title": "קבע את התור שלך",
-        "description": "בחר תאריך, שעה ומיקום לטיפול שלך.",
+        "title": "קביעת זמן ומיקום",
+        "description": "בחר תאריך, שעה וכתובת עבור הטיפול",
         "selectDate": "בחר תאריך",
         "selectTime": "בחר שעה",
-        "selectTimePlaceholder": "בחר משבצת זמן...",
-        "noSlotsAvailable": "אין משבצות זמן פנויות לתאריך הנבחר. אנא נסה תאריך אחר.",
-        "selectDateFirst": "אנא בחר תאריך תחילה כדי לראות זמנים פנויים.",
-        "flexibleTimeLabel": "אני גמיש/ה עם השעה (+/- שעתיים)",
+        "selectDateFirst": "בחר תאריך תחילה",
+        "flexibleTimeLabel": "גמישות בזמן",
+        "flexibleTimeDesc": "אני גמיש/ה בזמן הטיפול",
         "selectAddress": "בחר כתובת",
-        "selectAddressPlaceholder": "בחר כתובת...",
-        "noSavedAddresses": "אין לך כתובות שמורות. אנא הוסף כתובת.",
-        "therapistPreference": "העדפת מגדר מטפל/ת",
-        "notes": "הערות נוספות (אופציונלי)",
-        "notesPlaceholder": "בקשות מיוחדות או מידע למטפל/ת...",
-        "flexibleTimeDesc": "אם אתה גמיש, ננסה למצוא לך תור בטווח של +/- שעתיים מהשעה שבחרת.",
-        "forSomeoneElseLabel": "הזמנה זו עבור מישהו אחר",
-        "recipientName": "שם מלא של המקבל/ת",
-        "recipientPhone": "מספר טלפון של המקבל/ת"
+        "selectAddressPlaceholder": "בחר כתובת לטיפול",
+        "forSomeoneElseLabel": "הזמנה עבור מישהו אחר",
+        "notes": "הערות נוספות",
+        "notesPlaceholder": "הערות למטפל/ת (אופציונלי)",
+        "noSlotsAvailable": "אין זמנים פנויים",
+        "selectTimePlaceholder": "בחר שעת טיפול",
+        "recipientName": "שם המקבל",
+        "recipientPhone": "טלפון המקבל",
+        "therapistPreference": "העדפת מטפל/ת"
       },
       "summary": {
-        "title": "בדוק את הזמנתך",
-        "description": "אנא אשר את פרטי התור שלך.",
-        "bookingDetails": "פרטי הזמנה",
+        "title": "סיכום ההזמנה",
+        "description": "בדוק את פרטי ההזמנה לפני האישור",
+        "bookingForTitle": "הזמנה עבור",
+        "treatmentDetails": "פרטי הטיפול",
         "treatment": "טיפול",
         "dateTime": "תאריך ושעה",
-        "flexibleTime": "זמן גמיש",
-        "address": "כתובת",
         "therapistPreference": "העדפת מטפל/ת",
-        "notes": "הערות",
-        "couponCode": "קוד קופון (אופציונלי)",
-        "couponPlaceholder": "הזן קוד קופון",
-        "applyCoupon": "החל",
+        "addressTitle": "כתובת הטיפול",
         "calculatingPrice": "מחשב מחיר...",
         "basePrice": "מחיר בסיס",
-        "redeemedFromSubscription": "מומש מהמנוי",
-        "voucherApplied": "שובר מתנה הופעל",
-        "couponDiscount": "הנחת קופון",
         "totalAmount": "סכום כולל",
-        "fullyCovered": "הזמנה זו מכוסה במלואה.",
-        "confirmBooking": "אשר הזמנה",
-        "usingSubscription": "בשימוש ממנוי",
-        "bookingForTitle": "הזמנה עבור",
-        "recipientName": "שם המקבל/ת",
-        "recipientPhone": "טלפון המקבל/ת",
-        "bookedBy": "הוזמן על ידי",
-        "treatmentDetails": "פרטי הטיפול",
-        "addressTitle": "כתובת",
-        "couponDesc": "אם יש לך קוד קופון, הזן אותו כאן."
+        "couponCode": "קוד קופון",
+        "couponPlaceholder": "הכנס קוד קופון",
+        "couponDesc": "יש לך קוד הנחה? הכנס אותו כאן"
       },
       "payment": {
-        "title": "תשלום",
-        "description": "השלם את הזמנתך על ידי מסירת פרטי תשלום.",
-        "loadingPrice": "טוען פרטי מחיר...",
-        "confirmTitleNoPayment": "אשר את הזמנתך",
-        "confirmDescNoPayment": "הזמנתך מכוסה במלואה. אנא אשר לסיום.",
-        "confirmBooking": "אשר הזמנה",
+        "title": "תשלום ואישור",
+        "description": "בחר אמצעי תשלום ואשר את ההזמנה",
         "selectPaymentMethod": "בחר אמצעי תשלום",
-        "noSavedPaymentMethods": "אין לך אמצעי תשלום שמורים.",
+        "loadingPrice": "טוען מחיר...",
         "payAndConfirm": "שלם ואשר",
-        "agreeToTermsLabel": "אני מסכים/ה ל",
-        "agreeToTermsDesc": "בהמשך, הינך מסכים/ה לתנאי השירות ומדיניות הפרטיות שלנו.",
-        "agreeToMarketingLabel": "אני מסכים/ה לקבל הודעות שיווקיות (אופציונלי)"
-      },
-      "confirmation": {
-        "title": "ההזמנה אושרה!",
-        "successMessage": "הטיפול שלך הוזמן בהצלחה. אנו מוצאים עבורך את המטפל/ת המתאימ/ה ביותר.",
-        "bookingId": "מזהה הזמנה",
-        "detailsSentToEmail": "אישור עם פרטי ההזמנה שלך נשלח למייל שלך.",
-        "viewMyBookings": "צפה בהזמנות שלי",
-        "bookAnotherTreatment": "הזמן טיפול נוסף"
+        "agreeToTermsLabel": "אני מסכים/ה לתנאי השימוש",
+        "agreeToTermsDesc": "קרא ואשר את תנאי השימוש",
+        "agreeToMarketingLabel": "אני מסכים/ה לקבל חומר שיווקי"
       }
     },
     "success": {
@@ -1526,11 +1488,13 @@
       "bookingCreatedDescription": "הזמנתך נוצרה בהצלחה. אנו נודיע לך ברגע שישובץ מטפל/ת."
     },
     "confirmation": {
-      "title": "ההזמנה אושרה!",
+      "title": "אישור הזמנה",
       "thankYou": "תודה על הזמנתך! קיבלנו את בקשתך.",
       "bookingNumber": "מספר הזמנה",
       "status": "סטטוס",
-      "paymentStatus": "סטטוס תשלום",
+      "paymentStatus": {
+        "pending": "ממתין לתשלום"
+      },
       "bookedFor": "הוזמן עבור",
       "recipientName": "שם המקבל",
       "recipientPhone": "טלפון המקבל",
@@ -1600,7 +1564,7 @@
       "remaining": "נותרו"
     },
     "voucherUsage": {
-      "redeemedForBooking": "מומש עבור הזמנה מס':"
+      "redeemedForBooking": "נוצל עבור הזמנה"
     },
     "validation": {
       "sourceRequired": "אנא בחר כיצד ברצונך להזמין.",
@@ -1621,31 +1585,41 @@
       "unknownBookingError": "אירעה שגיאה לא ידועה.",
       "fetchTimeSlotsFailedTitle": "שגיאה בטעינת זמנים פנויים",
       "calculatePriceFailedTitle": "שגיאה בחישוב המחיר"
-    }
-  },
-  "preferences": {
-    "treatment": {
-      "genderAny": "כל העדפה",
-      "genderMale": "גבר",
-      "genderFemale": "אישה"
+    },
+    "surcharges": {
+      "specialTime": "תוספת שעות מיוחדות"
     }
   },
   "addresses": {
+    "title": "ניהול כתובות",
+    "addNew": "הוסף כתובת חדשה",
+    "addNewShort": "הוסף חדשה",
+    "addAddressDialogTitle": "הוסף כתובת חדשה",
     "fields": {
-      "city": "עיר",
-      "street": "רחוב",
-      "streetNumber": "מספר בית",
-      "apartment": "דירה/יחידה",
-      "entrance": "כניסה",
-      "floor": "קומה",
-      "doorName": "שם/קוד לדלת",
-      "buildingName": "שם הבניין",
-      "hotelName": "שם המלון",
-      "roomNumber": "מספר חדר",
-      "otherInstructions": "הוראות נוספות"
-    }
+      "apartmentNumber": "מספר דירה",
+      "hasPrivateParking": "חניה פרטית",
+      "hasPrivateParkingFull": "יש חניה פרטית",
+      "additionalNotes": "הערות נוספות",
+      "isDefault": "כתובת ברירת מחדל",
+      "addressType": "סוג כתובת",
+      "addressTypePlaceholder": "בחר סוג כתובת"
+    },
+    "types": {
+      "apartment": "דירה",
+      "house": "בית פרטי",
+      "office": "משרד",
+      "hotel": "מלון",
+      "other": "אחר"
+    },
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק כתובת זו?",
+    "deleteConfirmDescription": "לא ניתן לשחזר כתובת שנמחקה",
+    "selectedAddressDetails": "פרטי הכתובת הנבחרת"
   },
   "memberBookings": {
+    "client": {
+      "title": "ההזמנות שלי",
+      "loading": "טוען הזמנות..."
+    },
     "title": "ההזמנות שלי",
     "description": "נהל וצפה בכל ההזמנות שלך",
     "pageTitle": "ההזמנות שלי",

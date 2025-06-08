@@ -263,6 +263,10 @@
     "cancelConfirmDescription": "Это действие нельзя отменить. Оставшиеся сеансы будут аннулированы.",
     "cancelConfirmDescriptionAdmin": "Вы уверены, что хотите отменить эту подписку для {{userName}}? Это действие нельзя отменить.",
     "users": {
+      "fields": {
+        "namePlaceholder": "Введите полное имя",
+        "phonePlaceholder": "Введите номер телефона"
+      },
       "title": "Пользователи подписки",
       "description": "Управление пользователями подписки"
     },
@@ -366,6 +370,10 @@
       "sent": "Отправлен",
       "cancelled": "Отменен"
     },
+    "status": {
+      "pending_payment": "Ожидание оплаты",
+      "fully_used": "Полностью использован"
+    },
     "myVouchers": {
       "title": "Мои подарочные сертификаты",
       "description": "Управляйте вашими купленными и полученными подарочными сертификатами.",
@@ -464,6 +472,12 @@
     "purchased": "Купленные сертификаты",
     "noGiftVouchersDescription": "У вас пока нет подарочных сертификатов.",
     "noPurchasedVouchersDescription": "Сертификаты, которые вы покупаете для других, появятся здесь."
+  },
+  "memberBookings": {
+    "client": {
+      "title": "Мои записи",
+      "loading": "Загружаются записи..."
+    }
   },
   "memberSubscriptions": {
     "title": "Мои подписки",
@@ -1186,21 +1200,20 @@
     "noSpecialDatesHint": "Нажмите 'Добавить особую дату', чтобы создать одну."
   },
   "preferences": {
+    "title": "Настройки",
+    "generalPreferences": "Общие настройки",
     "treatment": {
       "title": "Предпочтения по процедурам",
-      "description": "Установите предпочитаемый пол специалиста.",
-      "therapistGenderLabel": "Предпочитаемый пол специалиста",
-      "genderAny": "Любой",
-      "genderMale": "Мужчина",
-      "genderFemale": "Женщина"
+      "description": "Настройте ваши предпочтения для будущих записей",
+      "therapistGenderLabel": "Предпочтение пола специалиста"
     },
     "notifications": {
       "title": "Настройки уведомлений",
-      "description": "Управляйте тем, как вы получаете уведомления и на каком языке.",
-      "methodsLabel": "Получать уведомления через:",
-      "methodEmail": "Эл. почта",
+      "description": "Выберите, как вы хотите получать обновления и уведомления",
+      "methodsLabel": "Способы уведомлений",
+      "methodEmail": "Email",
       "methodSms": "SMS",
-      "languageLabel": "Предпочитаемый язык уведомлений",
+      "languageLabel": "Язык уведомлений",
       "langHe": "Иврит",
       "langEn": "Английский",
       "langRu": "Русский"
@@ -1210,77 +1223,66 @@
     "title": "Записаться на процедуру",
     "steps": {
       "source": {
-        "title": "Как вы хотите забронировать?",
-        "description": "Выберите способ бронирования.",
-        "newBookingOnlyTitle": "Забронировать новую процедуру",
-        "newBookingOnlyDesc": "Выберите этот вариант, чтобы забронировать процедуру без использования подписки или сертификата.",
-        "newBooking": "Новое бронирование / Оплатить сейчас",
-        "newBookingDesc": "Забронируйте новую процедуру и оплатите напрямую.",
-        "redeemSubscription": "Использовать мою подписку",
-        "redeemSubscriptionDesc": "Использовать сеанс из ваших активных подписок.",
+        "title": "Выберите источник записи",
+        "description": "Выберите, как вы хотите сделать запись",
+        "redeemSubscription": "Использовать существующую подписку",
+        "redeemSubscriptionDesc": "Используйте процедуры из вашей подписки",
         "available": "Доступно",
-        "redeemVoucher": "Использовать подарочный сертификат",
-        "redeemVoucherDesc": "Применить подарочный сертификат к вашему бронированию."
+        "newBooking": "Новая запись",
+        "newBookingDesc": "Прямая оплата за процедуру"
       },
       "treatment": {
         "title": "Выберите процедуру",
-        "description": "Выберите предпочитаемую услугу и продолжительность.",
+        "description": "Выберите тип процедуры, продолжительность и специалиста",
+        "selectSubscription": "Выберите подписку",
+        "selectSubscriptionPlaceholder": "Выберите подписку для использования",
         "selectTreatment": "Выберите процедуру",
-        "selectDuration": "Выберите продолжительность",
-        "selectSubscription": "Выберите вашу подписку",
-        "selectSubscriptionPlaceholder": "Выберите подписку...",
-        "selectVoucher": "Выберите ваш подарочный сертификат",
-        "selectVoucherPlaceholder": "Выберите сертификат..."
+        "selectDuration": "Выберите продолжительность"
       },
       "scheduling": {
-        "title": "Запланируйте визит",
-        "description": "Выберите дату, время и место для вашей процедуры.",
+        "title": "Планирование времени и места",
+        "description": "Выберите дату, время и адрес для вашей процедуры",
         "selectDate": "Выберите дату",
         "selectTime": "Выберите время",
-        "selectDateFirst": "Пожалуйста, сначала выберите дату, чтобы увидеть доступное время.",
-        "flexibleTimeLabel": "Я гибок со временем (+/- 2 часа)",
-        "flexibleTimeDesc": "Если вы гибки, мы постараемся найти свободное время в пределах +/- 2 часов от выбранного вами времени.",
+        "selectDateFirst": "Сначала выберите дату",
+        "flexibleTimeLabel": "Гибкое время",
+        "flexibleTimeDesc": "Я гибок по времени процедуры",
         "selectAddress": "Выберите адрес",
-        "selectAddressPlaceholder": "Выберите адрес...",
-        "forSomeoneElseLabel": "Это бронирование для другого человека",
-        "notes": "Дополнительные примечания (необязательно)",
-        "notesPlaceholder": "Особые пожелания или информация для специалиста...",
-        "therapistPreference": "Предпочитаемый пол специалиста",
-        "noSlotsAvailable": "Нет доступных временных интервалов на выбранную дату. Пожалуйста, попробуйте другую дату.",
-        "selectTimePlaceholder": "Выберите временной интервал...",
-        "recipientName": "Полное имя получателя",
-        "recipientPhone": "Номер телефона получателя"
-      },
-      "summary": {
-        "title": "Проверьте ваше бронирование",
-        "description": "Пожалуйста, подтвердите детали вашего визита.",
-        "bookingForTitle": "Бронирование для",
+        "selectAddressPlaceholder": "Выберите адрес для процедуры",
+        "forSomeoneElseLabel": "Запись для кого-то еще",
+        "notes": "Дополнительные заметки",
+        "notesPlaceholder": "Заметки для специалиста (необязательно)",
+        "noSlotsAvailable": "Нет доступных слотов",
+        "selectTimePlaceholder": "Выберите время процедуры",
         "recipientName": "Имя получателя",
         "recipientPhone": "Телефон получателя",
-        "bookedBy": "Забронировал(а)",
+        "therapistPreference": "Предпочтение специалиста"
+      },
+      "summary": {
+        "title": "Сводка записи",
+        "description": "Проверьте детали записи перед подтверждением",
+        "bookingForTitle": "Запись для",
         "treatmentDetails": "Детали процедуры",
         "treatment": "Процедура",
         "dateTime": "Дата и время",
-        "therapistPreference": "Предпочтение по специалисту",
-        "addressTitle": "Адрес",
-        "calculatingPrice": "Расчет стоимости...",
-        "basePrice": "Базовая стоимость",
-        "totalAmount": "Итоговая сумма",
-        "couponCode": "Код купона (необязательно)",
+        "therapistPreference": "Предпочтение специалиста",
+        "addressTitle": "Адрес процедуры",
+        "calculatingPrice": "Рассчитываем цену...",
+        "basePrice": "Базовая цена",
+        "totalAmount": "Общая сумма",
+        "couponCode": "Код купона",
         "couponPlaceholder": "Введите код купона",
-        "couponDesc": "Если у вас есть код купона, введите его здесь.",
-        "usingGiftVoucher": "Использование подарочного сертификата",
-        "monetaryVoucherApplied": "Денежный сертификат применен"
+        "couponDesc": "Есть код скидки? Введите его здесь"
       },
       "payment": {
-        "title": "Оплата",
-        "description": "Завершите бронирование, указав платежные данные.",
-        "loadingPrice": "Загрузка информации о стоимости...",
+        "title": "Оплата и подтверждение",
+        "description": "Выберите способ оплаты и подтвердите запись",
         "selectPaymentMethod": "Выберите способ оплаты",
+        "loadingPrice": "Загружается цена...",
         "payAndConfirm": "Оплатить и подтвердить",
-        "agreeToTermsLabel": "Я согласен(на) с",
-        "agreeToTermsDesc": "Продолжая, вы соглашаетесь с нашими условиями обслуживания и политикой конфиденциальности.",
-        "agreeToMarketingLabel": "Я согласен(на) получать маркетинговые сообщения (необязательно)"
+        "agreeToTermsLabel": "Я согласен с условиями обслуживания",
+        "agreeToTermsDesc": "Прочтите и подтвердите условия обслуживания",
+        "agreeToMarketingLabel": "Я согласен получать маркетинговые материалы"
       }
     },
     "subscriptions": {
@@ -1291,11 +1293,14 @@
         "confirmed": "Подтверждено"
       },
       "paymentStatus": {
-        "pending": "В ожидании"
+        "pending": "Ожидание оплаты"
       }
     },
     "voucherUsage": {
-      "redeemedForBooking": "Использовано для бронирования №:"
+      "redeemedForBooking": "Использован для записи"
+    },
+    "surcharges": {
+      "specialTime": "Доплата за особое время"
     },
     "validation": {
       "sourceRequired": "Пожалуйста, выберите способ бронирования.",
@@ -1488,19 +1493,29 @@
     }
   },
   "addresses": {
+    "title": "Управление адресами",
+    "addNew": "Добавить новый адрес",
+    "addNewShort": "Добавить новый",
+    "addAddressDialogTitle": "Добавить новый адрес",
     "fields": {
-      "city": "Город",
-      "street": "Улица",
-      "streetNumber": "Номер дома",
-      "apartment": "Квартира/Помещение",
-      "entrance": "Подъезд",
-      "floor": "Этаж",
-      "doorName": "Название/код на двери",
-      "buildingName": "Название здания",
-      "hotelName": "Название отеля",
-      "roomNumber": "Номер комнаты",
-      "otherInstructions": "Другие инструкции"
-    }
+      "apartmentNumber": "Номер квартиры",
+      "hasPrivateParking": "Частная парковка",
+      "hasPrivateParkingFull": "Есть частная парковка",
+      "additionalNotes": "Дополнительные заметки",
+      "isDefault": "Адрес по умолчанию",
+      "addressType": "Тип адреса",
+      "addressTypePlaceholder": "Выберите тип адреса"
+    },
+    "types": {
+      "apartment": "Квартира",
+      "house": "Дом",
+      "office": "Офис",
+      "hotel": "Отель",
+      "other": "Другое"
+    },
+    "deleteConfirm": "Вы уверены, что хотите удалить этот адрес?",
+    "deleteConfirmDescription": "Это действие нельзя отменить",
+    "selectedAddressDetails": "Детали выбранного адреса"
   },
   "users": {
     "fields": {

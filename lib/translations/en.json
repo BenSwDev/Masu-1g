@@ -1490,104 +1490,144 @@
     "noSpecialDatesHint": "לחץ על 'הוסף תאריך מיוחד' כדי ליצור אחד."
   },
   "preferences": {
+    "title": "Preferences",
+    "generalPreferences": "General Preferences",
     "treatment": {
-      "genderAny": "כל העדפה",
-      "genderMale": "גבר",
-      "genderFemale": "אישה"
+      "title": "Treatment Preferences",
+      "description": "Set your treatment preferences for future bookings",
+      "therapistGenderLabel": "Therapist Gender Preference"
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "description": "Choose how you want to receive updates and notifications",
+      "methodsLabel": "Notification Methods",
+      "methodEmail": "Email",
+      "methodSms": "SMS",
+      "languageLabel": "Notification Language",
+      "langHe": "Hebrew",
+      "langEn": "English",
+      "langRu": "Russian"
+    }
+  },
+  "bookings": {
+    "confirmation": {
+      "title": "Booking Confirmation",
+      "paymentStatus": {
+        "pending": "Pending Payment"
+      }
+    },
+    "surcharges": {
+      "specialTime": "Special Time Surcharge"
+    },
+    "voucherUsage": {
+      "redeemedForBooking": "Redeemed for booking"
+    },
+    "steps": {
+      "source": {
+        "title": "Select Booking Source",
+        "description": "Choose how you want to make your booking",
+        "redeemSubscription": "Use Existing Subscription",
+        "redeemSubscriptionDesc": "Use treatments from your subscription",
+        "available": "Available",
+        "newBooking": "New Booking",
+        "newBookingDesc": "Direct payment for treatment"
+      },
+      "treatment": {
+        "title": "Select Treatment",
+        "description": "Choose the treatment type, duration and therapist",
+        "selectSubscription": "Select Subscription",
+        "selectSubscriptionPlaceholder": "Choose subscription to redeem",
+        "selectTreatment": "Select Treatment",
+        "selectDuration": "Select Duration"
+      },
+      "scheduling": {
+        "title": "Schedule Time & Location",
+        "description": "Choose date, time and address for your treatment",
+        "selectDate": "Select Date",
+        "selectTime": "Select Time",
+        "selectDateFirst": "Select date first",
+        "flexibleTimeLabel": "Flexible Time",
+        "flexibleTimeDesc": "I'm flexible with treatment time",
+        "selectAddress": "Select Address",
+        "selectAddressPlaceholder": "Choose treatment address",
+        "forSomeoneElseLabel": "Booking for someone else",
+        "notes": "Additional Notes",
+        "notesPlaceholder": "Notes for therapist (optional)",
+        "noSlotsAvailable": "No available slots",
+        "selectTimePlaceholder": "Choose treatment time",
+        "recipientName": "Recipient Name",
+        "recipientPhone": "Recipient Phone",
+        "therapistPreference": "Therapist Preference"
+      },
+      "summary": {
+        "title": "Booking Summary",
+        "description": "Review booking details before confirmation",
+        "bookingForTitle": "Booking For",
+        "treatmentDetails": "Treatment Details",
+        "treatment": "Treatment",
+        "dateTime": "Date & Time",
+        "therapistPreference": "Therapist Preference",
+        "addressTitle": "Treatment Address",
+        "calculatingPrice": "Calculating price...",
+        "basePrice": "Base Price",
+        "totalAmount": "Total Amount",
+        "couponCode": "Coupon Code",
+        "couponPlaceholder": "Enter coupon code",
+        "couponDesc": "Have a discount code? Enter it here"
+      },
+      "payment": {
+        "title": "Payment & Confirmation",
+        "description": "Select payment method and confirm booking",
+        "selectPaymentMethod": "Select Payment Method",
+        "loadingPrice": "Loading price...",
+        "payAndConfirm": "Pay & Confirm",
+        "agreeToTermsLabel": "I agree to terms of service",
+        "agreeToTermsDesc": "Read and confirm terms of service",
+        "agreeToMarketingLabel": "I agree to receive marketing materials"
+      }
     }
   },
   "addresses": {
+    "title": "Address Management",
+    "addNew": "Add New Address",
+    "addNewShort": "Add New",
+    "addAddressDialogTitle": "Add New Address",
     "fields": {
-      "city": "עיר",
-      "street": "רחוב",
-      "streetNumber": "מספר בית",
-      "apartment": "דירה/יחידה",
-      "entrance": "כניסה",
-      "floor": "קומה",
-      "doorName": "שם/קוד לדלת",
-      "buildingName": "שם הבניין",
-      "hotelName": "שם המלון",
-      "roomNumber": "מספר חדר",
-      "otherInstructions": "הוראות נוספות"
-    }
+      "apartmentNumber": "Apartment Number",
+      "hasPrivateParking": "Private Parking",
+      "hasPrivateParkingFull": "Has Private Parking",
+      "additionalNotes": "Additional Notes",
+      "isDefault": "Default Address",
+      "addressType": "Address Type",
+      "addressTypePlaceholder": "Select address type"
+    },
+    "types": {
+      "apartment": "Apartment",
+      "house": "House",
+      "office": "Office",
+      "hotel": "Hotel",
+      "other": "Other"
+    },
+    "deleteConfirm": "Are you sure you want to delete this address?",
+    "deleteConfirmDescription": "This action cannot be undone",
+    "selectedAddressDetails": "Selected Address Details"
   },
   "memberBookings": {
-    "title": "ההזמנות שלי",
-    "description": "נהל וצפה בכל ההזמנות שלך",
-    "pageTitle": "ההזמנות שלי",
-    "pageDescription": "צפה ונהל את ההזמנות הקרובות והקודמות שלך.",
-    "searchPlaceholder": "חפש לפי טיפול, מטפל, מזהה הזמנה...",
-    "filterByStatus": "סנן לפי סטטוס",
-    "noBookings": "אין לך הזמנות עדיין.",
-    "noBookingsFound": "לא נמצאו הזמנות התואמות לקריטריונים שלך.",
-    "bookNow": "הזמן טיפול",
-    "filters": {
-      "all": "הכל",
-      "upcoming": "קרובות",
-      "past": "עברו",
-      "cancelled": "בוטלו"
-    },
+    "client": {
+      "title": "My Bookings",
+      "loading": "Loading bookings..."
+    }
+  },
+  "users": {
+    "fields": {
+      "namePlaceholder": "Enter full name",
+      "phonePlaceholder": "Enter phone number"
+    }
+  },
+  "giftVouchers": {
     "status": {
-      "pending_professional_assignment": "ממתין לשיבוץ מטפל",
-      "pending_professional_assignment_short": "ממתין להקצאה",
-      "confirmed": "מאושרת",
-      "confirmed_short": "מאושר",
-      "professional_en_route": "מטפל בדרך",
-      "professional_en_route_short": "בדרך",
-      "completed": "הושלמה",
-      "completed_short": "הושלם",
-      "cancelled_by_user": "בוטלה על ידך",
-      "cancelled_by_user_short": "בוטל",
-      "cancelled_by_admin": "בוטלה על ידי המערכת",
-      "cancelled_by_admin_short": "בוטל",
-      "no_show": "לא הופעת",
-      "no_show_short": "לא הופיע",
-      "all": "כל הסטטוסים"
-    },
-    "columns": {
-      "bookingNumber": "מספר הזמנה",
-      "treatment": "טיפול",
-      "recipientDetails": "הוזמן עבור",
-      "dateTime": "תאריך ושעה",
-      "fullAddress": "כתובת מלאה",
-      "status": "סטטוס",
-      "paymentDetails": "פרטי תשלום",
-      "actions": "פעולות"
-    },
-    "table": {
-      "createdAt": "נוצרה",
-      "duration": "{minutes} דק'",
-      "selfBooking": "עצמי",
-      "bookingForOther": "הזמנה עבור אדם אחר",
-      "flexibleTime": "(גמיש ±2)",
-      "today": "היום",
-      "tomorrow": "מחר",
-      "daysRemaining": "בעוד {days} ימים",
-      "past": "עבר",
-      "locationNotAvailable": "מיקום לא זמין",
-      "cityNotSpecified": "עיר לא צוינה",
-      "apartment": "דירה",
-      "floor": "קומה",
-      "entrance": "כניסה",
-      "privateParking": "חנייה",
-      "accessible": "נגיש",
-      "paymentFree": "ללא תשלום",
-      "paymentNew": "רכישה חדשה",
-      "paymentSubscription": "מנוי",
-      "paymentVoucher": "שובר מתנה",
-      "basePrice": "מחיר בסיס",
-      "discount": "הנחה",
-      "surcharges": "תוספות",
-      "paymentPaid": "שולם",
-      "paymentPending": "ממתין לתשלום",
-      "paymentFailed": "תשלום נכשל",
-      "paymentNotRequired": "לא נדרש תשלום",
-      "showNotesTooltip": "הצג הערות מלאות",
-      "clickToShowNotes": "לחץ להצגת הערות מלאות"
-    },
-    "notesDialog": {
-      "title": "הערות ללקוח",
-      "noNotes": "אין הערות נוספות"
+      "pending_payment": "Pending Payment",
+      "fully_used": "Fully Used"
     }
   },
   "translations": {

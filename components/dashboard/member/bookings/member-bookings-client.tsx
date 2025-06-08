@@ -9,7 +9,6 @@ import { DataTable } from "@/components/common/ui/data-table"
 import { BookingsTableSkeleton } from "./bookings-table-skeleton"
 import type { PopulatedBooking } from "@/types/booking"
 import { Button } from "@/components/common/ui/button"
-import { cn } from "@/lib/utils/utils"
 
 // Status Tabs Component
 const StatusTabs = ({ 
@@ -32,7 +31,7 @@ const StatusTabs = ({
     <div className="border-b border-border mb-4">
       <nav className="-mb-px flex space-x-8">
         {tabs.map((tab) => (
-          <button
+          <Button
             key={tab.key}
             onClick={() => onStatusChange(tab.key)}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -42,7 +41,7 @@ const StatusTabs = ({
             }`}
           >
             {tab.label}
-          </button>
+          </Button>
         ))}
       </nav>
     </div>
@@ -101,20 +100,20 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
               Page {pagination.pageIndex + 1} of {data?.totalPages ?? 0} ({data?.totalBookings ?? 0} results)
             </div>
             <div className="flex items-center space-x-2">
-              <button
+              <Button
                 onClick={() => setPagination(prev => ({ ...prev, pageIndex: Math.max(0, prev.pageIndex - 1) }))}
                 disabled={pagination.pageIndex === 0}
                 className="px-3 py-2 text-sm border rounded disabled:opacity-50"
               >
                 Previous
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
                 disabled={pagination.pageIndex >= (data?.totalPages ?? 0) - 1}
                 className="px-3 py-2 text-sm border rounded disabled:opacity-50"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         </>

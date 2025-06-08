@@ -4,6 +4,9 @@ import { getBookingInitialData } from "@/actions/booking-actions"
 import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
 import type { UserSessionData } from "@/types/next-auth"
 
+// Add this import at the top
+import type { Language } from "@/lib/translations/i18n"
+
 // Import translations directly for server-side use
 import heTranslations from "@/lib/translations/he.json"
 import enTranslations from "@/lib/translations/en.json"
@@ -13,6 +16,21 @@ const allServerTranslationsData = {
   he: heTranslations,
   en: enTranslations,
   ru: ruTranslations,
+}
+
+// Define or import the Language type if not already available globally in this file context
+// For this example, assuming Language is 'he' | 'en' | 'ru' as defined in your i18n.tsx
+// type Language = "he" | "en" | "ru"; // This might already be imported or defined
+
+// Helper function to normalize language codes
+const normalizeLang = (lang?: string): Language => {
+  if (lang) {
+    const baseLang = lang.split("-")[0].toLowerCase()
+    if (baseLang === "he" || baseLang === "en" || baseLang === "ru") {
+      return baseLang as Language
+    }
+  }
+  return "he" // Default language
 }
 
 // Server-side translation helper function
@@ -41,8 +59,8 @@ function getSsrTranslation(key: string, lang = "he"): string {
 }
 
 export default async function BookTreatmentPage({ params }: { params?: { lang?: string } }) {
-  // Determine language for SSR: from URL params if available, else default.
-  const currentLang = params?.lang || "he"
+  // Normalize the language code from params
+  const currentLang = normalizeLang(params?.lang)
 
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {

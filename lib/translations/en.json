@@ -1492,5 +1492,8 @@
       "namePlaceholder": "Enter full name",
       "phonePlaceholder": "Enter phone number"
     }
+  },
+  "translations": {
+    "normalizationNote": "Language code is normalized to ensure matching with existing translation keys."
   }
 }

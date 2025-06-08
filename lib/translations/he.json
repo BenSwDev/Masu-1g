@@ -1788,5 +1788,8 @@
     "notifications": {
       "roleSwitchSuccess": "התפקיד הוחלף בהצלחה"
     }
+  },
+  "translations": {
+    "normalizationNote": "קוד השפה מנורמל כדי להבטיח התאמה למפתחות התרגום הקיימים."
   }
 }

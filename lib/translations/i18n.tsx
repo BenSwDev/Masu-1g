@@ -58,8 +58,25 @@ interface I18nProviderProps {
 }
 
 export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderProps) => {
-  const [language, setLanguage] = useState<Language>(defaultLanguage)
-  const [dir, setDir] = useState<"rtl" | "ltr">(getDirection(defaultLanguage))
+  // Load language from localStorage if available, otherwise use defaultLanguage
+  const getInitialLanguage = (): Language => {
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem("masu_language")
+      if (stored === "he" || stored === "en" || stored === "ru") return stored
+    }
+    return defaultLanguage
+  }
+
+  const [language, setLanguageState] = useState<Language>(getInitialLanguage)
+  const [dir, setDir] = useState<"rtl" | "ltr">(getDirection(getInitialLanguage()))
+
+  // When language changes, save to localStorage
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang)
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("masu_language", lang)
+    }
+  }
 
   // In development mode, expose a global function to get and copy missing keys.
   useEffect(() => {

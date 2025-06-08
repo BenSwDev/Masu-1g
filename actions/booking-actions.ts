@@ -1292,3 +1292,244 @@ export async function professionalMarkCompleted(
     return { success: false, error: "bookings.errors.markCompletedFailed" }
   }
 }
+
+export async function getAllBookings(
+  filters: {
+    status?: string
+    page?: number
+    limit?: number
+    sortBy?: string
+    sortDirection?: "asc" | "desc"
+    search?: string
+  } = {},
+): Promise<{ bookings: PopulatedBooking[]; totalPages: number; totalBookings: number }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("admin")) {
+    throw new Error("common.unauthorized")
+  }
+
+  try {
+    await dbConnect()
+
+    const {
+      status,
+      page = 1,
+      limit = 10,
+      sortBy = "bookingDateTime",
+      sortDirection = "desc",
+      search,
+    } = filters
+
+    // Build filter query
+    const filterQuery: any = {}
+
+    if (status && status !== "all") {
+      filterQuery.status = status
+    }
+
+    if (search) {
+      const searchRegex = new RegExp(search, "i")
+      filterQuery.$or = [
+        { bookingNumber: searchRegex },
+        { bookedByUserName: searchRegex },
+        { bookedByUserEmail: searchRegex },
+        { bookedByUserPhone: searchRegex },
+        { recipientName: searchRegex },
+        { recipientPhone: searchRegex },
+      ]
+    }
+
+    // Calculate pagination
+    const skip = (page - 1) * limit
+    const sortOrder = sortDirection === "asc" ? 1 : -1
+
+    // Get total count
+    const totalBookings = await Booking.countDocuments(filterQuery)
+    const totalPages = Math.ceil(totalBookings / limit)
+
+    // Fetch bookings with population
+    const bookings = await Booking.find(filterQuery)
+      .sort({ [sortBy]: sortOrder })
+      .skip(skip)
+      .limit(limit)
+      .populate("userId", "name email phone")
+      .populate("professionalId", "name email phone")
+      .populate("treatmentId", "name")
+      .populate("addressId")
+      .lean()
+
+    const populatedBookings: PopulatedBooking[] = bookings.map((booking) => ({
+      ...booking,
+      _id: booking._id.toString(),
+      userId: booking.userId,
+      treatmentId: booking.treatmentId,
+      professionalId: booking.professionalId || null,
+      addressId: booking.addressId || null,
+    }))
+
+    return {
+      bookings: populatedBookings,
+      totalPages,
+      totalBookings,
+    }
+  } catch (error) {
+    logger.error("Error in getAllBookings:", { error, filters })
+    throw new Error("bookings.errors.fetchBookingsFailed")
+  }
+}
+
+export async function assignProfessionalToBooking(
+  bookingId: string,
+  professionalId: string,
+): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("admin")) {
+    return { success: false, error: "common.unauthorized" }
+  }
+
+  const mongooseDbSession = await mongoose.startSession()
+  let assignedBooking: IBooking | null = null
+
+  try {
+    await mongooseDbSession.withTransaction(async () => {
+      await dbConnect()
+
+      // Verify professional exists and has professional role
+      const professional = await User.findById(professionalId).session(mongooseDbSession)
+      if (!professional || !professional.roles.includes("professional")) {
+        throw new Error("bookings.errors.professionalNotFound")
+      }
+
+      // Find and update booking
+      const booking = await Booking.findById(bookingId).session(mongooseDbSession)
+      if (!booking) {
+        throw new Error("bookings.errors.bookingNotFound")
+      }
+
+      if (booking.status !== "pending_professional_assignment") {
+        throw new Error("bookings.errors.bookingNotPendingAssignment")
+      }
+
+      booking.professionalId = new mongoose.Types.ObjectId(professionalId)
+      booking.status = "confirmed"
+      await booking.save({ session: mongooseDbSession })
+      assignedBooking = booking.toObject()
+    })
+
+    if (assignedBooking) {
+      revalidatePath("/dashboard/admin/bookings")
+      revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
+
+      try {
+        // Send notifications to client and professional
+        const [clientUser, professional, treatment] = await Promise.all([
+          User.findById(assignedBooking.userId).select("name email phone notificationPreferences").lean(),
+          User.findById(professionalId).select("name email phone notificationPreferences").lean(),
+          Treatment.findById(assignedBooking.treatmentId).select("name").lean(),
+        ])
+
+        if (clientUser && professional && treatment) {
+          // Client notification
+          const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
+          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
+
+          const clientNotificationData = {
+            type: "BOOKING_CONFIRMED_CLIENT",
+            userName: clientUser.name || "לקוח/ה",
+            professionalName: professional.name || "מטפל/ת",
+            bookingDateTime: assignedBooking.bookingDateTime,
+            treatmentName: treatment.name,
+            bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${assignedBooking._id.toString()}`,
+          }
+
+          if (clientNotificationMethods.includes("email") && clientUser.email) {
+            await notificationManager.sendNotification(
+              { type: "email", value: clientUser.email, name: clientUser.name, language: clientLang },
+              clientNotificationData,
+            )
+          }
+          if (clientNotificationMethods.includes("sms") && clientUser.phone) {
+            await notificationManager.sendNotification(
+              { type: "phone", value: clientUser.phone, language: clientLang },
+              clientNotificationData,
+            )
+          }
+
+          // Professional notification
+          const professionalLang = (professional.notificationPreferences?.language as NotificationLanguage) || "he"
+          const professionalNotificationMethods = professional.notificationPreferences?.methods || ["email"]
+
+          const professionalNotificationData = {
+            type: "BOOKING_ASSIGNED_PROFESSIONAL",
+            professionalName: professional.name || "מטפל/ת",
+            clientName: clientUser.name || "לקוח/ה",
+            bookingDateTime: assignedBooking.bookingDateTime,
+            treatmentName: treatment.name,
+            bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/professional/booking-management/${assignedBooking._id.toString()}`,
+          }
+
+          if (professionalNotificationMethods.includes("email") && professional.email) {
+            await notificationManager.sendNotification(
+              { type: "email", value: professional.email, name: professional.name, language: professionalLang },
+              professionalNotificationData,
+            )
+          }
+          if (professionalNotificationMethods.includes("sms") && professional.phone) {
+            await notificationManager.sendNotification(
+              { type: "phone", value: professional.phone, language: professionalLang },
+              professionalNotificationData,
+            )
+          }
+        }
+      } catch (notificationError) {
+        logger.error("Failed to send booking assignment notifications:", {
+          error: notificationError,
+          bookingId,
+          professionalId,
+        })
+      }
+
+      return { success: true, booking: assignedBooking }
+    }
+
+    return { success: false, error: "bookings.errors.assignProfessionalFailed" }
+  } catch (error) {
+    logger.error("Error in assignProfessionalToBooking:", { error, bookingId, professionalId })
+    const errorMessage = error instanceof Error ? error.message : "bookings.errors.assignProfessionalFailed"
+    return {
+      success: false,
+      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.assignProfessionalFailed",
+    }
+  } finally {
+    await mongooseDbSession.endSession()
+  }
+}
+
+export async function getAvailableProfessionals(): Promise<{ success: boolean; professionals?: any[]; error?: string }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("admin")) {
+    return { success: false, error: "common.unauthorized" }
+  }
+
+  try {
+    await dbConnect()
+
+    const professionals = await User.find({ roles: "professional" })
+      .select("_id name email phone gender")
+      .lean()
+
+    return {
+      success: true,
+      professionals: professionals.map((p) => ({
+        _id: p._id.toString(),
+        name: p.name,
+        email: p.email,
+        phone: p.phone,
+        gender: p.gender,
+      })),
+    }
+  } catch (error) {
+    logger.error("Error in getAvailableProfessionals:", { error })
+    return { success: false, error: "bookings.errors.fetchProfessionalsFailed" }
+  }
+}

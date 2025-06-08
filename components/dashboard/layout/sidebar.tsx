@@ -271,6 +271,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string }>> = {
       admin: [
         { titleKey: "users", icon: User, hrefSuffix: "users" },
+        { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
         { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments" },
         { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },

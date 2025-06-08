@@ -155,7 +155,11 @@
     "anonymousUser": "משתמש אנונימי",
     "more": "עוד",
     "unknownStep": "שלב לא ידוע",
-    "validationError": "שגיאת אימות"
+    "validationError": "שגיאת אימות",
+    "male": "זכר",
+    "female": "נקבה",
+    "assigning": "משייך...",
+    "pageOf": "עמוד {{current}} מתוך {{total}}"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -1769,6 +1773,44 @@
       "name": "שם",
       "namePlaceholder": "הכנס שם מלא",
       "phonePlaceholder": "הכנס מספר טלפון"
+    }
+  },
+  "adminBookings": {
+    "title": "ניהול הזמנות",
+    "searchPlaceholder": "חפש לפי מספר הזמנה, שם לקוח, אימייל או טלפון...",
+    "filterByStatus": "סנן לפי סטטוס",
+    "allStatuses": "כל הסטטוסים",
+    "noBookings": "אין הזמנות במערכת",
+    "summary": "מציג {{showing}} מתוך {{total}} הזמנות",
+    "assignProfessional": "שייך מטפל",
+    "selectProfessional": "בחר מטפל",
+    "chooseProfessional": "בחר מטפל מהרשימה",
+    "assign": "שייך",
+    "assignSuccess": "המטפל שויך בהצלחה להזמנה",
+    "assignError": "שגיאה בשיוך המטפל להזמנה",
+    "noProfessional": "ללא מטפל",
+    "viewClientNotes": "צפה בהערות לקוח",
+    "notesDialog": {
+      "title": "הערות לקוח",
+      "noNotes": "אין הערות נוספות"
+    },
+    "status": {
+      "pendingAssignment": "ממתין לשיוך מטפל",
+      "confirmed": "מאושר",
+      "enRoute": "מטפל בדרך",
+      "completed": "הושלם",
+      "cancelledByUser": "בוטל על ידי לקוח",
+      "cancelledByAdmin": "בוטל על ידי מנהל",
+      "noShow": "לא הופיע"
+    },
+    "columns": {
+      "bookingNumber": "מספר הזמנה",
+      "client": "לקוח",
+      "treatment": "טיפול",
+      "dateTime": "תאריך ושעה",
+      "professional": "מטפל",
+      "status": "סטטוס",
+      "amount": "סכום"
     }
   }
 }

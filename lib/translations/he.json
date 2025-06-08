@@ -151,7 +151,9 @@
       "userNotBookingOwner": "אינך מורשה לבטל הזמנה זו.",
       "cancellationWindowExpired": "חלון הביטולים עבור הזמנה זו פג."
     },
-    "toggleColumns": "החלף עמודות"
+    "toggleColumns": "החלף עמודות",
+    "export": "ייצא",
+    "included": "כלול"
   },
   "login": {
     "welcome": "ברוכים השבים",
@@ -1696,6 +1698,7 @@
     "sourceGiftVoucher": "שובר מתנה",
     "cancelBooking": "בטל הזמנה",
     "viewDetailsButton": "צפה בפרטים",
+    "viewClientNotes": "צפה בהערות לקוח",
     "userCancellationReason": "בוטל על ידי המשתמש מלוח הבקרה.",
     "cancelSuccess": "ההזמנה בוטלה בהצלחה.",
     "cancelConfirmDescription": "האם אתה בטוח שברצונך לבטל הזמנה זו? פעולה זו אינה ניתנת לשחזור."

@@ -140,7 +140,9 @@
       "userNotBookingOwner": "You are not authorized to cancel this booking.",
       "cancellationWindowExpired": "The cancellation window for this booking has expired."
     },
-    "toggleColumns": "Toggle Columns"
+    "toggleColumns": "Toggle Columns",
+    "export": "Export",
+    "included": "Included"
   },
   "dashboard": {
     "sidebar": {
@@ -1142,7 +1144,8 @@
     "stepComplete": "Confirmation",
     "minimumAmount": "Minimum amount",
     "minimumAmountDetails": "Minimum amount is {{amount}} {{currency}}",
-    "selectTypeDescription": "Choose whether you want to gift a specific treatment or a monetary value."
+    "selectTypeDescription": "Choose whether you want to gift a specific treatment or a monetary value.",
+    "giftWrapping": "Gift Wrapping"
   },
   "gender": {
     "male": "Male",
@@ -1196,9 +1199,9 @@
       "title": "Treatment Preferences",
       "description": "Set your preferred therapist gender.",
       "therapistGenderLabel": "Preferred Therapist Gender",
+      "genderAny": "Any",
       "genderMale": "Male",
       "genderFemale": "Female",
-      "genderAny": "Any",
       "saveSuccess": "Treatment preferences saved successfully.",
       "saveError": "Failed to save treatment preferences."
     },
@@ -1208,7 +1211,7 @@
       "methodsLabel": "Receive notifications via:",
       "methodEmail": "Email",
       "methodSms": "SMS",
-      "languageLabel": "Preferred Language for Notifications",
+      "languageLabel": "Preferred notification language",
       "langHe": "Hebrew",
       "langEn": "English",
       "langRu": "Russian",
@@ -1223,106 +1226,75 @@
       "source": {
         "title": "How would you like to book?",
         "description": "Choose your booking method.",
-        "redeemSubscription": "Use My Subscription",
-        "redeemSubscriptionDesc": "Redeem a session from your active subscriptions.",
-        "available": "available",
-        "redeemVoucher": "Use Gift Voucher",
-        "redeemVoucherDesc": "Apply a gift voucher towards your booking.",
+        "newBookingOnlyTitle": "Book New Treatment",
+        "newBookingOnlyDesc": "Choose this option to book a treatment without using a subscription or voucher.",
         "newBooking": "New Booking / Pay Now",
         "newBookingDesc": "Book a new treatment and pay directly.",
-        "newBookingOnlyTitle": "Book a New Treatment",
-        "newBookingOnlyDesc": "Select this option to book a treatment without using a subscription or voucher."
+        "redeemSubscription": "Use My Subscription",
+        "redeemSubscriptionDesc": "Redeem a session from your active subscriptions.",
+        "available": "Available",
+        "redeemVoucher": "Use Gift Voucher",
+        "redeemVoucherDesc": "Apply a gift voucher to your booking."
       },
       "treatment": {
-        "title": "Select Your Treatment",
-        "description": "Choose the service and duration you prefer.",
-        "selectSubscription": "Select Your Subscription",
-        "selectSubscriptionPlaceholder": "Choose a subscription...",
-        "selectVoucher": "Select Your Gift Voucher",
-        "selectVoucherPlaceholder": "Choose a voucher...",
+        "title": "Choose Your Treatment",
+        "description": "Select your preferred service and duration.",
         "selectTreatment": "Select Treatment",
-        "noDescription": "No description available.",
-        "priceVariesByDuration": "Price varies by duration",
-        "noTreatmentsForSelection": "No treatments available for this selection. Please check your subscription/voucher or choose another booking method.",
         "selectDuration": "Select Duration",
-        "selectDurationPlaceholder": "Choose a duration...",
-        "treatmentLockedBySource": "Treatment is determined by your selected subscription/voucher:",
-        "durationLockedBySource": "Duration is determined by your selected subscription/voucher:",
-        "noDurationsForTreatment": "No durations available for the selected treatment."
+        "selectSubscription": "Select Your Subscription",
+        "selectSubscriptionPlaceholder": "Choose subscription...",
+        "selectVoucher": "Select Your Gift Voucher",
+        "selectVoucherPlaceholder": "Choose voucher..."
       },
       "scheduling": {
         "title": "Schedule Your Appointment",
-        "description": "Pick a date, time, and location for your treatment.",
+        "description": "Choose date, time, and location for your treatment.",
         "selectDate": "Select Date",
         "selectTime": "Select Time",
-        "selectTimePlaceholder": "Select a time slot...",
-        "noSlotsAvailable": "No time slots available for the selected date. Please try another date.",
         "selectDateFirst": "Please select a date first to see available times.",
-        "flexibleTimeLabel": "I'm flexible with the time (+/- 2 hours)",
-        "selectAddress": "Select Address",
-        "selectAddressPlaceholder": "Choose an address...",
-        "noSavedAddresses": "You have no saved addresses. Please add one.",
-        "therapistPreference": "Preferred Therapist Gender",
-        "notes": "Additional Notes (Optional)",
-        "notesPlaceholder": "Any special requests or information for the therapist...",
+        "flexibleTimeLabel": "I'm flexible with time (+/- 2 hours)",
         "flexibleTimeDesc": "If you're flexible, we'll try to find a slot within +/- 2 hours of your selected time.",
+        "selectAddress": "Select Address",
+        "selectAddressPlaceholder": "Choose address...",
         "forSomeoneElseLabel": "This booking is for someone else",
+        "notes": "Additional Notes (Optional)",
+        "notesPlaceholder": "Special requests or information for the therapist...",
+        "therapistPreference": "Preferred Therapist Gender",
+        "noSlotsAvailable": "No time slots available for the selected date. Please try another date.",
+        "selectTimePlaceholder": "Select time slot...",
         "recipientName": "Recipient's Full Name",
         "recipientPhone": "Recipient's Phone Number"
       },
       "summary": {
         "title": "Review Your Booking",
-        "description": "Please confirm the details of your appointment.",
-        "bookingDetails": "Booking Details",
-        "treatment": "Treatment",
-        "dateTime": "Date & Time",
-        "flexibleTime": "Flexible Time",
-        "address": "Address",
-        "therapistPreference": "Therapist Preference",
-        "notes": "Notes",
-        "couponCode": "Coupon Code (Optional)",
-        "couponPlaceholder": "Enter coupon code",
-        "applyCoupon": "Apply",
-        "calculatingPrice": "Calculating price...",
-        "basePrice": "Base Price",
-        "redeemedFromSubscription": "Redeemed from Subscription",
-        "voucherApplied": "Gift Voucher Applied",
-        "couponDiscount": "Coupon Discount",
-        "totalAmount": "Total Amount",
-        "fullyCovered": "This booking is fully covered.",
-        "confirmBooking": "Confirm Booking",
-        "usingSubscription": "Using subscription",
+        "description": "Please confirm your appointment details.",
         "bookingForTitle": "Booking For",
         "recipientName": "Recipient Name",
         "recipientPhone": "Recipient Phone",
         "bookedBy": "Booked By",
         "treatmentDetails": "Treatment Details",
+        "treatment": "Treatment",
+        "dateTime": "Date & Time",
+        "therapistPreference": "Therapist Preference",
         "addressTitle": "Address",
-        "couponDesc": "If you have a coupon code, enter it here."
+        "calculatingPrice": "Calculating price...",
+        "basePrice": "Base Price",
+        "totalAmount": "Total Amount",
+        "couponCode": "Coupon Code (Optional)",
+        "couponPlaceholder": "Enter coupon code",
+        "couponDesc": "If you have a coupon code, enter it here.",
+        "usingGiftVoucher": "Using Gift Voucher",
+        "monetaryVoucherApplied": "Monetary voucher applied"
       },
       "payment": {
         "title": "Payment",
         "description": "Complete your booking by providing payment details.",
         "loadingPrice": "Loading price details...",
-        "confirmTitleNoPayment": "Confirm Your Booking",
-        "confirmDescNoPayment": "Your booking is fully covered. Please confirm to finalize.",
-        "confirmBooking": "Confirm Booking",
         "selectPaymentMethod": "Select Payment Method",
-        "noSavedPaymentMethods": "You have no saved payment methods.",
         "payAndConfirm": "Pay & Confirm",
         "agreeToTermsLabel": "I agree to the",
-        "agreeToTermsDesc": "By proceeding, you agree to our Terms of Service and Privacy Policy.",
-        "agreeToMarketingLabel": "I agree to receive marketing communications (optional)"
-      },
-      "confirmation": {
-        "title": "Booking Confirmed!",
-        "successMessage": "Your treatment has been successfully booked. We're finding the best professional for you.",
-        "bookingId": "Booking ID",
-        "detailsSentToEmail": "A confirmation with your booking details has been sent to your email.",
-        "viewMyBookings": "View My Bookings",
-        "bookAnotherTreatment": "Book Another Treatment",
-        "status": "Status",
-        "paymentStatus": "Payment Status"
+        "agreeToTermsDesc": "By proceeding, you agree to our terms of service and privacy policy.",
+        "agreeToMarketingLabel": "I agree to receive marketing messages (optional)"
       }
     },
     "errors": {
@@ -1370,7 +1342,7 @@
       "specialTime": "Special Time Surcharge"
     },
     "voucherUsage": {
-      "redeemedForBooking": "Redeemed for booking ID:"
+      "redeemedForBooking": "Redeemed for booking #:"
     },
     "validation": {
       "sourceRequired": "Please select how you'd like to book.",
@@ -1385,8 +1357,7 @@
     "unknownSubscription": "Unknown Subscription",
     "treatmentVoucher": "Treatment Voucher",
     "subscriptions": {
-      "remaining": "Remaining",
-      "expiry": "Expires"
+      "remaining": "Remaining"
     },
     "status": {
       "pending_professional_assignment": "Pending Professional Assignment",
@@ -1405,7 +1376,13 @@
     "confirmation": {
       "sourceNewPurchase": "New Purchase",
       "professionalToBeAssigned": "Professional to be assigned",
-      "title": "Booking Confirmation"
+      "title": "Booking Confirmation",
+      "status": {
+        "confirmed": "Confirmed"
+      },
+      "paymentStatus": {
+        "pending": "Pending"
+      }
     },
     "table": {
       "header": {
@@ -1501,80 +1478,18 @@
     },
     "cancelBooking": "Cancel Booking",
     "viewDetailsButton": "View Details",
+    "viewClientNotes": "View Client Notes",
+    "userCancellationReason": "Cancelled by user from dashboard.",
     "cancelSuccess": "Booking cancelled successfully.",
     "cancelConfirmDescription": "Are you sure you want to cancel this booking? This action cannot be undone."
   },
-  "gender": {
-    "male": "Male",
-    "female": "Female",
-    "other": "Other"
+  "notifications": {
+    "roleSwitchSuccess": "Role switched successfully"
   },
-  "workingHours": {
-    "updateSuccess": "Working hours updated successfully",
-    "updateSuccessDescription": "Working hours settings have been saved",
-    "updateError": "Error updating working hours",
-    "updateErrorDescription": "Failed to update working hours settings",
-    "fixedHours": "Fixed Hours",
-    "specialDates": "Special Dates",
-    "day": "Day",
-    "active": "Active",
-    "startTime": "Start Time",
-    "endTime": "End Time",
-    "priceAddition": "Price Addition",
-    "notes": "Notes",
-    "addSpecialDate": "Add Special Date",
-    "editSpecialDate": "Edit Special Date",
-    "date": "Date",
-    "selectDate": "Select Date",
-    "amount": "Amount",
-    "type": "Type",
-    "notesPlaceholder": "Add notes...",
-    "hours": "Hours",
-    "days": {
-      "sunday": "Sunday",
-      "monday": "Monday",
-      "tuesday": "Tuesday",
-      "wednesday": "Wednesday",
-      "thursday": "Thursday",
-      "friday": "Friday",
-      "saturday": "Saturday"
-    },
-    "fixedHoursTab": "Fixed Hours",
-    "specialDatesTab": "Special Dates",
-    "specialDateName": "Event Name",
-    "specialDateNamePlaceholder": "e.g., Holiday, Special Event",
-    "fixedHoursDescription": "Set your regular weekly working hours.",
-    "specialDatesDescription": "Manage exceptions like holidays or special events.",
-    "specialDateDialogDescription": "Add or edit details for a specific date.",
-    "enablePriceAddition": "Enable price addition",
-    "specialDateActiveDescription": "Mark if services are available on this special date.",
-    "noSpecialDates": "No Special Dates Yet",
-    "noSpecialDatesHint": "Click 'Add Special Date' to create one."
-  },
-  "preferences": {
-    "treatment": {
-      "title": "Treatment Preferences",
-      "description": "Set your preferred therapist gender.",
-      "therapistGenderLabel": "Preferred Therapist Gender",
-      "genderMale": "Male",
-      "genderFemale": "Female",
-      "genderAny": "Any",
-      "saveSuccess": "Treatment preferences saved successfully.",
-      "saveError": "Failed to save treatment preferences."
-    },
-    "notifications": {
-      "title": "Notification Settings",
-      "description": "Manage how you receive notifications and in which language.",
-      "methodsLabel": "Receive notifications via:",
-      "methodEmail": "Email",
-      "methodSms": "SMS",
-      "languageLabel": "Preferred Language for Notifications",
-      "langHe": "Hebrew",
-      "langEn": "English",
-      "langRu": "Russian",
-      "errorMinMethods": "Please select at least one notification method.",
-      "saveSuccess": "Notification settings saved successfully.",
-      "saveError": "Failed to save notification settings."
+  "users": {
+    "fields": {
+      "namePlaceholder": "Enter full name",
+      "phonePlaceholder": "Enter phone number"
     }
   }
 }

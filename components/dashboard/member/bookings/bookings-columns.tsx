@@ -1,17 +1,20 @@
 "use client"
 
-import type { ColumnDef } from "@tanstack/react-table"
-import {
-  MoreHorizontal,
-  ArrowUpDown,
-  Eye,
-  X,
-  Loader2,
-  MapPin,
-  Phone,
-  MessageSquare,
-} from "lucide-react"
+import { ColumnDef } from "@tanstack/react-table"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { format } from "date-fns"
+import { he, enUS, ru } from "date-fns/locale"
+import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
+import { 
+  ArrowUpDown, 
+  MoreHorizontal, 
+  Eye, 
+  X, 
+  Loader2,
+  MessageSquare
+} from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,25 +22,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/common/ui/dropdown-menu"
-import { Badge } from "@/components/common/ui/badge"
+} from "@/components/ui/dropdown-menu"
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle
+} from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { cn, formatDateIsraeli, formatTimeIsraeli } from "@/lib/utils/utils"
 import BookingDetailsView from "./booking-details-view"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/common/ui/dialog"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/common/ui/tooltip"
-import { Button } from "@/components/common/ui/button"
-
 import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking"
 
 type TFunction = (key: string, options?: any) => string
@@ -47,6 +40,7 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
   const [isOpen, setIsOpen] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [showNotesModal, setShowNotesModal] = useState(false)
 
   const canCancel = useMemo(() => {
     const cancelableStatuses = ["pending_professional_assignment", "confirmed", "professional_en_route"]
@@ -71,6 +65,8 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
       setIsOpen(false)
     }
   }
+
+  const hasNotes = booking.notes && booking.notes.trim().length > 0
 
   return (
     <>
@@ -102,6 +98,16 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
             <Eye className="mr-2 h-4 w-4" />
             <span>{t("common.viewDetails")}</span>
           </DropdownMenuItem>
+
+          {hasNotes && (
+            <DropdownMenuItem
+              onClick={() => setShowNotesModal(true)}
+              className="cursor-pointer"
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              <span>{t("memberBookings.viewClientNotes")}</span>
+            </DropdownMenuItem>
+          )}
 
           {canCancel && (
             <>
@@ -140,6 +146,19 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("memberBookings.notesDialog.title")}</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-700">
+              {booking.notes || t("memberBookings.notesDialog.noNotes")}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
@@ -148,45 +167,42 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
 const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"]; t: TFunction }) => {
   const statusConfig = {
     pending_professional_assignment: {
-      label: t("memberBookings.status.pending_professional_assignment_short") || "ממתין להקצאה",
-      className: "bg-amber-50 text-amber-700 border border-amber-200",
+      label: t("memberBookings.status.pending_professional_assignment_short"),
+      className: "bg-amber-100 text-amber-800 border-amber-200"
     },
     confirmed: {
-      label: t("memberBookings.status.confirmed_short") || "מאושר",
-      className: "bg-green-50 text-green-700 border border-green-200",
+      label: t("memberBookings.status.confirmed_short"),
+      className: "bg-green-100 text-green-800 border-green-200"
     },
     professional_en_route: {
-      label: t("memberBookings.status.professional_en_route_short") || "בדרך",
-      className: "bg-blue-50 text-blue-700 border border-blue-200",
+      label: t("memberBookings.status.professional_en_route_short"),
+      className: "bg-blue-100 text-blue-800 border-blue-200"
     },
     completed: {
-      label: t("memberBookings.status.completed_short") || "הושלם",
-      className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+      label: t("memberBookings.status.completed_short"),
+      className: "bg-gray-100 text-gray-800 border-gray-200"
     },
     cancelled_by_user: {
-      label: t("memberBookings.status.cancelled_by_user_short") || "בוטל",
-      className: "bg-red-50 text-red-700 border border-red-200",
+      label: t("memberBookings.status.cancelled_by_user_short"),
+      className: "bg-red-100 text-red-800 border-red-200"
     },
     cancelled_by_admin: {
-      label: t("memberBookings.status.cancelled_by_admin_short") || "בוטל",
-      className: "bg-red-50 text-red-700 border border-red-200",
+      label: t("memberBookings.status.cancelled_by_admin_short"),
+      className: "bg-red-100 text-red-800 border-red-200"
     },
     no_show: {
-      label: t("memberBookings.status.no_show_short") || "לא הופיע",
-      className: "bg-orange-50 text-orange-700 border border-orange-200",
-    },
-  }
+      label: t("memberBookings.status.no_show_short"),
+      className: "bg-orange-100 text-orange-800 border-orange-200"
+    }
+  } as const
 
-  const config = statusConfig[status] || {
-    label: status,
-    className: "bg-gray-50 text-gray-700 border border-gray-200",
+  const config = statusConfig[status as keyof typeof statusConfig] || {
+    label: status || t("common.status.unknown"),
+    className: "bg-gray-100 text-gray-800 border-gray-200"
   }
 
   return (
-    <Badge
-      variant="outline"
-      className={`text-xs font-medium px-3 py-1 rounded-md ${config.className}`}
-    >
+    <Badge variant="outline" className={cn("text-xs px-2 py-1", config.className)}>
       {config.label}
     </Badge>
   )
@@ -212,22 +228,13 @@ const NotesDisplay = ({ notes, t }: { notes?: string; t: TFunction }) => {
 
   return (
     <>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div 
-              className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded cursor-pointer hover:bg-gray-100 flex items-center gap-1"
-              onClick={() => setShowDialog(true)}
-            >
-              <MessageSquare className="w-3 h-3" />
-              {truncated}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="max-w-xs">{t("memberBookings.table.clickToShowNotes")}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div 
+        className="text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded cursor-pointer hover:bg-gray-100 flex items-center gap-1"
+        onClick={() => setShowDialog(true)}
+      >
+        <MessageSquare className="w-3 h-3" />
+        {truncated}
+      </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-md">
@@ -243,6 +250,27 @@ const NotesDisplay = ({ notes, t }: { notes?: string; t: TFunction }) => {
       </Dialog>
     </>
   )
+}
+
+// Utility functions for formatting
+const formatDateIsraeli = (date: string | Date) => {
+  const d = typeof date === 'string' ? new Date(date) : date
+  return format(d, "d.M.yyyy", { locale: he })
+}
+
+const formatTimeIsraeli = (date: Date) => {
+  return format(date, "HH:mm", { locale: he })
+}
+
+const getLocale = (locale: string) => {
+  switch (locale) {
+    case 'he':
+      return he
+    case 'ru':
+      return ru
+    default:
+      return enUS
+  }
 }
 
 export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<PopulatedBooking>[] => {
@@ -278,7 +306,6 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         const booking = row.original
         const treatment = booking.treatmentId
         let durationDisplay = ""
-        let priceDisplay = ""
         
         if (treatment?.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
           const selectedDuration = treatment.durations.find(
@@ -286,36 +313,52 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
           )
           if (selectedDuration) {
             durationDisplay = t("memberBookings.table.duration", { minutes: selectedDuration.minutes })
-            priceDisplay = `₪${selectedDuration.price?.toFixed(0) || "0"}`
           }
         } else if (treatment?.pricingType === "fixed" && treatment.defaultDurationMinutes) {
           durationDisplay = t("memberBookings.table.duration", { minutes: treatment.defaultDurationMinutes })
-          priceDisplay = `₪${treatment.fixedPrice?.toFixed(0) || "0"}`
         }
 
         return (
-          <div className="text-right space-y-2">
+          <div className="text-right">
             <div className="font-medium text-gray-900">
               {treatment?.name || t("common.unknownTreatment")}
-            </div>
-            
-            <div className="flex justify-end gap-2 text-xs">
               {durationDisplay && (
-                <span className="text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                  {durationDisplay}
-                </span>
-              )}
-              {priceDisplay && (
-                <span className="text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                  {priceDisplay}
+                <span className="text-sm text-gray-600 mr-2">
+                  ({durationDisplay})
                 </span>
               )}
             </div>
-
-            <NotesDisplay notes={booking.notes} t={t} />
           </div>
         )
       },
+    },
+    {
+      accessorKey: "therapistGenderPreference",
+      header: () => <div className="text-right">{t("bookings.steps.scheduling.therapistPreference")}</div>,
+      cell: ({ row }) => {
+        const preference = row.original.therapistGenderPreference
+
+        const getPreferenceLabel = (pref: string) => {
+          switch (pref) {
+            case 'male':
+              return t("preferences.treatment.genderMale")
+            case 'female':
+              return t("preferences.treatment.genderFemale")
+            case 'any':
+            default:
+              return t("preferences.treatment.genderAny")
+          }
+        }
+
+        return (
+          <div className="text-right">
+            <div className="text-sm font-medium text-gray-700 bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-md">
+              {getPreferenceLabel(preference)}
+            </div>
+          </div>
+        )
+      },
+      size: 140,
     },
     {
       accessorKey: "recipientName",
@@ -357,46 +400,52 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         </Button>
       ),
       cell: ({ row }) => {
-        const date = new Date(row.original.bookingDateTime)
+        const booking = row.original
+        const bookingDate = new Date(booking.bookingDateTime)
         const now = new Date()
-        const diffDays = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-        
-        let urgencyClass = ""
-        let urgencyText = ""
-        
-        if (diffDays < 0) {
-          urgencyClass = "text-gray-500"
-          urgencyText = t("memberBookings.table.past")
-        } else if (diffDays === 0) {
-          urgencyClass = "text-red-600 font-semibold"
-          urgencyText = t("memberBookings.table.today")
-        } else if (diffDays === 1) {
-          urgencyClass = "text-orange-600 font-medium"
-          urgencyText = t("memberBookings.table.tomorrow")
-        } else if (diffDays <= 7) {
-          urgencyClass = "text-blue-600"
-          urgencyText = t("memberBookings.table.daysRemaining", { days: diffDays })
-        } else {
-          urgencyClass = "text-gray-600"
-        }
+        const isToday = bookingDate.toDateString() === now.toDateString()
+        const isTomorrow = bookingDate.toDateString() === new Date(now.getTime() + 24 * 60 * 60 * 1000).toDateString()
+        const isPast = bookingDate < now
 
-        const timeDisplay = row.original.isFlexibleTime 
-          ? `${formatTimeIsraeli(date)} ${t("memberBookings.table.flexibleTime")}`
-          : formatTimeIsraeli(date)
+        // Format date in Israeli style
+        const dateStr = formatDateIsraeli(booking.bookingDateTime)
+        const timeStr = formatTimeIsraeli(bookingDate)
+
+        // Get day label
+        let dayLabel = ""
+        if (isToday) {
+          dayLabel = t("memberBookings.table.today")
+        } else if (isTomorrow) {
+          dayLabel = t("memberBookings.table.tomorrow")
+        } else if (!isPast) {
+          const daysFromNow = Math.ceil((bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+          dayLabel = t("memberBookings.table.daysRemaining", { days: daysFromNow })
+        } else {
+          dayLabel = t("memberBookings.table.past")
+        }
 
         return (
           <div className="text-right space-y-1">
-            <div className={`font-medium ${urgencyClass}`}>
-              {formatDateIsraeli(date)}
+            <div className="font-medium text-gray-900">
+              {timeStr}
+              {booking.isFlexibleTime && (
+                <span className="text-xs text-blue-600 mr-1">
+                  {t("memberBookings.table.flexibleTime")}
+                </span>
+              )}
             </div>
-            <div className="font-mono text-sm text-gray-600">
-              {timeDisplay}
+            <div className="text-sm text-gray-600">
+              {dateStr}
             </div>
-            {urgencyText && (
-              <div className={`text-xs ${urgencyClass}`}>
-                {urgencyText}
-              </div>
-            )}
+            <div className={cn(
+              "text-xs px-2 py-1 rounded-full inline-block",
+              isToday ? "bg-green-100 text-green-700" :
+              isTomorrow ? "bg-blue-100 text-blue-700" :
+              isPast ? "bg-gray-100 text-gray-600" :
+              "bg-orange-100 text-orange-700"
+            )}>
+              {dayLabel}
+            </div>
           </div>
         )
       },

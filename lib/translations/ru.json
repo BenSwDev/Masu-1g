@@ -138,7 +138,9 @@
       "userNotBookingOwner": "Вы не авторизованы для отмены этого бронирования.",
       "cancellationWindowExpired": "Окно отмены для этого бронирования истекло."
     },
-    "toggleColumns": "Переключить колонки"
+    "toggleColumns": "Переключить колонки",
+    "export": "Экспорт",
+    "included": "Включено"
   },
   "dashboard": {
     "sidebar": {
@@ -1132,7 +1134,8 @@
     "stepComplete": "Подтверждение",
     "minimumAmount": "Минимальная сумма",
     "minimumAmountDetails": "Минимальная сумма {{amount}} {{currency}}",
-    "selectTypeDescription": "Выберите, хотите ли вы подарить конкретную процедуру или денежную сумму."
+    "selectTypeDescription": "Выберите, хотите ли вы подарить конкретную процедуру или денежную сумму.",
+    "giftWrapping": "Подарочная упаковка"
   },
   "gender": {
     "male": "Мужской",
@@ -1183,280 +1186,115 @@
   },
   "preferences": {
     "treatment": {
-      "title": "Предпочтения по процедурам",
-      "description": "Установите предпочитаемый пол терапевта.",
-      "therapistGenderLabel": "Предпочитаемый пол терапевта",
-      "genderMale": "Мужской",
-      "genderFemale": "Женский",
+      "title": "Предпочтения лечения",
+      "description": "Установите предпочтительный пол терапевта.",
+      "therapistGenderLabel": "Предпочтительный пол терапевта",
       "genderAny": "Любой",
-      "saveSuccess": "Предпочтения по процедурам успешно сохранены.",
-      "saveError": "Не удалось сохранить предпочтения по процедурам."
+      "genderMale": "Мужчина",
+      "genderFemale": "Женщина"
     },
     "notifications": {
       "title": "Настройки уведомлений",
-      "description": "Управляйте способами получения уведомлений и языком.",
+      "description": "Управляйте тем, как вы получаете уведомления и на каком языке.",
       "methodsLabel": "Получать уведомления через:",
-      "methodEmail": "Эл. почта",
+      "methodEmail": "Email",
       "methodSms": "SMS",
       "languageLabel": "Предпочитаемый язык уведомлений",
       "langHe": "Иврит",
       "langEn": "Английский",
-      "langRu": "Русский",
-      "errorMinMethods": "Пожалуйста, выберите хотя бы один способ уведомления.",
-      "saveSuccess": "Настройки уведомлений успешно сохранены.",
-      "saveError": "Не удалось сохранить настройки уведомлений."
+      "langRu": "Русский"
     }
   },
   "bookings": {
     "title": "Записаться на процедуру",
     "steps": {
       "source": {
-        "title": "Как вы хотите записаться?",
-        "description": "Выберите способ записи.",
-        "redeemSubscription": "Использовать мой абонемент",
-        "redeemSubscriptionDesc": "Используйте сеанс из ваших активных абонементов.",
-        "available": "доступно",
-        "redeemVoucher": "Использовать подарочный сертификат",
-        "redeemVoucherDesc": "Примените подарочный сертификат к вашей записи.",
-        "newBooking": "Новая запись / Оплатить сейчас",
-        "newBookingDesc": "Запишитесь на новую процедуру и оплатите напрямую.",
+        "title": "Как вы хотите забронировать?",
+        "description": "Выберите способ бронирования.",
         "newBookingOnlyTitle": "Забронировать новую процедуру",
-        "newBookingOnlyDesc": "Выберите эту опцию, чтобы забронировать процедуру без использования подписки или сертификата."
+        "newBookingOnlyDesc": "Выберите этот вариант, чтобы забронировать процедуру без использования подписки или ваучера.",
+        "newBooking": "Новое бронирование / Заплатить сейчас",
+        "newBookingDesc": "Забронируйте новую процедуру и заплатите напрямую.",
+        "redeemSubscription": "Использовать мою подписку",
+        "redeemSubscriptionDesc": "Погасите сеанс из ваших активных подписок.",
+        "available": "Доступно",
+        "redeemVoucher": "Использовать подарочный ваучер",
+        "redeemVoucherDesc": "Применить подарочный ваучер к вашему бронированию."
       },
       "treatment": {
-        "title": "Выберите процедуру",
+        "title": "Выберите вашу процедуру",
         "description": "Выберите предпочитаемую услугу и продолжительность.",
-        "selectSubscription": "Выберите ваш абонемент",
-        "selectSubscriptionPlaceholder": "Выберите абонемент...",
-        "selectVoucher": "Выберите ваш подарочный сертификат",
-        "selectVoucherPlaceholder": "Выберите сертификат...",
         "selectTreatment": "Выберите процедуру",
-        "noDescription": "Описание отсутствует.",
-        "priceVariesByDuration": "Цена зависит от продолжительности",
-        "noTreatmentsForSelection": "Нет доступных процедур для этого выбора. Пожалуйста, проверьте ваш абонемент/сертификат или выберите другой способ записи.",
         "selectDuration": "Выберите продолжительность",
-        "selectDurationPlaceholder": "Выберите продолжительность...",
-        "treatmentLockedBySource": "Процедура определяется выбранным вами абонементом/сертификатом:",
-        "durationLockedBySource": "Продолжительность определяется выбранным вами абонементом/сертификатом:",
-        "noDurationsForTreatment": "Для выбранной процедуры нет доступных вариантов продолжительности."
+        "selectSubscription": "Выберите вашу подписку",
+        "selectSubscriptionPlaceholder": "Выберите подписку...",
+        "selectVoucher": "Выберите ваш подарочный ваучер",
+        "selectVoucherPlaceholder": "Выберите ваучер..."
       },
       "scheduling": {
         "title": "Запланируйте вашу встречу",
         "description": "Выберите дату, время и место для вашей процедуры.",
         "selectDate": "Выберите дату",
         "selectTime": "Выберите время",
-        "selectTimePlaceholder": "Выберите временной слот...",
-        "noSlotsAvailable": "Нет доступных временных слотов на выбранную дату. Пожалуйста, попробуйте другую дату.",
         "selectDateFirst": "Пожалуйста, сначала выберите дату, чтобы увидеть доступное время.",
-        "flexibleTimeLabel": "Я гибок со временем (+/- 2 часа)",
+        "flexibleTimeLabel": "Я гибкий со временем (+/- 2 часа)",
+        "flexibleTimeDesc": "Если вы гибки, мы попытаемся найти слот в пределах +/- 2 часов от выбранного времени.",
         "selectAddress": "Выберите адрес",
         "selectAddressPlaceholder": "Выберите адрес...",
-        "noSavedAddresses": "У вас нет сохраненных адресов. Пожалуйста, добавьте адрес.",
-        "therapistPreference": "Предпочтительный пол терапевта",
-        "notes": "Дополнительные примечания (необязательно)",
-        "notesPlaceholder": "Любые особые пожелания или информация для терапевта...",
-        "flexibleTimeDesc": "Если вы гибки, мы постараемся найти слот в пределах +/- 2 часов от выбранного вами времени.",
-        "forSomeoneElseLabel": "Это бронирование для другого человека",
+        "forSomeoneElseLabel": "Это бронирование для кого-то другого",
+        "notes": "Дополнительные заметки (необязательно)",
+        "notesPlaceholder": "Особые пожелания или информация для терапевта...",
+        "therapistPreference": "Предпочитаемый пол терапевта",
+        "noSlotsAvailable": "Нет доступных временных слотов для выбранной даты. Пожалуйста, попробуйте другую дату.",
+        "selectTimePlaceholder": "Выберите временной слот...",
         "recipientName": "Полное имя получателя",
         "recipientPhone": "Номер телефона получателя"
       },
       "summary": {
-        "title": "Проверьте вашу запись",
+        "title": "Просмотрите ваше бронирование",
         "description": "Пожалуйста, подтвердите детали вашей встречи.",
-        "bookingDetails": "Детали записи",
-        "treatment": "Процедура",
-        "dateTime": "Дата и время",
-        "flexibleTime": "Гибкое время",
-        "address": "Адрес",
-        "therapistPreference": "Предпочтение терапевта",
-        "notes": "Примечания",
-        "couponCode": "Код купона (необязательно)",
-        "couponPlaceholder": "Введите код купона",
-        "applyCoupon": "Применить",
-        "calculatingPrice": "Расчет цены...",
-        "basePrice": "Базовая цена",
-        "redeemedFromSubscription": "Использовано из абонемента",
-        "voucherApplied": "Применен подарочный сертификат",
-        "couponDiscount": "Скидка по купону",
-        "totalAmount": "Итоговая сумма",
-        "fullyCovered": "Эта запись полностью покрыта.",
-        "confirmBooking": "Подтвердить запись",
-        "usingSubscription": "Используется абонемент",
         "bookingForTitle": "Бронирование для",
         "recipientName": "Имя получателя",
         "recipientPhone": "Телефон получателя",
         "bookedBy": "Забронировано",
         "treatmentDetails": "Детали процедуры",
+        "treatment": "Процедура",
+        "dateTime": "Дата и время",
+        "therapistPreference": "Предпочтение терапевта",
         "addressTitle": "Адрес",
-        "couponDesc": "Если у вас есть код купона, введите его здесь."
+        "calculatingPrice": "Расчет цены...",
+        "basePrice": "Базовая цена",
+        "totalAmount": "Общая сумма",
+        "couponCode": "Код купона (необязательно)",
+        "couponPlaceholder": "Введите код купона",
+        "couponDesc": "Если у вас есть код купона, введите его здесь.",
+        "usingGiftVoucher": "Использование подарочного ваучера",
+        "monetaryVoucherApplied": "Денежный ваучер применен"
       },
       "payment": {
-        "title": "Оплата",
-        "description": "Завершите запись, указав платежные данные.",
+        "title": "Платеж",
+        "description": "Завершите ваше бронирование, предоставив платежные данные.",
         "loadingPrice": "Загрузка деталей цены...",
-        "confirmTitleNoPayment": "Подтвердите вашу запись",
-        "confirmDescNoPayment": "Ваша запись полностью покрыта. Пожалуйста, подтвердите для завершения.",
-        "confirmBooking": "Подтвердить запись",
         "selectPaymentMethod": "Выберите способ оплаты",
-        "noSavedPaymentMethods": "У вас нет сохраненных способов оплаты.",
-        "payAndConfirm": "Оплатить и подтвердить",
+        "payAndConfirm": "Заплатить и подтвердить",
         "agreeToTermsLabel": "Я согласен с",
-        "agreeToTermsDesc": "Продолжая, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности.",
+        "agreeToTermsDesc": "Продолжая, вы соглашаетесь с нашими условиями обслуживания и политикой конфиденциальности.",
         "agreeToMarketingLabel": "Я согласен получать маркетинговые сообщения (необязательно)"
-      },
-      "confirmation": {
-        "title": "Запись подтверждена!",
-        "successMessage": "Ваша процедура успешно забронирована. Мы подбираем для вас лучшего специалиста.",
-        "status": "Статус",
-        "paymentStatus": "Статус платежа"
       }
     },
-    "errors": {
-      "invalidDate": "Выбрана неверная дата.",
-      "treatmentNotFound": "Выбранная процедура не найдена или неактивна.",
-      "durationRequired": "Для этого типа процедуры требуется указать продолжительность.",
-      "durationNotFound": "Выбранная продолжительность не найдена или неактивна.",
-      "invalidTreatmentDuration": "Неверная продолжительность процедуры.",
-      "workingHoursNotSet": "Рабочие часы не настроены для выбранной даты.",
-      "fetchTimeSlotsFailed": "Не удалось получить доступные временные слоты. Пожалуйста, попробуйте еще раз.",
-      "invalidBasePrice": "Невозможно рассчитать цену, базовая цена неверна.",
-      "calculatePriceFailed": "Не удалось рассчитать цену записи. Пожалуйста, попробуйте еще раз.",
-      "subscriptionInvalid": "Выбранный абонемент недействителен, истек или не имеет оставшихся сеансов.",
-      "giftVoucherInvalid": "Выбранный подарочный сертификат недействителен, истек или полностью использован.",
-      "couponInvalid": "Код купона недействителен, истек или достиг лимита использования.",
-      "subscriptionRedemptionFailed": "Не удалось использовать абонемент. Пожалуйста, проверьте его статус.",
-      "voucherRedemptionFailedInactive": "Не удалось использовать подарочный сертификат. Возможно, он неактивен.",
-      "voucherInsufficientBalance": "На подарочном сертификате недостаточно средств для этой записи.",
-      "couponApplyFailed": "Не удалось применить купон. Возможно, он недействителен или истек.",
-      "paymentMethodRequired": "Для этой записи требуется способ оплаты.",
-      "bookingCreationFailedUnknown": "Создание записи не удалось из-за неизвестной ошибки.",
-      "createBookingFailed": "Не удалось создать запись. Пожалуйста, попробуйте еще раз.",
-      "bookingNotFound": "Запись не найдена.",
-      "cannotCancelAlreadyProcessed": "Эту запись нельзя отменить, так как она уже обработана или отменена.",
-      "cancellationFailedUnknown": "Отмена записи не удалась из-за неизвестной ошибки.",
-      "cancelBookingFailed": "Не удалось отменить запись. Пожалуйста, попробуйте еще раз.",
-      "initialDataLoadFailed": "Не удалось загрузить критически важные данные для страницы записи.",
-      "initialDataFetchFailed": "Не удалось получить начальные данные для записи. Пожалуйста, обновите страницу.",
-      "subscriptionTreatmentMismatch": "Выбранная процедура не соответствует процедуре, покрываемой вашим абонементом.",
-      "subscriptionDurationMismatch": "Выбранная продолжительность не соответствует продолжительности, покрываемой вашим абонементом.",
-      "priceCalculationUnavailable": "Информация о цене в данный момент недоступна. Убедитесь, что все предыдущие шаги выполнены корректно.",
-      "invalidBookingId": "Неверный формат ID бронирования.",
-      "bookingNotAvailableForAcceptance": "Это бронирование больше недоступно для принятия или находится в некорректном состоянии.",
-      "acceptBookingFailed": "Не удалось принять бронирование. Пожалуйста, попробуйте еще раз.",
-      "bookingNotInCorrectStateForEnRoute": "Бронирование не может быть отмечено как 'в пути' из текущего состояния.",
-      "markEnRouteFailed": "Не удалось отметить бронирование как 'в пути'.",
-      "bookingNotInCorrectStateForCompletion": "Бронирование не может быть отмечено как 'завершено' из текущего состояния.",
-      "markCompletedFailed": "Не удалось отметить бронирование как 'завершено'.",
-      "fetchBookingForProFailed": "Не удалось получить детали бронирования для просмотра специалистом."
-    },
-    "messages": {
-      "closedOnSelectedDate": "Мы закрыты в выбранную дату."
-    },
-    "surcharges": {
-      "specialTime": "Надбавка за особое время"
-    },
-    "voucherUsage": {
-      "redeemedForBooking": "Использовано для записи ID:"
-    },
-    "validation": {
-      "sourceRequired": "Пожалуйста, выберите способ записи.",
-      "treatmentRequired": "Пожалуйста, выберите процедуру.",
-      "dateRequired": "Пожалуйста, выберите дату записи.",
-      "timeRequired": "Пожалуйста, выберите время записи.",
-      "addressRequired": "Пожалуйста, выберите адрес для услуги.",
-      "notesTooLong": "Примечания не могут превышать 500 символов.",
-      "paymentMethodRequired": "Пожалуйста, выберите способ оплаты.",
-      "durationRequiredForType": "Для выбранной процедуры требуется указать продолжительность."
-    },
-    "unknownSubscription": "Неизвестный абонемент",
-    "treatmentVoucher": "Сертификат на процедуру",
     "subscriptions": {
-      "remaining": "Осталось",
-      "expiry": "Истекает"
-    },
-    "status": {
-      "pending_professional_assignment": "Ожидает назначения специалиста",
-      "professional_en_route": "Специалист в пути",
-      "pending_professional_assignment": "Ожидает назначения специалиста",
-      "professional_en_route": "Специалист в пути"
-    },
-    "success": {
-      "bookingCreatedTitle": "Бронирование успешно создано!",
-      "bookingCreatedDescription": "Ваше бронирование успешно создано. Мы уведомим вас, как только будет назначен специалист."
+      "remaining": "Остается"
     },
     "confirmation": {
-      "sourceNewPurchase": "Новая покупка",
-      "professionalToBeAssigned": "Специалист будет назначен",
-      "title": "Подтверждение бронирования",
-      "thankYou": "Спасибо за ваше бронирование! Мы получили ваш запрос.",
-      "bookingNumber": "Номер бронирования",
-      "status": "Статус",
       "status": {
-        "confirmed": "Подтверждено - Ожидается назначение специалиста"
+        "confirmed": "Подтверждено"
       },
-      "bookedFor": "Забронировано для",
-      "recipientName": "Имя получателя",
-      "recipientPhone": "Телефон получателя",
-      "bookedBy": "Забронировал(а)",
-      "treatmentDetails": "Детали процедуры",
-      "treatment": "Процедура",
-      "dateTime": "Дата и время",
-      "flexibleTimeInfo": "Гибкое: Да (±{hours} ч.)",
-      "therapistPreference": "Предпочтение по специалисту",
-      "notes": "Примечания",
-      "professionalDetails": "Данные специалиста",
-      "professionalName": "Специалист",
-      "addressDetails": "Адрес",
-      "fullAddress": "Полный адрес",
-      "addressNotes": "Примечания к адресу",
-      "priceSummary": "Итоговая стоимость",
-      "bookingSource": "Источник бронирования",
-      "sourceSubscription": "Использование абонемента",
-      "sourceGiftVoucher": "Использование подарочного сертификата",
-      "sourceNewPurchase": "Новая покупка",
-      "usedSubscription": "Использованный абонемент",
-      "usedGiftVoucher": "Использованный подарочный сертификат",
-      "basePrice": "Базовая цена",
-      "treatmentCoveredBySubscription": "Процедура покрыта абонементом",
-      "treatmentCoveredByVoucher": "Процедура покрыта сертификатом",
-      "monetaryVoucherApplied": "Применен денежный сертификат",
-      "couponDiscount": "Скидка по купону",
-      "totalAmount": "Общая сумма",
-      "gift": "Подарок",
-      "paymentDetails": "Детали оплаты",
-      "paymentStatus": "Статус оплаты",
-      "paymentMethod": "Способ оплаты",
-      "voucherUsageTitle": "Обновление использования сертификата",
-      "voucherCodeUsed": "Детали для сертификата {code}:",
-      "voucherRemainingBalance": "Оставшийся баланс: {balance} {currency}",
-      "viewBookingsLink": "Посмотреть мои бронирования",
-      "contactSupport": "Если у вас есть вопросы или нужно внести изменения, пожалуйста, свяжитесь со службой поддержки или посетите страницу ваших бронирований.",
-      "errorLoading": "Ошибка загрузки подтверждения бронирования. Пожалуйста, попробуйте еще раз или обратитесь в поддержку.",
-      "paymentStatus.pending": "Ожидает",
-      "paymentStatus.paid": "Оплачено",
-      "paymentStatus.failed": "Не удалось",
-      "paymentStatus.not_required": "Не требуется"
-    },
-    "unknownSubscription": "Неизвестный абонемент",
-    "monetaryVoucher": "Денежный сертификат",
-    "balance": "Баланс",
-    "steps": {
-      "summary": {
-        "flexibleTime": "Гибкое время"
-      },
-      "table": {
-        "header": {
-          "professional": "Специалист",
-          "location": "Местоположение",
-          "bookingId": "ID бронирования",
-          "treatmentDetails": "Процедура",
-          "dateTime": "Дата и время",
-          "status": "Статус",
-          "total": "Итого"
-        },
-        "flexibleTime": "Гибкое время",
-        "toBeAssigned": "Будет назначен"
+      "paymentStatus": {
+        "pending": "В ожидании"
       }
+    },
+    "voucherUsage": {
+      "redeemedForBooking": "Погашено для бронирования #:"
     }
   },
   "memberBookings": {
@@ -1545,11 +1383,12 @@
     "sourceNewPurchase": "Новая покупка",
     "sourceSubscription": "Абонемент",
     "sourceGiftVoucher": "Подарочный сертификат",
-    "cancelBooking": "Отменить бронирование",
-    "viewDetailsButton": "Посмотреть детали",
-    "userCancellationReason": "Отменено пользователем из панели управления.",
-    "cancelSuccess": "Бронирование успешно отменено.",
-    "cancelConfirmDescription": "Вы уверены, что хотите отменить это бронирование? Это действие нельзя будет отменить."
+    "cancelBooking": "Отменить запись",
+    "viewDetailsButton": "Просмотр деталей",
+    "viewClientNotes": "Просмотр заметок клиента",
+    "userCancellationReason": "Отменено пользователем с панели управления.",
+    "cancelSuccess": "Запись успешно отменена.",
+    "cancelConfirmDescription": "Вы уверены, что хотите отменить эту запись? Это действие нельзя отменить."
   },
   "professionalBookingManagement": {
     "title": "Управление бронированием",

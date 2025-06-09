@@ -8,23 +8,42 @@ import { Heading } from "@/components/common/ui/heading"
 import { Separator } from "@/components/common/ui/separator"
 
 export default async function PurchaseReportsPage() {
-  const session = await getServerSession(authOptions)
-  
-  if (!session?.user?.roles?.includes('admin')) {
-    redirect("/dashboard")
-  }
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.roles?.includes('admin')) {
+      redirect("/dashboard")
+    }
 
-  return (
-    <ScrollArea className="h-full">
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <Heading 
-          title="דוחות רכישות ומימושים" 
-          description="דוח מקיף של כל הרכישות והמימושים במערכת - הזמנות, מנויים ושוברי מתנה"
-          icon={BarChart3}
-        />
-        <Separator />
-        <PurchaseReportsClient />
-      </div>
-    </ScrollArea>
-  )
+    return (
+      <ScrollArea className="h-full">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+          <Heading 
+            title="דוחות רכישות ומימושים" 
+            description="דוח מקיף של כל הרכישות והמימושים במערכת - הזמנות, מנויים ושוברי מתנה"
+            icon={BarChart3}
+          />
+          <Separator />
+          <PurchaseReportsClient />
+        </div>
+      </ScrollArea>
+    )
+  } catch (error) {
+    console.error('Error in purchase reports page:', error)
+    return (
+      <ScrollArea className="h-full">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+          <Heading 
+            title="דוחות רכישות ומימושים" 
+            description="דוח מקיף של כל הרכישות והמימושים במערכת - הזמנות, מנויים ושוברי מתנה"
+            icon={BarChart3}
+          />
+          <Separator />
+          <div className="text-center p-6">
+            <p className="text-muted-foreground">שגיאה בטעינת העמוד. נסה לרענן או פנה למנהל המערכת.</p>
+          </div>
+        </div>
+      </ScrollArea>
+    )
+  }
 } 

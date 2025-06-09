@@ -8,23 +8,42 @@ import { Heading } from "@/components/common/ui/heading"
 import { Separator } from "@/components/common/ui/separator"
 
 export default async function CustomersPage() {
-  const session = await getServerSession(authOptions)
-  
-  if (!session?.user?.roles?.includes('admin')) {
-    redirect("/dashboard")
-  }
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.roles?.includes('admin')) {
+      redirect("/dashboard")
+    }
 
-  return (
-    <ScrollArea className="h-full">
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <Heading 
-          title="ניהול לקוחות" 
-          description="סיכום מלא של כל הלקוחות, רכישותיהם ומימושיהם במערכת"
-          icon={UserCheck}
-        />
-        <Separator />
-        <CustomersClient />
-      </div>
-    </ScrollArea>
-  )
+    return (
+      <ScrollArea className="h-full">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+          <Heading 
+            title="ניהול לקוחות" 
+            description="סיכום מלא של כל הלקוחות, רכישותיהם ומימושיהם במערכת"
+            icon={UserCheck}
+          />
+          <Separator />
+          <CustomersClient />
+        </div>
+      </ScrollArea>
+    )
+  } catch (error) {
+    console.error('Error in customers page:', error)
+    return (
+      <ScrollArea className="h-full">
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+          <Heading 
+            title="ניהול לקוחות" 
+            description="סיכום מלא של כל הלקוחות, רכישותיהם ומימושיהם במערכת"
+            icon={UserCheck}
+          />
+          <Separator />
+          <div className="text-center p-6">
+            <p className="text-muted-foreground">שגיאה בטעינת העמוד. נסה לרענן או פנה למנהל המערכת.</p>
+          </div>
+        </div>
+      </ScrollArea>
+    )
+  }
 } 

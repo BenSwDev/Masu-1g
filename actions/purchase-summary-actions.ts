@@ -20,6 +20,17 @@ import type {
   GiftVoucherDetails,
 } from "@/lib/types/purchase-summary"
 
+// Helper function to handle database connection errors
+async function safeDbConnect() {
+  try {
+    await dbConnect()
+    return true
+  } catch (error) {
+    console.error('Database connection failed:', error)
+    return false
+  }
+}
+
 /**
  * Get user's purchase history (for member dashboard)
  */
@@ -43,7 +54,10 @@ export async function getUserPurchaseHistory(
       return { success: false, error: "Unauthorized" }
     }
 
-    await dbConnect()
+    const isConnected = await safeDbConnect()
+    if (!isConnected) {
+      return { success: false, error: "Database connection failed" }
+    }
 
     const userId = new mongoose.Types.ObjectId(session.user.id)
     const skip = (page - 1) * limit
@@ -220,8 +234,8 @@ export async function getUserPurchaseHistory(
       }
     }
   } catch (error) {
-    console.error('Error fetching user purchase history:', error)
-    return { success: false, error: 'Failed to fetch purchase history' }
+    console.error('Error in getUserPurchaseHistory:', error)
+    return { success: false, error: "Failed to fetch purchase history" }
   }
 }
 
@@ -351,7 +365,10 @@ export async function getAllCustomers(
       return { success: false, error: "Unauthorized" }
     }
 
-    await dbConnect()
+    const isConnected = await safeDbConnect()
+    if (!isConnected) {
+      return { success: false, error: "Database connection failed" }
+    }
 
     const skip = (page - 1) * limit
     let userQuery: any = { roles: { $in: ['member'] } }
@@ -409,7 +426,10 @@ export async function getPurchaseStats(): Promise<{
       return { success: false, error: "Unauthorized" }
     }
 
-    await dbConnect()
+    const isConnected = await safeDbConnect()
+    if (!isConnected) {
+      return { success: false, error: "Database connection failed" }
+    }
 
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)

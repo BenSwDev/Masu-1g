@@ -1781,15 +1781,51 @@
     "title": "ניהול הזמנות",
     "subtitle": "הצגת כל ההזמנות במערכת עם יכולות עריכה ומעקב",
     "searchPlaceholder": "חפש הזמנה...",
+    "filterByStatus": "סנן לפי סטטוס",
+    "allStatuses": "כל הסטטוסים",
+    "summary": "מציג {{from}} עד {{to}} מתוך {{total}} הזמנות",
+    "clickRowToEdit": "לחץ על שורה לעריכת הזמנה",
     "statusFilter": "סינון לפי סטטוס",
     "rowClickHint": "💡 לחץ על שורה לעריכת הזמנה",
     "assignProfessional": "שיוך מטפל",
+    "selectProfessional": "בחר מטפל להזמנה",
+    "assign": "שיוך",
+    "assignSuccess": "המטפל שויך בהצלחה",
+    "assignError": "שגיאה בשיוך המטפל",
+    "viewClientNotes": "צפה בהערות הלקוח",
     "viewNotes": "צפייה בהערות",
     "noNotes": "אין הערות",
     "notes": "הערות",
     "loading": "טוען הזמנות...",
     "error": "שגיאה בטעינת הזמנות",
     "noBookings": "לא נמצאו הזמנות",
+    "editBooking": "ערוך הזמנה",
+    "bookingDetails": "פרטי הזמנה",
+    "saveSuccess": "השינויים נשמרו בהצלחה",
+    "saveError": "שגיאה בשמירת השינויים",
+    "columns": {
+      "bookingNumber": "מספר הזמנה",
+      "client": "לקוח",
+      "treatment": "טיפול",
+      "dateTime": "תאריך ושעה",
+      "professional": "מטפל",
+      "status": "סטטוס",
+      "amount": "סכום"
+    },
+    "tabs": {
+      "details": "פרטים",
+      "treatment": "טיפול",
+      "client": "לקוח",
+      "recipient": "מקבל הטיפול",
+      "professional": "מטפל",
+      "payment": "תשלום",
+      "address": "כתובת",
+      "notes": "הערות"
+    },
+    "notesDialog": {
+      "title": "הערות הזמנה",
+      "noNotes": "אין הערות להזמנה זו"
+    },
     "bookingNumber": "מספר הזמנה",
     "client": "לקוח",
     "treatment": "טיפול",
@@ -1798,10 +1834,10 @@
     "dateTime": "תאריך ושעה",
     "amount": "סכום",
     "actions": "פעולות",
-    "editBooking": "ערוך הזמנה",
     "assignProfessionalSuccess": "המטפל שויך בהצלחה",
     "assignProfessionalError": "שגיאה בשיוך המטפל",
     "assignProfessionalButton": "שיוך מטפל",
+    "noProfessional": "אין מטפל",
     "noProfessionalAvailable": "אין מטפלים זמינים",
     "chooseProfessional": "בחר מטפל",
     "professionalAssigned": "המטפל שויך בהצלחה",
@@ -1809,7 +1845,6 @@
     "assignmentFailed": "השיוך נכשל",
     "unexpectedError": "שגיאה בלתי צפויה",
     "bookingEditModal": "עריכת הזמנה",
-    "bookingDetails": "פרטי הזמנה",
     "bookingInfo": "מידע על ההזמנה",
     "treatmentInfo": "מידע על הטיפול",
     "clientInfo": "מידע על הלקוח",
@@ -1876,6 +1911,7 @@
     "clientNotesPlaceholder": "הערות מהלקוח...",
     "adminNotesPlaceholder": "הערות פנימיות למנהל...",
     "recipientInfo": "פרטי מקבל הטיפול",
+    "bookedForSomeoneElse": "ההזמנה עבור מישהו אחר",
     "recipientNamePlaceholder": "שם מקבל הטיפול",
     "recipientPhonePlaceholder": "טלפון מקבל הטיפול",
     "priceBreakdown": "פירוט מחיר",
@@ -1908,7 +1944,7 @@
     "gender": "מין",
     "birthDate": "תאריך לידה",
     "accountCreated": "חשבון נוצר",
-    "lastUpdated": "עדכון אחרון",
+    "lastUpdate": "עדכון אחרון",
     "activeRole": "תפקיד פעיל",
     "allRoles": "כל התפקידים",
     "roles": "תפקידים",
@@ -1934,12 +1970,12 @@
       "cancelledByAdmin": "בוטל על ידי מנהל",
       "noShow": "לא הגיע"
     },
-         "paymentStatuses": {
-       "pending": "ממתין לתשלום",
-       "paid": "שולם",
-       "failed": "נכשל",
-       "notRequired": "לא נדרש תשלום"
-     }
+    "paymentStatuses": {
+      "pending": "ממתין לתשלום",
+      "paid": "שולם",
+      "failed": "נכשל",
+      "notRequired": "לא נדרש תשלום"
+    }
   },
   "bookings": {
     "errors": {

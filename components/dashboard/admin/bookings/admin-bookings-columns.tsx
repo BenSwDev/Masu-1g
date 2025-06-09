@@ -351,6 +351,157 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
   )
 }
 
+// Price Details Info Component
+const PriceDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const priceDetails = booking.priceDetails
+  if (!priceDetails) {
+    return <span className="text-muted-foreground">{t("common.notAvailable")}</span>
+  }
+
+  const hasDiscounts = (priceDetails as any).couponDiscount > 0 || (priceDetails as any).voucherAppliedAmount > 0
+  const hasSurcharges = (priceDetails as any).totalSurchargesAmount > 0
+
+  return (
+    <div className="space-y-1 max-w-[200px]">
+      <div className="text-sm font-medium">
+        ₪{priceDetails.finalAmount?.toFixed(2) || "0.00"}
+      </div>
+      
+      {(priceDetails as any).basePrice && (priceDetails as any).basePrice !== (priceDetails as any).finalAmount && (
+        <div className="text-xs text-muted-foreground">
+          {t("adminBookings.basePrice")}: ₪{(priceDetails as any).basePrice.toFixed(2)}
+        </div>
+      )}
+      
+      {hasSurcharges && (
+        <div className="text-xs text-orange-600">
+          +₪{(priceDetails as any).totalSurchargesAmount.toFixed(2)} {t("adminBookings.surcharges")}
+        </div>
+      )}
+      
+      {hasDiscounts && (
+        <div className="text-xs text-green-600">
+          {(priceDetails as any).couponDiscount > 0 && (
+            <div>-₪{(priceDetails as any).couponDiscount.toFixed(2)} {t("adminBookings.couponDiscount")}</div>
+          )}
+          {(priceDetails as any).voucherAppliedAmount > 0 && (
+            <div>-₪{(priceDetails as any).voucherAppliedAmount.toFixed(2)} {t("adminBookings.voucherDiscount")}</div>
+          )}
+        </div>
+      )}
+      
+      {(priceDetails as any).isFullyCoveredByVoucherOrSubscription && (
+        <div className="text-xs text-blue-600 font-medium">
+          {t("adminBookings.fullyCovered")}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Recipient Info Component
+const RecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const hasRecipient = booking.recipientName && booking.recipientName !== booking.bookedByUserName
+  
+  if (!hasRecipient) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        {t("adminBookings.selfBooking")}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1">
+        <User className="h-3 w-3 text-blue-600" />
+        <span className="text-sm font-medium">{booking.recipientName}</span>
+      </div>
+      {booking.recipientPhone && (
+        <div className="flex items-center gap-1">
+          <Phone className="h-3 w-3 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">{booking.recipientPhone}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Treatment Time Info Component
+const TreatmentTimeInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const treatment = booking.treatmentId as any
+  const selectedDurationId = booking.selectedDurationId
+  
+  if (!treatment) {
+    return <span className="text-muted-foreground">{t("common.notAvailable")}</span>
+  }
+
+  const selectedDuration = treatment.durations?.find((d: any) => d._id?.toString() === selectedDurationId?.toString())
+  const duration = selectedDuration?.minutes || treatment.defaultDurationMinutes || 0
+
+  return (
+    <div className="space-y-1">
+      <div className="text-sm font-medium">
+        {duration} {t("common.minutes")}
+      </div>
+      {selectedDuration?.description && (
+        <div className="text-xs text-muted-foreground">
+          {selectedDuration.description}
+        </div>
+      )}
+      {selectedDuration?.surcharge && selectedDuration.surcharge > 0 && (
+        <div className="text-xs text-orange-600">
+          +₪{selectedDuration.surcharge} {t("adminBookings.timeSurcharge")}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Address Details Info Component
+const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const address = booking.addressId as any
+  
+  if (!address) {
+    return <span className="text-muted-foreground">{t("common.notAvailable")}</span>
+  }
+
+  return (
+    <div className="space-y-1 max-w-[200px]">
+      <div className="text-sm">
+        {address.fullAddress || `${address.street} ${address.streetNumber}, ${address.city}`}
+      </div>
+      
+      <div className="flex items-center gap-1">
+        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+          {t(`adminBookings.addressType.${address.addressType}`)}
+        </span>
+      </div>
+      
+      {address.hasPrivateParking !== undefined && (
+        <div className="flex items-center gap-1">
+          <span className={`text-xs px-2 py-1 rounded ${
+            address.hasPrivateParking 
+              ? "text-green-700 bg-green-100" 
+              : "text-red-700 bg-red-100"
+          }`}>
+            {address.hasPrivateParking 
+              ? t("adminBookings.hasParking") 
+              : t("adminBookings.noParking")
+            }
+          </span>
+        </div>
+      )}
+      
+      {address.additionalNotes && (
+        <div className="text-xs text-muted-foreground">
+          {address.additionalNotes}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const formatDateIsraeli = (date: string | Date) => {
   return format(new Date(date), "dd/MM/yyyy")
 }
@@ -488,18 +639,26 @@ export const getAdminBookingColumns = (
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         className="h-auto p-0 font-semibold hover:bg-transparent"
       >
-        {t("adminBookings.columns.amount")}
+        {t("adminBookings.columns.priceDetails")}
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => {
-      const amount = row.original.priceDetails?.finalAmount || 0
-      return (
-        <div className="text-sm font-medium">
-          ₪{amount.toFixed(2)}
-        </div>
-      )
-    },
+    cell: ({ row }) => <PriceDetailsInfo booking={row.original} t={t} />,
+  },
+  {
+    accessorKey: "recipientInfo",
+    header: t("adminBookings.columns.recipient"),
+    cell: ({ row }) => <RecipientInfo booking={row.original} t={t} />,
+  },
+  {
+    accessorKey: "selectedTime",
+    header: t("adminBookings.columns.selectedTime"),
+    cell: ({ row }) => <TreatmentTimeInfo booking={row.original} t={t} />,
+  },
+  {
+    accessorKey: "addressDetails",
+    header: t("adminBookings.columns.addressDetails"),
+    cell: ({ row }) => <AddressDetailsInfo booking={row.original} t={t} />,
   },
   {
     id: "actions",

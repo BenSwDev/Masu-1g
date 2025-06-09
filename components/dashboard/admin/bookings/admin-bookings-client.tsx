@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "@/lib/translations/i18n"
 import { getAdminBookingColumns } from "./admin-bookings-columns"
@@ -13,7 +13,11 @@ import { getAllBookings } from "@/actions/booking-actions"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, RefreshCw } from "lucide-react"
+import { Search, RefreshCw, Filter, X } from "lucide-react"
+import { useDebounce } from "@/hooks/use-debounce"
+import { Badge } from "@/components/ui/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Separator } from "@/components/ui/separator"
 
 /**
  * Admin Bookings Client Component
@@ -21,11 +25,29 @@ import { Search, RefreshCw } from "lucide-react"
  */
 export default function AdminBookingsClient() {
   const { t, language, dir } = useTranslation()
+  
+  // Search and filters state
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [professionalFilter, setProfessionalFilter] = useState<string>("all")
+  const [treatmentFilter, setTreatmentFilter] = useState<string>("all")
+  const [dateRangeFilter, setDateRangeFilter] = useState<string>("all")
+  const [priceRangeFilter, setPriceRangeFilter] = useState<string>("all")
+  const [addressFilter, setAddressFilter] = useState<string>("all")
+  
+  // UI state
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedBooking, setSelectedBooking] = useState<PopulatedBooking | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+
+  // Debounce search term for real-time searching
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchTerm, statusFilter, professionalFilter, treatmentFilter, dateRangeFilter, priceRangeFilter, addressFilter])
 
   const {
     data,
@@ -36,14 +58,21 @@ export default function AdminBookingsClient() {
     { bookings: PopulatedBooking[]; totalPages: number; totalBookings: number },
     Error
   >({
-    queryKey: ["adminBookings", language, searchTerm, statusFilter, currentPage],
+    queryKey: ["adminBookings", language, debouncedSearchTerm, statusFilter, professionalFilter, treatmentFilter, dateRangeFilter, priceRangeFilter, addressFilter, currentPage],
     queryFn: () =>
       getAllBookings({
-        search: searchTerm || undefined,
+        search: debouncedSearchTerm || undefined,
         status: statusFilter === "all" ? undefined : statusFilter,
+        professional: professionalFilter === "all" ? undefined : professionalFilter,
+        treatment: treatmentFilter === "all" ? undefined : treatmentFilter,
+        dateRange: dateRangeFilter === "all" ? undefined : dateRangeFilter,
+        priceRange: priceRangeFilter === "all" ? undefined : priceRangeFilter,
+        address: addressFilter === "all" ? undefined : addressFilter,
         page: currentPage,
         limit: 20,
       }),
+    refetchOnWindowFocus: false,
+    staleTime: 30000, // 30 seconds
   })
 
   const handleRowClick = (booking: PopulatedBooking) => {
@@ -58,14 +87,32 @@ export default function AdminBookingsClient() {
 
   const columns = useMemo(() => getAdminBookingColumns(t, language, handleRowClick), [t, language])
 
-  const handleSearch = () => {
-    setCurrentPage(1)
-    refetch()
-  }
-
   const handleRefresh = () => {
     refetch()
   }
+
+  const clearAllFilters = () => {
+    setSearchTerm("")
+    setStatusFilter("all")
+    setProfessionalFilter("all")
+    setTreatmentFilter("all")
+    setDateRangeFilter("all")
+    setPriceRangeFilter("all")
+    setAddressFilter("all")
+  }
+
+  const getActiveFiltersCount = () => {
+    let count = 0
+    if (statusFilter !== "all") count++
+    if (professionalFilter !== "all") count++
+    if (treatmentFilter !== "all") count++
+    if (dateRangeFilter !== "all") count++
+    if (priceRangeFilter !== "all") count++
+    if (addressFilter !== "all") count++
+    return count
+  }
+
+  const activeFiltersCount = getActiveFiltersCount()
 
   if (isLoading) {
     return (
@@ -92,152 +139,254 @@ export default function AdminBookingsClient() {
     )
   }
 
-  if (!data?.bookings || data.bookings.length === 0) {
-    return (
-      <div>
-        <Heading as="h2" size="xl" className="mb-6 text-center md:text-right">
-          {t("adminBookings.title")}
-        </Heading>
-        
-        {/* Filters */}
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-1 items-center gap-2">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t("adminBookings.searchPlaceholder")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
-            </div>
-            <Button onClick={handleSearch} variant="outline" size="sm">
-              {t("common.search")}
-            </Button>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t("adminBookings.filterByStatus")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("adminBookings.allStatuses")}</SelectItem>
-                <SelectItem value="pending_professional_assignment">
-                  {t("adminBookings.status.pendingAssignment")}
-                </SelectItem>
-                <SelectItem value="confirmed">{t("adminBookings.status.confirmed")}</SelectItem>
-                <SelectItem value="professional_en_route">{t("adminBookings.status.enRoute")}</SelectItem>
-                <SelectItem value="completed">{t("adminBookings.status.completed")}</SelectItem>
-                <SelectItem value="cancelled_by_user">{t("adminBookings.status.cancelledByUser")}</SelectItem>
-                <SelectItem value="cancelled_by_admin">{t("adminBookings.status.cancelledByAdmin")}</SelectItem>
-                <SelectItem value="no_show">{t("adminBookings.status.noShow")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={handleRefresh} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        <p className="text-center text-muted-foreground">{t("adminBookings.noBookings")}</p>
-      </div>
-    )
-  }
-
   return (
     <div dir={dir}>
       <Heading as="h2" size="xl" className="mb-6 text-center md:text-right">
         {t("adminBookings.title")}
       </Heading>
       
-      {/* Filters */}
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 items-center gap-2">
-          <div className="relative flex-1 max-w-sm">
+      {/* Search and Filters Bar */}
+      <div className="mb-6 space-y-4">
+        {/* Main search bar */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center">
+          <div className="relative flex-1 max-w-md">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={t("adminBookings.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8"
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
-          <Button onClick={handleSearch} variant="outline" size="sm">
-            {t("common.search")}
-          </Button>
+          
+          <div className="flex items-center gap-2">
+            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  {t("adminBookings.filters")}
+                  {activeFiltersCount > 0 && (
+                    <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
+                      {activeFiltersCount}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">{t("adminBookings.advancedFilters")}</h4>
+                    {activeFiltersCount > 0 && (
+                      <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                        <X className="h-4 w-4 mr-1" />
+                        {t("common.clearAll")}
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <Separator />
+                  
+                  {/* Status Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t("adminBookings.filterByStatus")}</label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("adminBookings.allStatuses")}</SelectItem>
+                        <SelectItem value="pending_professional_assignment">
+                          {t("adminBookings.status.pendingAssignment")}
+                        </SelectItem>
+                        <SelectItem value="confirmed">{t("adminBookings.status.confirmed")}</SelectItem>
+                        <SelectItem value="professional_en_route">{t("adminBookings.status.enRoute")}</SelectItem>
+                        <SelectItem value="completed">{t("adminBookings.status.completed")}</SelectItem>
+                        <SelectItem value="cancelled_by_user">{t("adminBookings.status.cancelledByUser")}</SelectItem>
+                        <SelectItem value="cancelled_by_admin">{t("adminBookings.status.cancelledByAdmin")}</SelectItem>
+                        <SelectItem value="no_show">{t("adminBookings.status.noShow")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Professional Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t("adminBookings.filterByProfessional")}</label>
+                    <Select value={professionalFilter} onValueChange={setProfessionalFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("adminBookings.allProfessionals")}</SelectItem>
+                        <SelectItem value="assigned">{t("adminBookings.assignedOnly")}</SelectItem>
+                        <SelectItem value="unassigned">{t("adminBookings.unassignedOnly")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Date Range Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t("adminBookings.filterByDate")}</label>
+                    <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("adminBookings.allDates")}</SelectItem>
+                        <SelectItem value="today">{t("adminBookings.today")}</SelectItem>
+                        <SelectItem value="tomorrow">{t("adminBookings.tomorrow")}</SelectItem>
+                        <SelectItem value="this_week">{t("adminBookings.thisWeek")}</SelectItem>
+                        <SelectItem value="next_week">{t("adminBookings.nextWeek")}</SelectItem>
+                        <SelectItem value="this_month">{t("adminBookings.thisMonth")}</SelectItem>
+                        <SelectItem value="next_month">{t("adminBookings.nextMonth")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Price Range Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t("adminBookings.filterByPrice")}</label>
+                    <Select value={priceRangeFilter} onValueChange={setPriceRangeFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("adminBookings.allPrices")}</SelectItem>
+                        <SelectItem value="0-50">{t("adminBookings.priceRange0to50")}</SelectItem>
+                        <SelectItem value="50-100">{t("adminBookings.priceRange50to100")}</SelectItem>
+                        <SelectItem value="100-200">{t("adminBookings.priceRange100to200")}</SelectItem>
+                        <SelectItem value="200-500">{t("adminBookings.priceRange200to500")}</SelectItem>
+                        <SelectItem value="500+">{t("adminBookings.priceRange500plus")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Address Type Filter */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{t("adminBookings.filterByAddress")}</label>
+                    <Select value={addressFilter} onValueChange={setAddressFilter}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("adminBookings.allAddresses")}</SelectItem>
+                        <SelectItem value="with_parking">{t("adminBookings.withParking")}</SelectItem>
+                        <SelectItem value="without_parking">{t("adminBookings.withoutParking")}</SelectItem>
+                        <SelectItem value="apartment">{t("adminBookings.apartmentType")}</SelectItem>
+                        <SelectItem value="house">{t("adminBookings.houseType")}</SelectItem>
+                        <SelectItem value="office">{t("adminBookings.officeType")}</SelectItem>
+                        <SelectItem value="hotel">{t("adminBookings.hotelType")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            
+            <Button onClick={handleRefresh} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-2">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={t("adminBookings.filterByStatus")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("adminBookings.allStatuses")}</SelectItem>
-              <SelectItem value="pending_professional_assignment">
-                {t("adminBookings.status.pendingAssignment")}
-              </SelectItem>
-              <SelectItem value="confirmed">{t("adminBookings.status.confirmed")}</SelectItem>
-              <SelectItem value="professional_en_route">{t("adminBookings.status.enRoute")}</SelectItem>
-              <SelectItem value="completed">{t("adminBookings.status.completed")}</SelectItem>
-              <SelectItem value="cancelled_by_user">{t("adminBookings.status.cancelledByUser")}</SelectItem>
-              <SelectItem value="cancelled_by_admin">{t("adminBookings.status.cancelledByAdmin")}</SelectItem>
-              <SelectItem value="no_show">{t("adminBookings.status.noShow")}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={handleRefresh} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
+
+        {/* Active filters display */}
+        {activeFiltersCount > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {statusFilter !== "all" && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                {t("adminBookings.filterByStatus")}: {t(`adminBookings.status.${statusFilter}`)}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setStatusFilter("all")} />
+              </Badge>
+            )}
+            {professionalFilter !== "all" && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                {t("adminBookings.filterByProfessional")}: {t(`adminBookings.${professionalFilter}`)}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setProfessionalFilter("all")} />
+              </Badge>
+            )}
+            {dateRangeFilter !== "all" && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                {t("adminBookings.filterByDate")}: {t(`adminBookings.${dateRangeFilter}`)}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setDateRangeFilter("all")} />
+              </Badge>
+            )}
+            {priceRangeFilter !== "all" && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                {t("adminBookings.filterByPrice")}: {t(`adminBookings.priceRange${priceRangeFilter.replace(/[+-]/g, '').replace('-', 'to')}`)}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setPriceRangeFilter("all")} />
+              </Badge>
+            )}
+            {addressFilter !== "all" && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                {t("adminBookings.filterByAddress")}: {t(`adminBookings.${addressFilter}`)}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setAddressFilter("all")} />
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Summary */}
-      <div className="mb-4 text-sm text-muted-foreground">
-        {t("adminBookings.summary", { 
-          total: data.totalBookings,
-          showing: data.bookings.length 
-        })}
-      </div>
+      {data && (
+        <div className="mb-4 text-sm text-muted-foreground">
+          {t("adminBookings.summary", { 
+            total: data.totalBookings,
+            showing: data.bookings.length 
+          })}
+        </div>
+      )}
+
+      {/* No results */}
+      {(!data?.bookings || data.bookings.length === 0) && !isLoading && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">{t("adminBookings.noBookings")}</p>
+          {activeFiltersCount > 0 && (
+            <Button variant="outline" onClick={clearAllFilters} className="mt-2">
+              {t("adminBookings.clearFiltersToSeeAll")}
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Helpful instruction for clicking rows */}
-      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <p className="text-sm text-blue-800 text-center">
-          💡 {t("adminBookings.clickRowToEdit")}
-        </p>
-      </div>
+      {data?.bookings && data.bookings.length > 0 && (
+        <>
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 text-center">
+              💡 {t("adminBookings.clickRowToEdit")}
+            </p>
+          </div>
 
-      <DataTable 
-        columns={columns} 
-        data={data.bookings}
-        onRowClick={handleRowClick}
-      />
-      
-      {/* Pagination */}
-      {data.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-2">
-          <Button
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            variant="outline"
-            size="sm"
-          >
-            {t("common.previous")}
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {t("common.pageOf", { current: currentPage, total: data.totalPages })}
-          </span>
-          <Button
-            onClick={() => setCurrentPage(prev => Math.min(data.totalPages, prev + 1))}
-            disabled={currentPage === data.totalPages}
-            variant="outline"
-            size="sm"
-          >
-            {t("common.next")}
-          </Button>
-        </div>
+          <DataTable 
+            columns={columns} 
+            data={data.bookings}
+            onRowClick={handleRowClick}
+          />
+          
+          {/* Pagination */}
+          {data.totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <Button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                variant="outline"
+                size="sm"
+              >
+                {t("common.previous")}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {t("common.pageOf", { current: currentPage, total: data.totalPages })}
+              </span>
+              <Button
+                onClick={() => setCurrentPage(prev => Math.min(data.totalPages, prev + 1))}
+                disabled={currentPage === data.totalPages}
+                variant="outline"
+                size="sm"
+              >
+                {t("common.next")}
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Comprehensive Booking Edit Modal */}

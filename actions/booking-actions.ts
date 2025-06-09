@@ -1296,6 +1296,11 @@ export async function professionalMarkCompleted(
 export async function getAllBookings(
   filters: {
     status?: string
+    professional?: string
+    treatment?: string
+    dateRange?: string
+    priceRange?: string
+    address?: string
     page?: number
     limit?: number
     sortBy?: string
@@ -1313,6 +1318,11 @@ export async function getAllBookings(
 
     const {
       status,
+      professional,
+      treatment,
+      dateRange,
+      priceRange,
+      address,
       page = 1,
       limit = 10,
       sortBy = "bookingDateTime",
@@ -1325,6 +1335,86 @@ export async function getAllBookings(
 
     if (status && status !== "all") {
       filterQuery.status = status
+    }
+
+    // Professional filter
+    if (professional && professional !== "all") {
+      if (professional === "assigned") {
+        filterQuery.professionalId = { $ne: null }
+      } else if (professional === "unassigned") {
+        filterQuery.professionalId = null
+      }
+    }
+
+    // Date range filter
+    if (dateRange && dateRange !== "all") {
+      const now = new Date()
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000)
+      
+      switch (dateRange) {
+        case "today":
+          filterQuery.bookingDateTime = {
+            $gte: startOfDay,
+            $lt: endOfDay
+          }
+          break
+        case "tomorrow":
+          const tomorrowStart = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000)
+          const tomorrowEnd = new Date(tomorrowStart.getTime() + 24 * 60 * 60 * 1000)
+          filterQuery.bookingDateTime = {
+            $gte: tomorrowStart,
+            $lt: tomorrowEnd
+          }
+          break
+        case "this_week":
+          const thisWeekStart = new Date(startOfDay.getTime() - startOfDay.getDay() * 24 * 60 * 60 * 1000)
+          const thisWeekEnd = new Date(thisWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+          filterQuery.bookingDateTime = {
+            $gte: thisWeekStart,
+            $lt: thisWeekEnd
+          }
+          break
+        case "next_week":
+          const nextWeekStart = new Date(startOfDay.getTime() + (7 - startOfDay.getDay()) * 24 * 60 * 60 * 1000)
+          const nextWeekEnd = new Date(nextWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000)
+          filterQuery.bookingDateTime = {
+            $gte: nextWeekStart,
+            $lt: nextWeekEnd
+          }
+          break
+        case "this_month":
+          const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+          const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+          filterQuery.bookingDateTime = {
+            $gte: thisMonthStart,
+            $lt: thisMonthEnd
+          }
+          break
+        case "next_month":
+          const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+          const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 1)
+          filterQuery.bookingDateTime = {
+            $gte: nextMonthStart,
+            $lt: nextMonthEnd
+          }
+          break
+      }
+    }
+
+    // Price range filter
+    if (priceRange && priceRange !== "all") {
+      const [min, max] = priceRange.includes("-") 
+        ? priceRange.split("-").map(Number)
+        : priceRange === "500+" 
+          ? [500, Infinity]
+          : [0, 0]
+      
+      if (max === Infinity) {
+        filterQuery["priceDetails.finalAmount"] = { $gte: min }
+      } else {
+        filterQuery["priceDetails.finalAmount"] = { $gte: min, $lt: max }
+      }
     }
 
     if (search) {

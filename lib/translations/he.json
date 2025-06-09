@@ -1592,9 +1592,13 @@
   },
   "purchaseFilters": {
     "activeFilters": "מסננים פעילים",
+    "additionalStatuses": "סטטוסים נוספים",
+    "advancedFilters": "פילטרים מתקדמים",
     "amountRange": "טווח סכומים",
     "clearAll": "נקה הכל",
+    "dateFrom": "מתאריך",
     "dateRange": "טווח תאריכים",
+    "dateTo": "עד תאריך",
     "description": "סנן את רשימת הרכישות לפי קריטריונים שונים",
     "from": "מתאריך",
     "hideAdvanced": "הסתר מסננים מתקדמים",
@@ -1602,6 +1606,7 @@
     "minAmount": "סכום מינימלי",
     "search": "חיפוש",
     "searchPlaceholder": "חפש לפי מספר הזמנה, שם לקוח או פרטים...",
+    "selectDate": "בחר תאריך",
     "selectEndDate": "בחר תאריך סיום",
     "selectStartDate": "בחר תאריך התחלה",
     "showAdvanced": "הצג מסננים מתקדמים",
@@ -1702,6 +1707,14 @@
       "treatmentName": "שם הטיפול",
       "voucherApplied": "שובר הופעל"
     },
+    "details": {
+      "amount": "סכום",
+      "customerEmail": "אימייל לקוח",
+      "customerInfo": "פרטי לקוח",
+      "customerName": "שם לקוח",
+      "customerPhone": "טלפון לקוח",
+      "status": "סטטוס"
+    },
     "emptyState": {
       "bookTreatment": "הזמן טיפול",
       "buySubscription": "רכוש מנוי",
@@ -1723,6 +1736,7 @@
       "details": "פרטים"
     },
     "noTransactions": "אין עסקאות להצגה",
+    "noTransactionsDesc": "לא נמצאו עסקאות התואמות את הקריטריונים שנבחרו",
     "of": "מתוך",
     "payment": {
       "failed": "תשלום נכשל",
@@ -1758,12 +1772,15 @@
     "subscriptionDetails": {
       "bonusQuantity": "כמות בונוס",
       "expiryDate": "תאריך תפוגה",
+      "name": "שם המנוי",
       "pricePerSession": "מחיר לטיפול",
       "quantity": "כמות",
+      "remaining": "נותר",
       "remainingQuantity": "כמות נותרת",
       "subscriptionName": "שם המנוי",
       "title": "פרטי מנוי",
       "totalPaid": "סה״כ שולם",
+      "treatment": "טיפול",
       "treatmentName": "שם הטיפול",
       "usedQuantity": "כמות שנוצלה"
     },
@@ -1780,23 +1797,27 @@
     "table": {
       "actions": "פעולות",
       "amount": "סכום",
+      "customer": "לקוח",
       "date": "תאריך",
       "description": "תיאור",
       "status": "סטטוס",
       "type": "סוג",
       "viewDetails": "צפה בפרטים"
     },
+    "transactionDetails": "פרטי עסקה",
     "type": {
       "booking": "הזמנת טיפול",
       "giftVoucher": "שובר מתנה",
       "subscription": "מנוי"
     },
+    "viewDetails": "צפה בפרטים",
     "voucherDetails": {
       "code": "קוד",
       "monetary": "כספי",
       "originalAmount": "סכום מקורי",
       "recipientName": "שם המקבל",
       "recipientPhone": "טלפון המקבל",
+      "remaining": "נותר",
       "remainingAmount": "סכום נותר",
       "title": "פרטי שובר",
       "treatment": "טיפול",

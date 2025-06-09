@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "update-translations": "node scripts/update-translations.js"
   },
   "dependencies": {
     "@auth/core": "latest",
@@ -54,6 +55,7 @@
     "embla-carousel-react": "latest",
     "fs": "latest",
     "gcp-metadata": "latest",
+    "glob": "^11.0.2",
     "i18next": "latest",
     "input-otp": "latest",
     "kerberos": "latest",

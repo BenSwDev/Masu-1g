@@ -2,13 +2,13 @@
 
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { dbConnect } from "@/lib/db/connection"
-import { Booking } from "@/lib/db/models/booking"
-import { UserSubscription } from "@/lib/db/models/user-subscription"
-import { GiftVoucher } from "@/lib/db/models/gift-voucher"
-import { User } from "@/lib/db/models/user"
-import { Treatment } from "@/lib/db/models/treatment"
-import { Subscription } from "@/lib/db/models/subscription"
+import { dbConnect } from "@/lib/db/db"
+import Booking from "@/lib/db/models/booking"
+import UserSubscription from "@/lib/db/models/user-subscription"
+import GiftVoucher from "@/lib/db/models/gift-voucher"
+import User from "@/lib/db/models/user"
+import Treatment from "@/lib/db/models/treatment"
+import Subscription from "@/lib/db/models/subscription"
 import mongoose from "mongoose"
 import type {
   PurchaseTransaction,

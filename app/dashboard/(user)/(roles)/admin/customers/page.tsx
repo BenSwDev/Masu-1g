@@ -20,11 +20,13 @@ export default async function CustomersPage() {
     return (
       <ScrollArea className="h-full">
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          <Heading 
-            title="ניהול לקוחות" 
-            description="סיכום מלא של כל הלקוחות, רכישותיהם ומימושיהם במערכת"
-            icon={UserCheck}
-          />
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-6 w-6" />
+            <Heading 
+              title="ניהול לקוחות" 
+              description="סיכום מלא של כל הלקוחות, רכישותיהם ומימושיהם במערכת"
+            />
+          </div>
           <Separator />
           <CustomersClient />
         </div>
@@ -35,11 +37,13 @@ export default async function CustomersPage() {
     return (
       <ScrollArea className="h-full">
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          <Heading 
-            title="ניהול לקוחות" 
-            description="סיכום מלא של כל הלקוחות, רכישותיהם ומימושיהם במערכת"
-            icon={UserCheck}
-          />
+          <div className="flex items-center gap-2">
+            <UserCheck className="h-6 w-6" />
+            <Heading 
+              title="ניהול לקוחות" 
+              description="סיכום מלא של כל הלקוחות, רכישותיהם ומימושיהם במערכת"
+            />
+          </div>
           <Separator />
           <div className="text-center p-6">
             <p className="text-muted-foreground">שגיאה בטעינת העמוד. נסה לרענן או פנה למנהל המערכת.</p>

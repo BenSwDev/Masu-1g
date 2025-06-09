@@ -10,14 +10,14 @@ import ComprehensiveBookingEditModal from "./comprehensive-booking-edit-modal"
 import type { PopulatedBooking } from "@/types/booking"
 import { Heading } from "@/components/common/ui/heading"
 import { getAllBookings } from "@/actions/booking-actions"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/common/ui/input"
+import { Button } from "@/components/common/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Search, RefreshCw, Filter, X } from "lucide-react"
 import { useDebounce } from "@/hooks/use-debounce"
-import { Badge } from "@/components/ui/badge"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/common/ui/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
+import { Separator } from "@/components/common/ui/separator"
 
 /**
  * Admin Bookings Client Component
@@ -117,9 +117,9 @@ export default function AdminBookingsClient() {
   if (isLoading) {
     return (
       <div>
-        <Heading as="h2" size="xl" className="mb-6 text-center md:text-right">
-          {t("adminBookings.title")}
-        </Heading>
+        <div className="mb-6 text-center md:text-right">
+          <h2 className="text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+        </div>
         <BookingsTableSkeleton />
         <p className="mt-4 text-center text-muted-foreground">{t("common.loading")}</p>
       </div>
@@ -129,9 +129,9 @@ export default function AdminBookingsClient() {
   if (error) {
     return (
       <div className="text-center text-red-500">
-        <Heading as="h2" size="xl" className="mb-6 text-center md:text-right">
-          {t("adminBookings.title")}
-        </Heading>
+        <div className="mb-6 text-center md:text-right">
+          <h2 className="text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+        </div>
         <p>
           {t("common.error")}: {error.message}
         </p>
@@ -141,9 +141,9 @@ export default function AdminBookingsClient() {
 
   return (
     <div dir={dir}>
-      <Heading as="h2" size="xl" className="mb-6 text-center md:text-right">
-        {t("adminBookings.title")}
-      </Heading>
+      <div className="mb-6 text-center md:text-right">
+        <h2 className="text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+      </div>
       
       {/* Search and Filters Bar */}
       <div className="mb-6 space-y-4">

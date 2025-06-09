@@ -20,11 +20,13 @@ export default async function PurchaseReportsPage() {
     return (
       <ScrollArea className="h-full">
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          <Heading 
-            title="דוחות רכישות ומימושים" 
-            description="דוח מקיף של כל הרכישות והמימושים במערכת - הזמנות, מנויים ושוברי מתנה"
-            icon={BarChart3}
-          />
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-6 w-6" />
+            <Heading 
+              title="דוחות רכישות ומימושים" 
+              description="דוח מקיף של כל הרכישות והמימושים במערכת - הזמנות, מנויים ושוברי מתנה"
+            />
+          </div>
           <Separator />
           <PurchaseReportsClient />
         </div>
@@ -35,11 +37,13 @@ export default async function PurchaseReportsPage() {
     return (
       <ScrollArea className="h-full">
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          <Heading 
-            title="דוחות רכישות ומימושים" 
-            description="דוח מקיף של כל הרכישות והמימושים במערכת - הזמנות, מנויים ושוברי מתנה"
-            icon={BarChart3}
-          />
+          <div className="flex items-center gap-2">
+            <BarChart3 className="h-6 w-6" />
+            <Heading 
+              title="דוחות רכישות ומימושים" 
+              description="דוח מקיף של כל הרכישות והמימושים במערכת - הזמנות, מנויים ושוברי מתנה"
+            />
+          </div>
           <Separator />
           <div className="text-center p-6">
             <p className="text-muted-foreground">שגיאה בטעינת העמוד. נסה לרענן או פנה למנהל המערכת.</p>

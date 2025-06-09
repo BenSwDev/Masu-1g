@@ -49,9 +49,9 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
   if (isLoading) {
     return (
       <div>
-        <Heading as="h2" size="xl" className="mb-6 text-center md:text-right">
-          {t("memberBookings.client.title")}
-        </Heading>
+        <div className="mb-6 text-center md:text-right">
+          <h2 className="text-3xl font-bold tracking-tight">{t("memberBookings.client.title")}</h2>
+        </div>
         <BookingsTableSkeleton />
         <p className="mt-4 text-center text-muted-foreground">{t("memberBookings.client.loading")}</p>
       </div>
@@ -61,9 +61,9 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
   if (error) {
     return (
       <div className="text-center text-red-500">
-        <Heading as="h2" size="xl" className="mb-6 text-center md:text-right">
-          {t("memberBookings.client.title")}
-        </Heading>
+        <div className="mb-6 text-center md:text-right">
+          <h2 className="text-3xl font-bold tracking-tight">{t("memberBookings.client.title")}</h2>
+        </div>
         <p>
           {t("memberBookings.client.error")}: {error.message}
         </p>
@@ -75,9 +75,9 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
   if (!data?.bookings || data.bookings.length === 0) {
     return (
       <div>
-        <Heading as="h2" size="xl" className="mb-6 text-center md:text-right">
-          {t("memberBookings.client.title")}
-        </Heading>
+        <div className="mb-6 text-center md:text-right">
+          <h2 className="text-3xl font-bold tracking-tight">{t("memberBookings.client.title")}</h2>
+        </div>
         <p className="text-center text-muted-foreground">{t("memberBookings.client.noBookings")}</p>
       </div>
     )
@@ -85,9 +85,9 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
 
   return (
     <div dir={dir}>
-      <Heading as="h2" size="xl" className="mb-6 text-center md:text-right">
-        {t("memberBookings.client.title")}
-      </Heading>
+      <div className="mb-6 text-center md:text-right">
+        <h2 className="text-3xl font-bold tracking-tight">{t("memberBookings.client.title")}</h2>
+      </div>
       {/* 5. Pass data.bookings to the DataTable */}
       <DataTable columns={columns} data={data.bookings} />
     </div>

@@ -1,0 +1,30 @@
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth/auth"
+import { redirect } from "next/navigation"
+import { BarChart3 } from "lucide-react"
+import PurchaseReportsClient from "@/components/dashboard/admin/purchase-reports/purchase-reports-client"
+import { ScrollArea } from "@/components/common/ui/scroll-area"
+import { Heading } from "@/components/common/ui/heading"
+import { Separator } from "@/components/common/ui/separator"
+
+export default async function PurchaseReportsPage() {
+  const session = await getServerSession(authOptions)
+  
+  if (!session?.user?.roles?.includes('admin')) {
+    redirect("/dashboard")
+  }
+
+  return (
+    <ScrollArea className="h-full">
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <Heading 
+          title="דוחות רכישות ומימושים" 
+          description="דוח מקיף של כל הרכישות והמימושים במערכת - הזמנות, מנויים ושוברי מתנה"
+          icon={BarChart3}
+        />
+        <Separator />
+        <PurchaseReportsClient />
+      </div>
+    </ScrollArea>
+  )
+} 

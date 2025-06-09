@@ -1,0 +1,398 @@
+"use client"
+
+import { useState } from "react"
+import { CalendarIcon, Search, Filter, X } from "lucide-react"
+import { format } from "date-fns"
+import { he } from "date-fns/locale"
+import { Button } from "@/components/common/ui/button"
+import { Input } from "@/components/common/ui/input"
+import { Label } from "@/components/common/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/ui/select"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/common/ui/popover"
+import { Calendar } from "@/components/common/ui/calendar"
+import { Checkbox } from "@/components/common/ui/checkbox"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/common/ui/card"
+import { Badge } from "@/components/common/ui/badge"
+import { useTranslation } from "@/lib/translations/i18n"
+import type { PurchaseFilters, TransactionType, TransactionStatus } from "@/lib/types/purchase-summary"
+import { cn } from "@/lib/utils/utils"
+
+interface PurchaseFiltersProps {
+  filters: Partial<PurchaseFilters>
+  onFiltersChange: (filters: Partial<PurchaseFilters>) => void
+  onClearFilters: () => void
+  showAdvanced?: boolean
+}
+
+export default function PurchaseFiltersComponent({
+  filters,
+  onFiltersChange,
+  onClearFilters,
+  showAdvanced = true,
+}: PurchaseFiltersProps) {
+  const { t } = useTranslation()
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+
+  const transactionTypes: { value: TransactionType; label: string }[] = [
+    { value: 'booking', label: t('purchaseFilters.types.booking') || 'הזמנה' },
+    { value: 'subscription', label: t('purchaseFilters.types.subscription') || 'מנוי' },
+    { value: 'gift_voucher', label: t('purchaseFilters.types.giftVoucher') || 'שובר מתנה' },
+  ]
+
+  const transactionStatuses: { value: TransactionStatus; label: string }[] = [
+    { value: 'pending', label: t('purchaseFilters.statuses.pending') || 'ממתין' },
+    { value: 'completed', label: t('purchaseFilters.statuses.completed') || 'הושלם' },
+    { value: 'active', label: t('purchaseFilters.statuses.active') || 'פעיל' },
+    { value: 'cancelled', label: t('purchaseFilters.statuses.cancelled') || 'בוטל' },
+    { value: 'expired', label: t('purchaseFilters.statuses.expired') || 'פג תוקף' },
+    { value: 'partially_used', label: t('purchaseFilters.statuses.partiallyUsed') || 'נוצל חלקית' },
+    { value: 'fully_used', label: t('purchaseFilters.statuses.fullyUsed') || 'נוצל במלואו' },
+  ]
+
+  const handleTypeChange = (type: TransactionType, checked: boolean) => {
+    const currentTypes = filters.type || []
+    const newTypes = checked
+      ? [...currentTypes, type]
+      : currentTypes.filter(t => t !== type)
+    
+    onFiltersChange({ ...filters, type: newTypes })
+  }
+
+  const handleStatusChange = (status: TransactionStatus, checked: boolean) => {
+    const currentStatuses = filters.status || []
+    const newStatuses = checked
+      ? [...currentStatuses, status]
+      : currentStatuses.filter(s => s !== status)
+    
+    onFiltersChange({ ...filters, status: newStatuses })
+  }
+
+  const activeFiltersCount = [
+    filters.search,
+    filters.type?.length,
+    filters.status?.length,
+    filters.dateFrom,
+    filters.dateTo,
+    filters.amountMin,
+    filters.amountMax,
+  ].filter(Boolean).length
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              {t('purchaseFilters.title') || 'פילטרים'}
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="mr-2">
+                  {activeFiltersCount}
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription>
+              {t('purchaseFilters.description') || 'סנן וחפש בהיסטוריית הרכישות'}
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            {showAdvanced && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              >
+                {showAdvancedFilters 
+                  ? (t('purchaseFilters.hideAdvanced') || 'הסתר מתקדם')
+                  : (t('purchaseFilters.showAdvanced') || 'הצג מתקדם')
+                }
+              </Button>
+            )}
+            {activeFiltersCount > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onClearFilters}
+                className="flex items-center gap-1"
+              >
+                <X className="h-4 w-4" />
+                {t('purchaseFilters.clearAll') || 'נקה הכל'}
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Search */}
+        <div className="flex items-center space-x-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t('purchaseFilters.searchPlaceholder') || 'חפש לפי תיאור או מזהה...'}
+            value={filters.search || ''}
+            onChange={(e) => onFiltersChange({ ...filters, search: e.target.value || undefined })}
+            className="flex-1"
+          />
+        </div>
+
+        {/* Quick Filters Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Transaction Types */}
+          <div>
+            <Label className="text-sm font-medium">
+              {t('purchaseFilters.transactionTypes') || 'סוגי עסקאות'}
+            </Label>
+            <div className="mt-2 space-y-2">
+              {transactionTypes.map((type) => (
+                <div key={type.value} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`type-${type.value}`}
+                    checked={filters.type?.includes(type.value) || false}
+                    onCheckedChange={(checked) => 
+                      handleTypeChange(type.value, checked as boolean)
+                    }
+                  />
+                  <Label 
+                    htmlFor={`type-${type.value}`}
+                    className="text-sm cursor-pointer"
+                  >
+                    {type.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Transaction Status */}
+          <div>
+            <Label className="text-sm font-medium">
+              {t('purchaseFilters.statuses') || 'סטטוסים'}
+            </Label>
+            <div className="mt-2 space-y-2">
+              {transactionStatuses.slice(0, 3).map((status) => (
+                <div key={status.value} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`status-${status.value}`}
+                    checked={filters.status?.includes(status.value) || false}
+                    onCheckedChange={(checked) => 
+                      handleStatusChange(status.value, checked as boolean)
+                    }
+                  />
+                  <Label 
+                    htmlFor={`status-${status.value}`}
+                    className="text-sm cursor-pointer"
+                  >
+                    {status.label}
+                  </Label>
+                </div>
+              ))}
+              {showAdvancedFilters && transactionStatuses.slice(3).map((status) => (
+                <div key={status.value} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`status-${status.value}`}
+                    checked={filters.status?.includes(status.value) || false}
+                    onCheckedChange={(checked) => 
+                      handleStatusChange(status.value, checked as boolean)
+                    }
+                  />
+                  <Label 
+                    htmlFor={`status-${status.value}`}
+                    className="text-sm cursor-pointer"
+                  >
+                    {status.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Date Range */}
+          <div>
+            <Label className="text-sm font-medium">
+              {t('purchaseFilters.dateRange') || 'טווח תאריכים'}
+            </Label>
+            <div className="mt-2 space-y-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-right font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {filters.dateFrom ? (
+                      format(filters.dateFrom, "dd/MM/yyyy", { locale: he })
+                    ) : (
+                      <span>{t('purchaseFilters.selectStartDate') || 'תאריך התחלה'}</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={filters.dateFrom}
+                    onSelect={(date) => onFiltersChange({ ...filters, dateFrom: date })}
+                    disabled={(date) =>
+                      date > new Date() || (filters.dateTo && date > filters.dateTo)
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-right font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {filters.dateTo ? (
+                      format(filters.dateTo, "dd/MM/yyyy", { locale: he })
+                    ) : (
+                      <span>{t('purchaseFilters.selectEndDate') || 'תאריך סיום'}</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={filters.dateTo}
+                    onSelect={(date) => onFiltersChange({ ...filters, dateTo: date })}
+                    disabled={(date) =>
+                      date > new Date() || (filters.dateFrom && date < filters.dateFrom)
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Amount Range - Only in Advanced */}
+          {showAdvancedFilters && (
+            <div>
+              <Label className="text-sm font-medium">
+                {t('purchaseFilters.amountRange') || 'טווח סכומים (ש״ח)'}
+              </Label>
+              <div className="mt-2 space-y-2">
+                <Input
+                  type="number"
+                  placeholder={t('purchaseFilters.minAmount') || 'סכום מינימלי'}
+                  value={filters.amountMin || ''}
+                  onChange={(e) => onFiltersChange({ 
+                    ...filters, 
+                    amountMin: e.target.value ? Number(e.target.value) : undefined 
+                  })}
+                />
+                <Input
+                  type="number"
+                  placeholder={t('purchaseFilters.maxAmount') || 'סכום מקסימלי'}
+                  value={filters.amountMax || ''}
+                  onChange={(e) => onFiltersChange({ 
+                    ...filters, 
+                    amountMax: e.target.value ? Number(e.target.value) : undefined 
+                  })}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Active Filters Display */}
+        {activeFiltersCount > 0 && (
+          <div className="pt-4 border-t">
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm font-medium text-muted-foreground">
+                {t('purchaseFilters.activeFilters') || 'פילטרים פעילים'}:
+              </span>
+              
+              {filters.search && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {t('purchaseFilters.search') || 'חיפוש'}: "{filters.search}"
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => onFiltersChange({ ...filters, search: undefined })}
+                  />
+                </Badge>
+              )}
+              
+              {filters.type?.map((type) => (
+                <Badge key={type} variant="secondary" className="flex items-center gap-1">
+                  {transactionTypes.find(t => t.value === type)?.label}
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => handleTypeChange(type, false)}
+                  />
+                </Badge>
+              ))}
+              
+              {filters.status?.map((status) => (
+                <Badge key={status} variant="secondary" className="flex items-center gap-1">
+                  {transactionStatuses.find(s => s.value === status)?.label}
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => handleStatusChange(status, false)}
+                  />
+                </Badge>
+              ))}
+              
+              {filters.dateFrom && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {t('purchaseFilters.from') || 'מ'}: {format(filters.dateFrom, "dd/MM/yyyy", { locale: he })}
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => onFiltersChange({ ...filters, dateFrom: undefined })}
+                  />
+                </Badge>
+              )}
+              
+              {filters.dateTo && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {t('purchaseFilters.to') || 'עד'}: {format(filters.dateTo, "dd/MM/yyyy", { locale: he })}
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => onFiltersChange({ ...filters, dateTo: undefined })}
+                  />
+                </Badge>
+              )}
+              
+              {filters.amountMin && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {t('purchaseFilters.minAmount') || 'מינימום'}: {filters.amountMin} ש״ח
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => onFiltersChange({ ...filters, amountMin: undefined })}
+                  />
+                </Badge>
+              )}
+              
+              {filters.amountMax && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {t('purchaseFilters.maxAmount') || 'מקסימום'}: {filters.amountMax} ש״ח
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => onFiltersChange({ ...filters, amountMax: undefined })}
+                  />
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+} 

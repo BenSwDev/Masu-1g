@@ -252,7 +252,7 @@
     "termsOfService": "תנאי השימוש",
     "and": "ו",
     "privacyPolicy": "מדיניות הפרטיות",
-    "registerAsProfessional": "הרשם כבעל מקצוע"
+    "registerAsProfessional": "הרשם כמטפל"
   },
   "errors": {
     "unknown": "אירעה שגיאה בלתי צפויה",
@@ -290,7 +290,7 @@
       "signOut": "התנתק",
       "users": "משתמשים",
       "clients": "לקוחות",
-      "professionals": "בעלי מקצוע",
+      "professionals": "מטפלים",
       "partners": "שותפים",
       "treatments": "טיפולים",
       "subscriptions": "מנויים",
@@ -319,7 +319,7 @@
     "roles": {
       "member": "חבר",
       "admin": "מנהל",
-      "professional": "בעל מקצוע",
+      "professional": "מטפל",
       "partner": "שותף",
       "switchRole": "החלף תפקיד"
     }
@@ -1019,7 +1019,7 @@
     "admin": "מנהל",
     "member": "חבר",
     "partner": "שותף",
-    "professional": "מקצועי",
+    "professional": "מטפל",
     "guest": "אורח"
   },
   "partnerCoupons": {
@@ -1265,10 +1265,10 @@
     "admin": "מנהל",
     "member": "חבר",
     "partner": "שותף",
-    "professional": "מקצועי",
+    "professional": "מטפל",
     "guest": "אורח",
     "memberPlural": "חברים",
-    "professionalPlural": "מקצועיים",
+    "professionalPlural": "מטפלים",
     "partnerPlural": "שותפים"
   },
   "name": "שם",

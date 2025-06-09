@@ -7,6 +7,8 @@ import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { Heading } from "@/components/common/ui/heading"
 import { Separator } from "@/components/common/ui/separator"
 
+export const dynamic = 'force-dynamic'
+
 export default async function CustomersPage() {
   try {
     const session = await getServerSession(authOptions)

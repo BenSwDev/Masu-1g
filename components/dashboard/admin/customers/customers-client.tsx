@@ -53,7 +53,7 @@ import {
 } from "lucide-react"
 
 export default function CustomersClient() {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [customers, setCustomers] = useState<CustomerSummary[]>([])
@@ -164,7 +164,7 @@ export default function CustomersClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div dir={dir} className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

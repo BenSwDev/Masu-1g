@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 
 export default function PurchaseReportsClient() {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [statsLoading, setStatsLoading] = useState(true)
@@ -124,7 +124,7 @@ export default function PurchaseReportsClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div dir={dir} className="space-y-6">
       {/* Page Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">

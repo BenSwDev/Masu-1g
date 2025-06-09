@@ -21,7 +21,7 @@ import type { PurchaseTransaction, PurchaseFilters } from "@/lib/types/purchase-
 import { RefreshCw, Download, TrendingUp, Calendar, CreditCard, Gift } from "lucide-react"
 
 export default function PurchaseHistoryClient() {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [transactions, setTransactions] = useState<PurchaseTransaction[]>([])
@@ -91,7 +91,7 @@ export default function PurchaseHistoryClient() {
   }
 
   return (
-    <div className="space-y-6">
+    <div dir={dir} className="space-y-6">
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

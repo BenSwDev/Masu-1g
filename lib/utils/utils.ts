@@ -45,7 +45,19 @@ export function formatDate(date: Date | string, language = "en-US"): string {
  * @param language The language code (e.g., "en", "he", "ru") for localization. Defaults to "he-IL" for ILS, "en-US" for USD.
  * @returns A localized currency string (e.g., "₪100.00") or a fallback string if formatting fails.
  */
-export function formatCurrency(amount: number, currency = "ILS", language = "en-US"): string {
+export function formatCurrency(amount: number | undefined | null, currency = "ILS", language = "en-US"): string {
+  // Handle undefined/null values
+  if (amount === undefined || amount === null) {
+    return `0.00 ${currency}`
+  }
+  
+  // Ensure amount is a number
+  const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount))
+  if (isNaN(numericAmount)) {
+    console.warn(`[Utils] Invalid amount provided to formatCurrency: ${amount}`)
+    return `0.00 ${currency}`
+  }
+
   let effectiveLanguage = language
   // Specific language defaults for certain currencies if a generic language like "en" is passed.
   if (language === "he" && currency === "ILS") effectiveLanguage = "he-IL"
@@ -58,11 +70,11 @@ export function formatCurrency(amount: number, currency = "ILS", language = "en-
       currency: currency,
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(amount)
+    }).format(numericAmount)
   } catch (error) {
     console.error(`[Utils] Error formatting currency ${currency} for language ${effectiveLanguage}:`, error)
     // Fallback for unsupported currencies or errors
-    return `${amount.toFixed(2)} ${currency}`
+    return `${numericAmount.toFixed(2)} ${currency}`
   }
 }
 

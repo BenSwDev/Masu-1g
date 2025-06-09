@@ -59,13 +59,19 @@ export async function getUserPurchaseHistory(
       return { success: false, error: "Database connection failed" }
     }
 
-    const userId = new mongoose.Types.ObjectId(session.user.id)
+    // For admin users, allow filtering by specific userId, otherwise use session user id
+    let targetUserId: mongoose.Types.ObjectId
+    if (session.user.roles.includes('admin') && filters?.userId) {
+      targetUserId = new mongoose.Types.ObjectId(filters.userId)
+    } else {
+      targetUserId = new mongoose.Types.ObjectId(session.user.id)
+    }
     const skip = (page - 1) * limit
     const allTransactions: PurchaseTransaction[] = []
 
     // Get bookings
     if (!filters?.type || filters.type.includes('booking')) {
-      const bookings = await Booking.find({ userId })
+      const bookings = await Booking.find({ userId: targetUserId })
         .populate('treatmentId', 'name')
         .populate('professionalId', 'name')
         .sort({ bookingDateTime: -1 })
@@ -77,14 +83,14 @@ export async function getUserPurchaseHistory(
           treatmentName: (booking.treatmentId as any)?.name || 'Unknown Treatment',
           professionalName: (booking.professionalId as any)?.name,
           dateTime: booking.bookingDateTime,
-          clientName: booking.clientName,
+          clientName: booking.recipientName || booking.bookedByUserName || 'Unknown Client',
           source: booking.source,
           priceDetails: {
-            basePrice: booking.priceDetails.basePrice,
-            finalAmount: booking.priceDetails.finalAmount,
-            isFullyCoveredByVoucherOrSubscription: booking.priceDetails.isFullyCoveredByVoucherOrSubscription,
-            appliedDiscounts: booking.priceDetails.discountAmount,
-            appliedVouchers: booking.priceDetails.voucherAppliedAmount,
+            basePrice: booking.priceDetails.basePrice || 0,
+            finalAmount: booking.priceDetails.finalAmount || 0,
+            isFullyCoveredByVoucherOrSubscription: booking.priceDetails.isFullyCoveredByVoucherOrSubscription || false,
+            appliedDiscounts: booking.priceDetails.discountAmount || 0,
+            appliedVouchers: booking.priceDetails.voucherAppliedAmount || 0,
           },
           paymentStatus: booking.paymentDetails.paymentStatus,
         }
@@ -93,8 +99,8 @@ export async function getUserPurchaseHistory(
           id: booking._id.toString(),
           type: 'booking',
           date: booking.bookingDateTime,
-          amount: booking.priceDetails.basePrice,
-          finalAmount: booking.priceDetails.finalAmount,
+          amount: booking.priceDetails.basePrice || 0,
+          finalAmount: booking.priceDetails.finalAmount || 0,
           status: booking.status === 'completed' ? 'completed' : 
                  booking.status === 'cancelled_by_user' || booking.status === 'cancelled_by_admin' ? 'cancelled' : 'pending',
           description: `הזמנת ${(booking.treatmentId as any)?.name || 'טיפול'}`,
@@ -105,7 +111,7 @@ export async function getUserPurchaseHistory(
 
     // Get subscriptions
     if (!filters?.type || filters.type.includes('subscription')) {
-      const userSubscriptions = await UserSubscription.find({ userId })
+      const userSubscriptions = await UserSubscription.find({ userId: targetUserId })
         .populate('subscriptionId', 'name')
         .populate('treatmentId', 'name')
         .sort({ purchaseDate: -1 })
@@ -115,22 +121,22 @@ export async function getUserPurchaseHistory(
         const subscriptionDetails: SubscriptionDetails = {
           subscriptionName: (userSub.subscriptionId as any)?.name || 'Unknown Subscription',
           treatmentName: (userSub.treatmentId as any)?.name || 'Unknown Treatment',
-          quantity: userSub.quantity,
-          bonusQuantity: userSub.bonusQuantity,
-          usedQuantity: userSub.usedQuantity,
-          remainingQuantity: userSub.remainingQuantity,
+          quantity: userSub.totalQuantity || 0,
+          bonusQuantity: 0,
+          usedQuantity: (userSub.totalQuantity || 0) - (userSub.remainingQuantity || 0),
+          remainingQuantity: userSub.remainingQuantity || 0,
           expiryDate: userSub.expiryDate,
-          pricePerSession: userSub.pricePerSession,
-          totalPaid: userSub.totalPaid,
-          validityMonths: userSub.validityMonths,
+          pricePerSession: userSub.pricePerSession || 0,
+          totalPaid: userSub.paymentAmount || 0,
+          validityMonths: 0,
         }
 
         allTransactions.push({
           id: userSub._id.toString(),
           type: 'subscription',
           date: userSub.purchaseDate,
-          amount: userSub.totalPaid,
-          finalAmount: userSub.totalPaid,
+          amount: userSub.paymentAmount || 0,
+          finalAmount: userSub.paymentAmount || 0,
           status: userSub.remainingQuantity > 0 && userSub.expiryDate > new Date() ? 'active' : 'expired',
           description: `מנוי ${(userSub.subscriptionId as any)?.name || 'לא ידוע'}`,
           details: subscriptionDetails,
@@ -142,8 +148,8 @@ export async function getUserPurchaseHistory(
     if (!filters?.type || filters.type.includes('gift_voucher')) {
       const vouchers = await GiftVoucher.find({ 
         $or: [
-          { purchaserUserId: userId },
-          { ownerUserId: userId }
+          { purchaserUserId: targetUserId },
+          { ownerUserId: targetUserId }
         ]
       })
         .populate('treatmentId', 'name')

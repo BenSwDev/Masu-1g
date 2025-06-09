@@ -36,7 +36,7 @@ export default function PurchaseStatsOverview({
   }
 
   const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`
+    return `${value?.toFixed(1) || '0.0'}%`
   }
 
   if (isLoading) {

@@ -40,7 +40,7 @@ export function PurchaseSummary({ title, items, totalPrice, currency = "₪", cl
             <div className="flex justify-between items-center pt-3 text-lg">
               <span className="font-semibold">{t("common.totalPrice")}:</span>
               <span className="font-bold text-xl text-primary">
-                {totalPrice.toFixed(2)} {currency}
+                {totalPrice?.toFixed(2) || '0.00'} {currency}
               </span>
             </div>
           </>

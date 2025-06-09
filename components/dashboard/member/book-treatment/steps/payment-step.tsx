@@ -146,7 +146,7 @@ export default function PaymentStep({
             {t("bookings.steps.payment.description")}
             <span className="font-semibold text-primary">
               {" "}
-              {t("common.totalPrice")}: {calculatedPrice.finalAmount.toFixed(2)} {t("common.currency")}
+              {t("common.totalPrice")}: {calculatedPrice.finalAmount?.toFixed(2) || '0.00'} {t("common.currency")}
             </span>
           </p>
         </div>
@@ -263,7 +263,7 @@ export default function PaymentStep({
           </Button>
           <Button type="submit" disabled={isLoading || !form.formState.isValid} size="lg" className="w-full sm:w-auto">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("bookings.steps.payment.payAndConfirm")} {calculatedPrice.finalAmount.toFixed(2)} {t("common.currency")}
+            {t("bookings.steps.payment.payAndConfirm")} {calculatedPrice.finalAmount?.toFixed(2) || '0.00'} {t("common.currency")}
           </Button>
         </div>
       </form>

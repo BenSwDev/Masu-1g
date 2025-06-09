@@ -123,8 +123,11 @@ export default function PurchaseHistoryTable({
     }
   }
 
-  const formatCurrency = (amount: number) => {
-    return `${amount.toFixed(0)} ש״ח`
+  const formatCurrency = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null) return '0 ש״ח'
+    const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount))
+    if (isNaN(numericAmount)) return '0 ש״ח'
+    return `${numericAmount.toFixed(0)} ש״ח`
   }
 
   const formatDate = (date: Date) => {

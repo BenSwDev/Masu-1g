@@ -29,6 +29,9 @@ import {
   Calendar,
   Bell,
   SlidersHorizontal,
+  History,
+  Users,
+  BarChart3,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
@@ -271,6 +274,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string }>> = {
       admin: [
         { titleKey: "users", icon: User, hrefSuffix: "users" },
+        { titleKey: "customers", icon: Users, hrefSuffix: "customers" },
         { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
         { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments" },
         { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours" },
@@ -278,12 +282,14 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions" },
         { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
+        { titleKey: "purchaseReports", icon: BarChart3, hrefSuffix: "purchase-reports" },
       ],
       member: [
         { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },
         { titleKey: "paymentMethods", icon: CreditCard, hrefSuffix: "payment-methods" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
-        { titleKey: "bookings", icon: CreditCard, hrefSuffix: "bookings" },
+        { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
+        { titleKey: "purchaseHistory", icon: History, hrefSuffix: "purchase-history" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
       ],
       professional: [

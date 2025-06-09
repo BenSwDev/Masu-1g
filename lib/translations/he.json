@@ -307,6 +307,9 @@
       "categories": "קטגוריות",
       "orders": "הזמנות",
       "bookings": "הזמנות",
+      "purchaseHistory": "היסטוריית רכישות",
+      "customers": "לקוחות",
+      "purchaseReports": "דוחות רכישות",
       "support": "תמיכה",
       "settings": "הגדרות",
       "userMenu": {
@@ -1987,5 +1990,100 @@
       "bookingCannotBeAssigned": "לא ניתן לשייך מטפל להזמנה זו בסטטוס הנוכחי",
       "fetchProfessionalsFailed": "שגיאה בטעינת רשימת המטפלים"
     }
+  },
+  "customers": {
+    "title": "ניהול לקוחות",
+    "description": "סיכום מלא של כל הלקוחות, רכישותיהם ומימושיהם במערכת",
+    "summary": {
+      "totalCustomers": "סה״כ לקוחות",
+      "totalRevenue": "סה״כ הכנסות",
+      "averageSpent": "ממוצע הוצאה ללקוח",
+      "activeCustomers": "לקוחות פעילים",
+      "registeredUsers": "משתמשים רשומים",
+      "fromAllCustomers": "מכל הלקוחות",
+      "last30Days": "ב-30 הימים האחרונים"
+    },
+    "search": {
+      "placeholder": "חפש לקוח לפי שם, אימייל או טלפון...",
+      "noResults": "לא נמצאו לקוחות התואמים לחיפוש"
+    },
+    "table": {
+      "customerName": "שם הלקוח",
+      "contact": "פרטי קשר",
+      "joinDate": "תאריך הצטרפות",
+      "totalSpent": "סה״כ הוצאה",
+      "lastActivity": "פעילות אחרונה",
+      "status": "סטטוס",
+      "actions": "פעולות",
+      "viewDetails": "צפה בפרטים",
+      "active": "פעיל",
+      "inactive": "לא פעיל"
+    },
+    "details": {
+      "title": "פרטי לקוח",
+      "personalInfo": "מידע אישי",
+      "purchaseHistory": "היסטוריית רכישות",
+      "statistics": "סטטיסטיקות",
+      "contactInfo": "פרטי קשר",
+      "accountInfo": "פרטי חשבון"
+    },
+    "error": {
+      "loadFailed": "שגיאה בטעינת הלקוחות",
+      "transactionsFailed": "שגיאה בטעינת עסקאות הלקוח"
+    }
+  },
+  "purchaseReports": {
+    "title": "דוחות רכישות ומימושים",
+    "description": "דוח מקיף של כל הרכישות והמימושים במערכת - הזמנות, מנויים ושוברי מתנה",
+    "summary": {
+      "totalTransactions": "סה״כ עסקאות",
+      "totalRevenue": "סה״כ הכנסות",
+      "averageTransaction": "ממוצע עסקה",
+      "totalCustomers": "סה״כ לקוחות",
+      "bookingRevenue": "הכנסות מהזמנות",
+      "subscriptionRevenue": "הכנסות ממנויים",
+      "voucherRevenue": "הכנסות משוברי מתנה"
+    },
+    "filters": {
+      "dateRange": "טווח תאריכים",
+      "transactionType": "סוג עסקה",
+      "status": "סטטוס",
+      "customer": "לקוח",
+      "amountRange": "טווח סכום"
+    },
+    "export": {
+      "excel": "ייצא לאקסל",
+      "pdf": "ייצא ל-PDF",
+      "csv": "ייצא ל-CSV"
+    },
+    "chart": {
+      "monthlyRevenue": "הכנסות חודשיות",
+      "transactionTypes": "התפלגות סוגי עסקאות",
+      "customerActivity": "פעילות לקוחות"
+    }
+  },
+  "purchaseHistory": {
+    "title": "היסטוריית רכישות ומימושים",
+    "description": "צפה בכל הרכישות והמימושים שלך - הזמנות, מנויים ושוברי מתנה",
+    "filters": {
+      "type": "סוג רכישה",
+      "status": "סטטוס",
+      "dateRange": "טווח תאריכים"
+    },
+    "types": {
+      "booking": "הזמנת טיפול",
+      "subscription": "מנוי טיפולים",
+      "gift_voucher": "שובר מתנה"
+    },
+    "statuses": {
+      "pending": "ממתין",
+      "completed": "הושלם",
+      "cancelled": "בוטל",
+      "expired": "פג תוקף",
+      "active": "פעיל",
+      "partially_used": "בשימוש חלקי",
+      "fully_used": "נוצל במלואו"
+    },
+    "noTransactions": "אין עסקאות להצגה"
   }
 }

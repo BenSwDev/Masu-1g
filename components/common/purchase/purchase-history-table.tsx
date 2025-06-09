@@ -41,6 +41,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Eye,
 } from "lucide-react"
 
 interface PurchaseHistoryTableProps {
@@ -54,7 +55,7 @@ export default function PurchaseHistoryTable({
   isLoading = false,
   showCustomerInfo = false,
 }: PurchaseHistoryTableProps) {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const [selectedTransaction, setSelectedTransaction] = useState<PurchaseTransaction | null>(null)
 
   const getStatusBadgeVariant = (status: string) => {
@@ -404,14 +405,12 @@ export default function PurchaseHistoryTable({
 
   if (isLoading) {
     return (
-      <Card>
+      <Card dir={dir}>
         <CardContent className="p-6">
-          <div className="space-y-4">
-            {[...Array(5)].map((_, index) => (
-              <div key={index} className="animate-pulse">
-                <div className="h-12 bg-muted rounded-md"></div>
-              </div>
-            ))}
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-muted rounded w-full"></div>
+            <div className="h-4 bg-muted rounded w-3/4"></div>
+            <div className="h-4 bg-muted rounded w-1/2"></div>
           </div>
         </CardContent>
       </Card>
@@ -420,10 +419,14 @@ export default function PurchaseHistoryTable({
 
   if (transactions.length === 0) {
     return (
-      <Card>
+      <Card dir={dir}>
         <CardContent className="p-6 text-center">
+          <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">
+            {t('purchaseHistory.noTransactions') || 'אין עסקאות'}
+          </h3>
           <p className="text-muted-foreground">
-            {t('purchaseHistory.noTransactions') || 'לא נמצאו עסקאות'}
+            {t('purchaseHistory.noTransactionsDesc') || 'לא נמצאו עסקאות התואמות את הקריטריונים שנבחרו'}
           </p>
         </CardContent>
       </Card>
@@ -431,69 +434,103 @@ export default function PurchaseHistoryTable({
   }
 
   return (
-    <>
+    <div dir={dir}>
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('purchaseHistory.table.type') || 'סוג'}</TableHead>
-                <TableHead>{t('purchaseHistory.table.description') || 'תיאור'}</TableHead>
-                <TableHead>{t('purchaseHistory.table.date') || 'תאריך'}</TableHead>
-                <TableHead>{t('purchaseHistory.table.amount') || 'סכום'}</TableHead>
-                <TableHead>{t('purchaseHistory.table.status') || 'סטטוס'}</TableHead>
-                <TableHead>{t('purchaseHistory.table.actions') || 'פעולות'}</TableHead>
+                <TableHead className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+                  {t('purchaseHistory.table.type') || 'סוג'}
+                </TableHead>
+                <TableHead className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+                  {t('purchaseHistory.table.description') || 'תיאור'}
+                </TableHead>
+                <TableHead className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+                  {t('purchaseHistory.table.date') || 'תאריך'}
+                </TableHead>
+                <TableHead className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+                  {t('purchaseHistory.table.amount') || 'סכום'}
+                </TableHead>
+                <TableHead className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+                  {t('purchaseHistory.table.status') || 'סטטוס'}
+                </TableHead>
+                {showCustomerInfo && (
+                  <TableHead className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+                    {t('purchaseHistory.table.customer') || 'לקוח'}
+                  </TableHead>
+                )}
+                <TableHead className={dir === 'rtl' ? 'text-right' : 'text-left'}>
+                  {t('purchaseHistory.table.actions') || 'פעולות'}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {transactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className={`flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                       {getTypeIcon(transaction.type)}
-                      <span className="font-medium">{getTypeText(transaction.type)}</span>
+                      <span className="text-sm font-medium">
+                        {getTypeText(transaction.type)}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <p className="font-medium">{transaction.description}</p>
-                      <p className="text-sm text-muted-foreground">ID: {transaction.id.slice(-8)}</p>
+                    <div className="max-w-xs truncate" title={transaction.description}>
+                      {transaction.description}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <p>{format(new Date(transaction.date), "dd/MM/yyyy", { locale: he })}</p>
-                      <p className="text-muted-foreground">
-                        {format(new Date(transaction.date), "HH:mm", { locale: he })}
-                      </p>
+                      {formatDate(transaction.date)}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div>
-                      {transaction.finalAmount !== undefined && transaction.finalAmount !== transaction.amount ? (
-                        <>
-                          <p className="font-medium">{formatCurrency(transaction.finalAmount)}</p>
-                          <p className="text-sm text-muted-foreground line-through">
-                            {formatCurrency(transaction.amount)}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="font-medium">{formatCurrency(transaction.amount)}</p>
-                      )}
+                    <div className="font-medium">
+                      {transaction.finalAmount !== undefined
+                        ? formatCurrency(transaction.finalAmount)
+                        : formatCurrency(transaction.amount)}
                     </div>
+                    {transaction.finalAmount !== undefined && transaction.finalAmount !== transaction.amount && (
+                      <div className="text-xs text-muted-foreground line-through">
+                        {formatCurrency(transaction.amount)}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(transaction.status)}>
                       {getStatusText(transaction.status)}
                     </Badge>
                   </TableCell>
+                  {showCustomerInfo && (
+                    <TableCell>
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium">
+                          {transaction.customerName || 'לא ידוע'}
+                        </div>
+                        {transaction.customerEmail && (
+                          <div className="text-xs text-muted-foreground">
+                            {transaction.customerEmail}
+                          </div>
+                        )}
+                        {transaction.customerPhone && (
+                          <div className="text-xs text-muted-foreground">
+                            {transaction.customerPhone}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                  )}
                   <TableCell>
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                       onClick={() => setSelectedTransaction(transaction)}
+                      className={`flex items-center gap-1 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}
                     >
-                      {t('purchaseHistory.table.viewDetails') || 'צפה בפרטים'}
+                      <Eye className="h-4 w-4" />
+                      {t('purchaseHistory.viewDetails') || 'צפה בפרטים'}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -503,23 +540,216 @@ export default function PurchaseHistoryTable({
         </CardContent>
       </Card>
 
-      {/* Transaction Details Modal */}
+      {/* Transaction Details Dialog */}
       <Dialog open={!!selectedTransaction} onOpenChange={() => setSelectedTransaction(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" dir={dir}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className={`flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
               {selectedTransaction && getTypeIcon(selectedTransaction.type)}
-              {selectedTransaction && getTypeText(selectedTransaction.type)} - 
-              {t('purchaseHistory.modal.details') || 'פרטים'}
+              {t('purchaseHistory.transactionDetails') || 'פרטי עסקה'}
             </DialogTitle>
             <DialogDescription>
-              {selectedTransaction && selectedTransaction.description}
+              {selectedTransaction && (
+                `${getTypeText(selectedTransaction.type)} • ${formatDate(selectedTransaction.date)}`
+              )}
             </DialogDescription>
           </DialogHeader>
-          
-          {selectedTransaction && renderTransactionDetails(selectedTransaction)}
+          {selectedTransaction && (
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {t('purchaseHistory.details.amount') || 'סכום'}:
+                  </p>
+                  <p className="font-medium text-lg">
+                    {selectedTransaction.finalAmount !== undefined
+                      ? formatCurrency(selectedTransaction.finalAmount)
+                      : formatCurrency(selectedTransaction.amount)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {t('purchaseHistory.details.status') || 'סטטוס'}:
+                  </p>
+                  <Badge variant={getStatusBadgeVariant(selectedTransaction.status)}>
+                    {getStatusText(selectedTransaction.status)}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Customer Info for Admin */}
+              {showCustomerInfo && selectedTransaction.customerName && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    {t('purchaseHistory.details.customerInfo') || 'פרטי לקוח'}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        {t('purchaseHistory.details.customerName') || 'שם לקוח'}:
+                      </p>
+                      <p className="font-medium">{selectedTransaction.customerName}</p>
+                    </div>
+                    {selectedTransaction.customerEmail && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          {t('purchaseHistory.details.customerEmail') || 'אימייל'}:
+                        </p>
+                        <p className="font-medium">{selectedTransaction.customerEmail}</p>
+                      </div>
+                    )}
+                    {selectedTransaction.customerPhone && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          {t('purchaseHistory.details.customerPhone') || 'טלפון'}:
+                        </p>
+                        <p className="font-medium">{selectedTransaction.customerPhone}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Type-specific details */}
+              <div className="border-t pt-4">
+                {selectedTransaction.type === 'booking' && (
+                  <BookingDetails details={selectedTransaction.details as any} />
+                )}
+                {selectedTransaction.type === 'subscription' && (
+                  <SubscriptionDetails details={selectedTransaction.details as any} />
+                )}
+                {selectedTransaction.type === 'gift_voucher' && (
+                  <GiftVoucherDetails details={selectedTransaction.details as any} />
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
+  )
+}
+
+// Helper components for different transaction types
+function BookingDetails({ details }: { details: any }) {
+  const { t, dir } = useTranslation()
+  
+  return (
+    <div>
+      <h4 className={`font-semibold mb-3 flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+        <Calendar className="h-4 w-4" />
+        {t('purchaseHistory.bookingDetails.title') || 'פרטי הזמנה'}
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.bookingDetails.bookingNumber') || 'מספר הזמנה'}:
+          </p>
+          <p className="font-medium">{details.bookingNumber}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.bookingDetails.treatmentName') || 'שם הטיפול'}:
+          </p>
+          <p className="font-medium">{details.treatmentName}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.bookingDetails.dateTime') || 'תאריך ושעה'}:
+          </p>
+          <p className="font-medium">{format(new Date(details.dateTime), "dd/MM/yyyy HH:mm", { locale: he })}</p>
+        </div>
+        {details.professionalName && (
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {t('purchaseHistory.bookingDetails.professional') || 'מטפל'}:
+            </p>
+            <p className="font-medium">{details.professionalName}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SubscriptionDetails({ details }: { details: any }) {
+  const { t, dir } = useTranslation()
+  
+  return (
+    <div>
+      <h4 className={`font-semibold mb-3 flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+        <Stethoscope className="h-4 w-4" />
+        {t('purchaseHistory.subscriptionDetails.title') || 'פרטי מנוי'}
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.subscriptionDetails.name') || 'שם המנוי'}:
+          </p>
+          <p className="font-medium">{details.subscriptionName}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.subscriptionDetails.treatment') || 'טיפול'}:
+          </p>
+          <p className="font-medium">{details.treatmentName}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.subscriptionDetails.remaining') || 'נותר'}:
+          </p>
+          <p className="font-medium">{details.remainingQuantity} מתוך {details.quantity}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.subscriptionDetails.expiryDate') || 'תוקף עד'}:
+          </p>
+          <p className="font-medium">{format(new Date(details.expiryDate), "dd/MM/yyyy", { locale: he })}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function GiftVoucherDetails({ details }: { details: any }) {
+  const { t, dir } = useTranslation()
+  
+  return (
+    <div>
+      <h4 className={`font-semibold mb-3 flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+        <Gift className="h-4 w-4" />
+        {t('purchaseHistory.voucherDetails.title') || 'פרטי שובר מתנה'}
+      </h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.voucherDetails.code') || 'קוד השובר'}:
+          </p>
+          <p className="font-medium">{details.code}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.voucherDetails.type') || 'סוג השובר'}:
+          </p>
+          <p className="font-medium">
+            {details.voucherType === 'monetary' ? 'שובר כספי' : 'שובר טיפול'}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.voucherDetails.remaining') || 'נותר'}:
+          </p>
+          <p className="font-medium">{details.remainingAmount} ש״ח מתוך {details.originalAmount} ש״ח</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {t('purchaseHistory.voucherDetails.validUntil') || 'תוקף עד'}:
+          </p>
+          <p className="font-medium">{format(new Date(details.validUntil), "dd/MM/yyyy", { locale: he })}</p>
+        </div>
+      </div>
+    </div>
   )
 } 

@@ -29,7 +29,7 @@ export default function PurchaseStatsOverview({
   stats,
   isLoading = false,
 }: PurchaseStatsOverviewProps) {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString('he-IL')} ש״ח`
@@ -41,10 +41,10 @@ export default function PurchaseStatsOverview({
 
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" dir={dir}>
         {[...Array(8)].map((_, index) => (
           <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className={`flex ${dir === 'rtl' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between space-y-0 pb-2`}>
               <div className="h-4 bg-muted animate-pulse rounded w-24"></div>
               <div className="h-4 w-4 bg-muted animate-pulse rounded"></div>
             </CardHeader>
@@ -126,11 +126,11 @@ export default function PurchaseStatsOverview({
   ]
 
   return (
-    <>
+    <div dir={dir}>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {statCards.map((stat, index) => (
           <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className={`flex ${dir === 'rtl' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between space-y-0 pb-2`}>
               <CardTitle className="text-sm font-medium">
                 {stat.title}
               </CardTitle>
@@ -138,7 +138,7 @@ export default function PurchaseStatsOverview({
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <p className={`text-xs text-muted-foreground flex items-center gap-1 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                 {stat.trendUp ? (
                   <TrendingUp className="h-3 w-3 text-green-500" />
                 ) : (
@@ -180,7 +180,7 @@ export default function PurchaseStatsOverview({
       <div className="grid gap-4 md:grid-cols-3 mt-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className={`text-lg flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
               <Calendar className="h-5 w-5 text-primary" />
               {t('purchaseStats.bookingRevenue') || 'הכנסות מהזמנות'}
             </CardTitle>
@@ -190,15 +190,15 @@ export default function PurchaseStatsOverview({
               {formatCurrency(stats.bookingStats.revenue)}
             </div>
             <div className="mt-4 space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                 <span>{t('purchaseStats.totalBookings') || 'סה״כ הזמנות'}:</span>
                 <span>{stats.bookingStats.total}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                 <span>{t('purchaseStats.completedBookings') || 'הזמנות שהושלמו'}:</span>
                 <span className="text-green-600">{stats.bookingStats.completed}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                 <span>{t('purchaseStats.cancelledBookings') || 'הזמנות שבוטלו'}:</span>
                 <span className="text-red-600">{stats.bookingStats.cancelled}</span>
               </div>
@@ -208,21 +208,21 @@ export default function PurchaseStatsOverview({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Stethoscope className="h-5 w-5 text-primary" />
+            <CardTitle className={`text-lg flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+              <Stethoscope className="h-5 w-5 text-blue-600" />
               {t('purchaseStats.subscriptionRevenue') || 'הכנסות ממנויים'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">
+            <div className="text-3xl font-bold text-blue-600">
               {formatCurrency(stats.subscriptionStats.revenue)}
             </div>
             <div className="mt-4 space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                 <span>{t('purchaseStats.totalSubscriptions') || 'סה״כ מנויים'}:</span>
                 <span>{stats.subscriptionStats.total}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                 <span>{t('purchaseStats.activeSubscriptions') || 'מנויים פעילים'}:</span>
                 <span className="text-green-600">{stats.subscriptionStats.active}</span>
               </div>
@@ -232,32 +232,34 @@ export default function PurchaseStatsOverview({
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Gift className="h-5 w-5 text-primary" />
-              {t('purchaseStats.voucherRevenue') || 'הכנסות משוברים'}
+            <CardTitle className={`text-lg flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+              <Gift className="h-5 w-5 text-purple-600" />
+              {t('purchaseStats.voucherRevenue') || 'הכנסות משוברי מתנה'}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-primary">
+            <div className="text-3xl font-bold text-purple-600">
               {formatCurrency(stats.voucherStats.revenue)}
             </div>
             <div className="mt-4 space-y-2">
-              <div className="flex justify-between text-sm">
+              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                 <span>{t('purchaseStats.totalVouchers') || 'סה״כ שוברים'}:</span>
                 <span>{stats.voucherStats.total}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                 <span>{t('purchaseStats.activeVouchers') || 'שוברים פעילים'}:</span>
                 <span className="text-green-600">{stats.voucherStats.active}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className={`flex justify-between text-sm ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
                 <span>{t('purchaseStats.redemptionRate') || 'שיעור מימוש'}:</span>
-                <span className="text-blue-600">{formatPercentage(stats.voucherStats.redemptionRate)}</span>
+                <span className={stats.voucherStats.redemptionRate > 50 ? "text-green-600" : "text-orange-500"}>
+                  {formatPercentage(stats.voucherStats.redemptionRate)}
+                </span>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   )
 } 

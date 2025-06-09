@@ -59,13 +59,8 @@ export async function getUserPurchaseHistory(
       return { success: false, error: "Database connection failed" }
     }
 
-    // For admin users, allow filtering by specific userId, otherwise use session user id
-    let targetUserId: mongoose.Types.ObjectId
-    if (session.user.roles.includes('admin') && filters?.userId) {
-      targetUserId = new mongoose.Types.ObjectId(filters.userId)
-    } else {
-      targetUserId = new mongoose.Types.ObjectId(session.user.id)
-    }
+    // For member users, use session user id
+    const targetUserId = new mongoose.Types.ObjectId(session.user.id)
     const skip = (page - 1) * limit
     const allTransactions: PurchaseTransaction[] = []
 
@@ -298,7 +293,7 @@ export async function getCustomerSummary(customerId: string): Promise<{
 
     // Calculate totals
     const totalBookingSpent = bookings.reduce((sum, b) => sum + b.priceDetails.finalAmount, 0)
-    const totalSubscriptionSpent = userSubscriptions.reduce((sum, s) => sum + s.totalPaid, 0)
+            const totalSubscriptionSpent = userSubscriptions.reduce((sum, s) => sum + (s.paymentAmount || 0), 0)
     const totalVoucherSpent = vouchers.filter(v => v.purchaserUserId.equals(userId))
       .reduce((sum, v) => sum + v.amount, 0)
     const totalSpent = totalBookingSpent + totalSubscriptionSpent + totalVoucherSpent
@@ -419,6 +414,233 @@ export async function getAllCustomers(
 }
 
 /**
+ * Get all purchase transactions for admin dashboard
+ */
+export async function getAllPurchaseTransactions(
+  page = 1,
+  limit = 20,
+  filters?: Partial<PurchaseFilters>
+): Promise<{
+  success: boolean
+  data?: {
+    transactions: PurchaseTransaction[]
+    totalCount: number
+    totalPages: number
+    currentPage: number
+  }
+  error?: string
+}> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes('admin')) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    const isConnected = await safeDbConnect()
+    if (!isConnected) {
+      return { success: false, error: "Database connection failed" }
+    }
+
+    const skip = (page - 1) * limit
+    const allTransactions: PurchaseTransaction[] = []
+
+    // Build filter query
+    let userFilter: any = {}
+    if (filters?.userId) {
+      userFilter = { userId: new mongoose.Types.ObjectId(filters.userId) }
+    }
+
+    // Get bookings
+    if (!filters?.type || filters.type.includes('booking')) {
+      const bookings = await Booking.find(userFilter)
+        .populate('treatmentId', 'name')
+        .populate('professionalId', 'name')
+        .populate('userId', 'name email phone')
+        .sort({ bookingDateTime: -1 })
+        .lean()
+
+      for (const booking of bookings) {
+        const bookingDetails: BookingDetails = {
+          bookingNumber: booking.bookingNumber,
+          treatmentName: (booking.treatmentId as any)?.name || 'Unknown Treatment',
+          professionalName: (booking.professionalId as any)?.name,
+          dateTime: booking.bookingDateTime,
+          clientName: booking.recipientName || booking.bookedByUserName || (booking.userId as any)?.name || 'Unknown Client',
+          source: booking.source,
+          priceDetails: {
+            basePrice: booking.priceDetails.basePrice || 0,
+            finalAmount: booking.priceDetails.finalAmount || 0,
+            isFullyCoveredByVoucherOrSubscription: booking.priceDetails.isFullyCoveredByVoucherOrSubscription || false,
+            appliedDiscounts: booking.priceDetails.discountAmount || 0,
+            appliedVouchers: booking.priceDetails.voucherAppliedAmount || 0,
+          },
+          paymentStatus: booking.paymentDetails.paymentStatus,
+        }
+
+        allTransactions.push({
+          id: booking._id.toString(),
+          type: 'booking',
+          date: booking.bookingDateTime,
+          amount: booking.priceDetails.basePrice || 0,
+          finalAmount: booking.priceDetails.finalAmount || 0,
+          status: booking.status === 'completed' ? 'completed' : 
+                 booking.status === 'cancelled_by_user' || booking.status === 'cancelled_by_admin' ? 'cancelled' : 'pending',
+          description: `הזמנת ${(booking.treatmentId as any)?.name || 'טיפול'}`,
+          details: bookingDetails,
+          customerName: (booking.userId as any)?.name || 'Unknown',
+          customerEmail: (booking.userId as any)?.email,
+          customerPhone: (booking.userId as any)?.phone,
+        })
+      }
+    }
+
+    // Get subscriptions
+    if (!filters?.type || filters.type.includes('subscription')) {
+      const userSubscriptions = await UserSubscription.find(userFilter)
+        .populate('subscriptionId', 'name')
+        .populate('treatmentId', 'name')
+        .populate('userId', 'name email phone')
+        .sort({ purchaseDate: -1 })
+        .lean()
+
+      for (const userSub of userSubscriptions) {
+        const subscriptionDetails: SubscriptionDetails = {
+          subscriptionName: (userSub.subscriptionId as any)?.name || 'Unknown Subscription',
+          treatmentName: (userSub.treatmentId as any)?.name || 'Unknown Treatment',
+          quantity: userSub.totalQuantity || 0,
+          bonusQuantity: 0,
+          usedQuantity: (userSub.totalQuantity || 0) - (userSub.remainingQuantity || 0),
+          remainingQuantity: userSub.remainingQuantity || 0,
+          expiryDate: userSub.expiryDate,
+          pricePerSession: userSub.pricePerSession || 0,
+          totalPaid: userSub.paymentAmount || 0,
+          validityMonths: 0,
+        }
+
+        allTransactions.push({
+          id: userSub._id.toString(),
+          type: 'subscription',
+          date: userSub.purchaseDate,
+          amount: userSub.paymentAmount || 0,
+          finalAmount: userSub.paymentAmount || 0,
+          status: userSub.remainingQuantity > 0 && userSub.expiryDate > new Date() ? 'active' : 'expired',
+          description: `מנוי ${(userSub.subscriptionId as any)?.name || 'לא ידוע'}`,
+          details: subscriptionDetails,
+          customerName: (userSub.userId as any)?.name || 'Unknown',
+          customerEmail: (userSub.userId as any)?.email,
+          customerPhone: (userSub.userId as any)?.phone,
+        })
+      }
+    }
+
+    // Get gift vouchers
+    if (!filters?.type || filters.type.includes('gift_voucher')) {
+      let voucherFilter: any = {}
+      if (filters?.userId) {
+        voucherFilter = {
+          $or: [
+            { purchaserUserId: new mongoose.Types.ObjectId(filters.userId) },
+            { ownerUserId: new mongoose.Types.ObjectId(filters.userId) }
+          ]
+        }
+      }
+
+      const vouchers = await GiftVoucher.find(voucherFilter)
+        .populate('treatmentId', 'name')
+        .populate('purchaserUserId', 'name email phone')
+        .populate('ownerUserId', 'name email phone')
+        .sort({ purchaseDate: -1 })
+        .lean()
+
+      for (const voucher of vouchers) {
+        const voucherDetails: GiftVoucherDetails = {
+          code: voucher.code,
+          voucherType: voucher.voucherType,
+          originalAmount: voucher.originalAmount || voucher.amount,
+          remainingAmount: voucher.remainingAmount || voucher.amount,
+          treatmentName: voucher.voucherType === 'treatment' ? (voucher.treatmentId as any)?.name : undefined,
+          isGift: voucher.isGift,
+          recipientName: voucher.recipientName,
+          recipientPhone: voucher.recipientPhone,
+          validUntil: voucher.validUntil,
+          usageHistory: voucher.usageHistory?.map(h => ({
+            date: h.date,
+            amountUsed: h.amountUsed,
+            orderId: h.orderId?.toString(),
+            description: h.description || 'שימוש בשובר',
+          })) || [],
+        }
+
+        const customerData = voucher.purchaserUserId || voucher.ownerUserId
+        allTransactions.push({
+          id: voucher._id.toString(),
+          type: 'gift_voucher',
+          date: voucher.purchaseDate,
+          amount: voucher.amount,
+          finalAmount: voucher.amount,
+          status: voucher.status === 'active' ? 'active' : 
+                 voucher.status === 'partially_used' ? 'partially_used' :
+                 voucher.status === 'fully_used' ? 'fully_used' : 'pending',
+          description: voucher.voucherType === 'monetary' ? 
+            `שובר כספי ${voucher.amount} ש״ח` : 
+            `שובר טיפול ${(voucher.treatmentId as any)?.name || 'לא ידוע'}`,
+          details: voucherDetails,
+          customerName: (customerData as any)?.name || 'Unknown',
+          customerEmail: (customerData as any)?.email,
+          customerPhone: (customerData as any)?.phone,
+        })
+      }
+    }
+
+    // Apply filters
+    let filteredTransactions = allTransactions
+
+    if (filters?.status && filters.status.length > 0) {
+      filteredTransactions = filteredTransactions.filter(t => filters.status!.includes(t.status))
+    }
+
+    if (filters?.dateFrom) {
+      filteredTransactions = filteredTransactions.filter(t => t.date >= filters.dateFrom!)
+    }
+
+    if (filters?.dateTo) {
+      filteredTransactions = filteredTransactions.filter(t => t.date <= filters.dateTo!)
+    }
+
+    if (filters?.search) {
+      const searchLower = filters.search.toLowerCase()
+      filteredTransactions = filteredTransactions.filter(t => 
+        t.description.toLowerCase().includes(searchLower) ||
+        t.customerName?.toLowerCase().includes(searchLower) ||
+        t.customerEmail?.toLowerCase().includes(searchLower) ||
+        t.customerPhone?.includes(filters.search!)
+      )
+    }
+
+    // Sort by date descending
+    filteredTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    // Paginate
+    const totalCount = filteredTransactions.length
+    const totalPages = Math.ceil(totalCount / limit)
+    const paginatedTransactions = filteredTransactions.slice(skip, skip + limit)
+
+    return {
+      success: true,
+      data: {
+        transactions: paginatedTransactions,
+        totalCount,
+        totalPages,
+        currentPage: page,
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching all purchase transactions:', error)
+    return { success: false, error: 'Failed to fetch transactions' }
+  }
+}
+
+/**
  * Get purchase statistics for admin dashboard
  */
 export async function getPurchaseStats(): Promise<{
@@ -458,7 +680,7 @@ export async function getPurchaseStats(): Promise<{
     const activeSubscriptions = allSubscriptions.filter(s => 
       s.remainingQuantity > 0 && s.expiryDate > now
     )
-    const subscriptionRevenue = allSubscriptions.reduce((sum, s) => sum + s.totalPaid, 0)
+    const subscriptionRevenue = allSubscriptions.reduce((sum, s) => sum + (s.paymentAmount || 0), 0)
 
     // Calculate voucher stats
     const activeVouchers = allVouchers.filter(v => 
@@ -488,7 +710,7 @@ export async function getPurchaseStats(): Promise<{
       
       const monthSubscriptions = allSubscriptions.filter(s => 
         s.purchaseDate >= monthStart && s.purchaseDate <= monthEnd
-      ).reduce((sum, s) => sum + s.totalPaid, 0)
+      ).reduce((sum, s) => sum + (s.paymentAmount || 0), 0)
       
       const monthVouchers = allVouchers.filter(v => 
         v.purchaseDate >= monthStart && v.purchaseDate <= monthEnd

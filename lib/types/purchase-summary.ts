@@ -10,6 +10,10 @@ export interface PurchaseTransaction {
   status: TransactionStatus
   description: string
   details: BookingDetails | SubscriptionDetails | GiftVoucherDetails
+  // Optional customer info for admin views
+  customerName?: string
+  customerEmail?: string
+  customerPhone?: string
 }
 
 export interface BookingDetails {

@@ -6,7 +6,7 @@ import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { useTranslation } from "@/lib/translations/i18n"
-import { getPurchaseStats, getUserPurchaseHistory } from "@/actions/purchase-summary-actions"
+import { getPurchaseStats, getAllPurchaseTransactions } from "@/actions/purchase-summary-actions"
 import PurchaseStatsOverview from "@/components/common/purchase/purchase-stats-overview"
 import PurchaseHistoryTable from "@/components/common/purchase/purchase-history-table"
 import PurchaseFiltersComponent from "@/components/common/purchase/purchase-filters"
@@ -16,8 +16,6 @@ import {
   Download,
   TrendingUp,
   BarChart3,
-  PieChart,
-  Calendar,
 } from "lucide-react"
 
 export default function PurchaseReportsClient() {
@@ -63,9 +61,7 @@ export default function PurchaseReportsClient() {
   const loadAllTransactions = async (page = 1, newFilters = filters) => {
     try {
       setLoading(true)
-      // For admin reports, we'll call the user purchase history without user filter
-      // This will need to be modified to get ALL transactions, not just user-specific
-      const result = await getUserPurchaseHistory(page, limit, newFilters)
+      const result = await getAllPurchaseTransactions(page, limit, newFilters)
       
       if (result.success && result.data) {
         setTransactions(result.data.transactions)
@@ -126,14 +122,14 @@ export default function PurchaseReportsClient() {
   return (
     <div dir={dir} className="space-y-6">
       {/* Page Actions */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className={`flex items-center justify-between ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
             disabled={loading || statsLoading}
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}
           >
             <RefreshCw className={`h-4 w-4 ${(loading || statsLoading) ? 'animate-spin' : ''}`} />
             {t('common.refresh') || 'רענן'}
@@ -142,7 +138,7 @@ export default function PurchaseReportsClient() {
           <Button
             variant="outline"
             size="sm"
-            className="flex items-center gap-2"
+            className={`flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}
           >
             <Download className="h-4 w-4" />
             {t('purchaseReports.exportReport') || 'ייצא דוח'}
@@ -155,19 +151,15 @@ export default function PurchaseReportsClient() {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" dir={dir}>
+        <TabsList className={`grid w-full grid-cols-2 ${dir === 'rtl' ? 'direction-rtl' : ''}`}>
+          <TabsTrigger value="overview" className={`flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
             <TrendingUp className="h-4 w-4" />
             {t('purchaseReports.tabs.overview') || 'סקירה כללית'}
           </TabsTrigger>
-          <TabsTrigger value="transactions" className="flex items-center gap-2">
+          <TabsTrigger value="transactions" className={`flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
             <BarChart3 className="h-4 w-4" />
             {t('purchaseReports.tabs.transactions') || 'כל העסקאות'}
-          </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <PieChart className="h-4 w-4" />
-            {t('purchaseReports.tabs.analytics') || 'ניתוחים'}
           </TabsTrigger>
         </TabsList>
 
@@ -198,7 +190,7 @@ export default function PurchaseReportsClient() {
           />
 
           {/* Transaction Summary */}
-          <div className="flex items-center justify-between">
+          <div className={`flex items-center justify-between ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
             <div className="text-sm text-muted-foreground">
               {loading ? (
                 t('common.loading') || 'טוען...'
@@ -207,12 +199,12 @@ export default function PurchaseReportsClient() {
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
               <Button
                 variant="outline"
                 size="sm"
                 disabled={transactions.length === 0}
-                className="flex items-center gap-2"
+                className={`flex items-center gap-2 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}
               >
                 <Download className="h-4 w-4" />
                 {t('purchaseReports.exportTransactions') || 'ייצא עסקאות'}
@@ -230,121 +222,31 @@ export default function PurchaseReportsClient() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex justify-center">
-              {/* Pagination component would go here - same as in other components */}
+              <div className={`flex items-center space-x-2 ${dir === 'rtl' ? 'space-x-reverse' : ''}`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1 || loading}
+                >
+                  {dir === 'rtl' ? 'הבא' : 'הקודם'}
+                </Button>
+                
+                <span className="text-sm text-muted-foreground">
+                  {t('common.page') || 'עמוד'} {currentPage} {t('common.of') || 'מתוך'} {totalPages}
+                </span>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages || loading}
+                >
+                  {dir === 'rtl' ? 'הקודם' : 'הבא'}
+                </Button>
+              </div>
             </div>
           )}
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* Revenue Trends */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  {t('purchaseReports.analytics.revenueTrends') || 'מגמות הכנסות'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>{t('purchaseReports.analytics.chartPlaceholder') || 'גרף מגמות הכנסות'}</p>
-                    <p className="text-sm mt-2">
-                      {t('purchaseReports.analytics.monthlyBreakdown') || 'פירוט חודשי לפי סוג עסקה'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Transaction Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PieChart className="h-5 w-5" />
-                  {t('purchaseReports.analytics.transactionDistribution') || 'התפלגות עסקאות'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <PieChart className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>{t('purchaseReports.analytics.pieChartPlaceholder') || 'גרף עוגה - התפלגות סוגי עסקאות'}</p>
-                    <p className="text-sm mt-2">
-                      {t('purchaseReports.analytics.percentageBreakdown') || 'פירוט באחוזים'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Customer Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  {t('purchaseReports.analytics.customerActivity') || 'פעילות לקוחות'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-                  <div className="text-center">
-                    <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>{t('purchaseReports.analytics.activityChart') || 'גרף פעילות לקוחות'}</p>
-                    <p className="text-sm mt-2">
-                      {t('purchaseReports.analytics.newVsReturning') || 'לקוחות חדשים מול חוזרים'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Performance Metrics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  {t('purchaseReports.analytics.performanceMetrics') || 'מדדי ביצועים'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {stats && (
-                    <>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">
-                          {t('purchaseReports.analytics.conversionRate') || 'שיעור המרה'}:
-                        </span>
-                        <span className="font-medium">85.2%</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">
-                          {t('purchaseReports.analytics.avgOrderValue') || 'ערך הזמנה ממוצע'}:
-                        </span>
-                        <span className="font-medium">
-                          {stats.averageTransactionValue.toLocaleString('he-IL')} ש״ח
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">
-                          {t('purchaseReports.analytics.customerRetention') || 'שמירה על לקוחות'}:
-                        </span>
-                        <span className="font-medium">78.4%</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">
-                          {t('purchaseReports.analytics.monthlyGrowth') || 'צמיחה חודשית'}:
-                        </span>
-                        <span className="font-medium text-green-600">+12.3%</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
       </Tabs>
     </div>

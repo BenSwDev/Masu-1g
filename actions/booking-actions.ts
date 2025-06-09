@@ -1352,10 +1352,14 @@ export async function getAllBookings(
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(limit)
-      .populate("userId", "name email phone")
-      .populate("professionalId", "name email phone")
-      .populate("treatmentId", "name")
-      .populate("addressId")
+      .populate("userId", "name email phone dateOfBirth gender roles activeRole treatmentPreferences notificationPreferences createdAt updatedAt")
+      .populate("professionalId", "name email phone specialization")
+      .populate("treatmentId", "name category defaultDurationMinutes pricingType fixedPrice durations")
+      .populate("addressId", "fullAddress city street streetNumber apartmentDetails houseDetails officeDetails hotelDetails otherDetails additionalNotes addressType hasPrivateParking")
+      .populate("priceDetails.appliedCouponId", "code discountType discountValue")
+      .populate("priceDetails.appliedGiftVoucherId", "code amount")
+      .populate("priceDetails.redeemedUserSubscriptionId")
+      .populate("paymentDetails.paymentMethodId", "type last4 brand displayName")
       .lean()
 
     const populatedBookings: PopulatedBooking[] = bookings.map((booking) => ({

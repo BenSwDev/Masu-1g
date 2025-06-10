@@ -1,9 +1,9 @@
 {
   "Roles": {
-    "admin": "מנהל",
+      "admin": "מנהל",
     "guest": "אורח",
     "member": "חבר",
-    "partner": "שותף",
+      "partner": "שותף",
     "professional": "מטפל"
   },
   "T": "T",
@@ -83,7 +83,7 @@
       "editUserDescription": "עדכן פרטי משתמש ותפקידים",
       "editUserTitle": "ערוך משתמש",
       "email": "אימייל",
-      "fields": {
+    "fields": {
         "namePlaceholder": "הכנס שם מלא",
         "phonePlaceholder": "הכנס מספר טלפון"
       },
@@ -178,7 +178,7 @@
     "bookingNotes": "הערות הזמנה",
     "bookingNumber": "מספר הזמנה",
     "cardBrand": "מותג כרטיס",
-    "category": "קטגוריה",
+      "category": "קטגוריה",
     "changeProfessional": "החלף מטפל",
     "chooseDifferentProfessional": "בחר מטפל אחר",
     "chooseProfessional": "בחר מטפל",
@@ -211,7 +211,7 @@
     "couponName": "שם קופון",
     "date": "תאריך",
     "dateTime": "תאריך ושעה",
-    "description": "תיאור",
+      "description": "תיאור",
     "discountAmount": "סכום הנחה",
     "discountType": "סוג הנחה",
     "discountValue": "ערך הנחה",
@@ -244,7 +244,7 @@
     "lastUpdate": "עדכון אחרון",
     "loading": "טוען הזמנות...",
     "methods": "שיטות",
-    "minutes": "דקות",
+      "minutes": "דקות",
     "nextMonth": "החודש הבא",
     "nextWeek": "השבוע הבא",
     "noAddressInfo": "אין מידע כתובת",
@@ -564,7 +564,9 @@
         "selectTime": "בחר שעה",
         "selectTimePlaceholder": "בחר שעה מהרשימה",
         "therapistPreference": "העדפת מטפל",
-        "title": "תזמון הטיפול"
+        "title": "תזמון הטיפול",
+        "bookingOptions": "אפשרויות הזמנה",
+        "additionalInfo": "מידע נוסף"
       },
       "source": {
         "available": "זמין",
@@ -612,7 +614,7 @@
       },
       "treatment": {
         "description": "בחר את הטיפול הרצוי ומשך הזמן",
-        "selectDuration": "בחר משך טיפול",
+    "selectDuration": "בחר משך טיפול",
         "selectSubscription": "בחר מנוי",
         "selectSubscriptionPlaceholder": "בחר מנוי מהרשימה",
         "selectTreatment": "בחר טיפול",
@@ -781,7 +783,7 @@
     "minutes_short": "דק'",
     "months": "חודשים",
     "more": "עוד",
-    "name": "שם",
+      "name": "שם",
     "next": "הבא",
     "no": "לא",
     "noData": "אין נתונים זמינים",
@@ -1078,8 +1080,8 @@
       "sendDate": "תאריך שליחה",
       "status": "סטטוס",
       "treatment": "טיפול",
-      "validFrom": "תקף מ",
-      "validUntil": "תקף עד",
+    "validFrom": "תקף מ",
+    "validUntil": "תקף עד",
       "value": "ערך",
       "voucherType": "סוג שובר"
     },
@@ -1403,7 +1405,7 @@
     "usedOnDate": "נוצל בתאריך {{date}}",
     "viewDetails": "הצג פרטים"
   },
-  "name": "שם",
+      "name": "שם",
   "newEmail": "דוא״ל חדש",
   "newPassword": "סיסמה חדשה",
   "notifications": {
@@ -1525,7 +1527,7 @@
       "markCompleted": "סמן כהושלם",
       "markEnRoute": "אני בדרך"
     },
-    "bookingId": "מזהה הזמנה",
+        "bookingId": "מזהה הזמנה",
     "clientDetails": {
       "email": "אימייל",
       "name": "שם",
@@ -1535,10 +1537,10 @@
     "details": {
       "address": "כתובת",
       "anonymousClient": "לקוח אנונימי",
-      "dateTime": "תאריך ושעה",
+        "dateTime": "תאריך ושעה",
       "duration": "משך הטיפול",
       "notes": "הערות לקוח",
-      "status": "סטטוס",
+        "status": "סטטוס",
       "title": "פרטי ההזמנה"
     },
     "errors": {
@@ -1615,7 +1617,7 @@
     "minAmount": "סכום מינימלי",
     "search": "חיפוש",
     "searchPlaceholder": "חפש לפי מספר הזמנה, שם לקוח או פרטים...",
-    "selectDate": "בחר תאריך",
+        "selectDate": "בחר תאריך",
     "selectEndDate": "בחר תאריך סיום",
     "selectStartDate": "בחר תאריך התחלה",
     "showAdvanced": "הצג מסננים מתקדמים",
@@ -1677,10 +1679,10 @@
     "recipientNamePlaceholder": "הזן שם מלא של המקבל/ת",
     "recipientPhone": "טלפון מקבל/ת המתנה",
     "selectCategory": "בחר קטגוריה",
-    "selectDuration": "בחר משך זמן",
+        "selectDuration": "בחר משך זמן",
     "selectPaymentMethod": "בחר אמצעי תשלום",
     "selectTime": "בחר שעה",
-    "selectTreatment": "בחר טיפול",
+        "selectTreatment": "בחר טיפול",
     "selectType": "בחר סוג שובר",
     "selectTypeDescription": "בחר אם ברצונך להעניק טיפול ספציפי או שובר כספי.",
     "sendAsGift": "האם זו מתנה?",
@@ -2139,7 +2141,7 @@
       "durations": "משכי זמן",
       "isActive": "פעיל",
       "minutes": "דקות",
-      "name": "שם",
+    "name": "שם",
       "price": "מחיר",
       "pricingType": "סוג תמחור",
       "professionalPrice": "מחיר למטפל"

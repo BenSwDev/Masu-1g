@@ -14,6 +14,8 @@ import { Loader2, Info, PlusCircle, MapPin } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { SchedulingDetailsSchema, type SchedulingFormValues, getTodayInTimezone } from "@/lib/validation/booking-schemas"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
+import { cn } from "@/lib/utils/utils"
 import {
   Form,
   FormControl,
@@ -248,153 +250,163 @@ export default function SchedulingStep({
           <p className="text-muted-foreground mt-1">{t("bookings.steps.scheduling.description")}</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-          <div>
-            <FormField
-              control={form.control}
-              name="bookingDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>{t("bookings.steps.scheduling.selectDate")}</FormLabel>
-                  <FormControl>
-                    <Calendar
-                      mode="single"
-                      selected={field.value || undefined}
-                      onSelect={field.onChange}
-                      className="rounded-md border self-start shadow-sm bg-card"
-                      disabled={(date) => date < getTodayInTimezone()}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            {/* Left Column - Date Selection & Address */}
+            <div className="border rounded-lg p-4 shadow-sm bg-card">
+              <h3 className="text-lg font-medium mb-4">{t("bookings.steps.scheduling.selectDate")}</h3>
+              <FormField
+                control={form.control}
+                name="bookingDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Calendar
+                        mode="single"
+                        selected={field.value || undefined}
+                        onSelect={field.onChange}
+                        className="mx-auto rounded-md"
+                        disabled={(date) => date < getTodayInTimezone()}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
-            <FormField
-              control={form.control}
-              name="selectedAddressId"
-              render={({ field }) => (
-                <FormItem className="mt-6">
-                  <div className="flex justify-between items-center mb-1">
-                    <FormLabel>{t("bookings.steps.scheduling.selectAddress")}</FormLabel>
-                    <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
-                      <DialogTrigger asChild>
-                        <Button type="button" variant="outline" size="sm">
-                          <PlusCircle className="mr-2 rtl:ml-2 h-4 w-4" />
-                          {localAddresses.length > 0
-                            ? t("addresses.addNewShort", "Add New")
-                            : t("addresses.addFirstAddressShort", "Add Address")}
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[625px]">
-                        <DialogHeader>
-                          <DialogTitle>{t("addresses.addAddressDialogTitle", "Add New Address")}</DialogTitle>
-                        </DialogHeader>
-                        {isAddressModalOpen && (
-                          <AddressForm onCancel={() => setIsAddressModalOpen(false)} onSuccess={handleAddressUpserted} />
-                        )}
-                      </DialogContent>
-                    </Dialog>
-                  </div>
-                  {localAddresses.length > 0 ? (
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("bookings.steps.scheduling.selectAddressPlaceholder")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {localAddresses.map((address) => (
-                          <SelectItem key={address._id.toString()} value={address._id.toString()}>
-                            {`${address.street} ${address.streetNumber || ""}, ${address.city}`}
-                            {address.isDefault && ` (${t("addresses.fields.isDefault")})`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Alert variant="default">
-                      <Info className="h-4 w-4" />
-                      <AlertTitle>{t("bookings.steps.scheduling.noSavedAddressesTitle")}</AlertTitle>
-                      <AlertDescription>{t("bookings.steps.scheduling.noSavedAddressesDesc")}</AlertDescription>
-                    </Alert>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            {displayedAddressDetails && <SelectedAddressDetailsDisplay address={displayedAddressDetails} t={t} />}
+            <div className="border rounded-lg p-4 shadow-sm bg-card">
+              <FormField
+                control={form.control}
+                name="selectedAddressId"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex justify-between items-center mb-2">
+                      <FormLabel className="text-base font-medium">{t("bookings.steps.scheduling.selectAddress")}</FormLabel>
+                      <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
+                        <DialogTrigger asChild>
+                          <Button type="button" variant="outline" size="sm">
+                            <PlusCircle className="mr-2 rtl:ml-2 h-4 w-4" />
+                            {localAddresses.length > 0
+                              ? t("addresses.addNewShort", "Add New")
+                              : t("addresses.addFirstAddressShort", "Add Address")}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[625px]">
+                          <DialogHeader>
+                            <DialogTitle>{t("addresses.addAddressDialogTitle", "Add New Address")}</DialogTitle>
+                          </DialogHeader>
+                          {isAddressModalOpen && (
+                            <AddressForm onCancel={() => setIsAddressModalOpen(false)} onSuccess={handleAddressUpserted} />
+                          )}
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                    {localAddresses.length > 0 ? (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("bookings.steps.scheduling.selectAddressPlaceholder")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {localAddresses.map((address) => (
+                            <SelectItem key={address._id.toString()} value={address._id.toString()}>
+                              {`${address.street} ${address.streetNumber || ""}, ${address.city}`}
+                              {address.isDefault && ` (${t("addresses.fields.isDefault")})`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Alert variant="default">
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>{t("bookings.steps.scheduling.noSavedAddressesTitle")}</AlertTitle>
+                        <AlertDescription>{t("bookings.steps.scheduling.noSavedAddressesDesc")}</AlertDescription>
+                      </Alert>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              {displayedAddressDetails && <SelectedAddressDetailsDisplay address={displayedAddressDetails} t={t} />}
+            </div>
           </div>
 
           <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="bookingTime"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("bookings.steps.scheduling.selectTime")}</FormLabel>
-                  {isTimeSlotsLoading ? (
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse h-10 p-2 border rounded-md bg-muted animate-pulse">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                      <span className="text-muted-foreground">{t("common.loading")}</span>
-                    </div>
-                  ) : timeSlots.length > 0 ? (
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={!form.getValues("bookingDate")}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("bookings.steps.scheduling.selectTimePlaceholder")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {timeSlots
-                          .filter((slot) => slot.isAvailable)
-                          .map((slot) => (
-                            <SelectItem key={slot.time} value={slot.time}>
-                              {slot.time}
-                              {slot.surcharge &&
-                                ` (+${slot.surcharge.amount.toFixed(2)} ${t("common.currencySymbol", "$")})`}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Alert variant="default" className="text-sm">
-                      <Info className="h-4 w-4" />
-                      <AlertDescription>
-                        {form.getValues("bookingDate")
-                          ? workingHoursNote
-                            ? t(workingHoursNote)
-                            : t("bookings.steps.scheduling.noSlotsAvailable")
-                          : t("bookings.steps.scheduling.selectDateFirst")}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Right Column - Time Selection & Other Options */}
+            <div className="border rounded-lg p-4 shadow-sm bg-card">
+              <h3 className="text-lg font-medium mb-4">{t("bookings.steps.scheduling.selectTime")}</h3>
+              <FormField
+                control={form.control}
+                name="bookingTime"
+                render={({ field }) => (
+                  <FormItem>
+                    {isTimeSlotsLoading ? (
+                      <div className="flex items-center space-x-2 rtl:space-x-reverse h-10 p-2 border rounded-md bg-muted animate-pulse">
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        <span className="text-muted-foreground">{t("common.loading")}</span>
+                      </div>
+                    ) : timeSlots.length > 0 ? (
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={!form.getValues("bookingDate")}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("bookings.steps.scheduling.selectTimePlaceholder")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {timeSlots
+                            .filter((slot) => slot.isAvailable)
+                            .map((slot) => (
+                              <SelectItem key={slot.time} value={slot.time}>
+                                {slot.time}
+                                {slot.surcharge &&
+                                  ` (+${slot.surcharge.amount.toFixed(2)} ${t("common.currencySymbol", "$")})`}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Alert variant="default" className="text-sm">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          {form.getValues("bookingDate")
+                            ? workingHoursNote
+                              ? t(workingHoursNote)
+                              : t("bookings.steps.scheduling.noSlotsAvailable")
+                            : t("bookings.steps.scheduling.selectDateFirst")}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
-            <FormField
-              control={form.control}
-              name="isBookingForSomeoneElse"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse rounded-md border p-3 shadow-sm bg-card">
-                  <FormControl>
-                    <Checkbox checked={field.value} onCheckedChange={field.onChange} id="isForSomeoneElse" />
-                  </FormControl>
-                  <div className="space-y-0.5">
-                    <Label htmlFor="isForSomeoneElse" className="text-sm font-medium cursor-pointer">
-                      {t("bookings.steps.scheduling.forSomeoneElseLabel")}
-                    </Label>
-                  </div>
-                </FormItem>
-              )}
-            />
+            <div className="border rounded-lg p-4 shadow-sm bg-card">
+              <h3 className="text-lg font-medium mb-4">{t("bookings.steps.scheduling.bookingOptions")}</h3>
+              <FormField
+                control={form.control}
+                name="isBookingForSomeoneElse"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse rounded-md border p-3 shadow-sm bg-muted/30">
+                    <FormControl>
+                      <Checkbox checked={field.value} onCheckedChange={field.onChange} id="isForSomeoneElse" />
+                    </FormControl>
+                    <div className="space-y-0.5">
+                      <Label htmlFor="isForSomeoneElse" className="text-sm font-medium cursor-pointer">
+                        {t("bookings.steps.scheduling.forSomeoneElseLabel")}
+                      </Label>
+                    </div>
+                  </FormItem>
+                )}
+              />
             
             {/* זמן גמיש מוסתר כרגע - יוחזר בעתיד
             <FormField
@@ -422,10 +434,13 @@ export default function SchedulingStep({
 
 
 
+            </div>
+          </div>
+        
         {form.watch("isBookingForSomeoneElse") && (
-          <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg bg-muted/50">
-            <h3 className="text-lg font-medium mb-2">{t("bookings.steps.scheduling.forSomeoneElseDetails")}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="border rounded-lg p-5 mt-4 shadow-sm bg-card">
+            <h3 className="text-lg font-medium mb-4">{t("bookings.steps.scheduling.forSomeoneElseDetails")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <FormField
                 control={form.control}
                 name="recipientName"
@@ -458,7 +473,7 @@ export default function SchedulingStep({
                 )}
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
               <FormField
                 control={form.control}
                 name="recipientPhone"
@@ -487,61 +502,79 @@ export default function SchedulingStep({
               <FormField
                 control={form.control}
                 name="recipientBirthdate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("bookings.steps.scheduling.recipientBirthdate")}</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) => {
-                            // Calculate 16 years ago
-                            const sixteenYearsAgo = new Date();
-                            sixteenYearsAgo.setFullYear(sixteenYearsAgo.getFullYear() - 16);
-                            return date > sixteenYearsAgo;
-                          }}
-                          captionLayout="dropdown-buttons"
-                          fromYear={1920}
-                          toYear={new Date().getFullYear() - 16}
-                          className="border rounded-md absolute z-10 top-full mt-1 bg-white"
-                        />
-                        <Input
-                          type="text"
-                          readOnly
-                          value={field.value ? formatInTimeZone(field.value, TIMEZONE, 'dd/MM/yyyy') : ''}
-                          onClick={() => document.querySelector(".rdp-button_reset")?.click()}
-                          placeholder={t("bookings.steps.scheduling.recipientBirthdatePlaceholder")}
-                        />
-                      </div>
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      {t("bookings.steps.scheduling.mustBe16YearsOld")}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+                  return (
+                    <FormItem>
+                      <FormLabel>{t("bookings.steps.scheduling.recipientBirthdate")}</FormLabel>
+                      <FormControl>
+                        <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-right font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                zonedTimeToUtc(field.value, "Asia/Jerusalem").toLocaleDateString("he-IL")
+                              ) : (
+                                <span>{t("bookings.steps.scheduling.recipientBirthdatePlaceholder")}</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={(date) => {
+                                field.onChange(date);
+                                setIsCalendarOpen(false);
+                              }}
+                              disabled={(date) => {
+                                // Calculate 16 years ago
+                                const sixteenYearsAgo = new Date();
+                                sixteenYearsAgo.setFullYear(sixteenYearsAgo.getFullYear() - 16);
+                                return date > sixteenYearsAgo;
+                              }}
+                              fromYear={1920}
+                              toYear={new Date().getFullYear() - 16}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        {t("bookings.steps.scheduling.mustBe16YearsOld")}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             </div>
           </div>
         )}
 
-        <FormField
-          control={form.control}
-          name="notes"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("bookings.steps.scheduling.notes")}</FormLabel>
-              <FormControl>
-                <Textarea placeholder={t("bookings.steps.scheduling.notesPlaceholder")} {...field} rows={3} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="border rounded-lg p-5 mt-4 shadow-sm bg-card">
+          <h3 className="text-lg font-medium mb-4">{t("bookings.steps.scheduling.additionalInfo")}</h3>
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t("bookings.steps.scheduling.notes")}</FormLabel>
+                <FormControl>
+                  <Textarea placeholder={t("bookings.steps.scheduling.notesPlaceholder")} {...field} rows={3} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
-        <div className="flex justify-between pt-6">
+        <div className="flex justify-between pt-6 mt-4">
           <Button variant="outline" type="button" onClick={onPrev} disabled={form.formState.isSubmitting} size="lg">
             {t("common.back")}
           </Button>
@@ -551,6 +584,7 @@ export default function SchedulingStep({
               form.formState.isSubmitting || (!form.getValues("selectedAddressId") && localAddresses.length > 0)
             }
             size="lg"
+            className="px-8"
           >
             {form.formState.isSubmitting && <Loader2 className="mr-2 rtl:ml-2 h-4 w-4 animate-spin" />}
             {t("common.next")}

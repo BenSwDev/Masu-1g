@@ -120,25 +120,52 @@ export interface BookingInitialData {
   }
 }
 
+export interface SchedulingFormValues {
+  bookingDate: Date;
+  bookingTime: string;
+  isFlexibleTime: boolean;
+  flexibilityRangeHours?: number;
+  notes?: string;
+  isBookingForSomeoneElse: boolean;
+  recipientName?: string;
+  recipientPhone?: string;
+  recipientEmail?: string;
+  recipientBirthDate?: Date;
+  selectedAddressId?: string;
+  customAddressDetails?: {
+    country: string;
+    city: string;
+    street: string;
+    streetNumber: string;
+    apartment?: string;
+    floor?: string;
+    entrance?: string;
+    addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other";
+    notes?: string;
+  };
+}
+
 export interface SelectedBookingOptions {
-  selectedTreatmentId?: string
-  selectedDurationId?: string
-  bookingDate?: string
-  bookingTime?: string
-  therapistGenderPreference: "male" | "female" | "any"
-  isFlexibleTime: boolean
-  flexibilityRangeHours?: number
-  notes?: string
-  source: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
-  selectedUserSubscriptionId?: string
-  selectedGiftVoucherId?: string
-  appliedCouponCode?: string
-  isBookingForSomeoneElse: boolean
-  recipientName?: string
-  recipientPhone?: string
-  recipientEmail?: string
-  recipientBirthDate?: Date
-  selectedAddressId?: string
-  customAddressDetails?: any
-  paymentMethodId?: string
+  bookingDate?: string;
+  bookingTime?: string;
+  isFlexibleTime: boolean;
+  flexibilityRangeHours?: number;
+  notes?: string;
+  isBookingForSomeoneElse: boolean;
+  recipientName?: string;
+  recipientPhone?: string;
+  recipientEmail?: string;
+  recipientBirthDate?: string;
+  selectedAddressId?: string;
+  customAddressDetails?: {
+    country: string;
+    city: string;
+    street: string;
+    streetNumber: string;
+    apartment?: string;
+    floor?: string;
+    entrance?: string;
+    addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other";
+    notes?: string;
+  };
 }

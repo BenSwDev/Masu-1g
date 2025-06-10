@@ -164,7 +164,7 @@ export default function SchedulingStep({
       recipientName: bookingOptions.recipientName || "",
       recipientPhone: bookingOptions.recipientPhone || "",
       recipientEmail: bookingOptions.recipientEmail || "",
-      recipientBirthDate: bookingOptions.recipientBirthDate || undefined,
+      recipientBirthDate: bookingOptions.recipientBirthDate ? new Date(bookingOptions.recipientBirthDate) : undefined,
       customAddressDetails: bookingOptions.customAddressDetails || undefined,
     },
   })
@@ -192,6 +192,7 @@ export default function SchedulingStep({
         ...prev,
         ...values,
         bookingDate: values.bookingDate ? values.bookingDate.toISOString() : undefined,
+        recipientBirthDate: values.recipientBirthDate ? values.recipientBirthDate.toISOString() : undefined,
         isFlexibleTime: false, // Always set to false
       }))
     })
@@ -465,9 +466,10 @@ export default function SchedulingStep({
                         <Input
                           type="date"
                           {...field}
-                          value={field.value ? (field.value instanceof Date ? field.value.toISOString().split('T')[0] : new Date(field.value).toISOString().split('T')[0]) : ''}
+                          value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
                           onChange={(e) => {
-                            const date = e.target.value ? new Date(e.target.value) : null;
+                            const value = e.target.value;
+                            const date = value ? new Date(value + 'T00:00:00') : null;
                             field.onChange(date);
                           }}
                           max={new Date(Date.now() - 16 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}

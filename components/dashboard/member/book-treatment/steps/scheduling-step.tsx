@@ -465,7 +465,11 @@ export default function SchedulingStep({
                         <Input
                           type="date"
                           {...field}
-                          value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                          value={field.value ? (field.value instanceof Date ? field.value.toISOString().split('T')[0] : new Date(field.value).toISOString().split('T')[0]) : ''}
+                          onChange={(e) => {
+                            const date = e.target.value ? new Date(e.target.value) : null;
+                            field.onChange(date);
+                          }}
                           max={new Date(Date.now() - 16 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                         />
                       </FormControl>

@@ -104,12 +104,16 @@ export const SchedulingDetailsSchema = z
       if (data.isBookingForSomeoneElse && data.recipientBirthDate) {
         const minAge = 16
         const today = new Date()
-        const birthDate = new Date(data.recipientBirthDate)
-        const age = today.getFullYear() - birthDate.getFullYear()
+        const birthDate = data.recipientBirthDate // Already a Date object from zod validation
+        
+        let age = today.getFullYear() - birthDate.getFullYear()
         const monthDiff = today.getMonth() - birthDate.getMonth()
+        
+        // Adjust age if birthday hasn't occurred this year
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-          return age - 1 >= minAge
+          age--
         }
+        
         return age >= minAge
       }
       return true

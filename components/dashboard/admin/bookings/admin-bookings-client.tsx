@@ -367,6 +367,7 @@ export default function AdminBookingsClient() {
                 totalPages={data?.totalPages || 1}
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
+                onRowClick={handleRowClick}
                 className="min-w-full"
               />
             </div>

@@ -3700,6 +3700,27 @@
     }
   },
   "memberBookings": {
+    "searchPlaceholder": "חפש הזמנות...",
+    "filters": "מסננים",
+    "advancedFilters": "מסננים מתקדמים",
+    "filterByStatus": "סנן לפי סטטוס",
+    "allStatuses": "כל הסטטוסים",
+    "filterByTreatment": "סנן לפי טיפול",
+    "allTreatments": "כל הטיפולים",
+    "filterByDate": "סנן לפי תאריך",
+    "allDates": "כל התאריכים",
+    "today": "היום",
+    "thisWeek": "השבוע",
+    "thisMonth": "החודש",
+    "lastMonth": "החודש שעבר",
+    "noBookings": "אין הזמנות",
+    "totalBookings": "סה\"כ {count} הזמנות",
+    "bookingDetails": "פרטי הזמנה",
+    "bookingNumber": "מספר הזמנה",
+    "treatment": "טיפול",
+    "dateTime": "תאריך ושעה",
+    "status": "סטטוס",
+    "notes": "הערות",
     "status": {
       "pending_professional_assignment": "ממתין לשיבוץ מטפל",
       "confirmed": "מאושר",
@@ -3768,6 +3789,41 @@
       "loading": "טוען הזמנות...",
       "error": "שגיאה בטעינת ההזמנות",
       "noBookings": "לא נמצאו הזמנות"
+    }
+  },
+  "memberReviews": {
+    "title": "חוות הדעת שלי",
+    "searchPlaceholder": "חפש חוות דעת...",
+    "filters": "מסננים",
+    "advancedFilters": "מסננים מתקדמים",
+    "filterByRating": "סנן לפי דירוג",
+    "allRatings": "כל הדירוגים",
+    "noReviews": "אין חוות דעת",
+    "totalReviews": "סה\"כ {count} חוות דעת",
+    "writeReview": "כתוב חוות דעת",
+    "reviewDetails": "פרטי חוות דעת",
+    "treatment": "טיפול",
+    "rating": "דירוג",
+    "comment": "תגובה",
+    "dateCreated": "תאריך יצירה"
+  },
+  "adminReviews": {
+    "title": "ניהול חוות דעת",
+    "searchPlaceholder": "חפש חוות דעת...",
+    "filters": "מסננים",
+    "advancedFilters": "מסננים מתקדמים",
+    "filterByRating": "סנן לפי דירוג",
+    "allRatings": "כל הדירוגים",
+    "filterByResponse": "סנן לפי תגובה",
+    "allResponses": "כל התגובות",
+    "withResponse": "עם תגובה",
+    "withoutResponse": "ללא תגובה",
+    "noReviews": "אין חוות דעת",
+    "totalReviews": "סה\"כ {count} חוות דעת",
+    "withoutReviewsNote": "עמוד זה יציג הזמנות ללא חוות דעת",
+    "tabs": {
+      "withReviews": "עם חוות דעת",
+      "withoutReviews": "ללא חוות דעת"
     }
   },
   "memberGiftVouchers": {

@@ -19,6 +19,7 @@ import {
   type IWorkingHoursSettings,
   type IFixedHours,
   type ISpecialDate,
+  type ISpecialDateEvent,
 } from "@/lib/db/models/working-hours"
 import { getNextSequenceValue } from "@/lib/db/models/counter"
 
@@ -57,11 +58,25 @@ function isSameUTCDay(dateLeft: Date, dateRight: Date): boolean {
   )
 }
 
-function getDayWorkingHours(dateUTC: Date, settings: IWorkingHoursSettings): IFixedHours | ISpecialDate | null {
+function getDayWorkingHours(dateUTC: Date, settings: IWorkingHoursSettings): IFixedHours | ISpecialDate | ISpecialDateEvent | null {
+  // First check for special date events (new priority system)
+  if (settings.specialDateEvents) {
+    for (const event of settings.specialDateEvents) {
+      for (const eventDate of event.dates) {
+        if (isSameUTCDay(new Date(eventDate), dateUTC)) {
+          return event
+        }
+      }
+    }
+  }
+
+  // Then check legacy special dates
   const specialDateSetting = settings.specialDates?.find((sd) => isSameUTCDay(new Date(sd.date), dateUTC))
   if (specialDateSetting) {
     return specialDateSetting
   }
+
+  // Finally check fixed hours for the day of week
   const dayOfWeekUTC = dateUTC.getUTCDay()
   const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeekUTC)
   return fixedDaySetting || null
@@ -128,17 +143,35 @@ export async function getAvailableTimeSlots(
     const dayEndTime = set(selectedDateUTC, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 })
 
     const nowUtc = new Date(Date.now())
-    const minimumBookingLeadTimeHours = settings.minimumBookingLeadTimeHours || 2
-    const minimumBookingTime = add(nowUtc, { hours: minimumBookingLeadTimeHours })
+
+    // Use minimum booking advance hours from the specific day settings or fallback to global settings
+    const minimumBookingAdvanceHours = daySettings.minimumBookingAdvanceHours ?? settings.minimumBookingLeadTimeHours ?? 2
+    const minimumBookingTime = add(nowUtc, { hours: minimumBookingAdvanceHours })
+
+    // Check if cutoff time exists and if current time is past it for same-day bookings
+    let isCutoffTimeReached = false
+    if (daySettings.cutoffTime && isSameUTCDay(selectedDateUTC, nowUtc)) {
+      const [cutoffHour, cutoffMinute] = daySettings.cutoffTime.split(":").map(Number)
+      const cutoffTime = set(nowUtc, { hours: cutoffHour, minutes: cutoffMinute, seconds: 0, milliseconds: 0 })
+      isCutoffTimeReached = isAfter(nowUtc, cutoffTime)
+    }
 
     while (isBefore(currentTimeSlotStart, dayEndTime)) {
       const potentialSlotEnd = addMinutes(currentTimeSlotStart, treatmentDurationMinutes)
       let isSlotAvailable = true
 
+      // Check minimum booking advance time
       if (isBefore(currentTimeSlotStart, minimumBookingTime)) {
         isSlotAvailable = false
       }
+
+      // Check if treatment would extend beyond day end time
       if (isAfter(potentialSlotEnd, dayEndTime)) {
+        isSlotAvailable = false
+      }
+
+      // Check cutoff time for same-day bookings
+      if (isCutoffTimeReached) {
         isSlotAvailable = false
       }
 
@@ -175,7 +208,14 @@ export async function getAvailableTimeSlots(
       }
       currentTimeSlotStart = addMinutes(currentTimeSlotStart, slotInterval)
     }
-    return { success: true, timeSlots, workingHoursNote: daySettings.notes }
+
+    // Add informative note about cutoff time if relevant
+    let workingHoursNote = daySettings.notes
+    if (isCutoffTimeReached && daySettings.cutoffTime) {
+      workingHoursNote = `${workingHoursNote ? workingHoursNote + " " : ""}לא ניתן לבצע הזמנות ליום זה לאחר שעה ${daySettings.cutoffTime}.`
+    }
+
+    return { success: true, timeSlots, workingHoursNote }
   } catch (error) {
     logger.error("Error fetching available time slots:", { error })
     return { success: false, error: "bookings.errors.fetchTimeSlotsFailed" }

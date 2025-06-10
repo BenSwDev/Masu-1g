@@ -26,8 +26,12 @@ export async function getWorkingHoursSettings() {
           hasPriceAddition: false,
           priceAddition: { amount: 0, type: "fixed" },
           notes: "",
+          minimumBookingAdvanceHours: 2,
+          cutoffTime: null,
+          professionalSharePercentage: 70,
         })),
         specialDates: [],
+        specialDateEvents: [],
       })
 
       settings = await defaultSettings.save()
@@ -48,6 +52,12 @@ export async function getWorkingHoursSettings() {
           ...date,
           _id: date._id?.toString(),
           date: date.date.toISOString().split("T")[0], // Convert to YYYY-MM-DD format
+        })) || [],
+      specialDateEvents:
+        settings.specialDateEvents?.map((event) => ({
+          ...event,
+          _id: event._id?.toString(),
+          dates: event.dates.map(date => date.toISOString().split("T")[0]), // Convert dates array
         })) || [],
       createdAt: settings.createdAt?.toISOString(),
       updatedAt: settings.updatedAt?.toISOString(),
@@ -89,6 +99,9 @@ export async function updateFixedHours(fixedHours: any[]) {
       ...fh,
       priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
       notes: fh.notes?.trim() || "",
+      minimumBookingAdvanceHours: fh.minimumBookingAdvanceHours ?? 2,
+      cutoffTime: fh.cutoffTime || null,
+      professionalSharePercentage: fh.professionalSharePercentage ?? 70,
     }))
 
     // Get existing settings or create new
@@ -98,6 +111,7 @@ export async function updateFixedHours(fixedHours: any[]) {
       settings = new WorkingHoursSettings({
         fixedHours: processedFixedHours,
         specialDates: [],
+        specialDateEvents: [],
       })
     } else {
       settings.fixedHours = processedFixedHours
@@ -118,47 +132,59 @@ export async function updateFixedHours(fixedHours: any[]) {
   }
 }
 
-export async function addSpecialDate(specialDate: any) {
-  const requestId = `add_special_date_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+export async function updateSpecialDates(specialDates: any[]) {
+  const requestId = `update_special_dates_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
-    logger.info(`[${requestId}] Adding special date`, { specialDate })
+    logger.info(`[${requestId}] Updating special dates only`)
     await dbConnect()
 
-    let processedDate
-    if (typeof specialDate.date === "string") {
-      if (specialDate.date.includes("T")) {
-        processedDate = new Date(specialDate.date)
+    // Process special dates with better date handling
+    const processedSpecialDates = specialDates.map((date, index) => {
+      console.log(`[${requestId}] Processing special date ${index}:`, date)
+
+      let processedDate
+
+      // טפל בפורמטים שונים של תאריך
+      if (typeof date.date === "string") {
+        // אם זה string, נסה לפרש אותו
+        if (date.date.includes("T")) {
+          // ISO string
+          processedDate = new Date(date.date)
+        } else {
+          // YYYY-MM-DD format - הוסף זמן UTC כדי למנוע בעיות timezone
+          processedDate = new Date(date.date + "T12:00:00.000Z")
+        }
       } else {
-        processedDate = new Date(specialDate.date + "T12:00:00.000Z")
+        // אם זה כבר Date object
+        processedDate = new Date(date.date)
       }
-    } else {
-      processedDate = new Date(specialDate.date)
-    }
 
-    if (isNaN(processedDate.getTime())) {
-      throw new Error(`Invalid date format: ${specialDate.date}`)
-    }
+      // ודא שהתאריך תקין
+      if (isNaN(processedDate.getTime())) {
+        console.error(`[${requestId}] Invalid date format: ${date.date}`)
+        throw new Error(`Invalid date format: ${date.date}`)
+      }
 
-    const processedSpecialDate = {
-      name: specialDate.name || "",
-      date: processedDate,
-      isActive: Boolean(specialDate.isActive),
-      startTime: specialDate.startTime || "09:00",
-      endTime: specialDate.endTime || "17:00",
-      hasPriceAddition: Boolean(specialDate.hasPriceAddition),
-      priceAddition:
-        specialDate.hasPriceAddition && specialDate.priceAddition
-          ? specialDate.priceAddition
-          : { amount: 0, type: "fixed" },
-      notes: specialDate.notes?.trim() || "",
-    }
+      const processed = {
+        name: date.name || "",
+        date: processedDate,
+        isActive: Boolean(date.isActive),
+        startTime: date.startTime || "09:00",
+        endTime: date.endTime || "17:00",
+        hasPriceAddition: Boolean(date.hasPriceAddition),
+        priceAddition: date.hasPriceAddition && date.priceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
+        notes: date.notes?.trim() || "",
+      }
+
+      console.log(`[${requestId}] Processed special date ${index}:`, processed)
+      return processed
+    })
 
     // Get existing settings or create new
     let settings = await WorkingHoursSettings.findOne()
 
     if (!settings) {
-      // Create default fixed hours
       const defaultFixedHours = Array.from({ length: 7 }, (_, i) => ({
         dayOfWeek: i,
         isActive: false,
@@ -167,88 +193,128 @@ export async function addSpecialDate(specialDate: any) {
         hasPriceAddition: false,
         priceAddition: { amount: 0, type: "fixed" },
         notes: "",
+        minimumBookingAdvanceHours: 2,
+        cutoffTime: null,
+        professionalSharePercentage: 70,
       }))
 
       settings = new WorkingHoursSettings({
         fixedHours: defaultFixedHours,
-        specialDates: [processedSpecialDate],
+        specialDates: processedSpecialDates,
+        specialDateEvents: [],
       })
     } else {
-      settings.specialDates.push(processedSpecialDate)
+      settings.specialDates = processedSpecialDates
     }
 
     await settings.save()
 
-    logger.info(`[${requestId}] Successfully added special date`)
+    logger.info(`[${requestId}] Successfully updated special dates`)
     revalidatePath("/dashboard/admin/working-hours")
 
     return { success: true, data: settings.toObject() }
   } catch (error) {
-    logger.error(`[${requestId}] Error adding special date:`, error)
+    console.error(`[${requestId}] Error updating special dates:`, error)
+    logger.error(`[${requestId}] Error updating special dates:`, error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to add special date",
+      error: error instanceof Error ? error.message : "Failed to update special dates",
     }
   }
 }
 
-export async function updateSpecialDate(index: number, specialDate: any) {
-  const requestId = `update_special_date_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+// New function for managing special date events
+export async function updateSpecialDateEvents(specialDateEvents: any[]) {
+  const requestId = `update_special_events_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
-    logger.info(`[${requestId}] Updating special date at index ${index}`)
+    logger.info(`[${requestId}] Updating special date events only`)
     await dbConnect()
 
-    let processedDate
-    if (typeof specialDate.date === "string") {
-      if (specialDate.date.includes("T")) {
-        processedDate = new Date(specialDate.date)
-      } else {
-        processedDate = new Date(specialDate.date + "T12:00:00.000Z")
+    // Process special date events
+    const processedEvents = specialDateEvents.map((event, index) => {
+      console.log(`[${requestId}] Processing special event ${index}:`, event)
+
+      // Process dates array
+      const processedDates = event.dates.map((dateStr: string) => {
+        let processedDate
+
+        if (typeof dateStr === "string") {
+          if (dateStr.includes("T")) {
+            processedDate = new Date(dateStr)
+          } else {
+            processedDate = new Date(dateStr + "T12:00:00.000Z")
+          }
+        } else {
+          processedDate = new Date(dateStr)
+        }
+
+        if (isNaN(processedDate.getTime())) {
+          throw new Error(`Invalid date format in event: ${dateStr}`)
+        }
+
+        return processedDate
+      })
+
+      const processed = {
+        name: event.name || "",
+        description: event.description?.trim() || "",
+        eventType: event.eventType || "special",
+        color: event.color || "#3B82F6",
+        dates: processedDates,
+        isActive: Boolean(event.isActive),
+        startTime: event.startTime || "09:00",
+        endTime: event.endTime || "17:00",
+        hasPriceAddition: Boolean(event.hasPriceAddition),
+        priceAddition: event.hasPriceAddition && event.priceAddition ? event.priceAddition : { amount: 0, type: "fixed" },
+        notes: event.notes?.trim() || "",
+        minimumBookingAdvanceHours: event.minimumBookingAdvanceHours ?? 2,
+        cutoffTime: event.cutoffTime || null,
+        professionalSharePercentage: event.professionalSharePercentage ?? 70,
       }
-    } else {
-      processedDate = new Date(specialDate.date)
-    }
 
-    if (isNaN(processedDate.getTime())) {
-      throw new Error(`Invalid date format: ${specialDate.date}`)
-    }
+      console.log(`[${requestId}] Processed special event ${index}:`, processed)
+      return processed
+    })
 
-    const processedSpecialDate = {
-      name: specialDate.name || "",
-      date: processedDate,
-      isActive: Boolean(specialDate.isActive),
-      startTime: specialDate.startTime || "09:00",
-      endTime: specialDate.endTime || "17:00",
-      hasPriceAddition: Boolean(specialDate.hasPriceAddition),
-      priceAddition:
-        specialDate.hasPriceAddition && specialDate.priceAddition
-          ? specialDate.priceAddition
-          : { amount: 0, type: "fixed" },
-      notes: specialDate.notes?.trim() || "",
-    }
+    // Get existing settings or create new
+    let settings = await WorkingHoursSettings.findOne()
 
-    const settings = await WorkingHoursSettings.findOne()
     if (!settings) {
-      return { success: false, error: "Settings not found" }
+      const defaultFixedHours = Array.from({ length: 7 }, (_, i) => ({
+        dayOfWeek: i,
+        isActive: false,
+        startTime: "09:00",
+        endTime: "17:00",
+        hasPriceAddition: false,
+        priceAddition: { amount: 0, type: "fixed" },
+        notes: "",
+        minimumBookingAdvanceHours: 2,
+        cutoffTime: null,
+        professionalSharePercentage: 70,
+      }))
+
+      settings = new WorkingHoursSettings({
+        fixedHours: defaultFixedHours,
+        specialDates: [],
+        specialDateEvents: processedEvents,
+      })
+    } else {
+      settings.specialDateEvents = processedEvents
     }
 
-    if (index < 0 || index >= settings.specialDates.length) {
-      return { success: false, error: "Invalid special date index" }
-    }
-
-    settings.specialDates[index] = processedSpecialDate
     await settings.save()
 
-    logger.info(`[${requestId}] Successfully updated special date`)
+    logger.info(`[${requestId}] Successfully updated special date events`)
     revalidatePath("/dashboard/admin/working-hours")
 
     return { success: true, data: settings.toObject() }
   } catch (error) {
-    logger.error(`[${requestId}] Error updating special date:`, error)
+    console.error(`[${requestId}] Error updating special date events:`, error)
+    logger.error(`[${requestId}] Error updating special date events:`, error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to update special date",
+      error: error instanceof Error ? error.message : "Failed to update special date events",
     }
   }
 }
@@ -262,17 +328,19 @@ export async function deleteSpecialDate(index: number) {
 
     const settings = await WorkingHoursSettings.findOne()
     if (!settings) {
-      return { success: false, error: "Settings not found" }
+      logger.error(`[${requestId}] No settings found`)
+      return { success: false, error: "Working hours settings not found" }
     }
 
     if (index < 0 || index >= settings.specialDates.length) {
+      logger.error(`[${requestId}] Invalid index ${index} for ${settings.specialDates.length} special dates`)
       return { success: false, error: "Invalid special date index" }
     }
 
     settings.specialDates.splice(index, 1)
     await settings.save()
 
-    logger.info(`[${requestId}] Successfully deleted special date`)
+    logger.info(`[${requestId}] Successfully deleted special date at index ${index}`)
     revalidatePath("/dashboard/admin/working-hours")
 
     return { success: true, data: settings.toObject() }
@@ -284,20 +352,52 @@ export async function deleteSpecialDate(index: number) {
     }
   }
 }
+
+export async function deleteSpecialDateEvent(index: number) {
+  const requestId = `delete_special_event_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+
+  try {
+    logger.info(`[${requestId}] Deleting special date event at index ${index}`)
+    await dbConnect()
+
+    const settings = await WorkingHoursSettings.findOne()
+    if (!settings) {
+      logger.error(`[${requestId}] No settings found`)
+      return { success: false, error: "Working hours settings not found" }
+    }
+
+    if (!settings.specialDateEvents || index < 0 || index >= settings.specialDateEvents.length) {
+      logger.error(`[${requestId}] Invalid index ${index} for ${settings.specialDateEvents?.length || 0} special events`)
+      return { success: false, error: "Invalid special event index" }
+    }
+
+    settings.specialDateEvents.splice(index, 1)
+    await settings.save()
+
+    logger.info(`[${requestId}] Successfully deleted special date event at index ${index}`)
+    revalidatePath("/dashboard/admin/working-hours")
+
+    return { success: true, data: settings.toObject() }
+  } catch (error) {
+    logger.error(`[${requestId}] Error deleting special date event:`, error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to delete special date event",
+    }
+  }
+}
+
 export async function updateWorkingHoursSettings(data: {
   fixedHours: any[]
   specialDates: any[]
+  specialDateEvents?: any[]
 }) {
   const requestId = `update_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
-    console.log(`[${requestId}] Raw input data:`, JSON.stringify(data, null, 2))
+    logger.info(`[${requestId}] Updating complete working hours settings`)
+    console.log(`[${requestId}] Request data:`, JSON.stringify(data, null, 2))
 
-    logger.info(`[${requestId}] Updating working hours settings`, {
-      fixedHoursCount: data.fixedHours?.length,
-      specialDatesCount: data.specialDates?.length,
-      specialDatesRaw: data.specialDates,
-    })
     await dbConnect()
 
     // Validate fixedHours
@@ -357,21 +457,73 @@ export async function updateWorkingHoursSettings(data: {
       return processed
     })
 
+    // Process special date events if provided
+    const processedSpecialDateEvents = data.specialDateEvents ? data.specialDateEvents.map((event, index) => {
+      console.log(`[${requestId}] Processing special event ${index}:`, event)
+
+      // Process dates array
+      const processedDates = event.dates.map((dateStr: string) => {
+        let processedDate
+
+        if (typeof dateStr === "string") {
+          if (dateStr.includes("T")) {
+            processedDate = new Date(dateStr)
+          } else {
+            processedDate = new Date(dateStr + "T12:00:00.000Z")
+          }
+        } else {
+          processedDate = new Date(dateStr)
+        }
+
+        if (isNaN(processedDate.getTime())) {
+          throw new Error(`Invalid date format in event: ${dateStr}`)
+        }
+
+        return processedDate
+      })
+
+      const processed = {
+        name: event.name || "",
+        description: event.description?.trim() || "",
+        eventType: event.eventType || "special",
+        color: event.color || "#3B82F6",
+        dates: processedDates,
+        isActive: Boolean(event.isActive),
+        startTime: event.startTime || "09:00",
+        endTime: event.endTime || "17:00",
+        hasPriceAddition: Boolean(event.hasPriceAddition),
+        priceAddition: event.hasPriceAddition && event.priceAddition ? event.priceAddition : { amount: 0, type: "fixed" },
+        notes: event.notes?.trim() || "",
+        minimumBookingAdvanceHours: event.minimumBookingAdvanceHours ?? 2,
+        cutoffTime: event.cutoffTime || null,
+        professionalSharePercentage: event.professionalSharePercentage ?? 70,
+      }
+
+      console.log(`[${requestId}] Processed special event ${index}:`, processed)
+      return processed
+    }) : []
+
     // Convert date strings back to Date objects for specialDates
     const processedData = {
       fixedHours: data.fixedHours.map((fh) => ({
         ...fh,
         priceAddition: fh.hasPriceAddition && fh.priceAddition ? fh.priceAddition : { amount: 0, type: "fixed" },
         notes: fh.notes?.trim() || "",
+        minimumBookingAdvanceHours: fh.minimumBookingAdvanceHours ?? 2,
+        cutoffTime: fh.cutoffTime || null,
+        professionalSharePercentage: fh.professionalSharePercentage ?? 70,
       })),
       specialDates: processedSpecialDates,
+      specialDateEvents: processedSpecialDateEvents,
     }
 
     console.log(`[${requestId}] Final processed data:`, JSON.stringify(processedData, null, 2))
 
     logger.info(`[${requestId}] Processed data for update`, {
       specialDatesProcessed: processedData.specialDates.length,
+      specialEventsProcessed: processedData.specialDateEvents.length,
       specialDatesData: processedData.specialDates,
+      specialEventsData: processedData.specialDateEvents,
     })
 
     // מחק את ההגדרות הקיימות ויצור חדשות

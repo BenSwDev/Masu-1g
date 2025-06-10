@@ -891,6 +891,9 @@ export async function getUserBookings(
   userId: string,
   filters: {
     status?: string
+    treatment?: string
+    dateRange?: string
+    search?: string
     page?: number
     limit?: number
     sortBy?: string
@@ -909,7 +912,7 @@ export async function getUserBookings(
 
     await dbConnect()
 
-    const { status, page = 1, limit = 10, sortBy = "bookingDateTime", sortDirection = "desc" } = filters
+    const { status, treatment, dateRange, search, page = 1, limit = 10, sortBy = "bookingDateTime", sortDirection = "desc" } = filters
 
     const query: any = { userId: new mongoose.Types.ObjectId(userId) }
 
@@ -929,6 +932,52 @@ export async function getUserBookings(
           query.status = status
           break
       }
+    }
+
+    // Add treatment filter
+    if (treatment && treatment !== "all") {
+      query.treatmentId = new mongoose.Types.ObjectId(treatment)
+    }
+
+    // Add date range filter
+    if (dateRange && dateRange !== "all") {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      
+      switch (dateRange) {
+        case "today":
+          query.bookingDateTime = {
+            $gte: today,
+            $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+          }
+          break
+        case "this_week":
+          const startOfWeek = new Date(today)
+          startOfWeek.setDate(today.getDate() - today.getDay())
+          const endOfWeek = new Date(startOfWeek)
+          endOfWeek.setDate(startOfWeek.getDate() + 7)
+          query.bookingDateTime = { $gte: startOfWeek, $lt: endOfWeek }
+          break
+        case "this_month":
+          const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+          const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1)
+          query.bookingDateTime = { $gte: startOfMonth, $lt: endOfMonth }
+          break
+        case "last_month":
+          const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+          const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+          query.bookingDateTime = { $gte: startOfLastMonth, $lt: endOfLastMonth }
+          break
+      }
+    }
+
+    // Add search filter
+    if (search && search.trim()) {
+      query.$or = [
+        { bookingNumber: { $regex: search.trim(), $options: "i" } },
+        { recipientName: { $regex: search.trim(), $options: "i" } },
+        { notes: { $regex: search.trim(), $options: "i" } }
+      ]
     }
 
     const sortOptions: { [key: string]: 1 | -1 } = {}

@@ -17,21 +17,6 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { Badge } from "@/components/common/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { Separator } from "@/components/common/ui/separator"
-import { format } from "date-fns"
-import { he, enUS, ru } from "date-fns/locale"
-
-const getLocale = (locale: string) => {
-  switch (locale) {
-    case "he":
-      return he
-    case "en":
-      return enUS
-    case "ru":
-      return ru
-    default:
-      return he
-  }
-}
 
 /**
  * @file MemberBookingsClient.tsx
@@ -60,8 +45,6 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
   // UI state
   const [currentPage, setCurrentPage] = useState(1)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [selectedBooking, setSelectedBooking] = useState<PopulatedBooking | null>(null)
-  const [isBookingDetailOpen, setIsBookingDetailOpen] = useState(false)
 
   // Debounce search term for real-time searching
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -115,16 +98,6 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
   }
 
   const activeFiltersCount = getActiveFiltersCount()
-
-  const handleRowClick = (booking: PopulatedBooking) => {
-    setSelectedBooking(booking)
-    setIsBookingDetailOpen(true)
-  }
-
-  const handleCloseBookingDetail = () => {
-    setIsBookingDetailOpen(false)
-    setSelectedBooking(null)
-  }
 
   if (isLoading) {
     return (
@@ -296,7 +269,6 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
             totalPages={data?.totalPages || 1}
             currentPage={currentPage}
             onPageChange={setCurrentPage}
-            onRowClick={handleRowClick}
             className="min-w-full"
           />
         </div>
@@ -305,51 +277,6 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
       {data && data.totalBookings > 0 && (
         <div className="mt-4 text-sm text-muted-foreground text-center">
           {t("memberBookings.totalBookings", { count: data.totalBookings })}
-        </div>
-      )}
-
-      {/* Booking Detail Modal */}
-      {selectedBooking && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" dir={dir}>
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-4 md:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg md:text-xl font-semibold">{t("memberBookings.bookingDetails")}</h3>
-                <Button variant="ghost" size="sm" onClick={handleCloseBookingDetail}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t("memberBookings.bookingNumber")}</p>
-                  <p className="font-medium">#{selectedBooking.bookingNumber}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground">{t("memberBookings.treatment")}</p>
-                  <p className="font-medium">{selectedBooking.treatment?.name || "N/A"}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground">{t("memberBookings.dateTime")}</p>
-                  <p>{format(new Date(selectedBooking.bookingDateTime), "dd/MM/yyyy HH:mm", { locale: getLocale(language) })}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-muted-foreground">{t("memberBookings.status")}</p>
-                  <Badge variant="outline">{t(`memberBookings.status.${selectedBooking.status}`)}</Badge>
-                </div>
-                
-                {selectedBooking.notes && (
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t("memberBookings.notes")}</p>
-                    <p className="mt-1">{selectedBooking.notes}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>

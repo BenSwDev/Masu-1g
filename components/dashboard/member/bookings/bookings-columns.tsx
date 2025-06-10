@@ -1,8 +1,8 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/common/ui/button"
+import { Badge } from "@/components/common/ui/badge"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -24,20 +24,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/common/ui/dropdown-menu"
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle
-} from "@/components/ui/dialog"
+} from "@/components/common/ui/dialog"
 import { toast } from "sonner"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import BookingDetailsView from "./booking-details-view"
 import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking"
 import { getReviewByBookingId } from "@/actions/review-actions"
-import CreateReviewModal from "../reviews/create-review-modal"
-import ReviewDetailModal from "../../admin/reviews/review-detail-modal"
+import { CreateReviewModal } from "../reviews/create-review-modal"
+import ReviewDetailModal from "../reviews/review-detail-modal"
 import { Heading } from "@/components/common/ui/heading"
 
 type TFunction = (key: string, options?: any) => string

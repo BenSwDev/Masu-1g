@@ -18,8 +18,10 @@ export default async function AdminReviewsPage() {
   }
 
   return (
-    <Suspense fallback={<BookingsTableSkeleton />}>
-      <AdminReviewsClient />
-    </Suspense>
+    <div className="container mx-auto px-4 py-8 md:px-6 lg:px-8">
+      <Suspense fallback={<BookingsTableSkeleton />}>
+        <AdminReviewsClient />
+      </Suspense>
+    </div>
   )
 } 

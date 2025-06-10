@@ -296,11 +296,14 @@ export async function getAvailableTimeSlots(
       endTimeMinutes,
       nowTimeMinutes,
       minimumBookingTimeMinutes,
+      treatmentDurationMinutes,
+      lastPossibleStartTimeMinutes: endTimeMinutes - treatmentDurationMinutes,
+      lastPossibleStartTime: `${String(Math.floor((endTimeMinutes - treatmentDurationMinutes) / 60) % 24).padStart(2, '0')}:${String((endTimeMinutes - treatmentDurationMinutes) % 60).padStart(2, '0')}`,
       isToday
     })
 
     // Generate slots
-    for (let currentMinutes = startTimeMinutes; currentMinutes < endTimeMinutes; currentMinutes += slotInterval) {
+    for (let currentMinutes = startTimeMinutes; currentMinutes <= endTimeMinutes; currentMinutes += slotInterval) {
       // Convert back to hours and minutes
       let slotHour = Math.floor(currentMinutes / 60) % 24
       let slotMinute = currentMinutes % 60
@@ -310,11 +313,9 @@ export async function getAvailableTimeSlots(
       
       let isSlotAvailable = true
       
-      // Check if treatment duration would exceed end time
-      const slotEndMinutes = currentMinutes + treatmentDurationMinutes
-      if (slotEndMinutes > endTimeMinutes) {
-        isSlotAvailable = false
-      }
+      // We now allow starting at the end time exactly
+      // For example, if closing is at 22:00, we allow a booking at 22:00
+      // No need to check if treatment extends beyond working hours anymore
       
       // For today, check if the slot time is after the minimum booking time
       if (isToday && currentMinutes < minimumBookingTimeMinutes) {

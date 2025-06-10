@@ -259,8 +259,11 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       isFlexibleTime: bookingOptions.isFlexibleTime || false,
       flexibilityRangeHours: bookingOptions.flexibilityRangeHours,
       // Add new fields for "book for someone else"
+      isBookingForSomeoneElse: bookingOptions.isBookingForSomeoneElse || false,
       recipientName: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientName : undefined,
       recipientPhone: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientPhone : undefined,
+      recipientEmail: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientEmail : undefined,
+      recipientBirthDate: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientBirthDate : undefined,
     }
 
     const result = await createBooking(payload)

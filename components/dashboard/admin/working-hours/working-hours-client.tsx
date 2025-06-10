@@ -220,10 +220,10 @@ export default function WorkingHoursClient() {
   const updateFixedHoursMutation = useMutation({
     mutationFn: updateFixedHours,
     onSuccess: () => {
-      toast({
+        toast({
         title: t("workingHours.fixedHoursUpdated"),
         variant: "default",
-      })
+        })
     },
     onError: (error) => {
       console.error("Error updating fixed hours:", error)
@@ -237,12 +237,12 @@ export default function WorkingHoursClient() {
   const addSpecialDateMutation = useMutation({
     mutationFn: updateSpecialDates,
     onSuccess: () => {
-      toast({
+        toast({
         title: t("workingHours.specialDateAdded"),
         variant: "default",
-      })
-      setIsSpecialDateDialogOpen(false)
-      specialDateForm.reset()
+        })
+        setIsSpecialDateDialogOpen(false)
+        specialDateForm.reset()
     },
     onError: (error) => {
       console.error("Error adding special date:", error)
@@ -256,20 +256,20 @@ export default function WorkingHoursClient() {
   const updateSpecialDateMutation = useMutation({
     mutationFn: updateSpecialDates,
     onSuccess: () => {
-      toast({
+        toast({
         title: t("workingHours.specialDateUpdated"),
         variant: "default",
-      })
-      setIsSpecialDateDialogOpen(false)
-      setEditingSpecialDateIndex(null)
-      specialDateForm.reset()
+        })
+        setIsSpecialDateDialogOpen(false)
+        setEditingSpecialDateIndex(null)
+        specialDateForm.reset()
     },
     onError: (error) => {
       console.error("Error updating special date:", error)
-      toast({
+        toast({
         title: t("common.error"),
-        variant: "destructive",
-      })
+          variant: "destructive",
+        })
     },
   })
 
@@ -293,20 +293,20 @@ export default function WorkingHoursClient() {
   const updateSpecialDateEventsMutation = useMutation({
     mutationFn: updateSpecialDateEvents,
     onSuccess: () => {
-      toast({
+        toast({
         title: t("workingHours.specialEventUpdated"),
         variant: "default",
-      })
+        })
       setIsSpecialEventDialogOpen(false)
       setEditingSpecialEventIndex(null)
       specialEventForm.reset()
     },
     onError: (error) => {
       console.error("Error updating special event:", error)
-      toast({
+        toast({
         title: t("common.error"),
-        variant: "destructive",
-      })
+          variant: "destructive",
+        })
     },
   })
 
@@ -344,7 +344,7 @@ export default function WorkingHoursClient() {
       const currentDates = workingHoursData?.specialDates || []
       let updatedDates: ISpecialDate[]
 
-      if (editingSpecialDateIndex !== null) {
+    if (editingSpecialDateIndex !== null) {
         // עדכון תאריך מיוחד קיים
         updatedDates = [...currentDates]
         updatedDates[editingSpecialDateIndex] = {
@@ -352,7 +352,7 @@ export default function WorkingHoursClient() {
           date: new Date(data.date),
         }
         await updateSpecialDateMutation.mutateAsync(updatedDates)
-      } else {
+    } else {
         // הוספת תאריך מיוחד חדש
         updatedDates = [
           ...currentDates,

@@ -143,7 +143,7 @@ export async function updateSpecialDates(specialDates: any[]) {
     const processedSpecialDates = specialDates.map((date, index) => {
       console.log(`[${requestId}] Processing special date ${index}:`, date)
 
-      let processedDate
+    let processedDate
 
       // טפל בפורמטים שונים של תאריך
       if (typeof date.date === "string") {
@@ -158,24 +158,24 @@ export async function updateSpecialDates(specialDates: any[]) {
       } else {
         // אם זה כבר Date object
         processedDate = new Date(date.date)
-      }
+    }
 
       // ודא שהתאריך תקין
-      if (isNaN(processedDate.getTime())) {
+    if (isNaN(processedDate.getTime())) {
         console.error(`[${requestId}] Invalid date format: ${date.date}`)
         throw new Error(`Invalid date format: ${date.date}`)
-      }
+    }
 
       const processed = {
         name: date.name || "",
-        date: processedDate,
+      date: processedDate,
         isActive: Boolean(date.isActive),
         startTime: date.startTime || "09:00",
         endTime: date.endTime || "17:00",
         hasPriceAddition: Boolean(date.hasPriceAddition),
         priceAddition: date.hasPriceAddition && date.priceAddition ? date.priceAddition : { amount: 0, type: "fixed" },
         notes: date.notes?.trim() || "",
-      }
+    }
 
       console.log(`[${requestId}] Processed special date ${index}:`, processed)
       return processed
@@ -237,21 +237,21 @@ export async function updateSpecialDateEvents(specialDateEvents: any[]) {
 
       // Process dates array
       const processedDates = event.dates.map((dateStr: string) => {
-        let processedDate
+    let processedDate
 
         if (typeof dateStr === "string") {
           if (dateStr.includes("T")) {
             processedDate = new Date(dateStr)
-          } else {
+      } else {
             processedDate = new Date(dateStr + "T12:00:00.000Z")
-          }
-        } else {
+      }
+    } else {
           processedDate = new Date(dateStr)
-        }
+    }
 
-        if (isNaN(processedDate.getTime())) {
+    if (isNaN(processedDate.getTime())) {
           throw new Error(`Invalid date format in event: ${dateStr}`)
-        }
+    }
 
         return processedDate
       })

@@ -57,10 +57,10 @@ export const SchedulingDetailsSchema = z
     isFlexibleTime: z.boolean().default(false),
     flexibilityRangeHours: z.number().min(1).max(12).optional(),
     isBookingForSomeoneElse: z.boolean().default(false),
-        recipientName: z.string().optional(),
-  recipientPhone: z.string().optional(),
-  recipientEmail: z.string().optional(),
-  recipientBirthdate: z.date().optional(),
+    recipientName: z.string().optional(),
+    recipientPhone: z.string().optional(),
+    recipientEmail: z.string().email("bookings.validation.invalidEmail").optional(),
+    recipientBirthDate: z.date().optional(),
   })
   .refine(
     (data) => {
@@ -90,8 +90,7 @@ export const SchedulingDetailsSchema = z
   .refine(
     (data) => {
       if (data.isBookingForSomeoneElse) {
-        // Email validation
-        return !!data.recipientEmail
+        return !!data.recipientEmail && data.recipientEmail.trim().length > 0
       }
       return true
     },
@@ -102,24 +101,22 @@ export const SchedulingDetailsSchema = z
   )
   .refine(
     (data) => {
-      if (data.isBookingForSomeoneElse) {
-        // Birthdate validation - must be at least 16 years old
-        if (!data.recipientBirthdate) return false;
-        
-        const today = new Date();
-        const birthDate = new Date(data.recipientBirthdate);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-          age--;
+      if (data.isBookingForSomeoneElse && data.recipientBirthDate) {
+        const minAge = 16
+        const today = new Date()
+        const birthDate = new Date(data.recipientBirthDate)
+        const age = today.getFullYear() - birthDate.getFullYear()
+        const monthDiff = today.getMonth() - birthDate.getMonth()
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          return age - 1 >= minAge
         }
-        return age >= 16;
+        return age >= minAge
       }
       return true
     },
     {
-      message: "bookings.validation.recipientMustBe16",
-      path: ["recipientBirthdate"],
+      message: "bookings.validation.recipientMinAge",
+      path: ["recipientBirthDate"],
     },
   )
   .refine((data) => !!data.selectedAddressId || !!data.customAddressDetails, {
@@ -194,8 +191,11 @@ export const CreateBookingPayloadSchema = z.object({
   appliedCouponId: z.string().optional(),
   isFlexibleTime: z.boolean().optional(),
   flexibilityRangeHours: z.number().optional(),
+  isBookingForSomeoneElse: z.boolean().optional(),
   recipientName: z.string().optional(),
   recipientPhone: z.string().optional(),
+  recipientEmail: z.string().email("bookings.validation.invalidEmail").optional(),
+  recipientBirthDate: z.date().optional(),
 })
 
 export type BookingSourceFormValues = z.infer<typeof BookingSourceSchema>

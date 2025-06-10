@@ -133,10 +133,11 @@ export interface SelectedBookingOptions {
   selectedUserSubscriptionId?: string
   selectedGiftVoucherId?: string
   appliedCouponCode?: string
+  isBookingForSomeoneElse: boolean
   recipientName?: string
   recipientPhone?: string
   recipientEmail?: string
-  recipientBirthdate?: Date
+  recipientBirthDate?: Date
   selectedAddressId?: string
   customAddressDetails?: any
   paymentMethodId?: string

@@ -141,7 +141,7 @@ export async function getAvailableTimeSlots(
     // Create a timezone-aware date from the dateString
     // First create a UTC date from the string (noon to avoid DST issues)
     const selectedDateUTC = new Date(`${dateString}T12:00:00.000Z`)
-    
+
     if (isNaN(selectedDateUTC.getTime())) {
       return { success: false, error: "bookings.errors.invalidDate" }
     }
@@ -156,7 +156,7 @@ export async function getAvailableTimeSlots(
       selectedDateInTZ: selectedDateInTZ.toISOString(),
       selectedDateInTZ_dayOfWeek: selectedDateInTZ.getDay()
     })
-    
+
     const treatment = (await Treatment.findById(treatmentId).lean()) as ITreatment | null
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "bookings.errors.treatmentNotFound" }
@@ -255,11 +255,11 @@ export async function getAvailableTimeSlots(
     // Create time slots based on working hours
     const timeSlots: TimeSlot[] = []
     const slotInterval = settings.slotIntervalMinutes || 30
-    
+
     // Parse working hours start and end times
     const [startHour, startMinute] = daySettings.startTime.split(":").map(Number)
     const [endHour, endMinute] = daySettings.endTime.split(":").map(Number)
-    
+
     // Debug logging
     console.log('Working hours configuration:', {
       startTime: daySettings.startTime,
@@ -312,7 +312,7 @@ export async function getAvailableTimeSlots(
       const timeStr = `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`
       
       let isSlotAvailable = true
-      
+
       // We now allow starting at the end time exactly
       // For example, if closing is at 22:00, we allow a booking at 22:00
       // No need to check if treatment extends beyond working hours anymore
@@ -321,28 +321,28 @@ export async function getAvailableTimeSlots(
       if (isToday && currentMinutes < minimumBookingTimeMinutes) {
         isSlotAvailable = false
       }
-      
+
       if (isSlotAvailable) {
         const slot: TimeSlot = {
           time: timeStr,
           isAvailable: true,
         }
-        
+
         // Add price surcharge if applicable
         if (daySettings.hasPriceAddition && daySettings.priceAddition && daySettings.priceAddition.amount > 0) {
           const basePriceForSurchargeCalc =
             treatment.pricingType === "fixed"
               ? treatment.fixedPrice || 0
               : treatment.durations?.find((d) => d._id.toString() === selectedDurationId)?.price || 0
-              
+
           const surchargeAmount =
             daySettings.priceAddition.type === "fixed"
               ? daySettings.priceAddition.amount
               : basePriceForSurchargeCalc * (daySettings.priceAddition.amount / 100)
-          
+
           if (surchargeAmount > 0) {
             slot.surcharge = {
-              description: 
+              description:
                 daySettings.priceAddition.description || daySettings.notes || "bookings.surcharges.specialTime",
               amount: surchargeAmount,
             }

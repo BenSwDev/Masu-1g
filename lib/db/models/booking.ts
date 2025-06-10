@@ -75,6 +75,8 @@ export interface IBooking extends Document {
   professionalId?: Types.ObjectId // Assigned professional (can be null)
   recipientName?: string // Name of the person receiving the treatment if not the user
   recipientPhone?: string // Phone of the person receiving the treatment
+  recipientEmail?: string // Email of the person receiving the treatment
+  recipientBirthDate?: Date // Birth date of the person receiving the treatment
   createdAt: Date
   updatedAt: Date
 }
@@ -182,6 +184,8 @@ const BookingSchema: Schema<IBooking> = new Schema(
     professionalId: { type: Schema.Types.ObjectId, ref: "User", default: null },
     recipientName: { type: String, trim: true },
     recipientPhone: { type: String, trim: true },
+    recipientEmail: { type: String, trim: true },
+    recipientBirthDate: { type: Date },
   },
   { timestamps: true },
 )

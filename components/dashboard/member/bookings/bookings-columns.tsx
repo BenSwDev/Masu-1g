@@ -13,7 +13,9 @@ import {
   Eye, 
   X, 
   Loader2,
-  MessageSquare
+  MessageSquare,
+  Star,
+  MessageCircle
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -30,10 +32,91 @@ import {
   DialogTitle
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
+import { useQuery } from "@tanstack/react-query"
 import BookingDetailsView from "./booking-details-view"
 import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking"
+import { getReviewByBookingId } from "@/actions/review-actions"
+import CreateReviewModal from "../reviews/create-review-modal"
+import ReviewDetailModal from "../../admin/reviews/review-detail-modal"
 
 type TFunction = (key: string, options?: any) => string
+
+// Review Action Component
+const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
+
+  // Check if booking can be reviewed (completed only)
+  const canReview = booking.status === "completed"
+
+  // Fetch existing review if any
+  const { data: existingReview, refetch } = useQuery({
+    queryKey: ["review", booking._id],
+    queryFn: () => getReviewByBookingId(booking._id),
+    enabled: canReview,
+    staleTime: 30000,
+  })
+
+  const hasReview = !!existingReview
+
+  if (!canReview) {
+    return (
+      <Button variant="outline" size="sm" disabled className="text-xs">
+        <MessageCircle className="h-3 w-3 mr-1" />
+        {t("memberBookings.reviewNotAvailable")}
+      </Button>
+    )
+  }
+
+  if (hasReview) {
+    return (
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => setIsViewModalOpen(true)}
+        className="text-xs"
+      >
+        <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
+        {t("memberBookings.viewReview")}
+      </Button>
+    )
+  }
+
+  return (
+    <>
+      <Button 
+        variant="outline" 
+        size="sm" 
+        onClick={() => setIsCreateModalOpen(true)}
+        className="text-xs"
+      >
+        <MessageCircle className="h-3 w-3 mr-1" />
+        {t("memberBookings.writeReview")}
+      </Button>
+
+      {/* Create Review Modal */}
+      <CreateReviewModal
+        booking={booking}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={() => {
+          refetch()
+          setIsCreateModalOpen(false)
+        }}
+      />
+
+      {/* View Review Modal */}
+      {existingReview && (
+        <ReviewDetailModal
+          review={existingReview}
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          onUpdate={refetch}
+        />
+      )}
+    </>
+  )
+}
 
 // Helper component for actions
 const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
@@ -596,6 +679,16 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         )
       },
       size: 150,
+    },
+    {
+      id: "review",
+      header: () => <div className="text-center">{t("memberBookings.columns.review")}</div>,
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <ReviewAction booking={row.original} t={t} />
+        </div>
+      ),
+      size: 100,
     },
     {
       id: "actions",

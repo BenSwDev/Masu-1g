@@ -100,7 +100,12 @@ function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixed
   }
 
   // Finally check fixed hours for the day of week
-  const dayOfWeek = zonedDate.getDay() // Local day of week in the specified timezone
+  // This is the key fix - we need to use the local day of week from the zoned date
+  const dayOfWeek = zonedDate.getDay() // 0 = Sunday, 1 = Monday, etc.
+  
+  console.log('Looking for fixed day setting with dayOfWeek:', dayOfWeek)
+  console.log('Available fixed hours settings:', settings.fixedHours?.map(fh => ({ dayOfWeek: fh.dayOfWeek, isActive: fh.isActive })))
+  
   const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeek)
   
   // Debug logging
@@ -219,7 +224,7 @@ export async function getAvailableTimeSlots(
     
     // Check if cutoff time has been reached for today
     let isCutoffTimeReached = false
-    if (isToday && daySettings.cutoffTime) {
+    if (isToday && 'cutoffTime' in daySettings && daySettings.cutoffTime) {
       const [cutoffHour, cutoffMinute] = daySettings.cutoffTime.split(":").map(Number)
       
       // Create a Date representing the cutoff time today in the target timezone
@@ -243,7 +248,7 @@ export async function getAvailableTimeSlots(
       return {
         success: true,
         timeSlots: [],
-        workingHoursNote: `לא ניתן לבצע הזמנות ליום זה לאחר שעה ${daySettings.cutoffTime}.`
+        workingHoursNote: `לא ניתן לבצע הזמנות ליום זה לאחר שעה ${('cutoffTime' in daySettings) ? daySettings.cutoffTime : '18:00'}.`
       }
     }
     
@@ -255,25 +260,35 @@ export async function getAvailableTimeSlots(
     const [startHour, startMinute] = daySettings.startTime.split(":").map(Number)
     const [endHour, endMinute] = daySettings.endTime.split(":").map(Number)
     
-    // Create dates for the start and end of working hours in the correct timezone
-    const startOfDay = new Date(selectedDateInTZ)
-    startOfDay.setHours(startHour, startMinute, 0, 0)
+    // FIX: Create dates for the start and end of working hours in the correct timezone
+    // Use set from date-fns with the zonedTime to set the hours correctly
+    const startDate = new Date(selectedDateInTZ.getFullYear(), selectedDateInTZ.getMonth(), selectedDateInTZ.getDate())
+    const endDate = new Date(selectedDateInTZ.getFullYear(), selectedDateInTZ.getMonth(), selectedDateInTZ.getDate())
     
-    const endOfDay = new Date(selectedDateInTZ)
-    endOfDay.setHours(endHour, endMinute, 0, 0)
+    // Create a string representation in the target timezone format and parse it back
+    const startTimeStr = `${selectedDateInTZ.getFullYear()}-${String(selectedDateInTZ.getMonth() + 1).padStart(2, '0')}-${String(selectedDateInTZ.getDate()).padStart(2, '0')}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00.000`
+    const endTimeStr = `${selectedDateInTZ.getFullYear()}-${String(selectedDateInTZ.getMonth() + 1).padStart(2, '0')}-${String(selectedDateInTZ.getDate()).padStart(2, '0')}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00.000`
+    
+    // Parse the time strings directly into the timezone
+    const startOfDay = toZonedTime(new Date(startTimeStr), TIMEZONE)
+    const endOfDay = toZonedTime(new Date(endTimeStr), TIMEZONE)
     
     // Debug logging
-    console.log('Generating time slots:', {
-      startTime: daySettings.startTime,
-      endTime: daySettings.endTime,
+    console.log('Corrected time slot generation:', {
+      startTimeStr,
+      endTimeStr,
       startOfDay: startOfDay.toISOString(),
+      startOfDayHours: startOfDay.getHours(),
       endOfDay: endOfDay.toISOString(),
-      slotInterval,
-      treatmentDurationMinutes
+      endOfDayHours: endOfDay.getHours(),
+      timezone: TIMEZONE
     })
     
-    // Calculate minimum booking time
-    const minimumBookingAdvanceHours = daySettings.minimumBookingAdvanceHours ?? settings.minimumBookingLeadTimeHours ?? 2
+    // Calculate minimum booking time - use type checking for minimumBookingAdvanceHours
+    const minimumBookingAdvanceHours = 
+      ('minimumBookingAdvanceHours' in daySettings && daySettings.minimumBookingAdvanceHours !== undefined) 
+        ? daySettings.minimumBookingAdvanceHours 
+        : settings.minimumBookingLeadTimeHours ?? 2;
     const minimumBookingTime = new Date(nowInTZ.getTime() + (minimumBookingAdvanceHours * 60 * 60 * 1000))
     
     // Generate time slots
@@ -296,7 +311,7 @@ export async function getAvailableTimeSlots(
       }
       
       if (isSlotAvailable) {
-        // Format the time as HH:mm
+        // Format the time as HH:mm in the target timezone
         const timeStr = formatInTimeZone(currentSlotTime, TIMEZONE, 'HH:mm')
         
         const slot: TimeSlot = {
@@ -342,7 +357,7 @@ export async function getAvailableTimeSlots(
     
     // Add informative note about cutoff time
     let workingHoursNote = daySettings.notes
-    if (!isToday && daySettings.cutoffTime) {
+    if (!isToday && 'cutoffTime' in daySettings && daySettings.cutoffTime) {
       const cutoffTimeNote = `הזמנות ליום זה יתאפשרו עד השעה ${daySettings.cutoffTime} באותו היום.`
       workingHoursNote = workingHoursNote ? `${workingHoursNote} ${cutoffTimeNote}` : cutoffTimeNote
     }

@@ -260,60 +260,68 @@ export async function getAvailableTimeSlots(
     const [startHour, startMinute] = daySettings.startTime.split(":").map(Number)
     const [endHour, endMinute] = daySettings.endTime.split(":").map(Number)
     
-    // FIX: Create dates for the start and end of working hours in the correct timezone
-    // Use set from date-fns with the zonedTime to set the hours correctly
-    const startDate = new Date(selectedDateInTZ.getFullYear(), selectedDateInTZ.getMonth(), selectedDateInTZ.getDate())
-    const endDate = new Date(selectedDateInTZ.getFullYear(), selectedDateInTZ.getMonth(), selectedDateInTZ.getDate())
-    
-    // Create a string representation in the target timezone format and parse it back
-    const startTimeStr = `${selectedDateInTZ.getFullYear()}-${String(selectedDateInTZ.getMonth() + 1).padStart(2, '0')}-${String(selectedDateInTZ.getDate()).padStart(2, '0')}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00.000`
-    const endTimeStr = `${selectedDateInTZ.getFullYear()}-${String(selectedDateInTZ.getMonth() + 1).padStart(2, '0')}-${String(selectedDateInTZ.getDate()).padStart(2, '0')}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00.000`
-    
-    // Parse the time strings directly into the timezone
-    const startOfDay = toZonedTime(new Date(startTimeStr), TIMEZONE)
-    const endOfDay = toZonedTime(new Date(endTimeStr), TIMEZONE)
-    
     // Debug logging
-    console.log('Corrected time slot generation:', {
-      startTimeStr,
-      endTimeStr,
-      startOfDay: startOfDay.toISOString(),
-      startOfDayHours: startOfDay.getHours(),
-      endOfDay: endOfDay.toISOString(),
-      endOfDayHours: endOfDay.getHours(),
+    console.log('Working hours configuration:', {
+      startTime: daySettings.startTime,
+      endTime: daySettings.endTime,
+      nowFormatted: formatInTimeZone(nowInTZ, TIMEZONE, 'HH:mm'),
       timezone: TIMEZONE
     })
     
-    // Calculate minimum booking time - use type checking for minimumBookingAdvanceHours
+    // Calculate minimum booking time 
     const minimumBookingAdvanceHours = 
       ('minimumBookingAdvanceHours' in daySettings && daySettings.minimumBookingAdvanceHours !== undefined) 
         ? daySettings.minimumBookingAdvanceHours 
         : settings.minimumBookingLeadTimeHours ?? 2;
-    const minimumBookingTime = new Date(nowInTZ.getTime() + (minimumBookingAdvanceHours * 60 * 60 * 1000))
-    
-    // Generate time slots
-    let currentSlotTime = new Date(startOfDay)
-    
-    while (currentSlotTime < endOfDay) {
-      // Calculate when this slot would end
-      const slotEndTime = new Date(currentSlotTime.getTime() + (treatmentDurationMinutes * 60 * 1000))
+
+    // Convert hours to minutes for easier calculation
+    let startTimeMinutes = (startHour * 60) + startMinute
+    let endTimeMinutes = (endHour * 60) + endMinute
+
+    // Handle cases where end time is on the next day (e.g., for 24-hour places)
+    if (endTimeMinutes <= startTimeMinutes) {
+      endTimeMinutes += 24 * 60
+    }
+
+    // Get current time components directly from nowInTZ
+    const nowHourTZ = nowInTZ.getHours()
+    const nowMinuteTZ = nowInTZ.getMinutes()
+    const nowTimeMinutes = (nowHourTZ * 60) + nowMinuteTZ
+
+    // Minimum booking time in minutes from midnight
+    const minimumBookingTimeMinutes = nowTimeMinutes + (minimumBookingAdvanceHours * 60)
+
+    console.log('Time calculations in minutes:', {
+      startTimeMinutes,
+      endTimeMinutes,
+      nowTimeMinutes,
+      minimumBookingTimeMinutes,
+      isToday
+    })
+
+    // Generate slots
+    for (let currentMinutes = startTimeMinutes; currentMinutes < endTimeMinutes; currentMinutes += slotInterval) {
+      // Convert back to hours and minutes
+      let slotHour = Math.floor(currentMinutes / 60) % 24
+      let slotMinute = currentMinutes % 60
+      
+      // Format the time as HH:MM
+      const timeStr = `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`
       
       let isSlotAvailable = true
       
-      // For today, check if the slot time is after the minimum booking time
-      if (isToday && currentSlotTime < minimumBookingTime) {
+      // Check if treatment duration would exceed end time
+      const slotEndMinutes = currentMinutes + treatmentDurationMinutes
+      if (slotEndMinutes > endTimeMinutes) {
         isSlotAvailable = false
       }
       
-      // Check if the treatment would extend beyond working hours
-      if (slotEndTime > endOfDay) {
+      // For today, check if the slot time is after the minimum booking time
+      if (isToday && currentMinutes < minimumBookingTimeMinutes) {
         isSlotAvailable = false
       }
       
       if (isSlotAvailable) {
-        // Format the time as HH:mm in the target timezone
-        const timeStr = formatInTimeZone(currentSlotTime, TIMEZONE, 'HH:mm')
-        
         const slot: TimeSlot = {
           time: timeStr,
           isAvailable: true,
@@ -342,9 +350,6 @@ export async function getAvailableTimeSlots(
         
         timeSlots.push(slot)
       }
-      
-      // Move to the next time slot
-      currentSlotTime = new Date(currentSlotTime.getTime() + (slotInterval * 60 * 1000))
     }
     
     // Debug logging

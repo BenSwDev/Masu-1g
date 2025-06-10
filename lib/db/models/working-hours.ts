@@ -14,7 +14,7 @@ export interface IFixedHours {
   notes?: string
   // New fields for advanced booking control
   minimumBookingAdvanceHours?: number // הזמנות ליום זה יתאפשרו לפחות X שעות מראש
-  cutoffTime?: string // משעה X תחסם האופציה לבצע הזמנה ביום זה לאותו היום (Format: "HH:mm")
+  cutoffTime?: string | null // משעה X תחסם האופציה לבצע הזמנה ביום זה לאותו היום (Format: "HH:mm")
   professionalShare?: {
     amount: number
     type: "fixed" | "percentage" // 'fixed' for ₪, 'percentage' for %
@@ -335,27 +335,26 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
         notes: "",
         minimumBookingAdvanceHours: 2,
         cutoffTime: null,
-        professionalShare: { amount: 70, type: "percentage" },
+        professionalShare: { amount: 70, type: "percentage" }, // Default but will only be used when hasPriceAddition is true
       } as IFixedHours) // Cast to IFixedHours
     }
-  } else if (this.fixedHours.length > 0) {
-    // Ensure all days 0-6 exist if not new or not empty
-    for (let i = 0; i < 7; i++) {
-      const existingDay = this.fixedHours.find((day) => day.dayOfWeek === i)
-      if (!existingDay) {
-        this.fixedHours.push({
-          dayOfWeek: i,
-          isActive: false,
-          startTime: "09:00",
-          endTime: "17:00",
-          hasPriceAddition: false,
-          priceAddition: { amount: 0, type: "fixed" },
-          notes: "",
-          minimumBookingAdvanceHours: 2,
-          cutoffTime: null,
-          professionalShare: { amount: 70, type: "percentage" },
-        } as IFixedHours)
-      }
+  }
+  // Ensure all days 0-6 exist if not new or not empty
+  for (let i = 0; i < 7; i++) {
+    const existingDay = this.fixedHours.find((day) => day.dayOfWeek === i)
+    if (!existingDay) {
+      this.fixedHours.push({
+        dayOfWeek: i,
+        isActive: false,
+        startTime: "09:00",
+        endTime: "17:00",
+        hasPriceAddition: false,
+        priceAddition: { amount: 0, type: "fixed" },
+        notes: "",
+        minimumBookingAdvanceHours: 2,
+        cutoffTime: null,
+        professionalShare: { amount: 70, type: "percentage" }, // Default but will only be used when hasPriceAddition is true
+      } as IFixedHours)
     }
   }
 

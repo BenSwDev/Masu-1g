@@ -270,7 +270,7 @@ export async function updateSpecialDateEvents(specialDateEvents: any[]) {
         notes: event.notes?.trim() || "",
         minimumBookingAdvanceHours: event.minimumBookingAdvanceHours ?? 2,
         cutoffTime: event.cutoffTime || null,
-        professionalSharePercentage: event.professionalSharePercentage ?? 70,
+        professionalShare: Boolean(event.hasPriceAddition) && event.professionalShare ? event.professionalShare : { amount: 0, type: "percentage" },
       }
 
       console.log(`[${requestId}] Processed special event ${index}:`, processed)
@@ -496,7 +496,7 @@ export async function updateWorkingHoursSettings(data: {
         notes: event.notes?.trim() || "",
         minimumBookingAdvanceHours: event.minimumBookingAdvanceHours ?? 2,
         cutoffTime: event.cutoffTime || null,
-        professionalSharePercentage: event.professionalSharePercentage ?? 70,
+        professionalShare: Boolean(event.hasPriceAddition) && event.professionalShare ? event.professionalShare : { amount: 0, type: "percentage" },
       }
 
       console.log(`[${requestId}] Processed special event ${index}:`, processed)

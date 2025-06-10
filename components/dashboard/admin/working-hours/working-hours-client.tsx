@@ -663,56 +663,58 @@ export default function WorkingHoursClient() {
                                         </FormItem>
                                       )}
                                     />
-                                    <FormField
-                                      control={fixedHoursForm.control}
-                                      name={`fixedHours.${index}.professionalShare.amount`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel className="text-xs">{t("workingHours.professionalSharePercentage")}</FormLabel>
-                                          <FormControl>
-                                            <div className="flex items-center gap-1">
-                                              <Input
-                                                type="number"
-                                                min="0"
-                                                placeholder={t("workingHours.professionalSharePercentagePlaceholder")}
-                                                {...field}
-                                                onChange={(e) =>
-                                                  field.onChange(Number.parseInt(e.target.value) || 70)
-                                                }
-                                                className="h-8 w-16"
-                                              />
-                                              <FormField
-                                                control={fixedHoursForm.control}
-                                                name={`fixedHours.${index}.professionalShare.type`}
-                                                render={({ field }) => (
-                                                  <FormItem>
-                                                    <Select
-                                                      onValueChange={field.onChange}
-                                                      defaultValue={field.value || "percentage"}
-                                                    >
-                                                      <FormControl>
-                                                        <SelectTrigger
-                                                          className="w-[70px] h-8"
-                                                          aria-label={`${t("workingHours.type")} for professional share`}
-                                                        >
-                                                          <SelectValue />
-                                                        </SelectTrigger>
-                                                      </FormControl>
-                                                      <SelectContent>
-                                                        <SelectItem value="fixed">₪</SelectItem>
-                                                        <SelectItem value="percentage">%</SelectItem>
-                                                      </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                  </FormItem>
-                                                )}
-                                              />
-                                            </div>
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
+                                    {fixedHoursForm.watch(`fixedHours.${index}.hasPriceAddition`) && (
+                                      <FormField
+                                        control={fixedHoursForm.control}
+                                        name={`fixedHours.${index}.professionalShare.amount`}
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel className="text-xs">{t("workingHours.professionalSharePercentage")}</FormLabel>
+                                            <FormControl>
+                                              <div className="flex items-center gap-1">
+                                                <Input
+                                                  type="number"
+                                                  min="0"
+                                                  placeholder={t("workingHours.professionalSharePercentagePlaceholder")}
+                                                  {...field}
+                                                  onChange={(e) =>
+                                                    field.onChange(Number.parseInt(e.target.value) || 70)
+                                                  }
+                                                  className="h-8 w-16"
+                                                />
+                                                <FormField
+                                                  control={fixedHoursForm.control}
+                                                  name={`fixedHours.${index}.professionalShare.type`}
+                                                  render={({ field }) => (
+                                                    <FormItem>
+                                                      <Select
+                                                        onValueChange={field.onChange}
+                                                        defaultValue={field.value || "percentage"}
+                                                      >
+                                                        <FormControl>
+                                                          <SelectTrigger
+                                                            className="w-[70px] h-8"
+                                                            aria-label={`${t("workingHours.type")} for professional share`}
+                                                          >
+                                                            <SelectValue />
+                                                          </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                          <SelectItem value="fixed">₪</SelectItem>
+                                                          <SelectItem value="percentage">%</SelectItem>
+                                                        </SelectContent>
+                                                      </Select>
+                                                      <FormMessage />
+                                                    </FormItem>
+                                                  )}
+                                                />
+                                              </div>
+                                            </FormControl>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                    )}
                                   </div>
                                 )}
                                 {!isActive && <span className="text-muted-foreground">-</span>}
@@ -1657,51 +1659,53 @@ export default function WorkingHoursClient() {
                               )}
                             />
                             
-                            <FormField
-                              control={specialEventForm.control}
-                              name="professionalShare.amount"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>{t("workingHours.professionalSharePercentage")}</FormLabel>
-                                  <FormControl>
-                                    <div className="flex items-center gap-2">
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 70)}
-                                        placeholder={t("workingHours.professionalSharePercentagePlaceholder")}
-                                        className="flex-1"
-                                      />
-                                      <FormField
-                                        control={specialEventForm.control}
-                                        name="professionalShare.type"
-                                        render={({ field }) => (
-                                          <FormItem>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value || "percentage"}>
-                                              <FormControl>
-                                                <SelectTrigger className="w-24">
-                                                  <SelectValue />
-                                                </SelectTrigger>
-                                              </FormControl>
-                                              <SelectContent>
-                                                <SelectItem value="fixed">₪</SelectItem>
-                                                <SelectItem value="percentage">%</SelectItem>
-                                              </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                          </FormItem>
-                                        )}
-                                      />
-                                    </div>
-                                  </FormControl>
-                                  <FormDescription className="text-xs">
-                                    {t("workingHours.professionalSharePercentageDescription")}
-                                  </FormDescription>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                            {specialEventForm.watch("hasPriceAddition") && (
+                              <FormField
+                                control={specialEventForm.control}
+                                name="professionalShare.amount"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>{t("workingHours.professionalSharePercentage")}</FormLabel>
+                                    <FormControl>
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          {...field}
+                                          onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 70)}
+                                          placeholder={t("workingHours.professionalSharePercentagePlaceholder")}
+                                          className="flex-1"
+                                        />
+                                        <FormField
+                                          control={specialEventForm.control}
+                                          name="professionalShare.type"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <Select onValueChange={field.onChange} defaultValue={field.value || "percentage"}>
+                                                <FormControl>
+                                                  <SelectTrigger className="w-24">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                  <SelectItem value="fixed">₪</SelectItem>
+                                                  <SelectItem value="percentage">%</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      {t("workingHours.professionalSharePercentageDescription")}
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            )}
                           </div>
 
                           <FormField

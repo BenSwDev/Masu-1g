@@ -72,11 +72,20 @@ function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixed
   // Convert the input date to the correct timezone
   const zonedDate = toZonedTime(date, TIMEZONE)
   
+  // Debug logging
+  console.log('getDayWorkingHours inputs:', {
+    originalDate: date.toISOString(),
+    zonedDate: zonedDate.toISOString(),
+    dayOfWeek: zonedDate.getDay(),
+    timezone: TIMEZONE
+  })
+  
   // First check for special date events (new priority system)
   if (settings.specialDateEvents) {
     for (const event of settings.specialDateEvents) {
       for (const eventDate of event.dates) {
         if (isSameDay(new Date(eventDate), date)) {
+          console.log('Found matching special date event:', event)
           return event
         }
       }
@@ -86,12 +95,26 @@ function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixed
   // Then check legacy special dates
   const specialDateSetting = settings.specialDates?.find((sd) => isSameDay(new Date(sd.date), date))
   if (specialDateSetting) {
+    console.log('Found matching special date:', specialDateSetting)
     return specialDateSetting
   }
 
   // Finally check fixed hours for the day of week
   const dayOfWeek = zonedDate.getDay() // Local day of week in the specified timezone
   const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeek)
+  
+  // Debug logging
+  if (fixedDaySetting) {
+    console.log('Found matching fixed day setting:', {
+      dayOfWeek,
+      startTime: fixedDaySetting.startTime,
+      endTime: fixedDaySetting.endTime,
+      isActive: fixedDaySetting.isActive
+    })
+  } else {
+    console.log('No matching day setting found for day of week:', dayOfWeek)
+  }
+  
   return fixedDaySetting || null
 }
 
@@ -103,6 +126,13 @@ export async function getAvailableTimeSlots(
   try {
     await dbConnect()
     
+    // Debug logging
+    console.log('getAvailableTimeSlots inputs:', {
+      dateString,
+      treatmentId,
+      selectedDurationId
+    })
+    
     // Create a timezone-aware date from the dateString
     // First create a UTC date from the string (noon to avoid DST issues)
     const selectedDateUTC = new Date(`${dateString}T12:00:00.000Z`)
@@ -113,6 +143,14 @@ export async function getAvailableTimeSlots(
 
     // Convert to our target timezone
     const selectedDateInTZ = toZonedTime(selectedDateUTC, TIMEZONE)
+    
+    // Debug logging
+    console.log('Date conversions:', {
+      dateString,
+      selectedDateUTC: selectedDateUTC.toISOString(),
+      selectedDateInTZ: selectedDateInTZ.toISOString(),
+      selectedDateInTZ_dayOfWeek: selectedDateInTZ.getDay()
+    })
     
     const treatment = (await Treatment.findById(treatmentId).lean()) as ITreatment | null
     if (!treatment || !treatment.isActive) {
@@ -138,7 +176,24 @@ export async function getAvailableTimeSlots(
       return { success: false, error: "bookings.errors.workingHoursNotSet" }
     }
 
+    // Debug logging
+    console.log('Working hours settings:', {
+      fixedHoursCount: settings.fixedHours?.length,
+      specialDatesCount: settings.specialDates?.length,
+      specialDateEventsCount: settings.specialDateEvents?.length,
+      slotIntervalMinutes: settings.slotIntervalMinutes
+    })
+
     const daySettings = getDayWorkingHours(selectedDateUTC, settings)
+    
+    // Debug logging
+    console.log('Day settings result:', {
+      found: !!daySettings,
+      isActive: daySettings?.isActive,
+      startTime: daySettings?.startTime,
+      endTime: daySettings?.endTime
+    })
+    
     if (!daySettings || !daySettings.isActive) {
       return {
         success: true,
@@ -154,6 +209,14 @@ export async function getAvailableTimeSlots(
     // Check if selected date is today in the target timezone
     const isToday = isSameDay(selectedDateUTC, now)
     
+    // Debug logging
+    console.log('Time calculations:', {
+      now: now.toISOString(),
+      nowInTZ: nowInTZ.toISOString(),
+      isToday,
+      cutoffTime: daySettings.cutoffTime
+    })
+    
     // Check if cutoff time has been reached for today
     let isCutoffTimeReached = false
     if (isToday && daySettings.cutoffTime) {
@@ -165,6 +228,14 @@ export async function getAvailableTimeSlots(
       
       // Compare current time to cutoff time
       isCutoffTimeReached = nowInTZ >= cutoffTimeToday
+      
+      // Debug logging
+      console.log('Cutoff time check:', {
+        cutoffHour,
+        cutoffMinute,
+        cutoffTimeToday: cutoffTimeToday.toISOString(),
+        isCutoffTimeReached
+      })
     }
     
     // If today and past cutoff time, no slots are available
@@ -190,6 +261,16 @@ export async function getAvailableTimeSlots(
     
     const endOfDay = new Date(selectedDateInTZ)
     endOfDay.setHours(endHour, endMinute, 0, 0)
+    
+    // Debug logging
+    console.log('Generating time slots:', {
+      startTime: daySettings.startTime,
+      endTime: daySettings.endTime,
+      startOfDay: startOfDay.toISOString(),
+      endOfDay: endOfDay.toISOString(),
+      slotInterval,
+      treatmentDurationMinutes
+    })
     
     // Calculate minimum booking time
     const minimumBookingAdvanceHours = daySettings.minimumBookingAdvanceHours ?? settings.minimumBookingLeadTimeHours ?? 2
@@ -250,6 +331,14 @@ export async function getAvailableTimeSlots(
       // Move to the next time slot
       currentSlotTime = new Date(currentSlotTime.getTime() + (slotInterval * 60 * 1000))
     }
+    
+    // Debug logging
+    console.log('Generated time slots:', {
+      totalSlots: timeSlots.length,
+      availableSlots: timeSlots.filter(slot => slot.isAvailable).length,
+      firstSlot: timeSlots.length > 0 ? timeSlots[0].time : null,
+      lastSlot: timeSlots.length > 0 ? timeSlots[timeSlots.length - 1].time : null
+    })
     
     // Add informative note about cutoff time
     let workingHoursNote = daySettings.notes

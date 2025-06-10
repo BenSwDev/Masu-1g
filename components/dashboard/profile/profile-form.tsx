@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useTranslation } from "react-i18next"
+import { useTranslation } from "@/lib/translations/i18n"
 import { PhoneInput } from "@/components/common/phone-input"
 
 const profileFormSchema = z.object({
@@ -53,7 +53,7 @@ export function ProfileForm({ initialValues, onSubmit }: ProfileFormProps) {
             <FormItem>
               <FormLabel>{t("profile.name")}</FormLabel>
               <FormControl>
-                <Input placeholder={t("profile.namePlaceholder", "John Doe")} {...field} />
+                <Input placeholder={t("profile.namePlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -66,7 +66,7 @@ export function ProfileForm({ initialValues, onSubmit }: ProfileFormProps) {
             <FormItem>
               <FormLabel>{t("profile.email")}</FormLabel>
               <FormControl>
-                <Input placeholder={t("profile.emailPlaceholder", "johndoe@example.com")} {...field} />
+                <Input placeholder={t("profile.emailPlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -82,7 +82,7 @@ export function ProfileForm({ initialValues, onSubmit }: ProfileFormProps) {
                 <PhoneInput
                   id="phone"
                   name={field.name}
-                  placeholder={t("profile.phonePlaceholder", "Enter your phone number")}
+                  placeholder={t("profile.phonePlaceholder")}
                   fullNumberValue={field.value || ""}
                   onPhoneChange={field.onChange}
                   ref={field.ref}
@@ -100,7 +100,7 @@ export function ProfileForm({ initialValues, onSubmit }: ProfileFormProps) {
             <FormItem>
               <FormLabel>{t("profile.bio")}</FormLabel>
               <FormControl>
-                <Input placeholder={t("profile.bioPlaceholder", "Tell us a little about yourself")} {...field} />
+                <Input placeholder={t("profile.bioPlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

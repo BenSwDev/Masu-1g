@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, Controller } from "react-hook-form"
 import * as z from "zod"
-import { useTranslation } from "react-i18next"
+import { useTranslation } from "@/lib/translations/i18n"
 import { PhoneInput } from "@/components/common/phone-input"
 
 const formSchema = z.object({

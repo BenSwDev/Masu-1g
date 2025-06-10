@@ -24,8 +24,8 @@ interface UserSubscriptionCardProps {
 }
 
 export default function UserSubscriptionCard({ userSubscription, onCancel }: UserSubscriptionCardProps) {
-  const { t, i18n } = useTranslation()
-  const currentLocale = i18n.language === "he" ? he : undefined
+  const { t, language } = useTranslation()
+  const currentLocale = language === "he" ? he : undefined
 
   const getStatusBadge = (status: string) => {
     switch (status) {

@@ -1,24 +1,30 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { connectToDatabase } from "@/lib/db/mongodb"
-import Review from "@/lib/db/models/review"
-import Booking from "@/lib/db/models/booking"
+import { getServerSession } from "next-auth"
+import mongoose from "mongoose"
+import { authOptions } from "@/lib/auth/auth"
+import dbConnect from "@/lib/db/mongoose"
+
+import Review, { type IReview } from "@/lib/db/models/review"
+import Booking, { type IBooking } from "@/lib/db/models/booking"
+import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
+import User, { type IUser } from "@/lib/db/models/user"
+
+import { logger } from "@/lib/logs/logger"
 import type { CreateReviewData, UpdateReviewData, ReviewFilters, PopulatedReview } from "@/types/review"
-import { auth } from "@/lib/auth"
-import { getUserFromSession } from "@/lib/auth/session"
 
 /**
  * יצירת חוות דעת חדשה
  */
-export async function createReview(data: CreateReviewData) {
+export async function createReview(data: CreateReviewData): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      throw new Error("User not authenticated")
+      return { success: false, error: "Unauthorized" }
     }
 
-    await connectToDatabase()
+    await dbConnect()
 
     // בדיקה שההזמנה קיימת ושהיא הושלמה
     const booking = await Booking.findById(data.bookingId)
@@ -26,286 +32,365 @@ export async function createReview(data: CreateReviewData) {
       .populate("treatmentId", "_id")
 
     if (!booking) {
-      throw new Error("Booking not found")
+      return { success: false, error: "Booking not found" }
     }
 
     if (booking.status !== "completed") {
-      throw new Error("Can only review completed treatments")
+      return { success: false, error: "Can only review completed treatments" }
     }
 
     if (booking.userId.toString() !== session.user.id) {
-      throw new Error("Not authorized to review this booking")
+      return { success: false, error: "Unauthorized" }
     }
 
     // בדיקה שעוד לא קיימת חוות דעת להזמנה זו
     const existingReview = await Review.findOne({ bookingId: data.bookingId })
     if (existingReview) {
-      throw new Error("Review already exists for this booking")
+      return { success: false, error: "Review already exists for this booking" }
     }
 
     // יצירת חוות הדעת
     const review = new Review({
       bookingId: data.bookingId,
       userId: session.user.id,
-      professionalId: booking.professionalId._id,
-      treatmentId: booking.treatmentId._id,
+      professionalId: booking.professionalId || null,
+      treatmentId: booking.treatmentId,
       rating: data.rating,
-      comment: data.comment
+      comment: data.comment || "",
     })
 
     await review.save()
+
+    // Log the action
+    logger.info(`Review created for booking ${data.bookingId} by user ${session.user.id}`)
 
     revalidatePath("/dashboard/member/reviews")
     revalidatePath("/dashboard/member/bookings")
     revalidatePath("/dashboard/admin/reviews")
 
-    return { success: true, reviewId: review._id.toString() }
+    return { success: true }
   } catch (error) {
-    console.error("Error creating review:", error)
-    throw new Error(error instanceof Error ? error.message : "Failed to create review")
+    logger.error("Error creating review:", error)
+    return { success: false, error: "Failed to create review" }
   }
 }
 
 /**
  * עדכון תגובת מטפל לחוות דעת
  */
-export async function updateReviewResponse(reviewId: string, data: UpdateReviewData) {
+export async function updateReviewResponse(
+  reviewId: string, 
+  professionalResponse: string
+): Promise<{ success: boolean; error?: string }> {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      throw new Error("User not authenticated")
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles || !session.user.roles.some(role => ["admin", "professional"].includes(role))) {
+      return { success: false, error: "Unauthorized" }
     }
 
-    const user = await getUserFromSession()
-    if (user.role !== "admin") {
-      throw new Error("Not authorized")
-    }
+    await dbConnect()
 
-    await connectToDatabase()
-
-    const review = await Review.findByIdAndUpdate(
-      reviewId,
-      { professionalResponse: data.professionalResponse },
-      { new: true, runValidators: true }
-    )
-
+    const review = await Review.findById(reviewId)
     if (!review) {
-      throw new Error("Review not found")
+      return { success: false, error: "Review not found" }
     }
+
+    review.professionalResponse = professionalResponse
+    review.updatedAt = new Date()
+    await review.save()
+
+    // Log the action
+    logger.info(`Review response updated for review ${reviewId} by user ${session.user.id}`)
 
     revalidatePath("/dashboard/admin/reviews")
+    revalidatePath("/dashboard/member/reviews")
 
     return { success: true }
   } catch (error) {
-    console.error("Error updating review response:", error)
-    throw new Error(error instanceof Error ? error.message : "Failed to update review response")
+    logger.error("Error updating review response:", error)
+    return { success: false, error: "Failed to update review response" }
   }
 }
 
 /**
  * קבלת כל חוות הדעת (למנהל)
  */
-export async function getAllReviews(filters: ReviewFilters = {}) {
+export async function getAllReviews(filters: ReviewFilters = {}): Promise<{
+  reviews: PopulatedReview[]
+  totalPages: number
+  totalReviews: number
+}> {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      throw new Error("User not authenticated")
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles || !session.user.roles.includes("admin")) {
+      throw new Error("Unauthorized")
     }
 
-    const user = await getUserFromSession()
-    if (user.role !== "admin") {
-      throw new Error("Not authorized")
-    }
-
-    await connectToDatabase()
+    await dbConnect()
 
     const page = filters.page || 1
     const limit = filters.limit || 20
     const skip = (page - 1) * limit
 
-    // בניית query עבור חיפוש וסינון
-    const query: any = {}
+    // Build aggregation pipeline
+    const matchStage: any = {}
 
-    // סינון לפי דירוג
     if (filters.rating) {
-      query.rating = filters.rating
+      matchStage.rating = filters.rating
     }
 
-    // סינון לפי תגובת מטפל
     if (filters.hasResponse !== undefined) {
       if (filters.hasResponse) {
-        query.professionalResponse = { $exists: true, $ne: "" }
+        matchStage.professionalResponse = { $exists: true, $ne: "" }
       } else {
-        query.$or = [
+        matchStage.$or = [
           { professionalResponse: { $exists: false } },
           { professionalResponse: "" }
         ]
       }
     }
 
-    // קבלת חוות הדעת עם populate
-    const reviews = await Review.find(query)
-      .populate({
-        path: "bookingId",
-        select: "bookingNumber bookingDateTime status bookedByUserName bookedByUserEmail bookedByUserPhone recipientName recipientPhone recipientEmail"
-      })
-      .populate({
-        path: "userId",
-        select: "name email phone"
-      })
-      .populate({
-        path: "professionalId", 
-        select: "name email phone"
-      })
-      .populate({
-        path: "treatmentId",
-        select: "name duration"
-      })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
-
-    // סינון נוסף לפי חיפוש טקסט
-    let filteredReviews = reviews
     if (filters.search) {
-      const searchTerm = filters.search.toLowerCase()
-      filteredReviews = reviews.filter((review: any) => 
-        review.bookingId?.bookingNumber?.toLowerCase().includes(searchTerm) ||
-        review.userId?.name?.toLowerCase().includes(searchTerm) ||
-        review.professionalId?.name?.toLowerCase().includes(searchTerm) ||
-        review.treatmentId?.name?.toLowerCase().includes(searchTerm) ||
-        review.comment?.toLowerCase().includes(searchTerm)
-      )
+      matchStage.$or = [
+        { comment: { $regex: filters.search, $options: "i" } },
+        { professionalResponse: { $regex: filters.search, $options: "i" } }
+      ]
     }
 
-    // ספירת סה"כ תוצאות
-    const totalReviews = await Review.countDocuments(query)
+    const pipeline: any[] = [
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: "bookings",
+          localField: "bookingId",
+          foreignField: "_id",
+          as: "bookingId"
+        }
+      },
+      { $unwind: "$bookingId" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userId"
+        }
+      },
+      { $unwind: "$userId" },
+      {
+        $lookup: {
+          from: "treatments",
+          localField: "treatmentId",
+          foreignField: "_id",
+          as: "treatmentId"
+        }
+      },
+      { $unwind: "$treatmentId" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "professionalId",
+          foreignField: "_id",
+          as: "professionalId"
+        }
+      },
+      {
+        $unwind: {
+          path: "$professionalId",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit }
+    ]
+
+    const reviews = await Review.aggregate(pipeline)
+    const totalReviews = await Review.countDocuments(matchStage)
     const totalPages = Math.ceil(totalReviews / limit)
 
     return {
-      reviews: filteredReviews as PopulatedReview[],
+      reviews: reviews as PopulatedReview[],
       totalPages,
-      totalReviews,
-      currentPage: page
+      totalReviews
     }
   } catch (error) {
-    console.error("Error fetching reviews:", error)
-    throw new Error(error instanceof Error ? error.message : "Failed to fetch reviews")
+    logger.error("Error getting all reviews:", error)
+    throw new Error("Failed to get reviews")
   }
 }
 
 /**
  * קבלת חוות הדעת של משתמש ספציפי
  */
-export async function getUserReviews(filters: ReviewFilters = {}) {
+export async function getUserReviews(filters: ReviewFilters = {}): Promise<{
+  reviews: PopulatedReview[]
+  totalPages: number
+  totalReviews: number
+}> {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      throw new Error("User not authenticated")
+      throw new Error("Unauthorized")
     }
 
-    await connectToDatabase()
+    await dbConnect()
 
     const page = filters.page || 1
     const limit = filters.limit || 20
     const skip = (page - 1) * limit
 
-    const query: any = { userId: session.user.id }
-
-    // סינון לפי דירוג
-    if (filters.rating) {
-      query.rating = filters.rating
+    // Build aggregation pipeline
+    const matchStage: any = {
+      userId: new mongoose.Types.ObjectId(session.user.id)
     }
 
-    const reviews = await Review.find(query)
-      .populate({
-        path: "bookingId",
-        select: "bookingNumber bookingDateTime"
-      })
-      .populate({
-        path: "professionalId",
-        select: "name" // רק שם המטפל ללקוח
-      })
-      .populate({
-        path: "treatmentId", 
-        select: "name duration"
-      })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
+    if (filters.rating) {
+      matchStage.rating = filters.rating
+    }
 
-    const totalReviews = await Review.countDocuments(query)
+    if (filters.search) {
+      matchStage.$or = [
+        { comment: { $regex: filters.search, $options: "i" } },
+        { professionalResponse: { $regex: filters.search, $options: "i" } }
+      ]
+    }
+
+    const pipeline: any[] = [
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: "bookings",
+          localField: "bookingId",
+          foreignField: "_id",
+          as: "bookingId"
+        }
+      },
+      { $unwind: "$bookingId" },
+      {
+        $lookup: {
+          from: "treatments",
+          localField: "treatmentId",
+          foreignField: "_id",
+          as: "treatmentId"
+        }
+      },
+      { $unwind: "$treatmentId" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "professionalId",
+          foreignField: "_id",
+          as: "professionalId"
+        }
+      },
+      {
+        $unwind: {
+          path: "$professionalId",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit }
+    ]
+
+    const reviews = await Review.aggregate(pipeline)
+    const totalReviews = await Review.countDocuments(matchStage)
     const totalPages = Math.ceil(totalReviews / limit)
 
     return {
       reviews: reviews as PopulatedReview[],
       totalPages,
-      totalReviews,
-      currentPage: page
+      totalReviews
     }
   } catch (error) {
-    console.error("Error fetching user reviews:", error)
-    throw new Error(error instanceof Error ? error.message : "Failed to fetch user reviews")
+    logger.error("Error getting user reviews:", error)
+    throw new Error("Failed to get user reviews")
   }
 }
 
 /**
  * קבלת חוות דעת לפי ID הזמנה
  */
-export async function getReviewByBookingId(bookingId: string) {
+export async function getReviewByBookingId(bookingId: string): Promise<PopulatedReview | null> {
   try {
-    const session = await auth()
-    if (!session?.user?.id) {
-      throw new Error("User not authenticated")
-    }
+    await dbConnect()
 
-    await connectToDatabase()
+    const pipeline: any[] = [
+      { $match: { bookingId: new mongoose.Types.ObjectId(bookingId) } },
+      {
+        $lookup: {
+          from: "bookings",
+          localField: "bookingId",
+          foreignField: "_id",
+          as: "bookingId"
+        }
+      },
+      { $unwind: "$bookingId" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userId"
+        }
+      },
+      { $unwind: "$userId" },
+      {
+        $lookup: {
+          from: "treatments",
+          localField: "treatmentId",
+          foreignField: "_id",
+          as: "treatmentId"
+        }
+      },
+      { $unwind: "$treatmentId" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "professionalId",
+          foreignField: "_id",
+          as: "professionalId"
+        }
+      },
+      {
+        $unwind: {
+          path: "$professionalId",
+          preserveNullAndEmptyArrays: true
+        }
+      }
+    ]
 
-    const review = await Review.findOne({ bookingId })
-      .populate({
-        path: "bookingId",
-        select: "bookingNumber bookingDateTime"
-      })
-      .populate({
-        path: "professionalId",
-        select: "name"
-      })
-      .populate({
-        path: "treatmentId",
-        select: "name duration"
-      })
-      .lean()
-
-    return review as PopulatedReview | null
+    const reviews = await Review.aggregate(pipeline)
+    return reviews.length > 0 ? (reviews[0] as PopulatedReview) : null
   } catch (error) {
-    console.error("Error fetching review by booking ID:", error)
-    throw new Error(error instanceof Error ? error.message : "Failed to fetch review")
+    logger.error("Error getting review by booking ID:", error)
+    return null
   }
 }
 
 /**
  * קבלת הזמנות שהושלמו ללא חוות דעת
  */
-export async function getCompletedBookingsWithoutReviews() {
+export async function getCompletedBookingsWithoutReviews(): Promise<{
+  bookings: any[]
+  totalPages: number
+  totalBookings: number
+}> {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      throw new Error("User not authenticated")
+      throw new Error("Unauthorized")
     }
 
-    await connectToDatabase()
+    await dbConnect()
 
     // קבלת כל ההזמנות שהושלמו של המשתמש
     const completedBookings = await Booking.find({
       userId: session.user.id,
       status: "completed"
-    })
-    .populate("treatmentId", "name duration")
-    .populate("professionalId", "name")
-    .sort({ bookingDateTime: -1 })
-    .lean()
+    }).populate("treatmentId").populate("professionalId").lean()
 
     // קבלת כל חוות הדעת של המשתמש
     const existingReviews = await Review.find({
@@ -321,9 +406,13 @@ export async function getCompletedBookingsWithoutReviews() {
       booking => !reviewedBookingIds.has(booking._id.toString())
     )
 
-    return bookingsWithoutReviews
+    return {
+      bookings: bookingsWithoutReviews,
+      totalPages: 1,
+      totalBookings: bookingsWithoutReviews.length
+    }
   } catch (error) {
-    console.error("Error fetching completed bookings without reviews:", error)
-    throw new Error(error instanceof Error ? error.message : "Failed to fetch bookings")
+    logger.error("Error getting completed bookings without reviews:", error)
+    throw new Error("Failed to get completed bookings")
   }
 } 

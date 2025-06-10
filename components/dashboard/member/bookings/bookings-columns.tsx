@@ -32,12 +32,13 @@ import {
   DialogTitle
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import BookingDetailsView from "./booking-details-view"
 import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking"
 import { getReviewByBookingId } from "@/actions/review-actions"
 import CreateReviewModal from "../reviews/create-review-modal"
 import ReviewDetailModal from "../../admin/reviews/review-detail-modal"
+import { Heading } from "@/components/common/ui/heading"
 
 type TFunction = (key: string, options?: any) => string
 

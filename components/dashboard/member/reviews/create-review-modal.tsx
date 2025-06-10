@@ -13,15 +13,24 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Separator } from "@/components/common/ui/separator"
 import { Star, User, Calendar, Clock, MessageCircle } from "lucide-react"
-import { formatDateTime } from "@/lib/utils/date"
+import { format } from "date-fns"
+import { he, enUS, ru } from "date-fns/locale"
 import { createReview } from "@/actions/review-actions"
 import { toast } from "sonner"
+import { useQueryClient } from "@tanstack/react-query"
+import type { PopulatedBooking } from "@/types/booking"
 
 interface CreateReviewModalProps {
   booking: any // The completed booking to review
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+}
+
+const formatDateTime = (date: string | Date, language: string) => {
+  const d = new Date(date)
+  const locale = language === "he" ? he : language === "ru" ? ru : enUS
+  return format(d, "dd/MM/yyyy HH:mm", { locale })
 }
 
 export default function CreateReviewModal({

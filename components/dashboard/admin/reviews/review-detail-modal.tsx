@@ -13,9 +13,10 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Badge } from "@/components/common/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Separator } from "@/components/common/ui/separator"
-import { Star, User, Phone, Mail, Calendar, Clock, MessageCircle, AlertTriangle } from "lucide-react"
+import { Star, User, Phone, Mail, Calendar, Clock, MessageCircle, AlertTriangle, Edit3 } from "lucide-react"
 import type { PopulatedReview } from "@/types/review"
-import { formatDateTime } from "@/lib/utils/date"
+import { format } from "date-fns"
+import { he, enUS, ru } from "date-fns/locale"
 import { updateReviewResponse } from "@/actions/review-actions"
 import { toast } from "sonner"
 
@@ -24,6 +25,12 @@ interface ReviewDetailModalProps {
   isOpen: boolean
   onClose: () => void
   onUpdate: () => void
+}
+
+const formatDateTime = (date: string | Date, language: string) => {
+  const d = new Date(date)
+  const locale = language === "he" ? he : language === "ru" ? ru : enUS
+  return format(d, "dd/MM/yyyy HH:mm", { locale })
 }
 
 export default function ReviewDetailModal({

@@ -1,24 +1,40 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "@/lib/translations/i18n"
 import { DataTable } from "@/components/common/ui/data-table"
-import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
-import type { PopulatedReview } from "@/types/review"
-import { Heading } from "@/components/common/ui/heading"
-import { getUserReviews } from "@/actions/review-actions"
 import { Input } from "@/components/common/ui/input"
 import { Button } from "@/components/common/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Search, RefreshCw, Filter, X, Star, MessageCircle, Eye } from "lucide-react"
-import { useDebounce } from "@/hooks/use-debounce"
 import { Badge } from "@/components/common/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { Separator } from "@/components/common/ui/separator"
-import { formatDateTime } from "@/lib/utils/date"
-import { type ColumnDef } from "@tanstack/react-table"
-import ReviewDetailModal from "../../../admin/reviews/review-detail-modal"
+import { Search, RefreshCw, Filter, X, Star } from "lucide-react"
+import { format } from "date-fns"
+import { he, enUS, ru } from "date-fns/locale"
+import { useDebounce } from "@/hooks/use-debounce"
+import { getUserReviews } from "@/actions/review-actions"
+import { CreateReviewModal } from "./create-review-modal"
+import type { PopulatedReview } from "@/types/review"
+import { getMemberReviewColumns } from "./member-reviews-columns"
+
+const formatDate = (date: string | Date) => {
+  return format(new Date(date), "dd/MM/yyyy")
+}
+
+const getLocale = (locale: string) => {
+  switch (locale) {
+    case "he":
+      return he
+    case "en":
+      return enUS
+    case "ru":
+      return ru
+    default:
+      return he
+  }
+}
 
 /**
  * Member Reviews Client Component
@@ -76,122 +92,7 @@ export default function MemberReviewsClient() {
   }
 
   // Define columns for member reviews (simplified version)
-  const columns: ColumnDef<PopulatedReview>[] = useMemo(() => [
-    {
-      accessorKey: "bookingId.bookingNumber",
-      header: t("memberReviews.columns.bookingNumber"),
-      cell: ({ row }) => {
-        const review = row.original
-        return (
-          <div className="space-y-1">
-            <div className="font-medium">{review.bookingId.bookingNumber}</div>
-            <div className="text-xs text-muted-foreground">
-              {formatDateTime(review.bookingId.bookingDateTime, language)}
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "treatmentId.name",
-      header: t("memberReviews.columns.treatmentType"),
-      cell: ({ row }) => {
-        const review = row.original
-        const duration = review.treatmentId.duration
-        return (
-          <div className="space-y-1">
-            <div className="font-medium">{review.treatmentId.name}</div>
-            {duration && (
-              <div className="text-xs text-muted-foreground">
-                {duration} {t("common.minutes")}
-              </div>
-            )}
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "professionalId.name",
-      header: t("memberReviews.columns.professional"),
-      cell: ({ row }) => {
-        const review = row.original
-        return (
-          <div className="font-medium">{review.professionalId.name}</div>
-        )
-      },
-    },
-    {
-      accessorKey: "rating",
-      header: t("memberReviews.columns.rating"),
-      cell: ({ row }) => {
-        const review = row.original
-        const rating = review.rating
-        const hasComment = !!review.comment
-        const hasResponse = !!review.professionalResponse
-        
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: 5 }, (_, i) => (
-                <Star
-                  key={i}
-                  className={`h-4 w-4 ${
-                    i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                  }`}
-                />
-              ))}
-              <span className="ml-2 text-sm font-medium">{rating}/5</span>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              {hasComment && (
-                <Badge variant="secondary" className="text-xs">
-                  <MessageCircle className="h-3 w-3 mr-1" />
-                  {t("memberReviews.hasComment")}
-                </Badge>
-              )}
-              
-              {hasResponse && (
-                <Badge variant="outline" className="text-xs">
-                  {t("memberReviews.hasResponse")}
-                </Badge>
-              )}
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: "createdAt",
-      header: t("memberReviews.columns.reviewDate"),
-      cell: ({ row }) => {
-        const review = row.original
-        return (
-          <div className="text-sm">
-            {formatDateTime(review.createdAt, language)}
-          </div>
-        )
-      },
-    },
-    {
-      id: "actions",
-      header: t("common.actions"),
-      cell: ({ row }) => {
-        const review = row.original
-        
-        return (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleRowClick(review)}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            {t("memberReviews.viewDetails")}
-          </Button>
-        )
-      },
-    },
-  ], [t, language])
+  const columns = useMemo(() => getMemberReviewColumns(t, language), [t, language])
 
   const handleRefresh = () => {
     refetch()

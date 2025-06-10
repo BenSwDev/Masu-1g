@@ -5,7 +5,21 @@ import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
 import { Star, MessageCircle, AlertTriangle, Eye } from "lucide-react"
 import type { PopulatedReview } from "@/types/review"
-import { formatDate, formatDateTime } from "@/lib/utils/date"
+import { format } from "date-fns"
+import { he, enUS, ru } from "date-fns/locale"
+import { ArrowUpDown } from "lucide-react"
+
+type TFunction = (key: string, options?: any) => string
+
+const formatDate = (date: string | Date) => {
+  return format(new Date(date), "dd/MM/yyyy")
+}
+
+const formatDateTime = (date: string | Date, language: string) => {
+  const d = new Date(date)
+  const locale = language === "he" ? he : language === "ru" ? ru : enUS
+  return format(d, "dd/MM/yyyy HH:mm", { locale })
+}
 
 export function getAdminReviewColumns(
   t: (key: string, fallback?: string) => string,

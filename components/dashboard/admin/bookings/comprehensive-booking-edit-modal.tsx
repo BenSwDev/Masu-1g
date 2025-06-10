@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { getAvailableProfessionals, assignProfessionalToBooking } from "@/actions/booking-actions"
+import { getAvailableProfessionals, assignProfessionalToBooking, updateBookingByAdmin } from "@/actions/booking-actions"
 
 type TFunction = (key: string, options?: any) => string
 
@@ -104,12 +104,57 @@ export default function ComprehensiveBookingEditModal({
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      // Here you would implement the save logic
-      // For now, we'll just show success message
-      toast.success(t("adminBookings.saveSuccess"))
-      queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
-      onClose()
+      // Prepare updates object
+      const updates: any = {}
+      
+      if (editedBooking.status !== booking.status) {
+        updates.status = editedBooking.status
+      }
+      
+      if (editedBooking.bookingDateTime !== booking.bookingDateTime) {
+        updates.bookingDateTime = editedBooking.bookingDateTime ? new Date(editedBooking.bookingDateTime) : undefined
+      }
+      
+      if (editedBooking.recipientName !== booking.recipientName) {
+        updates.recipientName = editedBooking.recipientName
+      }
+      
+      if (editedBooking.recipientPhone !== booking.recipientPhone) {
+        updates.recipientPhone = editedBooking.recipientPhone
+      }
+      
+      if (editedBooking.recipientEmail !== booking.recipientEmail) {
+        updates.recipientEmail = editedBooking.recipientEmail
+      }
+      
+      if (editedBooking.notes !== booking.notes) {
+        updates.notes = editedBooking.notes
+      }
+      
+      // Check if payment status changed
+      if (editedBooking.paymentDetails?.paymentStatus !== booking.paymentDetails?.paymentStatus) {
+        updates.paymentStatus = editedBooking.paymentDetails?.paymentStatus
+      }
+
+      // Only update if there are actual changes
+      if (Object.keys(updates).length > 0) {
+        const result = await updateBookingByAdmin(booking._id, updates)
+        if (result.success) {
+          toast.success(t("adminBookings.saveSuccess"))
+          queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+          onClose()
+        } else {
+          const errorMessage = result.error && result.error.startsWith("bookings.errors.") 
+            ? t(result.error) 
+            : t("adminBookings.saveError")
+          toast.error(errorMessage)
+        }
+      } else {
+        toast.success(t("adminBookings.saveSuccess"))
+        onClose()
+      }
     } catch (error) {
+      console.error("Error saving booking:", error)
       toast.error(t("adminBookings.saveError"))
     } finally {
       setIsSaving(false)

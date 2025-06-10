@@ -32,6 +32,7 @@ import {
   History,
   Users,
   BarChart3,
+  Star,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
 import { signOut } from "next-auth/react"
@@ -276,6 +277,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "users", icon: User, hrefSuffix: "users" },
         { titleKey: "customers", icon: Users, hrefSuffix: "customers" },
         { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
+        { titleKey: "reviews", icon: Star, hrefSuffix: "reviews" },
         { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments" },
         { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
@@ -289,6 +291,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "paymentMethods", icon: CreditCard, hrefSuffix: "payment-methods" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
         { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
+        { titleKey: "reviews", icon: Star, hrefSuffix: "reviews" },
         { titleKey: "purchaseHistory", icon: History, hrefSuffix: "purchase-history" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
       ],

@@ -373,13 +373,15 @@
     "${professionalFilter}": "סינון לפי מטפל",
     "${dateRangeFilter}": "סינון לפי טווח תאריכים",
     "${addressFilter}": "סינון לפי כתובת",
-    "status.pendingAssignment": "ממתין להקצאה",
-    "status.confirmed": "מאושר",
-    "status.enRoute": "בדרך",
-    "status.completed": "הושלם",
-    "status.cancelledByUser": "בוטל על ידי המשתמש",
-    "status.cancelledByAdmin": "בוטל על ידי המנהל",
-    "status.noShow": "לא הגיע"
+    "status": {
+      "pendingAssignment": "ממתין להקצאה",
+      "confirmed": "מאושר",
+      "enRoute": "בדרך",
+      "completed": "הושלם",
+      "cancelledByUser": "בוטל על ידי המשתמש",
+      "cancelledByAdmin": "בוטל על ידי המנהל",
+      "noShow": "לא הגיע"
+    }
   },
   "adminCoupons": {
     "columns": {
@@ -1000,7 +1002,8 @@
         },
         "userSubscriptions": "מנויי משתמשים",
         "users": "משתמשים",
-        "workingHours": "שעות פעילות"
+        "workingHours": "שעות פעילות",
+        "reviews": "חוות דעת"
       }
     },
     "doorName": "שם דלת",
@@ -3602,6 +3605,17 @@
       "bookTreatment": "הזמן טיפול",
       "purchaseSubscription": "רכוש מנוי",
       "purchaseGiftVoucher": "רכוש שובר מתנה",
+      "users": "משתמשים",
+      "customers": "לקוחות",
+      "bookings": "הזמנות",
+      "treatments": "טיפולים",
+      "workingHours": "שעות פעילות",
+      "subscriptions": "מנויים",
+      "userSubscriptions": "מנויי משתמשים",
+      "coupons": "קופונים",
+      "giftVouchers": "שוברי מתנה",
+      "purchaseReports": "דוחות רכישות",
+      "reviews": "חוות דעת",
       "userMenu": {
         "toggleTooltip": "תפריט משתמש",
         "treatmentPreferences": "העדפות טיפול",

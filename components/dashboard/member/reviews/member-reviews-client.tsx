@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "@/lib/translations/i18n"
 import { DataTable } from "@/components/common/ui/data-table"
@@ -18,6 +18,7 @@ import { getUserReviews } from "@/actions/review-actions"
 import { CreateReviewModal } from "./create-review-modal"
 import type { PopulatedReview } from "@/types/review"
 import { getMemberReviewColumns } from "./member-reviews-columns"
+import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
 
 const formatDate = (date: string | Date) => {
   return format(new Date(date), "dd/MM/yyyy")

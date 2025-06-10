@@ -1824,3 +1824,84 @@ export async function getAvailableProfessionals(): Promise<{ success: boolean; p
     return { success: false, error: "bookings.errors.fetchProfessionalsFailed" }
   }
 }
+
+export async function updateBookingByAdmin(
+  bookingId: string,
+  updates: {
+    status?: BookingStatus
+    bookingDateTime?: Date
+    recipientName?: string
+    recipientPhone?: string
+    recipientEmail?: string
+    notes?: string
+    professionalId?: string
+    paymentStatus?: "pending" | "paid" | "failed" | "not_required"
+  }
+): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("admin")) {
+    return { success: false, error: "common.unauthorized" }
+  }
+
+  try {
+    await dbConnect()
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "bookings.errors.bookingNotFound" }
+    }
+
+    // Update fields if provided
+    if (updates.status !== undefined) {
+      booking.status = updates.status
+    }
+    
+    if (updates.bookingDateTime) {
+      booking.bookingDateTime = updates.bookingDateTime
+    }
+    
+    if (updates.recipientName !== undefined) {
+      booking.recipientName = updates.recipientName
+    }
+    
+    if (updates.recipientPhone !== undefined) {
+      booking.recipientPhone = updates.recipientPhone
+    }
+    
+    if (updates.recipientEmail !== undefined) {
+      booking.recipientEmail = updates.recipientEmail
+    }
+    
+    if (updates.notes !== undefined) {
+      booking.notes = updates.notes
+    }
+    
+    if (updates.professionalId !== undefined) {
+      if (updates.professionalId) {
+        // Verify professional exists
+        const professional = await User.findById(updates.professionalId)
+        if (!professional || !professional.roles.includes("professional")) {
+          return { success: false, error: "bookings.errors.professionalNotFound" }
+        }
+        booking.professionalId = new mongoose.Types.ObjectId(updates.professionalId)
+      } else {
+        booking.professionalId = null
+      }
+    }
+    
+    if (updates.paymentStatus !== undefined) {
+      booking.paymentDetails.paymentStatus = updates.paymentStatus
+    }
+
+    await booking.save()
+    
+    // Revalidate relevant paths
+    revalidatePath("/dashboard/admin/bookings")
+    revalidatePath("/dashboard/member/bookings")
+    revalidatePath("/dashboard/professional/bookings")
+    
+    return { success: true, booking: booking.toObject() }
+  } catch (error) {
+    console.error("Error updating booking:", error)
+    return { success: false, error: "common.unknown" }
+  }
+}

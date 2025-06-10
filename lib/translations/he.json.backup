@@ -1,9 +1,9 @@
 {
   "Roles": {
-    "admin": "מנהל",
+      "admin": "מנהל",
     "guest": "אורח",
     "member": "חבר",
-    "partner": "שותף",
+      "partner": "שותף",
     "professional": "מטפל"
   },
   "T": "T",
@@ -83,7 +83,7 @@
       "editUserDescription": "עדכן פרטי משתמש ותפקידים",
       "editUserTitle": "ערוך משתמש",
       "email": "אימייל",
-      "fields": {
+    "fields": {
         "namePlaceholder": "הכנס שם מלא",
         "phonePlaceholder": "הכנס מספר טלפון"
       },
@@ -178,7 +178,7 @@
     "bookingNotes": "הערות הזמנה",
     "bookingNumber": "מספר הזמנה",
     "cardBrand": "מותג כרטיס",
-    "category": "קטגוריה",
+      "category": "קטגוריה",
     "changeProfessional": "החלף מטפל",
     "chooseDifferentProfessional": "בחר מטפל אחר",
     "chooseProfessional": "בחר מטפל",
@@ -211,7 +211,7 @@
     "couponName": "שם קופון",
     "date": "תאריך",
     "dateTime": "תאריך ושעה",
-    "description": "תיאור",
+      "description": "תיאור",
     "discountAmount": "סכום הנחה",
     "discountType": "סוג הנחה",
     "discountValue": "ערך הנחה",
@@ -242,9 +242,9 @@
     "language": "שפה",
     "last4Digits": "4 ספרות אחרונות",
     "lastUpdate": "עדכון אחרון",
-        "loading": "טוען הזמנות...",
+    "loading": "טוען הזמנות...",
     "methods": "שיטות",
-    "minutes": "דקות",
+      "minutes": "דקות",
     "nextMonth": "החודש הבא",
     "nextWeek": "השבוע הבא",
     "noAddressInfo": "אין מידע כתובת",
@@ -2374,6 +2374,7 @@
       "professionalShareInfo": "המטפל יקבל {percentage}% מתוספת המחיר"
     }
   },
+  "memberBookings": {
     "columns": {
       "review": "חוות דעת"
     },

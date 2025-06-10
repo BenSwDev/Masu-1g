@@ -30,18 +30,31 @@ export const TreatmentSelectionSchema = z.object({
 
 // Schema for scheduling details
 export const SchedulingDetailsSchema = z.object({
-  bookingDate: z.date(),
-  bookingTime: z.string(),
+  bookingDate: z.preprocess((arg) => {
+    if (typeof arg === 'string') {
+      return new Date(arg);
+    } else if (arg instanceof Date) {
+      return arg;
+    }
+    return undefined;
+  }, z.date({
+    required_error: "bookings.validation.dateRequired",
+    invalid_type_error: "bookings.validation.invalidDate",
+  })),
+  bookingTime: z.string({
+    required_error: "bookings.validation.timeRequired",
+    invalid_type_error: "bookings.validation.invalidTime",
+  }),
   isFlexibleTime: z.boolean().default(false),
   flexibilityRangeHours: z.number().optional(),
   notes: z.string().optional(),
   isBookingForSomeoneElse: z.boolean().default(false),
   recipientName: z.string().optional(),
   recipientPhone: z.string().optional(),
-  recipientEmail: z.string().email().optional(),
+  recipientEmail: z.string().email("bookings.validation.invalidEmail").optional(),
   recipientBirthDate: z.preprocess((arg) => {
     if (typeof arg === 'string') {
-      return new Date(arg);
+      return new Date(arg + 'T00:00:00');
     } else if (arg instanceof Date) {
       return arg;
     }

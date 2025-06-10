@@ -101,23 +101,28 @@ export type { ITreatmentDuration }
 
 // Additional types for booking workflow
 export interface BookingInitialData {
-  activeUserSubscriptions: any[]
-  usableGiftVouchers: any[]
-  userPreferences: {
-    therapistGender: "male" | "female" | "any"
-    notificationMethods: string[]
-    notificationLanguage: string
-  }
-  userAddresses: any[]
-  userPaymentMethods: any[]
-  activeTreatments: any[]
-  workingHoursSettings: any
-  currentUser: {
-    id: string
-    name: string
-    email: string
-    phone?: string
-  }
+  bookingDate?: string;
+  bookingTime?: string;
+  selectedAddressId?: string;
+  notes?: string;
+  isFlexibleTime?: boolean;
+  flexibilityRangeHours?: number;
+  isBookingForSomeoneElse?: boolean;
+  recipientName?: string;
+  recipientPhone?: string;
+  recipientEmail?: string;
+  recipientBirthDate?: string;
+  customAddressDetails?: {
+    country: string;
+    city: string;
+    street: string;
+    streetNumber: string;
+    apartment?: string;
+    floor?: string;
+    entrance?: string;
+    addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other";
+    notes?: string;
+  };
 }
 
 export interface SchedulingFormValues {

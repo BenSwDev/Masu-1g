@@ -154,18 +154,18 @@ export default function SchedulingStep({
   const form = useForm<SchedulingFormValues>({
     resolver: zodResolver(SchedulingDetailsSchema),
     defaultValues: {
-      bookingDate: bookingOptions.bookingDate ? new Date(bookingOptions.bookingDate) : undefined,
-      bookingTime: bookingOptions.bookingTime || undefined,
-      selectedAddressId: bookingOptions.selectedAddressId || undefined,
-      notes: bookingOptions.notes || "",
-      isFlexibleTime: false, // Always set to false - hidden from UI
+      bookingDate: initialData?.bookingDate ? new Date(initialData.bookingDate) : undefined,
+      bookingTime: initialData?.bookingTime || undefined,
+      selectedAddressId: initialData?.selectedAddressId || undefined,
+      notes: initialData?.notes || "",
+      isFlexibleTime: false,
       flexibilityRangeHours: 2,
-      isBookingForSomeoneElse: bookingOptions.isBookingForSomeoneElse || false,
-      recipientName: bookingOptions.recipientName || "",
-      recipientPhone: bookingOptions.recipientPhone || "",
-      recipientEmail: bookingOptions.recipientEmail || "",
-      recipientBirthDate: bookingOptions.recipientBirthDate ? new Date(bookingOptions.recipientBirthDate) : undefined,
-      customAddressDetails: bookingOptions.customAddressDetails || undefined,
+      isBookingForSomeoneElse: initialData?.isBookingForSomeoneElse || false,
+      recipientName: initialData?.recipientName || "",
+      recipientPhone: initialData?.recipientPhone || "",
+      recipientEmail: initialData?.recipientEmail || "",
+      recipientBirthDate: initialData?.recipientBirthDate ? new Date(initialData.recipientBirthDate) : undefined,
+      customAddressDetails: initialData?.customAddressDetails || undefined,
     },
   })
 
@@ -193,7 +193,7 @@ export default function SchedulingStep({
         ...values,
         bookingDate: values.bookingDate ? values.bookingDate.toISOString() : undefined,
         recipientBirthDate: values.recipientBirthDate ? values.recipientBirthDate.toISOString() : undefined,
-        isFlexibleTime: false, // Always set to false
+        isFlexibleTime: false,
       }))
     })
     return () => subscription.unsubscribe()
@@ -239,6 +239,33 @@ export default function SchedulingStep({
   }
 
   const onSubmitValidated = (data: SchedulingFormValues) => {
+    // Ensure dates are properly formatted before submitting
+    const formattedData = {
+      ...data,
+      bookingDate: data.bookingDate ? new Date(data.bookingDate) : undefined,
+      recipientBirthDate: data.recipientBirthDate ? new Date(data.recipientBirthDate) : undefined,
+    }
+    
+    // Validate recipient birth date if booking for someone else
+    if (formattedData.isBookingForSomeoneElse && formattedData.recipientBirthDate) {
+      const today = new Date()
+      const birthDate = formattedData.recipientBirthDate
+      let age = today.getFullYear() - birthDate.getFullYear()
+      const monthDiff = today.getMonth() - birthDate.getMonth()
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--
+      }
+      
+      if (age < 16) {
+        form.setError("recipientBirthDate", {
+          type: "manual",
+          message: t("bookings.validation.recipientMinAge"),
+        })
+        return
+      }
+    }
+    
     onNext()
   }
 

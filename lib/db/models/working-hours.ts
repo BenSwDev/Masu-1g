@@ -15,7 +15,10 @@ export interface IFixedHours {
   // New fields for advanced booking control
   minimumBookingAdvanceHours?: number // הזמנות ליום זה יתאפשרו לפחות X שעות מראש
   cutoffTime?: string // משעה X תחסם האופציה לבצע הזמנה ביום זה לאותו היום (Format: "HH:mm")
-  professionalSharePercentage?: number // הפרשה למטפל (כמה מתוך הסכום תוספת הולך למטפל)
+  professionalShare?: {
+    amount: number
+    type: "fixed" | "percentage" // 'fixed' for ₪, 'percentage' for %
+  }
 }
 
 export interface ISpecialDateEvent {
@@ -38,7 +41,10 @@ export interface ISpecialDateEvent {
   // New fields for advanced booking control
   minimumBookingAdvanceHours?: number
   cutoffTime?: string
-  professionalSharePercentage?: number
+  professionalShare?: {
+    amount: number
+    type: "fixed" | "percentage"
+  }
 }
 
 // Legacy interface for backward compatibility
@@ -139,11 +145,9 @@ const FixedHoursSchema = new Schema<IFixedHours>({
     },
     default: null,
   },
-  professionalSharePercentage: {
-    type: Number,
-    min: 0,
-    max: 100,
-    default: 70, // Default to 70% for professional
+  professionalShare: {
+    type: PriceAdditionSchema,
+    default: { amount: 70, type: "percentage" },
   },
 })
 
@@ -274,11 +278,9 @@ const SpecialDateEventSchema = new Schema<ISpecialDateEvent>({
     },
     default: null,
   },
-  professionalSharePercentage: {
-    type: Number,
-    min: 0,
-    max: 100,
-    default: 70,
+  professionalShare: {
+    type: PriceAdditionSchema,
+    default: { amount: 70, type: "percentage" },
   },
 })
 
@@ -333,7 +335,7 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
         notes: "",
         minimumBookingAdvanceHours: 2,
         cutoffTime: null,
-        professionalSharePercentage: 70,
+        professionalShare: { amount: 70, type: "percentage" },
       } as IFixedHours) // Cast to IFixedHours
     }
   } else if (this.fixedHours.length > 0) {
@@ -351,7 +353,7 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
           notes: "",
           minimumBookingAdvanceHours: 2,
           cutoffTime: null,
-          professionalSharePercentage: 70,
+          professionalShare: { amount: 70, type: "percentage" },
         } as IFixedHours)
       }
     }

@@ -71,7 +71,7 @@ const fixedHoursSchema = z.object({
   notes: z.string().max(500, "Notes too long").optional(),
   minimumBookingAdvanceHours: z.number().min(0).max(168).optional(),
   cutoffTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM").optional().nullable(),
-  professionalSharePercentage: z.number().min(0).max(100).optional(),
+  professionalShare: priceAdditionSchema,
 })
 
 const fixedHoursFormSchema = z.object({
@@ -95,6 +95,9 @@ const specialDateFormSchema = z.object({
   hasPriceAddition: z.boolean().default(false),
   priceAddition: priceAdditionSchema,
   notes: z.string().max(500, "Notes are too long (max 500 chars)").optional().default(""),
+  minimumBookingAdvanceHours: z.number().min(0).max(168).optional(),
+  cutoffTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM").optional().nullable(),
+  professionalShare: priceAdditionSchema,
 })
 
 const specialDateEventFormSchema = z.object({
@@ -117,7 +120,7 @@ const specialDateEventFormSchema = z.object({
   notes: z.string().max(500, "Notes are too long (max 500 chars)").optional().default(""),
   minimumBookingAdvanceHours: z.number().min(0).max(168).optional(),
   cutoffTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM").optional().nullable(),
-  professionalSharePercentage: z.number().min(0).max(100).optional(),
+  professionalShare: priceAdditionSchema,
 })
 
 type FixedHoursFormData = z.infer<typeof fixedHoursFormSchema>
@@ -136,8 +139,8 @@ const getDefaultFixedHours = (): IFixedHours[] => {
       priceAddition: { amount: 0, type: "fixed" as const },
       notes: "",
       minimumBookingAdvanceHours: 2,
-      cutoffTime: undefined,
-      professionalSharePercentage: 70,
+      cutoffTime: null,
+      professionalShare: { amount: 70, type: "percentage" },
     })
   }
   return days
@@ -167,7 +170,7 @@ export default function WorkingHoursClient() {
   const fixedHoursForm = useForm<FixedHoursFormData>({
     resolver: zodResolver(fixedHoursFormSchema),
     defaultValues: {
-      fixedHours: getDefaultFixedHours(),
+      fixedHours: workingHoursData?.fixedHours || getDefaultFixedHours(),
     },
   })
 
@@ -182,6 +185,9 @@ export default function WorkingHoursClient() {
       hasPriceAddition: false,
       notes: "",
       priceAddition: { amount: 0, type: "fixed" },
+      minimumBookingAdvanceHours: 2,
+      cutoffTime: undefined,
+      professionalShare: { amount: 0, type: "fixed" },
     },
   })
 
@@ -200,7 +206,7 @@ export default function WorkingHoursClient() {
       notes: "",
       minimumBookingAdvanceHours: 2,
       cutoffTime: undefined,
-      professionalSharePercentage: 70,
+      professionalShare: { amount: 0, type: "fixed" },
       priceAddition: { amount: 0, type: "fixed" },
     },
   })
@@ -659,7 +665,7 @@ export default function WorkingHoursClient() {
                                     />
                                     <FormField
                                       control={fixedHoursForm.control}
-                                      name={`fixedHours.${index}.professionalSharePercentage`}
+                                      name={`fixedHours.${index}.professionalShare.amount`}
                                       render={({ field }) => (
                                         <FormItem>
                                           <FormLabel className="text-xs">{t("workingHours.professionalSharePercentage")}</FormLabel>
@@ -668,7 +674,6 @@ export default function WorkingHoursClient() {
                                               <Input
                                                 type="number"
                                                 min="0"
-                                                max="100"
                                                 placeholder={t("workingHours.professionalSharePercentagePlaceholder")}
                                                 {...field}
                                                 onChange={(e) =>
@@ -676,7 +681,32 @@ export default function WorkingHoursClient() {
                                                 }
                                                 className="h-8 w-16"
                                               />
-                                              <span className="text-xs text-muted-foreground">%</span>
+                                              <FormField
+                                                control={fixedHoursForm.control}
+                                                name={`fixedHours.${index}.professionalShare.type`}
+                                                render={({ field }) => (
+                                                  <FormItem>
+                                                    <Select
+                                                      onValueChange={field.onChange}
+                                                      defaultValue={field.value || "percentage"}
+                                                    >
+                                                      <FormControl>
+                                                        <SelectTrigger
+                                                          className="w-[70px] h-8"
+                                                          aria-label={`${t("workingHours.type")} for professional share`}
+                                                        >
+                                                          <SelectValue />
+                                                        </SelectTrigger>
+                                                      </FormControl>
+                                                      <SelectContent>
+                                                        <SelectItem value="fixed">₪</SelectItem>
+                                                        <SelectItem value="percentage">%</SelectItem>
+                                                      </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                  </FormItem>
+                                                )}
+                                              />
                                             </div>
                                           </FormControl>
                                           <FormMessage />
@@ -999,6 +1029,9 @@ export default function WorkingHoursClient() {
                       hasPriceAddition: false,
                       notes: "",
                       priceAddition: { amount: 0, type: "fixed" },
+                      minimumBookingAdvanceHours: 2,
+                      cutoffTime: undefined,
+                      professionalShare: { amount: 0, type: "fixed" },
                     })
                   }
                 }}
@@ -1626,22 +1659,40 @@ export default function WorkingHoursClient() {
                             
                             <FormField
                               control={specialEventForm.control}
-                              name="professionalSharePercentage"
+                              name="professionalShare.amount"
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>{t("workingHours.professionalSharePercentage")}</FormLabel>
                                   <FormControl>
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-2">
                                       <Input
                                         type="number"
                                         min="0"
-                                        max="100"
                                         {...field}
                                         onChange={(e) => field.onChange(Number.parseInt(e.target.value) || 70)}
                                         placeholder={t("workingHours.professionalSharePercentagePlaceholder")}
                                         className="flex-1"
                                       />
-                                      <span className="text-sm text-muted-foreground">%</span>
+                                      <FormField
+                                        control={specialEventForm.control}
+                                        name="professionalShare.type"
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value || "percentage"}>
+                                              <FormControl>
+                                                <SelectTrigger className="w-24">
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                              </FormControl>
+                                              <SelectContent>
+                                                <SelectItem value="fixed">₪</SelectItem>
+                                                <SelectItem value="percentage">%</SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
                                     </div>
                                   </FormControl>
                                   <FormDescription className="text-xs">
@@ -1846,7 +1897,10 @@ export default function WorkingHoursClient() {
                             )}
                             <div>
                               <span className="font-medium">{t("workingHours.professionalSharePercentage")}: </span>
-                              <span>{event.professionalSharePercentage || 70}%</span>
+                              <span>
+                                {event.professionalShare?.amount || 0}
+                                {event.professionalShare?.type === "percentage" ? "%" : "₪"}
+                              </span>
                             </div>
                           </div>
                         )}

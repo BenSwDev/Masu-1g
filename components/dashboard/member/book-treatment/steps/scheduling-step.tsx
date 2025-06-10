@@ -163,6 +163,8 @@ export default function SchedulingStep({
       isBookingForSomeoneElse: bookingOptions.isBookingForSomeoneElse || false,
       recipientName: bookingOptions.recipientName || "",
       recipientPhone: bookingOptions.recipientPhone || "",
+      recipientEmail: bookingOptions.recipientEmail || "",
+      recipientBirthdate: bookingOptions.recipientBirthdate || undefined,
       customAddressDetails: bookingOptions.customAddressDetails || undefined,
     },
   })
@@ -247,25 +249,83 @@ export default function SchedulingStep({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-          <FormField
-            control={form.control}
-            name="bookingDate"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>{t("bookings.steps.scheduling.selectDate")}</FormLabel>
-                <FormControl>
-                  <Calendar
-                    mode="single"
-                    selected={field.value || undefined}
-                    onSelect={field.onChange}
-                    className="rounded-md border self-start shadow-sm bg-card"
-                    disabled={(date) => date < getTodayInTimezone()}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <FormField
+              control={form.control}
+              name="bookingDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>{t("bookings.steps.scheduling.selectDate")}</FormLabel>
+                  <FormControl>
+                    <Calendar
+                      mode="single"
+                      selected={field.value || undefined}
+                      onSelect={field.onChange}
+                      className="rounded-md border self-start shadow-sm bg-card"
+                      disabled={(date) => date < getTodayInTimezone()}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="selectedAddressId"
+              render={({ field }) => (
+                <FormItem className="mt-6">
+                  <div className="flex justify-between items-center mb-1">
+                    <FormLabel>{t("bookings.steps.scheduling.selectAddress")}</FormLabel>
+                    <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
+                      <DialogTrigger asChild>
+                        <Button type="button" variant="outline" size="sm">
+                          <PlusCircle className="mr-2 rtl:ml-2 h-4 w-4" />
+                          {localAddresses.length > 0
+                            ? t("addresses.addNewShort", "Add New")
+                            : t("addresses.addFirstAddressShort", "Add Address")}
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[625px]">
+                        <DialogHeader>
+                          <DialogTitle>{t("addresses.addAddressDialogTitle", "Add New Address")}</DialogTitle>
+                        </DialogHeader>
+                        {isAddressModalOpen && (
+                          <AddressForm onCancel={() => setIsAddressModalOpen(false)} onSuccess={handleAddressUpserted} />
+                        )}
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  {localAddresses.length > 0 ? (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("bookings.steps.scheduling.selectAddressPlaceholder")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {localAddresses.map((address) => (
+                          <SelectItem key={address._id.toString()} value={address._id.toString()}>
+                            {`${address.street} ${address.streetNumber || ""}, ${address.city}`}
+                            {address.isDefault && ` (${t("addresses.fields.isDefault")})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Alert variant="default">
+                      <Info className="h-4 w-4" />
+                      <AlertTitle>{t("bookings.steps.scheduling.noSavedAddressesTitle")}</AlertTitle>
+                      <AlertDescription>{t("bookings.steps.scheduling.noSavedAddressesDesc")}</AlertDescription>
+                    </Alert>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {displayedAddressDetails && <SelectedAddressDetailsDisplay address={displayedAddressDetails} t={t} />}
+          </div>
 
           <div className="space-y-4">
             <FormField
@@ -318,6 +378,25 @@ export default function SchedulingStep({
                 </FormItem>
               )}
             />
+            
+            <FormField
+              control={form.control}
+              name="isBookingForSomeoneElse"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse rounded-md border p-3 shadow-sm bg-card">
+                  <FormControl>
+                    <Checkbox checked={field.value} onCheckedChange={field.onChange} id="isForSomeoneElse" />
+                  </FormControl>
+                  <div className="space-y-0.5">
+                    <Label htmlFor="isForSomeoneElse" className="text-sm font-medium cursor-pointer">
+                      {t("bookings.steps.scheduling.forSomeoneElseLabel")}
+                    </Label>
+                  </div>
+                </FormItem>
+              )}
+            />
+            
+            {/* זמן גמיש מוסתר כרגע - יוחזר בעתיד
             <FormField
               control={form.control}
               name="isFlexibleTime"
@@ -337,117 +416,114 @@ export default function SchedulingStep({
                 </FormItem>
               )}
             />
+            */}
           </div>
         </div>
 
-        <FormField
-          control={form.control}
-          name="selectedAddressId"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex justify-between items-center mb-1">
-                <FormLabel>{t("bookings.steps.scheduling.selectAddress")}</FormLabel>
-                <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
-                  <DialogTrigger asChild>
-                    <Button type="button" variant="outline" size="sm">
-                      <PlusCircle className="mr-2 rtl:ml-2 h-4 w-4" />
-                      {localAddresses.length > 0
-                        ? t("addresses.addNewShort", "Add New")
-                        : t("addresses.addFirstAddressShort", "Add Address")}
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[625px]">
-                    <DialogHeader>
-                      <DialogTitle>{t("addresses.addAddressDialogTitle", "Add New Address")}</DialogTitle>
-                    </DialogHeader>
-                    {isAddressModalOpen && ( // Important: Render form only when dialog is open
-                      <AddressForm onCancel={() => setIsAddressModalOpen(false)} onSuccess={handleAddressUpserted} />
-                    )}
-                  </DialogContent>
-                </Dialog>
-              </div>
-              {localAddresses.length > 0 ? (
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("bookings.steps.scheduling.selectAddressPlaceholder")} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {localAddresses.map((address) => (
-                      <SelectItem key={address._id.toString()} value={address._id.toString()}>
-                        {`${address.street} ${address.streetNumber || ""}, ${address.city}`}
-                        {address.isDefault && ` (${t("addresses.fields.isDefault")})`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Alert variant="default">
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>{t("bookings.steps.scheduling.noSavedAddressesTitle")}</AlertTitle>
-                  <AlertDescription>{t("bookings.steps.scheduling.noSavedAddressesDesc")}</AlertDescription>
-                </Alert>
-              )}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
-        {displayedAddressDetails && <SelectedAddressDetailsDisplay address={displayedAddressDetails} t={t} />}
-
-        <FormField
-          control={form.control}
-          name="isBookingForSomeoneElse"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse rounded-md border p-3 shadow-sm bg-card">
-              <FormControl>
-                <Checkbox checked={field.value} onCheckedChange={field.onChange} id="isForSomeoneElse" />
-              </FormControl>
-              <div className="space-y-0.5">
-                <Label htmlFor="isForSomeoneElse" className="text-sm font-medium cursor-pointer">
-                  {t("bookings.steps.scheduling.forSomeoneElseLabel")}
-                </Label>
-              </div>
-            </FormItem>
-          )}
-        />
 
         {form.watch("isBookingForSomeoneElse") && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-muted/50">
-            <FormField
-              control={form.control}
-              name="recipientName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("bookings.steps.scheduling.recipientName")}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t("users.fields.namePlaceholder")} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="recipientPhone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("bookings.steps.scheduling.recipientPhone")}</FormLabel>
-                  <FormControl>
-                    <PhoneInput
-                      id="recipientPhone" // Or field.name
-                      name={field.name}
-                      placeholder={t("users.fields.phonePlaceholder")}
-                      fullNumberValue={field.value || ""}
-                      onPhoneChange={field.onChange}
-                      ref={field.ref}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="grid grid-cols-1 gap-4 p-4 border rounded-lg bg-muted/50">
+            <h3 className="text-lg font-medium mb-2">{t("bookings.steps.scheduling.forSomeoneElseDetails")}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="recipientName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("bookings.steps.scheduling.recipientName")}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t("users.fields.namePlaceholder")} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="recipientEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("bookings.steps.scheduling.recipientEmail")}</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="email"
+                        placeholder={t("users.fields.emailPlaceholder")} 
+                        {...field} 
+                        value={field.value || ""} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="recipientPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("bookings.steps.scheduling.recipientPhone")}</FormLabel>
+                    <FormControl>
+                      <PhoneInput
+                        id="recipientPhone"
+                        name={field.name}
+                        placeholder={t("users.fields.phonePlaceholder")}
+                        fullNumberValue={field.value || ""}
+                        onPhoneChange={field.onChange}
+                        ref={field.ref}
+                        dir="ltr" // Force left-to-right for phone numbers
+                        className="text-left" // Ensure text alignment is left
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      {t("bookings.steps.scheduling.phoneNumberLeftToRight")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="recipientBirthdate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("bookings.steps.scheduling.recipientBirthdate")}</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) => {
+                            // Calculate 16 years ago
+                            const sixteenYearsAgo = new Date();
+                            sixteenYearsAgo.setFullYear(sixteenYearsAgo.getFullYear() - 16);
+                            return date > sixteenYearsAgo;
+                          }}
+                          captionLayout="dropdown-buttons"
+                          fromYear={1920}
+                          toYear={new Date().getFullYear() - 16}
+                          className="border rounded-md absolute z-10 top-full mt-1 bg-white"
+                        />
+                        <Input
+                          type="text"
+                          readOnly
+                          value={field.value ? formatInTimeZone(field.value, TIMEZONE, 'dd/MM/yyyy') : ''}
+                          onClick={() => document.querySelector(".rdp-button_reset")?.click()}
+                          placeholder={t("bookings.steps.scheduling.recipientBirthdatePlaceholder")}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      {t("bookings.steps.scheduling.mustBe16YearsOld")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         )}
 

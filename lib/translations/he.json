@@ -544,13 +544,19 @@
         "flexibleTimeDesc": "המטפל יצור קשר לתיאום שעה מדויקת",
         "flexibleTimeLabel": "זמן גמיש",
         "forSomeoneElseLabel": "הזמנה עבור מישהו אחר",
+        "forSomeoneElseDetails": "פרטי המטופל/ת",
+        "mustBe16YearsOld": "המטופל/ת חייב/ת להיות בן/בת 16 ומעלה",
         "noSavedAddressesDesc": "לא נמצאו כתובות שמורות. יש להוסיף כתובת חדשה.",
         "noSavedAddressesTitle": "אין כתובות שמורות",
         "noSlotsAvailable": "אין זמנים פנויים לתאריך זה",
         "notes": "הערות",
         "notesPlaceholder": "הערות נוספות לטיפול...",
+        "phoneNumberLeftToRight": "מספר הטלפון יוצג משמאל לימין",
         "recipientName": "שם המטופל",
         "recipientPhone": "טלפון המטופל",
+        "recipientEmail": "דוא\"ל המטופל",
+        "recipientBirthdate": "תאריך לידה",
+        "recipientBirthdatePlaceholder": "בחר תאריך לידה",
         "selectAddress": "בחר כתובת",
         "selectAddressPlaceholder": "בחר כתובת מהרשימה",
         "selectDate": "בחר תאריך",
@@ -626,7 +632,10 @@
     "unknownSubscription": "מנוי לא מוכר",
     "unknownTreatment": "טיפול לא מוכר",
     "validation": {
-      "durationRequiredForType": "נדרש לבחור משך זמן לסוג טיפול זה"
+      "durationRequiredForType": "נדרש לבחור משך זמן לסוג טיפול זה",
+      "recipientEmailRequired": "יש להזין דוא\"ל של המטופל",
+      "recipientMustBe16": "המטופל חייב להיות מעל גיל 16",
+      "invalidEmail": "כתובת דוא\"ל לא תקינה"
     }
   },
   "buildingName": "שם בניין",

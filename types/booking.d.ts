@@ -135,6 +135,8 @@ export interface SelectedBookingOptions {
   appliedCouponCode?: string
   recipientName?: string
   recipientPhone?: string
+  recipientEmail?: string
+  recipientBirthdate?: Date
   selectedAddressId?: string
   customAddressDetails?: any
   paymentMethodId?: string

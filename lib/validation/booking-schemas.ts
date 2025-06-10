@@ -57,8 +57,10 @@ export const SchedulingDetailsSchema = z
     isFlexibleTime: z.boolean().default(false),
     flexibilityRangeHours: z.number().min(1).max(12).optional(),
     isBookingForSomeoneElse: z.boolean().default(false),
-    recipientName: z.string().optional(),
-    recipientPhone: z.string().optional(),
+        recipientName: z.string().optional(),
+  recipientPhone: z.string().optional(),
+  recipientEmail: z.string().optional(),
+  recipientBirthdate: z.date().optional(),
   })
   .refine(
     (data) => {
@@ -83,6 +85,41 @@ export const SchedulingDetailsSchema = z
     {
       message: "bookings.validation.recipientPhoneRequired",
       path: ["recipientPhone"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.isBookingForSomeoneElse) {
+        // Email validation
+        return !!data.recipientEmail
+      }
+      return true
+    },
+    {
+      message: "bookings.validation.recipientEmailRequired",
+      path: ["recipientEmail"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.isBookingForSomeoneElse) {
+        // Birthdate validation - must be at least 16 years old
+        if (!data.recipientBirthdate) return false;
+        
+        const today = new Date();
+        const birthDate = new Date(data.recipientBirthdate);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        return age >= 16;
+      }
+      return true
+    },
+    {
+      message: "bookings.validation.recipientMustBe16",
+      path: ["recipientBirthdate"],
     },
   )
   .refine((data) => !!data.selectedAddressId || !!data.customAddressDetails, {

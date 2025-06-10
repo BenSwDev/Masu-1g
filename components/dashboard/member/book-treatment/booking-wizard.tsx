@@ -1,6 +1,8 @@
 "use client"
 import { useState, useEffect, useCallback } from "react" // Added useMemo
 import { useTranslation } from "@/lib/translations/i18n"
+import { format } from "date-fns"
+import { toZonedTime } from "date-fns-tz"
 
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails, TimeSlot } from "@/types/booking"
 import { useToast } from "@/components/common/ui/use-toast"
@@ -27,6 +29,9 @@ interface BookingWizardProps {
 
 const TOTAL_STEPS_WITH_PAYMENT = 5
 const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
+
+// Add a constant for the timezone
+const TIMEZONE = "Asia/Jerusalem" // Israel timezone
 
 export default function BookingWizard({ initialData, currentUser }: BookingWizardProps) {
   const { t, language, dir } = useTranslation()
@@ -57,12 +62,17 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
         setIsTimeSlotsLoading(true)
         setTimeSlots([])
         setWorkingHoursNote(undefined)
-        // Construct dateStr from local date parts to ensure it represents the user's selected day
+        
+        // Get the local date from the bookingOptions
         const localDate = bookingOptions.bookingDate!
+        
+        // Format the date as YYYY-MM-DD - use the raw date object
+        // This ensures the correct date is sent regardless of timezone
         const year = localDate.getFullYear()
         const month = (localDate.getMonth() + 1).toString().padStart(2, "0") // getMonth() is 0-indexed
         const day = localDate.getDate().toString().padStart(2, "0")
         const dateStr = `${year}-${month}-${day}`
+        
         const result = await getAvailableTimeSlots(
           dateStr,
           bookingOptions.selectedTreatmentId!,
@@ -110,9 +120,14 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
     }
 
     setIsPriceCalculating(true)
+    
+    // Create the booking date time in a timezone-consistent way
     const bookingDateTime = new Date(bookingOptions.bookingDate)
     const [hours, minutes] = bookingOptions.bookingTime.split(":").map(Number)
     bookingDateTime.setHours(hours, minutes, 0, 0)
+    
+    // Note: This will be treated as a local date by the server,
+    // and will be converted to the correct timezone when needed
 
     const payload: CalculatePricePayloadType = {
       treatmentId: bookingOptions.selectedTreatmentId,
@@ -217,9 +232,10 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       return
     }
 
+    // Create the booking date time in a timezone-consistent way
     const bookingDateTime = new Date(bookingOptions.bookingDate)
-    const [hours, minutesValue] = bookingOptions.bookingTime.split(":").map(Number)
-    bookingDateTime.setHours(hours, minutesValue, 0, 0)
+    const [hours, minutes] = bookingOptions.bookingTime.split(":").map(Number)
+    bookingDateTime.setHours(hours, minutes, 0, 0)
 
     const payload: CreateBookingPayloadType = {
       userId: currentUser.id,

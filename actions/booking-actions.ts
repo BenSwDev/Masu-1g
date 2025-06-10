@@ -30,6 +30,7 @@ import type {
   PopulatedBooking,
 } from "@/types/booking"
 import { add, format, set, addMinutes, isBefore, isAfter } from "date-fns"
+import { formatInTimeZone, toZonedTime, format as formatTz } from "date-fns-tz"
 import { CalculatePricePayloadSchema, CreateBookingPayloadSchema } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
 import type { CreateBookingPayloadType as CreateBookingPayloadSchemaType } from "@/lib/validation/booking-schemas"
@@ -50,20 +51,32 @@ import { getActivePaymentMethods as fetchUserActivePaymentMethods } from "@/acti
 
 export type { IGiftVoucherUsageHistory } from "@/types/booking"
 
-function isSameUTCDay(dateLeft: Date, dateRight: Date): boolean {
+// Define the timezone we'll use throughout the app
+const TIMEZONE = "Asia/Jerusalem" // Israel timezone
+
+// Replace the isSameUTCDay function with a timezone-aware version
+function isSameDay(dateLeft: Date, dateRight: Date): boolean {
+  // Convert both dates to the same timezone before comparing
+  const zonedLeft = toZonedTime(dateLeft, TIMEZONE)
+  const zonedRight = toZonedTime(dateRight, TIMEZONE)
+  
   return (
-    dateLeft.getUTCFullYear() === dateRight.getUTCFullYear() &&
-    dateLeft.getUTCMonth() === dateRight.getUTCMonth() &&
-    dateLeft.getUTCDate() === dateRight.getUTCDate()
+    zonedLeft.getFullYear() === zonedRight.getFullYear() &&
+    zonedLeft.getMonth() === zonedRight.getMonth() &&
+    zonedLeft.getDate() === zonedRight.getDate()
   )
 }
 
-function getDayWorkingHours(dateUTC: Date, settings: IWorkingHoursSettings): IFixedHours | ISpecialDate | ISpecialDateEvent | null {
+// Replace getDayWorkingHours function to use the new isSameDay function
+function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixedHours | ISpecialDate | ISpecialDateEvent | null {
+  // Convert the input date to the correct timezone
+  const zonedDate = toZonedTime(date, TIMEZONE)
+  
   // First check for special date events (new priority system)
   if (settings.specialDateEvents) {
     for (const event of settings.specialDateEvents) {
       for (const eventDate of event.dates) {
-        if (isSameUTCDay(new Date(eventDate), dateUTC)) {
+        if (isSameDay(new Date(eventDate), date)) {
           return event
         }
       }
@@ -71,14 +84,14 @@ function getDayWorkingHours(dateUTC: Date, settings: IWorkingHoursSettings): IFi
   }
 
   // Then check legacy special dates
-  const specialDateSetting = settings.specialDates?.find((sd) => isSameUTCDay(new Date(sd.date), dateUTC))
+  const specialDateSetting = settings.specialDates?.find((sd) => isSameDay(new Date(sd.date), date))
   if (specialDateSetting) {
     return specialDateSetting
   }
 
   // Finally check fixed hours for the day of week
-  const dayOfWeekUTC = dateUTC.getUTCDay()
-  const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeekUTC)
+  const dayOfWeek = zonedDate.getDay() // Local day of week in the specified timezone
+  const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeek)
   return fixedDaySetting || null
 }
 
@@ -89,12 +102,18 @@ export async function getAvailableTimeSlots(
 ): Promise<{ success: boolean; timeSlots?: TimeSlot[]; error?: string; workingHoursNote?: string }> {
   try {
     await dbConnect()
+    
+    // Create a timezone-aware date from the dateString
+    // First create a UTC date from the string (noon to avoid DST issues)
     const selectedDateUTC = new Date(`${dateString}T12:00:00.000Z`)
-
+    
     if (isNaN(selectedDateUTC.getTime())) {
       return { success: false, error: "bookings.errors.invalidDate" }
     }
 
+    // Convert to our target timezone
+    const selectedDateInTZ = toZonedTime(selectedDateUTC, TIMEZONE)
+    
     const treatment = (await Treatment.findById(treatmentId).lean()) as ITreatment | null
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "bookings.errors.treatmentNotFound" }
@@ -128,126 +147,117 @@ export async function getAvailableTimeSlots(
       }
     }
 
-    const timeSlots: TimeSlot[] = []
-    const slotInterval = settings.slotIntervalMinutes || 30
-
-    const [startHour, startMinute] = daySettings.startTime.split(":").map(Number)
-    const [endHour, endMinute] = daySettings.endTime.split(":").map(Number)
-
-    let currentTimeSlotStart = set(selectedDateUTC, {
-      hours: startHour,
-      minutes: startMinute,
-      seconds: 0,
-      milliseconds: 0,
-    })
-    const dayEndTime = set(selectedDateUTC, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 })
-
-    // Use current time in local timezone for comparisons
+    // Get current time in the correct timezone
     const now = new Date()
+    const nowInTZ = toZonedTime(now, TIMEZONE)
     
-    // Use minimum booking advance hours from the specific day settings or fallback to global settings
-    const minimumBookingAdvanceHours = daySettings.minimumBookingAdvanceHours ?? settings.minimumBookingLeadTimeHours ?? 2
+    // Check if selected date is today in the target timezone
+    const isToday = isSameDay(selectedDateUTC, now)
     
-    // Check if selected date is today
-    const isToday = isSameUTCDay(selectedDateUTC, now)
-    
-    // Check if cutoff time exists and if current time is past it for same-day bookings
+    // Check if cutoff time has been reached for today
     let isCutoffTimeReached = false
     if (isToday && daySettings.cutoffTime) {
       const [cutoffHour, cutoffMinute] = daySettings.cutoffTime.split(":").map(Number)
-      // Create a cutoff time for today's date using the local timezone
-      const cutoffTime = new Date(now)
-      cutoffTime.setHours(cutoffHour, cutoffMinute, 0, 0)
       
-      // If current time is past cutoff time, no slots available for today
-      isCutoffTimeReached = now >= cutoffTime
+      // Create a Date representing the cutoff time today in the target timezone
+      const cutoffTimeToday = new Date(nowInTZ)
+      cutoffTimeToday.setHours(cutoffHour, cutoffMinute, 0, 0)
+      
+      // Compare current time to cutoff time
+      isCutoffTimeReached = nowInTZ >= cutoffTimeToday
     }
     
-    // If it's today and after cutoff time, no slots should be available
+    // If today and past cutoff time, no slots are available
     if (isToday && isCutoffTimeReached) {
-      return { 
-        success: true, 
-        timeSlots: [], 
-        workingHoursNote: `לא ניתן לבצע הזמנות ליום זה לאחר שעה ${daySettings.cutoffTime}.` 
+      return {
+        success: true,
+        timeSlots: [],
+        workingHoursNote: `לא ניתן לבצע הזמנות ליום זה לאחר שעה ${daySettings.cutoffTime}.`
       }
     }
-
-    while (isBefore(currentTimeSlotStart, dayEndTime)) {
-      const potentialSlotEnd = addMinutes(currentTimeSlotStart, treatmentDurationMinutes)
+    
+    // Create time slots based on working hours
+    const timeSlots: TimeSlot[] = []
+    const slotInterval = settings.slotIntervalMinutes || 30
+    
+    // Parse working hours start and end times
+    const [startHour, startMinute] = daySettings.startTime.split(":").map(Number)
+    const [endHour, endMinute] = daySettings.endTime.split(":").map(Number)
+    
+    // Create dates for the start and end of working hours in the correct timezone
+    const startOfDay = new Date(selectedDateInTZ)
+    startOfDay.setHours(startHour, startMinute, 0, 0)
+    
+    const endOfDay = new Date(selectedDateInTZ)
+    endOfDay.setHours(endHour, endMinute, 0, 0)
+    
+    // Calculate minimum booking time
+    const minimumBookingAdvanceHours = daySettings.minimumBookingAdvanceHours ?? settings.minimumBookingLeadTimeHours ?? 2
+    const minimumBookingTime = new Date(nowInTZ.getTime() + (minimumBookingAdvanceHours * 60 * 60 * 1000))
+    
+    // Generate time slots
+    let currentSlotTime = new Date(startOfDay)
+    
+    while (currentSlotTime < endOfDay) {
+      // Calculate when this slot would end
+      const slotEndTime = new Date(currentSlotTime.getTime() + (treatmentDurationMinutes * 60 * 1000))
+      
       let isSlotAvailable = true
-
-      // For today's bookings, check minimum advance time
-      if (isToday) {
-        // Create a date object for the minimum booking time
-        const minimumBookingTime = new Date(now)
-        minimumBookingTime.setHours(
-          minimumBookingTime.getHours() + minimumBookingAdvanceHours,
-          minimumBookingTime.getMinutes(),
-          0,
-          0
-        )
-        
-        // Convert current time slot to local time for comparison
-        const slotTimeLocal = new Date(selectedDateUTC)
-        slotTimeLocal.setHours(
-          currentTimeSlotStart.getUTCHours(),
-          currentTimeSlotStart.getUTCMinutes(),
-          0,
-          0
-        )
-        
-        // If slot time is before the minimum allowed booking time, mark as unavailable
-        if (slotTimeLocal < minimumBookingTime) {
-          isSlotAvailable = false
-        }
-      }
-
-      // Check if treatment would extend beyond day end time
-      if (isAfter(potentialSlotEnd, dayEndTime)) {
+      
+      // For today, check if the slot time is after the minimum booking time
+      if (isToday && currentSlotTime < minimumBookingTime) {
         isSlotAvailable = false
       }
-
+      
+      // Check if the treatment would extend beyond working hours
+      if (slotEndTime > endOfDay) {
+        isSlotAvailable = false
+      }
+      
       if (isSlotAvailable) {
+        // Format the time as HH:mm
+        const timeStr = formatInTimeZone(currentSlotTime, TIMEZONE, 'HH:mm')
+        
         const slot: TimeSlot = {
-          time: format(currentTimeSlotStart, "HH:mm", {
-            useAdditionalWeekYearTokens: false,
-            useAdditionalDayOfYearTokens: false,
-          }),
+          time: timeStr,
           isAvailable: true,
         }
-
+        
+        // Add price surcharge if applicable
         if (daySettings.hasPriceAddition && daySettings.priceAddition && daySettings.priceAddition.amount > 0) {
           const basePriceForSurchargeCalc =
             treatment.pricingType === "fixed"
               ? treatment.fixedPrice || 0
               : treatment.durations?.find((d) => d._id.toString() === selectedDurationId)?.price || 0
-
-          const surchargeBase = basePriceForSurchargeCalc
+              
           const surchargeAmount =
             daySettings.priceAddition.type === "fixed"
               ? daySettings.priceAddition.amount
-              : surchargeBase * (daySettings.priceAddition.amount / 100)
-
+              : basePriceForSurchargeCalc * (daySettings.priceAddition.amount / 100)
+          
           if (surchargeAmount > 0) {
             slot.surcharge = {
-              description:
+              description: 
                 daySettings.priceAddition.description || daySettings.notes || "bookings.surcharges.specialTime",
               amount: surchargeAmount,
             }
           }
         }
+        
         timeSlots.push(slot)
       }
-      currentTimeSlotStart = addMinutes(currentTimeSlotStart, slotInterval)
+      
+      // Move to the next time slot
+      currentSlotTime = new Date(currentSlotTime.getTime() + (slotInterval * 60 * 1000))
     }
-
-    // Add informative note about cutoff time if relevant
+    
+    // Add informative note about cutoff time
     let workingHoursNote = daySettings.notes
     if (!isToday && daySettings.cutoffTime) {
       const cutoffTimeNote = `הזמנות ליום זה יתאפשרו עד השעה ${daySettings.cutoffTime} באותו היום.`
       workingHoursNote = workingHoursNote ? `${workingHoursNote} ${cutoffTimeNote}` : cutoffTimeNote
     }
-
+    
     return { success: true, timeSlots, workingHoursNote }
   } catch (error) {
     logger.error("Error fetching available time slots:", { error })

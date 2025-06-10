@@ -13,7 +13,7 @@ import { Input } from "@/components/common/ui/input"
 import { Loader2, Info, PlusCircle, MapPin } from "lucide-react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { SchedulingDetailsSchema, type SchedulingFormValues } from "@/lib/validation/booking-schemas"
+import { SchedulingDetailsSchema, type SchedulingFormValues, getTodayInTimezone } from "@/lib/validation/booking-schemas"
 import {
   Form,
   FormControl,
@@ -31,6 +31,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
 import { PhoneInput } from "@/components/common/phone-input"
+import { zonedTimeToUtc, utcToZonedTime } from "date-fns-tz"
+import { startOfDay } from "date-fns"
 
 interface SchedulingStepProps {
   initialData: BookingInitialData
@@ -144,10 +146,11 @@ export default function SchedulingStep({
   onPrev,
   workingHoursNote,
 }: SchedulingStepProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [localAddresses, setLocalAddresses] = useState<IAddress[]>(initialData.userAddresses || [])
 
+  // Use the original schema with timezone-aware validation now built in
   const form = useForm<SchedulingFormValues>({
     resolver: zodResolver(SchedulingDetailsSchema),
     defaultValues: {
@@ -235,9 +238,6 @@ export default function SchedulingStep({
     onNext()
   }
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitValidated)} className="space-y-8">
@@ -259,7 +259,7 @@ export default function SchedulingStep({
                     selected={field.value || undefined}
                     onSelect={field.onChange}
                     className="rounded-md border self-start shadow-sm bg-card"
-                    disabled={(date) => date < today}
+                    disabled={(date) => date < getTodayInTimezone()}
                   />
                 </FormControl>
                 <FormMessage />

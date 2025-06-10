@@ -1,4 +1,16 @@
 import { z } from "zod"
+import { startOfDay } from "date-fns"
+import { formatInTimeZone, toZonedTime } from "date-fns-tz"
+
+// Define timezone constant
+const TIMEZONE = "Asia/Jerusalem" // Israel timezone
+
+// Create a timezone-aware today for validation
+export const getTodayInTimezone = () => {
+  const now = new Date()
+  const nowInTZ = toZonedTime(now, TIMEZONE)
+  return startOfDay(nowInTZ)
+}
 
 // Schema for selecting the booking source
 export const BookingSourceSchema = z.object({
@@ -19,7 +31,14 @@ export const TreatmentSelectionSchema = z.object({
 // Schema for scheduling details
 export const SchedulingDetailsSchema = z
   .object({
-    bookingDate: z.date({ required_error: "bookings.validation.dateRequired" }),
+    bookingDate: z
+      .date({ required_error: "bookings.validation.dateRequired" })
+      .refine((date) => {
+        const today = getTodayInTimezone()
+        return date >= today
+      }, {
+        message: "bookings.validation.pastDateNotAllowed"
+      }),
     bookingTime: z.string({ required_error: "bookings.validation.timeRequired" }),
     selectedAddressId: z.string().optional(), // Made optional, will validate that either this or customAddress is present
     customAddressDetails: z // New: for one-time address

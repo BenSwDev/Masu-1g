@@ -69,7 +69,7 @@ export default function AdminBookingsClient() {
         priceRange: priceRangeFilter === "all" ? undefined : priceRangeFilter,
         address: addressFilter === "all" ? undefined : addressFilter,
         page: currentPage,
-        limit: 20,
+        limit: 5,
       }),
     refetchOnWindowFocus: false,
     staleTime: 30000, // 30 seconds
@@ -116,9 +116,9 @@ export default function AdminBookingsClient() {
 
   if (isLoading) {
     return (
-      <div>
+      <div className="w-full max-w-full overflow-hidden">
         <div className="mb-6 text-center md:text-right">
-          <h2 className="text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
         </div>
         <BookingsTableSkeleton />
         <p className="mt-4 text-center text-muted-foreground">{t("common.loading")}</p>
@@ -128,9 +128,9 @@ export default function AdminBookingsClient() {
 
   if (error) {
     return (
-      <div className="text-center text-red-500">
+      <div className="text-center text-red-500 w-full max-w-full overflow-hidden">
         <div className="mb-6 text-center md:text-right">
-          <h2 className="text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
         </div>
         <p>
           {t("common.error")}: {error.message}
@@ -140,26 +140,31 @@ export default function AdminBookingsClient() {
   }
 
   return (
-    <div dir={dir}>
+    <div dir={dir} className="w-full max-w-full overflow-hidden space-y-4">
       <div className="mb-6 text-center md:text-right">
-        <h2 className="text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
       </div>
       
-      {/* Search and Filters Bar */}
-      <div className="mb-6 space-y-4">
+      {/* Search and Filters Bar - Responsive */}
+      <div className="space-y-4">
         {/* Main search bar */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center">
-          <div className="relative flex-1 max-w-md">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="relative flex-1 max-w-full sm:max-w-md">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={t("adminBookings.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
+              className="pl-8 w-full"
             />
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={handleRefresh}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {t("common.refresh")}
+            </Button>
+            
             <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -173,7 +178,7 @@ export default function AdminBookingsClient() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80" align="end">
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-96 overflow-y-auto">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium">{t("adminBookings.advancedFilters")}</h4>
                     {activeFiltersCount > 0 && (
@@ -281,10 +286,6 @@ export default function AdminBookingsClient() {
                 </div>
               </PopoverContent>
             </Popover>
-            
-            <Button onClick={handleRefresh} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
@@ -356,34 +357,24 @@ export default function AdminBookingsClient() {
             </p>
           </div>
 
-          <DataTable 
-            columns={columns} 
-            data={data.bookings}
-            onRowClick={handleRowClick}
-          />
+          <div className="w-full overflow-hidden rounded-lg border bg-white">
+            <div className="w-full overflow-x-auto">
+              <DataTable
+                columns={columns}
+                data={data?.bookings || []}
+                searchPlaceholder={t("adminBookings.searchPlaceholder")}
+                emptyMessage={t("adminBookings.noBookings")}
+                totalPages={data?.totalPages || 1}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+                className="min-w-full"
+              />
+            </div>
+          </div>
           
-          {/* Pagination */}
-          {data.totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-center gap-2">
-              <Button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                variant="outline"
-                size="sm"
-              >
-                {t("common.previous")}
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {t("common.pageOf", { current: currentPage, total: data.totalPages })}
-              </span>
-              <Button
-                onClick={() => setCurrentPage(prev => Math.min(data.totalPages, prev + 1))}
-                disabled={currentPage === data.totalPages}
-                variant="outline"
-                size="sm"
-              >
-                {t("common.next")}
-              </Button>
+          {data && data.totalBookings > 0 && (
+            <div className="mt-4 text-sm text-muted-foreground text-center">
+              {t("adminBookings.totalBookings", { count: data.totalBookings })}
             </div>
           )}
         </>
@@ -394,7 +385,6 @@ export default function AdminBookingsClient() {
         booking={selectedBooking}
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
-        t={t}
       />
     </div>
   )

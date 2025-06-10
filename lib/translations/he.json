@@ -1003,7 +1003,10 @@
         "userSubscriptions": "מנויי משתמשים",
         "users": "משתמשים",
         "workingHours": "שעות פעילות",
-        "reviews": "חוות דעת"
+        "reviews": "חוות דעת",
+        "addresses": "כתובות",
+        "paymentMethods": "אמצעי תשלום",
+        "purchaseHistory": "היסטוריית רכישות"
       }
     },
     "doorName": "שם דלת",
@@ -1036,6 +1039,9 @@
     },
     "floor": "קומה",
     "gender": {
+    "male": "זכר"
+  },
+  "gender_old": {
       "female": "נקבה",
       "male": "זכר",
       "other": "אחר"
@@ -3616,6 +3622,9 @@
       "giftVouchers": "שוברי מתנה",
       "purchaseReports": "דוחות רכישות",
       "reviews": "חוות דעת",
+      "addresses": "כתובות",
+      "paymentMethods": "אמצעי תשלום",
+      "purchaseHistory": "היסטוריית רכישות",
       "userMenu": {
         "toggleTooltip": "תפריט משתמש",
         "treatmentPreferences": "העדפות טיפול",
@@ -3663,6 +3672,31 @@
       "langHe": "עברית",
       "langEn": "אנגלית",
       "langRu": "רוסית"
+    }
+  },
+  "roles": {
+    "memberPlural": "חברים",
+    "professionalPlural": "מטפלים", 
+    "partnerPlural": "שותפים"
+  },
+  "userSubscriptions": {
+    "usageTooltip": "לחץ לפרטי שימוש",
+    "cancelDialog": {
+      "description": "האם אתה בטוח שברצונך לבטל מנוי זה?"
+    },
+    "deleteDialog": {
+      "description": "האם אתה בטוח שברצונך למחוק מנוי זה?"
+    },
+    "detailsModal": {
+      "description": "פרטי המנוי ושימוש"
+    }
+  },
+  "giftVouchers": {
+    "fields": {
+      "daysRemainingShortCount": {
+        "363": "363 ימים",
+        "362": "362 ימים"
+      }
     }
   },
   "memberBookings": {

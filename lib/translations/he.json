@@ -493,7 +493,6 @@
       "sourceGiftVoucher": "שובר מתנה",
       "sourceNewPurchase": "רכישה חדשה",
       "sourceSubscription": "מנוי",
-      "status": "סטטוס",
       "thankYou": "תודה רבה!",
       "therapistPreference": "העדפת מטפל",
       "title": "אישור הזמנה",
@@ -508,8 +507,10 @@
       "viewBookingsLink": "לצפייה בהזמנות",
       "voucherCodeUsed": "קוד השובר שנוצל",
       "voucherRemainingBalance": "יתרת השובר",
-      "voucherUsageTitle": "פירוט שימוש בשובר"
-    },
+      "voucherUsageTitle": "פירוט שימוש בשובר",
+      "status": {
+        "confirmed": "אושרה"
+       },
     "errors": {
       "assignProfessionalFailed": "שגיאה בשיוך המטפל להזמנה",
       "bookingAlreadyHasProfessional": "להזמנה זו כבר יש מטפל משויך",
@@ -553,7 +554,7 @@
         "recipientPhone": "טלפון המטופל",
         "recipientEmail": "אימייל המטופל",
         "recipientBirthDate": "תאריך לידה",
-        "recipientBirthDateDesc": "חייב להיות בן 16 לפחות",
+        "recipientBirthDateDesc": "גילאי 16 ומעלה בלבד",
         "recipientDetailsTitle": "פרטי המטופל",
         "selectAddress": "בחר כתובת",
         "selectAddressPlaceholder": "בחר כתובת מהרשימה",
@@ -636,7 +637,10 @@
       "recipientPhoneRequired": "טלפון המטופל נדרש כשמזמינים עבור מישהו אחר", 
       "recipientEmailRequired": "אימייל המטופל נדרש כשמזמינים עבור מישהו אחר",
       "recipientEmailInvalid": "כתובת האימייל אינה תקינה",
-      "recipientMustBe16OrOlder": "המטופל חייב להיות בן 16 לפחות"
+      "recipientMustBe16OrOlder": "גילאי 16 ומעלה בלבד",
+      "recipientBirthDateRequired": "תאריך לידה נדרש",
+      "recipientBirthDateInvalid": "תאריך לידה אינו תקין",
+      "timeRequired": "יש לבחור שעה תקינה"
     }
   },
   "buildingName": "שם בניין",

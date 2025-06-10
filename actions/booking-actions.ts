@@ -142,36 +142,68 @@ export async function getAvailableTimeSlots(
     })
     const dayEndTime = set(selectedDateUTC, { hours: endHour, minutes: endMinute, seconds: 0, milliseconds: 0 })
 
-    const nowUtc = new Date(Date.now())
-
+    // Use current time in local timezone for comparisons
+    const now = new Date()
+    
     // Use minimum booking advance hours from the specific day settings or fallback to global settings
     const minimumBookingAdvanceHours = daySettings.minimumBookingAdvanceHours ?? settings.minimumBookingLeadTimeHours ?? 2
-    const minimumBookingTime = add(nowUtc, { hours: minimumBookingAdvanceHours })
-
+    
+    // Check if selected date is today
+    const isToday = isSameUTCDay(selectedDateUTC, now)
+    
     // Check if cutoff time exists and if current time is past it for same-day bookings
     let isCutoffTimeReached = false
-    if (daySettings.cutoffTime && isSameUTCDay(selectedDateUTC, nowUtc)) {
+    if (isToday && daySettings.cutoffTime) {
       const [cutoffHour, cutoffMinute] = daySettings.cutoffTime.split(":").map(Number)
-      const cutoffTime = set(nowUtc, { hours: cutoffHour, minutes: cutoffMinute, seconds: 0, milliseconds: 0 })
-      isCutoffTimeReached = isAfter(nowUtc, cutoffTime)
+      // Create a cutoff time for today's date using the local timezone
+      const cutoffTime = new Date(now)
+      cutoffTime.setHours(cutoffHour, cutoffMinute, 0, 0)
+      
+      // If current time is past cutoff time, no slots available for today
+      isCutoffTimeReached = now >= cutoffTime
+    }
+    
+    // If it's today and after cutoff time, no slots should be available
+    if (isToday && isCutoffTimeReached) {
+      return { 
+        success: true, 
+        timeSlots: [], 
+        workingHoursNote: `לא ניתן לבצע הזמנות ליום זה לאחר שעה ${daySettings.cutoffTime}.` 
+      }
     }
 
     while (isBefore(currentTimeSlotStart, dayEndTime)) {
       const potentialSlotEnd = addMinutes(currentTimeSlotStart, treatmentDurationMinutes)
       let isSlotAvailable = true
 
-      // Check minimum booking advance time
-      if (isBefore(currentTimeSlotStart, minimumBookingTime)) {
-        isSlotAvailable = false
+      // For today's bookings, check minimum advance time
+      if (isToday) {
+        // Create a date object for the minimum booking time
+        const minimumBookingTime = new Date(now)
+        minimumBookingTime.setHours(
+          minimumBookingTime.getHours() + minimumBookingAdvanceHours,
+          minimumBookingTime.getMinutes(),
+          0,
+          0
+        )
+        
+        // Convert current time slot to local time for comparison
+        const slotTimeLocal = new Date(selectedDateUTC)
+        slotTimeLocal.setHours(
+          currentTimeSlotStart.getUTCHours(),
+          currentTimeSlotStart.getUTCMinutes(),
+          0,
+          0
+        )
+        
+        // If slot time is before the minimum allowed booking time, mark as unavailable
+        if (slotTimeLocal < minimumBookingTime) {
+          isSlotAvailable = false
+        }
       }
 
       // Check if treatment would extend beyond day end time
       if (isAfter(potentialSlotEnd, dayEndTime)) {
-        isSlotAvailable = false
-      }
-
-      // Check cutoff time for same-day bookings
-      if (isCutoffTimeReached) {
         isSlotAvailable = false
       }
 
@@ -211,8 +243,9 @@ export async function getAvailableTimeSlots(
 
     // Add informative note about cutoff time if relevant
     let workingHoursNote = daySettings.notes
-    if (isCutoffTimeReached && daySettings.cutoffTime) {
-      workingHoursNote = `${workingHoursNote ? workingHoursNote + " " : ""}לא ניתן לבצע הזמנות ליום זה לאחר שעה ${daySettings.cutoffTime}.`
+    if (!isToday && daySettings.cutoffTime) {
+      const cutoffTimeNote = `הזמנות ליום זה יתאפשרו עד השעה ${daySettings.cutoffTime} באותו היום.`
+      workingHoursNote = workingHoursNote ? `${workingHoursNote} ${cutoffTimeNote}` : cutoffTimeNote
     }
 
     return { success: true, timeSlots, workingHoursNote }

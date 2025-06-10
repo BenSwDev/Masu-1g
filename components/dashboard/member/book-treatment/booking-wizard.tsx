@@ -232,44 +232,57 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       return
     }
 
-    try {
-      // Create the booking date time in a timezone-consistent way
-      const bookingDateTime = new Date(bookingOptions.bookingDate);
-      const [hours, minutes] = bookingOptions.bookingTime.split(":").map(Number);
-      bookingDateTime.setHours(hours, minutes, 0, 0);
+    // Create the booking date time in a timezone-consistent way
+    const bookingDateTime = new Date(bookingOptions.bookingDate)
+    const [hours, minutes] = bookingOptions.bookingTime.split(":").map(Number)
+    bookingDateTime.setHours(hours, minutes, 0, 0)
 
-      // Prepare the booking data
-      const bookingData = {
-        ...bookingOptions,
-        userId: currentUser.id,
-        bookingDateTime: bookingDateTime.toISOString(),
-        recipientBirthDate: bookingOptions.recipientBirthDate ? new Date(bookingOptions.recipientBirthDate).toISOString() : undefined,
-      };
-
-      // Create the booking
-      const response = await createBooking(bookingData);
-
-      if (!response.success) {
-        throw new Error(response.error || "Failed to create booking");
-      }
-
-      // Handle successful booking
-      setCurrentStep(CONFIRMATION_STEP_NUMBER);
-      setBookingResult({
-        success: true,
-        bookingNumber: response.booking?.bookingNumber,
-        error: null,
-      });
-    } catch (error) {
-      console.error("Error creating booking:", error);
-      setBookingResult({
-        success: false,
-        bookingNumber: null,
-        error: error instanceof Error ? error.message : "Unknown error occurred",
-      });
-    } finally {
-      setIsLoading(false);
+    const payload: CreateBookingPayloadType = {
+      userId: currentUser.id,
+      treatmentId: bookingOptions.selectedTreatmentId,
+      selectedDurationId: bookingOptions.selectedDurationId,
+      bookingDateTime,
+      selectedAddressId: bookingOptions.selectedAddressId,
+      therapistGenderPreference: bookingOptions.therapistGenderPreference || "any",
+      notes: bookingOptions.notes,
+      priceDetails: calculatedPrice,
+      paymentDetails: {
+        paymentMethodId: bookingOptions.selectedPaymentMethodId,
+        paymentStatus: calculatedPrice.finalAmount === 0 ? "not_required" : "pending",
+      },
+      source: bookingOptions.source || "new_purchase",
+      redeemedUserSubscriptionId:
+        bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
+      redeemedGiftVoucherId:
+        bookingOptions.source === "gift_voucher_redemption" ? bookingOptions.selectedGiftVoucherId : undefined,
+      appliedCouponId: calculatedPrice.appliedCouponId,
+      isFlexibleTime: bookingOptions.isFlexibleTime || false,
+      flexibilityRangeHours: bookingOptions.flexibilityRangeHours,
+      // Add new fields for "book for someone else"
+      recipientName: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientName : undefined,
+      recipientPhone: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientPhone : undefined,
+      recipientEmail: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientEmail : undefined,
+      recipientBirthDate: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientBirthDate : undefined,
     }
+
+    const result = await createBooking(payload)
+    if (result.success && result.booking) {
+      setBookingResult(result.booking)
+      toast({
+        title: t("bookings.success.bookingCreatedTitle") || "Booking Created!",
+        description: t("bookings.success.bookingCreatedDescription") || "Your booking has been successfully created.",
+      })
+      setCurrentStep(CONFIRMATION_STEP_NUMBER)
+    } else {
+      toast({
+        variant: "destructive",
+        title: t(result.error || "bookings.errors.bookingFailedTitle") || result.error || "Booking Failed",
+        description: result.issues
+          ? result.issues.map((issue) => issue.message).join(", ")
+          : t(result.error || "bookings.errors.unknownBookingError") || result.error || "An unknown error occurred.",
+      })
+    }
+    setIsLoading(false)
   }
 
   const progressValue = (currentStep / TOTAL_STEPS_WITH_PAYMENT) * 100

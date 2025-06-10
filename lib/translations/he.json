@@ -547,10 +547,14 @@
         "noSavedAddressesDesc": "לא נמצאו כתובות שמורות. יש להוסיף כתובת חדשה.",
         "noSavedAddressesTitle": "אין כתובות שמורות",
         "noSlotsAvailable": "אין זמנים פנויים לתאריך זה",
-        "notes": "הערות",
+        "notes": "הערות", 
         "notesPlaceholder": "הערות נוספות לטיפול...",
         "recipientName": "שם המטופל",
         "recipientPhone": "טלפון המטופל",
+        "recipientEmail": "אימייל המטופל",
+        "recipientBirthDate": "תאריך לידה",
+        "recipientBirthDateDesc": "חייב להיות בן 16 לפחות",
+        "recipientDetailsTitle": "פרטי המטופל",
         "selectAddress": "בחר כתובת",
         "selectAddressPlaceholder": "בחר כתובת מהרשימה",
         "selectDate": "בחר תאריך",
@@ -594,6 +598,7 @@
         "notes": "הערות",
         "recipientName": "שם המטופל",
         "recipientPhone": "טלפון המטופל",
+        "recipientEmail": "אימייל המטופל",
         "therapistPreference": "העדפת מטפל",
         "title": "סיכום ההזמנה",
         "totalAmount": "סכום כולל",
@@ -626,7 +631,12 @@
     "unknownSubscription": "מנוי לא מוכר",
     "unknownTreatment": "טיפול לא מוכר",
     "validation": {
-      "durationRequiredForType": "נדרש לבחור משך זמן לסוג טיפול זה"
+      "durationRequiredForType": "נדרש לבחור משך זמן לסוג טיפול זה",
+      "recipientNameRequired": "שם המטופל נדרש כשמזמינים עבור מישהו אחר",
+      "recipientPhoneRequired": "טלפון המטופל נדרש כשמזמינים עבור מישהו אחר", 
+      "recipientEmailRequired": "אימייל המטופל נדרש כשמזמינים עבור מישהו אחר",
+      "recipientEmailInvalid": "כתובת האימייל אינה תקינה",
+      "recipientMustBe16OrOlder": "המטופל חייב להיות בן 16 לפחות"
     }
   },
   "buildingName": "שם בניין",

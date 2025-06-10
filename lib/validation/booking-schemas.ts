@@ -29,66 +29,101 @@ export const TreatmentSelectionSchema = z.object({
 })
 
 // Schema for scheduling details
-export const SchedulingDetailsSchema = z.object({
-  bookingDate: z.preprocess((arg) => {
-    if (typeof arg === 'string') {
-      return new Date(arg);
-    } else if (arg instanceof Date) {
-      return arg;
-    }
-    return undefined;
-  }, z.date({
-    required_error: "bookings.validation.dateRequired",
-    invalid_type_error: "bookings.validation.invalidDate",
-  })),
-  bookingTime: z.string({
-    required_error: "bookings.validation.timeRequired",
-    invalid_type_error: "bookings.validation.invalidTime",
-  }),
-  isFlexibleTime: z.boolean().default(false),
-  flexibilityRangeHours: z.number().optional(),
-  notes: z.string().optional(),
-  isBookingForSomeoneElse: z.boolean().default(false),
-  recipientName: z.string().optional(),
-  recipientPhone: z.string().optional(),
-  recipientEmail: z.string().email("bookings.validation.invalidEmail").optional(),
-  recipientBirthDate: z.preprocess((arg) => {
-    if (typeof arg === 'string') {
-      return new Date(arg + 'T00:00:00');
-    } else if (arg instanceof Date) {
-      return arg;
-    }
-    return undefined;
-  }, z.date().optional())
-    .refine(
-      (date) => {
-        if (!date) return true;
-        const minAge = 16;
-        const today = new Date();
-        let age = today.getFullYear() - date.getFullYear();
-        const monthDiff = today.getMonth() - date.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < date.getDate())) {
-          age--;
-        }
-        return age >= minAge;
-      },
-      {
-        message: "bookings.validation.recipientMinAge",
+export const SchedulingDetailsSchema = z
+  .object({
+    bookingDate: z
+      .date({ required_error: "bookings.validation.dateRequired" })
+      .refine((date) => {
+        const today = getTodayInTimezone()
+        return date >= today
+      }, {
+        message: "bookings.validation.pastDateNotAllowed"
+      }),
+    bookingTime: z.string({ required_error: "bookings.validation.timeRequired" }),
+    selectedAddressId: z.string().optional(), // Made optional, will validate that either this or customAddress is present
+    customAddressDetails: z // New: for one-time address
+      .object({
+        fullAddress: z.string({ required_error: "bookings.validation.address.fullAddressRequired" }),
+        city: z.string({ required_error: "bookings.validation.address.cityRequired" }),
+        street: z.string({ required_error: "bookings.validation.address.streetRequired" }),
+        streetNumber: z.string().optional(),
+        apartment: z.string().optional(),
+        entrance: z.string().optional(),
+        floor: z.string().optional(),
+        notes: z.string().max(200, "bookings.validation.address.notesTooLong").optional(),
+      })
+      .optional(),
+    notes: z.string().max(500, "bookings.validation.notesTooLong").optional(),
+    isFlexibleTime: z.boolean().default(false),
+    flexibilityRangeHours: z.number().min(1).max(12).optional(),
+    isBookingForSomeoneElse: z.boolean().default(false),
+    recipientName: z.string().optional(),
+    recipientPhone: z.string().optional(),
+    recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional(),
+    recipientBirthDate: z.date().optional(),
+  })
+  .refine(
+    (data) => {
+      if (data.isBookingForSomeoneElse) {
+        return !!data.recipientName && data.recipientName.trim().length > 1
       }
-    ),
-  selectedAddressId: z.string().optional(),
-  customAddressDetails: z.object({
-    country: z.string(),
-    city: z.string(),
-    street: z.string(),
-    streetNumber: z.string(),
-    apartment: z.string().optional(),
-    floor: z.string().optional(),
-    entrance: z.string().optional(),
-    addressType: z.enum(["apartment", "house", "private", "office", "hotel", "other"]),
-    notes: z.string().optional(),
-  }).optional(),
-})
+      return true
+    },
+    {
+      message: "bookings.validation.recipientNameRequired",
+      path: ["recipientName"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.isBookingForSomeoneElse) {
+        // Basic phone validation, can be enhanced
+        return !!data.recipientPhone && data.recipientPhone.trim().length >= 9
+      }
+      return true
+    },
+    {
+      message: "bookings.validation.recipientPhoneRequired",
+      path: ["recipientPhone"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.isBookingForSomeoneElse) {
+        return !!data.recipientEmail && data.recipientEmail.trim().length > 0
+      }
+      return true
+    },
+    {
+      message: "bookings.validation.recipientEmailRequired",
+      path: ["recipientEmail"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.isBookingForSomeoneElse && data.recipientBirthDate) {
+        const today = new Date()
+        const birthDate = new Date(data.recipientBirthDate)
+        const age = today.getFullYear() - birthDate.getFullYear()
+        const monthDiff = today.getMonth() - birthDate.getMonth()
+        const dayDiff = today.getDate() - birthDate.getDate()
+        
+        // Adjust age if birthday hasn't occurred this year
+        const actualAge = monthDiff < 0 || (monthDiff === 0 && dayDiff < 0) ? age - 1 : age
+        
+        return actualAge >= 16
+      }
+      return true
+    },
+    {
+      message: "bookings.validation.recipientMustBe16OrOlder",
+      path: ["recipientBirthDate"],
+    },
+  )
+  .refine((data) => !!data.selectedAddressId || !!data.customAddressDetails, {
+    message: "bookings.validation.addressOrCustomRequired",
+    path: ["selectedAddressId"], // Or path: ["customAddressDetails"]
+  })
 
 // Schema for the summary/coupon step
 export const SummarySchema = z.object({
@@ -157,10 +192,9 @@ export const CreateBookingPayloadSchema = z.object({
   appliedCouponId: z.string().optional(),
   isFlexibleTime: z.boolean().optional(),
   flexibilityRangeHours: z.number().optional(),
-  isBookingForSomeoneElse: z.boolean().optional(),
   recipientName: z.string().optional(),
   recipientPhone: z.string().optional(),
-  recipientEmail: z.string().email("bookings.validation.invalidEmail").optional(),
+  recipientEmail: z.string().optional(),
   recipientBirthDate: z.date().optional(),
 })
 

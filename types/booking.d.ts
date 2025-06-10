@@ -101,76 +101,44 @@ export type { ITreatmentDuration }
 
 // Additional types for booking workflow
 export interface BookingInitialData {
-  bookingDate?: string;
-  bookingTime?: string;
-  selectedAddressId?: string;
-  notes?: string;
-  isFlexibleTime?: boolean;
-  flexibilityRangeHours?: number;
-  isBookingForSomeoneElse?: boolean;
-  recipientName?: string;
-  recipientPhone?: string;
-  recipientEmail?: string;
-  recipientBirthDate?: string;
-  customAddressDetails?: {
-    country: string;
-    city: string;
-    street: string;
-    streetNumber: string;
-    apartment?: string;
-    floor?: string;
-    entrance?: string;
-    addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other";
-    notes?: string;
-  };
-}
-
-export interface SchedulingFormValues {
-  bookingDate: Date;
-  bookingTime: string;
-  isFlexibleTime: boolean;
-  flexibilityRangeHours?: number;
-  notes?: string;
-  isBookingForSomeoneElse: boolean;
-  recipientName?: string;
-  recipientPhone?: string;
-  recipientEmail?: string;
-  recipientBirthDate?: Date;
-  selectedAddressId?: string;
-  customAddressDetails?: {
-    country: string;
-    city: string;
-    street: string;
-    streetNumber: string;
-    apartment?: string;
-    floor?: string;
-    entrance?: string;
-    addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other";
-    notes?: string;
-  };
+  activeUserSubscriptions: any[]
+  usableGiftVouchers: any[]
+  userPreferences: {
+    therapistGender: "male" | "female" | "any"
+    notificationMethods: string[]
+    notificationLanguage: string
+  }
+  userAddresses: any[]
+  userPaymentMethods: any[]
+  activeTreatments: any[]
+  workingHoursSettings: any
+  currentUser: {
+    id: string
+    name: string
+    email: string
+    phone?: string
+  }
 }
 
 export interface SelectedBookingOptions {
-  bookingDate?: string;
-  bookingTime?: string;
-  isFlexibleTime: boolean;
-  flexibilityRangeHours?: number;
-  notes?: string;
-  isBookingForSomeoneElse: boolean;
-  recipientName?: string;
-  recipientPhone?: string;
-  recipientEmail?: string;
-  recipientBirthDate?: string;
-  selectedAddressId?: string;
-  customAddressDetails?: {
-    country: string;
-    city: string;
-    street: string;
-    streetNumber: string;
-    apartment?: string;
-    floor?: string;
-    entrance?: string;
-    addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other";
-    notes?: string;
-  };
+  selectedTreatmentId?: string
+  selectedDurationId?: string
+  bookingDate?: string
+  bookingTime?: string
+  therapistGenderPreference: "male" | "female" | "any"
+  isFlexibleTime: boolean
+  flexibilityRangeHours?: number
+  notes?: string
+  source: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
+  selectedUserSubscriptionId?: string
+  selectedGiftVoucherId?: string
+  appliedCouponCode?: string
+  recipientName?: string
+  recipientPhone?: string
+  recipientEmail?: string
+  recipientBirthDate?: Date
+  isBookingForSomeoneElse?: boolean
+  selectedAddressId?: string
+  customAddressDetails?: any
+  paymentMethodId?: string
 }

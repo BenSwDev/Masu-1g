@@ -146,7 +146,7 @@ export default function SchedulingStep({
   onPrev,
   workingHoursNote,
 }: SchedulingStepProps) {
-  const { t, language } = useTranslation()
+  const { t, language, dir } = useTranslation()
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [localAddresses, setLocalAddresses] = useState<IAddress[]>(initialData.userAddresses || [])
 
@@ -154,18 +154,18 @@ export default function SchedulingStep({
   const form = useForm<SchedulingFormValues>({
     resolver: zodResolver(SchedulingDetailsSchema),
     defaultValues: {
-      bookingDate: initialData?.bookingDate ? new Date(initialData.bookingDate) : undefined,
-      bookingTime: initialData?.bookingTime || undefined,
-      selectedAddressId: initialData?.selectedAddressId || undefined,
-      notes: initialData?.notes || "",
-      isFlexibleTime: false,
+      bookingDate: bookingOptions.bookingDate || undefined,
+      bookingTime: bookingOptions.bookingTime || undefined,
+      selectedAddressId: bookingOptions.selectedAddressId || undefined,
+      notes: bookingOptions.notes || "",
+      isFlexibleTime: false, // Always set to false - hidden from UI
       flexibilityRangeHours: 2,
-      isBookingForSomeoneElse: initialData?.isBookingForSomeoneElse || false,
-      recipientName: initialData?.recipientName || "",
-      recipientPhone: initialData?.recipientPhone || "",
-      recipientEmail: initialData?.recipientEmail || "",
-      recipientBirthDate: initialData?.recipientBirthDate ? new Date(initialData.recipientBirthDate) : undefined,
-      customAddressDetails: initialData?.customAddressDetails || undefined,
+      isBookingForSomeoneElse: bookingOptions.isBookingForSomeoneElse || false,
+      recipientName: bookingOptions.recipientName || "",
+      recipientPhone: bookingOptions.recipientPhone || "",
+      recipientEmail: bookingOptions.recipientEmail || "",
+      recipientBirthDate: bookingOptions.recipientBirthDate || undefined,
+      customAddressDetails: bookingOptions.customAddressDetails || undefined,
     },
   })
 
@@ -173,7 +173,7 @@ export default function SchedulingStep({
 
   const displayedAddressDetails = useMemo(() => {
     if (!selectedAddressId) return null
-    return localAddresses.find((addr) => addr._id?.toString() === selectedAddressId) || null
+    return localAddresses.find((addr) => addr._id.toString() === selectedAddressId) || null
   }, [selectedAddressId, localAddresses])
 
   // Set default address on mount if not already set
@@ -181,7 +181,7 @@ export default function SchedulingStep({
     if (localAddresses.length > 0 && !form.getValues("selectedAddressId")) {
       const defaultAddress = localAddresses.find((a) => a.isDefault) || localAddresses[0]
       if (defaultAddress) {
-        form.setValue("selectedAddressId", defaultAddress._id?.toString())
+        form.setValue("selectedAddressId", defaultAddress._id.toString())
       }
     }
   }, [localAddresses, form]) // form added to dependency array
@@ -191,9 +191,8 @@ export default function SchedulingStep({
       setBookingOptions((prev) => ({
         ...prev,
         ...values,
-        bookingDate: values.bookingDate ? values.bookingDate.toISOString() : undefined,
-        recipientBirthDate: values.recipientBirthDate ? values.recipientBirthDate.toISOString() : undefined,
-        isFlexibleTime: false,
+        bookingDate: values.bookingDate || null, // Ensure null if undefined
+        isFlexibleTime: false, // Always set to false
       }))
     })
     return () => subscription.unsubscribe()
@@ -207,7 +206,7 @@ export default function SchedulingStep({
       const previousDate = form.formState.defaultValues?.bookingDate
       // Check if it's a meaningful change, not just initial set
       if (previousDate && previousDate.getTime() !== watchedDate.getTime()) {
-        form.setValue("bookingTime", "", { shouldValidate: true })
+        form.setValue("bookingTime", undefined, { shouldValidate: true })
       } else if (!previousDate) {
         // If there was no previous date (initial load with a date)
         // Potentially do nothing or handle as needed, current logic is fine
@@ -216,9 +215,9 @@ export default function SchedulingStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedDate]) // form.setValue and form.formState.defaultValues should not be dependencies here
 
-  const handleAddressUpserted = (upsertedAddress: IAddress & { _id: { toString(): string } }) => {
+  const handleAddressUpserted = (upsertedAddress: IAddress) => {
     setLocalAddresses((prev) => {
-      const existingIndex = prev.findIndex((a) => (a._id as { toString(): string })?.toString() === upsertedAddress._id.toString())
+      const existingIndex = prev.findIndex((a) => a._id.toString() === upsertedAddress._id.toString())
       let newAddresses
       if (existingIndex > -1) {
         newAddresses = [...prev]
@@ -229,7 +228,7 @@ export default function SchedulingStep({
       // If the new/updated address is set as default, update others
       if (upsertedAddress.isDefault) {
         newAddresses = newAddresses.map((addr) =>
-          (addr._id as { toString(): string })?.toString() === upsertedAddress._id.toString() ? addr : { ...addr, isDefault: false },
+          addr._id.toString() === upsertedAddress._id.toString() ? addr : { ...addr, isDefault: false },
         )
       }
       return newAddresses.sort((a, b) => (b.isDefault ? 1 : 0) - (a.isDefault ? 1 : 0) || a.city.localeCompare(b.city))
@@ -238,34 +237,7 @@ export default function SchedulingStep({
     setIsAddressModalOpen(false)
   }
 
-  const onSubmitValidated = (data: SchedulingFormValues) => {
-    // Ensure dates are properly formatted before submitting
-    const formattedData = {
-      ...data,
-      bookingDate: data.bookingDate ? new Date(data.bookingDate) : undefined,
-      recipientBirthDate: data.recipientBirthDate ? new Date(data.recipientBirthDate) : undefined,
-    }
-    
-    // Validate recipient birth date if booking for someone else
-    if (formattedData.isBookingForSomeoneElse && formattedData.recipientBirthDate) {
-      const today = new Date()
-      const birthDate = formattedData.recipientBirthDate
-      let age = today.getFullYear() - birthDate.getFullYear()
-      const monthDiff = today.getMonth() - birthDate.getMonth()
-      
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--
-      }
-      
-      if (age < 16) {
-        form.setError("recipientBirthDate", {
-          type: "manual",
-          message: t("bookings.validation.recipientMinAge"),
-        })
-        return
-      }
-    }
-    
+  const onSubmitValidated = (_data: SchedulingFormValues) => {
     onNext()
   }
 
@@ -306,7 +278,7 @@ export default function SchedulingStep({
                 <FormItem>
                   <FormLabel>{t("bookings.steps.scheduling.selectTime")}</FormLabel>
                   {isTimeSlotsLoading ? (
-                    <div className="flex items-center space-x-2 rtl:space-x-reverse h-10 p-2 border rounded-md bg-muted animate-pulse">
+                    <div className={`flex items-center h-10 p-2 border rounded-md bg-muted animate-pulse ${dir === "rtl" ? "space-x-reverse" : "space-x-2"}`}>
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                       <span className="text-muted-foreground">{t("common.loading")}</span>
                     </div>
@@ -328,7 +300,7 @@ export default function SchedulingStep({
                             <SelectItem key={slot.time} value={slot.time}>
                               {slot.time}
                               {slot.surcharge &&
-                                ` (+${slot.surcharge.amount.toFixed(2)} ${t("common.currencySymbol")})`}
+                                ` (+${slot.surcharge.amount.toFixed(2)} ${t("common.currencySymbol", "$")})`}
                             </SelectItem>
                           ))}
                       </SelectContent>
@@ -349,6 +321,7 @@ export default function SchedulingStep({
                 </FormItem>
               )}
             />
+
           </div>
         </div>
 
@@ -362,15 +335,15 @@ export default function SchedulingStep({
                 <Dialog open={isAddressModalOpen} onOpenChange={setIsAddressModalOpen}>
                   <DialogTrigger asChild>
                     <Button type="button" variant="outline" size="sm">
-                      <PlusCircle className="mr-2 rtl:ml-2 h-4 w-4" />
+                      <PlusCircle className={`h-4 w-4 ${dir === "rtl" ? "ml-2" : "mr-2"}`} />
                       {localAddresses.length > 0
-                        ? t("addresses.addNewShort")
-                        : t("addresses.addFirstAddressShort")}
+                        ? t("addresses.addNewShort", "Add New")
+                        : t("addresses.addFirstAddressShort", "Add Address")}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[625px]">
                     <DialogHeader>
-                      <DialogTitle>{t("addresses.addAddressDialogTitle")}</DialogTitle>
+                      <DialogTitle>{t("addresses.addAddressDialogTitle", "Add New Address")}</DialogTitle>
                     </DialogHeader>
                     {isAddressModalOpen && ( // Important: Render form only when dialog is open
                       <AddressForm onCancel={() => setIsAddressModalOpen(false)} onSuccess={handleAddressUpserted} />
@@ -387,7 +360,7 @@ export default function SchedulingStep({
                   </FormControl>
                   <SelectContent>
                     {localAddresses.map((address) => (
-                      <SelectItem key={address._id?.toString()} value={address._id?.toString()}>
+                      <SelectItem key={address._id.toString()} value={address._id.toString()}>
                         {`${address.street} ${address.streetNumber || ""}, ${address.city}`}
                         {address.isDefault && ` (${t("addresses.fields.isDefault")})`}
                       </SelectItem>
@@ -412,7 +385,7 @@ export default function SchedulingStep({
           control={form.control}
           name="isBookingForSomeoneElse"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center space-x-3 rtl:space-x-reverse rounded-md border p-3 shadow-sm bg-card">
+            <FormItem className={`flex flex-row items-center rounded-md border p-3 shadow-sm bg-card ${dir === "rtl" ? "space-x-reverse" : "space-x-3"}`}>
               <FormControl>
                 <Checkbox checked={field.value} onCheckedChange={field.onChange} id="isForSomeoneElse" />
               </FormControl>
@@ -426,12 +399,12 @@ export default function SchedulingStep({
         />
 
         {form.watch("isBookingForSomeoneElse") && (
-          <Card className="p-4 border rounded-lg bg-muted/50">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-md font-semibold text-turquoise-700">
+          <Card className="border-turquoise-200 bg-turquoise-50/30">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-lg text-turquoise-700">
+                <User className="h-5 w-5" />
                 {t("bookings.steps.scheduling.recipientDetailsTitle")}
               </CardTitle>
-              <User className="h-5 w-5 text-turquoise-500" />
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -455,12 +428,18 @@ export default function SchedulingStep({
                     <FormItem>
                       <FormLabel>{t("bookings.steps.scheduling.recipientEmail")}</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder={t("users.fields.emailPlaceholder")} {...field} />
+                        <Input 
+                          type="email" 
+                          placeholder={t("users.fields.emailPlaceholder", "Enter email address")} 
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="recipientPhone"
@@ -468,16 +447,17 @@ export default function SchedulingStep({
                     <FormItem>
                       <FormLabel>{t("bookings.steps.scheduling.recipientPhone")}</FormLabel>
                       <FormControl>
-                        <PhoneInput
-                          id="recipientPhone"
-                          name={field.name}
-                          placeholder={t("users.fields.phonePlaceholder")}
-                          fullNumberValue={field.value || ""}
-                          onPhoneChange={field.onChange}
-                          ref={field.ref}
-                          dir="ltr"
-                          className="text-left"
-                        />
+                        <div dir="ltr" className="w-full">
+                          <PhoneInput
+                            id="recipientPhone"
+                            name={field.name}
+                            placeholder={t("users.fields.phonePlaceholder")}
+                            fullNumberValue={field.value || ""}
+                            onPhoneChange={field.onChange}
+                            ref={field.ref}
+                            className="text-left"
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -490,19 +470,18 @@ export default function SchedulingStep({
                     <FormItem>
                       <FormLabel>{t("bookings.steps.scheduling.recipientBirthDate")}</FormLabel>
                       <FormControl>
-                        <Input
-                          type="date"
+                        <Input 
+                          type="date" 
                           {...field}
-                          value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : ''}
+                          value={field.value ? field.value.toISOString().split('T')[0] : ''}
                           onChange={(e) => {
-                            const value = e.target.value;
-                            const date = value ? new Date(value + 'T00:00:00') : null;
+                            const date = e.target.value ? new Date(e.target.value) : undefined;
                             field.onChange(date);
                           }}
-                          max={new Date(Date.now() - 16 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                          max={new Date(new Date().setFullYear(new Date().getFullYear() - 16)).toISOString().split('T')[0]}
                         />
                       </FormControl>
-                      <FormDescription>
+                      <FormDescription className="text-xs">
                         {t("bookings.steps.scheduling.recipientBirthDateDesc")}
                       </FormDescription>
                       <FormMessage />
@@ -539,7 +518,7 @@ export default function SchedulingStep({
             }
             size="lg"
           >
-            {form.formState.isSubmitting && <Loader2 className="mr-2 rtl:ml-2 h-4 w-4 animate-spin" />}
+            {form.formState.isSubmitting && <Loader2 className={`h-4 w-4 animate-spin ${dir === "rtl" ? "ml-2" : "mr-2"}`} />}
             {t("common.next")}
           </Button>
         </div>

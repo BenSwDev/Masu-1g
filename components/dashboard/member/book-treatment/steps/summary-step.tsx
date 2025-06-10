@@ -30,7 +30,7 @@ export default function SummaryStep({
   onNext,
   onPrev,
 }: SummaryStepProps) {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
 
   const currentUserDetails = initialData.currentUser
   const selectedTreatment = initialData.activeTreatments.find(
@@ -209,23 +209,31 @@ export default function SummaryStep({
           {bookingOptions.isBookingForSomeoneElse && bookingOptions.recipientName ? (
             <>
               <div className="flex items-center">
-                <User className="mr-2 h-4 w-4 text-primary" />
+                <User className={`h-4 w-4 text-primary ${dir === "rtl" ? "ml-2" : "mr-2"}`} />
                 <span>
                   {t("bookings.steps.summary.recipientName")}: {bookingOptions.recipientName}
                 </span>
               </div>
               {bookingOptions.recipientPhone && (
                 <div className="flex items-center">
-                  <Phone className="mr-2 h-4 w-4 text-primary" />
+                  <Phone className={`h-4 w-4 text-primary ${dir === "rtl" ? "ml-2" : "mr-2"}`} />
                   <span>
                     {t("bookings.steps.summary.recipientPhone")}: {bookingOptions.recipientPhone}
+                  </span>
+                </div>
+              )}
+              {bookingOptions.recipientEmail && (
+                <div className="flex items-center">
+                  <Mail className={`h-4 w-4 text-primary ${dir === "rtl" ? "ml-2" : "mr-2"}`} />
+                  <span>
+                    {t("bookings.steps.summary.recipientEmail")}: {bookingOptions.recipientEmail}
                   </span>
                 </div>
               )}
               <Separator className="my-2" />
               <p className="text-xs text-muted-foreground">{t("bookings.steps.summary.bookedBy")}:</p>
               <div className="flex items-center">
-                <User className="mr-2 h-4 w-4 text-gray-500" />
+                <User className={`h-4 w-4 text-gray-500 ${dir === "rtl" ? "ml-2" : "mr-2"}`} />
                 <span>{currentUserDetails?.name || t("common.notAvailable")}</span>
               </div>
             </>

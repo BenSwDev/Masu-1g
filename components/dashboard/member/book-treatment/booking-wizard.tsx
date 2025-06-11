@@ -118,7 +118,12 @@ export default function BookingWizard({ initialData, currentUser, isGuestMode = 
       try {
         // Format date as YYYY-MM-DD string
         const dateString = selectedDate.toISOString().split('T')[0]
-        const result = await getAvailableTimeSlots(dateString, treatmentId, selectedDurationId)
+        
+        const result = await getAvailableTimeSlots(
+          dateString,
+          treatmentId,
+          selectedDurationId
+        )
 
         if (result.success && result.timeSlots) {
           setTimeSlots(result.timeSlots)

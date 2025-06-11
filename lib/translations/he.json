@@ -6,6 +6,11 @@
     "partner": "שותף",
     "professional": "מטפל"
   },
+  "roles": {
+    "admin": "מנהל",
+    "member": "חבר",
+    "professional": "מטפל"
+  },
   "T": "T",
   "additionalNotes": "הערות נוספות",
   "addressType": "סוג כתובת",
@@ -361,6 +366,7 @@
     "treatmentPreferences": "העדפות טיפול",
     "treatmentPriceAfterSubscription": "מחיר טיפול לאחר מינוי",
     "treatmentTab": "פרטי טיפול",
+    "unassigned": "לא משויך",
     "unassignedOnly": "לא מטופלים בלבד",
     "unexpectedError": "שגיאה בלתי צפויה",
     "unknown": "לא ידוע",
@@ -385,6 +391,7 @@
     "actualPaid": "שולם בפועל",
     "professionalFee": "רווח מטפל",
     "officeFee": "עמלת משרד",
+    "surcharges": "תוספות",
     "redemption": "מימוש",
     "financialSummary": "סיכום כספי",
     "viewClientNotes": "צפה בהערות הלקוח",
@@ -542,7 +549,10 @@
       "voucherCodeUsed": "קוד השובר שנוצל",
       "voucherRemainingBalance": "יתרת השובר",
       "voucherUsageTitle": "פירוט שימוש בשובר",
-      "status": "סטטוס",
+      "status": {
+        "confirmed": "אושר",
+        "completed": "הושלם"
+      },
       "errors": {
         "assignProfessionalFailed": "שגיאה בשיוך המטפל להזמנה",
         "bookingAlreadyHasProfessional": "להזמנה זו כבר יש מטפל משויך",

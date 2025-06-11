@@ -617,12 +617,19 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
   }
 
   const actualPaid = priceDetails.finalAmount
+  const hasSurcharges = priceDetails.surcharges && priceDetails.surcharges.length > 0
+  const totalSurcharges = priceDetails.totalSurchargesAmount || 0
 
   return (
     <div className="space-y-1 max-w-[180px]">
       <div className="font-medium text-sm">
         {t("adminBookings.finalCost")}: ₪{priceDetails.finalAmount.toFixed(2)}
       </div>
+      {hasSurcharges && totalSurcharges > 0 && (
+        <div className="text-xs text-orange-600">
+          {t("adminBookings.surcharges")}: ₪{totalSurcharges.toFixed(2)}
+        </div>
+      )}
       <div className="text-xs text-muted-foreground">
         {t("adminBookings.actualPaid")}: ₪{actualPaid.toFixed(2)}
       </div>

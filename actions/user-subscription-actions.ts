@@ -31,61 +31,127 @@ export async function purchaseSubscription({
   paymentMethodId,
   selectedDurationId,
 }: PurchaseSubscriptionArgs) {
+  const requestId = `sub_purchase_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+  const startTime = Date.now()
+  
   let sessionData // Renamed to avoid conflict with mongoose session
   try {
+    logger.info(`[${requestId}] Starting subscription purchase`, {
+      subscriptionId,
+      treatmentId,
+      hasSelectedDuration: !!selectedDurationId
+    })
+
     sessionData = await getServerSession(authOptions)
     if (!sessionData || !sessionData.user) {
-      logger.warn("Purchase attempt by unauthenticated user.")
+      logger.warn(`[${requestId}] Purchase attempt by unauthenticated user`)
       return { success: false, error: "Unauthorized" }
     }
 
+    const dbConnectStart = Date.now()
     await dbConnect()
+    const dbConnectTime = Date.now() - dbConnectStart
+    
+    logger.info(`[${requestId}] Database connected`, { 
+      dbConnectTime: `${dbConnectTime}ms`,
+      userId: sessionData.user.id
+    })
 
-    const subscription = await Subscription.findById(subscriptionId)
+    // Load all required data in parallel
+    const dataLoadStart = Date.now()
+    const [subscriptionResult, treatmentResult, paymentMethodResult] = await Promise.allSettled([
+      Subscription.findById(subscriptionId),
+      Treatment.findById(treatmentId).lean(),
+      PaymentMethod.findById(paymentMethodId)
+    ])
+    const dataLoadTime = Date.now() - dataLoadStart
+
+    // Check for failed data loads
+    if (subscriptionResult.status === "rejected" || treatmentResult.status === "rejected" || paymentMethodResult.status === "rejected") {
+      logger.error(`[${requestId}] Failed to load required data`, {
+        dataLoadTime: `${dataLoadTime}ms`,
+        subscriptionError: subscriptionResult.status === "rejected" ? subscriptionResult.reason : null,
+        treatmentError: treatmentResult.status === "rejected" ? treatmentResult.reason : null,
+        paymentMethodError: paymentMethodResult.status === "rejected" ? paymentMethodResult.reason : null
+      })
+      return { success: false, error: "Failed to load required data" }
+    }
+
+    const subscription = subscriptionResult.value
+    const treatment = treatmentResult.value as ITreatment | null
+    const paymentMethod = paymentMethodResult.value
+
+    logger.info(`[${requestId}] Data loaded successfully`, {
+      dataLoadTime: `${dataLoadTime}ms`,
+      subscriptionFound: !!subscription,
+      subscriptionActive: subscription?.isActive,
+      treatmentFound: !!treatment,
+      treatmentActive: treatment?.isActive,
+      paymentMethodFound: !!paymentMethod
+    })
+
     if (!subscription || !subscription.isActive) {
-      logger.warn(`Subscription not found or inactive: ${subscriptionId}`)
+      logger.warn(`[${requestId}] Subscription not found or inactive`, { subscriptionId })
       return { success: false, error: "Subscription not found or inactive" }
     }
 
-    const treatment = (await Treatment.findById(treatmentId).lean()) as ITreatment | null
     if (!treatment || !treatment.isActive) {
-      logger.warn(`Treatment not found or inactive: ${treatmentId}`)
+      logger.warn(`[${requestId}] Treatment not found or inactive`, { treatmentId })
       return { success: false, error: "Treatment not found or inactive" }
     }
 
-    const paymentMethod = await PaymentMethod.findById(paymentMethodId)
     if (!paymentMethod || paymentMethod.userId.toString() !== sessionData.user.id) {
-      logger.warn(`Payment method not found or not owned by user: ${paymentMethodId}, userId: ${sessionData.user.id}`)
+      logger.warn(`[${requestId}] Payment method not found or not owned by user`, { 
+        paymentMethodId, 
+        userId: sessionData.user.id
+      })
       return { success: false, error: "Payment method not found or not owned by user" }
     }
 
+    // Price calculation
+    const priceCalcStart = Date.now()
     let singleSessionPrice: number | undefined
 
     if (treatment.pricingType === "fixed") {
       singleSessionPrice = treatment.fixedPrice
     } else if (treatment.pricingType === "duration_based") {
       if (!selectedDurationId) {
-        logger.warn(`Duration ID not provided for duration-based treatment: ${treatmentId}`)
+        logger.warn(`[${requestId}] Duration ID not provided for duration-based treatment`, { treatmentId })
         return { success: false, error: "Duration must be selected for this treatment" }
       }
       const duration = treatment.durations?.find((d) => d._id.toString() === selectedDurationId)
       if (!duration || !duration.isActive) {
-        logger.warn(`Selected duration not found or inactive: ${selectedDurationId} for treatment ${treatmentId}`)
+        logger.warn(`[${requestId}] Selected duration not found or inactive`, { 
+          selectedDurationId, 
+          treatmentId
+        })
         return { success: false, error: "Selected duration not found or inactive" }
       }
       singleSessionPrice = duration.price
     }
 
     if (singleSessionPrice === undefined || singleSessionPrice < 0) {
-      logger.error(`Invalid price calculated for treatment ${treatmentId}. Price: ${singleSessionPrice}`)
+      logger.error(`[${requestId}] Invalid price calculated for treatment`, { 
+        treatmentId, 
+        singleSessionPrice
+      })
       return { success: false, error: "Invalid treatment price" }
     }
 
     const totalPaymentAmount = subscription.quantity * singleSessionPrice
+    const priceCalcTime = Date.now() - priceCalcStart
+    
+    logger.info(`[${requestId}] Price calculation completed`, {
+      priceCalcTime: `${priceCalcTime}ms`,
+      singleSessionPrice,
+      totalPaymentAmount
+    })
+
     const purchaseDate = new Date()
     const expiryDate = new Date(purchaseDate)
     expiryDate.setMonth(expiryDate.getMonth() + subscription.validityMonths)
 
+    const saveStart = Date.now()
     const newUserSubscription = new UserSubscription({
       userId: sessionData.user.id,
       subscriptionId: subscription._id,
@@ -105,12 +171,16 @@ export async function purchaseSubscription({
     })
 
     await newUserSubscription.save()
-    logger.info(
-      `User ${sessionData.user.id} purchased subscription ${subscriptionId} for treatment ${treatmentId}. UserSubscription ID: ${newUserSubscription._id}`,
-    )
+    const saveTime = Date.now() - saveStart
+    
+    logger.info(`[${requestId}] User subscription created successfully`, {
+      saveTime: `${saveTime}ms`,
+      userSubscriptionId: newUserSubscription._id
+    })
 
     // --- Send purchase success notification ---
     try {
+      const notificationStart = Date.now()
       const user = await User.findById(sessionData.user.id).select("name email phone notificationPreferences").lean()
 
       if (user) {
@@ -145,11 +215,18 @@ export async function purchaseSubscription({
           }
           await notificationManager.sendNotification(phoneRecipient, notificationData)
         }
+        
+        const notificationTime = Date.now() - notificationStart
+        logger.info(`[${requestId}] Notifications sent successfully`, {
+          notificationTime: `${notificationTime}ms`
+        })
       } else {
-        logger.warn(`User not found for notification after subscription purchase: ${sessionData.user.id}`)
+        logger.warn(`[${requestId}] User not found for notification after subscription purchase`, { 
+          userId: sessionData.user.id 
+        })
       }
     } catch (notificationError) {
-      logger.error("Failed to send purchase success notification for subscription:", {
+      logger.error(`[${requestId}] Failed to send purchase success notification for subscription`, {
         userId: sessionData.user.id,
         subscriptionId: newUserSubscription._id.toString(),
         error: notificationError instanceof Error ? notificationError.message : String(notificationError),
@@ -160,10 +237,27 @@ export async function purchaseSubscription({
     revalidatePath("/dashboard/member/subscriptions")
     revalidatePath("/dashboard/admin/user-subscriptions")
 
+    const totalTime = Date.now() - startTime
+    logger.info(`[${requestId}] Subscription purchase completed successfully`, {
+      totalTime: `${totalTime}ms`,
+      userSubscriptionId: newUserSubscription._id,
+      phases: {
+        dbConnect: `${dbConnectTime}ms`,
+        dataLoad: `${dataLoadTime}ms`,
+        priceCalc: `${priceCalcTime}ms`,
+        save: `${saveTime}ms`
+      }
+    })
+
     return { success: true, userSubscription: newUserSubscription.toObject() } // Return plain object
   } catch (error) {
-    logger.error("Error purchasing subscription:", {
-      error: error instanceof Error ? error.message : String(error),
+    const totalTime = Date.now() - startTime
+    logger.error(`[${requestId}] Error purchasing subscription`, {
+      totalTime: `${totalTime}ms`,
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5)
+      } : String(error),
       subscriptionId,
       treatmentId,
       userId: sessionData?.user?.id,

@@ -1425,6 +1425,28 @@
       "guest-form": "Fill Details",
       "purchase-flow": "Purchase Process",
       "progress-check": "Progress Check"
+    },
+    "subscription": {
+      "description": "Choose a subscription plan that fits your needs",
+      "noSubscriptions": "No subscriptions available at the moment",
+      "selectedSubscription": "Selected Subscription",
+      "paymentNote": "Payment will be processed securely",
+      "proceedToPayment": "Proceed to Payment",
+      "sessionsIncluded": "Sessions Included"
+    },
+    "giftVoucher": {
+      "description": "Create a gift voucher for someone special",
+      "selectType": "Select voucher type",
+      "treatmentVoucher": "Treatment Voucher",
+      "monetaryVoucher": "Monetary Voucher",
+      "selectTreatment": "Select Treatment",
+      "noTreatments": "No treatments available at the moment",
+      "setAmount": "Set Amount",
+      "amount": "Amount",
+      "minimumAmount": "Minimum amount",
+      "summary": "Order Summary",
+      "paymentNote": "Payment will be processed securely",
+      "proceedToPayment": "Proceed to Payment"
     }
   }
 }

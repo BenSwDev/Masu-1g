@@ -4064,6 +4064,28 @@
       "guest-form": "מילוי פרטים",
       "purchase-flow": "תהליך רכישה",
       "progress-check": "בדיקת התקדמות"
+    },
+    "subscription": {
+      "description": "בחר מנוי מתאים לצרכיך",
+      "noSubscriptions": "אין מנויים זמינים כרגע",
+      "selectedSubscription": "מנוי נבחר",
+      "paymentNote": "התשלום יתבצע באופן מאובטח",
+      "proceedToPayment": "המשך לתשלום",
+      "sessionsIncluded": "טיפולים כלולים"
+    },
+    "giftVoucher": {
+      "description": "צור שובר מתנה לאדם יקר",
+      "selectType": "בחר סוג שובר",
+      "treatmentVoucher": "שובר לטיפול",
+      "monetaryVoucher": "שובר כספי",
+      "selectTreatment": "בחר טיפול",
+      "noTreatments": "אין טיפולים זמינים כרגע",
+      "setAmount": "קבע סכום",
+      "amount": "סכום",
+      "minimumAmount": "סכום מינימלי",
+      "summary": "סיכום הזמנה",
+      "paymentNote": "התשלום יתבצע באופן מאובטח",
+      "proceedToPayment": "המשך לתשלום"
     }
   }
 }

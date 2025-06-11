@@ -94,11 +94,16 @@ export default function GuestPurchaseModal({
   // Check for existing progress when modal opens
   useEffect(() => {
     if (isOpen && !isProgressLoading) {
-      if (hasMatchingProgress(purchaseType)) {
-        setStep("progress-check")
-      } else if (hasActiveGuestSession()) {
-        setStep("choice")
-      } else {
+      try {
+        if (hasMatchingProgress(purchaseType)) {
+          setStep("progress-check")
+        } else if (hasActiveGuestSession()) {
+          setStep("choice")
+        } else {
+          setStep("choice")
+        }
+      } catch (error) {
+        console.error("Error checking progress:", error)
         setStep("choice")
       }
     }
@@ -465,14 +470,24 @@ export default function GuestPurchaseModal({
             </div>
           )}
 
-          {step === "progress-check" && getProgressSummary() && (
-            <GuestProgressOptions
-              progressSummary={getProgressSummary()!}
-              onResume={handleProgressResume}
-              onStartFresh={handleProgressStartFresh}
-              onCancel={performClose}
-            />
-          )}
+          {step === "progress-check" && (() => {
+            try {
+              const summary = getProgressSummary()
+              if (!summary) return null
+              return (
+                <GuestProgressOptions
+                  progressSummary={summary}
+                  onResume={handleProgressResume}
+                  onStartFresh={handleProgressStartFresh}
+                  onCancel={performClose}
+                />
+              )
+            } catch (error) {
+              console.error("Error rendering progress options:", error)
+              setStep("choice")
+              return null
+            }
+          })()}
 
           {step === "choice" && (
             <div className="space-y-4">
@@ -718,35 +733,50 @@ export default function GuestPurchaseModal({
             </Form>
           )}
 
-          {step === "purchase-flow" && guestUser && (
-            <div className="space-y-6">
-              {purchaseType === "booking" && (
-                <BookingWizard
-                  initialData={initialData}
-                  currentUser={guestUser}
-                  isGuestMode={true}
-                  onBookingComplete={handleBookingComplete}
-                />
-              )}
-              
-              {purchaseType === "subscription" && (
-                <GuestSubscriptionClient
-                  subscriptions={initialData?.subscriptions || []}
-                  treatments={initialData?.treatments || []}
-                  paymentMethods={initialData?.paymentMethods || []}
-                  guestUser={guestUser}
-                />
-              )}
-              
-              {purchaseType === "gift-voucher" && (
-                <GuestGiftVoucherClient
-                  treatments={initialData?.treatments || []}
-                  paymentMethods={initialData?.paymentMethods || []}
-                  guestUser={guestUser}
-                />
-              )}
-            </div>
-          )}
+          {step === "purchase-flow" && guestUser && (() => {
+            try {
+              return (
+                <div className="space-y-6">
+                  {purchaseType === "booking" && (
+                    <BookingWizard
+                      initialData={initialData}
+                      currentUser={guestUser}
+                      isGuestMode={true}
+                      onBookingComplete={handleBookingComplete}
+                    />
+                  )}
+                  
+                  {purchaseType === "subscription" && (
+                    <GuestSubscriptionClient
+                      subscriptions={initialData?.subscriptions || []}
+                      treatments={initialData?.treatments || []}
+                      paymentMethods={initialData?.paymentMethods || []}
+                      guestUser={guestUser}
+                    />
+                  )}
+                  
+                  {purchaseType === "gift-voucher" && (
+                    <GuestGiftVoucherClient
+                      treatments={initialData?.treatments || []}
+                      paymentMethods={initialData?.paymentMethods || []}
+                      guestUser={guestUser}
+                    />
+                  )}
+                </div>
+              )
+            } catch (error) {
+              console.error("Error rendering purchase flow:", error)
+              setStep("choice")
+              return (
+                <div className="text-center py-8">
+                  <p className="text-red-600 mb-4">{t("common.error")}</p>
+                  <Button onClick={() => setStep("choice")}>
+                    {t("common.back")}
+                  </Button>
+                </div>
+              )
+            }
+          })()}
         </DialogContent>
       </Dialog>
 
@@ -769,14 +799,16 @@ export default function GuestPurchaseModal({
       />
 
       {/* Exit Confirmation Dialog */}
-      <GuestExitConfirmation
-        isOpen={showExitConfirmation}
-        onConfirmExit={performClose}
-        onCancel={() => setShowExitConfirmation(false)}
-        onSaveAndExit={handleSaveAndExit}
-        currentStep={step}
-        hasProgress={step !== "choice" && step !== "progress-check"}
-      />
+      {showExitConfirmation && (
+        <GuestExitConfirmation
+          isOpen={showExitConfirmation}
+          onConfirmExit={performClose}
+          onCancel={() => setShowExitConfirmation(false)}
+          onSaveAndExit={handleSaveAndExit}
+          currentStep={step}
+          hasProgress={step !== "choice" && step !== "progress-check"}
+        />
+      )}
     </>
   )
 } 

@@ -23,6 +23,12 @@ export function useGuestProgress() {
 
   // Load saved progress from localStorage
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === "undefined") {
+      setIsLoading(false)
+      return
+    }
+
     try {
       const saved = localStorage.getItem(GUEST_PROGRESS_KEY)
       if (saved) {
@@ -40,7 +46,11 @@ export function useGuestProgress() {
     } catch (error) {
       console.warn("Failed to load guest progress:", error)
       // Clear corrupted data
-      localStorage.removeItem(GUEST_PROGRESS_KEY)
+      try {
+        localStorage.removeItem(GUEST_PROGRESS_KEY)
+      } catch (clearError) {
+        console.warn("Failed to clear corrupted progress data:", clearError)
+      }
     } finally {
       setIsLoading(false)
     }
@@ -48,6 +58,11 @@ export function useGuestProgress() {
 
   // Save progress to localStorage
   const saveProgress = useCallback((progress: Omit<GuestProgress, "timestamp">) => {
+    // Only run on client side
+    if (typeof window === "undefined") {
+      return false
+    }
+
     try {
       const progressWithTimestamp: GuestProgress = {
         ...progress,
@@ -64,6 +79,11 @@ export function useGuestProgress() {
 
   // Clear saved progress
   const clearProgress = useCallback(() => {
+    // Only run on client side
+    if (typeof window === "undefined") {
+      return false
+    }
+
     try {
       localStorage.removeItem(GUEST_PROGRESS_KEY)
       setSavedProgress(null)

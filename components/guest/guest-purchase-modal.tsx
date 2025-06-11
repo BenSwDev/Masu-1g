@@ -109,7 +109,15 @@ export default function GuestPurchaseModal({
     const handleEscKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isOpen) {
         event.preventDefault()
-        handleClose()
+        // Check if user has made progress and show confirmation
+        const hasProgress = step !== "choice" && step !== "progress-check"
+        if (hasProgress) {
+          setShowExitConfirmation(true)
+          return
+        }
+        
+        // Direct close if no progress
+        onClose()
       }
     }
 
@@ -117,7 +125,7 @@ export default function GuestPurchaseModal({
       document.addEventListener('keydown', handleEscKey)
       return () => document.removeEventListener('keydown', handleEscKey)
     }
-  }, [isOpen, handleClose])
+  }, [isOpen, step, onClose])
 
   // Update current form data for abandonment tracking
   useEffect(() => {

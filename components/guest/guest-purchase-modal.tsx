@@ -23,9 +23,8 @@ import { getSubscriptionsForSelection } from "@/actions/subscription-actions"
 import { getTreatmentsForSelection } from "@/actions/gift-voucher-actions"
 import { signIn } from "next-auth/react"
 import { useGuestSession } from "@/components/guest/guest-session-manager"
-import type { BookingInitialData, IBooking } from "@/types/booking"
+import type { BookingInitialData } from "@/types/booking"
 import type { IUser } from "@/lib/db/models/user"
-import type { UserSessionData } from "@/types/next-auth"
 
 // Import the existing purchase components
 import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
@@ -144,12 +143,26 @@ export default function GuestPurchaseModal({
   }
 
   const loadGuestDataAndProceed = async (guestUserId: string) => {
-    // Create a mock user session for the guest
-    const guestUser: UserSessionData = {
-      id: guestUserId,
-      name: guestSession.guestUserId ? "Guest User" : "",
-      email: "",
+    // Get the actual guest user profile
+    const { getUserProfile } = await import("@/actions/profile-actions")
+    const guestProfileResult = await getUserProfile(guestUserId)
+    
+    if (!guestProfileResult?.success || !guestProfileResult.user) {
+      throw new Error("Failed to load guest profile")
+    }
+    
+    const guestProfile = guestProfileResult.user
+
+    // Create user session for the guest with real data
+    const guestUser: any = {
+      id: guestProfile._id || guestProfile.id,
+      name: guestProfile.name || "",
+      email: guestProfile.email || "",
       roles: ["member"],
+      phone: guestProfile.phone,
+      gender: guestProfile.gender,
+      dateOfBirth: guestProfile.dateOfBirth,
+      address: guestProfile.address,
       isGuest: true
     }
     
@@ -162,11 +175,25 @@ export default function GuestPurchaseModal({
         initialData = result.data
       }
     } else if (purchaseType === "subscription") {
-      const subscriptions = await getSubscriptionsForSelection()
-      initialData = { subscriptions }
+      const [subscriptionsResult, treatmentsResult] = await Promise.all([
+        getSubscriptionsForSelection(),
+        getTreatmentsForSelection()
+      ])
+      if (subscriptionsResult.success && treatmentsResult.success) {
+        initialData = { 
+          subscriptions: subscriptionsResult.subscriptions,
+          treatments: treatmentsResult.treatments,
+          paymentMethods: [] // Guests don't have saved payment methods
+        }
+      }
     } else if (purchaseType === "gift-voucher") {
-      const treatments = await getTreatmentsForSelection()
-      initialData = { treatments }
+      const treatmentsResult = await getTreatmentsForSelection()
+      if (treatmentsResult.success) {
+        initialData = { 
+          treatments: treatmentsResult.treatments,
+          initialPaymentMethods: [] // Guests don't have saved payment methods
+        }
+      }
     }
 
     if (initialData) {
@@ -457,7 +484,7 @@ export default function GuestPurchaseModal({
                     <FormItem>
                       <FormLabel>{t("register.phone")}</FormLabel>
                       <FormControl>
-                        <PhoneInput value={field.value} onChange={field.onChange} />
+                        <PhoneInput {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

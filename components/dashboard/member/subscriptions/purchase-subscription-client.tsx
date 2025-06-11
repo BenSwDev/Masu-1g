@@ -40,18 +40,12 @@ interface PurchaseSubscriptionClientProps {
   subscriptions?: ISubscription[]
   treatments?: ITreatment[]
   paymentMethods?: PaymentMethod[]
-  currentUser?: any
-  isGuestMode?: boolean
-  onPurchaseComplete?: (purchase: any) => void
 }
 
 const PurchaseSubscriptionClient = ({
   subscriptions = [],
   treatments = [],
   paymentMethods = [],
-  currentUser,
-  isGuestMode = false,
-  onPurchaseComplete,
 }: PurchaseSubscriptionClientProps) => {
   const { t } = useTranslation()
   const router = useRouter()
@@ -226,11 +220,7 @@ const PurchaseSubscriptionClient = ({
         selectedDurationId: selectedTreatmentData?.pricingType === "duration_based" ? selectedDurationId : undefined,
       })
       if (result.success) {
-        if (isGuestMode && onPurchaseComplete) {
-          onPurchaseComplete(result.data)
-        } else {
-          setPurchaseComplete(true)
-        }
+        setPurchaseComplete(true)
       } else {
         toast.error(result.error || t("subscriptions.purchase.error"))
       }

@@ -15,7 +15,7 @@ import PaymentStep from "./steps/payment-step"
 import BookingConfirmation from "./steps/booking-confirmation"
 
 import { calculateBookingPrice, createBooking, getAvailableTimeSlots } from "@/actions/booking-actions"
-import type { IUser } from "@/lib/db/models/user"
+import type { UserSessionData } from "@/types/next-auth"
 import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress" // Added Progress
 import { AlertCircle } from "lucide-react" // For error messages
@@ -24,9 +24,7 @@ import type { IBooking } from "@/lib/db/models/booking" // Add this import
 
 interface BookingWizardProps {
   initialData: BookingInitialData
-  currentUser: IUser
-  isGuestMode?: boolean
-  onBookingComplete?: (booking: IBooking) => void
+  currentUser: UserSessionData
 }
 
 const TOTAL_STEPS_WITH_PAYMENT = 5
@@ -35,7 +33,7 @@ const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 // Add a constant for the timezone
 const TIMEZONE = "Asia/Jerusalem" // Israel timezone
 
-export default function BookingWizard({ initialData, currentUser, isGuestMode = false, onBookingComplete }: BookingWizardProps) {
+export default function BookingWizard({ initialData, currentUser }: BookingWizardProps) {
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -53,115 +51,54 @@ export default function BookingWizard({ initialData, currentUser, isGuestMode = 
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false)
   const [bookingResult, setBookingResult] = useState<IBooking | null>(null)
   const [workingHoursNote, setWorkingHoursNote] = useState<string | undefined>(undefined)
-  const [isBookingCompleted, setIsBookingCompleted] = useState(false)
 
   const { toast } = useToast()
+  // const translations = useMemo(() => initialData.translations || {}, [initialData.translations])
 
-  // Session storage key for this booking session
-  const sessionKey = `booking_wizard_${currentUser._id}_${Date.now()}`
-  const sessionStorageKey = `booking_wizard_${currentUser._id}`
-
-  // Load saved state from localStorage on mount
+  // Effect to fetch time slots
   useEffect(() => {
-    const savedState = localStorage.getItem(sessionStorageKey)
-    if (savedState && !bookingResult) {
-      try {
-        const parsed = JSON.parse(savedState)
-        if (parsed.bookingOptions) {
-          setBookingOptions(parsed.bookingOptions)
-        }
-        if (parsed.currentStep && parsed.currentStep < CONFIRMATION_STEP_NUMBER) {
-          setCurrentStep(parsed.currentStep)
-        }
-        if (parsed.calculatedPrice) {
-          setCalculatedPrice(parsed.calculatedPrice)
-        }
-      } catch (error) {
-        console.warn('Failed to load saved booking state:', error)
-      }
-    }
-  }, [sessionStorageKey, bookingResult])
-
-  // Save state to localStorage whenever relevant data changes
-  useEffect(() => {
-    if (!isBookingCompleted && currentStep < CONFIRMATION_STEP_NUMBER) {
-      const stateToSave = {
-        bookingOptions,
-        currentStep,
-        calculatedPrice,
-        timestamp: Date.now(),
-      }
-      try {
-        localStorage.setItem(sessionStorageKey, JSON.stringify(stateToSave))
-      } catch (error) {
-        console.warn('Failed to save booking state:', error)
-      }
-    }
-  }, [bookingOptions, currentStep, calculatedPrice, sessionStorageKey, isBookingCompleted])
-
-  // Clear saved state when booking is completed
-  useEffect(() => {
-    if (isBookingCompleted || bookingResult) {
-      try {
-        localStorage.removeItem(sessionStorageKey)
-      } catch (error) {
-        console.warn('Failed to clear booking state:', error)
-      }
-    }
-  }, [isBookingCompleted, bookingResult, sessionStorageKey])
-
-  const loadTimeSlots = useCallback(
-    async (treatmentId: string, selectedDate: Date, selectedDurationId?: string) => {
-      setIsTimeSlotsLoading(true)
-      setWorkingHoursNote(undefined)
-
-      try {
-        // Format date as YYYY-MM-DD string
-        const dateString = selectedDate.toISOString().split('T')[0]
+    if (bookingOptions.bookingDate && bookingOptions.selectedTreatmentId) {
+      const fetchSlots = async () => {
+        setIsTimeSlotsLoading(true)
+        setTimeSlots([])
+        setWorkingHoursNote(undefined)
+        
+        // Get the local date from the bookingOptions
+        const localDate = bookingOptions.bookingDate!
+        
+        // Format the date as YYYY-MM-DD - use the raw date object
+        // This ensures the correct date is sent regardless of timezone
+        const year = localDate.getFullYear()
+        const month = (localDate.getMonth() + 1).toString().padStart(2, "0") // getMonth() is 0-indexed
+        const day = localDate.getDate().toString().padStart(2, "0")
+        const dateStr = `${year}-${month}-${day}`
         
         const result = await getAvailableTimeSlots(
-          dateString,
-          treatmentId,
-          selectedDurationId
+          dateStr,
+          bookingOptions.selectedTreatmentId!,
+          bookingOptions.selectedDurationId,
         )
-
-        if (result.success && result.timeSlots) {
-          setTimeSlots(result.timeSlots)
+        if (result.success) {
+          setTimeSlots(result.timeSlots || [])
           setWorkingHoursNote(result.workingHoursNote)
         } else {
-          setTimeSlots([])
           toast({
             variant: "destructive",
-            title: t("bookings.errors.timeSlotsFailedTitle") || "Failed to load time slots",
-            description: t("bookings.errors.timeSlotsFailedDescription") || "Please try again",
+            title:
+              t(result.error || "bookings.errors.fetchTimeSlotsFailedTitle") ||
+              result.error ||
+              "Error fetching time slots",
+            description: t(result.error || "bookings.errors.fetchTimeSlotsFailedTitle"),
           })
         }
-      } catch (error) {
-        setTimeSlots([])
-        toast({
-          variant: "destructive",
-          title: t("common.error") || "Error",
-          description: t("bookings.errors.timeSlotsFailedDescription") || "Failed to load available time slots",
-        })
-      } finally {
         setIsTimeSlotsLoading(false)
       }
-    },
-    [toast, t],
-  )
-
-  useEffect(() => {
-    if (bookingOptions.selectedTreatmentId && bookingOptions.bookingDate) {
-      loadTimeSlots(bookingOptions.selectedTreatmentId, bookingOptions.bookingDate, bookingOptions.selectedDurationId)
+      fetchSlots()
     } else {
       setTimeSlots([])
+      setWorkingHoursNote(undefined)
     }
-  }, [
-    bookingOptions.selectedTreatmentId,
-    bookingOptions.bookingDate,
-    bookingOptions.selectedDurationId,
-    loadTimeSlots,
-  ])
+  }, [bookingOptions.bookingDate, bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, toast, t])
 
   const triggerPriceCalculation = useCallback(async () => {
     if (
@@ -265,14 +202,7 @@ export default function BookingWizard({ initialData, currentUser, isGuestMode = 
       setCurrentStep((prev) => Math.min(prev + 1, CONFIRMATION_STEP_NUMBER))
     }
   }
-  
-  const prevStep = () => {
-    // Prevent going back after booking is completed
-    if (isBookingCompleted || bookingResult) {
-      return
-    }
-    setCurrentStep((prev) => Math.max(prev - 1, 1))
-  }
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1))
 
   const handleFinalSubmit = async (skipPaymentUI = false) => {
     setIsLoading(true)
@@ -307,44 +237,37 @@ export default function BookingWizard({ initialData, currentUser, isGuestMode = 
     const [hours, minutes] = bookingOptions.bookingTime.split(":").map(Number)
     bookingDateTime.setHours(hours, minutes, 0, 0)
 
-    // Convert to UTC for storage
-    const utcDateTime = new Date(bookingDateTime.getTime() - bookingDateTime.getTimezoneOffset() * 60000)
-
     const payload: CreateBookingPayloadType = {
+      userId: currentUser.id,
       treatmentId: bookingOptions.selectedTreatmentId,
       selectedDurationId: bookingOptions.selectedDurationId,
-      bookingDateTime: utcDateTime.toISOString(),
-      addressId: bookingOptions.selectedAddressId,
-      notes: bookingOptions.notes || "",
+      bookingDateTime,
+      selectedAddressId: bookingOptions.selectedAddressId,
       therapistGenderPreference: bookingOptions.therapistGenderPreference || "any",
-      source: bookingOptions.source!,
-      selectedUserSubscriptionId: bookingOptions.selectedUserSubscriptionId,
-      selectedGiftVoucherId: bookingOptions.selectedGiftVoucherId,
-      appliedCouponCode: bookingOptions.appliedCouponCode,
-      selectedPaymentMethodId: skipPaymentUI ? undefined : bookingOptions.selectedPaymentMethodId,
-      agreeToTerms: true,
-      agreeToMarketing: bookingOptions.agreeToMarketing || false,
-      isFlexibleTime: false,
-      flexibilityRangeHours: 2,
-      isBookingForSomeoneElse: bookingOptions.isBookingForSomeoneElse || false,
-      recipientName: bookingOptions.recipientName,
-      recipientPhone: bookingOptions.recipientPhone,
-      recipientEmail: bookingOptions.recipientEmail,
-      recipientBirthDate: bookingOptions.recipientBirthDate?.toISOString(),
+      notes: bookingOptions.notes,
+      priceDetails: calculatedPrice,
+      paymentDetails: {
+        paymentMethodId: bookingOptions.selectedPaymentMethodId,
+        paymentStatus: calculatedPrice.finalAmount === 0 ? "not_required" : "pending",
+      },
+      source: bookingOptions.source || "new_purchase",
+      redeemedUserSubscriptionId:
+        bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
+      redeemedGiftVoucherId:
+        bookingOptions.source === "gift_voucher_redemption" ? bookingOptions.selectedGiftVoucherId : undefined,
+      appliedCouponId: calculatedPrice.appliedCouponId,
+      isFlexibleTime: bookingOptions.isFlexibleTime || false,
+      flexibilityRangeHours: bookingOptions.flexibilityRangeHours,
+      // Add new fields for "book for someone else"
+      recipientName: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientName : undefined,
+      recipientPhone: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientPhone : undefined,
+      recipientEmail: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientEmail : undefined,
+      recipientBirthDate: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientBirthDate : undefined,
     }
 
     const result = await createBooking(payload)
-
     if (result.success && result.booking) {
       setBookingResult(result.booking)
-      setIsBookingCompleted(true) // Mark as completed to prevent navigation back
-      
-      // Call callback if provided (for guest mode)
-      if (onBookingComplete) {
-        onBookingComplete(result.booking)
-        return // Don't show toast or change step, let the callback handle it
-      }
-      
       toast({
         title: t("bookings.success.bookingCreatedTitle") || "Booking Created!",
         description: t("bookings.success.bookingCreatedDescription") || "Your booking has been successfully created.",
@@ -365,12 +288,6 @@ export default function BookingWizard({ initialData, currentUser, isGuestMode = 
   const progressValue = (currentStep / TOTAL_STEPS_WITH_PAYMENT) * 100
 
   const renderStep = () => {
-    // If booking is completed, only show confirmation step
-    if (isBookingCompleted && currentStep !== CONFIRMATION_STEP_NUMBER) {
-      setCurrentStep(CONFIRMATION_STEP_NUMBER)
-      return null
-    }
-
     const stepProps = {
       initialData,
       bookingOptions,
@@ -422,16 +339,16 @@ export default function BookingWizard({ initialData, currentUser, isGuestMode = 
   return (
     <div className="w-full max-w-none sm:max-w-2xl lg:max-w-3xl xl:max-w-4xl mx-auto px-2 sm:px-0">
       <div className="bg-card p-3 sm:p-4 md:p-6 lg:p-8 rounded-lg shadow-xl border w-full">
-        {currentStep <= TOTAL_STEPS_WITH_PAYMENT && !isBookingCompleted && (
+      {currentStep <= TOTAL_STEPS_WITH_PAYMENT && (
           <div className="mb-4 sm:mb-6">
             <Progress value={progressValue} className="w-full h-2 sm:h-3" />
             <p className="text-center text-xs sm:text-sm text-muted-foreground mt-2">
-              {t("common.step") || "Step"} {currentStep} {t("common.of") || "of"} {TOTAL_STEPS_WITH_PAYMENT}
-            </p>
-          </div>
-        )}
+            {t("common.step") || "Step"} {currentStep} {t("common.of") || "of"} {TOTAL_STEPS_WITH_PAYMENT}
+          </p>
+        </div>
+      )}
         <div className="w-full overflow-hidden">
-          {renderStep()}
+      {renderStep()}
         </div>
       </div>
     </div>

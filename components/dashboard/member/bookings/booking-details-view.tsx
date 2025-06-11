@@ -80,13 +80,6 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
 
   const getBookingStatusInfo = (statusKey: PopulatedBooking["status"]) => {
     switch (statusKey) {
-      case "abandoned":
-        return {
-          label: t("memberBookings.status.abandoned"),
-          icon: <XCircle className="mr-1.5 h-4 w-4 text-gray-600" />,
-          badgeClass: "bg-gray-100 text-gray-700 border-gray-300",
-          textColor: "text-gray-700",
-        }
       case "pending_professional_assignment":
         return {
           label: t("memberBookings.status.pending_professional_assignment"),
@@ -123,13 +116,6 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
           icon: <XCircle className="mr-1.5 h-4 w-4 text-red-600" />,
           badgeClass: "bg-red-100 text-red-700 border-red-300",
           textColor: "text-red-700",
-        }
-      case "cancelled_refunded":
-        return {
-          label: t("memberBookings.status.cancelled_refunded"),
-          icon: <XCircle className="mr-1.5 h-4 w-4 text-purple-600" />,
-          badgeClass: "bg-purple-100 text-purple-700 border-purple-300",
-          textColor: "text-purple-700",
         }
       case "no_show":
         return {

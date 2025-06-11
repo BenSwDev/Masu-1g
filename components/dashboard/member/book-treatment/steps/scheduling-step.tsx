@@ -31,7 +31,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
 import { PhoneInput } from "@/components/common/phone-input"
-import { toZonedTime } from "date-fns-tz"
+import { zonedTimeToUtc, utcToZonedTime } from "date-fns-tz"
 import { startOfDay } from "date-fns"
 
 interface SchedulingStepProps {
@@ -215,16 +215,6 @@ export default function SchedulingStep({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedDate]) // form.setValue and form.formState.defaultValues should not be dependencies here
 
-  // Auto-select first available time slot when timeSlots change
-  useEffect(() => {
-    if (timeSlots.length > 0 && !form.getValues("bookingTime") && form.getValues("bookingDate")) {
-      const firstAvailableSlot = timeSlots.find((slot) => slot.isAvailable)
-      if (firstAvailableSlot) {
-        form.setValue("bookingTime", firstAvailableSlot.time, { shouldValidate: true })
-      }
-    }
-  }, [timeSlots, form])
-
   const handleAddressUpserted = (upsertedAddress: IAddress) => {
     setLocalAddresses((prev) => {
       const existingIndex = prev.findIndex((a) => a._id.toString() === upsertedAddress._id.toString())
@@ -247,7 +237,7 @@ export default function SchedulingStep({
     setIsAddressModalOpen(false)
   }
 
-  const onSubmitValidated = (data: SchedulingFormValues) => {
+  const onSubmitValidated = (_data: SchedulingFormValues) => {
     onNext()
   }
 

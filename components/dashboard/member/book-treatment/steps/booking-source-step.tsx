@@ -37,7 +37,7 @@ export default function BookingSourceStep({
   const form = useForm<BookingSourceFormValues>({
     resolver: zodResolver(BookingSourceSchema),
     defaultValues: {
-      source: bookingOptions.source || (hasSubscriptions || hasVouchers ? (hasSubscriptions ? "subscription_redemption" : "gift_voucher_redemption") : "new_purchase"),
+      source: bookingOptions.source || (hasSubscriptions || hasVouchers ? undefined : "new_purchase"),
     },
   })
 
@@ -57,9 +57,6 @@ export default function BookingSourceStep({
   useEffect(() => {
     if (!hasSubscriptions && !hasVouchers && !form.getValues("source")) {
       form.setValue("source", "new_purchase", { shouldValidate: true })
-    } else if ((hasSubscriptions || hasVouchers) && !form.getValues("source")) {
-      // Auto-select first available option
-      form.setValue("source", hasSubscriptions ? "subscription_redemption" : "gift_voucher_redemption", { shouldValidate: true })
     }
   }, [hasSubscriptions, hasVouchers, form])
 

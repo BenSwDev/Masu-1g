@@ -63,21 +63,25 @@ export async function updateProfile(formData: FormData) {
   }
 }
 
-export async function getUserProfile(userId?: string) {
+export async function getUserProfile() {
   try {
-    let userIdToUse = userId
-    
-    if (!userIdToUse) {
-      const session = await getServerSession(authOptions)
-      if (!session?.user?.id) {
-        return { success: false, message: "notAuthenticated" }
-      }
-      userIdToUse = session.user.id
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return { success: false, message: "notAuthenticated" }
     }
 
     await dbConnect()
 
-    const user = await User.findById(userIdToUse).select("-password").lean()
+    const user = await User.findById(session.user.id).select("-password") as {
+      _id: { toString(): string };
+      name: string;
+      email: string;
+      phone: string;
+      gender: string;
+      dateOfBirth: Date;
+      image: string;
+      createdAt: Date;
+    }
 
     if (!user) {
       return { success: false, message: "userNotFound" }
@@ -86,24 +90,14 @@ export async function getUserProfile(userId?: string) {
     return {
       success: true,
       user: {
-        _id: user._id.toString(),
         id: user._id.toString(),
         name: user.name,
-        firstName: user.name?.split(' ')[0] || '',
-        lastName: user.name?.split(' ').slice(1).join(' ') || '',
         email: user.email,
         phone: user.phone,
         gender: user.gender,
         dateOfBirth: user.dateOfBirth,
-        birthDate: user.dateOfBirth,
         image: user.image,
         createdAt: user.createdAt,
-        isGuest: user.isGuest,
-        guestSessionId: user.guestSessionId,
-        parentUserId: user.parentUserId,
-        address: user.address,
-        notes: user.notes,
-        roles: user.roles || [],
       },
     }
   } catch (error) {

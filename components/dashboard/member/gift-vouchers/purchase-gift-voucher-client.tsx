@@ -65,10 +65,7 @@ interface Treatment {
 
 interface PurchaseGiftVoucherClientProps {
   treatments: Treatment[]
-  initialPaymentMethods?: IPaymentMethod[]
-  currentUser?: any
-  isGuestMode?: boolean
-  onPurchaseComplete?: (purchase: any) => void
+  initialPaymentMethods: IPaymentMethod[]
 }
 
 type GiftDetailsFormData = z.infer<typeof giftDetailsSchema>
@@ -99,10 +96,7 @@ const giftDetailsSchema = z.object({
 
 export default function PurchaseGiftVoucherClient({
   treatments,
-  initialPaymentMethods = [],
-  currentUser,
-  isGuestMode = false,
-  onPurchaseComplete,
+  initialPaymentMethods,
 }: PurchaseGiftVoucherClientProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
@@ -333,12 +327,8 @@ export default function PurchaseGiftVoucherClient({
             })
           }
         }
-        if (isGuestMode && onPurchaseComplete) {
-          onPurchaseComplete(paymentResult.data)
-        } else {
-          setPurchaseComplete(true)
-          setCurrentStep("complete")
-        }
+        setPurchaseComplete(true)
+        setCurrentStep("complete")
       } else {
         toast({
           title: t("common.error"),

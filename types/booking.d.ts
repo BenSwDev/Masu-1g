@@ -123,7 +123,7 @@ export interface BookingInitialData {
 export interface SelectedBookingOptions {
   selectedTreatmentId?: string
   selectedDurationId?: string
-  bookingDate?: Date
+  bookingDate?: string
   bookingTime?: string
   therapistGenderPreference: "male" | "female" | "any"
   isFlexibleTime: boolean
@@ -141,6 +141,4 @@ export interface SelectedBookingOptions {
   selectedAddressId?: string
   customAddressDetails?: any
   paymentMethodId?: string
-  selectedPaymentMethodId?: string
-  agreeToMarketing?: boolean
 }

@@ -2591,7 +2591,7 @@
         "noSlotsAvailable": "אין זמינות במועד זה",
         "selectDateFirst": "יש לבחור תאריך תחילה",
         "selectAddress": "בחר כתובת",
-        "selectAddressPlaceholder": "בחר כתובת",
+        "selectAddressPlaceholder": "בחר כתובת למשלוח",
         "noSavedAddressesTitle": "אין כתובות שמורות",
         "noSavedAddressesDesc": "לא נמצאו כתובות שמורות, הוסף כתובת חדשה",
         "forSomeoneElseLabel": "ההזמנה עבור מישהו אחר",
@@ -4000,30 +4000,5 @@
     "professionalInterface": "כניסה לממשק מטפלים",
     "partnerInterface": "כניסה לממשק שותפים",
     "adminInterface": "כניסה לממשק מנהל"
-  },
-  "guest": {
-    "modal": {
-      "choiceDescription": "בחר איך תרצה להמשיך",
-      "formDescription": "מלא את הפרטים שלך כדי להמשיך",
-      "login": "יש לי חשבון - התחבר",
-      "loginDescription": "אם יש לך כבר חשבון במערכת, התחבר כדי לגשת לכל הפיצ'רים",
-      "continueAsGuest": "המשך כאורח",
-      "guestDescription": "מלא פרטים בסיסיים ותוכל לבצע הזמנה מיד",
-      "continueWithSession": "המשך עם הפרטים הקיימים",
-      "continueWithSessionDescription": "השתמש בפרטי האורח שמולאו קודם",
-      "editGuestDetails": "ערוך פרטי אורח",
-      "editGuestDetailsDescription": "שנה או עדכן את הפרטים לפני המשך",
-      "continue": "המשך"
-    },
-    "creation": {
-      "success": "נוצר בהצלחה",
-      "successDescription": "המערכת מוכנה לקבל את ההזמנה שלך",
-      "willMergeDescription": "זוהה חשבון קיים - הרכישה תתווסף אליו אוטומטית",
-      "crossConflictWarning": "זוהו פרטים שייכים למספר חשבונות - ייווצר חשבון חדש",
-      "failed": "שגיאה ביצירת אורח"
-    },
-    "purchase": {
-      "title": "רכישה כאורח"
-    }
   }
 }

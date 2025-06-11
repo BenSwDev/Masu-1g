@@ -52,13 +52,6 @@ export default function TreatmentSelectionStep({
     },
   })
 
-  const validGiftVouchers = useMemo(() => {
-    return (initialData.usableGiftVouchers || []).filter(
-      (voucher): voucher is IGiftVoucher & { _id: string } =>
-        voucher && typeof voucher._id === "string" && voucher._id.length > 0,
-    )
-  }, [initialData.usableGiftVouchers])
-
   const treatmentCategories = useMemo(() => {
     const categories = new Set((initialData.activeTreatments || []).map((t) => t.category || "Uncategorized"))
     return Array.from(categories)
@@ -83,27 +76,6 @@ export default function TreatmentSelectionStep({
     })
     return () => subscription.unsubscribe()
   }, [form, setBookingOptions])
-
-  // Auto-select first subscription when source is subscription_redemption
-  useEffect(() => {
-    if (bookingOptions.source === "subscription_redemption" && 
-        !form.getValues("selectedUserSubscriptionId") && 
-        initialData.activeUserSubscriptions && 
-        initialData.activeUserSubscriptions.length > 0) {
-      const firstSubscription = initialData.activeUserSubscriptions[0]
-      form.setValue("selectedUserSubscriptionId", firstSubscription._id.toString(), { shouldValidate: true })
-    }
-  }, [bookingOptions.source, initialData.activeUserSubscriptions, form])
-
-  // Auto-select first gift voucher when source is gift_voucher_redemption
-  useEffect(() => {
-    if (bookingOptions.source === "gift_voucher_redemption" && 
-        !form.getValues("selectedGiftVoucherId") && 
-        validGiftVouchers.length > 0) {
-      const firstVoucher = validGiftVouchers[0]
-      form.setValue("selectedGiftVoucherId", firstVoucher._id.toString(), { shouldValidate: true })
-    }
-  }, [bookingOptions.source, validGiftVouchers, form])
 
   useEffect(() => {
     const currentSource = bookingOptions.source
@@ -183,27 +155,6 @@ export default function TreatmentSelectionStep({
     form,
   ])
 
-  // Auto-select first treatment when only one is available or when new purchase with limited options
-  useEffect(() => {
-    if (availableTreatmentsForStep.length === 1 && !form.getValues("selectedTreatmentId")) {
-      const singleTreatment = availableTreatmentsForStep[0]
-      form.setValue("selectedTreatmentId", singleTreatment._id.toString(), { shouldValidate: true })
-      
-      // If it's a fixed price treatment, that's all we need
-      if (singleTreatment.pricingType === "fixed_price") {
-        // Treatment is fully selected
-      } else if (singleTreatment.pricingType === "duration_based" && 
-                 singleTreatment.durations && 
-                 singleTreatment.durations.length === 1) {
-        // Auto-select the only duration
-        const singleDuration = singleTreatment.durations.find(d => d.isActive)
-        if (singleDuration) {
-          form.setValue("selectedDurationId", singleDuration._id.toString(), { shouldValidate: true })
-        }
-      }
-    }
-  }, [availableTreatmentsForStep, form])
-
   const onSubmitValidated = (data: TreatmentSelectionFormValues) => {
     const selectedTreatment = availableTreatmentsForStep.find((t) => t._id.toString() === data.selectedTreatmentId)
     if (selectedTreatment?.pricingType === "duration_based" && !data.selectedDurationId) {
@@ -215,6 +166,13 @@ export default function TreatmentSelectionStep({
     }
     onNext()
   }
+
+  const validGiftVouchers = useMemo(() => {
+    return (initialData.usableGiftVouchers || []).filter(
+      (voucher): voucher is IGiftVoucher & { _id: string } =>
+        voucher && typeof voucher._id === "string" && voucher._id.length > 0,
+    )
+  }, [initialData.usableGiftVouchers])
 
   return (
     <Form {...form}>

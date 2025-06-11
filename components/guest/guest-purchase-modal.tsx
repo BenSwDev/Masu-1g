@@ -26,6 +26,7 @@ import { useGuestSession } from "@/components/guest/guest-session-manager"
 import type { BookingInitialData } from "@/types/booking"
 import type { IUser } from "@/lib/db/models/user"
 import { logger } from "@/lib/logs/logger"
+import { QueryProvider } from "@/components/common/providers/query-provider"
 
 // Import the existing purchase components
 import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
@@ -687,8 +688,9 @@ export default function GuestPurchaseModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className={step === "purchase-flow" ? "overflow-y-auto flex-1" : ""}>
-          {step === "choice" && (
+        <QueryProvider>
+          <div className={step === "purchase-flow" ? "overflow-y-auto flex-1" : ""}>
+            {step === "choice" && (
             <div className="space-y-4">
               <Card className="cursor-pointer hover:shadow-md transition-all" onClick={handleLoginClick}>
                 <CardHeader className="pb-3">
@@ -967,7 +969,8 @@ export default function GuestPurchaseModal({
               </div>
             </div>
           )}
-        </div>
+          </div>
+        </QueryProvider>
       </DialogContent>
     </Dialog>
   )

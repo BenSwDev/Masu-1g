@@ -116,11 +116,9 @@ export default function BookingWizard({ initialData, currentUser, isGuestMode = 
       setWorkingHoursNote(undefined)
 
       try {
-        const result = await getAvailableTimeSlots({
-          treatmentId,
-          date: selectedDate,
-          durationId: selectedDurationId,
-        })
+        // Format date as YYYY-MM-DD string
+        const dateString = selectedDate.toISOString().split('T')[0]
+        const result = await getAvailableTimeSlots(dateString, treatmentId, selectedDurationId)
 
         if (result.success && result.timeSlots) {
           setTimeSlots(result.timeSlots)

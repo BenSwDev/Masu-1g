@@ -1,14 +1,9 @@
 {
-  "Roles": {
+  "roles": {
     "admin": "מנהל",
     "guest": "אורח",
     "member": "חבר",
     "partner": "שותף",
-    "professional": "מטפל"
-  },
-  "roles": {
-    "admin": "מנהל",
-    "member": "חבר",
     "professional": "מטפל"
   },
   "T": "T",
@@ -501,6 +496,140 @@
     },
     "totalCoupons": "סה\"כ קופונים: {{count}}"
   },
+  "adminPartnerCouponBatches": {
+    "title": "ניהול סדרות קופוני שותפים",
+    "description": "צור ונהל סדרות קופונים לשותפים. כל סדרה כוללת מספר קופונים עם אותם מאפיינים.",
+    "createNew": "צור סדרת קופונים חדשה",
+    "totalBatches": "סה\"כ סדרות: {{count}}",
+    "noBatchesFound": "לא נמצאו סדרות קופונים",
+    "viewCoupons": "הצג קופונים",
+    "columns": {
+      "name": "שם הסדרה",
+      "description": "תיאור",
+      "couponCount": "מספר קופונים",
+      "total": "סה\"כ קופונים",
+      "active": "קופונים פעילים",
+      "discount": "הנחה",
+      "validFrom": "תקף מ-",
+      "validUntil": "תקף עד",
+      "status": "סטטוס",
+      "assignedPartner": "שותף משויך",
+      "partnerNotAssigned": "לא משויך",
+      "partnerLoading": "טוען...",
+      "partnerUnnamed": "ללא שם"
+    },
+    "status": {
+      "active": "פעיל",
+      "expired": "פג תוקף",
+      "scheduled": "מתוזמן",
+      "inactiveManual": "לא פעיל"
+    },
+    "form": {
+      "titleCreate": "יצירת סדרת קופונים חדשה",
+      "titleEdit": "עריכת סדרת קופונים",
+      "descriptionCreate": "מלא את הפרטים ליצירת סדרת קופונים חדשה לשותף.",
+      "descriptionEdit": "עדכן את פרטי סדרת הקופונים.",
+      "nameLabel": "שם הסדרה",
+      "descriptionLabel": "תיאור (אופציונלי)",
+      "couponCountLabel": "מספר קופונים",
+      "codePrefixLabel": "קידומת קוד",
+      "discountTypeLabel": "סוג הנחה",
+      "discountTypePlaceholder": "בחר סוג הנחה",
+      "discountTypePercentage": "אחוז",
+      "discountTypeFixedAmount": "סכום קבוע",
+      "discountValueLabel": "ערך הנחה",
+      "validFromLabel": "תקף מ-",
+      "validUntilLabel": "תקף עד",
+      "usageLimitLabel": "מגבלת שימוש כוללת (0 ללא הגבלה)",
+      "usageLimitPerUserLabel": "מגבלת שימוש למשתמש (0 ללא הגבלה)",
+      "assignedPartnerLabel": "שותף משויך",
+      "assignedPartnerPlaceholder": "בחר שותף",
+      "notesForPartnerLabel": "הערות לשותף (אופציונלי)",
+      "isActiveLabel": "הסדרה פעילה",
+      "createBatch": "צור סדרה",
+      "saveChanges": "שמור שינויים"
+    },
+    "deleteDialog": {
+      "title": "מחיקת סדרת קופונים",
+      "description": "האם אתה בטוח שברצונך למחוק סדרת קופונים זו? פעולה זו אינה ניתנת לשחזור.",
+      "confirmButton": "מחק סדרה",
+      "deletingButton": "מוחק..."
+    },
+    "couponModal": {
+      "title": "קופונים בסדרה",
+      "description": "רשימת כל הקופונים שנוצרו בסדרה זו.",
+      "totalCoupons": "סה\"כ קופונים: {{count}}",
+      "activeCoupons": "קופונים פעילים: {{count}}",
+      "prefix": "קידומת קוד",
+      "discount": "הנחה",
+      "validFrom": "תקף מ-",
+      "validUntil": "תקף עד",
+      "selectedCount": "{{count}} נבחרו",
+      "activateSelected": "הפעל נבחרים",
+      "deactivateSelected": "השבת נבחרים",
+      "loading": "טוען קופונים...",
+      "columns": {
+        "code": "קוד קופון",
+        "status": "סטטוס",
+        "usage": "שימושים"
+      }
+    },
+    "toast": {
+      "createSuccess": "סדרת קופונים נוצרה בהצלחה",
+      "updateSuccess": "סדרת קופונים עודכנה בהצלחה",
+      "deleteSuccess": "סדרת קופונים נמחקה בהצלחה",
+      "deleteError": "מחיקת הסדרה נכשלה.",
+      "formError": "אירעה שגיאה לא צפויה.",
+      "loadCouponsError": "שגיאה בטעינת קופונים.",
+      "codeCopied": "הקוד הועתק",
+      "copyError": "שגיאה בהעתקת הקוד",
+      "bulkUpdateSuccess": "הסטטוס של הקופונים עודכן בהצלחה",
+      "bulkUpdateError": "שגיאה בעדכון סטטוס הקופונים"
+    }
+  },
+    "title": "ניהול סדרות קופונים לשותפים",
+    "description": "צור ונהל סדרות קופונים לשותפים. כל סדרה כוללת מספר קופונים עם אותם מאפיינים.",
+    "columns": {
+      "name": "שם הסדרה",
+      "description": "תיאור",
+      "couponCount": "מספר קופונים",
+      "discount": "הנחה",
+      "validFrom": "תקף מ-",
+      "validUntil": "תקף עד",
+      "status": "סטטוס",
+      "assignedPartner": "שותף משויך"
+    },
+    "createNew": "צור סדרת קופונים חדשה",
+    "totalBatches": "סה\"כ סדרות: {{count}}",
+    "form": {
+      "titleCreate": "יצירת סדרת קופונים חדשה",
+      "descriptionCreate": "מלא את הפרטים ליצירת סדרת קופונים חדשה לשותף.",
+      "nameLabel": "שם הסדרה",
+      "descriptionLabel": "תיאור (אופציונלי)",
+      "couponCountLabel": "מספר קופונים",
+      "codePrefixLabel": "קידומת קוד",
+      "discountTypeLabel": "סוג הנחה",
+      "discountValueLabel": "ערך הנחה",
+      "validFromLabel": "תקף מ-",
+      "validUntilLabel": "תקף עד",
+      "usageLimitLabel": "מגבלת שימוש כוללת (0 ללא הגבלה)",
+      "usageLimitPerUserLabel": "מגבלת שימוש למשתמש (0 ללא הגבלה)",
+      "assignedPartnerLabel": "שותף משויך",
+      "notesForPartnerLabel": "הערות לשותף (אופציונלי)",
+      "isActiveLabel": "הסדרה פעילה",
+      "createBatch": "צור סדרה",
+      "discountTypePlaceholder": "בחר סוג הנחה",
+      "discountTypePercentage": "אחוז",
+      "discountTypeFixedAmount": "סכום קבוע",
+      "assignedPartnerPlaceholder": "בחר שותף"
+    },
+    "deleteDialog": {
+      "title": "מחיקת סדרת קופונים",
+      "description": "האם אתה בטוח שברצונך למחוק סדרת קופונים זו? פעולה זו אינה ניתנת לשחזור.",
+      "confirmButton": "מחק סדרה"
+    }
+  },
+
   "apartmentNumber": "מספר דירה",
   "bookingDetails": {
     "drawerTitle": "פרטי הזמנה"
@@ -2028,16 +2157,6 @@
       "termsOfService": "תנאי השימוש",
       "welcome": "צור חשבון",
       "year": "שנה"
-    },
-    "roles": {
-      "admin": "מנהל",
-      "guest": "אורח",
-      "member": "חבר",
-      "memberPlural": "חברים",
-      "partner": "שותף",
-      "partnerPlural": "שותפים",
-      "professional": "מטפל",
-      "professionalPlural": "מטפלים"
     },
     "roomNumber": "מספר חדר",
     "search": "חיפוש",
@@ -3635,12 +3754,6 @@
     "eventMultiDayInfo": "אירוע זה נמשך מספר ימים",
     "eventSingleDayInfo": "אירוע זה מתקיים ביום אחד"
   },
-  "roles": {
-    "admin": "מנהל",
-    "professional": "מטפל",
-    "partner": "שותף",
-    "member": "חבר"
-  },
   "notifications": {
     "roleSwitchSuccess": "תפקיד הוחלף בהצלחה",
     "roleSwitchError": "שגיאה בהחלפת תפקיד"
@@ -3669,6 +3782,7 @@
       "addresses": "כתובות",
       "paymentMethods": "אמצעי תשלום",
       "purchaseHistory": "היסטוריית רכישות",
+      "partnerCouponBatches": "קופוני שותפים",
       "userMenu": {
         "toggleTooltip": "תפריט משתמש",
         "treatmentPreferences": "העדפות טיפול",
@@ -3717,11 +3831,6 @@
       "langEn": "אנגלית",
       "langRu": "רוסית"
     }
-  },
-  "roles": {
-    "memberPlural": "חברים",
-    "professionalPlural": "מטפלים", 
-    "partnerPlural": "שותפים"
   },
   "userSubscriptions": {
     "usageTooltip": "לחץ לפרטי שימוש",

@@ -283,6 +283,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
         { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions" },
         { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons" },
+        { titleKey: "partnerCouponBatches", icon: Handshake, hrefSuffix: "partner-coupon-batches" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
         { titleKey: "purchaseReports", icon: BarChart3, hrefSuffix: "purchase-reports" },
       ],

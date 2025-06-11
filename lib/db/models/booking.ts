@@ -45,6 +45,7 @@ export interface IBookingAddressSnapshot {
   hotelName?: string
   roomNumber?: string
   otherInstructions?: string
+  hasPrivateParking?: boolean
 }
 
 export interface IBooking extends Document {
@@ -133,6 +134,7 @@ const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
     hotelName: { type: String },
     roomNumber: { type: String },
     otherInstructions: { type: String },
+    hasPrivateParking: { type: Boolean },
   },
   { _id: false },
 )

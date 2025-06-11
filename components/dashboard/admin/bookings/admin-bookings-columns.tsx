@@ -446,12 +446,25 @@ const RecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
   )
 }
 
+// Update TreatmentInfo component to show more details with correct duration logic
 const TreatmentInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   const treatment = booking.treatmentId as any
-  const selectedTime = (booking as any).selectedTime
   
   if (!treatment) {
     return <div className="text-sm text-muted-foreground">-</div>
+  }
+
+  // Get duration information based on treatment type
+  let durationInfo = null
+  if (treatment.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
+    const selectedDuration = treatment.durations.find(
+      (d: any) => d._id?.toString() === booking.selectedDurationId?.toString()
+    )
+    if (selectedDuration) {
+      durationInfo = `${selectedDuration.minutes} ${t("common.minutes")}`
+    }
+  } else if (treatment.pricingType === "fixed" && treatment.defaultDurationMinutes) {
+    durationInfo = `${treatment.defaultDurationMinutes} ${t("common.minutes")}`
   }
 
   return (
@@ -462,23 +475,19 @@ const TreatmentInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
           {treatment.category}
         </div>
       )}
-      {selectedTime && (
+      {durationInfo && (
         <div className="text-xs text-blue-600">
-          {t("adminBookings.selectedTime")}: {selectedTime}
-        </div>
-      )}
-      {treatment.defaultDurationMinutes && (
-        <div className="text-xs text-muted-foreground">
-          {treatment.defaultDurationMinutes} {t("common.minutes")}
+          {durationInfo}
         </div>
       )}
     </div>
   )
 }
 
+// Fix AddressDetailsInfo to properly handle parking information
 const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   // First try bookingAddressSnapshot, then addressId, then customAddressDetails
-  const address = booking.bookingAddressSnapshot || (booking as any).addressDetails || booking.addressId
+  const address = booking.bookingAddressSnapshot || booking.customAddressDetails || (booking as any).addressId
   
   if (!address) {
     return <div className="text-sm text-muted-foreground">-</div>
@@ -529,6 +538,100 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
           {address.additionalNotes}
         </div>
       )}
+    </div>
+  )
+}
+
+// Add new component for redemption details (מימוש)
+const RedemptionInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const priceDetails = booking.priceDetails
+  
+  if (!priceDetails) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
+
+  const hasRedemption = priceDetails.isBaseTreatmentCoveredBySubscription || 
+                       priceDetails.isBaseTreatmentCoveredByTreatmentVoucher ||
+                       priceDetails.discountAmount > 0 ||
+                       priceDetails.voucherAppliedAmount > 0
+
+  if (!hasRedemption) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
+
+  return (
+    <div className="space-y-1 max-w-[180px]">
+      {priceDetails.isBaseTreatmentCoveredBySubscription && (
+        <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+          {t("adminBookings.subscriptionRedemption")}
+        </div>
+      )}
+      {priceDetails.isBaseTreatmentCoveredByTreatmentVoucher && (
+        <div className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+          {t("adminBookings.treatmentVoucherRedemption")}
+        </div>
+      )}
+      {priceDetails.voucherAppliedAmount > 0 && !priceDetails.isBaseTreatmentCoveredByTreatmentVoucher && (
+        <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
+          {t("adminBookings.monetaryVoucherRedemption")}: ₪{priceDetails.voucherAppliedAmount.toFixed(2)}
+        </div>
+      )}
+      {priceDetails.discountAmount > 0 && (
+        <div className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
+          {t("adminBookings.couponDiscount")}: ₪{priceDetails.discountAmount.toFixed(2)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Add new component for financial summary (סיכום כספי)
+const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const priceDetails = booking.priceDetails
+  const treatment = booking.treatmentId as any
+  
+  if (!priceDetails) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
+
+  // Calculate professional fee and office commission
+  let professionalFee = 0
+  let officeFee = 0
+
+  if (treatment && priceDetails.finalAmount > 0) {
+    // Get professional price based on treatment type
+    let professionalPrice = 0
+    if (treatment.pricingType === "fixed") {
+      professionalPrice = treatment.fixedProfessionalPrice || 0
+    } else if (treatment.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
+      const selectedDuration = treatment.durations.find(
+        (d: any) => d._id?.toString() === booking.selectedDurationId?.toString()
+      )
+      if (selectedDuration) {
+        professionalPrice = selectedDuration.professionalPrice || 0
+      }
+    }
+
+    professionalFee = professionalPrice
+    officeFee = priceDetails.finalAmount - professionalPrice
+  }
+
+  const actualPaid = priceDetails.finalAmount
+
+  return (
+    <div className="space-y-1 max-w-[180px]">
+      <div className="font-medium text-sm">
+        {t("adminBookings.finalCost")}: ₪{priceDetails.finalAmount.toFixed(2)}
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {t("adminBookings.actualPaid")}: ₪{actualPaid.toFixed(2)}
+      </div>
+      <div className="text-xs text-green-600">
+        {t("adminBookings.professionalFee")}: ₪{professionalFee.toFixed(2)}
+      </div>
+      <div className="text-xs text-blue-600">
+        {t("adminBookings.officeFee")}: ₪{officeFee.toFixed(2)}
+      </div>
     </div>
   )
 }
@@ -645,7 +748,7 @@ export const getAdminBookingColumns = (
     header: t("adminBookings.columns.addressDetails"),
     cell: ({ row }) => <AddressDetailsInfo booking={row.original} t={t} />,
   },
-  // 5. Treatment with Category and Times
+  // 5. Treatment with Category and Duration
   {
     accessorKey: "treatmentId",
     header: t("adminBookings.columns.treatment"),
@@ -678,7 +781,19 @@ export const getAdminBookingColumns = (
     ),
     cell: ({ row }) => <PriceDetailsInfo booking={row.original} t={t} />,
   },
-  // 9. Actions
+  // 9. NEW: Redemption Details (מימוש)
+  {
+    accessorKey: "redemption",
+    header: t("adminBookings.columns.redemption"),
+    cell: ({ row }) => <RedemptionInfo booking={row.original} t={t} />,
+  },
+  // 10. NEW: Financial Summary (סיכום כספי)
+  {
+    accessorKey: "financialSummary",
+    header: t("adminBookings.columns.financialSummary"),
+    cell: ({ row }) => <FinancialSummaryInfo booking={row.original} t={t} />,
+  },
+  // 11. Actions
   {
     id: "actions",
     header: t("common.actions"),

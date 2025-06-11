@@ -671,6 +671,7 @@ export async function createBooking(
           selectedAddressDoc.addressType === "hotel" ? selectedAddressDoc.hotelDetails?.roomNumber : undefined,
         otherInstructions:
           selectedAddressDoc.addressType === "other" ? selectedAddressDoc.otherDetails?.instructions : undefined,
+        hasPrivateParking: selectedAddressDoc.hasPrivateParking,
       }
 
       if (!bookingAddressSnapshot.fullAddress) {

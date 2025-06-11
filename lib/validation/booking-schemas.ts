@@ -51,6 +51,7 @@ export const SchedulingDetailsSchema = z
         entrance: z.string().optional(),
         floor: z.string().optional(),
         notes: z.string().max(200, "bookings.validation.address.notesTooLong").optional(),
+        hasPrivateParking: z.boolean().optional(),
       })
       .optional(),
     notes: z.string().max(500, "bookings.validation.notesTooLong").optional(),

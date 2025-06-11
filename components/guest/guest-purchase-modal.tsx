@@ -25,6 +25,7 @@ import { signIn } from "next-auth/react"
 import { useGuestSession } from "@/components/guest/guest-session-manager"
 import type { BookingInitialData } from "@/types/booking"
 import type { IUser } from "@/lib/db/models/user"
+import { logger } from "@/lib/logs/logger"
 
 // Import the existing purchase components
 import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
@@ -82,10 +83,24 @@ export default function GuestPurchaseModal({
 
   // Check if user has existing guest session
   useEffect(() => {
-    if (hasActiveGuestSession() && isOpen) {
-      setStep("choice")
+    if (isOpen) {
+      logger.info("🔓 Guest purchase modal opened", {
+        purchaseType,
+        hasActiveGuestSession: hasActiveGuestSession(),
+        guestUserId: guestSession.guestUserId,
+        step
+      })
+      
+      if (hasActiveGuestSession()) {
+        logger.info("👤 Found existing guest session", {
+          guestUserId: guestSession.guestUserId,
+          guestSessionId: guestSession.guestSessionId,
+          shouldMergeWith: guestSession.shouldMergeWith
+        })
+        setStep("choice")
+      }
     }
-  }, [hasActiveGuestSession, isOpen])
+  }, [hasActiveGuestSession, isOpen, purchaseType, guestSession, step])
 
   // Generate years, months, days for date of birth
   const currentYear = new Date().getFullYear()
@@ -120,18 +135,46 @@ export default function GuestPurchaseModal({
   }
 
   const handleLoginClick = () => {
+    logger.info("🔐 User chose to login instead of guest", {
+      purchaseType,
+      currentStep: step
+    })
+    
     onClose()
     router.push("/auth/login")
   }
 
   const handleContinueWithExistingGuest = async () => {
-    if (!guestSession.guestUserId) return
+    logger.info("🚀 Starting guest purchase flow with existing guest", {
+      guestUserId: guestSession.guestUserId,
+      purchaseType,
+      hasGuestSession: hasActiveGuestSession()
+    })
+    
+    if (!guestSession.guestUserId) {
+      logger.error("❌ No guest user ID in session", { guestSession })
+      return
+    }
     
     setIsLoading(true)
     try {
+      logger.info("📥 Loading guest data and proceeding to purchase flow", {
+        guestUserId: guestSession.guestUserId,
+        purchaseType
+      })
+      
       // Load guest data and proceed to purchase flow
       await loadGuestDataAndProceed(guestSession.guestUserId)
+      
+      logger.info("✅ Successfully loaded guest data and proceeded to purchase flow")
     } catch (error) {
+      logger.error("❌ Failed to load guest data", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        guestUserId: guestSession.guestUserId,
+        purchaseType
+      })
+      
       toast({
         title: t("common.error"),
         description: t("guest.load.failed"),
@@ -143,69 +186,172 @@ export default function GuestPurchaseModal({
   }
 
   const loadGuestDataAndProceed = async (guestUserId: string) => {
-    // Get the actual guest user profile
-    const { getUserProfile } = await import("@/actions/profile-actions")
-    const guestProfileResult = await getUserProfile(guestUserId)
+    logger.info("📊 Loading guest data and purchase data", {
+      guestUserId,
+      purchaseType,
+      step: "start"
+    })
     
-    if (!guestProfileResult?.success || !guestProfileResult.user) {
-      throw new Error("Failed to load guest profile")
-    }
-    
-    const guestProfile = guestProfileResult.user
-
-    // Create user session for the guest with real data
-    const guestUser: any = {
-      id: guestProfile._id || guestProfile.id,
-      name: guestProfile.name || "",
-      email: guestProfile.email || "",
-      roles: ["member"],
-      phone: guestProfile.phone,
-      gender: guestProfile.gender,
-      dateOfBirth: guestProfile.dateOfBirth,
-      address: guestProfile.address,
-      isGuest: true
-    }
-    
-    // Load initial data based on purchase type
-    let initialData: any = null
-    
-    if (purchaseType === "booking") {
-      const result = await getBookingInitialData(guestUserId)
-      if (result.success) {
-        initialData = result.data
+    try {
+      // Get the actual guest user profile
+      logger.info("👤 Loading guest profile", { guestUserId })
+      const { getUserProfile } = await import("@/actions/profile-actions")
+      const guestProfileResult = await getUserProfile(guestUserId)
+      
+      logger.info("📋 Guest profile result", {
+        success: guestProfileResult?.success,
+        hasUser: !!guestProfileResult?.user,
+        userData: guestProfileResult?.user ? {
+          hasId: !!(guestProfileResult.user._id || guestProfileResult.user.id),
+          hasName: !!guestProfileResult.user.name,
+          hasEmail: !!guestProfileResult.user.email,
+          isGuest: guestProfileResult.user.isGuest
+        } : null
+      })
+      
+      if (!guestProfileResult?.success || !guestProfileResult.user) {
+        logger.error("❌ Failed to load guest profile", {
+          guestUserId,
+          profileResult: guestProfileResult
+        })
+        throw new Error("Failed to load guest profile")
       }
-    } else if (purchaseType === "subscription") {
-      const [subscriptionsResult, treatmentsResult] = await Promise.all([
-        getSubscriptionsForSelection(),
-        getTreatmentsForSelection()
-      ])
-      if (subscriptionsResult.success && treatmentsResult.success) {
-        initialData = { 
-          subscriptions: subscriptionsResult.subscriptions,
-          treatments: treatmentsResult.treatments,
-          paymentMethods: [] // Guests don't have saved payment methods
+      
+      const guestProfile = guestProfileResult.user
+      logger.info("✅ Guest profile loaded successfully")
+
+      // Create user session for the guest with real data
+      const guestUser: any = {
+        id: guestProfile._id || guestProfile.id,
+        name: guestProfile.name || "",
+        email: guestProfile.email || "",
+        roles: ["member"],
+        phone: guestProfile.phone,
+        gender: guestProfile.gender,
+        dateOfBirth: guestProfile.dateOfBirth,
+        address: guestProfile.address,
+        isGuest: true
+      }
+      
+      logger.info("👤 Created guest user session", {
+        hasId: !!guestUser.id,
+        hasName: !!guestUser.name,
+        hasEmail: !!guestUser.email,
+        isGuest: guestUser.isGuest
+      })
+      
+      // Load initial data based on purchase type
+      let initialData: any = null
+      
+      logger.info("📦 Loading purchase data", { purchaseType })
+      
+      if (purchaseType === "booking") {
+        logger.info("🏥 Loading booking data...")
+        const result = await getBookingInitialData(guestUserId)
+        logger.info("📋 Booking data result", {
+          success: result.success,
+          hasData: !!result.data,
+          error: result.error
+        })
+        if (result.success) {
+          initialData = result.data
+          logger.info("✅ Booking data loaded", {
+            hasTreatments: !!result.data?.activeTreatments,
+            treatmentCount: result.data?.activeTreatments?.length,
+            hasSubscriptions: !!result.data?.activeUserSubscriptions,
+            subscriptionCount: result.data?.activeUserSubscriptions?.length
+          })
+        }
+      } else if (purchaseType === "subscription") {
+        logger.info("📅 Loading subscription data...")
+        const [subscriptionsResult, treatmentsResult] = await Promise.all([
+          getSubscriptionsForSelection(),
+          getTreatmentsForSelection()
+        ])
+        
+        logger.info("📋 Subscription loading results", {
+          subscriptionsSuccess: subscriptionsResult.success,
+          subscriptionsCount: subscriptionsResult.subscriptions?.length,
+          subscriptionsError: subscriptionsResult.error,
+          treatmentsSuccess: treatmentsResult.success,
+          treatmentsCount: treatmentsResult.treatments?.length,
+          treatmentsError: treatmentsResult.error
+        })
+        
+        if (subscriptionsResult.success && treatmentsResult.success) {
+          initialData = { 
+            subscriptions: subscriptionsResult.subscriptions,
+            treatments: treatmentsResult.treatments,
+            paymentMethods: [] // Guests don't have saved payment methods
+          }
+          logger.info("✅ Subscription data loaded", {
+            subscriptionCount: initialData.subscriptions?.length,
+            treatmentCount: initialData.treatments?.length
+          })
+        }
+      } else if (purchaseType === "gift-voucher") {
+        logger.info("🎁 Loading gift voucher data...")
+        const treatmentsResult = await getTreatmentsForSelection()
+        
+        logger.info("📋 Gift voucher treatments result", {
+          success: treatmentsResult.success,
+          treatmentCount: treatmentsResult.treatments?.length,
+          error: treatmentsResult.error
+        })
+        
+        if (treatmentsResult.success) {
+          initialData = { 
+            treatments: treatmentsResult.treatments,
+            initialPaymentMethods: [] // Guests don't have saved payment methods
+          }
+          logger.info("✅ Gift voucher data loaded", {
+            treatmentCount: initialData.treatments?.length
+          })
         }
       }
-    } else if (purchaseType === "gift-voucher") {
-      const treatmentsResult = await getTreatmentsForSelection()
-      if (treatmentsResult.success) {
-        initialData = { 
-          treatments: treatmentsResult.treatments,
-          initialPaymentMethods: [] // Guests don't have saved payment methods
-        }
-      }
-    }
 
-    if (initialData) {
-      setGuestUser(guestUser as IUser)
-      setPurchaseData(initialData)
-      setStep("purchase-flow")
-    } else {
-      throw new Error("Failed to load purchase data")
+      logger.info("📊 Final data loading result", {
+        hasInitialData: !!initialData,
+        dataType: purchaseType,
+        dataKeys: initialData ? Object.keys(initialData) : []
+      })
+
+      if (initialData) {
+        logger.info("🚀 Proceeding to purchase flow", {
+          step: "purchase-flow",
+          hasGuestUser: !!guestUser,
+          hasInitialData: !!initialData
+        })
+        
+        setGuestUser(guestUser as IUser)
+        setPurchaseData(initialData)
+        setStep("purchase-flow")
+        
+        logger.info("✅ Successfully set guest user and purchase data, moved to purchase flow")
+      } else {
+        logger.error("❌ No initial data loaded", {
+          purchaseType,
+          guestUserId
+        })
+        throw new Error("Failed to load purchase data")
+      }
+    } catch (error) {
+      logger.error("❌ Exception in loadGuestDataAndProceed", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        guestUserId,
+        purchaseType
+      })
+      throw error
     }
   }
 
   const handleGuestFormSubmit = async (data: GuestFormValues) => {
+    logger.info("🆕 Creating new guest user", {
+      formData: { ...data, phone: data.phone ? "***" : undefined }, // Hide phone for privacy
+      purchaseType
+    })
+    
     setIsLoading(true)
     try {
       const { name, email, phone, gender, day, month, year } = data
@@ -214,6 +360,7 @@ export default function GuestPurchaseModal({
       let dateOfBirth: Date | undefined
       if (day && month && year) {
         dateOfBirth = new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`)
+        logger.debug("📅 Parsed date of birth", { day, month, year, dateOfBirth })
       }
 
       const payload: CreateGuestUserPayload = {
@@ -224,9 +371,32 @@ export default function GuestPurchaseModal({
         dateOfBirth,
       }
 
+      logger.info("🔄 Calling createGuestUser API", {
+        hasName: !!payload.name,
+        hasEmail: !!payload.email,
+        hasPhone: !!payload.phone,
+        hasGender: !!payload.gender,
+        hasDateOfBirth: !!payload.dateOfBirth
+      })
+
       const result = await createGuestUser(payload)
       
+      logger.info("📋 Guest user creation result", {
+        success: result.success,
+        hasGuestUserId: !!result.guestUserId,
+        hasGuestSessionId: !!result.guestSessionId,
+        hasExistingUserId: !!result.existingUserId,
+        shouldMerge: result.shouldMerge,
+        error: result.error
+      })
+      
       if (result.success && result.guestUserId) {
+        logger.info("✅ Guest user created successfully, updating session", {
+          guestUserId: result.guestUserId,
+          guestSessionId: result.guestSessionId,
+          shouldMergeWith: result.existingUserId
+        })
+        
         // Update guest session
         updateGuestSession({
           guestUserId: result.guestUserId,
@@ -234,9 +404,16 @@ export default function GuestPurchaseModal({
           shouldMergeWith: result.existingUserId,
         })
 
+        logger.info("🔄 Proceeding to load guest data and start purchase flow")
+        
         // Load guest data and proceed to purchase flow
         await loadGuestDataAndProceed(result.guestUserId)
       } else {
+        logger.error("❌ Guest user creation failed", {
+          result,
+          payload: { ...payload, email: "***", phone: "***" } // Hide sensitive data
+        })
+        
         toast({
           title: t("common.error"),
           description: t(result.error || "guest.creation.failed"),
@@ -244,6 +421,12 @@ export default function GuestPurchaseModal({
         })
       }
     } catch (error) {
+      logger.error("❌ Exception during guest user creation", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        purchaseType
+      })
+      
       toast({
         title: t("common.error"),
         description: t("guest.creation.failed"),
@@ -255,34 +438,80 @@ export default function GuestPurchaseModal({
   }
 
   const handlePurchaseComplete = async (purchase: any) => {
+    logger.info("🎉 Purchase completed by guest!", {
+      purchaseType,
+      guestUserId: guestSession.guestUserId,
+      purchaseData: purchase ? {
+        hasId: !!purchase._id || !!purchase.id,
+        type: purchase.type || "unknown"
+      } : null
+    })
+    
     setCompletedPurchase(purchase)
     
     // Convert guest to real user
     if (guestSession.guestUserId) {
       try {
+        logger.info("🔄 Converting guest to real user", {
+          guestUserId: guestSession.guestUserId
+        })
+        
         const conversionResult = await convertGuestToRealUser(guestSession.guestUserId)
+        
+        logger.info("📋 Guest conversion result", {
+          success: conversionResult.success,
+          error: conversionResult.error
+        })
+        
         if (conversionResult.success) {
+          logger.info("✅ Guest converted to real user successfully")
           toast({
             title: t("guest.conversion.success"),
             description: t("guest.conversion.description"),
             variant: "default",
           })
+        } else {
+          logger.warn("⚠️ Guest conversion failed but purchase was successful", {
+            error: conversionResult.error
+          })
         }
       } catch (error) {
-        console.warn("Failed to convert guest to real user:", error)
+        logger.error("❌ Exception during guest conversion", {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          guestUserId: guestSession.guestUserId
+        })
       }
+    } else {
+      logger.warn("⚠️ No guest user ID found for conversion", {
+        guestSession
+      })
     }
     
+    logger.info("✅ Moving to completion step")
     setStep("completion")
   }
 
   const handleBackToPurchaseChoice = () => {
+    logger.info("⬅️ User going back to purchase choice", {
+      currentStep: step,
+      purchaseType
+    })
+    
     setStep("choice")
     setGuestUser(null)
     setPurchaseData(null)
   }
 
   const handleClose = () => {
+    logger.info("❌ Closing guest purchase modal", {
+      currentStep: step,
+      purchaseType,
+      hadGuestUser: !!guestUser,
+      hadPurchaseData: !!purchaseData,
+      hadCompletedPurchase: !!completedPurchase
+    })
+    
     setStep("choice")
     setGuestUser(null)
     setPurchaseData(null)
@@ -291,11 +520,44 @@ export default function GuestPurchaseModal({
     onClose()
   }
 
-  const renderPurchaseFlow = () => {
-    if (!guestUser || !purchaseData) return null
+    const renderPurchaseFlow = () => {
+    logger.debug("🔄 Rendering purchase flow", {
+      purchaseType,
+      hasGuestUser: !!guestUser,
+      hasPurchaseData: !!purchaseData,
+      guestUserId: guestUser?.id,
+      step
+    })
+    
+    if (!guestUser || !purchaseData) {
+      logger.warn("⚠️ Cannot render purchase flow - missing data", {
+        hasGuestUser: !!guestUser,
+        hasPurchaseData: !!purchaseData,
+        purchaseType
+      })
+      return null
+    }
+
+    logger.info("🎨 Rendering purchase component", {
+      purchaseType,
+      componentData: {
+        booking: purchaseType === "booking" ? {
+          hasInitialData: !!purchaseData,
+          dataKeys: purchaseData ? Object.keys(purchaseData) : []
+        } : null,
+        subscription: purchaseType === "subscription" ? {
+          subscriptionCount: purchaseData.subscriptions?.length,
+          treatmentCount: purchaseData.treatments?.length
+        } : null,
+        giftVoucher: purchaseType === "gift-voucher" ? {
+          treatmentCount: purchaseData.treatments?.length
+        } : null
+      }
+    })
 
     switch (purchaseType) {
       case "booking":
+        logger.info("🏥 Rendering BookingWizard component")
         return (
           <BookingWizard
             initialData={purchaseData}
@@ -304,25 +566,31 @@ export default function GuestPurchaseModal({
             onBookingComplete={handlePurchaseComplete}
           />
         )
-             case "subscription":
-         return (
-           <PurchaseSubscriptionClient
-             subscriptions={purchaseData.subscriptions}
-             currentUser={guestUser}
-             isGuestMode={true}
-             onPurchaseComplete={handlePurchaseComplete}
-           />
-         )
-             case "gift-voucher":
-         return (
-           <PurchaseGiftVoucherClient
-             treatments={purchaseData.treatments}
-             currentUser={guestUser}
-             isGuestMode={true}
-             onPurchaseComplete={handlePurchaseComplete}
-           />
-         )
+      case "subscription":
+        logger.info("📅 Rendering PurchaseSubscriptionClient component")
+        return (
+          <PurchaseSubscriptionClient
+            subscriptions={purchaseData.subscriptions}
+            treatments={purchaseData.treatments}
+            paymentMethods={purchaseData.paymentMethods}
+            currentUser={guestUser}
+            isGuestMode={true}
+            onPurchaseComplete={handlePurchaseComplete}
+          />
+        )
+      case "gift-voucher":
+        logger.info("🎁 Rendering PurchaseGiftVoucherClient component")
+        return (
+          <PurchaseGiftVoucherClient
+            treatments={purchaseData.treatments}
+            initialPaymentMethods={purchaseData.initialPaymentMethods}
+            currentUser={guestUser}
+            isGuestMode={true}
+            onPurchaseComplete={handlePurchaseComplete}
+          />
+        )
       default:
+        logger.error("❌ Unknown purchase type", { purchaseType })
         return null
     }
   }

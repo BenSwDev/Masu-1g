@@ -81,9 +81,9 @@ export default function GuestPurchaseModal({
     },
   })
 
-  // Check if user has existing guest session (only when modal opens, not on step changes)
+  // Check if user has existing guest session - only run when modal opens
   useEffect(() => {
-    if (isOpen && step === "choice") {
+    if (isOpen) {
       logger.info("🔓 Guest purchase modal opened", {
         purchaseType,
         hasActiveGuestSession: hasActiveGuestSession(),
@@ -91,16 +91,18 @@ export default function GuestPurchaseModal({
         step
       })
       
+      // Only set initial step when modal first opens
       if (hasActiveGuestSession()) {
         logger.info("👤 Found existing guest session", {
           guestUserId: guestSession.guestUserId,
           guestSessionId: guestSession.guestSessionId,
           shouldMergeWith: guestSession.shouldMergeWith
         })
-        // Already on choice step, no need to set it again
+        // Don't override step if we're already in a flow
+        setStep(prevStep => prevStep === "choice" ? "choice" : prevStep)
       }
     }
-  }, [hasActiveGuestSession, isOpen, purchaseType, guestSession.guestUserId, guestSession.guestSessionId])
+  }, [isOpen])
 
   // Generate years, months, days for date of birth
   const currentYear = new Date().getFullYear()
@@ -559,14 +561,61 @@ export default function GuestPurchaseModal({
     switch (purchaseType) {
       case "booking":
         logger.info("🏥 Rendering BookingWizard component")
-        return (
-          <BookingWizard
-            initialData={purchaseData}
-            currentUser={guestUser}
-            isGuestMode={true}
-            onBookingComplete={handlePurchaseComplete}
-          />
-        )
+        
+        // Validate data before passing to BookingWizard
+        if (!purchaseData?.activeTreatments || !purchaseData?.workingHoursSettings) {
+          logger.error("❌ Invalid booking data for BookingWizard", {
+            hasActiveTreatments: !!purchaseData?.activeTreatments,
+            hasWorkingHoursSettings: !!purchaseData?.workingHoursSettings,
+            purchaseDataKeys: purchaseData ? Object.keys(purchaseData) : []
+          })
+          return (
+            <div className="p-4 text-center">
+              <p className="text-red-600">{t("common.error")}: נתוני הזמנה לא תקינים</p>
+            </div>
+          )
+        }
+        
+        if (!guestUser?.id || !guestUser?.name || !guestUser?.email) {
+          logger.error("❌ Invalid guest user data for BookingWizard", {
+            hasId: !!guestUser?.id,
+            hasName: !!guestUser?.name,
+            hasEmail: !!guestUser?.email
+          })
+          return (
+            <div className="p-4 text-center">
+              <p className="text-red-600">{t("common.error")}: נתוני משתמש אורח לא תקינים</p>
+            </div>
+          )
+        }
+        
+        logger.info("✅ BookingWizard data validation passed", {
+          treatmentCount: purchaseData.activeTreatments?.length,
+          hasWorkingHours: !!purchaseData.workingHoursSettings,
+          guestUserId: guestUser.id
+        })
+        
+        try {
+          return (
+            <BookingWizard
+              initialData={purchaseData}
+              currentUser={guestUser}
+              isGuestMode={true}
+              onBookingComplete={handlePurchaseComplete}
+            />
+          )
+        } catch (error) {
+          logger.error("❌ Error rendering BookingWizard", {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+          })
+          return (
+            <div className="p-4 text-center">
+              <p className="text-red-600">{t("common.error")}: שגיאה בטעינת אשף ההזמנה</p>
+              <p className="text-sm text-gray-600 mt-2">נא לנסות שוב או ליצור קשר עם התמיכה</p>
+            </div>
+          )
+        }
       case "subscription":
         logger.info("📅 Rendering PurchaseSubscriptionClient component")
         return (
@@ -598,41 +647,33 @@ export default function GuestPurchaseModal({
 
   const modalSize = step === "purchase-flow" ? "max-w-7xl w-full h-[90vh]" : "sm:max-w-md md:max-w-lg"
 
-  const handleDialogOpenChange = (open: boolean) => {
-    logger.info("🔄 Dialog open change requested", {
-      open,
-      currentStep: step,
-      purchaseType,
-      willClose: !open && step !== "purchase-flow"
-    })
-    
-    // Only allow closing if not in purchase flow or if explicitly closing
-    if (!open && step !== "purchase-flow") {
-      logger.info("✅ Allowing dialog close", { step })
-      handleClose()
-    } else if (!open && step === "purchase-flow") {
-      logger.info("🚫 Blocking dialog close during purchase flow", { step })
-    }
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className={modalSize}>
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-center text-xl font-bold flex-1">
-              {step === "completion" ? t("guest.purchase.completed") : getPurchaseTypeTitle()}
-            </DialogTitle>
-            {step !== "purchase-flow" && (
+            {step === "purchase-flow" && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleClose}
+                onClick={handleBackToPurchaseChoice}
                 className="flex items-center gap-2"
               >
-                <X className="h-4 w-4" />
+                <ArrowLeft className="h-4 w-4" />
+                {t("common.back")}
               </Button>
             )}
+            <DialogTitle className="text-center text-xl font-bold flex-1">
+              {step === "completion" ? t("guest.purchase.completed") : getPurchaseTypeTitle()}
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="flex items-center gap-2"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
           <DialogDescription className="text-center">
             {step === "choice" 

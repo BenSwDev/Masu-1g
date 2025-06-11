@@ -42,7 +42,7 @@ interface GuestUserEditModalProps {
   onUserUpdated: (updatedUser: IUser) => void
 }
 
-export function GuestUserEditModal({
+export default function GuestUserEditModal({
   isOpen,
   onClose,
   guestUser,
@@ -62,13 +62,13 @@ export function GuestUserEditModal({
   } = useForm<GuestEditFormData>({
     resolver: zodResolver(guestEditSchema),
     defaultValues: {
-      firstName: guestUser.firstName || "",
-      lastName: guestUser.lastName || "",
-      email: guestUser.email || "",
-      phone: guestUser.phone || "",
-      birthDate: guestUser.birthDate ? new Date(guestUser.birthDate).toISOString().split('T')[0] : "",
-      address: guestUser.address || "",
-      notes: guestUser.notes || "",
+      firstName: guestUser?.firstName || "",
+      lastName: guestUser?.lastName || "",
+      email: guestUser?.email || "",
+      phone: guestUser?.phone || "",
+      birthDate: guestUser?.birthDate ? new Date(guestUser.birthDate).toISOString().split('T')[0] : "",
+      address: guestUser?.address || "",
+      notes: guestUser?.notes || "",
     }
   })
 

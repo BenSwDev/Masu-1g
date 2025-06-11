@@ -4013,7 +4013,8 @@
       "continueWithSessionDescription": "השתמש בפרטי האורח שמולאו קודם",
       "editGuestDetails": "ערוך פרטי אורח",
       "editGuestDetailsDescription": "שנה או עדכן את הפרטים לפני המשך",
-      "continue": "המשך"
+      "continue": "המשך",
+      "purchaseDescription": "השלם את הרכישה עם הפרטים שנבחרו"
     },
     "creation": {
       "success": "נוצר בהצלחה",
@@ -4024,6 +4025,14 @@
     },
     "purchase": {
       "title": "רכישה כאורח"
-    }
+    },
+    "welcomeBack": "שמחים לראותך שוב!",
+    "editDetails": "ערוך פרטים",
+    "loginAsExisting": "התחבר כלקוח קיים",
+    "continueAsGuest": "המשך כאורח",
+    "fetchError": "שגיאה בטעינת נתוני המשתמש",
+    "goToDashboard": "עבור לדשבורד",
+    "backToHome": "חזור לעמוד הבית",
+    "guestModeNote": "מצב אורח מאפשר לך לבצע רכישה ללא יצירת חשבון מלא"
   }
 }

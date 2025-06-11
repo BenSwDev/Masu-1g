@@ -52,6 +52,13 @@ export default function TreatmentSelectionStep({
     },
   })
 
+  const validGiftVouchers = useMemo(() => {
+    return (initialData.usableGiftVouchers || []).filter(
+      (voucher): voucher is IGiftVoucher & { _id: string } =>
+        voucher && typeof voucher._id === "string" && voucher._id.length > 0,
+    )
+  }, [initialData.usableGiftVouchers])
+
   const treatmentCategories = useMemo(() => {
     const categories = new Set((initialData.activeTreatments || []).map((t) => t.category || "Uncategorized"))
     return Array.from(categories)
@@ -208,13 +215,6 @@ export default function TreatmentSelectionStep({
     }
     onNext()
   }
-
-  const validGiftVouchers = useMemo(() => {
-    return (initialData.usableGiftVouchers || []).filter(
-      (voucher): voucher is IGiftVoucher & { _id: string } =>
-        voucher && typeof voucher._id === "string" && voucher._id.length > 0,
-    )
-  }, [initialData.usableGiftVouchers])
 
   return (
     <Form {...form}>

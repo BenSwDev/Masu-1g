@@ -14,93 +14,50 @@ export function LandingHero() {
   const [guestModalOpen, setGuestModalOpen] = useState(false)
   const [selectedPurchaseType, setSelectedPurchaseType] = useState<"booking" | "subscription" | "gift-voucher">("booking")
 
-  const [initialData, setInitialData] = useState<any>(null)
-  const [isLoadingData, setIsLoadingData] = useState(false)
-
-  const loadInitialData = async (purchaseType: "booking" | "subscription" | "gift-voucher") => {
-    setIsLoadingData(true)
-    try {
-      let data = {}
-      
-      switch (purchaseType) {
-        case "booking":
-          // Load treatments only for guests
-          const treatmentsRes = await fetch("/api/treatments-for-selection")
-          const treatments = treatmentsRes.ok ? await treatmentsRes.json() : { treatments: [] }
-          
-          data = {
-            activeTreatments: treatments.treatments || [],
-            paymentMethods: [], // Empty for guests - will be handled in booking flow
-            activeUserSubscriptions: [], // Empty for guests
-            usableGiftVouchers: [], // Empty for guests  
-            userAddresses: [] // Empty for guests - will be created during booking flow
-          }
-          break
-          
-        case "subscription":
-          // Load subscriptions, treatments - no payment methods for guests
-          const [subsRes, treatRes] = await Promise.all([
-            fetch("/api/subscriptions-for-selection"),
-            fetch("/api/treatments-for-selection")
-          ])
-          const subscriptions = subsRes.ok ? await subsRes.json() : { subscriptions: [] }
-          const treat = treatRes.ok ? await treatRes.json() : { treatments: [] }
-          
-          data = {
-            subscriptions: subscriptions.subscriptions || [],
-            treatments: treat.treatments || [],
-            paymentMethods: [] // Empty for guests - will be handled in purchase flow
-          }
-          break
-          
-        case "gift-voucher":
-          // Load treatments only - no payment methods for guests
-          const treatmentsGRes = await fetch("/api/treatments-for-selection")
-          const treatmentsG = treatmentsGRes.ok ? await treatmentsGRes.json() : { treatments: [] }
-          
-          data = {
-            treatments: treatmentsG.treatments || [],
-            paymentMethods: [] // Empty for guests - will be handled in purchase flow
-          }
-          break
-      }
-      
-      setInitialData(data)
-    } catch (error) {
-      console.error("Error loading initial data:", error)
-      setInitialData({})
-    } finally {
-      setIsLoadingData(false)
+  const handleGuestCreated = (guestUserId: string, shouldMerge?: boolean, existingUserId?: string) => {
+    // Store guest info in session/localStorage
+    localStorage.setItem("guestUserId", guestUserId)
+    if (shouldMerge && existingUserId) {
+      localStorage.setItem("shouldMergeWith", existingUserId)
+    }
+    
+    // Navigate to the appropriate purchase flow
+    switch (selectedPurchaseType) {
+      case "booking":
+        router.push("/guest/book-treatment")
+        break
+      case "subscription":
+        router.push("/guest/subscriptions/purchase")
+        break
+      case "gift-voucher":
+        router.push("/guest/gift-vouchers/purchase")
+        break
     }
   }
 
-  const handleButtonClick = async (action: string) => {
+  const handleButtonClick = (action: string) => {
     if (!session) {
-      // עבור אורח - טען נתונים ופתח מודאל
-      let purchaseType: "booking" | "subscription" | "gift-voucher" = "booking"
-      
+      // עבור אורח - פתח מודאל
       switch (action) {
         case "book-treatment":
-          purchaseType = "booking"
+          setSelectedPurchaseType("booking")
+          setGuestModalOpen(true)
           break
         case "book-subscription":
-          purchaseType = "subscription"
+          setSelectedPurchaseType("subscription")
+          setGuestModalOpen(true)
           break
         case "book-gift-voucher":
-          purchaseType = "gift-voucher"
+          setSelectedPurchaseType("gift-voucher")
+          setGuestModalOpen(true)
           break
         case "use-voucher":
           // TODO: Handle voucher usage for guests
           console.log(`Clicked: ${action}`)
-          return
+          break
         default:
           console.log(`Guest clicked: ${action}`)
-          return
       }
-      
-      setSelectedPurchaseType(purchaseType)
-      await loadInitialData(purchaseType)
-      setGuestModalOpen(true)
       return
     }
 
@@ -296,12 +253,9 @@ export function LandingHero() {
       {/* Guest Purchase Modal */}
       <GuestPurchaseModal
         isOpen={guestModalOpen}
-        onClose={() => {
-          setGuestModalOpen(false)
-          setInitialData(null)
-        }}
+        onClose={() => setGuestModalOpen(false)}
+        onGuestCreated={handleGuestCreated}
         purchaseType={selectedPurchaseType}
-        initialData={initialData}
       />
 
       {/* Decorative elements */}

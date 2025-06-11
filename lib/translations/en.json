@@ -1374,8 +1374,7 @@
       "continueWithSessionDescription": "Use the guest details filled out earlier",
       "editGuestDetails": "Edit guest details",
       "editGuestDetailsDescription": "Change or update details before continuing",
-      "continue": "Continue",
-      "purchaseDescription": "Complete your purchase with the selected details"
+      "continue": "Continue"
     },
     "creation": {
       "success": "Created successfully",
@@ -1386,14 +1385,6 @@
     },
     "purchase": {
       "title": "Guest Purchase"
-    },
-    "welcomeBack": "Welcome back",
-    "editDetails": "Edit Details",
-    "loginAsExisting": "Login as Existing Customer",
-    "continueAsGuest": "Continue as Guest",
-    "fetchError": "Error fetching user data",
-    "goToDashboard": "Go to Dashboard",
-    "backToHome": "Back to Home",
-    "guestModeNote": "Guest mode allows you to make a purchase without creating a full account"
+    }
   }
 }

@@ -337,16 +337,18 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
   }
 
   return (
-    <div className="bg-card p-4 sm:p-6 md:p-8 rounded-lg shadow-xl border max-w-3xl mx-auto">
-      {currentStep <= TOTAL_STEPS_WITH_PAYMENT && (
-        <div className="mb-6">
-          <Progress value={progressValue} className="w-full" />
-          <p className="text-center text-sm text-muted-foreground mt-2">
-            {t("common.step") || "Step"} {currentStep} {t("common.of") || "of"} {TOTAL_STEPS_WITH_PAYMENT}
-          </p>
-        </div>
-      )}
-      {renderStep()}
+    <div className="max-w-3xl mx-auto">
+      <div className="bg-card p-4 sm:p-6 md:p-8 rounded-lg shadow-xl border">
+        {currentStep <= TOTAL_STEPS_WITH_PAYMENT && (
+          <div className="mb-6">
+            <Progress value={progressValue} className="w-full" />
+            <p className="text-center text-sm text-muted-foreground mt-2">
+              {t("common.step") || "Step"} {currentStep} {t("common.of") || "of"} {TOTAL_STEPS_WITH_PAYMENT}
+            </p>
+          </div>
+        )}
+        {renderStep()}
+      </div>
     </div>
   )
 }

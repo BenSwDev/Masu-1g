@@ -23,8 +23,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <DashboardSidebar isMobileOpen={isMobileSidebarOpen} onMobileOpenChange={setIsMobileSidebarOpen} />
           <div className="flex flex-1 flex-col min-w-0">
             <DashboardHeader onSidebarToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} />
-            <main className="flex-1 bg-gray-50 min-h-0">
-              <div className="h-full p-4 md:p-6 lg:p-8">{children}</div>
+            <main className="flex-1 bg-gray-50 min-h-0 overflow-hidden">
+              <div className="h-full p-4 md:p-6 lg:p-8 overflow-y-auto">{children}</div>
             </main>
             <DashboardFooter />
           </div>

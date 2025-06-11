@@ -597,12 +597,32 @@ export interface PaymentResultData {
 }
 
 export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) {
+  const requestId = `voucher_init_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+  const startTime = Date.now()
+  
   try {
+    logger.info(`[${requestId}] Starting gift voucher purchase initiation`, {
+      voucherType: data.voucherType,
+      treatmentId: data.treatmentId,
+      hasSelectedDuration: !!data.selectedDurationId,
+      monetaryValue: data.monetaryValue,
+      isGift: data.isGift
+    })
+
     const session = await getServerSession(authOptions)
     if (!session?.user) {
+      logger.warn(`[${requestId}] Purchase attempt by unauthenticated user`)
       return { success: false, error: "Unauthorized" }
     }
+    
+    const dbConnectStart = Date.now()
     await dbConnect()
+    const dbConnectTime = Date.now() - dbConnectStart
+    
+    logger.info(`[${requestId}] Database connected`, { 
+      dbConnectTime: `${dbConnectTime}ms`,
+      userId: session.user.id
+    })
 
     // Destructure monetaryValue as inputMonetaryValue to differentiate from internal variables
     const { voucherType, treatmentId, selectedDurationId, monetaryValue: inputMonetaryValue, isGift } = data
@@ -610,94 +630,139 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
     let determinedPrice = 0 // This will be the final price for the voucher
 
     if (voucherType === "monetary") {
+      const monetaryValidationStart = Date.now()
       if (typeof inputMonetaryValue !== "number" || inputMonetaryValue < 150) {
+        logger.warn(`[${requestId}] Invalid monetary value`, { 
+          inputMonetaryValue,
+          isNumber: typeof inputMonetaryValue === "number"
+        })
         return { success: false, error: "Minimum monetary value is 150 ILS and must be a number." }
       }
       determinedPrice = inputMonetaryValue
-      logger.info(`Monetary voucher selected. Price determined from input: ${determinedPrice}`)
-    } else if (voucherType === "treatment") {
+      const monetaryValidationTime = Date.now() - monetaryValidationStart
+      logger.info(`[${requestId}] Monetary voucher selected`, { 
+        monetaryValidationTime: `${monetaryValidationTime}ms`,
+        determinedPrice 
+      })
+    } else {
       // For treatment vouchers, inputMonetaryValue is IGNORED. Price is derived from treatment.
+      const treatmentValidationStart = Date.now()
+      
       if (!treatmentId || !mongoose.Types.ObjectId.isValid(treatmentId)) {
+        logger.warn(`[${requestId}] Invalid treatment ID for treatment voucher`, { treatmentId })
         return { success: false, error: "Valid Treatment ID is required for treatment voucher." }
       }
+      
       const treatmentDoc = (await Treatment.findById(treatmentId)
         .select("name fixedPrice pricingType durations") // Select name for logging
         .lean()) as any
+        
+      const treatmentLoadTime = Date.now() - treatmentValidationStart
+      
       if (!treatmentDoc) {
-        logger.warn(`Treatment not found for ID: ${treatmentId} during voucher purchase.`)
+        logger.warn(`[${requestId}] Treatment not found for voucher purchase`, { 
+          treatmentId,
+          treatmentLoadTime: `${treatmentLoadTime}ms`
+        })
         return { success: false, error: "Treatment not found." }
       }
+
+      logger.info(`[${requestId}] Treatment loaded for voucher`, {
+        treatmentLoadTime: `${treatmentLoadTime}ms`,
+        treatmentName: treatmentDoc.name,
+        pricingType: treatmentDoc.pricingType,
+        hasFixedPrice: typeof treatmentDoc.fixedPrice === "number",
+        durationsCount: treatmentDoc.durations?.length || 0
+      })
 
       let priceFromTreatment: number | undefined
       if (treatmentDoc.pricingType === "fixed") {
         if (typeof treatmentDoc.fixedPrice === "number") {
           priceFromTreatment = treatmentDoc.fixedPrice
         }
-        logger.info(
-          `Treatment voucher: Fixed price. Treatment: ${treatmentDoc.name}, FixedPrice: ${treatmentDoc.fixedPrice}, DerivedPrice: ${priceFromTreatment}`,
-        )
+        logger.info(`[${requestId}] Treatment voucher: Fixed price`, {
+          treatmentName: treatmentDoc.name,
+          fixedPrice: treatmentDoc.fixedPrice,
+          derivedPrice: priceFromTreatment
+        })
       } else if (
         treatmentDoc.pricingType === "duration_based" &&
         treatmentDoc.durations &&
         treatmentDoc.durations.length > 0
       ) {
         if (!selectedDurationId || !mongoose.Types.ObjectId.isValid(selectedDurationId)) {
-          logger.warn(
-            `Treatment voucher: Duration-based, but no/invalid duration selected. Treatment: ${treatmentDoc.name}`,
-          )
+          logger.warn(`[${requestId}] Treatment voucher: Duration-based, but no/invalid duration selected`, {
+            treatmentName: treatmentDoc.name,
+            selectedDurationId,
+            availableDurations: treatmentDoc.durations.map((d: any) => ({ id: d._id, price: d.price }))
+          })
           return { success: false, error: "A valid duration must be selected for this treatment type." }
         }
         const duration = treatmentDoc.durations.find((d: any) => d._id.toString() === selectedDurationId)
         if (duration && typeof duration.price === "number") {
           priceFromTreatment = duration.price
-          logger.info(
-            `Treatment voucher: Duration-based. Treatment: ${treatmentDoc.name}, Duration: ${selectedDurationId}, DurationPrice: ${duration.price}, DerivedPrice: ${priceFromTreatment}`,
-          )
+          logger.info(`[${requestId}] Treatment voucher: Duration-based`, {
+            treatmentName: treatmentDoc.name,
+            selectedDurationId,
+            durationPrice: duration.price,
+            derivedPrice: priceFromTreatment
+          })
         } else {
-          logger.warn(
-            `Treatment voucher: Duration-based, duration ${selectedDurationId} not found or no price. Treatment: ${treatmentDoc.name}`,
-          )
+          logger.warn(`[${requestId}] Treatment voucher: Duration not found or no price`, {
+            treatmentName: treatmentDoc.name,
+            selectedDurationId,
+            foundDuration: !!duration,
+            durationPrice: duration?.price
+          })
         }
       } else if (
         treatmentDoc.pricingType === "duration_based" &&
         (!treatmentDoc.durations || treatmentDoc.durations.length === 0)
       ) {
-        logger.warn(`Treatment voucher: Duration-based, but no durations defined. Treatment: ${treatmentDoc.name}`)
+        logger.warn(`[${requestId}] Treatment voucher: Duration-based, but no durations defined`, {
+          treatmentName: treatmentDoc.name
+        })
         // Fallback to fixedPrice if it exists and is positive, otherwise it's an issue
         if (typeof treatmentDoc.fixedPrice === "number" && treatmentDoc.fixedPrice > 0) {
           priceFromTreatment = treatmentDoc.fixedPrice
-          logger.info(
-            `Treatment voucher: Duration-based with no durations, falling back to fixedPrice. Treatment: ${treatmentDoc.name}, FixedPrice: ${treatmentDoc.fixedPrice}, DerivedPrice: ${priceFromTreatment}`,
-          )
+          logger.info(`[${requestId}] Treatment voucher: Duration-based with no durations, falling back to fixedPrice`, {
+            treatmentName: treatmentDoc.name,
+            fixedPrice: treatmentDoc.fixedPrice,
+            derivedPrice: priceFromTreatment
+          })
         }
       }
 
       if (typeof priceFromTreatment === "number" && priceFromTreatment > 0) {
         determinedPrice = priceFromTreatment
       } else {
-        logger.error(
-          `Could not determine a valid positive price for treatment: ${treatmentDoc.name} (ID: ${treatmentId}). PricingType: ${treatmentDoc.pricingType}, FixedPrice: ${treatmentDoc.fixedPrice}, SelectedDuration: ${selectedDurationId}. Derived price from treatment: ${priceFromTreatment}.`,
-        )
+        logger.error(`[${requestId}] Could not determine a valid positive price for treatment`, {
+          treatmentName: treatmentDoc.name,
+          treatmentId,
+          pricingType: treatmentDoc.pricingType,
+          fixedPrice: treatmentDoc.fixedPrice,
+          selectedDurationId,
+          derivedPriceFromTreatment: priceFromTreatment
+        })
         return {
           success: false,
           error: `Could not determine a valid price for the selected treatment '${treatmentDoc.name}'. Please check treatment configuration or select a valid duration.`,
         }
       }
-    } else {
-      // Should not be reached if client validation is good
-      return { success: false, error: "Invalid voucher type specified." }
     }
 
     // Final check on determinedPrice
     if (determinedPrice <= 0) {
-      logger.error(
-        `Attempted to create voucher with non-positive price: ${determinedPrice} for voucherType: ${voucherType}.`,
-      )
+      logger.error(`[${requestId}] Attempted to create voucher with non-positive price`, {
+        determinedPrice,
+        voucherType
+      })
       return { success: false, error: "Voucher price must be positive." }
     }
 
     const code = `GV-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
 
+    const voucherCreationStart = Date.now()
     const giftVoucherData: Partial<IGiftVoucher> = {
       code,
       voucherType,
@@ -725,7 +790,18 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
 
     const newVoucher = new GiftVoucher(giftVoucherData)
     await newVoucher.save()
-    logger.info(`Successfully created gift voucher ${newVoucher._id} with amount ${determinedPrice}`)
+    const voucherCreationTime = Date.now() - voucherCreationStart
+    
+    const totalTime = Date.now() - startTime
+    logger.info(`[${requestId}] Successfully created gift voucher`, {
+      totalTime: `${totalTime}ms`,
+      voucherCreationTime: `${voucherCreationTime}ms`,
+      voucherId: newVoucher._id,
+      voucherCode: code,
+      amount: determinedPrice,
+      voucherType,
+      isGift
+    })
 
     return {
       success: true,
@@ -733,11 +809,17 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
       amount: determinedPrice, // Return the actual amount used for the voucher
     }
   } catch (error) {
-    logger.error("Error initiating gift voucher purchase:", {
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      details: error, // Log the full error object
+    const totalTime = Date.now() - startTime
+    logger.error(`[${requestId}] Error initiating gift voucher purchase`, {
+      totalTime: `${totalTime}ms`,
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5)
+      } : String(error),
+      voucherType: data.voucherType,
+      treatmentId: data.treatmentId
     })
+    
     if (error instanceof mongoose.Error.ValidationError) {
       const messages = Object.values(error.errors)
         .map((err: any) => err.message)

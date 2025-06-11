@@ -592,198 +592,247 @@ export async function calculateBookingPrice(
 export async function createBooking(
   payload: unknown,
 ): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
-  const validationResult = CreateBookingPayloadSchema.safeParse(payload)
-  if (!validationResult.success) {
-    logger.warn("Invalid payload for createBooking:", { issues: validationResult.error.issues })
-    return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
-  }
-  const validatedPayload = validationResult.data as CreateBookingPayloadSchemaType & {
-    priceDetails: ClientCalculatedPriceDetails
-  }
-
-  const session = await getServerSession(authOptions)
-  if (!session || session.user.id !== validatedPayload.userId) {
-    return { success: false, error: "common.unauthorized" }
-  }
-
-  const mongooseDbSession = await mongoose.startSession()
-  let bookingResult: IBooking | null = null
-  let updatedVoucherDetails: IGiftVoucher | null = null
-
+  const requestId = `booking_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+  const startTime = Date.now()
+  
   try {
-    await dbConnect()
+    logger.info(`[${requestId}] Starting booking creation`, { 
+      timestamp: new Date().toISOString(),
+      payload: payload ? "provided" : "missing"
+    })
 
-    const bookingUser = await User.findById(validatedPayload.userId).select("name email phone").lean()
-    if (!bookingUser) {
+    // Validation phase
+    const validationStart = Date.now()
+    const validationResult = CreateBookingPayloadSchema.safeParse(payload)
+    const validationTime = Date.now() - validationStart
+    
+    if (!validationResult.success) {
+      logger.warn(`[${requestId}] Validation failed`, {
+        validationTime: `${validationTime}ms`,
+        errors: validationResult.error.issues.map(issue => ({
+          path: issue.path,
+          message: issue.message
+        }))
+      })
+      return { success: false, issues: validationResult.error.issues }
+    }
+    
+    logger.info(`[${requestId}] Validation passed`, { validationTime: `${validationTime}ms` })
+    const validatedPayload = validationResult.data
+
+    // Database connection phase
+    const dbConnectStart = Date.now()
+    await dbConnect()
+    const dbConnectTime = Date.now() - dbConnectStart
+    
+    logger.info(`[${requestId}] Database connected`, { 
+      dbConnectTime: `${dbConnectTime}ms`,
+      userId: validatedPayload.userId
+    })
+
+    // Data loading phase
+    const dataLoadStart = Date.now()
+    logger.info(`[${requestId}] Loading initial data`, { phase: "data-loading" })
+
+    const [treatmentResult, userResult] = await Promise.allSettled([
+      Treatment.findById(validatedPayload.treatmentId).lean(),
+      User.findById(validatedPayload.userId).lean()
+    ])
+
+    const dataLoadTime = Date.now() - dataLoadStart
+    
+    if (treatmentResult.status === "rejected" || userResult.status === "rejected") {
+      logger.error(`[${requestId}] Failed to load initial data`, {
+        dataLoadTime: `${dataLoadTime}ms`,
+        treatmentError: treatmentResult.status === "rejected" ? treatmentResult.reason : null,
+        userError: userResult.status === "rejected" ? userResult.reason : null
+      })
+      return { success: false, error: "bookings.errors.dataLoadFailed" }
+    }
+
+    const treatment = treatmentResult.value as ITreatment | null
+    const user = userResult.value
+
+    if (!treatment || !treatment.isActive) {
+      logger.warn(`[${requestId}] Treatment not found or inactive`, { 
+        treatmentId: validatedPayload.treatmentId,
+        treatmentFound: !!treatment,
+        treatmentActive: treatment?.isActive
+      })
+      return { success: false, error: "bookings.errors.treatmentNotFound" }
+    }
+
+    if (!user) {
+      logger.warn(`[${requestId}] User not found`, { userId: validatedPayload.userId })
       return { success: false, error: "bookings.errors.userNotFound" }
     }
 
-    let bookingAddressSnapshot: IBookingAddressSnapshot | undefined
+    logger.info(`[${requestId}] Initial data loaded successfully`, { 
+      dataLoadTime: `${dataLoadTime}ms`,
+      treatmentName: treatment.name,
+      userName: user.name,
+      isGuest: user.isGuest
+    })
 
-    if (validatedPayload.customAddressDetails) {
-      if (!validatedPayload.customAddressDetails.fullAddress) {
-        validatedPayload.customAddressDetails.fullAddress = constructFullAddressHelper(
-          validatedPayload.customAddressDetails as Partial<IAddress>,
-        )
-      }
-      bookingAddressSnapshot = validatedPayload.customAddressDetails
-    } else if (validatedPayload.selectedAddressId) {
-      const selectedAddressDoc = (await Address.findById(validatedPayload.selectedAddressId).lean()) as IAddress | null
-
-      if (!selectedAddressDoc) {
-        logger.error("Selected address not found during booking creation", {
-          selectedAddressId: validatedPayload.selectedAddressId,
-          userId: validatedPayload.userId,
-        })
-        return { success: false, error: "bookings.errors.addressNotFound" }
-      }
-
-      const currentFullAddress = selectedAddressDoc.fullAddress || constructFullAddressHelper(selectedAddressDoc)
-
-      bookingAddressSnapshot = {
-        fullAddress: currentFullAddress,
-        city: selectedAddressDoc.city,
-        street: selectedAddressDoc.street,
-        streetNumber: selectedAddressDoc.streetNumber,
-        apartment: selectedAddressDoc.apartmentDetails?.apartmentNumber,
-        entrance:
-          selectedAddressDoc.addressType === "apartment"
-            ? selectedAddressDoc.apartmentDetails?.entrance
-            : selectedAddressDoc.addressType === "house" || selectedAddressDoc.addressType === "private"
-              ? selectedAddressDoc.houseDetails?.entrance
-              : selectedAddressDoc.addressType === "office"
-                ? selectedAddressDoc.officeDetails?.entrance
-                : undefined,
-        floor:
-          selectedAddressDoc.addressType === "apartment"
-            ? selectedAddressDoc.apartmentDetails?.floor?.toString()
-            : selectedAddressDoc.addressType === "office"
-              ? selectedAddressDoc.officeDetails?.floor?.toString()
-              : undefined,
-        notes: selectedAddressDoc.additionalNotes,
-        doorName:
-          selectedAddressDoc.addressType === "house" || selectedAddressDoc.addressType === "private"
-            ? selectedAddressDoc.houseDetails?.doorName
-            : undefined,
-        buildingName:
-          selectedAddressDoc.addressType === "office" ? selectedAddressDoc.officeDetails?.buildingName : undefined,
-        hotelName: selectedAddressDoc.addressType === "hotel" ? selectedAddressDoc.hotelDetails?.hotelName : undefined,
-        roomNumber:
-          selectedAddressDoc.addressType === "hotel" ? selectedAddressDoc.hotelDetails?.roomNumber : undefined,
-        otherInstructions:
-          selectedAddressDoc.addressType === "other" ? selectedAddressDoc.otherDetails?.instructions : undefined,
-        hasPrivateParking: selectedAddressDoc.hasPrivateParking,
-      }
-
-      if (!bookingAddressSnapshot.fullAddress) {
-        logger.error("Failed to construct a valid bookingAddressSnapshot (fullAddress still missing)", {
-          selectedAddressDoc,
-          constructedSnapshot: bookingAddressSnapshot,
-        })
-        return { success: false, error: "bookings.errors.addressSnapshotCreationFailed" }
-      }
-    } else {
-      logger.warn("No address provided for booking", { userId: validatedPayload.userId })
-      return { success: false, error: "bookings.errors.addressRequired" }
+    // Price calculation phase
+    const priceCalcStart = Date.now()
+    logger.info(`[${requestId}] Starting price calculation`, { phase: "price-calculation" })
+    
+    const priceCalculationPayload = {
+      treatmentId: validatedPayload.treatmentId,
+      selectedDurationId: validatedPayload.selectedDurationId,
+      bookingDateTime: new Date(validatedPayload.bookingDateTime),
+      couponCode: validatedPayload.appliedCouponCode,
+      giftVoucherCode: validatedPayload.selectedGiftVoucherId 
+        ? (await GiftVoucher.findById(validatedPayload.selectedGiftVoucherId).select('code').lean())?.code
+        : undefined,
+      userSubscriptionId: validatedPayload.selectedUserSubscriptionId,
+      userId: validatedPayload.userId,
     }
 
-    await mongooseDbSession.withTransaction(async () => {
-      const nextBookingNum = await getNextSequenceValue("bookingNumber")
-      const bookingNumber = nextBookingNum.toString().padStart(6, "0")
+    const calculatedPriceResult = await calculateBookingPrice(priceCalculationPayload)
+    const priceCalcTime = Date.now() - priceCalcStart
 
-      const newBooking = new Booking({
-        ...validatedPayload,
+    if (!calculatedPriceResult.success) {
+      logger.error(`[${requestId}] Price calculation failed`, {
+        priceCalcTime: `${priceCalcTime}ms`,
+        error: calculatedPriceResult.error
+      })
+      return { success: false, error: calculatedPriceResult.error }
+    }
+
+    logger.info(`[${requestId}] Price calculation completed`, { 
+      priceCalcTime: `${priceCalcTime}ms`,
+      finalAmount: calculatedPriceResult.priceDetails?.finalAmount,
+      basePrice: calculatedPriceResult.priceDetails?.basePrice
+    })
+
+    // Additional data loading phase
+    const additionalDataStart = Date.now()
+    let address: IAddress | null = null
+    
+    if (validatedPayload.addressId) {
+      address = await Address.findById(validatedPayload.addressId).lean()
+      if (!address) {
+        logger.warn(`[${requestId}] Address not found`, { addressId: validatedPayload.addressId })
+        return { success: false, error: "bookings.errors.addressNotFound" }
+      }
+    }
+
+    const additionalDataTime = Date.now() - additionalDataStart
+    logger.info(`[${requestId}] Additional data loaded`, { 
+      additionalDataTime: `${additionalDataTime}ms`,
+      hasAddress: !!address
+    })
+
+    // Transaction phase
+    const transactionStart = Date.now()
+    logger.info(`[${requestId}] Starting transaction`, { phase: "transaction" })
+
+    const mongooseDbSession = await mongoose.startSession()
+    let bookingResult: IBooking | null = null
+    let updatedVoucherDetails: IGiftVoucher | null = null
+
+    await mongooseDbSession.withTransaction(async () => {
+      // Get next booking number
+      const bookingNumberStart = Date.now()
+      const bookingNumber = await getNextSequenceValue("booking")
+      const bookingNumberTime = Date.now() - bookingNumberStart
+      
+      logger.info(`[${requestId}] Booking number generated`, { 
         bookingNumber,
-        userId: new mongoose.Types.ObjectId(validatedPayload.userId),
-        bookedByUserName: bookingUser.name,
-        bookedByUserEmail: bookingUser.email,
-        bookedByUserPhone: bookingUser.phone,
-        bookingAddressSnapshot,
-        status: "confirmed", // Always set to confirmed for clients - internal management happens behind the scenes
-        priceDetails: {
-          basePrice: validatedPayload.priceDetails.basePrice,
-          surcharges: validatedPayload.priceDetails.surcharges,
-          totalSurchargesAmount: validatedPayload.priceDetails.totalSurchargesAmount,
-          treatmentPriceAfterSubscriptionOrTreatmentVoucher:
-            validatedPayload.priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher,
-          discountAmount: validatedPayload.priceDetails.couponDiscount,
-          voucherAppliedAmount: validatedPayload.priceDetails.voucherAppliedAmount,
-          finalAmount: validatedPayload.priceDetails.finalAmount,
-          isBaseTreatmentCoveredBySubscription: validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription,
-          isBaseTreatmentCoveredByTreatmentVoucher:
-            validatedPayload.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher,
-          isFullyCoveredByVoucherOrSubscription: validatedPayload.priceDetails.isFullyCoveredByVoucherOrSubscription,
-          appliedCouponId: validatedPayload.priceDetails.appliedCouponId
-            ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.appliedCouponId)
-            : undefined,
-          appliedGiftVoucherId: validatedPayload.priceDetails.appliedGiftVoucherId
-            ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.appliedGiftVoucherId)
-            : undefined,
-          redeemedUserSubscriptionId: validatedPayload.priceDetails.redeemedUserSubscriptionId
-            ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.redeemedUserSubscriptionId)
-            : undefined,
-        } as IPriceDetails,
-        paymentDetails: {
-          paymentMethodId: validatedPayload.paymentDetails.paymentMethodId
-            ? new mongoose.Types.ObjectId(validatedPayload.paymentDetails.paymentMethodId)
-            : undefined,
-          paymentStatus:
-            validatedPayload.priceDetails.finalAmount === 0
-              ? "not_required"
-              : validatedPayload.paymentDetails.paymentStatus || "pending",
-          transactionId: validatedPayload.paymentDetails.transactionId,
-        },
-        professionalId: null,
+        generationTime: `${bookingNumberTime}ms`
       })
 
-      await newBooking.save({ session: mongooseDbSession })
-      bookingResult = newBooking
+      // Create booking object
+      const newBooking = new Booking({
+        bookingNumber,
+        userId: new mongoose.Types.ObjectId(validatedPayload.userId),
+        treatmentId: new mongoose.Types.ObjectId(validatedPayload.treatmentId),
+        selectedDurationId: validatedPayload.selectedDurationId
+          ? new mongoose.Types.ObjectId(validatedPayload.selectedDurationId)
+          : undefined,
+        bookingDateTime: new Date(validatedPayload.bookingDateTime),
+        status: "pending_confirmation" as BookingStatus,
+        source: validatedPayload.source,
+        notes: validatedPayload.notes,
+        therapistGenderPreference: validatedPayload.therapistGenderPreference,
+        addressSnapshot: address
+          ? {
+              fullAddress: constructFullAddressHelper(address),
+              addressLine1: address.addressLine1,
+              addressLine2: address.addressLine2,
+              city: address.city,
+              state: address.state,
+              postalCode: address.postalCode,
+              country: address.country,
+              latitude: address.latitude,
+              longitude: address.longitude,
+            }
+          : undefined,
+        priceDetails: calculatedPriceResult.priceDetails!,
+        paymentDetails: {
+          paymentStatus: calculatedPriceResult.priceDetails!.finalAmount === 0 ? "not_required" : "pending",
+          paymentMethodId: validatedPayload.selectedPaymentMethodId
+            ? new mongoose.Types.ObjectId(validatedPayload.selectedPaymentMethodId)
+            : undefined,
+        },
+        userPreferences: {
+          agreeToTerms: validatedPayload.agreeToTerms,
+          agreeToMarketing: validatedPayload.agreeToMarketing,
+        },
+        isFlexibleTime: validatedPayload.isFlexibleTime,
+        flexibilityRangeHours: validatedPayload.flexibilityRangeHours,
+        isBookingForSomeoneElse: validatedPayload.isBookingForSomeoneElse,
+        recipientDetails: validatedPayload.isBookingForSomeoneElse
+          ? {
+              name: validatedPayload.recipientName!,
+              phone: validatedPayload.recipientPhone!,
+              email: validatedPayload.recipientEmail!,
+              birthDate: validatedPayload.recipientBirthDate
+                ? new Date(validatedPayload.recipientBirthDate)
+                : undefined,
+            }
+          : undefined,
+      })
 
-      if (
-        validatedPayload.priceDetails.redeemedUserSubscriptionId &&
-        validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription
-      ) {
-        const userSub = await UserSubscription.findById(
-          validatedPayload.priceDetails.redeemedUserSubscriptionId,
-        ).session(mongooseDbSession)
-        if (!userSub || userSub.remainingQuantity < 1 || userSub.status !== "active") {
-          throw new Error("bookings.errors.subscriptionRedemptionFailed")
+      // Save booking
+      const bookingSaveStart = Date.now()
+      bookingResult = await newBooking.save({ session: mongooseDbSession })
+      const bookingSaveTime = Date.now() - bookingSaveStart
+      
+      logger.info(`[${requestId}] Booking saved`, { 
+        bookingSaveTime: `${bookingSaveTime}ms`,
+        bookingId: bookingResult._id,
+        bookingNumber: bookingResult.bookingNumber
+      })
+
+      // Handle voucher/subscription logic
+      if (validatedPayload.priceDetails.appliedGiftVoucherId && validatedPayload.priceDetails.voucherAppliedAmount > 0) {
+        const voucherUpdateStart = Date.now()
+        const voucher = (await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(mongooseDbSession)) as IGiftVoucher | null
+        
+        if (!voucher) {
+          logger.error(`[${requestId}] Voucher not found during redemption`, { 
+            voucherId: validatedPayload.priceDetails.appliedGiftVoucherId 
+          })
+          throw new Error("bookings.errors.voucherNotFoundDuringCreation")
         }
-        userSub.remainingQuantity -= 1
-        if (userSub.remainingQuantity === 0) userSub.status = "depleted"
-        await userSub.save({ session: mongooseDbSession })
-      }
 
-      if (
-        validatedPayload.priceDetails.appliedGiftVoucherId &&
-        validatedPayload.priceDetails.voucherAppliedAmount > 0
-      ) {
-        const voucher = (await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(
-          mongooseDbSession,
-        )) as IGiftVoucher | null
-        if (!voucher) throw new Error("bookings.errors.voucherNotFoundDuringCreation")
-        if (!voucher.isActive && voucher.status !== "sent")
-          throw new Error("bookings.errors.voucherRedemptionFailedInactive")
-
-        if (
-          voucher.voucherType === "treatment" &&
-          validatedPayload.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher
-        ) {
+        // Update voucher usage
+        if (voucher.voucherType === "treatment" && validatedPayload.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
           voucher.status = "fully_used"
           voucher.remainingAmount = 0
           voucher.isActive = false
         } else if (voucher.voucherType === "monetary") {
-          if (
-            typeof voucher.remainingAmount !== "number" ||
-            voucher.remainingAmount < validatedPayload.priceDetails.voucherAppliedAmount
-          ) {
+          if (typeof voucher.remainingAmount !== "number" || voucher.remainingAmount < validatedPayload.priceDetails.voucherAppliedAmount) {
             throw new Error("bookings.errors.voucherInsufficientBalance")
           }
           voucher.remainingAmount -= validatedPayload.priceDetails.voucherAppliedAmount
           voucher.status = voucher.remainingAmount <= 0 ? "fully_used" : "partially_used"
-          if (voucher.remainingAmount < 0) voucher.remainingAmount = 0
           voucher.isActive = voucher.remainingAmount > 0
         }
+
         voucher.usageHistory = voucher.usageHistory || []
         voucher.usageHistory.push({
           date: new Date(),
@@ -792,15 +841,36 @@ export async function createBooking(
           description: `bookings.voucherUsage.redeemedForBooking ${bookingResult!._id.toString()}`,
           userId: new mongoose.Types.ObjectId(validatedPayload.userId),
         } as any)
+        
         await voucher.save({ session: mongooseDbSession })
         updatedVoucherDetails = voucher.toObject() as IGiftVoucher
+        
+        const voucherUpdateTime = Date.now() - voucherUpdateStart
+        logger.info(`[${requestId}] Voucher updated`, { 
+          voucherUpdateTime: `${voucherUpdateTime}ms`,
+          voucherCode: voucher.code,
+          remainingAmount: voucher.remainingAmount
+        })
       }
 
+      // Handle coupon logic
       if (validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
+        const couponUpdateStart = Date.now()
         const coupon = await Coupon.findById(validatedPayload.priceDetails.appliedCouponId).session(mongooseDbSession)
-        if (!coupon || !coupon.isActive) throw new Error("bookings.errors.couponApplyFailed")
+        
+        if (!coupon || !coupon.isActive) {
+          throw new Error("bookings.errors.couponApplyFailed")
+        }
+        
         coupon.timesUsed += 1
         await coupon.save({ session: mongooseDbSession })
+        
+        const couponUpdateTime = Date.now() - couponUpdateStart
+        logger.info(`[${requestId}] Coupon updated`, { 
+          couponUpdateTime: `${couponUpdateTime}ms`,
+          couponCode: coupon.code,
+          timesUsed: coupon.timesUsed
+        })
       }
 
       if (bookingResult) {
@@ -812,91 +882,76 @@ export async function createBooking(
       }
     })
 
+    const transactionTime = Date.now() - transactionStart
+    logger.info(`[${requestId}] Transaction completed`, { 
+      transactionTime: `${transactionTime}ms`
+    })
+
     if (bookingResult) {
-      // Handle guest user merge after successful booking
-      const guestUserId = validatedPayload.userId
-      const bookingUser = await User.findById(guestUserId).lean()
-      
-      if (bookingUser?.isGuest) {
-        // Check if this is a merge scenario or conversion scenario
-        // We'll handle this logic in a separate hook or client-side after booking success
-        logger.info("Guest booking completed successfully", { guestUserId, bookingId: bookingResult._id })
+      // Handle guest user post-booking
+      if (user?.isGuest) {
+        logger.info(`[${requestId}] Guest booking completed`, { 
+          guestUserId: validatedPayload.userId, 
+          bookingId: bookingResult._id 
+        })
       }
 
+      // Revalidation phase
+      const revalidationStart = Date.now()
       revalidatePath("/dashboard/member/book-treatment")
       revalidatePath("/dashboard/member/subscriptions")
       revalidatePath("/dashboard/member/gift-vouchers")
       revalidatePath("/dashboard/member/bookings")
       revalidatePath("/dashboard/admin/bookings")
+      const revalidationTime = Date.now() - revalidationStart
+
+      const totalTime = Date.now() - startTime
+      logger.info(`[${requestId}] Booking creation completed successfully`, {
+        totalTime: `${totalTime}ms`,
+        revalidationTime: `${revalidationTime}ms`,
+        bookingId: bookingResult._id,
+        bookingNumber: bookingResult.bookingNumber,
+        finalAmount: bookingResult.priceDetails.finalAmount,
+        phases: {
+          validation: `${validationTime}ms`,
+          dbConnect: `${dbConnectTime}ms`,
+          dataLoad: `${dataLoadTime}ms`,
+          priceCalc: `${priceCalcTime}ms`,
+          additionalData: `${additionalDataTime}ms`,
+          transaction: `${transactionTime}ms`,
+          revalidation: `${revalidationTime}ms`
+        }
+      })
 
       const finalBookingObject = bookingResult.toObject() as IBooking
       if (updatedVoucherDetails) {
         ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
       }
 
-      try {
-        const userForNotification = await User.findById(finalBookingObject.userId)
-          .select("name email phone notificationPreferences")
-          .lean()
-        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
-
-        if (userForNotification && treatment) {
-          const userLang = (userForNotification.notificationPreferences?.language as NotificationLanguage) || "he"
-          const userNotificationMethods = userForNotification.notificationPreferences?.methods || ["email"]
-
-          const bookingSuccessData: BookingSuccessNotificationData = {
-            type: "BOOKING_SUCCESS",
-            userName: finalBookingObject.recipientName || userForNotification.name || "User",
-            bookingId: finalBookingObject.bookingNumber,
-            treatmentName: treatment.name,
-            bookingDateTime: finalBookingObject.bookingDateTime,
-            orderDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${finalBookingObject._id.toString()}`,
-          }
-
-          if (userNotificationMethods.includes("email") && userForNotification.email) {
-            const emailRecipient: EmailRecipient = {
-              type: "email",
-              value: userForNotification.email,
-              name: userForNotification.name,
-              language: userLang,
-            }
-            await notificationManager.sendNotification(emailRecipient, bookingSuccessData)
-          }
-          if (userNotificationMethods.includes("sms") && userForNotification.phone) {
-            const phoneRecipient: PhoneRecipient = {
-              type: "phone",
-              value: userForNotification.phone,
-              language: userLang,
-            }
-            await notificationManager.sendNotification(phoneRecipient, bookingSuccessData)
-          }
-
-          logger.info(`Booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
-        } else {
-          logger.warn("Could not send booking notifications: User or Treatment not found", {
-            bookingId: finalBookingObject._id.toString(),
-          })
-        }
-      } catch (notificationError) {
-        logger.error("Failed to send booking notifications:", {
-          error: notificationError,
-          bookingId: finalBookingObject._id.toString(),
-        })
-      }
-
       return { success: true, booking: finalBookingObject }
-    } else {
-      return { success: false, error: "bookings.errors.bookingCreationFailedUnknown" }
     }
+
+    logger.error(`[${requestId}] Booking creation failed - no booking result`, {
+      totalTime: `${Date.now() - startTime}ms`
+    })
+    return { success: false, error: "bookings.errors.creationFailed" }
+
   } catch (error) {
-    logger.error("Error creating booking:", { error, userId: session?.user?.id, payload: validatedPayload })
-    const errorMessage = error instanceof Error ? error.message : "bookings.errors.createBookingFailed"
-    return {
-      success: false,
-      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.createBookingFailed",
+    const totalTime = Date.now() - startTime
+    logger.error(`[${requestId}] Booking creation failed with exception`, {
+      totalTime: `${totalTime}ms`,
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5) // First 5 lines of stack
+      } : String(error)
+    })
+
+    if (error instanceof mongoose.Error.ValidationError) {
+      const validationErrors = Object.values(error.errors).map(err => err.message)
+      return { success: false, error: `Validation failed: ${validationErrors.join(', ')}` }
     }
-  } finally {
-    await mongooseDbSession.endSession()
+
+    return { success: false, error: "bookings.errors.creationFailed" }
   }
 }
 
@@ -1055,28 +1110,8 @@ export async function getUserBookings(
 
     return { bookings, totalPages, totalBookings }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error during booking fetch"
-    const errorStack = error instanceof Error ? error.stack : "No stack available"
-    let errorDetails: any = {} // Use 'any' for flexibility in capturing diverse error properties
-    if (error && typeof error === "object") {
-      // Attempt to capture all own properties, including non-enumerable ones if possible, though getOwnPropertyNames is good
-      Object.getOwnPropertyNames(error).forEach((key) => {
-        errorDetails[key] = (error as Record<string, any>)[key]
-      })
-    } else if (error) {
-      errorDetails = String(error) // Fallback to string representation
-    }
-
-    logger.error("Error fetching user bookings:", {
-      userId,
-      filters,
-      errorName: error instanceof Error ? error.name : "UnknownErrorType",
-      errorMessage: errorMessage,
-      errorStack: errorStack,
-      errorDetails: errorDetails,
-      rawErrorObjectString: String(error),
-    })
-    return { bookings: [], totalPages: 0, totalBookings: 0 }
+    logger.error("Error in getAllBookings:", { error, filters })
+    throw new Error("bookings.errors.fetchBookingsFailed")
   }
 }
 
@@ -1189,14 +1224,34 @@ export async function cancelBooking(
 }
 
 export async function getBookingInitialDataForGuest(userId: string): Promise<{ success: boolean; data?: any; error?: string }> {
+  const requestId = `guest_data_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+  const startTime = Date.now()
+  
   try {
+    logger.info(`[${requestId}] Loading booking initial data for guest`, { userId })
+    
     // For guest users, we don't check session - just verify the user exists and is a guest
     await dbConnect()
+    const userStart = Date.now()
     const user = await User.findById(userId).select("isGuest guestSessionId name email phone").lean()
+    const userTime = Date.now() - userStart
+    
     if (!user || !user.isGuest) {
+      logger.warn(`[${requestId}] User not found or not a guest`, { 
+        userId, 
+        userFound: !!user, 
+        isGuest: user?.isGuest,
+        userLoadTime: `${userTime}ms`
+      })
       return { success: false, error: "common.unauthorized" }
     }
 
+    logger.info(`[${requestId}] Guest user verified`, { 
+      userLoadTime: `${userTime}ms`,
+      guestSessionId: user.guestSessionId 
+    })
+
+    const dataLoadStart = Date.now()
     const [
       treatmentsResult,
       workingHoursResult,
@@ -1204,6 +1259,7 @@ export async function getBookingInitialDataForGuest(userId: string): Promise<{ s
       Treatment.find({ isActive: true }).populate("durations").lean(),
       WorkingHoursSettings.findOne().lean(),
     ])
+    const dataLoadTime = Date.now() - dataLoadStart
 
     const getFulfilledValue = (result: PromiseSettledResult<any>, defaultValue: any = null) =>
       result.status === "fulfilled" ? result.value : defaultValue
@@ -1211,11 +1267,22 @@ export async function getBookingInitialDataForGuest(userId: string): Promise<{ s
     const activeTreatments = getFulfilledValue(treatmentsResult, [])
     const workingHoursSettings = getFulfilledValue(workingHoursResult)
 
+    logger.info(`[${requestId}] Data loading completed`, {
+      dataLoadTime: `${dataLoadTime}ms`,
+      treatmentsCount: activeTreatments?.length || 0,
+      hasWorkingHours: !!workingHoursSettings,
+      treatmentsStatus: treatmentsResult.status,
+      workingHoursStatus: workingHoursResult.status
+    })
+
     if (!activeTreatments || !workingHoursSettings) {
-      logger.error("Failed to load critical initial data for guest booking:", {
+      logger.error(`[${requestId}] Failed to load critical initial data for guest booking`, {
         userId,
         treatmentsFound: !!activeTreatments,
         settingsFound: !!workingHoursSettings,
+        treatmentsError: treatmentsResult.status === "rejected" ? treatmentsResult.reason : null,
+        workingHoursError: workingHoursResult.status === "rejected" ? workingHoursResult.reason : null,
+        totalTime: `${Date.now() - startTime}ms`
       })
       return { success: false, error: "bookings.errors.initialDataLoadFailed" }
     }
@@ -1240,9 +1307,26 @@ export async function getBookingInitialDataForGuest(userId: string): Promise<{ s
       },
     }
 
+    const totalTime = Date.now() - startTime
+    logger.info(`[${requestId}] Guest booking data loaded successfully`, {
+      totalTime: `${totalTime}ms`,
+      userLoadTime: `${userTime}ms`,
+      dataLoadTime: `${dataLoadTime}ms`,
+      treatmentsCount: activeTreatments.length,
+      userId
+    })
+
     return { success: true, data: JSON.parse(JSON.stringify(data)) }
   } catch (error) {
-    logger.error("Error fetching initial booking data for guest:", { error, userId })
+    const totalTime = Date.now() - startTime
+    logger.error(`[${requestId}] Error fetching initial booking data for guest`, { 
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 3)
+      } : String(error),
+      userId,
+      totalTime: `${totalTime}ms`
+    })
     return { success: false, error: "bookings.errors.initialDataFetchFailed" }
   }
 }

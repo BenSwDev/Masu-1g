@@ -3996,6 +3996,9 @@
     "bookTreatment": "הזמן טיפול",
     "bookSubscription": "הזמן מנוי",
     "bookGiftVoucher": "הזמן שובר מתנה",
-    "useVoucher": "יש לי שובר/קופון"
+    "useVoucher": "יש לי שובר/קופון",
+    "professionalInterface": "כניסה לממשק מטפלים",
+    "partnerInterface": "כניסה לממשק שותפים",
+    "adminInterface": "כניסה לממשק מנהל"
   }
 }

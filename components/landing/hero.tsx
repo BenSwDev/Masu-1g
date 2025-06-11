@@ -2,25 +2,62 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 
 export function LandingHero() {
   const { t, dir } = useTranslation()
+  const { data: session } = useSession()
+  const router = useRouter()
 
   const handleButtonClick = (action: string) => {
-    // כרגע הכפתורים לא יעשו דבר
-    console.log(`Clicked: ${action}`)
+    if (!session) {
+      // עבור אורח - כרגע לא פעיל
+      console.log(`Guest clicked: ${action}`)
+      return
+    }
+
+    const userRoles = session.user?.roles || []
+    const isMember = userRoles.includes("member")
+
+    switch (action) {
+      case "book-treatment":
+        if (isMember) {
+          router.push("/dashboard/member/book-treatment")
+        }
+        break
+      case "book-subscription":
+        if (isMember) {
+          router.push("/dashboard/member/subscriptions/purchase")
+        }
+        break
+      case "book-gift-voucher":
+        if (isMember) {
+          router.push("/dashboard/member/gift-vouchers/purchase")
+        }
+        break
+      case "use-voucher":
+        console.log(`Clicked: ${action}`)
+        break
+      case "professional-interface":
+        router.push("/dashboard/professional")
+        break
+      case "partner-interface":
+        router.push("/dashboard/partner")
+        break
+      case "admin-interface":
+        router.push("/dashboard/admin")
+        break
+      default:
+        console.log(`Clicked: ${action}`)
+    }
   }
 
-  return (
-    <section className="bg-gradient-to-br from-turquoise-50 via-white to-turquoise-100 py-20 px-6 md:py-32">
-      <div className="container mx-auto text-center">
-        {/* Hero Title */}
-        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-12">
-          {t("landing.heroTitle")}
-        </h1>
-
-        {/* Action Buttons */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto ${dir === "rtl" ? "rtl" : ""}`}>
+  const renderButtons = () => {
+    if (!session) {
+      // אורח - כל 4 הכפתורים
+      return (
+        <>
           <Button
             size="lg"
             className="h-16 text-lg font-semibold bg-turquoise-600 hover:bg-turquoise-700"
@@ -55,6 +92,117 @@ export function LandingHero() {
           >
             {t("landing.useVoucher")}
           </Button>
+        </>
+      )
+    }
+
+    const userRoles = session.user?.roles || []
+    const isMember = userRoles.includes("member")
+    const isProfessional = userRoles.includes("professional")
+    const isPartner = userRoles.includes("partner")
+    const isAdmin = userRoles.includes("admin")
+
+    const buttons = []
+
+    // עבור member - 3 כפתורים ללא "יש לי שובר/קופון"
+    if (isMember) {
+      buttons.push(
+        <Button
+          key="book-treatment"
+          size="lg"
+          className="h-16 text-lg font-semibold bg-turquoise-600 hover:bg-turquoise-700"
+          onClick={() => handleButtonClick("book-treatment")}
+        >
+          {t("landing.bookTreatment")}
+        </Button>,
+        <Button
+          key="book-subscription"
+          size="lg"
+          variant="outline"
+          className="h-16 text-lg font-semibold border-turquoise-600 text-turquoise-700 hover:bg-turquoise-50"
+          onClick={() => handleButtonClick("book-subscription")}
+        >
+          {t("landing.bookSubscription")}
+        </Button>,
+        <Button
+          key="book-gift-voucher"
+          size="lg"
+          variant="outline"
+          className="h-16 text-lg font-semibold border-turquoise-600 text-turquoise-700 hover:bg-turquoise-50"
+          onClick={() => handleButtonClick("book-gift-voucher")}
+        >
+          {t("landing.bookGiftVoucher")}
+        </Button>
+      )
+    }
+
+    // כפתורים נוספים לפי תפקידים
+    if (isProfessional) {
+      buttons.push(
+        <Button
+          key="professional-interface"
+          size="lg"
+          variant="default"
+          className="h-16 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
+          onClick={() => handleButtonClick("professional-interface")}
+        >
+          {t("landing.professionalInterface")}
+        </Button>
+      )
+    }
+
+    if (isPartner) {
+      buttons.push(
+        <Button
+          key="partner-interface"
+          size="lg"
+          variant="default"
+          className="h-16 text-lg font-semibold bg-purple-600 hover:bg-purple-700"
+          onClick={() => handleButtonClick("partner-interface")}
+        >
+          {t("landing.partnerInterface")}
+        </Button>
+      )
+    }
+
+    if (isAdmin) {
+      buttons.push(
+        <Button
+          key="admin-interface"
+          size="lg"
+          variant="default"
+          className="h-16 text-lg font-semibold bg-red-600 hover:bg-red-700"
+          onClick={() => handleButtonClick("admin-interface")}
+        >
+          {t("landing.adminInterface")}
+        </Button>
+      )
+    }
+
+    return buttons
+  }
+
+  const buttons = renderButtons()
+  const buttonCount = buttons.length
+  
+  // קביעת הגריד לפי מספר הכפתורים
+  const gridClass = buttonCount <= 2 
+    ? "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto"
+    : buttonCount === 3
+    ? "grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto"
+    : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto"
+
+  return (
+    <section className="bg-gradient-to-br from-turquoise-50 via-white to-turquoise-100 py-20 px-6 md:py-32">
+      <div className="container mx-auto text-center">
+        {/* Hero Title */}
+        <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-12">
+          {t("landing.heroTitle")}
+        </h1>
+
+        {/* Action Buttons */}
+        <div className={`${gridClass} ${dir === "rtl" ? "rtl" : ""}`}>
+          {buttons}
         </div>
       </div>
 

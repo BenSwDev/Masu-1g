@@ -1284,6 +1284,9 @@
     "bookTreatment": "Book Treatment",
     "bookSubscription": "Book Subscription",
     "bookGiftVoucher": "Book Gift Voucher",
-    "useVoucher": "I have a voucher/coupon"
+    "useVoucher": "I have a voucher/coupon",
+    "professionalInterface": "Professional Interface",
+    "partnerInterface": "Partner Interface",
+    "adminInterface": "Admin Interface"
   }
 }

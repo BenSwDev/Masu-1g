@@ -1634,6 +1634,9 @@
     "bookTreatment": "Записаться на процедуру",
     "bookSubscription": "Купить подписку",
     "bookGiftVoucher": "Купить подарочный сертификат",
-    "useVoucher": "У меня есть ваучер/купон"
+    "useVoucher": "У меня есть ваучер/купон",
+    "professionalInterface": "Интерфейс специалиста",
+    "partnerInterface": "Интерфейс партнера",
+    "adminInterface": "Интерфейс администратора"
   }
 }

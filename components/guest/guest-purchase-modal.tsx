@@ -16,10 +16,21 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { PhoneInput } from "@/components/common/phone-input"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Separator } from "@/components/common/ui/separator"
-import { UserCircle, LogIn, ShoppingCart, Calendar } from "lucide-react"
-import { createGuestUser, type CreateGuestUserPayload } from "@/actions/guest-auth-actions"
+import { UserCircle, LogIn, ShoppingCart, Calendar, ArrowLeft, X } from "lucide-react"
+import { createGuestUser, convertGuestToRealUser, type CreateGuestUserPayload } from "@/actions/guest-auth-actions"
+import { getBookingInitialData, createBooking } from "@/actions/booking-actions"
+import { getSubscriptionsForSelection } from "@/actions/subscription-actions"
+import { getTreatmentsForSelection } from "@/actions/gift-voucher-actions"
 import { signIn } from "next-auth/react"
 import { useGuestSession } from "@/components/guest/guest-session-manager"
+import type { BookingInitialData, IBooking } from "@/types/booking"
+import type { IUser } from "@/lib/db/models/user"
+import type { UserSessionData } from "@/types/next-auth"
+
+// Import the existing purchase components
+import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
+import PurchaseSubscriptionClient from "@/components/dashboard/member/subscriptions/purchase-subscription-client"
+import PurchaseGiftVoucherClient from "@/components/dashboard/member/gift-vouchers/purchase-gift-voucher-client"
 
 const guestFormSchema = z.object({
   name: z.string().min(2, "שם חייב להכיל לפחות 2 תווים"),
@@ -40,6 +51,8 @@ interface GuestPurchaseModalProps {
   purchaseType: "booking" | "subscription" | "gift-voucher"
 }
 
+type ModalStep = "choice" | "guest-form" | "purchase-flow" | "completion"
+
 export default function GuestPurchaseModal({
   isOpen,
   onClose,
@@ -49,9 +62,14 @@ export default function GuestPurchaseModal({
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const router = useRouter()
-  const [step, setStep] = useState<"choice" | "guest-form">("choice")
+  const [step, setStep] = useState<ModalStep>("choice")
   const [isLoading, setIsLoading] = useState(false)
   const { guestSession, updateGuestSession, hasActiveGuestSession } = useGuestSession()
+  
+  // Guest user and purchase data
+  const [guestUser, setGuestUser] = useState<IUser | null>(null)
+  const [purchaseData, setPurchaseData] = useState<any>(null)
+  const [completedPurchase, setCompletedPurchase] = useState<any>(null)
 
   const form = useForm<GuestFormValues>({
     resolver: zodResolver(guestFormSchema),
@@ -63,10 +81,9 @@ export default function GuestPurchaseModal({
     },
   })
 
-  // Check if user has existing guest session and show edit option
+  // Check if user has existing guest session
   useEffect(() => {
     if (hasActiveGuestSession() && isOpen) {
-      // User has existing guest session - show choice to continue or edit
       setStep("choice")
     }
   }, [hasActiveGuestSession, isOpen])
@@ -108,6 +125,59 @@ export default function GuestPurchaseModal({
     router.push("/auth/login")
   }
 
+  const handleContinueWithExistingGuest = async () => {
+    if (!guestSession.guestUserId) return
+    
+    setIsLoading(true)
+    try {
+      // Load guest data and proceed to purchase flow
+      await loadGuestDataAndProceed(guestSession.guestUserId)
+    } catch (error) {
+      toast({
+        title: t("common.error"),
+        description: t("guest.load.failed"),
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadGuestDataAndProceed = async (guestUserId: string) => {
+    // Create a mock user session for the guest
+    const guestUser: UserSessionData = {
+      id: guestUserId,
+      name: guestSession.guestUserId ? "Guest User" : "",
+      email: "",
+      roles: ["member"],
+      isGuest: true
+    }
+    
+    // Load initial data based on purchase type
+    let initialData: any = null
+    
+    if (purchaseType === "booking") {
+      const result = await getBookingInitialData(guestUserId)
+      if (result.success) {
+        initialData = result.data
+      }
+    } else if (purchaseType === "subscription") {
+      const subscriptions = await getSubscriptionsForSelection()
+      initialData = { subscriptions }
+    } else if (purchaseType === "gift-voucher") {
+      const treatments = await getTreatmentsForSelection()
+      initialData = { treatments }
+    }
+
+    if (initialData) {
+      setGuestUser(guestUser as IUser)
+      setPurchaseData(initialData)
+      setStep("purchase-flow")
+    } else {
+      throw new Error("Failed to load purchase data")
+    }
+  }
+
   const handleGuestFormSubmit = async (data: GuestFormValues) => {
     setIsLoading(true)
     try {
@@ -137,9 +207,8 @@ export default function GuestPurchaseModal({
           shouldMergeWith: result.existingUserId,
         })
 
-        // Close modal and notify parent component
-        onClose()
-        onGuestCreated(result.guestUserId, result.shouldMerge, result.existingUserId)
+        // Load guest data and proceed to purchase flow
+        await loadGuestDataAndProceed(result.guestUserId)
       } else {
         toast({
           title: t("common.error"),
@@ -158,268 +227,402 @@ export default function GuestPurchaseModal({
     }
   }
 
+  const handlePurchaseComplete = async (purchase: any) => {
+    setCompletedPurchase(purchase)
+    
+    // Convert guest to real user
+    if (guestSession.guestUserId) {
+      try {
+        const conversionResult = await convertGuestToRealUser(guestSession.guestUserId)
+        if (conversionResult.success) {
+          toast({
+            title: t("guest.conversion.success"),
+            description: t("guest.conversion.description"),
+            variant: "default",
+          })
+        }
+      } catch (error) {
+        console.warn("Failed to convert guest to real user:", error)
+      }
+    }
+    
+    setStep("completion")
+  }
 
+  const handleBackToPurchaseChoice = () => {
+    setStep("choice")
+    setGuestUser(null)
+    setPurchaseData(null)
+  }
 
   const handleClose = () => {
     setStep("choice")
+    setGuestUser(null)
+    setPurchaseData(null)
+    setCompletedPurchase(null)
     form.reset()
     onClose()
   }
 
+  const renderPurchaseFlow = () => {
+    if (!guestUser || !purchaseData) return null
+
+    switch (purchaseType) {
+      case "booking":
+        return (
+          <BookingWizard
+            initialData={purchaseData}
+            currentUser={guestUser}
+            isGuestMode={true}
+            onBookingComplete={handlePurchaseComplete}
+          />
+        )
+             case "subscription":
+         return (
+           <PurchaseSubscriptionClient
+             subscriptions={purchaseData.subscriptions}
+             currentUser={guestUser}
+             isGuestMode={true}
+             onPurchaseComplete={handlePurchaseComplete}
+           />
+         )
+             case "gift-voucher":
+         return (
+           <PurchaseGiftVoucherClient
+             treatments={purchaseData.treatments}
+             currentUser={guestUser}
+             isGuestMode={true}
+             onPurchaseComplete={handlePurchaseComplete}
+           />
+         )
+      default:
+        return null
+    }
+  }
+
+  const modalSize = step === "purchase-flow" ? "max-w-7xl w-full h-[90vh]" : "sm:max-w-md md:max-w-lg"
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md md:max-w-lg">
+      <DialogContent className={modalSize}>
         <DialogHeader>
-          <DialogTitle className="text-center text-xl font-bold">
-            {getPurchaseTypeTitle()}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            {step === "purchase-flow" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackToPurchaseChoice}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {t("common.back")}
+              </Button>
+            )}
+            <DialogTitle className="text-center text-xl font-bold flex-1">
+              {step === "completion" ? t("guest.purchase.completed") : getPurchaseTypeTitle()}
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClose}
+              className="flex items-center gap-2"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
           <DialogDescription className="text-center">
             {step === "choice" 
               ? t("guest.modal.choiceDescription")
-              : t("guest.modal.formDescription")
+              : step === "guest-form"
+              ? t("guest.modal.formDescription")
+              : step === "completion"
+              ? t("guest.modal.completionDescription")
+              : t("guest.modal.purchaseDescription")
             }
           </DialogDescription>
         </DialogHeader>
 
-        {step === "choice" && (
-          <div className="space-y-4">
-            <Card className="cursor-pointer hover:shadow-md transition-all" onClick={handleLoginClick}>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-3 text-base">
-                  <LogIn className="h-5 w-5 text-turquoise-600" />
-                  {t("guest.modal.login")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm text-muted-foreground">
-                  {t("guest.modal.loginDescription")}
-                </p>
-              </CardContent>
-            </Card>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  {t("common.or")}
-                </span>
-              </div>
-            </div>
-
-            {hasActiveGuestSession() ? (
-              <>
-                <Card className="cursor-pointer hover:shadow-md transition-all border-turquoise-200 bg-turquoise-50" 
-                      onClick={() => onGuestCreated(guestSession.guestUserId!, false, guestSession.shouldMergeWith)}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-3 text-base">
-                      <ShoppingCart className="h-5 w-5 text-turquoise-600" />
-                      {t("guest.modal.continueWithSession")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground">
-                      {t("guest.modal.continueWithSessionDescription")}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="cursor-pointer hover:shadow-md transition-all" onClick={() => setStep("guest-form")}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-3 text-base">
-                      <UserCircle className="h-5 w-5 text-turquoise-600" />
-                      {t("guest.modal.editGuestDetails")}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground">
-                      {t("guest.modal.editGuestDetailsDescription")}
-                    </p>
-                  </CardContent>
-                </Card>
-              </>
-            ) : (
-              <Card className="cursor-pointer hover:shadow-md transition-all" onClick={() => setStep("guest-form")}>
+        <div className={step === "purchase-flow" ? "overflow-y-auto flex-1" : ""}>
+          {step === "choice" && (
+            <div className="space-y-4">
+              <Card className="cursor-pointer hover:shadow-md transition-all" onClick={handleLoginClick}>
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-3 text-base">
-                    <UserCircle className="h-5 w-5 text-turquoise-600" />
-                    {t("guest.modal.continueAsGuest")}
+                    <LogIn className="h-5 w-5 text-turquoise-600" />
+                    {t("guest.modal.login")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
                   <p className="text-sm text-muted-foreground">
-                    {t("guest.modal.guestDescription")}
+                    {t("guest.modal.loginDescription")}
                   </p>
                 </CardContent>
               </Card>
-            )}
-          </div>
-        )}
 
-        {step === "guest-form" && (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleGuestFormSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("register.fullName")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("register.fullNamePlaceholder")} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("register.email")}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={t("register.emailPlaceholder")} type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("register.phone")}</FormLabel>
-                    <FormControl>
-                      <PhoneInput value={field.value} onChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="gender"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t("register.gender")}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("register.selectGender")} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="male">{t("common.male")}</SelectItem>
-                        <SelectItem value="female">{t("common.female")}</SelectItem>
-                        <SelectItem value="other">{t("register.preferNotToSay")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Date of Birth - Optional */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  {t("register.dateOfBirth")} ({t("common.optional")})
-                </Label>
-                <div className="grid grid-cols-3 gap-2">
-                  <FormField
-                    control={form.control}
-                    name="day"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("register.day")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {days.map((day) => (
-                              <SelectItem key={day} value={day.toString()}>
-                                {day}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="month"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("register.month")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {months.map((month) => (
-                              <SelectItem key={month.value} value={month.value}>
-                                {month.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="year"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("register.year")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {years.map((year) => (
-                              <SelectItem key={year} value={year.toString()}>
-                                {year}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <Separator className="w-full" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    {t("common.or")}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
+              {hasActiveGuestSession() ? (
+                <>
+                  <Card className="cursor-pointer hover:shadow-md transition-all border-turquoise-200 bg-turquoise-50" 
+                        onClick={handleContinueWithExistingGuest}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-3 text-base">
+                        <ShoppingCart className="h-5 w-5 text-turquoise-600" />
+                        {t("guest.modal.continueWithSession")}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground">
+                        {t("guest.modal.continueWithSessionDescription")}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="cursor-pointer hover:shadow-md transition-all" onClick={() => setStep("guest-form")}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-3 text-base">
+                        <UserCircle className="h-5 w-5 text-turquoise-600" />
+                        {t("guest.modal.editGuestDetails")}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground">
+                        {t("guest.modal.editGuestDetailsDescription")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </>
+              ) : (
+                <Card className="cursor-pointer hover:shadow-md transition-all" onClick={() => setStep("guest-form")}>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-3 text-base">
+                      <UserCircle className="h-5 w-5 text-turquoise-600" />
+                      {t("guest.modal.continueAsGuest")}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground">
+                      {t("guest.modal.guestDescription")}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {step === "guest-form" && (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleGuestFormSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("register.fullName")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t("register.fullNamePlaceholder")} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("register.email")}</FormLabel>
+                      <FormControl>
+                        <Input placeholder={t("register.emailPlaceholder")} type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("register.phone")}</FormLabel>
+                      <FormControl>
+                        <PhoneInput value={field.value} onChange={field.onChange} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("register.gender")}</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("register.selectGender")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="male">{t("register.male")}</SelectItem>
+                          <SelectItem value="female">{t("register.female")}</SelectItem>
+                          <SelectItem value="other">{t("register.other")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-2">
+                  <Label>{t("register.dateOfBirth")} ({t("register.optional")})</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <FormField
+                      control={form.control}
+                      name="day"
+                      render={({ field }) => (
+                        <FormItem>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t("register.day")} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {days.map((day) => (
+                                <SelectItem key={day} value={day.toString()}>
+                                  {day}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="month"
+                      render={({ field }) => (
+                        <FormItem>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t("register.month")} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {months.map((month) => (
+                                <SelectItem key={month.value} value={month.value}>
+                                  {month.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="year"
+                      render={({ field }) => (
+                        <FormItem>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t("register.year")} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {years.map((year) => (
+                                <SelectItem key={year} value={year.toString()}>
+                                  {year}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setStep("choice")}
+                    className="flex-1"
+                  >
+                    {t("common.back")}
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="flex-1 bg-turquoise-600 hover:bg-turquoise-700"
+                  >
+                    {isLoading ? t("common.loading") : t("guest.modal.continueAsGuest")}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          )}
+
+          {step === "purchase-flow" && renderPurchaseFlow()}
+
+          {step === "completion" && (
+            <div className="space-y-6 text-center">
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {t("guest.purchase.completed")}
+                </h3>
+                <p className="text-sm text-gray-600 mt-2">
+                  {t("guest.purchase.completedDescription")}
+                </p>
+              </div>
+
+              <div className="flex gap-3">
                 <Button
-                  type="button"
                   variant="outline"
-                  onClick={() => setStep("choice")}
+                  onClick={handleClose}
                   className="flex-1"
                 >
-                  {t("common.back")}
+                  {t("common.close")}
                 </Button>
                 <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1"
+                  onClick={() => {
+                    handleClose()
+                    router.push("/dashboard")
+                  }}
+                  className="flex-1 bg-turquoise-600 hover:bg-turquoise-700"
                 >
-                  {isLoading ? t("common.loading") : t("guest.modal.continue")}
+                  {t("guest.goToDashboard")}
                 </Button>
               </div>
-            </form>
-          </Form>
-        )}
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   )

@@ -15,25 +15,8 @@ export function LandingHero() {
   const [selectedPurchaseType, setSelectedPurchaseType] = useState<"booking" | "subscription" | "gift-voucher">("booking")
 
   const handleGuestCreated = (guestUserId: string, shouldMerge?: boolean, existingUserId?: string) => {
-    // Store guest info in session/localStorage
-    localStorage.setItem("guestUserId", guestUserId)
-    if (shouldMerge && existingUserId) {
-      localStorage.setItem("shouldMergeWith", existingUserId)
-    }
-    
-    // Navigate to the appropriate purchase flow
-    switch (selectedPurchaseType) {
-      case "booking":
-        // For booking, redirect to member page with guest mode
-        router.push(`/dashboard/member/book-treatment?guestUserId=${guestUserId}`)
-        break
-      case "subscription":
-        router.push("/guest/purchase-subscription")
-        break
-      case "gift-voucher":
-        router.push("/guest/purchase-gift-voucher")
-        break
-    }
+    // This callback is no longer used as the entire flow happens within the modal
+    // The modal will handle the complete purchase flow internally
   }
 
   const handleButtonClick = (action: string) => {

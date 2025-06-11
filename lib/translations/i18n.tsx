@@ -80,8 +80,7 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
 
   // In development mode, expose a global function to get and copy missing keys.
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.getMissingTranslations = () => {
+       window.getMissingTranslations = () => {
         if (missingKeys.size === 0) {
           console.log("[i18n] No missing translation keys found.")
           return
@@ -100,13 +99,12 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
           .catch((err) => {
             console.error("[i18n] Failed to copy missing keys: ", err)
           })
-      }
+    }
 
-      // Cleanup the global function when the component unmounts.
-      return () => {
-        if (typeof window !== "undefined" && window.getMissingTranslations) {
-          delete window.getMissingTranslations
-        }
+    // Cleanup the global function when the component unmounts.
+    return () => {
+      if (window.getMissingTranslations) {
+        delete window.getMissingTranslations
       }
     }
   }, []) // Empty dependency array ensures this runs only once.

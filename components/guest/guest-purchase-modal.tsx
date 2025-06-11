@@ -25,9 +25,6 @@ import GuestSubscriptionClient from "@/components/guest/guest-subscription-clien
 import GuestGiftVoucherClient from "@/components/guest/guest-gift-voucher-client"
 import GuestUserEditModal from "@/components/guest/guest-user-edit-modal"
 import GuestAbandonmentTracker, { type AbandonmentData } from "@/components/guest/guest-abandonment-tracker"
-import GuestExitConfirmation from "@/components/guest/guest-exit-confirmation"
-import GuestProgressOptions from "@/components/guest/guest-progress-options"
-import { useGuestProgress } from "@/hooks/use-guest-progress"
 
 const guestFormSchema = z.object({
   name: z.string().min(2, "שם חייב להכיל לפחות 2 תווים"),
@@ -40,7 +37,7 @@ const guestFormSchema = z.object({
 })
 
 type GuestFormValues = z.infer<typeof guestFormSchema>
-type PurchaseStep = "progress-check" | "choice" | "guest-form" | "purchase-flow"
+type PurchaseStep = "choice" | "guest-form" | "purchase-flow"
 
 interface GuestPurchaseModalProps {
   isOpen: boolean
@@ -62,20 +59,7 @@ export default function GuestPurchaseModal({
   const [isLoading, setIsLoading] = useState(false)
   const [guestUser, setGuestUser] = useState<any>(null)
   const [isUserEditModalOpen, setIsUserEditModalOpen] = useState(false)
-  const [showExitConfirmation, setShowExitConfirmation] = useState(false)
   const { guestSession, updateGuestSession, hasActiveGuestSession } = useGuestSession()
-  
-  // Progress management
-  const {
-    savedProgress,
-    isLoading: isProgressLoading,
-    saveProgress,
-    clearProgress,
-    createNewProgress,
-    updateProgress,
-    hasMatchingProgress,
-    getProgressSummary
-  } = useGuestProgress()
   
   const form = useForm<GuestFormValues>({
     resolver: zodResolver(guestFormSchema),
@@ -91,46 +75,12 @@ export default function GuestPurchaseModal({
   const [currentFormData, setCurrentFormData] = useState<any>({})
   const formValues = form.watch()
 
-  // Check for existing progress when modal opens
+  // Check if user has existing guest session and show edit option
   useEffect(() => {
-    if (isOpen && !isProgressLoading) {
-      try {
-        if (hasMatchingProgress(purchaseType)) {
-          setStep("progress-check")
-        } else if (hasActiveGuestSession()) {
-          setStep("choice")
-        } else {
-          setStep("choice")
-        }
-      } catch (error) {
-        console.error("Error checking progress:", error)
-        setStep("choice")
-      }
+    if (hasActiveGuestSession() && isOpen) {
+      setStep("choice")
     }
-  }, [isOpen, isProgressLoading, purchaseType, hasMatchingProgress, hasActiveGuestSession])
-
-  // Handle ESC key with confirmation
-  useEffect(() => {
-    const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isOpen) {
-        event.preventDefault()
-        // Check if user has made progress and show confirmation
-        const hasProgress = step !== "choice" && step !== "progress-check"
-        if (hasProgress) {
-          setShowExitConfirmation(true)
-          return
-        }
-        
-        // Direct close if no progress
-        onClose()
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscKey)
-      return () => document.removeEventListener('keydown', handleEscKey)
-    }
-  }, [isOpen, step, onClose])
+  }, [hasActiveGuestSession, isOpen])
 
   // Update current form data for abandonment tracking
   useEffect(() => {
@@ -190,14 +140,6 @@ export default function GuestPurchaseModal({
       if (response.ok) {
         const userData = await response.json()
         setGuestUser(userData.user)
-        
-        // Save progress when moving to purchase flow
-        updateProgress({
-          currentStep: "purchase-flow",
-          guestUserId: guestUserId,
-          formData: currentFormData
-        })
-        
         setStep("purchase-flow")
       }
     } catch (error) {
@@ -236,13 +178,6 @@ export default function GuestPurchaseModal({
           guestUserId: result.guestUserId,
           guestSessionId: result.guestSessionId,
           shouldMergeWith: result.existingUserId,
-        })
-
-        // Save progress
-        updateProgress({
-          currentStep: "guest-form",
-          guestUserId: result.guestUserId,
-          formData: currentFormData
         })
 
         // Call onGuestCreated to proceed to purchase flow
@@ -295,10 +230,6 @@ export default function GuestPurchaseModal({
       title: t("bookings.success"),
       description: t("bookings.successMessage"),
     })
-    
-    // Clear progress on successful completion
-    clearProgress()
-    
     onClose()
   }
 
@@ -317,18 +248,6 @@ export default function GuestPurchaseModal({
   }
 
   const handleClose = () => {
-    // Check if user has made progress and show confirmation
-    const hasProgress = step !== "choice" && step !== "progress-check"
-    if (hasProgress) {
-      setShowExitConfirmation(true)
-      return
-    }
-    
-    // Direct close if no progress
-    performClose()
-  }
-
-  const performClose = () => {
     // Report modal close abandonment if user was in progress
     if ((window as any).reportGuestAbandonment) {
       (window as any).reportGuestAbandonment('modal_closed_manually')
@@ -336,77 +255,8 @@ export default function GuestPurchaseModal({
     
     setStep("choice")
     setGuestUser(null)
-    setShowExitConfirmation(false)
     form.reset()
     onClose()
-  }
-
-  const handleSaveAndExit = () => {
-    // Save current progress
-    if (savedProgress) {
-      updateProgress({
-        currentStep: step,
-        formData: currentFormData,
-        guestUserId: guestUser?._id
-      })
-    }
-    performClose()
-  }
-
-  const handleProgressResume = async () => {
-    if (!savedProgress) return
-
-    try {
-      setIsLoading(true)
-      
-      // If there's a guest user ID, fetch the data
-      if (savedProgress.guestUserId) {
-        const response = await fetch(`/api/guest-user/${savedProgress.guestUserId}`)
-        if (response.ok) {
-          const userData = await response.json()
-          setGuestUser(userData.user)
-        }
-      }
-
-      // Restore form data
-      if (savedProgress.formData && savedProgress.formData.formValues) {
-        Object.keys(savedProgress.formData.formValues).forEach(key => {
-          form.setValue(key as any, savedProgress.formData.formValues[key])
-        })
-      }
-
-      // Go to the saved step
-      setStep(savedProgress.currentStep as PurchaseStep)
-      
-    } catch (error) {
-      console.error("Failed to resume progress:", error)
-      // Fallback: start fresh
-      handleProgressStartFresh()
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleProgressStartFresh = async () => {
-    try {
-      setIsLoading(true)
-      
-      // Clear existing progress and create new
-      clearProgress()
-      await createNewProgress(purchaseType, initialData)
-      
-      // Reset state
-      setGuestUser(null)
-      form.reset()
-      setStep("choice")
-      
-    } catch (error) {
-      console.error("Failed to start fresh:", error)
-      // Fallback: just go to choice
-      setStep("choice")
-    } finally {
-      setIsLoading(false)
-    }
   }
 
   return (
@@ -428,9 +278,7 @@ export default function GuestPurchaseModal({
               {getPurchaseTypeTitle()}
             </DialogTitle>
             <DialogDescription className="text-center">
-              {step === "progress-check"
-                ? t("guest.modal.progressDescription")
-                : step === "choice" 
+              {step === "choice" 
                 ? t("guest.modal.choiceDescription")
                 : step === "guest-form"
                 ? t("guest.modal.formDescription")
@@ -469,25 +317,6 @@ export default function GuestPurchaseModal({
               </div>
             </div>
           )}
-
-          {step === "progress-check" && (() => {
-            try {
-              const summary = getProgressSummary()
-              if (!summary) return null
-              return (
-                <GuestProgressOptions
-                  progressSummary={summary}
-                  onResume={handleProgressResume}
-                  onStartFresh={handleProgressStartFresh}
-                  onCancel={performClose}
-                />
-              )
-            } catch (error) {
-              console.error("Error rendering progress options:", error)
-              setStep("choice")
-              return null
-            }
-          })()}
 
           {step === "choice" && (
             <div className="space-y-4">
@@ -733,50 +562,35 @@ export default function GuestPurchaseModal({
             </Form>
           )}
 
-          {step === "purchase-flow" && guestUser && (() => {
-            try {
-              return (
-                <div className="space-y-6">
-                  {purchaseType === "booking" && (
-                    <BookingWizard
-                      initialData={initialData}
-                      currentUser={guestUser}
-                      isGuestMode={true}
-                      onBookingComplete={handleBookingComplete}
-                    />
-                  )}
-                  
-                  {purchaseType === "subscription" && (
-                    <GuestSubscriptionClient
-                      subscriptions={initialData?.subscriptions || []}
-                      treatments={initialData?.treatments || []}
-                      paymentMethods={initialData?.paymentMethods || []}
-                      guestUser={guestUser}
-                    />
-                  )}
-                  
-                  {purchaseType === "gift-voucher" && (
-                    <GuestGiftVoucherClient
-                      treatments={initialData?.treatments || []}
-                      paymentMethods={initialData?.paymentMethods || []}
-                      guestUser={guestUser}
-                    />
-                  )}
-                </div>
-              )
-            } catch (error) {
-              console.error("Error rendering purchase flow:", error)
-              setStep("choice")
-              return (
-                <div className="text-center py-8">
-                  <p className="text-red-600 mb-4">{t("common.error")}</p>
-                  <Button onClick={() => setStep("choice")}>
-                    {t("common.back")}
-                  </Button>
-                </div>
-              )
-            }
-          })()}
+          {step === "purchase-flow" && guestUser && (
+            <div className="space-y-6">
+              {purchaseType === "booking" && (
+                <BookingWizard
+                  initialData={initialData}
+                  currentUser={guestUser}
+                  isGuestMode={true}
+                  onBookingComplete={handleBookingComplete}
+                />
+              )}
+              
+              {purchaseType === "subscription" && (
+                <GuestSubscriptionClient
+                  subscriptions={initialData?.subscriptions || []}
+                  treatments={initialData?.treatments || []}
+                  paymentMethods={initialData?.paymentMethods || []}
+                  guestUser={guestUser}
+                />
+              )}
+              
+              {purchaseType === "gift-voucher" && (
+                <GuestGiftVoucherClient
+                  treatments={initialData?.treatments || []}
+                  paymentMethods={initialData?.paymentMethods || []}
+                  guestUser={guestUser}
+                />
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -797,18 +611,6 @@ export default function GuestPurchaseModal({
         formData={currentFormData}
         onAbandon={handleAbandonmentReport}
       />
-
-      {/* Exit Confirmation Dialog */}
-      {showExitConfirmation && (
-        <GuestExitConfirmation
-          isOpen={showExitConfirmation}
-          onConfirmExit={performClose}
-          onCancel={() => setShowExitConfirmation(false)}
-          onSaveAndExit={handleSaveAndExit}
-          currentStep={step}
-          hasProgress={step !== "choice" && step !== "progress-check"}
-        />
-      )}
     </>
   )
 } 

@@ -85,7 +85,7 @@ export default function AdminBookingsClient() {
     setSelectedBooking(null)
   }
 
-  const columns = useMemo(() => getAdminBookingColumns(t, language, handleRowClick), [t, language])
+  const columns = useMemo(() => getAdminBookingColumns(t, language, handleRowClick), [t, language, handleRowClick])
 
   const handleRefresh = () => {
     refetch()
@@ -449,6 +449,7 @@ export default function AdminBookingsClient() {
         booking={selectedBooking}
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
+        t={t}
       />
     </div>
   )

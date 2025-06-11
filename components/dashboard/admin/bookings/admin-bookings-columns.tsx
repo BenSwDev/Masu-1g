@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
@@ -46,6 +47,36 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 type TFunction = (key: string, options?: any) => string
 
+// Safe date formatting functions
+const formatDateSafe = (date: string | Date | null | undefined): string => {
+  if (!date) return "-"
+  try {
+    return format(new Date(date), "dd/MM/yyyy")
+  } catch {
+    return "-"
+  }
+}
+
+const formatTimeSafe = (date: string | Date | null | undefined): string => {
+  if (!date) return "-"
+  try {
+    return format(new Date(date), "HH:mm")
+  } catch {
+    return "-"
+  }
+}
+
+const formatDateTimeSafe = (date: string | Date | null | undefined, language: string): string => {
+  if (!date) return "-"
+  try {
+    const d = new Date(date)
+    const locale = language === "he" ? he : language === "ru" ? ru : enUS
+    return format(d, "dd/MM/yyyy HH:mm", { locale })
+  } catch {
+    return "-"
+  }
+}
+
 // Professional Assignment Component
 const ProfessionalAssignmentDialog = ({ 
   booking, 
@@ -85,6 +116,7 @@ const ProfessionalAssignmentDialog = ({
         toast.error(errorMessage)
       }
     } catch (error) {
+      console.error("Assignment error:", error)
       toast.error(t("adminBookings.assignError"))
     } finally {
       setIsAssigning(false)
@@ -107,7 +139,7 @@ const ProfessionalAssignmentDialog = ({
                 <SelectValue placeholder={t("adminBookings.chooseProfessional")} />
               </SelectTrigger>
               <SelectContent>
-                {professionalsData?.professionals?.map((professional) => (
+                {professionalsData?.professionals?.map((professional: any) => (
                   <SelectItem key={professional._id} value={professional._id}>
                     <div className="flex items-center gap-2">
                       <span>{professional.name}</span>
@@ -157,10 +189,12 @@ const AdminBookingActions = ({
   const [showNotesModal, setShowNotesModal] = useState(false)
   const [showAssignModal, setShowAssignModal] = useState(false)
 
+  if (!booking) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
+
   const canAssignProfessional = !booking.professionalId && !["completed", "cancelled_by_user", "cancelled_by_admin", "no_show"].includes(booking.status)
   const hasNotes = booking.notes && booking.notes.trim().length > 0
-
-
 
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent row click when clicking dropdown
@@ -184,7 +218,7 @@ const AdminBookingActions = ({
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium">{t("common.actions")}</p>
               <p className="text-xs text-muted-foreground">
-                #{booking.bookingNumber}
+                #{booking.bookingNumber || "N/A"}
               </p>
             </div>
           </DropdownMenuLabel>
@@ -201,33 +235,34 @@ const AdminBookingActions = ({
           )}
 
           {canAssignProfessional && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setShowAssignModal(true)}
-                className="cursor-pointer text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              >
-                <UserPlus className="mr-2 h-4 w-4" />
-                <span>{t("adminBookings.assignProfessional")}</span>
-              </DropdownMenuItem>
-            </>
+            <DropdownMenuItem
+              onClick={() => setShowAssignModal(true)}
+              className="cursor-pointer"
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              <span>{t("adminBookings.assignProfessional")}</span>
+            </DropdownMenuItem>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
-        <DialogContent className="max-w-md" aria-describedby="notes-description">
-          <DialogHeader>
-            <DialogTitle>{t("adminBookings.notesDialog.title")}</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4" id="notes-description">
-            <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-700">
-              {booking.notes || t("adminBookings.notesDialog.noNotes")}
+      {/* Notes Modal */}
+      {showNotesModal && (
+        <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("adminBookings.clientNotes")}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {booking.notes || t("adminBookings.noNotes")}
+              </p>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
 
+      {/* Assignment Modal */}
       <ProfessionalAssignmentDialog
         booking={booking}
         isOpen={showAssignModal}
@@ -239,236 +274,174 @@ const AdminBookingActions = ({
 }
 
 // Status Badge Component
-const AdminBookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"]; t: TFunction }) => {
-  const statusConfig = {
-    pending_professional_assignment: {
-      label: t("adminBookings.status.pendingAssignment"),
-      className: "bg-amber-100 text-amber-800 border-amber-200"
-    },
-    confirmed: {
-      label: t("adminBookings.status.confirmed"),
-      className: "bg-green-100 text-green-800 border-green-200"
-    },
-    professional_en_route: {
-      label: t("adminBookings.status.enRoute"),
-      className: "bg-blue-100 text-blue-800 border-blue-200"
-    },
-    completed: {
-      label: t("adminBookings.status.completed"),
-      className: "bg-gray-100 text-gray-800 border-gray-200"
-    },
-    cancelled_by_user: {
-      label: t("adminBookings.status.cancelledByUser"),
-      className: "bg-red-100 text-red-800 border-red-200"
-    },
-    cancelled_by_admin: {
-      label: t("adminBookings.status.cancelledByAdmin"),
-      className: "bg-red-100 text-red-800 border-red-200"
-    },
-    no_show: {
-      label: t("adminBookings.status.noShow"),
-      className: "bg-orange-100 text-orange-800 border-orange-200"
-    }
-  } as const
-
-  const config = statusConfig[status as keyof typeof statusConfig] || {
-    label: status || t("common.status.unknown"),
-    className: "bg-gray-100 text-gray-800 border-gray-200"
+const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }) => {
+  if (!status) {
+    return <Badge variant="secondary">{t("common.unknown")}</Badge>
   }
 
+  const statusConfig: Record<string, { variant: "secondary" | "destructive"; color: string }> = {
+    pending: { variant: "secondary" as const, color: "bg-yellow-100 text-yellow-800" },
+    pending_professional_assignment: { variant: "secondary" as const, color: "bg-yellow-100 text-yellow-800" },
+    confirmed: { variant: "secondary" as const, color: "bg-blue-100 text-blue-800" },
+    in_progress: { variant: "secondary" as const, color: "bg-purple-100 text-purple-800" },
+    professional_en_route: { variant: "secondary" as const, color: "bg-blue-100 text-blue-800" },
+    completed: { variant: "secondary" as const, color: "bg-green-100 text-green-800" },
+    cancelled_by_user: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
+    cancelled_by_admin: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
+    no_show: { variant: "destructive" as const, color: "bg-orange-100 text-orange-800" },
+  }
+
+  const config = statusConfig[status] || statusConfig.pending
+
   return (
-    <Badge 
-      variant="outline" 
-      className={cn("text-xs font-medium", config.className)}
-    >
-      {config.label}
+    <Badge variant={config.variant} className={config.color}>
+      {t(`bookings.status.${status}`)}
     </Badge>
   )
 }
 
-// Client Info Component
+// Info Components with null safety
 const ClientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  const clientName = booking.bookedByUserName || (booking.userId as any)?.name || t("common.unknown")
-  const clientEmail = booking.bookedByUserEmail || (booking.userId as any)?.email
-  const clientPhone = booking.bookedByUserPhone || (booking.userId as any)?.phone
+  if (!booking?.userId) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
 
+  const user = booking.userId as any
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-1">
-        <User className="h-3 w-3 text-muted-foreground" />
-        <span className="text-sm font-medium">{clientName}</span>
+      <div className="font-medium">{user.name || t("common.unknown")}</div>
+      <div className="text-xs text-muted-foreground flex items-center gap-1">
+        <Phone className="h-3 w-3" />
+        {user.phone || "-"}
       </div>
-      {clientEmail && (
-        <div className="flex items-center gap-1">
-          <Mail className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{clientEmail}</span>
-        </div>
-      )}
-      {clientPhone && (
-        <div className="flex items-center gap-1">
-          <Phone className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{clientPhone}</span>
-        </div>
-      )}
+      <div className="text-xs text-muted-foreground flex items-center gap-1">
+        <Mail className="h-3 w-3" />
+        {user.email || "-"}
+      </div>
     </div>
   )
 }
 
-// Professional Info Component
 const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  if (!booking.professionalId) {
+  if (!booking?.professionalId) {
     return (
-      <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">
-        {t("adminBookings.noProfessional")}
+      <Badge variant="outline" className="text-orange-600 border-orange-200">
+        {t("adminBookings.unassigned")}
       </Badge>
     )
   }
 
-  const professionalName = (booking.professionalId as any)?.name || t("common.unknown")
-  const professionalPhone = (booking.professionalId as any)?.phone
-
+  const professional = booking.professionalId as any
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-1">
-        <User className="h-3 w-3 text-green-600" />
-        <span className="text-sm font-medium text-green-700">{professionalName}</span>
+      <div className="font-medium">{professional.name || t("common.unknown")}</div>
+      <div className="text-xs text-muted-foreground flex items-center gap-1">
+        <Phone className="h-3 w-3" />
+        {professional.phone || "-"}
       </div>
-      {professionalPhone && (
-        <div className="flex items-center gap-1">
-          <Phone className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{professionalPhone}</span>
-        </div>
-      )}
+      <div className="text-xs text-muted-foreground flex items-center gap-1">
+        <Mail className="h-3 w-3" />
+        {professional.email || "-"}
+      </div>
     </div>
   )
 }
 
-// Price Details Info Component
 const PriceDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  const priceDetails = booking.priceDetails
-  if (!priceDetails) {
-    return <span className="text-muted-foreground">{t("common.notAvailable")}</span>
+  if (!booking?.priceDetails) {
+    return <div className="text-sm text-muted-foreground">-</div>
   }
 
-  const hasDiscounts = (priceDetails as any).couponDiscount > 0 || (priceDetails as any).voucherAppliedAmount > 0
-  const hasSurcharges = (priceDetails as any).totalSurchargesAmount > 0
-
+  const price = booking.priceDetails as any
   return (
-    <div className="space-y-1 max-w-[200px]">
-      <div className="text-sm font-medium">
-        ₪{priceDetails.finalAmount?.toFixed(2) || "0.00"}
+    <div className="space-y-1">
+      <div className="font-medium">
+        ₪{price.finalAmount?.toFixed(2) || "0.00"}
       </div>
-      
-      {(priceDetails as any).basePrice && (priceDetails as any).basePrice !== (priceDetails as any).finalAmount && (
+      {price.basePrice && price.basePrice !== price.finalAmount && (
         <div className="text-xs text-muted-foreground">
-          {t("adminBookings.basePrice")}: ₪{(priceDetails as any).basePrice.toFixed(2)}
+          {t("adminBookings.basePrice")}: ₪{price.basePrice.toFixed(2)}
         </div>
       )}
-      
-      {hasSurcharges && (
-        <div className="text-xs text-orange-600">
-          +₪{(priceDetails as any).totalSurchargesAmount.toFixed(2)} {t("adminBookings.surcharges")}
-        </div>
-      )}
-      
-      {hasDiscounts && (
+      {price.couponDiscount && price.couponDiscount > 0 && (
         <div className="text-xs text-green-600">
-          {(priceDetails as any).couponDiscount > 0 && (
-            <div>-₪{(priceDetails as any).couponDiscount.toFixed(2)} {t("adminBookings.couponDiscount")}</div>
-          )}
-          {(priceDetails as any).voucherAppliedAmount > 0 && (
-            <div>-₪{(priceDetails as any).voucherAppliedAmount.toFixed(2)} {t("adminBookings.voucherDiscount")}</div>
-          )}
-        </div>
-      )}
-      
-      {(priceDetails as any).isFullyCoveredByVoucherOrSubscription && (
-        <div className="text-xs text-blue-600 font-medium">
-          {t("adminBookings.fullyCovered")}
+          {t("adminBookings.discount")}: -₪{price.couponDiscount.toFixed(2)}
         </div>
       )}
     </div>
   )
 }
 
-// Recipient Info Component
 const RecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  const hasRecipient = booking.recipientName && booking.recipientName !== booking.bookedByUserName
-  
-  if (!hasRecipient) {
-    return (
-      <div className="text-sm text-muted-foreground">
-        {t("adminBookings.selfBooking")}
-      </div>
-    )
+  if (!booking?.recipientName) {
+    return <div className="text-sm text-muted-foreground">-</div>
   }
 
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-1">
-        <User className="h-3 w-3 text-blue-600" />
-        <span className="text-sm font-medium">{booking.recipientName}</span>
-      </div>
+      <div className="font-medium">{booking.recipientName}</div>
       {booking.recipientPhone && (
-        <div className="flex items-center gap-1">
-          <Phone className="h-3 w-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">{booking.recipientPhone}</span>
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Phone className="h-3 w-3" />
+          {booking.recipientPhone}
+        </div>
+      )}
+      {booking.recipientEmail && (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Mail className="h-3 w-3" />
+          {booking.recipientEmail}
         </div>
       )}
     </div>
   )
 }
 
-// Treatment Time Info Component
 const TreatmentTimeInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   const treatment = booking.treatmentId as any
-  const selectedDurationId = booking.selectedDurationId
+  const selectedTime = (booking as any).selectedTime
   
-  if (!treatment) {
-    return <span className="text-muted-foreground">{t("common.notAvailable")}</span>
+  if (!selectedTime && !treatment) {
+    return <div className="text-sm text-muted-foreground">-</div>
   }
-
-  const selectedDuration = treatment.durations?.find((d: any) => d._id?.toString() === selectedDurationId?.toString())
-  const duration = selectedDuration?.minutes || treatment.defaultDurationMinutes || 0
 
   return (
     <div className="space-y-1">
-      <div className="text-sm font-medium">
-        {duration} {t("common.minutes")}
-      </div>
-      {selectedDuration?.description && (
-        <div className="text-xs text-muted-foreground">
-          {selectedDuration.description}
-        </div>
+      {selectedTime && (
+        <div className="font-medium">{selectedTime}</div>
       )}
-      {selectedDuration?.surcharge && selectedDuration.surcharge > 0 && (
-        <div className="text-xs text-orange-600">
-          +₪{selectedDuration.surcharge} {t("adminBookings.timeSurcharge")}
+      {treatment?.duration && (
+        <div className="text-xs text-muted-foreground">
+          {treatment.duration} {t("common.minutes")}
         </div>
       )}
     </div>
   )
 }
 
-// Address Details Info Component
 const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  const address = booking.addressId as any
+  const address = (booking as any).addressDetails || booking.addressId
   
   if (!address) {
-    return <span className="text-muted-foreground">{t("common.notAvailable")}</span>
+    return <div className="text-sm text-muted-foreground">-</div>
   }
 
   return (
     <div className="space-y-1 max-w-[200px]">
-      <div className="text-sm">
-        {address.fullAddress || `${address.street} ${address.streetNumber}, ${address.city}`}
+      <div className="font-medium text-sm">
+        {address.street} {address.houseNumber || address.streetNumber}, {address.city}
       </div>
       
-      <div className="flex items-center gap-1">
-        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-          {t(`adminBookings.addressType.${address.addressType}`)}
-        </span>
-      </div>
+      {address.floor && (
+        <div className="text-xs text-muted-foreground">
+          {t("adminBookings.floor")}: {address.floor}
+        </div>
+      )}
+      
+      {address.apartment && (
+        <div className="text-xs text-muted-foreground">
+          {t("adminBookings.apartment")}: {address.apartment}
+        </div>
+      )}
       
       {address.hasPrivateParking !== undefined && (
         <div className="flex items-center gap-1">
@@ -494,50 +467,7 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
   )
 }
 
-const formatDateIsraeli = (date: string | Date) => {
-  return format(new Date(date), "dd/MM/yyyy")
-}
-
-const formatTimeIsraeli = (date: Date) => {
-  return format(date, "HH:mm")
-}
-
-const getLocale = (locale: string) => {
-  switch (locale) {
-    case "he":
-      return he
-    case "en":
-      return enUS
-    case "ru":
-      return ru
-    default:
-      return he
-  }
-}
-
-// Create a clickable row component
-const ClickableRow = ({ 
-  children, 
-  onClick, 
-  className 
-}: { 
-  children: React.ReactNode; 
-  onClick: () => void; 
-  className?: string;
-}) => {
-  return (
-    <tr 
-      className={cn(
-        "cursor-pointer hover:bg-muted/50 transition-colors", 
-        className
-      )}
-      onClick={onClick}
-    >
-      {children}
-    </tr>
-  )
-}
-
+// Export the column definition function
 export const getAdminBookingColumns = (
   t: TFunction, 
   locale: string,
@@ -597,12 +527,10 @@ export const getAdminBookingColumns = (
     ),
     cell: ({ row }) => {
       const bookingDateTime = row.getValue("bookingDateTime") as string | Date
-      if (!bookingDateTime) return <div className="text-sm">-</div>
-      const date = new Date(bookingDateTime)
       return (
         <div className="text-sm">
-          <div className="font-medium">{formatDateIsraeli(date)}</div>
-          <div className="text-muted-foreground">{formatTimeIsraeli(date)}</div>
+          <div className="font-medium">{formatDateSafe(bookingDateTime)}</div>
+          <div className="text-muted-foreground">{formatTimeSafe(bookingDateTime)}</div>
         </div>
       )
     },
@@ -626,7 +554,7 @@ export const getAdminBookingColumns = (
     ),
     cell: ({ row }) => {
       const status = row.getValue("status") as string
-      return <AdminBookingStatusBadge status={status || "unknown"} t={t} />
+      return <AdminBookingStatusBadge status={status || "pending"} t={t} />
     },
   },
   {

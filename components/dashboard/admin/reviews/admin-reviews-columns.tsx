@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { type ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
@@ -11,14 +12,25 @@ import { ArrowUpDown } from "lucide-react"
 
 type TFunction = (key: string, options?: any) => string
 
-const formatDate = (date: string | Date) => {
-  return format(new Date(date), "dd/MM/yyyy")
+// Safe date formatting functions
+const formatDateSafe = (date: string | Date | null | undefined): string => {
+  if (!date) return "-"
+  try {
+    return format(new Date(date), "dd/MM/yyyy")
+  } catch {
+    return "-"
+  }
 }
 
-const formatDateTime = (date: string | Date, language: string) => {
-  const d = new Date(date)
-  const locale = language === "he" ? he : language === "ru" ? ru : enUS
-  return format(d, "dd/MM/yyyy HH:mm", { locale })
+const formatDateTimeSafe = (date: string | Date | null | undefined, language: string): string => {
+  if (!date) return "-"
+  try {
+    const d = new Date(date)
+    const locale = language === "he" ? he : language === "ru" ? ru : enUS
+    return format(d, "dd/MM/yyyy HH:mm", { locale })
+  } catch {
+    return "-"
+  }
 }
 
 export function getAdminReviewColumns(
@@ -32,11 +44,15 @@ export function getAdminReviewColumns(
       header: t("adminReviews.columns.bookingNumber"),
       cell: ({ row }) => {
         const review = row.original
+        if (!review?.bookingId) {
+          return <div className="text-sm text-muted-foreground">-</div>
+        }
+        
         return (
           <div className="space-y-1">
-            <div className="font-medium">{review.bookingId.bookingNumber}</div>
+            <div className="font-medium">{(review.bookingId as any).bookingNumber || "-"}</div>
             <div className="text-xs text-muted-foreground">
-              {formatDateTime(review.bookingId.bookingDateTime, language)}
+              {formatDateTimeSafe((review.bookingId as any).bookingDateTime, language)}
             </div>
           </div>
         )
@@ -47,9 +63,13 @@ export function getAdminReviewColumns(
       header: t("adminReviews.columns.treatmentTime"),
       cell: ({ row }) => {
         const review = row.original
+        if (!review?.bookingId) {
+          return <div className="text-sm text-muted-foreground">-</div>
+        }
+        
         return (
           <div className="text-sm">
-            {formatDateTime(review.bookingId.bookingDateTime, language)}
+            {formatDateTimeSafe((review.bookingId as any).bookingDateTime, language)}
           </div>
         )
       },
@@ -59,10 +79,15 @@ export function getAdminReviewColumns(
       header: t("adminReviews.columns.treatmentType"),
       cell: ({ row }) => {
         const review = row.original
-        const duration = review.treatmentId.duration
+        if (!review?.treatmentId) {
+          return <div className="text-sm text-muted-foreground">-</div>
+        }
+        
+        const treatment = review.treatmentId as any
+        const duration = treatment.duration
         return (
           <div className="space-y-1">
-            <div className="font-medium">{review.treatmentId.name}</div>
+            <div className="font-medium">{treatment.name || t("common.unknown")}</div>
             {duration && (
               <div className="text-xs text-muted-foreground">
                 {duration} {t("common.minutes")}
@@ -77,14 +102,19 @@ export function getAdminReviewColumns(
       header: t("adminReviews.columns.professional"),
       cell: ({ row }) => {
         const review = row.original
+        if (!review?.professionalId) {
+          return <div className="text-sm text-muted-foreground">-</div>
+        }
+        
+        const professional = review.professionalId as any
         return (
           <div className="space-y-1">
-            <div className="font-medium">{review.professionalId.name}</div>
+            <div className="font-medium">{professional.name || t("common.unknown")}</div>
             <div className="text-xs text-muted-foreground">
-              {review.professionalId.phone}
+              {professional.phone || "-"}
             </div>
             <div className="text-xs text-muted-foreground">
-              {review.professionalId.email}
+              {professional.email || "-"}
             </div>
           </div>
         )
@@ -95,14 +125,19 @@ export function getAdminReviewColumns(
       header: t("adminReviews.columns.customer"),
       cell: ({ row }) => {
         const review = row.original
+        if (!review?.userId) {
+          return <div className="text-sm text-muted-foreground">-</div>
+        }
+        
+        const user = review.userId as any
         return (
           <div className="space-y-1">
-            <div className="font-medium">{review.userId.name}</div>
+            <div className="font-medium">{user.name || t("common.unknown")}</div>
             <div className="text-xs text-muted-foreground">
-              {review.userId.phone}
+              {user.phone || "-"}
             </div>
             <div className="text-xs text-muted-foreground">
-              {review.userId.email}
+              {user.email || "-"}
             </div>
           </div>
         )
@@ -113,7 +148,12 @@ export function getAdminReviewColumns(
       header: t("adminReviews.columns.bookedFor"),
       cell: ({ row }) => {
         const review = row.original
-        const recipient = review.bookingId.recipientName
+        if (!review?.bookingId) {
+          return <div className="text-sm text-muted-foreground">-</div>
+        }
+        
+        const booking = review.bookingId as any
+        const recipient = booking.recipientName
         
         if (!recipient) {
           return <span className="text-muted-foreground">-</span>
@@ -122,14 +162,14 @@ export function getAdminReviewColumns(
         return (
           <div className="space-y-1">
             <div className="font-medium">{recipient}</div>
-            {review.bookingId.recipientPhone && (
+            {booking.recipientPhone && (
               <div className="text-xs text-muted-foreground">
-                {review.bookingId.recipientPhone}
+                {booking.recipientPhone}
               </div>
             )}
-            {review.bookingId.recipientEmail && (
+            {booking.recipientEmail && (
               <div className="text-xs text-muted-foreground">
-                {review.bookingId.recipientEmail}
+                {booking.recipientEmail}
               </div>
             )}
           </div>
@@ -142,13 +182,19 @@ export function getAdminReviewColumns(
       cell: ({ row }) => {
         const review = row.original
         
+        // COMPREHENSIVE NULL SAFETY CHECK
         if (!review) {
           return <div className="text-sm text-muted-foreground">-</div>
         }
         
         const rating = review.rating || 0
-        const hasComment = !!review.comment
-        const hasResponse = !!(review.professionalResponse && review.professionalResponse.trim())
+        const hasComment = !!(review.comment && review.comment.trim())
+        // SAFE ACCESS TO professionalResponse with multiple null checks
+        const hasResponse = !!(
+          review.professionalResponse && 
+          typeof review.professionalResponse === 'string' && 
+          review.professionalResponse.trim().length > 0
+        )
         const isLowRating = rating < 5
         
         return (
@@ -196,13 +242,21 @@ export function getAdminReviewColumns(
       cell: ({ row }) => {
         const review = row.original
         
+        if (!review) {
+          return <div className="text-sm text-muted-foreground">-</div>
+        }
+        
         return (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            onClick={() => onReviewClick(review)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onReviewClick(review)
+            }}
+            className="h-8 px-2"
           >
-            <Eye className="h-4 w-4 mr-2" />
+            <Eye className="h-4 w-4 mr-1" />
             {t("adminReviews.viewDetails")}
           </Button>
         )

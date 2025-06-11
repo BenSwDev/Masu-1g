@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/
 import { Separator } from "@/components/common/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import ReviewDetailModal from "./review-detail-modal"
+import { toast } from "sonner"
 
 /**
  * Admin Reviews Client Component
@@ -81,6 +82,10 @@ export default function AdminReviewsClient() {
   })
 
   const handleRowClick = (review: PopulatedReview) => {
+    if (!review) {
+      console.warn("Attempted to click on null/undefined review")
+      return
+    }
     setSelectedReview(review)
     setIsDetailModalOpen(true)
   }
@@ -90,10 +95,22 @@ export default function AdminReviewsClient() {
     setSelectedReview(null)
   }
 
-  const columns = useMemo(() => getAdminReviewColumns(t, language, handleRowClick), [t, language])
+  const columns = useMemo(() => {
+    try {
+      return getAdminReviewColumns(t, language, handleRowClick)
+    } catch (error) {
+      console.error("Error creating review columns:", error)
+      return []
+    }
+  }, [t, language])
 
   const handleRefresh = () => {
-    refetch()
+    try {
+      refetch()
+    } catch (error) {
+      console.error("Error refreshing reviews:", error)
+      toast.error(t("common.refreshError"))
+    }
   }
 
   const clearAllFilters = () => {

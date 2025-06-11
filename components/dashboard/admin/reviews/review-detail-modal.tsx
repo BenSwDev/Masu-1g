@@ -59,6 +59,7 @@ export default function ReviewDetailModal({
       onUpdate()
       onClose()
     } catch (error) {
+      console.error("Update response error:", error)
       toast.error(t("adminReviews.errors.updateFailed"))
     } finally {
       setIsUpdating(false)
@@ -80,6 +81,12 @@ export default function ReviewDetailModal({
       </div>
     )
   }
+
+  // Safe access to nested properties
+  const bookingInfo = review?.bookingId as any
+  const treatmentInfo = review?.treatmentId as any
+  const userInfo = review?.userId as any
+  const professionalInfo = review?.professionalId as any
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -108,25 +115,25 @@ export default function ReviewDetailModal({
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <span className="font-medium">{t("adminReviews.bookingNumber")}:</span>
-                    <span>{review.bookingId.bookingNumber}</span>
+                    <span>{bookingInfo?.bookingNumber || "-"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{t("adminReviews.treatmentDate")}:</span>
-                    <span>{formatDateTime(review.bookingId.bookingDateTime, language)}</span>
+                    <span>{bookingInfo?.bookingDateTime ? formatDateTime(bookingInfo.bookingDateTime, language) : "-"}</span>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <span className="font-medium">{t("adminReviews.treatmentType")}:</span>
-                    <span>{review.treatmentId.name}</span>
+                    <span>{treatmentInfo?.name || "-"}</span>
                   </div>
-                  {review.treatmentId.duration && (
+                  {treatmentInfo?.duration && (
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">{t("adminReviews.duration")}:</span>
-                      <span>{review.treatmentId.duration} {t("common.minutes")}</span>
+                      <span>{treatmentInfo.duration} {t("common.minutes")}</span>
                     </div>
                   )}
                 </div>
@@ -145,22 +152,22 @@ export default function ReviewDetailModal({
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{t("adminReviews.customerName")}:</span>
-                    <span>{review.userId.name}</span>
+                    <span>{userInfo?.name || "-"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{t("adminReviews.phone")}:</span>
-                    <span>{review.userId.phone}</span>
+                    <span>{userInfo?.phone || "-"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{t("adminReviews.email")}:</span>
-                    <span>{review.userId.email}</span>
+                    <span>{userInfo?.email || "-"}</span>
                   </div>
                 </div>
                 
                 {/* Recipient Information (if different) */}
-                {review.bookingId.recipientName && (
+                {bookingInfo?.recipientName && (
                   <div className="space-y-2">
                     <h4 className="font-medium text-sm text-muted-foreground">
                       {t("adminReviews.treatmentRecipient")}
@@ -168,20 +175,20 @@ export default function ReviewDetailModal({
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">{t("adminReviews.recipientName")}:</span>
-                      <span>{review.bookingId.recipientName}</span>
+                      <span>{bookingInfo.recipientName}</span>
                     </div>
-                    {review.bookingId.recipientPhone && (
+                    {bookingInfo.recipientPhone && (
                       <div className="flex items-center space-x-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{t("adminReviews.recipientPhone")}:</span>
-                        <span>{review.bookingId.recipientPhone}</span>
+                        <span>{bookingInfo.recipientPhone}</span>
                       </div>
                     )}
-                    {review.bookingId.recipientEmail && (
+                    {bookingInfo.recipientEmail && (
                       <div className="flex items-center space-x-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{t("adminReviews.recipientEmail")}:</span>
-                        <span>{review.bookingId.recipientEmail}</span>
+                        <span>{bookingInfo.recipientEmail}</span>
                       </div>
                     )}
                   </div>
@@ -199,17 +206,17 @@ export default function ReviewDetailModal({
               <div className="flex items-center space-x-2">
                 <User className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{t("adminReviews.professionalName")}:</span>
-                <span>{review.professionalId.name}</span>
+                <span>{professionalInfo?.name || "-"}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{t("adminReviews.phone")}:</span>
-                <span>{review.professionalId.phone}</span>
+                <span>{professionalInfo?.phone || "-"}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{t("adminReviews.email")}:</span>
-                <span>{review.professionalId.email}</span>
+                <span>{professionalInfo?.email || "-"}</span>
               </div>
             </CardContent>
           </Card>
@@ -221,93 +228,49 @@ export default function ReviewDetailModal({
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Rating */}
-              <div>
-                <span className="font-medium mb-2 block">{t("adminReviews.rating")}:</span>
-                {renderStars(review.rating)}
+              <div className="space-y-2">
+                <h4 className="font-medium">{t("adminReviews.rating")}</h4>
+                {renderStars(review.rating || 0)}
               </div>
 
-              <Separator />
-
-              {/* Comment */}
-              {review.comment ? (
-                <div>
-                  <span className="font-medium mb-2 block">{t("adminReviews.customerComment")}:</span>
-                  <div className="bg-muted p-3 rounded-md">
-                    <p className="text-sm">{review.comment}</p>
+              {/* Customer Comment */}
+              {review.comment && (
+                <div className="space-y-2">
+                  <h4 className="font-medium">{t("adminReviews.customerComment")}</h4>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm whitespace-pre-wrap">{review.comment}</p>
                   </div>
-                </div>
-              ) : (
-                <div>
-                  <span className="font-medium mb-2 block">{t("adminReviews.customerComment")}:</span>
-                  <p className="text-muted-foreground italic">{t("adminReviews.noComment")}</p>
                 </div>
               )}
 
               <Separator />
 
               {/* Professional Response */}
-              <div>
-                <span className="font-medium mb-2 block">{t("adminReviews.professionalResponse")}:</span>
-                {review.professionalResponse ? (
-                  <div className="bg-blue-50 p-3 rounded-md mb-3">
-                    <p className="text-sm">{review.professionalResponse}</p>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground italic mb-3">{t("adminReviews.noResponse")}</p>
-                )}
-                
-                {/* Response Form */}
-                <div className="space-y-3">
-                  <Textarea
-                    placeholder={t("adminReviews.responsePlaceholder")}
-                    value={professionalResponse}
-                    onChange={(e) => setProfessionalResponse(e.target.value)}
-                    rows={3}
-                    maxLength={1000}
-                  />
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">
-                      {professionalResponse.length}/1000 {t("common.characters")}
-                    </span>
-                    <Button 
-                      onClick={handleUpdateResponse}
-                      disabled={isUpdating || !professionalResponse.trim()}
-                      size="sm"
-                    >
-                      {isUpdating ? t("common.updating") : t("adminReviews.updateResponse")}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Review Metadata */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">{t("adminReviews.reviewMetadata")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">{t("adminReviews.reviewDate")}:</span>
-                <span>{formatDateTime(review.createdAt, language)}</span>
-              </div>
-              {review.updatedAt !== review.createdAt && (
+              <div className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{t("adminReviews.lastUpdated")}:</span>
-                  <span>{formatDateTime(review.updatedAt, language)}</span>
+                  <h4 className="font-medium">{t("adminReviews.professionalResponse")}</h4>
+                  <Edit3 className="h-4 w-4 text-muted-foreground" />
                 </div>
-              )}
+                
+                <Textarea
+                  placeholder={t("adminReviews.responseePlaceholder")}
+                  value={professionalResponse}
+                  onChange={(e) => setProfessionalResponse(e.target.value)}
+                  className="min-h-[100px]"
+                  disabled={isUpdating}
+                />
+                
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={onClose} disabled={isUpdating}>
+                    {t("common.cancel")}
+                  </Button>
+                  <Button onClick={handleUpdateResponse} disabled={isUpdating || !professionalResponse.trim()}>
+                    {isUpdating ? t("common.updating") : t("adminReviews.updateResponse")}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline" onClick={onClose}>
-            {t("common.close")}
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -15,15 +15,25 @@ export class SMSService {
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === "development"
     
-    // Only initialize Twilio in production mode
-    if (!this.isDevelopment && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-      if (!process.env.TWILIO_ACCOUNT_SID.startsWith("AC")) {
-        logger.warn("Invalid Twilio Account SID format - must start with 'AC'")
+    // Only initialize Twilio in production mode or when valid credentials are provided
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+      // Skip validation in development mode with placeholder values
+      if (this.isDevelopment && process.env.TWILIO_ACCOUNT_SID === "your-twilio-account-sid") {
         return
       }
       
-      this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-      this.messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID
+      if (!process.env.TWILIO_ACCOUNT_SID.startsWith("AC")) {
+        // Only warn in production or when not using placeholder values
+        if (!this.isDevelopment || process.env.TWILIO_ACCOUNT_SID !== "your-twilio-account-sid") {
+          logger.warn("Invalid Twilio Account SID format - must start with 'AC'")
+        }
+        return
+      }
+      
+      if (!this.isDevelopment) {
+        this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+        this.messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID
+      }
     }
   }
 

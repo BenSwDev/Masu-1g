@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { BookingWizard } from "@/components/dashboard/member/book-treatment/booking-wizard"
+import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
 import { getBookingInitialData } from "@/actions/booking-actions"
 
 export default async function GuestBookTreatmentPage() {

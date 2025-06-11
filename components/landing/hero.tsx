@@ -24,53 +24,43 @@ export function LandingHero() {
       
       switch (purchaseType) {
         case "booking":
-          // Load treatments, addresses, payment methods for booking
-          const [treatmentsRes, paymentsRes] = await Promise.all([
-            fetch("/api/treatments-for-selection"),
-            fetch("/api/payment-methods")
-          ])
+          // Load treatments only for guests
+          const treatmentsRes = await fetch("/api/treatments-for-selection")
           const treatments = treatmentsRes.ok ? await treatmentsRes.json() : { treatments: [] }
-          const payments = paymentsRes.ok ? await paymentsRes.json() : { paymentMethods: [] }
           
           data = {
             activeTreatments: treatments.treatments || [],
-            paymentMethods: payments.paymentMethods || [],
+            paymentMethods: [], // Empty for guests - will be handled in booking flow
             activeUserSubscriptions: [], // Empty for guests
-            usableGiftVouchers: [], // Empty for guests
-            userAddresses: [] // Will be created during booking flow
+            usableGiftVouchers: [], // Empty for guests  
+            userAddresses: [] // Empty for guests - will be created during booking flow
           }
           break
           
         case "subscription":
-          // Load subscriptions, treatments, payment methods
-          const [subsRes, treatRes, payRes] = await Promise.all([
+          // Load subscriptions, treatments - no payment methods for guests
+          const [subsRes, treatRes] = await Promise.all([
             fetch("/api/subscriptions-for-selection"),
-            fetch("/api/treatments-for-selection"),
-            fetch("/api/payment-methods")
+            fetch("/api/treatments-for-selection")
           ])
           const subscriptions = subsRes.ok ? await subsRes.json() : { subscriptions: [] }
           const treat = treatRes.ok ? await treatRes.json() : { treatments: [] }
-          const pay = payRes.ok ? await payRes.json() : { paymentMethods: [] }
           
           data = {
             subscriptions: subscriptions.subscriptions || [],
             treatments: treat.treatments || [],
-            paymentMethods: pay.paymentMethods || []
+            paymentMethods: [] // Empty for guests - will be handled in purchase flow
           }
           break
           
         case "gift-voucher":
-          // Load treatments, payment methods
-          const [treatmentsGRes, paymentsGRes] = await Promise.all([
-            fetch("/api/treatments-for-selection"),
-            fetch("/api/payment-methods")
-          ])
+          // Load treatments only - no payment methods for guests
+          const treatmentsGRes = await fetch("/api/treatments-for-selection")
           const treatmentsG = treatmentsGRes.ok ? await treatmentsGRes.json() : { treatments: [] }
-          const paymentsG = paymentsGRes.ok ? await paymentsGRes.json() : { paymentMethods: [] }
           
           data = {
             treatments: treatmentsG.treatments || [],
-            paymentMethods: paymentsG.paymentMethods || []
+            paymentMethods: [] // Empty for guests - will be handled in purchase flow
           }
           break
       }

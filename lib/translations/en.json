@@ -1375,7 +1375,8 @@
       "editGuestDetails": "Edit guest details",
       "editGuestDetailsDescription": "Change or update details before continuing",
       "continue": "Continue",
-      "purchaseDescription": "Complete your purchase with the selected details"
+      "purchaseDescription": "Complete your purchase with the selected details",
+      "progressDescription": "We found a purchase process you started earlier"
     },
     "creation": {
       "success": "Created successfully",
@@ -1394,6 +1395,36 @@
     "fetchError": "Error fetching user data",
     "goToDashboard": "Go to Dashboard",
     "backToHome": "Back to Home",
-    "guestModeNote": "Guest mode allows you to make a purchase without creating a full account"
+    "guestModeNote": "Guest mode allows you to make a purchase without creating a full account",
+    "exitConfirmation": {
+      "title": "Leave the modal?",
+      "hasProgressDescription": "You have progress in the purchase process. Would you like to save and return later?",
+      "noProgressDescription": "Are you sure you want to exit?",
+      "currentStep": "Current step",
+      "saveAndExit": "Save and Exit",
+      "discardAndExit": "Discard and Exit",
+      "exit": "Exit",
+      "continueEditing": "Continue Editing"
+    },
+    "progress": {
+      "foundExisting": "Found existing purchase process",
+      "foundExistingDescription": "You have an incomplete purchase process. Would you like to continue from where you left off or start fresh?",
+      "justNow": "just now",
+      "minutesAgo": "{{count}} minutes ago",
+      "hoursAgo": "{{count}} hours ago",
+      "daysAgo": "{{count}} days ago",
+      "userDetails": "User details",
+      "formData": "Form data",
+      "stepsCompleted": "{{count}} steps completed",
+      "resumeFromWhere": "Resume from {{step}}",
+      "startFresh": "Start Fresh",
+      "disclaimer": "Data is saved for 24 hours only"
+    },
+    "steps": {
+      "choice": "Option Selection",
+      "guest-form": "Fill Details",
+      "purchase-flow": "Purchase Process",
+      "progress-check": "Progress Check"
+    }
   }
 }

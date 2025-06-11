@@ -4014,7 +4014,8 @@
       "editGuestDetails": "ערוך פרטי אורח",
       "editGuestDetailsDescription": "שנה או עדכן את הפרטים לפני המשך",
       "continue": "המשך",
-      "purchaseDescription": "השלם את הרכישה עם הפרטים שנבחרו"
+      "purchaseDescription": "השלם את הרכישה עם הפרטים שנבחרו",
+      "progressDescription": "מצאנו תהליך רכישה שהתחלת קודם"
     },
     "creation": {
       "success": "נוצר בהצלחה",
@@ -4033,6 +4034,36 @@
     "fetchError": "שגיאה בטעינת נתוני המשתמש",
     "goToDashboard": "עבור לדשבורד",
     "backToHome": "חזור לעמוד הבית",
-    "guestModeNote": "מצב אורח מאפשר לך לבצע רכישה ללא יצירת חשבון מלא"
+    "guestModeNote": "מצב אורח מאפשר לך לבצע רכישה ללא יצירת חשבון מלא",
+    "exitConfirmation": {
+      "title": "האם להשאיר את המודל?",
+      "hasProgressDescription": "יש לך התקדמות בתהליך הרכישה. האם תרצה לשמור ולחזור מאוחר יותר?",
+      "noProgressDescription": "האם אתה בטוח שאתה רוצה לצאת?",
+      "currentStep": "שלב נוכחי",
+      "saveAndExit": "שמור וצא",
+      "discardAndExit": "מחק וצא",
+      "exit": "צא",
+      "continueEditing": "המשך עריכה"
+    },
+    "progress": {
+      "foundExisting": "מצאנו תהליך רכישה קיים",
+      "foundExistingDescription": "יש לך תהליך רכישה שלא הושלם. האם תרצה להמשיך מאיפה שהפסקת או להתחיל מחדש?",
+      "justNow": "עכשיו",
+      "minutesAgo": "לפני {{count}} דקות",
+      "hoursAgo": "לפני {{count}} שעות",
+      "daysAgo": "לפני {{count}} ימים",
+      "userDetails": "פרטי משתמש",
+      "formData": "נתוני טופס",
+      "stepsCompleted": "הושלמו {{count}} שלבים",
+      "resumeFromWhere": "המשך מ{{step}}",
+      "startFresh": "התחל מחדש",
+      "disclaimer": "נתונים נשמרים למשך 24 שעות בלבד"
+    },
+    "steps": {
+      "choice": "בחירת אפשרות",
+      "guest-form": "מילוי פרטים",
+      "purchase-flow": "תהליך רכישה",
+      "progress-check": "בדיקת התקדמות"
+    }
   }
 }

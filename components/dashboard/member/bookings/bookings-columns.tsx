@@ -51,14 +51,35 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
   const canReview = booking.status === "completed"
 
   // Fetch existing review if any
-  const { data: existingReview, refetch } = useQuery({
+  const { data: existingReview, refetch, isLoading, error } = useQuery({
     queryKey: ["review", booking._id],
     queryFn: () => getReviewByBookingId(booking._id.toString()),
     enabled: canReview,
     staleTime: 30000,
+    retry: 1,
   })
 
   const hasReview = !!existingReview
+
+  // Handle create review button click
+  const handleCreateReview = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsCreateModalOpen(true)
+  }
+
+  // Handle view review button click
+  const handleViewReview = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsViewModalOpen(true)
+  }
+
+  // Handle successful review creation
+  const handleReviewSuccess = () => {
+    refetch()
+    setIsCreateModalOpen(false)
+  }
 
   if (!canReview) {
     return (
@@ -69,17 +90,47 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
     )
   }
 
+  if (isLoading) {
+    return (
+      <Button variant="outline" size="sm" disabled className="text-xs">
+        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+        {t("common.loading")}
+      </Button>
+    )
+  }
+
+  if (error) {
+    return (
+      <Button variant="outline" size="sm" disabled className="text-xs text-red-600">
+        <X className="h-3 w-3 mr-1" />
+        {t("common.error")}
+      </Button>
+    )
+  }
+
   if (hasReview) {
     return (
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={() => setIsViewModalOpen(true)}
-        className="text-xs"
-      >
-        <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
-        {t("memberBookings.viewReview")}
-      </Button>
+      <>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleViewReview}
+          className="text-xs"
+        >
+          <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" />
+          {t("memberBookings.viewReview")}
+        </Button>
+
+        {/* View Review Modal */}
+        {existingReview && (
+          <ReviewDetailModal
+            review={existingReview}
+            isOpen={isViewModalOpen}
+            onClose={() => setIsViewModalOpen(false)}
+            onUpdate={refetch}
+          />
+        )}
+      </>
     )
   }
 
@@ -88,7 +139,7 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={() => setIsCreateModalOpen(true)}
+        onClick={handleCreateReview}
         className="text-xs"
       >
         <MessageCircle className="h-3 w-3 mr-1" />
@@ -100,21 +151,8 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
         booking={booking}
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={() => {
-          refetch()
-          setIsCreateModalOpen(false)
-        }}
+        onSuccess={handleReviewSuccess}
       />
-
-      {/* View Review Modal */}
-      {existingReview && (
-        <ReviewDetailModal
-          review={existingReview}
-          isOpen={isViewModalOpen}
-          onClose={() => setIsViewModalOpen(false)}
-          onUpdate={refetch}
-        />
-      )}
     </>
   )
 }

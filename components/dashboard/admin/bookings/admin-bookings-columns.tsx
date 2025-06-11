@@ -1,8 +1,8 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/common/ui/button"
+import { Badge } from "@/components/common/ui/badge"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -25,20 +25,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/common/ui/dropdown-menu"
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle
-} from "@/components/ui/dialog"
+} from "@/components/common/ui/dialog"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/common/ui/select"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { assignProfessionalToBooking, getAvailableProfessionals } from "@/actions/booking-actions"

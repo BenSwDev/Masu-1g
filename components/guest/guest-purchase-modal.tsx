@@ -81,9 +81,9 @@ export default function GuestPurchaseModal({
     },
   })
 
-  // Check if user has existing guest session
+  // Check if user has existing guest session (only when modal opens, not on step changes)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && step === "choice") {
       logger.info("🔓 Guest purchase modal opened", {
         purchaseType,
         hasActiveGuestSession: hasActiveGuestSession(),
@@ -97,10 +97,10 @@ export default function GuestPurchaseModal({
           guestSessionId: guestSession.guestSessionId,
           shouldMergeWith: guestSession.shouldMergeWith
         })
-        setStep("choice")
+        // Already on choice step, no need to set it again
       }
     }
-  }, [hasActiveGuestSession, isOpen, purchaseType, guestSession, step])
+  }, [hasActiveGuestSession, isOpen, purchaseType, guestSession.guestUserId, guestSession.guestSessionId])
 
   // Generate years, months, days for date of birth
   const currentYear = new Date().getFullYear()
@@ -598,33 +598,41 @@ export default function GuestPurchaseModal({
 
   const modalSize = step === "purchase-flow" ? "max-w-7xl w-full h-[90vh]" : "sm:max-w-md md:max-w-lg"
 
+  const handleDialogOpenChange = (open: boolean) => {
+    logger.info("🔄 Dialog open change requested", {
+      open,
+      currentStep: step,
+      purchaseType,
+      willClose: !open && step !== "purchase-flow"
+    })
+    
+    // Only allow closing if not in purchase flow or if explicitly closing
+    if (!open && step !== "purchase-flow") {
+      logger.info("✅ Allowing dialog close", { step })
+      handleClose()
+    } else if (!open && step === "purchase-flow") {
+      logger.info("🚫 Blocking dialog close during purchase flow", { step })
+    }
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className={modalSize}>
         <DialogHeader>
           <div className="flex items-center justify-between">
-            {step === "purchase-flow" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleBackToPurchaseChoice}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {t("common.back")}
-              </Button>
-            )}
             <DialogTitle className="text-center text-xl font-bold flex-1">
               {step === "completion" ? t("guest.purchase.completed") : getPurchaseTypeTitle()}
             </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClose}
-              className="flex items-center gap-2"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            {step !== "purchase-flow" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleClose}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           <DialogDescription className="text-center">
             {step === "choice" 

@@ -18,7 +18,7 @@ import { useToast } from "@/components/common/ui/use-toast"
 import { Separator } from "@/components/common/ui/separator"
 import { UserCircle, LogIn, ShoppingCart, Calendar, ArrowLeft, X } from "lucide-react"
 import { createGuestUser, convertGuestToRealUser, type CreateGuestUserPayload } from "@/actions/guest-auth-actions"
-import { getBookingInitialData, createBooking } from "@/actions/booking-actions"
+import { createBooking } from "@/actions/booking-actions"
 import { getSubscriptionsForSelection } from "@/actions/subscription-actions"
 import { getTreatmentsForSelection } from "@/actions/gift-voucher-actions"
 import { signIn } from "next-auth/react"
@@ -247,7 +247,8 @@ export default function GuestPurchaseModal({
       
       if (purchaseType === "booking") {
         logger.info("🏥 Loading booking data...")
-        const result = await getBookingInitialData(guestUserId)
+        const { getBookingInitialDataForGuest } = await import("@/actions/booking-actions")
+        const result = await getBookingInitialDataForGuest(guestUserId)
         logger.info("📋 Booking data result", {
           success: result.success,
           hasData: !!result.data,

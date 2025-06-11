@@ -1188,6 +1188,65 @@ export async function cancelBooking(
   }
 }
 
+export async function getBookingInitialDataForGuest(userId: string): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    // For guest users, we don't check session - just verify the user exists and is a guest
+    await dbConnect()
+    const user = await User.findById(userId).select("isGuest guestSessionId name email phone").lean()
+    if (!user || !user.isGuest) {
+      return { success: false, error: "common.unauthorized" }
+    }
+
+    const [
+      treatmentsResult,
+      workingHoursResult,
+    ] = await Promise.allSettled([
+      Treatment.find({ isActive: true }).populate("durations").lean(),
+      WorkingHoursSettings.findOne().lean(),
+    ])
+
+    const getFulfilledValue = (result: PromiseSettledResult<any>, defaultValue: any = null) =>
+      result.status === "fulfilled" ? result.value : defaultValue
+
+    const activeTreatments = getFulfilledValue(treatmentsResult, [])
+    const workingHoursSettings = getFulfilledValue(workingHoursResult)
+
+    if (!activeTreatments || !workingHoursSettings) {
+      logger.error("Failed to load critical initial data for guest booking:", {
+        userId,
+        treatmentsFound: !!activeTreatments,
+        settingsFound: !!workingHoursSettings,
+      })
+      return { success: false, error: "bookings.errors.initialDataLoadFailed" }
+    }
+
+    const data = {
+      activeUserSubscriptions: [], // Guests don't have subscriptions
+      usableGiftVouchers: [], // Guests don't have existing vouchers
+      userPreferences: {
+        therapistGender: "any",
+        notificationMethods: ["email"],
+        notificationLanguage: "he",
+      },
+      userAddresses: [], // Guests will enter address during booking
+      userPaymentMethods: [], // Guests will add payment during booking
+      activeTreatments,
+      workingHoursSettings,
+      currentUser: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+      },
+    }
+
+    return { success: true, data: JSON.parse(JSON.stringify(data)) }
+  } catch (error) {
+    logger.error("Error fetching initial booking data for guest:", { error, userId })
+    return { success: false, error: "bookings.errors.initialDataFetchFailed" }
+  }
+}
+
 export async function getBookingInitialData(userId: string): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
     const authSession = await getServerSession(authOptions)

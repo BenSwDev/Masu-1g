@@ -21,7 +21,7 @@ import { updateReviewResponse } from "@/actions/review-actions"
 import { toast } from "sonner"
 
 interface ReviewDetailModalProps {
-  review: PopulatedReview
+  review: PopulatedReview | null
   isOpen: boolean
   onClose: () => void
   onUpdate: () => void
@@ -40,8 +40,13 @@ export default function ReviewDetailModal({
   onUpdate,
 }: ReviewDetailModalProps) {
   const { t, language, dir } = useTranslation()
-  const [professionalResponse, setProfessionalResponse] = useState(review.professionalResponse || "")
+  const [professionalResponse, setProfessionalResponse] = useState(review?.professionalResponse || "")
   const [isUpdating, setIsUpdating] = useState(false)
+
+  // Early return if review is null/undefined
+  if (!review) {
+    return null
+  }
 
   const handleUpdateResponse = async () => {
     if (!professionalResponse.trim()) {
@@ -95,7 +100,7 @@ export default function ReviewDetailModal({
           <DialogTitle className="flex items-center space-x-2">
             <MessageCircle className="h-5 w-5" />
             <span>{t("adminReviews.reviewDetails")}</span>
-            {review.rating < 5 && (
+            {review?.rating && review.rating < 5 && (
               <Badge variant="destructive" className="mr-2">
                 <AlertTriangle className="h-3 w-3 mr-1" />
                 {t("adminReviews.lowRating")}

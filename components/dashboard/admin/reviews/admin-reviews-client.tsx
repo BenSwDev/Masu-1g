@@ -163,11 +163,9 @@ export default function AdminReviewsClient() {
         <DataTable
           columns={columns}
           data={data?.reviews || []}
-          searchPlaceholder={t("adminReviews.searchPlaceholder")}
-          emptyMessage={t("adminReviews.noReviews")}
-          totalPages={data?.totalPages || 1}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
+          hideDefaultPagination={true}
+          hideColumnsSelector={true}
+          onRowClick={handleRowClick}
         />
         
         {data && data.totalReviews > 0 && (

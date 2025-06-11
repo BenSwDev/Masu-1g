@@ -24,13 +24,14 @@ export function LandingHero() {
     // Navigate to the appropriate purchase flow
     switch (selectedPurchaseType) {
       case "booking":
-        router.push("/guest/book-treatment")
+        // For booking, redirect to member page with guest mode
+        router.push(`/dashboard/member/book-treatment?guestUserId=${guestUserId}`)
         break
       case "subscription":
-        router.push("/guest/subscriptions/purchase")
+        router.push("/guest/purchase-subscription")
         break
       case "gift-voucher":
-        router.push("/guest/gift-vouchers/purchase")
+        router.push("/guest/purchase-gift-voucher")
         break
     }
   }

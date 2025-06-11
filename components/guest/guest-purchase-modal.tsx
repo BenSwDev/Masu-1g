@@ -137,19 +137,9 @@ export default function GuestPurchaseModal({
           shouldMergeWith: result.existingUserId,
         })
 
-        // Redirect to appropriate guest purchase page based on purchase type
-        const baseUrl = `/guest/${getPurchaseUrlPath()}`
-        const params = new URLSearchParams({
-          guestUserId: result.guestUserId,
-        })
-        
-        if (result.shouldMerge && result.existingUserId) {
-          params.set('shouldMerge', 'true')
-          params.set('existingUserId', result.existingUserId)
-        }
-        
-        // Navigate to guest purchase page
-        window.location.href = `${baseUrl}?${params.toString()}`
+        // Close modal and notify parent component
+        onClose()
+        onGuestCreated(result.guestUserId, result.shouldMerge, result.existingUserId)
       } else {
         toast({
           title: t("common.error"),
@@ -168,18 +158,7 @@ export default function GuestPurchaseModal({
     }
   }
 
-  const getPurchaseUrlPath = () => {
-    switch (purchaseType) {
-      case "booking":
-        return "book-treatment"
-      case "subscription":
-        return "purchase-subscription"
-      case "gift-voucher":
-        return "purchase-gift-voucher"
-      default:
-        return "book-treatment"
-    }
-  }
+
 
   const handleClose = () => {
     setStep("choice")

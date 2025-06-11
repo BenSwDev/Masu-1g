@@ -77,6 +77,16 @@ const formatDateTimeSafe = (date: string | Date | null | undefined, language: st
   }
 }
 
+// Add function for formatting creation date
+const formatCreatedAtSafe = (date: string | Date | null | undefined): string => {
+  if (!date) return "-"
+  try {
+    return format(new Date(date), "dd/MM/yyyy HH:mm")
+  } catch {
+    return "-"
+  }
+}
+
 // Professional Assignment Component
 const ProfessionalAssignmentDialog = ({ 
   booking, 
@@ -195,6 +205,7 @@ const AdminBookingActions = ({
 
   const canAssignProfessional = !booking.professionalId && !["completed", "cancelled_by_user", "cancelled_by_admin", "no_show"].includes(booking.status)
   const hasNotes = booking.notes && booking.notes.trim().length > 0
+  const canCancel = !["completed", "cancelled_by_user", "cancelled_by_admin"].includes(booking.status)
 
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent row click when clicking dropdown
@@ -213,16 +224,48 @@ const AdminBookingActions = ({
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium">{t("common.actions")}</p>
+              <p className="text-sm font-medium">{t("adminBookings.actions")}</p>
               <p className="text-xs text-muted-foreground">
                 #{booking.bookingNumber || "N/A"}
               </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+
+          <DropdownMenuItem className="cursor-pointer">
+            <User className="mr-2 h-4 w-4" />
+            <span>{t("adminBookings.view")}</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem className="cursor-pointer text-muted-foreground" disabled>
+            <Mail className="mr-2 h-4 w-4" />
+            <span>{t("adminBookings.resendToClient")} ({t("common.notActive")})</span>
+          </DropdownMenuItem>
+
+          {canAssignProfessional && (
+            <DropdownMenuItem
+              onClick={() => setShowAssignModal(true)}
+              className="cursor-pointer"
+            >
+              <UserPlus className="mr-2 h-4 w-4" />
+              <span>{t("adminBookings.assignEditRemoveProfessional")}</span>
+            </DropdownMenuItem>
+          )}
+
+          <DropdownMenuItem className="cursor-pointer text-muted-foreground" disabled>
+            <MessageSquare className="mr-2 h-4 w-4" />
+            <span>{t("adminBookings.sendToProfessionals")} ({t("common.notActive")})</span>
+          </DropdownMenuItem>
+
+          {canCancel && (
+            <DropdownMenuItem className="cursor-pointer text-red-600">
+              <X className="mr-2 h-4 w-4" />
+              <span>{t("adminBookings.cancelBooking")}</span>
+            </DropdownMenuItem>
+          )}
 
           {hasNotes && (
             <DropdownMenuItem
@@ -231,16 +274,6 @@ const AdminBookingActions = ({
             >
               <MessageSquare className="mr-2 h-4 w-4" />
               <span>{t("adminBookings.viewClientNotes")}</span>
-            </DropdownMenuItem>
-          )}
-
-          {canAssignProfessional && (
-            <DropdownMenuItem
-              onClick={() => setShowAssignModal(true)}
-              className="cursor-pointer"
-            >
-              <UserPlus className="mr-2 h-4 w-4" />
-              <span>{t("adminBookings.assignProfessional")}</span>
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>
@@ -377,9 +410,21 @@ const RecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
     return <div className="text-sm text-muted-foreground">-</div>
   }
 
+  // Calculate age if birth date is available
+  let age = null
+  if (booking.recipientBirthDate) {
+    const today = new Date()
+    const birthDate = new Date(booking.recipientBirthDate)
+    age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+  }
+
   return (
-    <div className="space-y-1">
-      <div className="font-medium">{booking.recipientName}</div>
+    <div className="space-y-1 max-w-[180px]">
+      <div className="font-medium text-sm">{booking.recipientName}</div>
       {booking.recipientPhone && (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Phone className="h-3 w-3" />
@@ -392,26 +437,39 @@ const RecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
           {booking.recipientEmail}
         </div>
       )}
+      {age && (
+        <div className="text-xs text-muted-foreground">
+          {t("adminBookings.age")}: {age}
+        </div>
+      )}
     </div>
   )
 }
 
-const TreatmentTimeInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+const TreatmentInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   const treatment = booking.treatmentId as any
   const selectedTime = (booking as any).selectedTime
   
-  if (!selectedTime && !treatment) {
+  if (!treatment) {
     return <div className="text-sm text-muted-foreground">-</div>
   }
 
   return (
-    <div className="space-y-1">
-      {selectedTime && (
-        <div className="font-medium">{selectedTime}</div>
-      )}
-      {treatment?.duration && (
+    <div className="space-y-1 max-w-[200px]">
+      <div className="font-medium text-sm">{treatment.name}</div>
+      {treatment.category && (
         <div className="text-xs text-muted-foreground">
-          {treatment.duration} {t("common.minutes")}
+          {treatment.category}
+        </div>
+      )}
+      {selectedTime && (
+        <div className="text-xs text-blue-600">
+          {t("adminBookings.selectedTime")}: {selectedTime}
+        </div>
+      )}
+      {treatment.defaultDurationMinutes && (
+        <div className="text-xs text-muted-foreground">
+          {treatment.defaultDurationMinutes} {t("common.minutes")}
         </div>
       )}
     </div>
@@ -419,16 +477,24 @@ const TreatmentTimeInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunc
 }
 
 const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  const address = (booking as any).addressDetails || booking.addressId
+  // First try bookingAddressSnapshot, then addressId, then customAddressDetails
+  const address = booking.bookingAddressSnapshot || (booking as any).addressDetails || booking.addressId
   
   if (!address) {
     return <div className="text-sm text-muted-foreground">-</div>
   }
 
+  // Handle different address structure formats
+  const streetNumber = address.streetNumber || address.houseNumber
+  const hasParking = address.hasPrivateParking
+
   return (
     <div className="space-y-1 max-w-[200px]">
       <div className="font-medium text-sm">
-        {address.street} {address.houseNumber || address.streetNumber}, {address.city}
+        {address.street && streetNumber 
+          ? `${address.street} ${streetNumber}, ${address.city}`
+          : address.fullAddress || `${address.city}`
+        }
       </div>
       
       {address.floor && (
@@ -443,14 +509,14 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
         </div>
       )}
       
-      {address.hasPrivateParking !== undefined && (
+      {hasParking !== undefined && (
         <div className="flex items-center gap-1">
           <span className={`text-xs px-2 py-1 rounded ${
-            address.hasPrivateParking 
+            hasParking 
               ? "text-green-700 bg-green-100" 
               : "text-red-700 bg-red-100"
           }`}>
-            {address.hasPrivateParking 
+            {hasParking 
               ? t("adminBookings.hasParking") 
               : t("adminBookings.noParking")
             }
@@ -467,12 +533,55 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
   )
 }
 
-// Export the column definition function
+// Update RecipientInfo to show more details including age
+const EnhancedRecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  if (!booking?.recipientName) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
+
+  // Calculate age if birth date is available
+  let age = null
+  if (booking.recipientBirthDate) {
+    const today = new Date()
+    const birthDate = new Date(booking.recipientBirthDate)
+    age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+  }
+
+  return (
+    <div className="space-y-1 max-w-[180px]">
+      <div className="font-medium text-sm">{booking.recipientName}</div>
+      {booking.recipientPhone && (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Phone className="h-3 w-3" />
+          {booking.recipientPhone}
+        </div>
+      )}
+      {booking.recipientEmail && (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Mail className="h-3 w-3" />
+          {booking.recipientEmail}
+        </div>
+      )}
+      {age && (
+        <div className="text-xs text-muted-foreground">
+          {t("adminBookings.age")}: {age}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Export the updated column definition function
 export const getAdminBookingColumns = (
   t: TFunction, 
   locale: string,
   onRowClick?: (booking: PopulatedBooking) => void
 ): ColumnDef<PopulatedBooking>[] => [
+  // 1. Booking Number with Creation Date (default sort by createdAt DESC)
   {
     accessorKey: "bookingNumber",
     header: ({ column }) => (
@@ -487,59 +596,26 @@ export const getAdminBookingColumns = (
     ),
     cell: ({ row }) => {
       const bookingNumber = row.getValue("bookingNumber") as string
+      const createdAt = row.original.createdAt
       return (
-        <div className="font-mono text-sm font-medium">
-          #{bookingNumber || "Unknown"}
+        <div className="space-y-1">
+          <div className="font-mono text-sm font-medium">
+            #{bookingNumber || "Unknown"}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {formatCreatedAtSafe(createdAt)}
+          </div>
         </div>
       )
     },
-  },
-  {
-    accessorKey: "userId",
-    header: t("adminBookings.columns.client"),
-    cell: ({ row }) => <ClientInfo booking={row.original} t={t} />,
-  },
-  {
-    accessorKey: "treatmentId",
-    header: t("adminBookings.columns.treatment"),
-    cell: ({ row }) => {
-      const treatment = row.original.treatmentId as any
-      return (
-        <div className="max-w-[200px]">
-          <span className="text-sm font-medium">
-            {treatment?.name || t("common.unknown")}
-          </span>
-        </div>
-      )
+    sortingFn: (rowA, rowB) => {
+      // Default sort by createdAt desc (newest first)
+      const dateA = new Date(rowA.original.createdAt || 0).getTime()
+      const dateB = new Date(rowB.original.createdAt || 0).getTime()
+      return dateB - dateA
     },
   },
-  {
-    accessorKey: "bookingDateTime",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-auto p-0 font-semibold hover:bg-transparent"
-      >
-        {t("adminBookings.columns.dateTime")}
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => {
-      const bookingDateTime = row.getValue("bookingDateTime") as string | Date
-      return (
-        <div className="text-sm">
-          <div className="font-medium">{formatDateSafe(bookingDateTime)}</div>
-          <div className="text-muted-foreground">{formatTimeSafe(bookingDateTime)}</div>
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "professionalId",
-    header: t("adminBookings.columns.professional"),
-    cell: ({ row }) => <ProfessionalInfo booking={row.original} t={t} />,
-  },
+  // 2. Status
   {
     accessorKey: "status",
     header: ({ column }) => (
@@ -557,6 +633,37 @@ export const getAdminBookingColumns = (
       return <AdminBookingStatusBadge status={status || "pending"} t={t} />
     },
   },
+  // 3. Client
+  {
+    accessorKey: "userId",
+    header: t("adminBookings.columns.client"),
+    cell: ({ row }) => <ClientInfo booking={row.original} t={t} />,
+  },
+  // 4. Address with Parking
+  {
+    accessorKey: "addressDetails",
+    header: t("adminBookings.columns.addressDetails"),
+    cell: ({ row }) => <AddressDetailsInfo booking={row.original} t={t} />,
+  },
+  // 5. Treatment with Category and Times
+  {
+    accessorKey: "treatmentId",
+    header: t("adminBookings.columns.treatment"),
+    cell: ({ row }) => <TreatmentInfo booking={row.original} t={t} />,
+  },
+  // 6. Recipient with Age
+  {
+    accessorKey: "recipientInfo",
+    header: t("adminBookings.columns.recipient"),
+    cell: ({ row }) => <RecipientInfo booking={row.original} t={t} />,
+  },
+  // 7. Professional
+  {
+    accessorKey: "professionalId",
+    header: t("adminBookings.columns.professional"),
+    cell: ({ row }) => <ProfessionalInfo booking={row.original} t={t} />,
+  },
+  // 8. Price Details
   {
     accessorKey: "priceDetails.finalAmount",
     header: ({ column }) => (
@@ -571,21 +678,7 @@ export const getAdminBookingColumns = (
     ),
     cell: ({ row }) => <PriceDetailsInfo booking={row.original} t={t} />,
   },
-  {
-    accessorKey: "recipientInfo",
-    header: t("adminBookings.columns.recipient"),
-    cell: ({ row }) => <RecipientInfo booking={row.original} t={t} />,
-  },
-  {
-    accessorKey: "selectedTime",
-    header: t("adminBookings.columns.selectedTime"),
-    cell: ({ row }) => <TreatmentTimeInfo booking={row.original} t={t} />,
-  },
-  {
-    accessorKey: "addressDetails",
-    header: t("adminBookings.columns.addressDetails"),
-    cell: ({ row }) => <AddressDetailsInfo booking={row.original} t={t} />,
-  },
+  // 9. Actions
   {
     id: "actions",
     header: t("common.actions"),

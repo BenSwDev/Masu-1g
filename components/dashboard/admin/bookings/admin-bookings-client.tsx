@@ -70,6 +70,8 @@ export default function AdminBookingsClient() {
         address: addressFilter === "all" ? undefined : addressFilter,
         page: currentPage,
         limit: 20,
+        sortBy: "createdAt",
+        sortDirection: "desc",
       }),
     refetchOnWindowFocus: false,
     staleTime: 30000, // 30 seconds

@@ -1567,7 +1567,7 @@ export async function getAllBookings(
       address,
       page = 1,
       limit = 10,
-      sortBy = "bookingDateTime",
+      sortBy = "createdAt",
       sortDirection = "desc",
       search,
     } = filters

@@ -4,16 +4,60 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+import GuestPurchaseModal from "@/components/guest/guest-purchase-modal"
 
 export function LandingHero() {
   const { t, dir } = useTranslation()
   const { data: session } = useSession()
   const router = useRouter()
+  const [guestModalOpen, setGuestModalOpen] = useState(false)
+  const [selectedPurchaseType, setSelectedPurchaseType] = useState<"booking" | "subscription" | "gift-voucher">("booking")
+
+  const handleGuestCreated = (guestUserId: string, shouldMerge?: boolean, existingUserId?: string) => {
+    // Store guest info in session/localStorage
+    localStorage.setItem("guestUserId", guestUserId)
+    if (shouldMerge && existingUserId) {
+      localStorage.setItem("shouldMergeWith", existingUserId)
+    }
+    
+    // Navigate to the appropriate purchase flow
+    switch (selectedPurchaseType) {
+      case "booking":
+        router.push("/guest/book-treatment")
+        break
+      case "subscription":
+        router.push("/guest/subscriptions/purchase")
+        break
+      case "gift-voucher":
+        router.push("/guest/gift-vouchers/purchase")
+        break
+    }
+  }
 
   const handleButtonClick = (action: string) => {
     if (!session) {
-      // עבור אורח - כרגע לא פעיל
-      console.log(`Guest clicked: ${action}`)
+      // עבור אורח - פתח מודאל
+      switch (action) {
+        case "book-treatment":
+          setSelectedPurchaseType("booking")
+          setGuestModalOpen(true)
+          break
+        case "book-subscription":
+          setSelectedPurchaseType("subscription")
+          setGuestModalOpen(true)
+          break
+        case "book-gift-voucher":
+          setSelectedPurchaseType("gift-voucher")
+          setGuestModalOpen(true)
+          break
+        case "use-voucher":
+          // TODO: Handle voucher usage for guests
+          console.log(`Clicked: ${action}`)
+          break
+        default:
+          console.log(`Guest clicked: ${action}`)
+      }
       return
     }
 
@@ -205,6 +249,14 @@ export function LandingHero() {
           {buttons}
         </div>
       </div>
+
+      {/* Guest Purchase Modal */}
+      <GuestPurchaseModal
+        isOpen={guestModalOpen}
+        onClose={() => setGuestModalOpen(false)}
+        onGuestCreated={handleGuestCreated}
+        purchaseType={selectedPurchaseType}
+      />
 
       {/* Decorative elements */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">

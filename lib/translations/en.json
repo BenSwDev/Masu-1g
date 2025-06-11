@@ -1288,5 +1288,30 @@
     "professionalInterface": "Professional Interface",
     "partnerInterface": "Partner Interface",
     "adminInterface": "Admin Interface"
+  },
+  "guest": {
+    "modal": {
+      "choiceDescription": "Choose how you'd like to continue",
+      "formDescription": "Fill in your details to continue",
+      "login": "I have an account - Login",
+      "loginDescription": "If you already have an account, login to access all features",
+      "continueAsGuest": "Continue as Guest",
+      "guestDescription": "Fill in basic details and you can place your order right away",
+      "continueWithSession": "Continue with existing details",
+      "continueWithSessionDescription": "Use the guest details filled out earlier",
+      "editGuestDetails": "Edit guest details",
+      "editGuestDetailsDescription": "Change or update details before continuing",
+      "continue": "Continue"
+    },
+    "creation": {
+      "success": "Created successfully",
+      "successDescription": "The system is ready to accept your order",
+      "willMergeDescription": "Existing account detected - purchase will be added automatically",
+      "crossConflictWarning": "Details belong to multiple accounts - new account will be created",
+      "failed": "Error creating guest"
+    },
+    "purchase": {
+      "title": "Guest Purchase"
+    }
   }
 }

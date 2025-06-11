@@ -644,16 +644,6 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
       size: 200,
     },
     {
-      accessorKey: "status",
-      header: () => <div className="text-center">{t("memberBookings.columns.status")}</div>,
-      cell: ({ row }) => (
-        <div className="flex justify-center">
-          <BookingStatusBadge status={row.original.status} t={t} />
-        </div>
-      ),
-      size: 120,
-    },
-    {
       accessorKey: "priceDetails.finalAmount",
       header: ({ column }) => (
         <div className="text-right">

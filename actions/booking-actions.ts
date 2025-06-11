@@ -6,7 +6,7 @@ import mongoose from "mongoose"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 
-import Booking, { type IBooking, type IPriceDetails, type IBookingAddressSnapshot } from "@/lib/db/models/booking"
+import Booking, { type IBooking, type IPriceDetails, type IBookingAddressSnapshot, type BookingStatus } from "@/lib/db/models/booking"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
 import Subscription from "@/lib/db/models/subscription"
@@ -24,6 +24,7 @@ import {
 import { getNextSequenceValue } from "@/lib/db/models/counter"
 
 import { logger } from "@/lib/logs/logger"
+import { mergeGuestWithExistingUser, convertGuestToRealUser } from "@/actions/guest-auth-actions"
 import type {
   TimeSlot,
   CalculatedPriceDetails as ClientCalculatedPriceDetails,
@@ -693,11 +694,12 @@ export async function createBooking(
       const newBooking = new Booking({
         ...validatedPayload,
         bookingNumber,
+        userId: new mongoose.Types.ObjectId(validatedPayload.userId),
         bookedByUserName: bookingUser.name,
         bookedByUserEmail: bookingUser.email,
         bookedByUserPhone: bookingUser.phone,
         bookingAddressSnapshot,
-        status: "confirmed",
+        status: "confirmed", // Always set to confirmed for clients - internal management happens behind the scenes
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
           surcharges: validatedPayload.priceDetails.surcharges,
@@ -811,6 +813,16 @@ export async function createBooking(
     })
 
     if (bookingResult) {
+      // Handle guest user merge after successful booking
+      const guestUserId = validatedPayload.userId
+      const bookingUser = await User.findById(guestUserId).lean()
+      
+      if (bookingUser?.isGuest) {
+        // Check if this is a merge scenario or conversion scenario
+        // We'll handle this logic in a separate hook or client-side after booking success
+        logger.info("Guest booking completed successfully", { guestUserId, bookingId: bookingResult._id })
+      }
+
       revalidatePath("/dashboard/member/book-treatment")
       revalidatePath("/dashboard/member/subscriptions")
       revalidatePath("/dashboard/member/gift-vouchers")

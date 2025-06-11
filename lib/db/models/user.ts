@@ -32,6 +32,10 @@ export interface IUser extends Document {
   activeRole?: string // Add activeRole
   treatmentPreferences?: ITreatmentPreferences // New field
   notificationPreferences?: INotificationPreferences // New field
+  // Guest user fields
+  isGuest?: boolean
+  guestSessionId?: string
+  parentUserId?: mongoose.Types.ObjectId // Reference to real user if merged
   createdAt: Date
   updatedAt: Date
 }
@@ -112,6 +116,20 @@ const UserSchema: Schema = new Schema(
         enum: ["he", "en", "ru"],
         default: "he",
       },
+    },
+    // Guest user fields
+    isGuest: {
+      type: Boolean,
+      default: false,
+    },
+    guestSessionId: {
+      type: String,
+      required: false,
+    },
+    parentUserId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
     },
   },
   {

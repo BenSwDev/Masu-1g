@@ -425,6 +425,59 @@ export async function mergeGuestWithExistingUser(
 }
 
 /**
+ * Update guest user details during purchase flow
+ */
+export async function updateGuestUser(
+  guestUserId: string,
+  updateData: {
+    firstName?: string
+    lastName?: string
+    name?: string
+    email?: string
+    phone?: string
+    dateOfBirth?: Date
+    address?: string
+    notes?: string
+  }
+): Promise<{ success: boolean; user?: IUser; error?: string }> {
+  const requestId = `update_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+
+  try {
+    logger.info(`[${requestId}] Updating guest user: ${guestUserId}`)
+    await dbConnect()
+
+    if (!mongoose.Types.ObjectId.isValid(guestUserId)) {
+      return { success: false, error: "invalidUserId" }
+    }
+
+    const guestUser = await User.findById(guestUserId)
+    if (!guestUser || !guestUser.isGuest) {
+      return { success: false, error: "invalidGuestUser" }
+    }
+
+    // Update the fields
+    if (updateData.firstName && updateData.lastName) {
+      updateData.name = `${updateData.firstName} ${updateData.lastName}`
+    }
+
+    Object.assign(guestUser, updateData)
+    await guestUser.save()
+
+    logger.info(`[${requestId}] Successfully updated guest user`)
+    return { 
+      success: true, 
+      user: guestUser.toObject() 
+    }
+  } catch (error) {
+    logger.error(`[${requestId}] Error updating guest user:`, error)
+    return { 
+      success: false, 
+      error: "updateFailed" 
+    }
+  }
+}
+
+/**
  * Convert guest user to real user (when no existing user found)
  */
 export async function convertGuestToRealUser(guestUserId: string): Promise<{ success: boolean; error?: string }> {

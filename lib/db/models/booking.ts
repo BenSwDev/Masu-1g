@@ -1,12 +1,14 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
 
 export type BookingStatus =
+  | "abandoned" // הזמנה ננטשה - לא הושלמה
   | "pending_professional_assignment" // ממתין למציאת מטפל
   | "confirmed" // אושר, שובץ מטפל
   | "professional_en_route" // מטפל בדרך
   | "completed" // הושלם
   | "cancelled_by_user" // בוטל ע"י משתמש
   | "cancelled_by_admin" // בוטל ע"י מנהל
+  | "cancelled_refunded" // בוטל והכסף הוחזר
   | "no_show" // לא הופיע
 
 export interface IPriceDetails {
@@ -157,12 +159,14 @@ const BookingSchema: Schema<IBooking> = new Schema(
     status: {
       type: String,
       enum: [
+        "abandoned",
         "pending_professional_assignment",
         "confirmed",
         "professional_en_route",
         "completed",
         "cancelled_by_user",
         "cancelled_by_admin",
+        "cancelled_refunded",
         "no_show",
       ],
       default: "pending_professional_assignment", // Will be overridden to 'confirmed' in createBooking

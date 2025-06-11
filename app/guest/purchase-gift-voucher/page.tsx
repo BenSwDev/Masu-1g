@@ -3,7 +3,7 @@ import { getPaymentMethods } from "@/actions/payment-method-actions"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
-import GuestBookingClient from "@/components/guest/guest-booking-client"
+import GuestGiftVoucherClient from "@/components/guest/guest-gift-voucher-client"
 import { getUserProfile } from "@/actions/profile-actions"
 
 interface PageProps {
@@ -14,15 +14,15 @@ interface PageProps {
   }
 }
 
-export default async function GuestBookTreatmentPage({ searchParams }: PageProps) {
+export default async function GuestPurchaseGiftVoucherPage({ searchParams }: PageProps) {
   const session = await getServerSession(authOptions)
   
-  // If user is already logged in, redirect to member booking
+  // If user is already logged in, redirect to member gift voucher purchase
   if (session?.user && !searchParams.guestUserId) {
-    redirect("/dashboard/member/book-treatment")
+    redirect("/dashboard/member/gift-vouchers/purchase")
   }
 
-  // If guest user ID is provided, we're in guest booking mode
+  // If guest user ID is provided, we're in guest mode
   if (!searchParams.guestUserId) {
     redirect("/") // No guest session, redirect to home
   }
@@ -33,7 +33,7 @@ export default async function GuestBookTreatmentPage({ searchParams }: PageProps
     redirect("/") // Invalid guest user
   }
 
-  // Get initial data for booking
+  // Get initial data for gift voucher purchase
   const [treatmentsResult, paymentMethodsResult] = await Promise.all([
     getTreatmentsForSelection(),
     getPaymentMethods()
@@ -48,19 +48,11 @@ export default async function GuestBookTreatmentPage({ searchParams }: PageProps
   }
 
   return (
-    <GuestBookingClient
+    <GuestGiftVoucherClient
       guestUser={userResult.user}
       shouldMerge={searchParams.shouldMerge === 'true'}
       existingUserId={searchParams.existingUserId}
-      initialData={{
-        activeTreatments: treatmentsResult.treatments || [],
-        activeUserSubscriptions: [],
-        usableGiftVouchers: [],
-        categories: treatmentsResult.categories || [],
-        userPreferences: {
-          therapistGender: "any"
-        }
-      }}
+      treatments={treatmentsResult.treatments || []}
       initialPaymentMethods={paymentMethodsResult.paymentMethods || []}
     />
   )

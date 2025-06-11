@@ -137,20 +137,19 @@ export default function GuestPurchaseModal({
           shouldMergeWith: result.existingUserId,
         })
 
-        // Show appropriate message based on conflict type
-        let successMessage = t("guest.creation.successDescription")
-        if (result.conflictType === "cross_match") {
-          successMessage = t("guest.creation.crossConflictWarning")
-        } else if (result.shouldMerge) {
-          successMessage = t("guest.creation.willMergeDescription")
-        }
-
-        toast({
-          title: t("guest.creation.success"),
-          description: successMessage,
+        // Redirect to appropriate guest purchase page based on purchase type
+        const baseUrl = `/guest/${getPurchaseUrlPath()}`
+        const params = new URLSearchParams({
+          guestUserId: result.guestUserId,
         })
-        onGuestCreated(result.guestUserId, result.shouldMerge, result.existingUserId)
-        onClose()
+        
+        if (result.shouldMerge && result.existingUserId) {
+          params.set('shouldMerge', 'true')
+          params.set('existingUserId', result.existingUserId)
+        }
+        
+        // Navigate to guest purchase page
+        window.location.href = `${baseUrl}?${params.toString()}`
       } else {
         toast({
           title: t("common.error"),
@@ -166,6 +165,19 @@ export default function GuestPurchaseModal({
       })
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const getPurchaseUrlPath = () => {
+    switch (purchaseType) {
+      case "booking":
+        return "book-treatment"
+      case "subscription":
+        return "purchase-subscription"
+      case "gift-voucher":
+        return "purchase-gift-voucher"
+      default:
+        return "book-treatment"
     }
   }
 

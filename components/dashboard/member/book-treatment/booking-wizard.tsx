@@ -26,6 +26,7 @@ interface BookingWizardProps {
   initialData: BookingInitialData
   currentUser: IUser
   isGuestMode?: boolean
+  onBookingComplete?: (booking: IBooking) => void
 }
 
 const TOTAL_STEPS_WITH_PAYMENT = 5
@@ -34,7 +35,7 @@ const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 // Add a constant for the timezone
 const TIMEZONE = "Asia/Jerusalem" // Israel timezone
 
-export default function BookingWizard({ initialData, currentUser, isGuestMode = false }: BookingWizardProps) {
+export default function BookingWizard({ initialData, currentUser, isGuestMode = false, onBookingComplete }: BookingWizardProps) {
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -334,6 +335,13 @@ export default function BookingWizard({ initialData, currentUser, isGuestMode = 
     if (result.success && result.booking) {
       setBookingResult(result.booking)
       setIsBookingCompleted(true) // Mark as completed to prevent navigation back
+      
+      // Call callback if provided (for guest mode)
+      if (onBookingComplete) {
+        onBookingComplete(result.booking)
+        return // Don't show toast or change step, let the callback handle it
+      }
+      
       toast({
         title: t("bookings.success.bookingCreatedTitle") || "Booking Created!",
         description: t("bookings.success.bookingCreatedDescription") || "Your booking has been successfully created.",

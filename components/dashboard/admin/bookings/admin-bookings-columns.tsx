@@ -114,7 +114,7 @@ const ProfessionalAssignmentDialog = ({
 
     setIsAssigning(true)
     try {
-      const result = await assignProfessionalToBooking(booking._id, selectedProfessional)
+      const result = await assignProfessionalToBooking(booking._id.toString(), selectedProfessional)
       if (result.success) {
         toast.success(t("adminBookings.assignSuccess"))
         queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
@@ -314,6 +314,7 @@ const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }
 
   const statusConfig: Record<string, { variant: "secondary" | "destructive"; color: string }> = {
     pending: { variant: "secondary" as const, color: "bg-yellow-100 text-yellow-800" },
+    abandoned: { variant: "destructive" as const, color: "bg-gray-100 text-gray-800" },
     pending_professional_assignment: { variant: "secondary" as const, color: "bg-yellow-100 text-yellow-800" },
     confirmed: { variant: "secondary" as const, color: "bg-blue-100 text-blue-800" },
     in_progress: { variant: "secondary" as const, color: "bg-purple-100 text-purple-800" },
@@ -321,6 +322,7 @@ const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }
     completed: { variant: "secondary" as const, color: "bg-green-100 text-green-800" },
     cancelled_by_user: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
     cancelled_by_admin: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
+    cancelled_refunded: { variant: "destructive" as const, color: "bg-purple-100 text-purple-800" },
     no_show: { variant: "destructive" as const, color: "bg-orange-100 text-orange-800" },
   }
 

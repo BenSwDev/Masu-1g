@@ -90,12 +90,14 @@ export default function ComprehensiveBookingEditModal({
 
   const getStatusBadgeColor = (status: string) => {
     const statusColors = {
+      abandoned: "bg-gray-100 text-gray-800",
       confirmed: "bg-green-100 text-green-800",
       pending_professional_assignment: "bg-yellow-100 text-yellow-800",
       professional_en_route: "bg-blue-100 text-blue-800",
       completed: "bg-gray-100 text-gray-800",
       cancelled_by_user: "bg-red-100 text-red-800",
       cancelled_by_admin: "bg-red-100 text-red-800",
+      cancelled_refunded: "bg-purple-100 text-purple-800",
       no_show: "bg-orange-100 text-orange-800",
     }
     return statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"
@@ -163,7 +165,7 @@ export default function ComprehensiveBookingEditModal({
 
   const handleAssignProfessional = async (professionalId: string) => {
     try {
-      const result = await assignProfessionalToBooking(booking._id, professionalId)
+      const result = await assignProfessionalToBooking(booking._id.toString(), professionalId)
       if (result.success) {
         toast.success(t("adminBookings.assignSuccess"))
         setEditedBooking(prev => ({ ...prev, professionalId }))
@@ -254,12 +256,14 @@ export default function ComprehensiveBookingEditModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="abandoned">{t("adminBookings.status.abandoned")}</SelectItem>
                         <SelectItem value="confirmed">{t("adminBookings.status.confirmed")}</SelectItem>
                         <SelectItem value="pending_professional_assignment">{t("adminBookings.status.pendingAssignment")}</SelectItem>
                         <SelectItem value="professional_en_route">{t("adminBookings.status.enRoute")}</SelectItem>
                         <SelectItem value="completed">{t("adminBookings.status.completed")}</SelectItem>
                         <SelectItem value="cancelled_by_user">{t("adminBookings.status.cancelledByUser")}</SelectItem>
                         <SelectItem value="cancelled_by_admin">{t("adminBookings.status.cancelledByAdmin")}</SelectItem>
+                        <SelectItem value="cancelled_refunded">{t("adminBookings.status.cancelledRefunded")}</SelectItem>
                         <SelectItem value="no_show">{t("adminBookings.status.noShow")}</SelectItem>
                       </SelectContent>
                     </Select>

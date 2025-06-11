@@ -412,6 +412,45 @@
     "errorLoading": "Error loading gift vouchers",
     "noPurchasedVouchersDescription": "You haven't purchased any gift vouchers yet"
   },
+  "guest": {
+    "booking": {
+      "title": "Guest Booking - Complete Your Purchase",
+      "subtitle": "Continue with your treatment booking as a guest",
+      "editDetails": "Edit Details",
+      "loginAsExisting": "Login as Existing Customer",
+      "completionTitle": "Booking Successfully Completed!",
+      "completionDescription": "Your treatment booking has been successfully processed and confirmed.",
+      "bookingDetails": "Booking Details",
+      "statusExplanation": "Your booking is now confirmed and we will assign a therapist to your appointment soon. You will receive notifications about the assignment and appointment updates.",
+      "goToMemberDashboard": "Go to Member Dashboard",
+      "backToHome": "Back to Home",
+      "processingAccount": "Processing your account...",
+      "mergeSuccess": "Account Successfully Merged",
+      "mergeSuccessDescription": "Your purchase has been added to your existing account.",
+      "accountCreated": "Account Created Successfully",
+      "accountCreatedDescription": "Your guest account has been converted to a full member account.",
+      "detailsUpdated": "Details Updated",
+      "detailsUpdatedDescription": "Your information has been successfully updated."
+    },
+    "editModal": {
+      "title": "Edit Guest Details",
+      "updateSuccess": "Details Updated",
+      "updateSuccessDescription": "Your information has been successfully updated.",
+      "updateError": "Failed to update details"
+    },
+    "subscription": {
+      "title": "Guest Subscription Purchase",
+      "subtitle": "Complete your subscription purchase as a guest",
+      "completionTitle": "Subscription Successfully Purchased!",
+      "completionDescription": "Your subscription has been purchased and is now active."
+    },
+    "giftVoucher": {
+      "title": "Guest Gift Voucher Purchase", 
+      "subtitle": "Complete your gift voucher purchase as a guest",
+      "completionTitle": "Gift Voucher Successfully Purchased!",
+      "completionDescription": "Your gift voucher has been created and is ready to use."
+    }
+  },
   "memberSubscriptions": {
     "title": "My Subscriptions",
     "description": "View and manage your active and past subscriptions.",
@@ -439,6 +478,25 @@
   "validUntil": "Valid Until",
   "identifier": "Identifier",
   "password": "Password",
+  "adminBookings": {
+    "status": {
+      "abandoned": "Abandoned",
+      "confirmed": "Confirmed",
+      "pending_professional_assignment": "Pending assignment",
+      "professional_en_route": "Professional en route", 
+      "completed": "Completed",
+      "cancelled_by_user": "Cancelled by user",
+      "cancelled_by_admin": "Cancelled by admin",
+      "cancelled_refunded": "Cancelled & Refunded",
+      "no_show": "No show",
+      "pendingAssignment": "Pending Assignment",
+      "enRoute": "En Route",
+      "cancelledByUser": "Cancelled by User", 
+      "cancelledByAdmin": "Cancelled by Admin",
+      "cancelledRefunded": "Cancelled & Refunded",
+      "noShow": "No Show"
+    }
+  },
   "currentPassword": "Current Password",
   "newPassword": "New Password",
   "confirmPassword": "Confirm Password",
@@ -734,6 +792,17 @@
     }
   },
   "bookings": {
+    "status": {
+      "abandoned": "Abandoned",
+      "pending_professional_assignment": "Pending Assignment",
+      "confirmed": "Confirmed",
+      "professional_en_route": "Professional En Route",
+      "completed": "Completed",
+      "cancelled_by_user": "Cancelled by User",
+      "cancelled_by_admin": "Cancelled by Admin",
+      "cancelled_refunded": "Cancelled & Refunded",
+      "no_show": "No Show"
+    },
     "confirmation": {
       "title": "Booking Confirmation",
       "paymentStatus": {
@@ -976,18 +1045,22 @@
       "title": "Title"
     },
     "status": {
-      "cancelled_by_admin_short": "[memberBookings.status.cancelled_by_admin_short]",
-      "cancelled_by_user_short": "[memberBookings.status.cancelled_by_user_short]",
-      "completed": "[memberBookings.status.completed]",
-      "completed_short": "[memberBookings.status.completed_short]",
-      "confirmed": "[memberBookings.status.confirmed]",
-      "confirmed_short": "[memberBookings.status.confirmed_short]",
-      "no_show": "[memberBookings.status.no_show]",
-      "no_show_short": "[memberBookings.status.no_show_short]",
-      "pending_professional_assignment": "[memberBookings.status.pending_professional_assignment]",
-      "pending_professional_assignment_short": "[memberBookings.status.pending_professional_assignment_short]",
-      "professional_en_route": "[memberBookings.status.professional_en_route]",
-      "professional_en_route_short": "[memberBookings.status.professional_en_route_short]"
+      "abandoned": "Abandoned",
+      "abandoned_short": "Abandoned",
+      "cancelled_by_admin_short": "Admin Cancelled",
+      "cancelled_by_user_short": "User Cancelled",
+      "cancelled_refunded": "Cancelled & Refunded",
+      "cancelled_refunded_short": "Refunded",
+      "completed": "Completed",
+      "completed_short": "Completed",
+      "confirmed": "Confirmed",
+      "confirmed_short": "Confirmed",
+      "no_show": "No Show",
+      "no_show_short": "No Show",
+      "pending_professional_assignment": "Pending Assignment",
+      "pending_professional_assignment_short": "Pending",
+      "professional_en_route": "Professional En Route",
+      "professional_en_route_short": "En Route"
     },
     "table": {
       "accessible": "[memberBookings.table.accessible]",

@@ -288,6 +288,10 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
 // Status component - clean and minimal
 const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"]; t: TFunction }) => {
   const statusConfig = {
+    abandoned: {
+      label: t("memberBookings.status.abandoned_short"),
+      className: "bg-gray-100 text-gray-800 border-gray-200"
+    },
     pending_professional_assignment: {
       label: t("memberBookings.status.pending_professional_assignment_short"),
       className: "bg-amber-100 text-amber-800 border-amber-200"
@@ -311,6 +315,10 @@ const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"];
     cancelled_by_admin: {
       label: t("memberBookings.status.cancelled_by_admin_short"),
       className: "bg-red-100 text-red-800 border-red-200"
+    },
+    cancelled_refunded: {
+      label: t("memberBookings.status.cancelled_refunded_short"),
+      className: "bg-purple-100 text-purple-800 border-purple-200"
     },
     no_show: {
       label: t("memberBookings.status.no_show_short"),

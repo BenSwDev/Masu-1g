@@ -1,9 +1,9 @@
-import { getTreatmentsForSelection } from "@/actions/gift-voucher-actions"
+import { getSubscriptionsForSelection } from "@/actions/subscription-actions"
 import { getPaymentMethods } from "@/actions/payment-method-actions"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
-import GuestBookingClient from "@/components/guest/guest-booking-client"
+import GuestSubscriptionClient from "@/components/guest/guest-subscription-client"
 import { getUserProfile } from "@/actions/profile-actions"
 
 interface PageProps {
@@ -14,15 +14,15 @@ interface PageProps {
   }
 }
 
-export default async function GuestBookTreatmentPage({ searchParams }: PageProps) {
+export default async function GuestPurchaseSubscriptionPage({ searchParams }: PageProps) {
   const session = await getServerSession(authOptions)
   
-  // If user is already logged in, redirect to member booking
+  // If user is already logged in, redirect to member subscription purchase
   if (session?.user && !searchParams.guestUserId) {
-    redirect("/dashboard/member/book-treatment")
+    redirect("/dashboard/member/subscriptions/purchase")
   }
 
-  // If guest user ID is provided, we're in guest booking mode
+  // If guest user ID is provided, we're in guest mode
   if (!searchParams.guestUserId) {
     redirect("/") // No guest session, redirect to home
   }
@@ -33,14 +33,14 @@ export default async function GuestBookTreatmentPage({ searchParams }: PageProps
     redirect("/") // Invalid guest user
   }
 
-  // Get initial data for booking
-  const [treatmentsResult, paymentMethodsResult] = await Promise.all([
-    getTreatmentsForSelection(),
+  // Get initial data for subscription purchase
+  const [subscriptionsResult, paymentMethodsResult] = await Promise.all([
+    getSubscriptionsForSelection(),
     getPaymentMethods()
   ])
 
-  if (!treatmentsResult.success) {
-    console.error("Failed to load treatments:", treatmentsResult.error)
+  if (!subscriptionsResult.success) {
+    console.error("Failed to load subscriptions:", subscriptionsResult.error)
   }
 
   if (!paymentMethodsResult.success) {
@@ -48,19 +48,11 @@ export default async function GuestBookTreatmentPage({ searchParams }: PageProps
   }
 
   return (
-    <GuestBookingClient
+    <GuestSubscriptionClient
       guestUser={userResult.user}
       shouldMerge={searchParams.shouldMerge === 'true'}
       existingUserId={searchParams.existingUserId}
-      initialData={{
-        activeTreatments: treatmentsResult.treatments || [],
-        activeUserSubscriptions: [],
-        usableGiftVouchers: [],
-        categories: treatmentsResult.categories || [],
-        userPreferences: {
-          therapistGender: "any"
-        }
-      }}
+      subscriptions={subscriptionsResult.subscriptions || []}
       initialPaymentMethods={paymentMethodsResult.paymentMethods || []}
     />
   )

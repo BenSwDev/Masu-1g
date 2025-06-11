@@ -385,22 +385,24 @@ const PriceDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
     return <div className="text-sm text-muted-foreground">-</div>
   }
 
-  const price = booking.priceDetails as any
+  const priceDetails = booking.priceDetails
+  const basePrice = priceDetails.basePrice || 0
+  const totalSurcharges = priceDetails.totalSurchargesAmount || 0
+  const totalPriceBeforeDiscounts = basePrice + totalSurcharges
+
   return (
-    <div className="space-y-1">
-      <div className="font-medium">
-        ₪{price.finalAmount?.toFixed(2) || "0.00"}
+    <div className="space-y-1 max-w-[180px]">
+      <div className="text-sm">
+        מחיר בסיס: ₪{basePrice.toFixed(2)}
       </div>
-      {price.basePrice && price.basePrice !== price.finalAmount && (
-        <div className="text-xs text-muted-foreground">
-          {t("adminBookings.basePrice")}: ₪{price.basePrice.toFixed(2)}
+      {totalSurcharges > 0 && (
+        <div className="text-sm text-orange-600">
+          כולל תוספות: ₪{totalSurcharges.toFixed(2)}
         </div>
       )}
-      {price.couponDiscount && price.couponDiscount > 0 && (
-        <div className="text-xs text-green-600">
-          {t("adminBookings.discount")}: -₪{price.couponDiscount.toFixed(2)}
-        </div>
-      )}
+      <div className="font-medium text-sm border-t pt-1">
+        מחיר כללי: ₪{totalPriceBeforeDiscounts.toFixed(2)}
+      </div>
     </div>
   )
 }
@@ -609,13 +611,23 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
     }
   }
 
-  // Calculate surcharge professional share
+  // Calculate professional share from surcharges based on stored professionalShare data
   let surchargeProfessionalShare = 0
-  const totalSurcharges = priceDetails.totalSurchargesAmount || 0
   
-  // For simplicity, assume 70% professional share on surcharges (can be improved with working hours data)
-  if (totalSurcharges > 0) {
-    surchargeProfessionalShare = totalSurcharges * 0.70
+  if (priceDetails.surcharges) {
+    for (const [key, surcharge] of Object.entries(priceDetails.surcharges as Record<string, any>)) {
+      if (surcharge && typeof surcharge.amount === 'number' && surcharge.amount > 0) {
+        // Check if this surcharge has professional share information stored from working hours
+        if (surcharge.professionalShare) {
+          if (surcharge.professionalShare.type === 'percentage') {
+            surchargeProfessionalShare += (surcharge.amount * (surcharge.professionalShare.amount / 100))
+          } else if (surcharge.professionalShare.type === 'fixed') {
+            surchargeProfessionalShare += surcharge.professionalShare.amount
+          }
+        }
+        // If no professionalShare data, the professional gets 0 from this surcharge
+      }
+    }
   }
 
   // Total professional payment = base fee + surcharge share
@@ -627,6 +639,16 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
   // Office commission = customer paid - professional payment (cannot be negative)
   const officeCommission = Math.max(0, actualPaid - totalProfessionalPayment)
 
+  // Calculate total surcharges amount
+  let totalSurcharges = 0
+  if (priceDetails.surcharges) {
+    for (const [key, surcharge] of Object.entries(priceDetails.surcharges as Record<string, any>)) {
+      if (surcharge && typeof surcharge.amount === 'number' && surcharge.amount > 0) {
+        totalSurcharges += surcharge.amount
+      }
+    }
+  }
+  
   // Calculate total price including surcharges (before any discounts)
   const basePrice = priceDetails.basePrice || 0
   const totalPriceBeforeDiscounts = basePrice + totalSurcharges
@@ -635,31 +657,18 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
   const totalDiscounts = (priceDetails.discountAmount || 0) + (priceDetails.voucherAppliedAmount || 0)
 
   return (
-    <div className="space-y-1 max-w-[200px]">
-      <div className="text-xs text-gray-600">
-        {t("adminBookings.totalPrice")}: ₪{totalPriceBeforeDiscounts.toFixed(2)}
+    <div className="space-y-1 max-w-[180px]">
+      <div className="text-sm">
+        עלות סופית: ₪{actualPaid.toFixed(2)}
       </div>
-      {totalSurcharges > 0 && (
-        <div className="text-xs text-orange-600">
-          כולל {t("adminBookings.surcharges")}: ₪{totalSurcharges.toFixed(2)}
-        </div>
-      )}
-      {totalDiscounts > 0 && (
-        <div className="text-xs text-green-600">
-          {t("adminBookings.discountsAndRedemptions")}: -₪{totalDiscounts.toFixed(2)}
-        </div>
-      )}
-      <div className="font-medium text-sm border-t pt-1">
-        {t("adminBookings.finalCost")}: ₪{actualPaid.toFixed(2)}
+      <div className="text-sm">
+        שולם בפועל: ₪{actualPaid.toFixed(2)}
       </div>
-      <div className="text-xs text-muted-foreground">
-        {t("adminBookings.actualPaid")}: ₪{actualPaid.toFixed(2)}
+      <div className="text-sm text-green-600">
+        רווח מטפל: ₪{totalProfessionalPayment.toFixed(2)}
       </div>
-      <div className="text-xs text-green-600">
-        {t("adminBookings.professionalFee")}: ₪{totalProfessionalPayment.toFixed(2)}
-      </div>
-      <div className="text-xs text-blue-600">
-        {t("adminBookings.officeFee")}: ₪{officeCommission.toFixed(2)}
+      <div className="text-sm text-blue-600">
+        עמלת משרד: ₪{officeCommission.toFixed(2)}
       </div>
     </div>
   )

@@ -1032,6 +1032,97 @@
     "roleSwitchError": "roleSwitchError",
     "roleSwitchSuccess": "roleSwitchSuccess"
   },
+  "adminPartnerCouponBatches": {
+    "title": "title",
+    "description": "description",
+    "createNew": "createNew",
+    "noBatchesFound": "noBatchesFound",
+    "totalBatches": "totalBatches",
+    "viewCoupons": "viewCoupons",
+    "columns": {
+      "name": "name",
+      "description": "description",
+      "couponCount": "couponCount",
+      "total": "total",
+      "active": "active",
+      "discount": "discount",
+      "validFrom": "validFrom",
+      "validUntil": "validUntil",
+      "status": "status",
+      "assignedPartner": "assignedPartner",
+      "partnerNotAssigned": "partnerNotAssigned",
+      "partnerLoading": "partnerLoading",
+      "partnerUnnamed": "partnerUnnamed"
+    },
+    "status": {
+      "active": "active",
+      "expired": "expired",
+      "scheduled": "scheduled",
+      "inactiveManual": "inactiveManual"
+    },
+    "form": {
+      "titleCreate": "titleCreate",
+      "titleEdit": "titleEdit",
+      "descriptionCreate": "descriptionCreate",
+      "descriptionEdit": "descriptionEdit",
+      "nameLabel": "nameLabel",
+      "descriptionLabel": "descriptionLabel",
+      "couponCountLabel": "couponCountLabel",
+      "codePrefixLabel": "codePrefixLabel",
+      "discountTypeLabel": "discountTypeLabel",
+      "discountTypePlaceholder": "discountTypePlaceholder",
+      "discountTypePercentage": "discountTypePercentage",
+      "discountTypeFixedAmount": "discountTypeFixedAmount",
+      "discountValueLabel": "discountValueLabel",
+      "validFromLabel": "validFromLabel",
+      "validUntilLabel": "validUntilLabel",
+      "usageLimitLabel": "usageLimitLabel",
+      "usageLimitPerUserLabel": "usageLimitPerUserLabel",
+      "assignedPartnerLabel": "assignedPartnerLabel",
+      "assignedPartnerPlaceholder": "assignedPartnerPlaceholder",
+      "notesForPartnerLabel": "notesForPartnerLabel",
+      "isActiveLabel": "isActiveLabel",
+      "createBatch": "createBatch",
+      "saveChanges": "saveChanges"
+    },
+    "deleteDialog": {
+      "title": "title",
+      "description": "description",
+      "confirmButton": "confirmButton",
+      "deletingButton": "deletingButton"
+    },
+    "couponModal": {
+      "title": "title",
+      "description": "description",
+      "totalCoupons": "totalCoupons",
+      "activeCoupons": "activeCoupons",
+      "prefix": "prefix",
+      "discount": "discount",
+      "validFrom": "validFrom",
+      "validUntil": "validUntil",
+      "selectedCount": "selectedCount",
+      "activateSelected": "activateSelected",
+      "deactivateSelected": "deactivateSelected",
+      "loading": "loading",
+      "columns": {
+        "code": "code",
+        "status": "status",
+        "usage": "usage"
+      }
+    },
+    "toast": {
+      "createSuccess": "createSuccess",
+      "updateSuccess": "updateSuccess",
+      "deleteSuccess": "deleteSuccess",
+      "deleteError": "deleteError",
+      "formError": "formError",
+      "loadCouponsError": "loadCouponsError",
+      "codeCopied": "codeCopied",
+      "copyError": "copyError",
+      "bulkUpdateSuccess": "bulkUpdateSuccess",
+      "bulkUpdateError": "bulkUpdateError"
+    }
+  },
   "partnerAssignedCoupons": {
     "card": {
       "adminNoteLabel": "adminNoteLabel",

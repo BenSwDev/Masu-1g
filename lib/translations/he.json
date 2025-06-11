@@ -587,49 +587,6 @@
       "bulkUpdateError": "שגיאה בעדכון סטטוס הקופונים"
     }
   },
-    "title": "ניהול סדרות קופונים לשותפים",
-    "description": "צור ונהל סדרות קופונים לשותפים. כל סדרה כוללת מספר קופונים עם אותם מאפיינים.",
-    "columns": {
-      "name": "שם הסדרה",
-      "description": "תיאור",
-      "couponCount": "מספר קופונים",
-      "discount": "הנחה",
-      "validFrom": "תקף מ-",
-      "validUntil": "תקף עד",
-      "status": "סטטוס",
-      "assignedPartner": "שותף משויך"
-    },
-    "createNew": "צור סדרת קופונים חדשה",
-    "totalBatches": "סה\"כ סדרות: {{count}}",
-    "form": {
-      "titleCreate": "יצירת סדרת קופונים חדשה",
-      "descriptionCreate": "מלא את הפרטים ליצירת סדרת קופונים חדשה לשותף.",
-      "nameLabel": "שם הסדרה",
-      "descriptionLabel": "תיאור (אופציונלי)",
-      "couponCountLabel": "מספר קופונים",
-      "codePrefixLabel": "קידומת קוד",
-      "discountTypeLabel": "סוג הנחה",
-      "discountValueLabel": "ערך הנחה",
-      "validFromLabel": "תקף מ-",
-      "validUntilLabel": "תקף עד",
-      "usageLimitLabel": "מגבלת שימוש כוללת (0 ללא הגבלה)",
-      "usageLimitPerUserLabel": "מגבלת שימוש למשתמש (0 ללא הגבלה)",
-      "assignedPartnerLabel": "שותף משויך",
-      "notesForPartnerLabel": "הערות לשותף (אופציונלי)",
-      "isActiveLabel": "הסדרה פעילה",
-      "createBatch": "צור סדרה",
-      "discountTypePlaceholder": "בחר סוג הנחה",
-      "discountTypePercentage": "אחוז",
-      "discountTypeFixedAmount": "סכום קבוע",
-      "assignedPartnerPlaceholder": "בחר שותף"
-    },
-    "deleteDialog": {
-      "title": "מחיקת סדרת קופונים",
-      "description": "האם אתה בטוח שברצונך למחוק סדרת קופונים זו? פעולה זו אינה ניתנת לשחזור.",
-      "confirmButton": "מחק סדרה"
-    }
-  },
-
   "apartmentNumber": "מספר דירה",
   "bookingDetails": {
     "drawerTitle": "פרטי הזמנה"

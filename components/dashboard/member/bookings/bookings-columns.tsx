@@ -36,7 +36,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import BookingDetailsView from "./booking-details-view"
 import type { PopulatedBooking, ITreatmentDuration } from "@/types/booking"
 import { getReviewByBookingId } from "@/actions/review-actions"
-import { CreateReviewModal } from "../reviews/create-review-modal"
+import CreateReviewModal from "../reviews/create-review-modal"
 import ReviewDetailModal from "../reviews/review-detail-modal"
 import { Heading } from "@/components/common/ui/heading"
 
@@ -53,7 +53,7 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
   // Fetch existing review if any
   const { data: existingReview, refetch } = useQuery({
     queryKey: ["review", booking._id],
-    queryFn: () => getReviewByBookingId(booking._id),
+    queryFn: () => getReviewByBookingId(booking._id.toString()),
     enabled: canReview,
     staleTime: 30000,
   })
@@ -219,24 +219,24 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
       </DropdownMenu>
 
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="booking-details-description">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-right">
               {t("bookingDetails.drawerTitle")} #{booking.bookingNumber}
             </DialogTitle>
           </DialogHeader>
-          <div className="mt-4">
+          <div className="mt-4" id="booking-details-description">
             <BookingDetailsView booking={booking} />
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="member-notes-description">
           <DialogHeader>
             <DialogTitle>{t("memberBookings.notesDialog.title")}</DialogTitle>
           </DialogHeader>
-          <div className="mt-4">
+          <div className="mt-4" id="member-notes-description">
             <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-700">
               {booking.notes || t("memberBookings.notesDialog.noNotes")}
             </div>

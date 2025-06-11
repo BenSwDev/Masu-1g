@@ -264,12 +264,8 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
           <DataTable
             columns={columns}
             data={data.bookings}
-            searchPlaceholder={t("memberBookings.searchPlaceholder")}
-            emptyMessage={t("memberBookings.noBookings")}
-            totalPages={data?.totalPages || 1}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-            className="min-w-full"
+            hideDefaultPagination={true}
+            hideColumnsSelector={true}
           />
         </div>
       </div>

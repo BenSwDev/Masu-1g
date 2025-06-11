@@ -54,7 +54,7 @@ export default function ReviewDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir={dir}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir={dir} aria-describedby="review-detail-description">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <MessageCircle className="h-5 w-5" />
@@ -62,7 +62,7 @@ export default function ReviewDetailModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6" id="review-detail-description">
           {/* Review Rating */}
           <Card>
             <CardHeader>

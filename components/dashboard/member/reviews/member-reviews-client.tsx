@@ -15,7 +15,7 @@ import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { useDebounce } from "@/hooks/use-debounce"
 import { getUserReviews } from "@/actions/review-actions"
-import { CreateReviewModal } from "./create-review-modal"
+import CreateReviewModal from "./create-review-modal"
 import ReviewDetailModal from "./review-detail-modal"
 import type { PopulatedReview } from "@/types/review"
 import { getMemberReviewColumns } from "./member-reviews-columns"
@@ -217,11 +217,8 @@ export default function MemberReviewsClient() {
       <DataTable
         columns={columns}
         data={data?.reviews || []}
-        searchPlaceholder={t("memberReviews.searchPlaceholder")}
-        emptyMessage={t("memberReviews.noReviews")}
-        totalPages={data?.totalPages || 1}
-        currentPage={currentPage}
-        onPageChange={setCurrentPage}
+        hideDefaultPagination={true}
+        hideColumnsSelector={true}
       />
       
       {data && data.totalReviews > 0 && (

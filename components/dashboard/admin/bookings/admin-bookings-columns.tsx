@@ -148,12 +148,10 @@ const ProfessionalAssignmentDialog = ({
 // Admin Actions Component
 const AdminBookingActions = ({ 
   booking, 
-  t, 
-  onRowClick 
+  t 
 }: { 
   booking: PopulatedBooking; 
   t: TFunction;
-  onRowClick?: (e: React.MouseEvent) => void;
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
@@ -162,13 +160,7 @@ const AdminBookingActions = ({
   const canAssignProfessional = !booking.professionalId && !["completed", "cancelled_by_user", "cancelled_by_admin", "no_show"].includes(booking.status)
   const hasNotes = booking.notes && booking.notes.trim().length > 0
 
-  // Debug logging
-  console.log('Booking debug:', {
-    bookingNumber: booking.bookingNumber,
-    professionalId: booking.professionalId,
-    status: booking.status,
-    canAssignProfessional
-  })
+
 
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent row click when clicking dropdown
@@ -224,11 +216,11 @@ const AdminBookingActions = ({
       </DropdownMenu>
 
       <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby="notes-description">
           <DialogHeader>
             <DialogTitle>{t("adminBookings.notesDialog.title")}</DialogTitle>
           </DialogHeader>
-          <div className="mt-4">
+          <div className="mt-4" id="notes-description">
             <div className="p-4 bg-gray-50 rounded-lg text-sm text-gray-700">
               {booking.notes || t("adminBookings.notesDialog.noNotes")}
             </div>
@@ -563,11 +555,14 @@ export const getAdminBookingColumns = (
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => (
-      <div className="font-mono text-sm font-medium">
-        #{row.getValue("bookingNumber")}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const bookingNumber = row.getValue("bookingNumber") as string
+      return (
+        <div className="font-mono text-sm font-medium">
+          #{bookingNumber || "Unknown"}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "userId",
@@ -601,7 +596,9 @@ export const getAdminBookingColumns = (
       </Button>
     ),
     cell: ({ row }) => {
-      const date = new Date(row.getValue("bookingDateTime"))
+      const bookingDateTime = row.getValue("bookingDateTime") as string | Date
+      if (!bookingDateTime) return <div className="text-sm">-</div>
+      const date = new Date(bookingDateTime)
       return (
         <div className="text-sm">
           <div className="font-medium">{formatDateIsraeli(date)}</div>
@@ -627,9 +624,10 @@ export const getAdminBookingColumns = (
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => (
-      <AdminBookingStatusBadge status={row.getValue("status")} t={t} />
-    ),
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string
+      return <AdminBookingStatusBadge status={status || "unknown"} t={t} />
+    },
   },
   {
     accessorKey: "priceDetails.finalAmount",
@@ -664,11 +662,12 @@ export const getAdminBookingColumns = (
     id: "actions",
     header: t("common.actions"),
     cell: ({ row }) => (
-      <AdminBookingActions 
-        booking={row.original} 
-        t={t} 
-        onRowClick={onRowClick ? () => onRowClick(row.original) : undefined}
-      />
+      <div onClick={(e) => e.stopPropagation()}>
+        <AdminBookingActions 
+          booking={row.original} 
+          t={t} 
+        />
+      </div>
     ),
   },
 ] 

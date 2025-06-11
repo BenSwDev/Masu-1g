@@ -110,9 +110,10 @@ export const getMemberReviewColumns = (
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => (
-      <StarRating rating={row.getValue("rating")} />
-    ),
+    cell: ({ row }) => {
+      const rating = row.getValue("rating") as number
+      return <StarRating rating={rating || 0} />
+    },
   },
   {
     accessorKey: "createdAt",
@@ -127,7 +128,9 @@ export const getMemberReviewColumns = (
       </Button>
     ),
     cell: ({ row }) => {
-      const date = new Date(row.getValue("createdAt"))
+      const createdAt = row.getValue("createdAt") as string | Date
+      if (!createdAt) return <div className="text-sm">-</div>
+      const date = new Date(createdAt)
       return (
         <div className="text-sm">
           {formatDate(date)}

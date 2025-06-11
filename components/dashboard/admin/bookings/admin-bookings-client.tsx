@@ -362,12 +362,9 @@ export default function AdminBookingsClient() {
               <DataTable
                 columns={columns}
                 data={data?.bookings || []}
-                searchPlaceholder={t("adminBookings.searchPlaceholder")}
-                emptyMessage={t("adminBookings.noBookings")}
-                totalPages={data?.totalPages || 1}
-                currentPage={currentPage}
-                onPageChange={setCurrentPage}
-                className="min-w-full"
+                onRowClick={handleRowClick}
+                hideDefaultPagination={true}
+                hideColumnsSelector={true}
               />
             </div>
           </div>

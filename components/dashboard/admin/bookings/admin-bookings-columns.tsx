@@ -594,50 +594,72 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
     return <div className="text-sm text-muted-foreground">-</div>
   }
 
-  // Calculate professional fee and office commission
-  let professionalFee = 0
-  let officeFee = 0
-
-  if (treatment && priceDetails.finalAmount > 0) {
-    // Get professional price based on treatment type
-    let professionalPrice = 0
+  // Calculate base professional fee from treatment
+  let baseProfessionalFee = 0
+  if (treatment) {
     if (treatment.pricingType === "fixed") {
-      professionalPrice = treatment.fixedProfessionalPrice || 0
+      baseProfessionalFee = treatment.fixedProfessionalPrice || 0
     } else if (treatment.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
       const selectedDuration = treatment.durations.find(
         (d: any) => d._id?.toString() === booking.selectedDurationId?.toString()
       )
       if (selectedDuration) {
-        professionalPrice = selectedDuration.professionalPrice || 0
+        baseProfessionalFee = selectedDuration.professionalPrice || 0
       }
     }
-
-    professionalFee = professionalPrice
-    officeFee = priceDetails.finalAmount - professionalPrice
   }
 
-  const actualPaid = priceDetails.finalAmount
-  const hasSurcharges = priceDetails.surcharges && priceDetails.surcharges.length > 0
+  // Calculate surcharge professional share
+  let surchargeProfessionalShare = 0
   const totalSurcharges = priceDetails.totalSurchargesAmount || 0
+  
+  // For simplicity, assume 70% professional share on surcharges (can be improved with working hours data)
+  if (totalSurcharges > 0) {
+    surchargeProfessionalShare = totalSurcharges * 0.70
+  }
+
+  // Total professional payment = base fee + surcharge share
+  const totalProfessionalPayment = baseProfessionalFee + surchargeProfessionalShare
+  
+  // Final amount is what customer actually paid
+  const actualPaid = priceDetails.finalAmount
+  
+  // Office commission = customer paid - professional payment (cannot be negative)
+  const officeCommission = Math.max(0, actualPaid - totalProfessionalPayment)
+
+  // Calculate total price including surcharges (before any discounts)
+  const basePrice = priceDetails.basePrice || 0
+  const totalPriceBeforeDiscounts = basePrice + totalSurcharges
+  
+  // Display discounts/redemptions
+  const totalDiscounts = (priceDetails.discountAmount || 0) + (priceDetails.voucherAppliedAmount || 0)
 
   return (
-    <div className="space-y-1 max-w-[180px]">
-      <div className="font-medium text-sm">
-        {t("adminBookings.finalCost")}: ₪{priceDetails.finalAmount.toFixed(2)}
+    <div className="space-y-1 max-w-[200px]">
+      <div className="text-xs text-gray-600">
+        {t("adminBookings.totalPrice")}: ₪{totalPriceBeforeDiscounts.toFixed(2)}
       </div>
-      {hasSurcharges && totalSurcharges > 0 && (
+      {totalSurcharges > 0 && (
         <div className="text-xs text-orange-600">
-          {t("adminBookings.surcharges")}: ₪{totalSurcharges.toFixed(2)}
+          כולל {t("adminBookings.surcharges")}: ₪{totalSurcharges.toFixed(2)}
         </div>
       )}
+      {totalDiscounts > 0 && (
+        <div className="text-xs text-green-600">
+          {t("adminBookings.discountsAndRedemptions")}: -₪{totalDiscounts.toFixed(2)}
+        </div>
+      )}
+      <div className="font-medium text-sm border-t pt-1">
+        {t("adminBookings.finalCost")}: ₪{actualPaid.toFixed(2)}
+      </div>
       <div className="text-xs text-muted-foreground">
         {t("adminBookings.actualPaid")}: ₪{actualPaid.toFixed(2)}
       </div>
       <div className="text-xs text-green-600">
-        {t("adminBookings.professionalFee")}: ₪{professionalFee.toFixed(2)}
+        {t("adminBookings.professionalFee")}: ₪{totalProfessionalPayment.toFixed(2)}
       </div>
       <div className="text-xs text-blue-600">
-        {t("adminBookings.officeFee")}: ₪{officeFee.toFixed(2)}
+        {t("adminBookings.officeFee")}: ₪{officeCommission.toFixed(2)}
       </div>
     </div>
   )

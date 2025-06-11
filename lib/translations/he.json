@@ -392,6 +392,8 @@
     "professionalFee": "רווח מטפל",
     "officeFee": "עמלת משרד",
     "surcharges": "תוספות",
+    "totalPrice": "מחיר כללי",
+    "discountsAndRedemptions": "הנחות/מימושים",
     "redemption": "מימוש",
     "financialSummary": "סיכום כספי",
     "viewClientNotes": "צפה בהערות הלקוח",
@@ -505,6 +507,10 @@
   },
   "bookings": {
     "balance": "יתרה",
+    "status": {
+      "confirmed":"אושר",
+      "cancelled":"בוטל"
+    },
     "confirmation": {
       "addressDetails": "פרטי כתובת",
       "addressNotes": "הערות כתובת",

@@ -465,7 +465,7 @@ export default function GuestPurchaseModal({
             </div>
           )}
 
-          {step === "progress-check" && (
+          {step === "progress-check" && getProgressSummary() && (
             <GuestProgressOptions
               progressSummary={getProgressSummary()!}
               onResume={handleProgressResume}

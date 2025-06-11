@@ -1005,7 +1005,9 @@
       "view": "צפה",
       "viewDetails": "צפה בפרטים",
       "warning": "אזהרה",
-      "yes": "כן"
+      "yes": "כן",
+      "dashboard": "לוח בקרה",
+      "login": "התחבר"
     },
     "common.totalPrice": "מחיר כולל",
     "confirmPassword": "אימות סיסמה",
@@ -3988,5 +3990,12 @@
     "bio": "ביוגרפיה",
     "bioPlaceholder": "ספר מעט על עצמך",
     "saveChanges": "שמור שינויים"
+  },
+  "landing": {
+    "heroTitle": "MASU - הזמנת מטפל מקצועי עד הבית",
+    "bookTreatment": "הזמן טיפול",
+    "bookSubscription": "הזמן מנוי",
+    "bookGiftVoucher": "הזמן שובר מתנה",
+    "useVoucher": "יש לי שובר/קופון"
   }
 }

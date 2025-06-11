@@ -152,7 +152,9 @@
     "saveSettings": "[common.saveSettings]",
     "today": "[common.today]",
     "unknownStep": "Неизвестный шаг",
-    "validationError": "Ошибка валидации"
+    "validationError": "Ошибка валидации",
+    "dashboard": "Панель управления",
+    "login": "Войти"
   },
   "dashboard": {
     "sidebar": {
@@ -1626,5 +1628,12 @@
     "phone": "[profile.phone]",
     "phonePlaceholder": "[profile.phonePlaceholder]",
     "saveChanges": "[profile.saveChanges]"
+  },
+  "landing": {
+    "heroTitle": "MASU - Заказ профессионального лечения на дом",
+    "bookTreatment": "Записаться на процедуру",
+    "bookSubscription": "Купить подписку",
+    "bookGiftVoucher": "Купить подарочный сертификат",
+    "useVoucher": "У меня есть ваучер/купон"
   }
 }

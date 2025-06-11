@@ -151,7 +151,9 @@
     "unknown": "[common.unknown]",
     "unknownStep": "Unknown Step",
     "unknownTreatment": "[common.unknownTreatment]",
-    "validationError": "Validation Error"
+    "validationError": "Validation Error",
+    "dashboard": "Dashboard",
+    "login": "Login"
   },
   "dashboard": {
     "sidebar": {
@@ -1276,5 +1278,12 @@
   },
   "success": {
     "registrationComplete": "[success.registrationComplete]"
+  },
+  "landing": {
+    "heroTitle": "MASU - Professional Treatment Booking at Home",
+    "bookTreatment": "Book Treatment",
+    "bookSubscription": "Book Subscription",
+    "bookGiftVoucher": "Book Gift Voucher",
+    "useVoucher": "I have a voucher/coupon"
   }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { DropdownMenuItem } from "@/components/common/ui/dropdown-menu"
 
 import type React from "react"
 
@@ -60,6 +60,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
+
+import { useQuery } from "@tanstack/react-query"
 
 // Define UserData interface locally as requested
 export interface UserData {

@@ -1,7 +1,9 @@
 "use client"
 
+import React from 'react'
+import { Card, CardContent, CardHeader } from '@/components/common/ui/card'
 import { useIsMobile } from "@/components/common/ui/use-mobile"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/common/ui/skeleton"
 
 export function ClientAwareCouponsLoadingSkeleton() {
   const isMobile = useIsMobile()

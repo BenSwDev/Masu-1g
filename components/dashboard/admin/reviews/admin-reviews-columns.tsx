@@ -141,9 +141,14 @@ export function getAdminReviewColumns(
       header: t("adminReviews.columns.rating"),
       cell: ({ row }) => {
         const review = row.original
-        const rating = review.rating
+        
+        if (!review) {
+          return <div className="text-sm text-muted-foreground">-</div>
+        }
+        
+        const rating = review.rating || 0
         const hasComment = !!review.comment
-        const hasResponse = !!review.professionalResponse
+        const hasResponse = !!(review.professionalResponse && review.professionalResponse.trim())
         const isLowRating = rating < 5
         
         return (

@@ -1,29 +1,29 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { format } from "date-fns"
-import { CalendarDays, Clock, User, Phone, Mail, MapPin, CreditCard, FileText, Star, AlertTriangle, Stethoscope } from "lucide-react"
+import { Calendar, Clock, User, Phone, Mail, MapPin, CreditCard, FileText, Star, AlertTriangle, Stethoscope } from "lucide-react"
 import { 
   Dialog, 
   DialogContent, 
   DialogHeader, 
   DialogTitle 
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
+} from "@/components/common/ui/dialog"
+import { Button } from "@/components/common/ui/button"
+import { Input } from "@/components/common/ui/input"
+import { Textarea } from "@/components/common/ui/textarea"
+import { Badge } from "@/components/common/ui/badge"
+import { Label } from "@/components/common/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@/components/common/ui/select"
+import { Separator } from "@/components/common/ui/separator"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/common/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -234,7 +234,7 @@ export default function ComprehensiveBookingEditModal({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5" />
+                  <Calendar className="h-5 w-5" />
                   {t("adminBookings.bookingDetails")}
                 </CardTitle>
               </CardHeader>

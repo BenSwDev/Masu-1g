@@ -1,6 +1,7 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
+import { useQuery } from "@tanstack/react-query"
+import { Badge } from "@/components/common/ui/badge"
 
 import type React from "react"
 

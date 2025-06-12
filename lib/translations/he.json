@@ -1,4 +1,10 @@
 {
+  "navigation": {
+    "home": "דף הבית",
+    "bookTreatment": "הזמן טיפול",
+    "bookSubscription": "הזמן מנוי",
+    "bookGiftVoucher": "הזמן שובר מתנה"
+  },
   "roles": {
     "admin": "מנהל",
     "guest": "אורח",
@@ -592,10 +598,71 @@
     "drawerTitle": "פרטי הזמנה"
   },
   "bookings": {
+    "guestInformation": "פרטי האורח",
+    "bookingDetails": "פרטי ההזמנה",
+    "selectedTreatment": "הטיפול הנבחר",
+    "therapistGenderPreference": "העדפת מטפל",
+    "therapistGenderPreferenceDescription": "בחר את העדפת המין של המטפל",
+    "selectGenderPreference": "בחר העדפה",
+    "genderPreference": {
+      "any": "ללא העדפה",
+      "male": "מטפל",
+      "female": "מטפלת"
+    },
+    "therapistPreference": "העדפת מטפל",
+    "selectDate": "בחר תאריך",
+    "selectDateDescription": "בחר את התאריך הרצוי לטיפול",
+    "selectTime": "בחר שעה",
+    "availableTimesFor": "זמנים פנויים עבור {date}",
+    "selectDateFirst": "בחר תאריך תחילה",
+    "selectDateToShowTimes": "בחר תאריך כדי לראות זמנים פנויים",
+    "noAvailableTimes": "אין זמנים פנויים בתאריך זה",
+    "availableTimes": "זמנים פנויים",
+    "unavailableTimes": "זמנים תפוסים",
+    "date": "תאריך",
+    "time": "שעה",
+    "notes": "הערות",
+    "priceBreakdown": "פירוט מחיר",
+    "basePrice": "מחיר בסיס",
+    "taxes": "מסים",
+    "totalAmount": "סכום כולל",
+    "freeBooking": "הזמנה ללא תשלום",
+    "proceedToPayment": "המשך לתשלום",
+    "confirmBooking": "אשר הזמנה",
+    "priceCalculationFailed": "שגיאה בחישוב המחיר",
+    "processing": "מעבד...",
+    "orderSummary": "סיכום הזמנה",
+    "noPaymentRequired": "אין צורך בתשלום",
+    "freeBookingMessage": "ההזמנה שלך אושרה ללא תשלום",
+    "bookingReference": "מספר הזמנה",
+    "contactInformation": "פרטי קשר",
+    "appointmentDetails": "פרטי התור",
+    "totalPaid": "סך ששולם",
+    "importantInformation": "מידע חשוב",
+    "confirmationEmail": "תקבל אימייל עם פרטי ההזמנה",
+    "arriveEarly": "מומלץ להגיע 10 דקות לפני השעה",
+    "cancellationPolicy": "ניתן לבטל עד 24 שעות לפני הטיפול",
+    "contactSupport": "לשינויים צור קשר עם השירות",
+    "bookAnother": "הזמן טיפול נוסף",
     "balance": "יתרה",
     "status": {
       "confirmed":"אושר",
       "cancelled":"בוטל"
+    },
+    "addressStep": {
+      "title": "הוסף כתובת",
+      "city": "עיר",
+      "street": "רחוב",
+      "houseNumber": "מספר בית",
+      "addressType": "סוג כתובת",
+      "floor": "קומה",
+      "apartmentNumber": "מספר דירה",
+      "entrance": "כניסה",
+      "privateParking": "חניה פרטית",
+      "noParking": "אין חניה",
+      "isDefault": "כתובת ברירת מחדל",
+      "notDefault": "לא ברירת מחדל",
+      "notes": "הערות"
     },
     "confirmation": {
       "addressDetails": "פרטי כתובת",
@@ -2883,14 +2950,14 @@
     }
   },
   "common": {
-    "error": "שגיאה",
+    "error": "",
     "notAvailable": "לא זמין",
     "status": "סטטוס",
     "unknownTreatment": "טיפול לא ידוע",
     "minutes": "דקות",
     "anotherProfessional": "מטפל אחר",
     "loading": "טוען",
-    "back": "חזור",
+    "back": "חזור",שגיאה
     "complete": "השלם",
     "next": "הבא",
     "purchaseSuccessful": "רכישה מוצלחת",
@@ -4067,102 +4134,6 @@
     "professionalInterface": "כניסה לממשק מטפלים",
     "partnerInterface": "כניסה לממשק שותפים",
     "adminInterface": "כניסה לממשק מנהל"
-  },
-  "bookings": {
-    "steps": {
-      "guestInfo": {
-        "title": "פרטים אישיים",
-        "description": "אנא מלא את הפרטים האישיים שלך",
-        "personalDetails": "פרטים אישיים",
-        "notes": "הערות נוספות",
-        "notesPlaceholder": "הערות או בקשות מיוחדות..."
-      },
-      "treatment": {
-        "title": "בחירת טיפול",
-        "description": "בחר את הטיפול הרצוי"
-      },
-      "scheduling": {
-        "title": "תזמון",
-        "description": "בחר תאריך ושעה"
-      },
-      "summary": {
-        "title": "סיכום",
-        "description": "סקור את פרטי ההזמנה"
-      },
-      "payment": {
-        "title": "תשלום",
-        "description": "השלם את התשלום"
-      },
-      "confirmation": {
-        "title": "אישור",
-        "description": "ההזמנה הושלמה בהצלחה"
-      }
-    },
-    "guestInformation": "פרטי האורח",
-    "bookingDetails": "פרטי ההזמנה",
-    "selectedTreatment": "הטיפול הנבחר",
-    "therapistGenderPreference": "העדפת מטפל",
-    "therapistGenderPreferenceDescription": "בחר את העדפת המין של המטפל",
-    "selectGenderPreference": "בחר העדפה",
-    "genderPreference": {
-      "any": "ללא העדפה",
-      "male": "מטפל",
-      "female": "מטפלת"
-    },
-    "therapistPreference": "העדפת מטפל",
-    "selectDate": "בחר תאריך",
-    "selectDateDescription": "בחר את התאריך הרצוי לטיפול",
-    "selectTime": "בחר שעה",
-    "availableTimesFor": "זמנים פנויים עבור {date}",
-    "selectDateFirst": "בחר תאריך תחילה",
-    "selectDateToShowTimes": "בחר תאריך כדי לראות זמנים פנויים",
-    "noAvailableTimes": "אין זמנים פנויים בתאריך זה",
-    "availableTimes": "זמנים פנויים",
-    "unavailableTimes": "זמנים תפוסים",
-    "date": "תאריך",
-    "time": "שעה",
-    "notes": "הערות",
-    "priceBreakdown": "פירוט מחיר",
-    "basePrice": "מחיר בסיס",
-    "taxes": "מסים",
-    "totalAmount": "סכום כולל",
-    "freeBooking": "הזמנה ללא תשלום",
-    "proceedToPayment": "המשך לתשלום",
-    "confirmBooking": "אשר הזמנה",
-    "priceCalculationFailed": "שגיאה בחישוב המחיר",
-    "processing": "מעבד...",
-    "orderSummary": "סיכום הזמנה",
-    "noPaymentRequired": "אין צורך בתשלום",
-    "freeBookingMessage": "ההזמנה שלך אושרה ללא תשלום",
-    "success": {
-      "title": "הזמנה הושלמה בהצלחה!",
-      "subtitle": "תודה על ההזמנה. קיבלת אישור באימייל.",
-      "bookingCreated": "הזמנה נוצרה בהצלחה",
-      "bookingCreatedDescription": "תקבל אישור באימייל בקרוב"
-    },
-    "errors": {
-      "missingGuestInfo": "חסרים פרטים אישיים",
-      "completeGuestInfo": "אנא השלם את כל הפרטים האישיים",
-      "incompleteBookingDetails": "פרטי הזמנה חסרים",
-      "completeAllFields": "אנא השלם את כל השדות הנדרשים",
-      "unexpectedError": "אירעה שגיאה לא צפויה",
-      "tryAgain": "אנא נסה שוב מאוחר יותר",
-      "bookingNotFound": "הזמנה לא נמצאה",
-      "bookingNotFoundDescription": "אירעה שגיאה בטעינת פרטי ההזמנה",
-      "fetchTimeSlotsFailedTitle": "שגיאה בטעינת זמנים פנויים",
-      "calculatePriceFailedTitle": "שגיאה בחישוב המחיר",
-      "bookingFailedTitle": "שגיאה ביצירת ההזמנה"
-    },
-    "bookingReference": "מספר הזמנה",
-    "contactInformation": "פרטי קשר",
-    "appointmentDetails": "פרטי התור",
-    "totalPaid": "סך ששולם",
-    "importantInformation": "מידע חשוב",
-    "confirmationEmail": "תקבל אימייל עם פרטי ההזמנה",
-    "arriveEarly": "מומלץ להגיע 10 דקות לפני השעה",
-    "cancellationPolicy": "ניתן לבטל עד 24 שעות לפני הטיפול",
-    "contactSupport": "לשינויים צור קשר עם השירות",
-    "bookAnother": "הזמן טיפול נוסף"
   },
   "treatments": {
     "selectCategory": "בחר קטגוריה",

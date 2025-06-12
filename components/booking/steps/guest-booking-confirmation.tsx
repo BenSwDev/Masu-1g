@@ -6,7 +6,7 @@ import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, Home, AlertCircle } from "lucide-react"
-import { format } from "date-fns"
+import { format, isValid } from "date-fns"
 import { he } from "date-fns/locale"
 import Link from "next/link"
 import type { BookingInitialData } from "@/types/booking"
@@ -30,14 +30,25 @@ export function GuestBookingConfirmation({
     )
   }, [bookingResult?.treatmentId, initialData?.activeTreatments])
 
-  const formatDateString = (date: Date | string) => {
+  const formatDateString = (date: Date | string | undefined | null) => {
+    if (!date) return "-"
     const dateObj = typeof date === "string" ? new Date(date) : date
+    if (!isValid(dateObj)) return "-"
     return format(dateObj, "EEEE, d MMMM yyyy", { locale: language === "he" ? he : undefined })
   }
 
-  const formatTimeString = (date: Date | string) => {
+  const formatTimeString = (date: Date | string | undefined | null) => {
+    if (!date) return "-"
     const dateObj = typeof date === "string" ? new Date(date) : date
+    if (!isValid(dateObj)) return "-"
     return format(dateObj, "HH:mm")
+  }
+
+  const formatBirthDate = (date: Date | string | undefined | null) => {
+    if (!date) return "-"
+    const dateObj = typeof date === "string" ? new Date(date) : date
+    if (!isValid(dateObj)) return "-"
+    return format(dateObj, "dd/MM/yyyy")
   }
 
   const getTreatmentDurationText = () => {
@@ -51,7 +62,7 @@ export function GuestBookingConfirmation({
     
     if (bookingResult?.selectedDurationId && bookingTreatment.durations) {
       const duration = bookingTreatment.durations.find(
-        (d) => d._id.toString() === bookingResult.selectedDurationId?.toString()
+        (d: any) => d._id.toString() === bookingResult.selectedDurationId?.toString()
       )
       if (duration) {
         const hours = Math.floor((duration.minutes || 0) / 60)
@@ -113,7 +124,7 @@ export function GuestBookingConfirmation({
       <Alert className="bg-green-50 border-green-200">
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
-          <strong>{t("bookings.steps.confirmation.bookingReference")}:</strong> {bookingResult._id?.toString().slice(-8).toUpperCase()}
+          <strong>{t("bookings.steps.confirmation.bookingReference")}:</strong> {bookingResult.bookingNumber || bookingResult._id?.toString().slice(-8).toUpperCase()}
         </AlertDescription>
       </Alert>
 
@@ -151,7 +162,7 @@ export function GuestBookingConfirmation({
               {bookingResult.recipientBirthDate && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t("bookings.steps.confirmation.birthDate")}:</span>
-                  <span className="font-medium">{format(bookingResult.recipientBirthDate, "dd/MM/yyyy")}</span>
+                  <span className="font-medium">{formatBirthDate(bookingResult.recipientBirthDate)}</span>
                 </div>
               )}
               {bookingResult.recipientGender && (
@@ -218,7 +229,7 @@ export function GuestBookingConfirmation({
                   <Calendar className="h-4 w-4" />
                   {t("bookings.date")}:
                 </span>
-                <span className="font-medium">{formatDateString(bookingResult.scheduledDate)}</span>
+                <span className="font-medium">{formatDateString(bookingResult.bookingDateTime)}</span>
               </div>
               <div className="flex justify-between">
                 <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
@@ -226,7 +237,7 @@ export function GuestBookingConfirmation({
                   {t("bookings.time")}:
                 </span>
                 <span className="font-medium">
-                  {bookingResult.flexibleTime ? t("bookings.flexibleTime") : formatTimeString(bookingResult.scheduledDate)}
+                  {bookingResult.isFlexibleTime ? t("bookings.flexibleTime") : formatTimeString(bookingResult.bookingDateTime)}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -235,7 +246,7 @@ export function GuestBookingConfirmation({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("bookings.totalAmount")}:</span>
-                <span className="font-medium text-lg">{formatPrice(bookingResult.totalPrice)}</span>
+                <span className="font-medium text-lg">{formatPrice(bookingResult.priceDetails?.finalAmount || 0)}</span>
               </div>
             </div>
           </CardContent>
@@ -252,23 +263,32 @@ export function GuestBookingConfirmation({
           <CardContent>
             <div className="bg-muted p-4 rounded-lg">
               <p className="font-medium">
-                {[
-                  bookingResult.address?.street,
-                  bookingResult.address?.houseNumber,
-                  bookingResult.address?.city
-                ].filter(Boolean).join(", ")}
+                {bookingResult.bookingAddressSnapshot?.fullAddress || 
+                 bookingResult.customAddressDetails?.fullAddress || 
+                 [
+                   bookingResult.bookingAddressSnapshot?.street || bookingResult.customAddressDetails?.street,
+                   bookingResult.bookingAddressSnapshot?.streetNumber || bookingResult.customAddressDetails?.streetNumber,
+                   bookingResult.bookingAddressSnapshot?.city || bookingResult.customAddressDetails?.city
+                 ].filter(Boolean).join(", ")}
               </p>
-              {(bookingResult.address?.floor || bookingResult.address?.apartmentNumber || bookingResult.address?.entrance) && (
+              {((bookingResult.bookingAddressSnapshot?.floor || bookingResult.customAddressDetails?.floor) || 
+                (bookingResult.bookingAddressSnapshot?.apartment || bookingResult.customAddressDetails?.apartment) || 
+                (bookingResult.bookingAddressSnapshot?.entrance || bookingResult.customAddressDetails?.entrance)) && (
                 <p className="text-sm text-muted-foreground mt-1">
                   {[
-                    bookingResult.address?.floor && `${t("bookings.floor")} ${bookingResult.address.floor}`,
-                    bookingResult.address?.apartmentNumber && `${t("bookings.apartment")} ${bookingResult.address.apartmentNumber}`,
-                    bookingResult.address?.entrance && `${t("bookings.entrance")} ${bookingResult.address.entrance}`
+                    (bookingResult.bookingAddressSnapshot?.floor || bookingResult.customAddressDetails?.floor) && 
+                      `${t("bookings.floor")} ${bookingResult.bookingAddressSnapshot?.floor || bookingResult.customAddressDetails?.floor}`,
+                    (bookingResult.bookingAddressSnapshot?.apartment || bookingResult.customAddressDetails?.apartment) && 
+                      `${t("bookings.apartment")} ${bookingResult.bookingAddressSnapshot?.apartment || bookingResult.customAddressDetails?.apartment}`,
+                    (bookingResult.bookingAddressSnapshot?.entrance || bookingResult.customAddressDetails?.entrance) && 
+                      `${t("bookings.entrance")} ${bookingResult.bookingAddressSnapshot?.entrance || bookingResult.customAddressDetails?.entrance}`
                   ].filter(Boolean).join(", ")}
                 </p>
               )}
-              {bookingResult.address?.notes && (
-                <p className="text-sm text-muted-foreground mt-2">{bookingResult.address.notes}</p>
+              {(bookingResult.bookingAddressSnapshot?.notes || bookingResult.customAddressDetails?.notes) && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {bookingResult.bookingAddressSnapshot?.notes || bookingResult.customAddressDetails?.notes}
+                </p>
               )}
             </div>
           </CardContent>

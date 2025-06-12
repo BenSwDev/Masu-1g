@@ -43,7 +43,7 @@ export function GuestSchedulingStep({
 
   const selectedDuration = useMemo(() => {
     if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {
-      return selectedTreatment.durations.find((d) => d._id.toString() === bookingOptions.selectedDurationId)
+      return selectedTreatment.durations.find((d: any) => d._id.toString() === bookingOptions.selectedDurationId)
     }
     return null
   }, [selectedTreatment, bookingOptions.selectedDurationId])
@@ -232,23 +232,25 @@ export function GuestSchedulingStep({
                   <h4 className="text-sm font-medium mb-3 text-green-700">
                     {t("bookings.availableTimes")} ({availableTimeSlots.length})
                   </h4>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="max-h-80 overflow-y-auto border rounded-lg p-3">
+                    <div className="grid grid-cols-3 gap-2">
                     {availableTimeSlots.map((slot) => (
                       <Button
                         key={slot.time}
                         variant={bookingOptions.bookingTime === slot.time ? "default" : "outline"}
                         size="sm"
                         onClick={() => handleTimeSelect(slot.time)}
-                        className="text-xs flex flex-col items-center"
+                        className="text-xs flex flex-col items-center py-2 min-h-[60px]"
                       >
                         <span>{slot.time}</span>
                         {slot.surcharge && (
-                          <span className="text-orange-600 text-[11px] font-medium mt-1">
+                          <span className="text-orange-600 text-[10px] font-medium mt-1">
                             +{slot.surcharge.amount.toFixed(2)} ₪
                           </span>
                         )}
                       </Button>
                     ))}
+                    </div>
                   </div>
                 </div>
 
@@ -258,7 +260,8 @@ export function GuestSchedulingStep({
                     <h4 className="text-sm font-medium mb-3 text-gray-500">
                       {t("bookings.unavailableTimes")} ({unavailableTimeSlots.length})
                     </h4>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="max-h-40 overflow-y-auto border rounded-lg p-3">
+                      <div className="grid grid-cols-3 gap-2">
                       {unavailableTimeSlots.map((slot) => (
                         <Button
                           key={slot.time}
@@ -270,6 +273,7 @@ export function GuestSchedulingStep({
                           {slot.time}
                         </Button>
                       ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -284,23 +288,26 @@ export function GuestSchedulingStep({
 
                 {/* Surcharge Breakdown */}
                 {bookingOptions.bookingTime && selectedTimeSlot?.surcharge && (
-                  <div className="mt-4 p-3 rounded-lg border border-orange-200 bg-orange-50">
-                    <div className="flex items-center gap-2 text-orange-700 text-sm font-medium">
+                  <div className="mt-4 p-4 rounded-lg border border-orange-200 bg-gradient-to-r from-orange-50 to-orange-100">
+                    <div className="flex items-center gap-2 text-orange-800 text-sm font-semibold mb-3">
                       <Info className="h-4 w-4" />
-                      {t("bookings.surchargeReason")}
-                      <span className="font-semibold">{surchargeReason}</span>
+                      <span>תוספת מחיר:</span>
+                      <span className="font-bold">{surchargeReason || "תוספת זמן מיוחד"}</span>
                     </div>
-                    <div className="flex justify-between mt-2 text-sm">
-                      <span>{t("bookings.basePrice")}: </span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                      <span>מחיר בסיס:</span>
                       <span>{basePrice.toFixed(2)} ₪</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>{t("bookings.surcharge")}: </span>
+                      <span>תוספת:</span>
                       <span className="text-orange-700">+{surchargeAmount.toFixed(2)} ₪</span>
                     </div>
+                    <hr className="my-2 border-orange-300" />
                     <div className="flex justify-between font-bold text-base mt-2">
-                      <span>{t("bookings.totalAmount")}: </span>
+                      <span>סך הכל:</span>
                       <span className="text-primary">{finalPrice.toFixed(2)} ₪</span>
+                    </div>
                     </div>
                   </div>
                 )}

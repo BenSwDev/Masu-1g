@@ -16,7 +16,7 @@ import { GuestSummaryStep } from "./steps/guest-summary-step"
 import { GuestPaymentStep } from "./steps/guest-payment-step"
 import { GuestBookingConfirmation } from "./steps/guest-booking-confirmation"
 
-import { calculateBookingPrice, createBooking, getAvailableTimeSlots } from "@/actions/booking-actions"
+import { calculateBookingPrice, createGuestBooking, getAvailableTimeSlots } from "@/actions/booking-actions"
 import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress"
 import { AlertCircle } from "lucide-react"
@@ -139,11 +139,11 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
     bookingDateTime.setHours(hours, minutes, 0, 0)
 
     const payload: CalculatePricePayloadType = {
+      userId: "guest",
       treatmentId: bookingOptions.selectedTreatmentId,
       selectedDurationId: bookingOptions.selectedDurationId,
       bookingDateTime,
       couponCode: bookingOptions.appliedCouponCode,
-      guestEmail: guestInfo.email,
     }
     
     const result = await calculateBookingPrice(payload)
@@ -234,23 +234,35 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       const [hours, minutes] = bookingOptions.bookingTime.split(":").map(Number)
       bookingDateTime.setHours(hours, minutes, 0, 0)
 
-      const payload: CreateBookingPayloadType = {
+      const payload = {
+        userId: "guest",
         treatmentId: bookingOptions.selectedTreatmentId,
         selectedDurationId: bookingOptions.selectedDurationId,
         bookingDateTime,
         therapistGenderPreference: bookingOptions.therapistGenderPreference || "any",
-        couponCode: bookingOptions.appliedCouponCode,
         source: "new_purchase",
+        customAddressDetails: {
+          fullAddress: `${guestAddress.street} ${guestAddress.houseNumber}, ${guestAddress.city}`,
+          city: guestAddress.city || "",
+          street: guestAddress.street || "",
+          streetNumber: guestAddress.houseNumber || "",
+          apartment: guestAddress.apartmentNumber || undefined,
+          entrance: guestAddress.entrance,
+          floor: guestAddress.floor,
+          notes: guestAddress.notes,
+        },
+        priceDetails: calculatedPrice!,
+        paymentDetails: {
+          paymentStatus: calculatedPrice!.finalAmount === 0 ? "not_required" : "pending",
+        },
         guestInfo: {
-          firstName: guestInfo.firstName!,
-          lastName: guestInfo.lastName!,
+          name: `${guestInfo.firstName} ${guestInfo.lastName}`,
           email: guestInfo.email!,
           phone: guestInfo.phone!,
-          notes: guestInfo.notes,
         },
-      }
+      } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
 
-      const result = await createBooking(payload)
+      const result = await createGuestBooking(payload)
       if (result.success && result.booking) {
         setBookingResult(result.booking)
         setCurrentStep(CONFIRMATION_STEP_NUMBER)
@@ -331,6 +343,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             isPriceCalculating={isPriceCalculating}
             onNext={nextStep}
             onPrev={prevStep}
+            setBookingOptions={setBookingOptions}
           />
         )
       case 6:
@@ -360,7 +373,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       case 1:
         return t("bookings.steps.guestInfo.title")
       case 2:
-        return t("bookings.addressStep.title", "הוסף כתובת חדשה")
+        return t("bookings.addressStep.title") || "הוסף כתובת חדשה"
       case 3:
         return t("bookings.steps.treatment.title")
       case 4:

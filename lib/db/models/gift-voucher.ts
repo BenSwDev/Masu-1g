@@ -55,10 +55,15 @@ export interface IGiftVoucher extends Document {
   monetaryValue?: number // If monetary, this is the value. If treatment, could store the price at time of purchase.
   originalAmount?: number // For monetary vouchers, often same as 'amount' initially.
   remainingAmount?: number // For monetary vouchers, tracks current balance.
-  purchaserUserId: mongoose.Types.ObjectId
+  purchaserUserId?: mongoose.Types.ObjectId // Made optional for guest purchases
   purchaserName?: string // For display
-  ownerUserId: mongoose.Types.ObjectId
+  ownerUserId?: mongoose.Types.ObjectId // Made optional for guest purchases
   ownerName?: string // For display
+  guestInfo?: { // Guest information for non-user purchases
+    name: string
+    email: string
+    phone: string
+  }
   isGift: boolean
   recipientName?: string
   recipientPhone?: string
@@ -93,8 +98,17 @@ const GiftVoucherSchema: Schema<IGiftVoucher> = new Schema(
     monetaryValue: { type: Number, min: 0 }, // Value for monetary type, or price of treatment at purchase
     originalAmount: { type: Number, min: 0 }, // Initial value, especially for monetary type
     remainingAmount: { type: Number, min: 0 }, // Current balance for monetary type
-    purchaserUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    purchaserUserId: { type: Schema.Types.ObjectId, ref: "User", required: false, index: true }, // Made optional for guest purchases
+    ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: false, index: true }, // Made optional for guest purchases
+    guestInfo: {
+      // Guest information for non-user purchases
+      type: {
+        name: { type: String, required: true },
+        email: { type: String, required: true },
+        phone: { type: String, required: true },
+      },
+      required: false,
+    },
     isGift: { type: Boolean, default: false },
     recipientName: { type: String },
     recipientPhone: { type: String },

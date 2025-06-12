@@ -504,3 +504,220 @@ export async function deleteUserSubscription(id: string) {
     return { success: false, error: "Failed to delete user subscription" }
   }
 }
+
+export async function purchaseGuestSubscription({
+  subscriptionId,
+  treatmentId,
+  paymentMethodId,
+  selectedDurationId,
+  guestInfo,
+}: PurchaseSubscriptionArgs & {
+  guestInfo: {
+    name: string
+    email: string
+    phone: string
+  }
+}) {
+  const requestId = `guest_sub_purchase_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+  const startTime = Date.now()
+  
+  try {
+    logger.info(`[${requestId}] Starting guest subscription purchase`, {
+      subscriptionId,
+      treatmentId,
+      hasSelectedDuration: !!selectedDurationId,
+      guestEmail: guestInfo.email
+    })
+
+    const dbConnectStart = Date.now()
+    await dbConnect()
+    const dbConnectTime = Date.now() - dbConnectStart
+    
+    logger.info(`[${requestId}] Database connected`, { 
+      dbConnectTime: `${dbConnectTime}ms`,
+      guestEmail: guestInfo.email
+    })
+
+    // Load all required data in parallel
+    const dataLoadStart = Date.now()
+    const [subscriptionResult, treatmentResult] = await Promise.allSettled([
+      Subscription.findById(subscriptionId),
+      Treatment.findById(treatmentId).lean(),
+    ])
+    const dataLoadTime = Date.now() - dataLoadStart
+
+    // Check for failed data loads
+    if (subscriptionResult.status === "rejected" || treatmentResult.status === "rejected") {
+      logger.error(`[${requestId}] Failed to load required data`, {
+        dataLoadTime: `${dataLoadTime}ms`,
+        subscriptionError: subscriptionResult.status === "rejected" ? subscriptionResult.reason : null,
+        treatmentError: treatmentResult.status === "rejected" ? treatmentResult.reason : null,
+      })
+      return { success: false, error: "Failed to load required data" }
+    }
+
+    const subscription = subscriptionResult.value
+    const treatment = treatmentResult.value as ITreatment | null
+
+    logger.info(`[${requestId}] Data loaded successfully`, {
+      dataLoadTime: `${dataLoadTime}ms`,
+      subscriptionFound: !!subscription,
+      subscriptionActive: subscription?.isActive,
+      treatmentFound: !!treatment,
+      treatmentActive: treatment?.isActive,
+    })
+
+    if (!subscription || !subscription.isActive) {
+      logger.warn(`[${requestId}] Subscription not found or inactive`, { subscriptionId })
+      return { success: false, error: "Subscription not found or inactive" }
+    }
+
+    if (!treatment || !treatment.isActive) {
+      logger.warn(`[${requestId}] Treatment not found or inactive`, { treatmentId })
+      return { success: false, error: "Treatment not found or inactive" }
+    }
+
+    // Price calculation
+    const priceCalcStart = Date.now()
+    let singleSessionPrice: number | undefined
+
+    if (treatment.pricingType === "fixed") {
+      singleSessionPrice = treatment.fixedPrice
+    } else if (treatment.pricingType === "duration_based") {
+      if (!selectedDurationId) {
+        logger.warn(`[${requestId}] Duration ID not provided for duration-based treatment`, { treatmentId })
+        return { success: false, error: "Duration must be selected for this treatment" }
+      }
+      const duration = treatment.durations?.find((d) => d._id.toString() === selectedDurationId)
+      if (!duration || !duration.isActive) {
+        logger.warn(`[${requestId}] Selected duration not found or inactive`, { 
+          selectedDurationId, 
+          treatmentId
+        })
+        return { success: false, error: "Selected duration not found or inactive" }
+      }
+      singleSessionPrice = duration.price
+    }
+
+    if (singleSessionPrice === undefined || singleSessionPrice < 0) {
+      logger.error(`[${requestId}] Invalid price calculated for treatment`, { 
+        treatmentId, 
+        singleSessionPrice
+      })
+      return { success: false, error: "Invalid treatment price" }
+    }
+
+    const totalPaymentAmount = subscription.quantity * singleSessionPrice
+    const priceCalcTime = Date.now() - priceCalcStart
+    
+    logger.info(`[${requestId}] Price calculation completed`, {
+      priceCalcTime: `${priceCalcTime}ms`,
+      singleSessionPrice,
+      totalPaymentAmount
+    })
+
+    const purchaseDate = new Date()
+    const expiryDate = new Date(purchaseDate)
+    expiryDate.setMonth(expiryDate.getMonth() + subscription.validityMonths)
+
+    const saveStart = Date.now()
+    // For guest purchases, we create a special UserSubscription record without userId
+    const newUserSubscription = new UserSubscription({
+      userId: null, // Guest purchase - no user association
+      subscriptionId: subscription._id,
+      treatmentId: treatment._id,
+      selectedDurationId:
+        treatment.pricingType === "duration_based" && selectedDurationId
+          ? new mongoose.Types.ObjectId(selectedDurationId)
+          : undefined,
+      purchaseDate,
+      expiryDate,
+      totalQuantity: subscription.quantity + subscription.bonusQuantity,
+      remainingQuantity: subscription.quantity + subscription.bonusQuantity,
+      status: "active",
+      paymentMethodId: paymentMethodId ? new mongoose.Types.ObjectId(paymentMethodId) : undefined,
+      paymentAmount: totalPaymentAmount,
+      pricePerSession: singleSessionPrice,
+      // Store guest info in the record for reference
+      guestInfo: {
+        name: guestInfo.name,
+        email: guestInfo.email,
+        phone: guestInfo.phone,
+      },
+    })
+
+    await newUserSubscription.save()
+    const saveTime = Date.now() - saveStart
+    
+    logger.info(`[${requestId}] Guest subscription created successfully`, {
+      saveTime: `${saveTime}ms`,
+      userSubscriptionId: newUserSubscription._id,
+      guestEmail: guestInfo.email
+    })
+
+    // Send purchase success notification to guest
+    try {
+      const notificationStart = Date.now()
+      const lang = "he" // Default to Hebrew for guests
+      const subName = subscription.name || (lang === "he" ? "המנוי שלך" : "Your Subscription")
+      const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+
+      const notificationData: PurchaseSuccessSubscriptionNotificationData = {
+        type: "PURCHASE_SUCCESS_SUBSCRIPTION",
+        userName: guestInfo.name,
+        subscriptionName: subName,
+        purchaseDetailsLink: `${appBaseUrl}/subscription-status?subscriptionId=${newUserSubscription._id.toString()}`,
+      }
+
+      const emailRecipient: EmailRecipient = {
+        type: "email",
+        value: guestInfo.email,
+        language: lang,
+        name: guestInfo.name,
+      }
+      await notificationManager.sendNotification(emailRecipient, notificationData)
+      
+      const notificationTime = Date.now() - notificationStart
+      logger.info(`[${requestId}] Guest notification sent successfully`, {
+        notificationTime: `${notificationTime}ms`,
+        guestEmail: guestInfo.email
+      })
+    } catch (notificationError) {
+      logger.error(`[${requestId}] Failed to send purchase success notification for guest subscription`, {
+        guestEmail: guestInfo.email,
+        subscriptionId: newUserSubscription._id.toString(),
+        error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+      })
+    }
+
+    revalidatePath("/dashboard/admin/user-subscriptions")
+
+    const totalTime = Date.now() - startTime
+    logger.info(`[${requestId}] Guest subscription purchase completed successfully`, {
+      totalTime: `${totalTime}ms`,
+      userSubscriptionId: newUserSubscription._id,
+      guestEmail: guestInfo.email,
+      phases: {
+        dbConnect: `${dbConnectTime}ms`,
+        dataLoad: `${dataLoadTime}ms`,
+        priceCalc: `${priceCalcTime}ms`,
+        save: `${saveTime}ms`
+      }
+    })
+
+    return { success: true, userSubscription: newUserSubscription.toObject() }
+  } catch (error) {
+    const totalTime = Date.now() - startTime
+    logger.error(`[${requestId}] Error purchasing guest subscription`, {
+      totalTime: `${totalTime}ms`,
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5)
+      } : String(error),
+      subscriptionId,
+      treatmentId,
+      guestEmail: guestInfo.email,
+    })
+    return { success: false, error: "Failed to purchase subscription" }
+  }
+}

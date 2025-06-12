@@ -50,7 +50,7 @@ export interface IBookingAddressSnapshot {
 
 export interface IBooking extends Document {
   bookingNumber: string // New: Unique 6-digit booking number
-  userId: Types.ObjectId
+  userId?: Types.ObjectId // Made optional for guest bookings
   bookedByUserName?: string // New: Name of the user who made the booking
   bookedByUserEmail?: string // New: Email of the user who made the booking
   bookedByUserPhone?: string // New: Phone of the user who made the booking
@@ -142,7 +142,7 @@ const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
 const BookingSchema: Schema<IBooking> = new Schema(
   {
     bookingNumber: { type: String, required: true, unique: true, index: true },
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: false, index: true }, // Made optional for guest bookings
     bookedByUserName: { type: String },
     bookedByUserEmail: { type: String },
     bookedByUserPhone: { type: String },

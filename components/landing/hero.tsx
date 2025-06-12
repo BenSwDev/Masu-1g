@@ -12,8 +12,23 @@ export function LandingHero() {
 
   const handleButtonClick = (action: string) => {
     if (!session) {
-      // עבור אורח - כרגע לא פעיל
-      console.log(`Guest clicked: ${action}`)
+      // עבור אורח - הפניה לעמודי רכישה לאורחים
+      switch (action) {
+        case "book-treatment":
+          router.push("/book-treatment")
+          break
+        case "book-subscription":
+          router.push("/book-subscription")
+          break
+        case "book-gift-voucher":
+          router.push("/book-gift-voucher")
+          break
+        case "use-voucher":
+          console.log(`Clicked: ${action}`)
+          break
+        default:
+          console.log(`Clicked: ${action}`)
+      }
       return
     }
 

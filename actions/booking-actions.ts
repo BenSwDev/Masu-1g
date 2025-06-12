@@ -1955,3 +1955,242 @@ export async function updateBookingByAdmin(
     return { success: false, error: "common.unknown" }
   }
 }
+
+export async function createGuestBooking(
+  payload: unknown,
+): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
+  const validationResult = CreateBookingPayloadSchema.safeParse(payload)
+  if (!validationResult.success) {
+    logger.warn("Invalid payload for createGuestBooking:", { issues: validationResult.error.issues })
+    return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
+  }
+  const validatedPayload = validationResult.data as CreateBookingPayloadSchemaType & {
+    priceDetails: ClientCalculatedPriceDetails
+    guestInfo?: {
+      name: string
+      email: string
+      phone: string
+    }
+  }
+
+  const mongooseDbSession = await mongoose.startSession()
+  let bookingResult: IBooking | null = null
+  let updatedVoucherDetails: IGiftVoucher | null = null
+
+  try {
+    await dbConnect()
+
+    // For guest bookings, use provided guest info instead of fetching user
+    const guestInfo = validatedPayload.guestInfo
+    if (!guestInfo || !guestInfo.name || !guestInfo.email || !guestInfo.phone) {
+      return { success: false, error: "bookings.errors.guestInfoRequired" }
+    }
+
+    let bookingAddressSnapshot: IBookingAddressSnapshot | undefined
+
+    if (validatedPayload.customAddressDetails) {
+      if (!validatedPayload.customAddressDetails.fullAddress) {
+        validatedPayload.customAddressDetails.fullAddress = constructFullAddressHelper(
+          validatedPayload.customAddressDetails as Partial<IAddress>,
+        )
+      }
+      bookingAddressSnapshot = validatedPayload.customAddressDetails
+    } else {
+      logger.warn("No address provided for guest booking")
+      return { success: false, error: "bookings.errors.addressRequired" }
+    }
+
+    await mongooseDbSession.withTransaction(async () => {
+      const nextBookingNum = await getNextSequenceValue("bookingNumber")
+      const bookingNumber = nextBookingNum.toString().padStart(6, "0")
+
+      const newBooking = new Booking({
+        ...validatedPayload,
+        userId: null, // Guest booking - no user association
+        bookingNumber,
+        bookedByUserName: guestInfo.name,
+        bookedByUserEmail: guestInfo.email,
+        bookedByUserPhone: guestInfo.phone,
+        bookingAddressSnapshot,
+        status: "confirmed",
+        paymentDetails: {
+          paymentMethodId: validatedPayload.paymentDetails.paymentMethodId
+            ? new mongoose.Types.ObjectId(validatedPayload.paymentDetails.paymentMethodId)
+            : undefined,
+          paymentStatus:
+            validatedPayload.priceDetails.finalAmount === 0
+              ? "not_required"
+              : validatedPayload.paymentDetails.paymentStatus || "pending",
+          transactionId: validatedPayload.paymentDetails.transactionId,
+        },
+        professionalId: null,
+      })
+
+      await newBooking.save({ session: mongooseDbSession })
+      bookingResult = newBooking
+
+      // Handle gift voucher redemption for guest bookings
+      if (validatedPayload.priceDetails.appliedGiftVoucherId && validatedPayload.priceDetails.giftVoucherDiscount > 0) {
+        const voucher = await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(mongooseDbSession)
+        if (!voucher || !voucher.isActive) throw new Error("bookings.errors.voucherRedemptionFailed")
+        
+        voucher.remainingAmount -= validatedPayload.priceDetails.giftVoucherDiscount
+        if (voucher.remainingAmount <= 0) {
+          voucher.status = "used"
+          voucher.isActive = false
+        } else {
+          voucher.status = "partially_used"
+        }
+        
+        const usageEntry = {
+          date: new Date(),
+          orderId: newBooking._id,
+          amount: validatedPayload.priceDetails.giftVoucherDiscount,
+          description: `Booking ${bookingNumber}`,
+        }
+        voucher.usageHistory = voucher.usageHistory || []
+        voucher.usageHistory.push(usageEntry)
+        
+        await voucher.save({ session: mongooseDbSession })
+        updatedVoucherDetails = voucher
+      }
+
+      // Handle coupon application for guest bookings
+      if (validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
+        const coupon = await Coupon.findById(validatedPayload.priceDetails.appliedCouponId).session(mongooseDbSession)
+        if (!coupon || !coupon.isActive) throw new Error("bookings.errors.couponApplyFailed")
+        coupon.timesUsed += 1
+        await coupon.save({ session: mongooseDbSession })
+      }
+
+      if (bookingResult) {
+        if (bookingResult.priceDetails.finalAmount === 0) {
+          bookingResult.paymentDetails.paymentStatus = "not_required"
+        }
+        bookingResult.priceDetails = newBooking.priceDetails
+        await bookingResult.save({ session: mongooseDbSession })
+      }
+    })
+
+    if (bookingResult) {
+      // Revalidate relevant paths
+      revalidatePath("/dashboard/admin/bookings")
+
+      const finalBookingObject = bookingResult.toObject() as IBooking
+      if (updatedVoucherDetails) {
+        ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
+      }
+
+      // Send notification to guest (email only since no user preferences)
+      try {
+        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
+
+        if (treatment) {
+          const bookingSuccessData: BookingSuccessNotificationData = {
+            type: "BOOKING_SUCCESS",
+            userName: finalBookingObject.recipientName || guestInfo.name || "Guest",
+            bookingId: finalBookingObject.bookingNumber,
+            treatmentName: treatment.name,
+            bookingDateTime: finalBookingObject.bookingDateTime,
+            orderDetailsLink: `${process.env.NEXTAUTH_URL || ""}/booking-status?bookingId=${finalBookingObject._id.toString()}`,
+          }
+
+          const emailRecipient: EmailRecipient = {
+            type: "email",
+            value: guestInfo.email,
+            name: guestInfo.name,
+            language: "he", // Default to Hebrew for guests
+          }
+          await notificationManager.sendNotification(emailRecipient, bookingSuccessData)
+
+          logger.info(`Guest booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
+        }
+      } catch (notificationError) {
+        logger.error("Failed to send notification for guest booking:", {
+          bookingId: finalBookingObject._id.toString(),
+          error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+        })
+      }
+
+      logger.info(`Guest booking created successfully`, {
+        bookingId: finalBookingObject._id.toString(),
+        bookingNumber: finalBookingObject.bookingNumber,
+        guestEmail: guestInfo.email,
+      })
+
+      return { success: true, booking: finalBookingObject }
+    }
+
+    return { success: false, error: "bookings.errors.creationFailed" }
+  } catch (error) {
+    await mongooseDbSession.abortTransaction()
+    logger.error("Error creating guest booking:", {
+      error: error instanceof Error ? error.message : String(error),
+      guestInfo: validatedPayload.guestInfo,
+    })
+    return { success: false, error: error instanceof Error ? error.message : "bookings.errors.creationFailed" }
+  } finally {
+    await mongooseDbSession.endSession()
+  }
+}
+
+export async function getGuestBookingInitialData(): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    await dbConnect()
+
+    const [
+      treatmentsResult,
+      workingHoursResult,
+    ] = await Promise.allSettled([
+      Treatment.find({ isActive: true }).populate("durations").lean(),
+      WorkingHoursSettings.findOne().lean(),
+    ])
+
+    const getFulfilledValue = (result: PromiseSettledResult<any>, defaultValue: any = null) =>
+      result.status === "fulfilled" ? result.value : defaultValue
+
+    const treatments = getFulfilledValue(treatmentsResult, [])
+    const workingHours = getFulfilledValue(workingHoursResult)
+
+    if (!treatments || treatments.length === 0) {
+      return { success: false, error: "No active treatments available" }
+    }
+
+    if (!workingHours) {
+      return { success: false, error: "Working hours not configured" }
+    }
+
+    // Prepare serialized data for guest booking
+    const serializedTreatments = treatments.map((treatment: any) => ({
+      ...treatment,
+      _id: treatment._id.toString(),
+      durations: treatment.durations?.map((duration: any) => ({
+        ...duration,
+        _id: duration._id.toString(),
+      })) || [],
+    }))
+
+    const serializedWorkingHours = {
+      ...workingHours,
+      _id: workingHours._id.toString(),
+    }
+
+    return {
+      success: true,
+      data: {
+        treatments: serializedTreatments,
+        workingHours: serializedWorkingHours,
+        userSubscriptions: [], // No subscriptions for guests
+        giftVouchers: [], // No gift vouchers for guests
+        userAddresses: [], // No saved addresses for guests
+        paymentMethods: [], // No saved payment methods for guests
+        user: null, // No user data for guests
+      },
+    }
+  } catch (error) {
+    logger.error("Error getting guest booking initial data:", {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return { success: false, error: "Failed to load booking data" }
+  }
+}

@@ -1287,3 +1287,272 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
     return { success: false, error: "Failed to redeem voucher. Please try again or contact support." }
   }
 }
+
+export async function initiateGuestPurchaseGiftVoucher(data: PurchaseInitiationData & {
+  guestInfo: {
+    name: string
+    email: string
+    phone: string
+  }
+}) {
+  const requestId = `guest_voucher_init_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+  const startTime = Date.now()
+  
+  try {
+    logger.info(`[${requestId}] Starting guest gift voucher purchase initiation`, {
+      voucherType: data.voucherType,
+      treatmentId: data.treatmentId,
+      hasSelectedDuration: !!data.selectedDurationId,
+      monetaryValue: data.monetaryValue,
+      isGift: data.isGift,
+      guestEmail: data.guestInfo.email
+    })
+
+    const dbConnectStart = Date.now()
+    await dbConnect()
+    const dbConnectTime = Date.now() - dbConnectStart
+    
+    logger.info(`[${requestId}] Database connected`, { 
+      dbConnectTime: `${dbConnectTime}ms`,
+      guestEmail: data.guestInfo.email
+    })
+
+    const { voucherType, treatmentId, selectedDurationId, monetaryValue: inputMonetaryValue, isGift, guestInfo } = data
+
+    let determinedPrice = 0
+
+    if (voucherType === "monetary") {
+      const monetaryValidationStart = Date.now()
+      if (typeof inputMonetaryValue !== "number" || inputMonetaryValue < 150) {
+        logger.warn(`[${requestId}] Invalid monetary value`, { 
+          inputMonetaryValue,
+          isNumber: typeof inputMonetaryValue === "number"
+        })
+        return { success: false, error: "Minimum monetary value is 150 ILS and must be a number." }
+      }
+      determinedPrice = inputMonetaryValue
+      const monetaryValidationTime = Date.now() - monetaryValidationStart
+      logger.info(`[${requestId}] Monetary voucher selected`, { 
+        monetaryValidationTime: `${monetaryValidationTime}ms`,
+        determinedPrice 
+      })
+    } else {
+      const treatmentValidationStart = Date.now()
+      
+      if (!treatmentId || !mongoose.Types.ObjectId.isValid(treatmentId)) {
+        logger.warn(`[${requestId}] Invalid treatment ID for treatment voucher`, { treatmentId })
+        return { success: false, error: "Valid Treatment ID is required for treatment voucher." }
+      }
+      
+      const treatmentDoc = (await Treatment.findById(treatmentId)
+        .select("name fixedPrice pricingType durations")
+        .lean()) as any
+        
+      const treatmentLoadTime = Date.now() - treatmentValidationStart
+      
+      if (!treatmentDoc) {
+        logger.warn(`[${requestId}] Treatment not found for voucher purchase`, { 
+          treatmentId,
+          treatmentLoadTime: `${treatmentLoadTime}ms`
+        })
+        return { success: false, error: "Treatment not found." }
+      }
+      
+      if (treatmentDoc.pricingType === "fixed") {
+        determinedPrice = treatmentDoc.fixedPrice || 0
+      } else if (treatmentDoc.pricingType === "duration_based") {
+        if (!selectedDurationId) {
+          return { success: false, error: "Duration must be selected for duration-based treatments." }
+        }
+        
+        const durationDoc = treatmentDoc.durations?.find(
+          (d: any) => d._id.toString() === selectedDurationId
+        )
+        
+        if (!durationDoc || !durationDoc.isActive) {
+          return { success: false, error: "Selected duration not found or inactive." }
+        }
+        
+        determinedPrice = durationDoc.price || 0
+      }
+      
+      if (determinedPrice <= 0) {
+        return { success: false, error: "Invalid treatment price." }
+      }
+    }
+
+    const code = await generateUniqueVoucherCode()
+
+    const voucherCreationStart = Date.now()
+    const giftVoucherData: Partial<IGiftVoucher> = {
+      code,
+      voucherType,
+      amount: determinedPrice,
+      monetaryValue: determinedPrice,
+      originalAmount: determinedPrice,
+      remainingAmount: determinedPrice,
+      purchaserUserId: null, // Guest purchase - no user association
+      ownerUserId: null, // Guest purchase - no user association  
+      isGift,
+      status: "pending_payment",
+      purchaseDate: new Date(),
+      validFrom: new Date(),
+      validUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      isActive: false,
+      // Store guest info in the voucher for reference
+      guestInfo: {
+        name: guestInfo.name,
+        email: guestInfo.email,
+        phone: guestInfo.phone,
+      },
+    }
+
+    if (voucherType === "treatment") {
+      giftVoucherData.treatmentId = new mongoose.Types.ObjectId(treatmentId!)
+      if (selectedDurationId) {
+        giftVoucherData.selectedDurationId = new mongoose.Types.ObjectId(selectedDurationId)
+      }
+    }
+
+    const newVoucher = new GiftVoucher(giftVoucherData)
+    await newVoucher.save()
+    const voucherCreationTime = Date.now() - voucherCreationStart
+    
+    const totalTime = Date.now() - startTime
+    logger.info(`[${requestId}] Successfully created guest gift voucher`, {
+      totalTime: `${totalTime}ms`,
+      voucherCreationTime: `${voucherCreationTime}ms`,
+      voucherId: newVoucher._id,
+      voucherCode: code,
+      amount: determinedPrice,
+      voucherType,
+      isGift,
+      guestEmail: guestInfo.email
+    })
+
+    return {
+      success: true,
+      voucherId: newVoucher._id.toString(),
+      amount: determinedPrice,
+    }
+  } catch (error) {
+    const totalTime = Date.now() - startTime
+    logger.error(`[${requestId}] Error initiating guest gift voucher purchase`, {
+      totalTime: `${totalTime}ms`,
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5)
+      } : String(error),
+      voucherType: data.voucherType,
+      treatmentId: data.treatmentId,
+      guestEmail: data.guestInfo.email
+    })
+    
+    if (error instanceof mongoose.Error.ValidationError) {
+      const messages = Object.values(error.errors)
+        .map((err: any) => err.message)
+        .join(", ")
+      return { success: false, error: `Validation failed: ${messages}` }
+    }
+    return { success: false, error: "Failed to initiate purchase. Please try again." }
+  }
+}
+
+export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & {
+  guestInfo: {
+    name: string
+    email: string
+    phone: string
+  }
+}) {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(data.voucherId)) {
+      return { success: false, error: "Invalid Voucher ID format." }
+    }
+
+    await dbConnect()
+    const { voucherId, paymentId, success: paymentSuccess, guestInfo } = data
+
+    const voucher = await GiftVoucher.findById(voucherId)
+    if (!voucher) {
+      return { success: false, error: "Voucher not found" }
+    }
+
+    if (voucher.status !== "pending_payment") {
+      if (voucher.status === "active" || voucher.status === "sent" || voucher.status === "partially_used") {
+        logger.info(`Guest voucher ${voucherId} already processed. Status: ${voucher.status}`)
+        return { success: true, voucher: await toGiftVoucherPlain(voucher) }
+      }
+      return {
+        success: false,
+        error: "Voucher not awaiting payment or already processed with a non-successful status.",
+      }
+    }
+
+    if (paymentSuccess) {
+      voucher.paymentId = paymentId
+      if (!voucher.isGift) {
+        voucher.status = "active"
+        voucher.isActive = true
+      } else {
+        voucher.status = "active"
+        voucher.isActive = true
+      }
+      await voucher.save()
+
+      // Send purchase success notification to guest
+      try {
+        const lang = "he" // Default to Hebrew for guests
+        const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+
+        let treatmentNameForNotif: string | undefined
+        if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+          const treatmentDoc = await Treatment.findById(voucher.treatmentId).select("name").lean()
+          treatmentNameForNotif = treatmentDoc?.name
+        }
+
+        const notificationData: PurchaseSuccessGiftVoucherNotificationData = {
+          type: "PURCHASE_SUCCESS_GIFT_VOUCHER",
+          userName: guestInfo.name,
+          voucherType: voucher.voucherType,
+          treatmentName: treatmentNameForNotif,
+          voucherValue: voucher.voucherType === "monetary" ? voucher.amount : undefined,
+          voucherCode: voucher.code,
+          purchaseDetailsLink: `${appBaseUrl}/voucher-status?voucherId=${voucher._id.toString()}`,
+        }
+
+        const emailRecipient: EmailRecipient = {
+          type: "email",
+          value: guestInfo.email,
+          language: lang,
+          name: guestInfo.name,
+        }
+        await notificationManager.sendNotification(emailRecipient, notificationData)
+      } catch (notificationError) {
+        logger.error("Failed to send purchase success notification for guest gift voucher:", {
+          guestEmail: guestInfo.email,
+          voucherId: voucher._id.toString(),
+          error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+        })
+      }
+
+      revalidatePath("/dashboard/admin/gift-vouchers")
+      return {
+        success: true,
+        voucher: await toGiftVoucherPlain(voucher),
+      }
+    } else {
+      voucher.status = "cancelled"
+      voucher.isActive = false
+      await voucher.save()
+      return { success: false, error: "Payment failed. Voucher not activated." }
+    }
+  } catch (error) {
+    logger.error("Error confirming guest gift voucher purchase:", {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+    })
+    return { success: false, error: "Failed to confirm purchase. Please contact support." }
+  }
+}

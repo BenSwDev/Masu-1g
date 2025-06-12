@@ -72,20 +72,11 @@ function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixed
   // Convert the input date to the correct timezone
   const zonedDate = toZonedTime(date, TIMEZONE)
   
-  // Debug logging
-  console.log('getDayWorkingHours inputs:', {
-    originalDate: date.toISOString(),
-    zonedDate: zonedDate.toISOString(),
-    dayOfWeek: zonedDate.getDay(),
-    timezone: TIMEZONE
-  })
-  
   // First check for special date events (new priority system)
   if (settings.specialDateEvents) {
     for (const event of settings.specialDateEvents) {
       for (const eventDate of event.dates) {
         if (isSameDay(new Date(eventDate), date)) {
-          console.log('Found matching special date event:', event)
           return event
         }
       }
@@ -95,30 +86,12 @@ function getDayWorkingHours(date: Date, settings: IWorkingHoursSettings): IFixed
   // Then check legacy special dates
   const specialDateSetting = settings.specialDates?.find((sd) => isSameDay(new Date(sd.date), date))
   if (specialDateSetting) {
-    console.log('Found matching special date:', specialDateSetting)
     return specialDateSetting
   }
 
   // Finally check fixed hours for the day of week
-  // This is the key fix - we need to use the local day of week from the zoned date
   const dayOfWeek = zonedDate.getDay() // 0 = Sunday, 1 = Monday, etc.
-  
-  console.log('Looking for fixed day setting with dayOfWeek:', dayOfWeek)
-  console.log('Available fixed hours settings:', settings.fixedHours?.map(fh => ({ dayOfWeek: fh.dayOfWeek, isActive: fh.isActive })))
-  
   const fixedDaySetting = settings.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeek)
-  
-  // Debug logging
-  if (fixedDaySetting) {
-    console.log('Found matching fixed day setting:', {
-      dayOfWeek,
-      startTime: fixedDaySetting.startTime,
-      endTime: fixedDaySetting.endTime,
-      isActive: fixedDaySetting.isActive
-    })
-  } else {
-    console.log('No matching day setting found for day of week:', dayOfWeek)
-  }
   
   return fixedDaySetting || null
 }
@@ -131,15 +104,7 @@ export async function getAvailableTimeSlots(
   try {
     await dbConnect()
     
-    // Debug logging
-    console.log('getAvailableTimeSlots inputs:', {
-      dateString,
-      treatmentId,
-      selectedDurationId
-    })
-    
     // Create a timezone-aware date from the dateString
-    // First create a UTC date from the string (noon to avoid DST issues)
     const selectedDateUTC = new Date(`${dateString}T12:00:00.000Z`)
 
     if (isNaN(selectedDateUTC.getTime())) {
@@ -148,20 +113,22 @@ export async function getAvailableTimeSlots(
 
     // Convert to our target timezone
     const selectedDateInTZ = toZonedTime(selectedDateUTC, TIMEZONE)
-    
-    // Debug logging
-    console.log('Date conversions:', {
-      dateString,
-      selectedDateUTC: selectedDateUTC.toISOString(),
-      selectedDateInTZ: selectedDateInTZ.toISOString(),
-      selectedDateInTZ_dayOfWeek: selectedDateInTZ.getDay()
-    })
 
-    const treatment = (await Treatment.findById(treatmentId).lean()) as ITreatment | null
+    // Optimized database queries with lean() for better performance
+    const [treatment, settings] = await Promise.all([
+      Treatment.findById(treatmentId).lean().exec() as Promise<ITreatment | null>,
+      WorkingHoursSettings.findOne().lean().exec() as Promise<IWorkingHoursSettings | null>
+    ])
+
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "bookings.errors.treatmentNotFound" }
     }
 
+    if (!settings) {
+      return { success: false, error: "bookings.errors.workingHoursNotSet" }
+    }
+
+    // Calculate treatment duration
     let treatmentDurationMinutes = 0
     if (treatment.pricingType === "fixed") {
       treatmentDurationMinutes = treatment.defaultDurationMinutes || 60
@@ -176,28 +143,7 @@ export async function getAvailableTimeSlots(
       return { success: false, error: "bookings.errors.invalidTreatmentDuration" }
     }
 
-    const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
-    if (!settings) {
-      return { success: false, error: "bookings.errors.workingHoursNotSet" }
-    }
-
-    // Debug logging
-    console.log('Working hours settings:', {
-      fixedHoursCount: settings.fixedHours?.length,
-      specialDatesCount: settings.specialDates?.length,
-      specialDateEventsCount: settings.specialDateEvents?.length,
-      slotIntervalMinutes: settings.slotIntervalMinutes
-    })
-
     const daySettings = getDayWorkingHours(selectedDateUTC, settings)
-    
-    // Debug logging
-    console.log('Day settings result:', {
-      found: !!daySettings,
-      isActive: daySettings?.isActive,
-      startTime: daySettings?.startTime,
-      endTime: daySettings?.endTime
-    })
     
     if (!daySettings || !daySettings.isActive) {
       return {
@@ -214,33 +160,13 @@ export async function getAvailableTimeSlots(
     // Check if selected date is today in the target timezone
     const isToday = isSameDay(selectedDateUTC, now)
     
-    // Debug logging
-    console.log('Time calculations:', {
-      now: now.toISOString(),
-      nowInTZ: nowInTZ.toISOString(),
-      isToday,
-      cutoffTime: daySettings.cutoffTime
-    })
-    
     // Check if cutoff time has been reached for today
     let isCutoffTimeReached = false
     if (isToday && 'cutoffTime' in daySettings && daySettings.cutoffTime) {
       const [cutoffHour, cutoffMinute] = daySettings.cutoffTime.split(":").map(Number)
-      
-      // Create a Date representing the cutoff time today in the target timezone
       const cutoffTimeToday = new Date(nowInTZ)
       cutoffTimeToday.setHours(cutoffHour, cutoffMinute, 0, 0)
-      
-      // Compare current time to cutoff time
       isCutoffTimeReached = nowInTZ >= cutoffTimeToday
-      
-      // Debug logging
-      console.log('Cutoff time check:', {
-        cutoffHour,
-        cutoffMinute,
-        cutoffTimeToday: cutoffTimeToday.toISOString(),
-        isCutoffTimeReached
-      })
     }
     
     // If today and past cutoff time, no slots are available
@@ -259,14 +185,6 @@ export async function getAvailableTimeSlots(
     // Parse working hours start and end times
     const [startHour, startMinute] = daySettings.startTime.split(":").map(Number)
     const [endHour, endMinute] = daySettings.endTime.split(":").map(Number)
-
-    // Debug logging
-    console.log('Working hours configuration:', {
-      startTime: daySettings.startTime,
-      endTime: daySettings.endTime,
-      nowFormatted: formatInTimeZone(nowInTZ, TIMEZONE, 'HH:mm'),
-      timezone: TIMEZONE
-    })
     
     // Calculate minimum booking time 
     const minimumBookingAdvanceHours = 
@@ -284,43 +202,37 @@ export async function getAvailableTimeSlots(
     }
 
     // Get current time components directly from nowInTZ
-    const nowHourTZ = nowInTZ.getHours()
-    const nowMinuteTZ = nowInTZ.getMinutes()
-    const nowTimeMinutes = (nowHourTZ * 60) + nowMinuteTZ
-
-    // Minimum booking time in minutes from midnight
+    const nowTimeMinutes = (nowInTZ.getHours() * 60) + nowInTZ.getMinutes()
     const minimumBookingTimeMinutes = nowTimeMinutes + (minimumBookingAdvanceHours * 60)
 
-    console.log('Time calculations in minutes:', {
-      startTimeMinutes,
-      endTimeMinutes,
-      nowTimeMinutes,
-      minimumBookingTimeMinutes,
-      treatmentDurationMinutes,
-      lastPossibleStartTimeMinutes: endTimeMinutes - treatmentDurationMinutes,
-      lastPossibleStartTime: `${String(Math.floor((endTimeMinutes - treatmentDurationMinutes) / 60) % 24).padStart(2, '0')}:${String((endTimeMinutes - treatmentDurationMinutes) % 60).padStart(2, '0')}`,
-      isToday
-    })
+    // Pre-calculate surcharge details for better performance
+    let surchargeAmount = 0
+    let surchargeDescription = ""
+    if (daySettings.hasPriceAddition && daySettings.priceAddition && daySettings.priceAddition.amount > 0) {
+      const basePriceForSurchargeCalc =
+        treatment.pricingType === "fixed"
+          ? treatment.fixedPrice || 0
+          : treatment.durations?.find((d) => d._id.toString() === selectedDurationId)?.price || 0
 
-    // Generate slots
+      surchargeAmount =
+        daySettings.priceAddition.type === "fixed"
+          ? daySettings.priceAddition.amount
+          : basePriceForSurchargeCalc * (daySettings.priceAddition.amount / 100)
+
+      surchargeDescription = daySettings.priceAddition.description || daySettings.notes || "bookings.surcharges.specialTime"
+    }
+
+    // Generate slots with optimized loop
     for (let currentMinutes = startTimeMinutes; currentMinutes <= endTimeMinutes; currentMinutes += slotInterval) {
       // Convert back to hours and minutes
-      let slotHour = Math.floor(currentMinutes / 60) % 24
-      let slotMinute = currentMinutes % 60
+      const slotHour = Math.floor(currentMinutes / 60) % 24
+      const slotMinute = currentMinutes % 60
       
       // Format the time as HH:MM
       const timeStr = `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`
       
-      let isSlotAvailable = true
-
-      // We now allow starting at the end time exactly
-      // For example, if closing is at 22:00, we allow a booking at 22:00
-      // No need to check if treatment extends beyond working hours anymore
-      
-      // For today, check if the slot time is after the minimum booking time
-      if (isToday && currentMinutes < minimumBookingTimeMinutes) {
-        isSlotAvailable = false
-      }
+      // Check availability
+      const isSlotAvailable = !isToday || currentMinutes >= minimumBookingTimeMinutes
 
       if (isSlotAvailable) {
         const slot: TimeSlot = {
@@ -329,37 +241,16 @@ export async function getAvailableTimeSlots(
         }
 
         // Add price surcharge if applicable
-        if (daySettings.hasPriceAddition && daySettings.priceAddition && daySettings.priceAddition.amount > 0) {
-          const basePriceForSurchargeCalc =
-            treatment.pricingType === "fixed"
-              ? treatment.fixedPrice || 0
-              : treatment.durations?.find((d) => d._id.toString() === selectedDurationId)?.price || 0
-
-          const surchargeAmount =
-            daySettings.priceAddition.type === "fixed"
-              ? daySettings.priceAddition.amount
-              : basePriceForSurchargeCalc * (daySettings.priceAddition.amount / 100)
-
-          if (surchargeAmount > 0) {
-            slot.surcharge = {
-              description:
-                daySettings.priceAddition.description || daySettings.notes || "bookings.surcharges.specialTime",
-              amount: surchargeAmount,
-            }
+        if (surchargeAmount > 0) {
+          slot.surcharge = {
+            description: surchargeDescription,
+            amount: surchargeAmount,
           }
         }
         
         timeSlots.push(slot)
       }
     }
-    
-    // Debug logging
-    console.log('Generated time slots:', {
-      totalSlots: timeSlots.length,
-      availableSlots: timeSlots.filter(slot => slot.isAvailable).length,
-      firstSlot: timeSlots.length > 0 ? timeSlots[0].time : null,
-      lastSlot: timeSlots.length > 0 ? timeSlots[timeSlots.length - 1].time : null
-    })
     
     // Add informative note about cutoff time
     let workingHoursNote = daySettings.notes

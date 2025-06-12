@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback, memo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -23,7 +23,34 @@ interface GuestSchedulingStepProps {
   onPrev: () => void
 }
 
-export function GuestSchedulingStep({
+// Memoized time slot button component for better performance
+const TimeSlotButton = memo(({ 
+  slot, 
+  isSelected, 
+  onSelect 
+}: { 
+  slot: TimeSlot
+  isSelected: boolean
+  onSelect: (time: string) => void
+}) => (
+  <Button
+    variant={isSelected ? "default" : "outline"}
+    size="sm"
+    onClick={() => onSelect(slot.time)}
+    className="text-xs flex flex-col items-center py-2 min-h-[60px]"
+  >
+    <span>{slot.time}</span>
+    {slot.surcharge && (
+      <span className="text-orange-600 text-[10px] font-medium mt-1">
+        +{slot.surcharge.amount.toFixed(2)} ₪
+      </span>
+    )}
+  </Button>
+))
+
+TimeSlotButton.displayName = "TimeSlotButton"
+
+export const GuestSchedulingStep = memo(function GuestSchedulingStep({
   initialData,
   bookingOptions,
   setBookingOptions,
@@ -48,19 +75,17 @@ export function GuestSchedulingStep({
     return null
   }, [selectedTreatment, bookingOptions.selectedDurationId])
 
-  const availableTimeSlots = useMemo(() => {
-    return timeSlots.filter(slot => slot.isAvailable)
-  }, [timeSlots])
-
-  const unavailableTimeSlots = useMemo(() => {
-    return timeSlots.filter(slot => !slot.isAvailable)
+  const { availableTimeSlots, unavailableTimeSlots } = useMemo(() => {
+    const available = timeSlots.filter(slot => slot.isAvailable)
+    const unavailable = timeSlots.filter(slot => !slot.isAvailable)
+    return { availableTimeSlots: available, unavailableTimeSlots: unavailable }
   }, [timeSlots])
 
   const canProceed = useMemo(() => {
     return bookingOptions.bookingDate && bookingOptions.bookingTime
   }, [bookingOptions.bookingDate, bookingOptions.bookingTime])
 
-  const handleDateSelect = (date: Date | undefined) => {
+  const handleDateSelect = useCallback((date: Date | undefined) => {
     if (date) {
       setBookingOptions((prev) => ({
         ...prev,
@@ -68,47 +93,37 @@ export function GuestSchedulingStep({
         bookingTime: undefined, // Reset time when date changes
       }))
     }
-  }
+  }, [setBookingOptions])
 
-  const handleTimeSelect = (time: string) => {
+  const handleTimeSelect = useCallback((time: string) => {
     setBookingOptions((prev) => ({
       ...prev,
       bookingTime: time,
     }))
-  }
+  }, [setBookingOptions])
 
-  const formatDateString = (date: Date) => {
+  const formatDateString = useCallback((date: Date) => {
     return format(date, "EEEE, d MMMM yyyy", { locale: language === "he" ? he : undefined })
-  }
+  }, [language])
 
-  const getTreatmentDurationText = () => {
+  const getTreatmentDurationText = useMemo(() => {
     if (selectedTreatment?.pricingType === "fixed") {
       return selectedTreatment.defaultDuration 
         ? `${selectedTreatment.defaultDuration} ${t("common.minutes")}`
         : t("treatments.standardDuration")
     }
     if (selectedDuration) {
-      const hours = Math.floor((selectedDuration.minutes || 0) / 60)
-      const mins = (selectedDuration.minutes || 0) % 60
-      let durationString = ""
-      if (hours > 0) {
-        durationString += `${hours} ${t(hours === 1 ? "common.hour" : "common.hours")}`
-      }
-      if (mins > 0) {
-        if (hours > 0) durationString += ` ${t("common.and")} `
-        durationString += `${mins} ${t(mins === 1 ? "common.minute" : "common.minutes")}`
-      }
-      return durationString || `${selectedDuration.minutes} ${t("common.minutes")}`
+      return `${selectedDuration.minutes} ${t("common.minutes")}`
     }
     return ""
-  }
+  }, [selectedTreatment, selectedDuration, t])
 
   // Disable past dates and possibly weekends based on business rules
-  const isDateDisabled = (date: Date) => {
+  const isDateDisabled = useCallback((date: Date) => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return date < today
-  }
+  }, [])
 
   // Find the selected time slot (if any)
   const selectedTimeSlot = useMemo(() => {
@@ -117,12 +132,16 @@ export function GuestSchedulingStep({
   }, [bookingOptions.bookingTime, timeSlots])
 
   // Calculate base price and surcharge
-  const basePrice = selectedTreatment?.pricingType === "fixed"
-    ? selectedTreatment.fixedPrice || 0
-    : selectedDuration?.price || 0
-  const surchargeAmount = selectedTimeSlot?.surcharge?.amount || 0
-  const surchargeReason = selectedTimeSlot?.surcharge?.description || ""
-  const finalPrice = basePrice + surchargeAmount
+  const priceCalculation = useMemo(() => {
+    const basePrice = selectedTreatment?.pricingType === "fixed"
+      ? selectedTreatment.fixedPrice || 0
+      : selectedDuration?.price || 0
+    const surchargeAmount = selectedTimeSlot?.surcharge?.amount || 0
+    const surchargeReason = selectedTimeSlot?.surcharge?.description || ""
+    const finalPrice = basePrice + surchargeAmount
+    
+    return { basePrice, surchargeAmount, surchargeReason, finalPrice }
+  }, [selectedTreatment, selectedDuration, selectedTimeSlot])
 
   // Fix: selectedDate should be Date | undefined
   const bookingDateObj = useMemo(() => {
@@ -156,7 +175,7 @@ export function GuestSchedulingStep({
             </div>
             <div className="flex justify-between">
               <span className="font-medium">{t("treatments.duration")}:</span>
-              <span>{getTreatmentDurationText()}</span>
+              <span>{getTreatmentDurationText}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-medium">{t("bookings.therapistPreference")}:</span>
@@ -213,6 +232,10 @@ export function GuestSchedulingStep({
               </div>
             ) : isTimeSlotsLoading ? (
               <div className="space-y-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm text-muted-foreground">{t("common.loading")}...</span>
+                </div>
                 {[...Array(6)].map((_, i) => (
                   <Skeleton key={i} className="h-10 w-full" />
                 ))}
@@ -235,20 +258,12 @@ export function GuestSchedulingStep({
                   <div className="max-h-80 overflow-y-auto border rounded-lg p-3">
                     <div className="grid grid-cols-3 gap-2">
                     {availableTimeSlots.map((slot) => (
-                      <Button
+                      <TimeSlotButton
                         key={slot.time}
-                        variant={bookingOptions.bookingTime === slot.time ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleTimeSelect(slot.time)}
-                        className="text-xs flex flex-col items-center py-2 min-h-[60px]"
-                      >
-                        <span>{slot.time}</span>
-                        {slot.surcharge && (
-                          <span className="text-orange-600 text-[10px] font-medium mt-1">
-                            +{slot.surcharge.amount.toFixed(2)} ₪
-                          </span>
-                        )}
-                      </Button>
+                        slot={slot}
+                        isSelected={bookingOptions.bookingTime === slot.time}
+                        onSelect={handleTimeSelect}
+                      />
                     ))}
                     </div>
                   </div>
@@ -292,21 +307,21 @@ export function GuestSchedulingStep({
                     <div className="flex items-center gap-2 text-orange-800 text-sm font-semibold mb-3">
                       <Info className="h-4 w-4" />
                       <span>תוספת מחיר:</span>
-                      <span className="font-bold">{surchargeReason || "תוספת זמן מיוחד"}</span>
+                      <span className="font-bold">{priceCalculation.surchargeReason || "תוספת זמן מיוחד"}</span>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                       <span>מחיר בסיס:</span>
-                      <span>{basePrice.toFixed(2)} ₪</span>
+                      <span>{priceCalculation.basePrice.toFixed(2)} ₪</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>תוספת:</span>
-                      <span className="text-orange-700">+{surchargeAmount.toFixed(2)} ₪</span>
+                      <span className="text-orange-700">+{priceCalculation.surchargeAmount.toFixed(2)} ₪</span>
                     </div>
                     <hr className="my-2 border-orange-300" />
                     <div className="flex justify-between font-bold text-base mt-2">
                       <span>סך הכל:</span>
-                      <span className="text-primary">{finalPrice.toFixed(2)} ₪</span>
+                      <span className="text-primary">{priceCalculation.finalPrice.toFixed(2)} ₪</span>
                     </div>
                     </div>
                   </div>
@@ -328,4 +343,4 @@ export function GuestSchedulingStep({
       </div>
     </div>
   )
-} 
+}) 

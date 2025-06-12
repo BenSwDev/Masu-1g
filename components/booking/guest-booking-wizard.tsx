@@ -89,14 +89,21 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
 
   const { toast } = useToast()
 
-  // Effect to fetch time slots
+  // Effect to fetch time slots with debouncing for better performance
   useEffect(() => {
-    if (bookingOptions.bookingDate && bookingOptions.selectedTreatmentId) {
-      const fetchSlots = async () => {
-        setIsTimeSlotsLoading(true)
-        setTimeSlots([])
-        setWorkingHoursNote(undefined)
-        
+    if (!bookingOptions.bookingDate || !bookingOptions.selectedTreatmentId) {
+      setTimeSlots([])
+      setWorkingHoursNote(undefined)
+      return
+    }
+
+    // Debounce the API call to prevent rapid requests
+    const timeoutId = setTimeout(async () => {
+      setIsTimeSlotsLoading(true)
+      setTimeSlots([])
+      setWorkingHoursNote(undefined)
+      
+      try {
         const localDate = new Date(bookingOptions.bookingDate!)
         const year = localDate.getFullYear()
         const month = (localDate.getMonth() + 1).toString().padStart(2, "0")
@@ -108,6 +115,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           bookingOptions.selectedTreatmentId!,
           bookingOptions.selectedDurationId,
         )
+        
         if (result.success) {
           setTimeSlots(result.timeSlots || [])
           setWorkingHoursNote(result.workingHoursNote)
@@ -118,13 +126,19 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             description: t(result.error || "bookings.errors.fetchTimeSlotsFailedTitle"),
           })
         }
+      } catch (error) {
+        console.error("Error fetching time slots:", error)
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load available times",
+        })
+      } finally {
         setIsTimeSlotsLoading(false)
       }
-      fetchSlots()
-    } else {
-      setTimeSlots([])
-      setWorkingHoursNote(undefined)
-    }
+    }, 300) // 300ms debounce
+
+    return () => clearTimeout(timeoutId)
   }, [bookingOptions.bookingDate, bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, toast, t])
 
   const triggerPriceCalculation = useCallback(async () => {

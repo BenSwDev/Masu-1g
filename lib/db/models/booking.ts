@@ -79,6 +79,7 @@ export interface IBooking extends Document {
   recipientEmail?: string // Email of the person receiving the treatment
   recipientBirthDate?: Date // Birth date of the person receiving the treatment
   recipientGender?: "male" | "female" | "other" // Gender of the person receiving the treatment
+  isBookingForSomeoneElse?: boolean // NEW FIELD
   createdAt: Date
   updatedAt: Date
 }
@@ -190,6 +191,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
     recipientEmail: { type: String, trim: true },
     recipientBirthDate: { type: Date },
     recipientGender: { type: String, enum: ["male", "female", "other"] },
+    isBookingForSomeoneElse: { type: Boolean, default: false }, // NEW FIELD
   },
   { timestamps: true },
 )

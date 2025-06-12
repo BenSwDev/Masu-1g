@@ -34,6 +34,7 @@ export interface IAddress extends Document {
 
   hasPrivateParking: boolean
   additionalNotes?: string
+  // isDefault is not relevant for guest bookings, only for registered users
   isDefault: boolean
 
   createdAt: Date
@@ -106,6 +107,7 @@ const AddressSchema: Schema = new Schema(
       type: String,
       trim: true,
     },
+    // isDefault is not relevant for guest bookings, only for registered users
     isDefault: {
       type: Boolean,
       default: false,

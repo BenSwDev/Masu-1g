@@ -159,6 +159,12 @@ export const CalculatePricePayloadSchema = z.object({
   couponCode: z.string().optional(),
   giftVoucherCode: z.string().optional(),
   userSubscriptionId: z.string().optional(),
+  isBookingForSomeoneElse: z.boolean().optional(),
+  recipientName: z.string().optional(),
+  recipientPhone: z.string().optional(),
+  recipientEmail: z.string().optional(),
+  recipientBirthDate: z.date().optional(),
+  recipientGender: z.enum(["male", "female", "other"]).optional(),
 })
 
 // Schema for the payload of createBooking action
@@ -194,6 +200,7 @@ export const CreateBookingPayloadSchema = z.object({
   appliedCouponId: z.string().optional(),
   isFlexibleTime: z.boolean().optional(),
   flexibilityRangeHours: z.number().optional(),
+  isBookingForSomeoneElse: z.boolean().optional(),
   recipientName: z.string().optional(),
   recipientPhone: z.string().optional(),
   recipientEmail: z.string().optional(),

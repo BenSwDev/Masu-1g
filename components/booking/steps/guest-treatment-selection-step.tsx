@@ -213,30 +213,32 @@ export function GuestTreatmentSelectionStep({
       )}
 
       {/* Therapist Gender Preference */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            {t("bookings.therapistGenderPreference")}
-          </CardTitle>
-          <CardDescription>{t("bookings.therapistGenderPreferenceDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={bookingOptions.therapistGenderPreference || "any"}
-            onValueChange={handleGenderPreferenceChange}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("bookings.selectGenderPreference")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="any">{t("bookings.genderPreference.any")}</SelectItem>
-              <SelectItem value="male">{t("bookings.genderPreference.male")}</SelectItem>
-              <SelectItem value="female">{t("bookings.genderPreference.female")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
+      {selectedTreatment?.allowTherapistGenderSelection && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              {t("bookings.therapistGenderPreference")}
+            </CardTitle>
+            <CardDescription>{t("bookings.therapistGenderPreferenceDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={bookingOptions.therapistGenderPreference || "any"}
+              onValueChange={handleGenderPreferenceChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t("bookings.selectGenderPreference")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="any">{t("bookings.genderPreference.any")}</SelectItem>
+                <SelectItem value="male">{t("bookings.genderPreference.male")}</SelectItem>
+                <SelectItem value="female">{t("bookings.genderPreference.female")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Navigation */}
       <div className="flex justify-between">

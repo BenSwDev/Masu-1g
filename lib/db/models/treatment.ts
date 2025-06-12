@@ -21,6 +21,7 @@ export interface ITreatment extends Document {
   defaultDurationMinutes?: number
   // For duration-based pricing
   durations?: ITreatmentDuration[]
+  allowTherapistGenderSelection?: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -101,6 +102,10 @@ const TreatmentSchema = new Schema<ITreatment>(
       min: 0,
     },
     durations: [TreatmentDurationSchema],
+    allowTherapistGenderSelection: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

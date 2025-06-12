@@ -61,7 +61,6 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
       apartmentNumber: address.apartmentNumber || "",
       entrance: address.entrance || "",
       parking: address.parking || false,
-      isDefault: address.isDefault || false,
       notes: address.notes || "",
     },
   })
@@ -89,7 +88,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("bookings.addressStep.city", "עיר")}</FormLabel>
+                      <FormLabel>{t("bookings.addressStep.city")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -102,7 +101,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                   name="street"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("bookings.addressStep.street", "רחוב")}</FormLabel>
+                      <FormLabel>{t("bookings.addressStep.street")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -115,7 +114,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                   name="houseNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("bookings.addressStep.houseNumber", "מספר בית")}</FormLabel>
+                      <FormLabel>{t("bookings.addressStep.houseNumber")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -128,7 +127,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                   name="addressType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("bookings.addressStep.addressType", "סוג כתובת")}</FormLabel>
+                      <FormLabel>{t("bookings.addressStep.addressType")}</FormLabel>
                       <FormControl>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger>
@@ -150,7 +149,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                   name="floor"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("bookings.addressStep.floor", "קומה")}</FormLabel>
+                      <FormLabel>{t("bookings.addressStep.floor")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -163,7 +162,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                   name="apartmentNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("bookings.addressStep.apartmentNumber", "מספר דירה")}</FormLabel>
+                      <FormLabel>{t("bookings.addressStep.apartmentNumber")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -176,7 +175,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                   name="entrance"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("bookings.addressStep.entrance", "כניסה")}</FormLabel>
+                      <FormLabel>{t("bookings.addressStep.entrance")}</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -201,26 +200,6 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                           <FormLabel htmlFor="parking-yes">{t("bookings.addressStep.privateParking", "חניה פרטית")}</FormLabel>
                           <RadioGroupItem value="no" id="parking-no" />
                           <FormLabel htmlFor="parking-no">{t("bookings.addressStep.noParking", "ללא חניה פרטית")}</FormLabel>
-                        </RadioGroup>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="isDefault"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2">
-                      <FormControl>
-                        <RadioGroup
-                          value={field.value ? "yes" : "no"}
-                          onValueChange={val => field.onChange(val === "yes")}
-                          className="flex flex-row gap-2"
-                        >
-                          <RadioGroupItem value="yes" id="default-yes" />
-                          <FormLabel htmlFor="default-yes">{t("bookings.addressStep.isDefault", "כתובת ברירת מחדל")}</FormLabel>
-                          <RadioGroupItem value="no" id="default-no" />
-                          <FormLabel htmlFor="default-no">{t("bookings.addressStep.notDefault", "לא ברירת מחדל")}</FormLabel>
                         </RadioGroup>
                       </FormControl>
                     </FormItem>

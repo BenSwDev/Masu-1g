@@ -199,6 +199,11 @@ export const CreateBookingPayloadSchema = z.object({
   recipientEmail: z.string().optional(),
   recipientBirthDate: z.date().optional(),
   recipientGender: z.enum(["male", "female", "other"]).optional(),
+  guestInfo: z.object({
+    name: z.string(),
+    email: z.string().email(),
+    phone: z.string(),
+  }).optional(), // Optional for regular bookings, required for guest bookings
 })
 
 export type BookingSourceFormValues = z.infer<typeof BookingSourceSchema>

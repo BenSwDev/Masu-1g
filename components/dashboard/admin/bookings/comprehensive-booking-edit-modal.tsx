@@ -421,6 +421,12 @@ export default function ComprehensiveBookingEditModal({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Guest badge if no userId */}
+                {!client?._id && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="text-blue-700 border-blue-200">{t("common.guest")}</Badge>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
@@ -459,7 +465,8 @@ export default function ComprehensiveBookingEditModal({
                   </div>
                   <div className="space-y-2">
                     <Label>{t("adminBookings.userId")}</Label>
-                    <Input value={client?._id?.toString() || booking.userId?.toString()} disabled />
+                    <Input value={client?._id?.toString() || booking.userId?.toString() || t("common.guest")}
+                      disabled />
                   </div>
                 </div>
 

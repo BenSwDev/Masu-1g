@@ -155,7 +155,8 @@
     "dashboard": "Dashboard",
     "login": "Login",
     "logout": "Logout",
-    "openMenu": "Open Menu"
+    "openMenu": "Open Menu",
+    "guest": "Guest"
   },
   "navigation": {
     "home": "Home",

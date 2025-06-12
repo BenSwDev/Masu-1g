@@ -158,7 +158,8 @@
     "unknownStep": "Неизвестный шаг",
     "validationError": "Ошибка валидации",
     "dashboard": "Панель управления",
-    "login": "Войти"
+    "login": "Войти",
+    "guest": "Гость"
   },
   "dashboard": {
     "sidebar": {

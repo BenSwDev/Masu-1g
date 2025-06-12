@@ -335,22 +335,42 @@ const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }
 
 // Info Components with null safety
 const ClientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  if (!booking?.userId) {
-    return <div className="text-sm text-muted-foreground">-</div>
+  // If there is a userId (registered user)
+  if (booking?.userId) {
+    const user = booking.userId as any
+    return (
+      <div className="space-y-1">
+        <div className="font-medium">{user.name || t("common.unknown")}</div>
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Phone className="h-3 w-3" />
+          {user.phone || "-"}
+        </div>
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Mail className="h-3 w-3" />
+          {user.email || "-"}
+        </div>
+      </div>
+    )
   }
-
-  const user = booking.userId as any
+  // If guest booking (no userId)
   return (
     <div className="space-y-1">
-      <div className="font-medium">{user.name || t("common.unknown")}</div>
-      <div className="text-xs text-muted-foreground flex items-center gap-1">
-        <Phone className="h-3 w-3" />
-        {user.phone || "-"}
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{booking.bookedByUserName || booking.recipientName || t("common.guest")}</span>
+        <Badge variant="outline" className="text-blue-700 border-blue-200">{t("common.guest")}</Badge>
       </div>
-      <div className="text-xs text-muted-foreground flex items-center gap-1">
-        <Mail className="h-3 w-3" />
-        {user.email || "-"}
-      </div>
+      {booking.bookedByUserPhone || booking.recipientPhone ? (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Phone className="h-3 w-3" />
+          {booking.bookedByUserPhone || booking.recipientPhone}
+        </div>
+      ) : null}
+      {booking.bookedByUserEmail || booking.recipientEmail ? (
+        <div className="text-xs text-muted-foreground flex items-center gap-1">
+          <Mail className="h-3 w-3" />
+          {booking.bookedByUserEmail || booking.recipientEmail}
+        </div>
+      ) : null}
     </div>
   )
 }

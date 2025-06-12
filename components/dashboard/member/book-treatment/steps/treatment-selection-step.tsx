@@ -37,7 +37,7 @@ export default function TreatmentSelectionStep({
   const [selectedUserSubscription, setSelectedUserSubscription] = useState<PopulatedUserSubscription | null>(null)
   const [selectedVoucherDetails, setSelectedVoucherDetails] = useState<IGiftVoucher | null>(null)
   const [availableTreatmentsForStep, setAvailableTreatmentsForStep] = useState<ITreatment[]>(
-    initialData.activeTreatments || [],
+    initialData?.activeTreatments || [],
   )
   const [isTreatmentLockedBySource, setIsTreatmentLockedBySource] = useState(false)
 
@@ -53,9 +53,9 @@ export default function TreatmentSelectionStep({
   })
 
   const treatmentCategories = useMemo(() => {
-    const categories = new Set((initialData.activeTreatments || []).map((t) => t.category || "Uncategorized"))
+    const categories = new Set((initialData?.activeTreatments || []).map((t) => t.category || "Uncategorized"))
     return Array.from(categories)
-  }, [initialData.activeTreatments])
+  }, [initialData?.activeTreatments])
 
   const filteredTreatmentsByCategory = useMemo(() => {
     if (!selectedCategory) return []
@@ -94,16 +94,16 @@ export default function TreatmentSelectionStep({
     setSelectedVoucherDetails(null)
 
     if (currentSource === "new_purchase") {
-      setAvailableTreatmentsForStep(initialData.activeTreatments || [])
+      setAvailableTreatmentsForStep(initialData?.activeTreatments || [])
     } else {
       setAvailableTreatmentsForStep([])
     }
-  }, [bookingOptions.source, initialData.activeTreatments, form])
+  }, [bookingOptions.source, initialData?.activeTreatments, form])
 
   useEffect(() => {
     if (bookingOptions.source === "subscription_redemption" && form.getValues("selectedUserSubscriptionId")) {
       const subId = form.getValues("selectedUserSubscriptionId")
-      const sub = (initialData.activeUserSubscriptions || []).find((s) => s._id.toString() === subId) as
+      const sub = (initialData?.activeUserSubscriptions || []).find((s) => s._id.toString() === subId) as
         | PopulatedUserSubscription
         | undefined
       setSelectedUserSubscription(sub || null)

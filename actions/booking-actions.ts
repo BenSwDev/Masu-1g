@@ -2179,12 +2179,14 @@ export async function getGuestBookingInitialData(): Promise<{ success: boolean; 
       success: true,
       data: {
         treatments: serializedTreatments,
+        activeTreatments: serializedTreatments, // Alias for compatibility
         workingHours: serializedWorkingHours,
-        userSubscriptions: [], // No subscriptions for guests
-        giftVouchers: [], // No gift vouchers for guests
+        activeUserSubscriptions: [], // No subscriptions for guests
+        usableGiftVouchers: [], // No gift vouchers for guests
         userAddresses: [], // No saved addresses for guests
         paymentMethods: [], // No saved payment methods for guests
         user: null, // No user data for guests
+        userPreferences: null, // No preferences for guests
       },
     }
   } catch (error) {

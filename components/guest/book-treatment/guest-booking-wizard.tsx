@@ -20,7 +20,7 @@ import { Progress } from "@/components/common/ui/progress"
 import { AlertCircle, User, Mail, Phone, Bell } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
 
-import TreatmentSelectionStep from "@/components/dashboard/member/book-treatment/steps/treatment-selection-step"
+import GuestTreatmentSelection from "./guest-treatment-selection"
 import SchedulingStep from "@/components/dashboard/member/book-treatment/steps/scheduling-step"
 
 import { createGuestBooking, getAvailableTimeSlots } from "@/actions/booking-actions"
@@ -476,10 +476,10 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
     switch (currentStep) {
       case 1:
         return (
-          <TreatmentSelectionStep
+          <GuestTreatmentSelection
             treatments={initialData.treatments}
             bookingOptions={bookingOptions}
-            setBookingOptions={setBookingOptions}
+            setBookingOptions={(newOptions) => setBookingOptions(prev => ({ ...prev, ...newOptions }))}
           />
         )
       case 2:

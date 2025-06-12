@@ -13,13 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { useToast } from "@/components/common/ui/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
+import { Progress } from "@/components/common/ui/progress"
 
-import { StepIndicator } from "@/components/common/purchase/step-indicator"
-import { PurchaseCard } from "@/components/common/purchase/purchase-card"
-import { PurchaseNavigation } from "@/components/common/purchase/purchase-navigation"
-import { PurchaseSummary } from "@/components/common/purchase/purchase-summary"
-import { AnimatedContainer } from "@/components/common/purchase/animated-container"
-import { PurchaseSuccess } from "@/components/common/purchase/purchase-success"
+// Using basic components instead of complex purchase components
 
 import { purchaseGuestSubscription } from "@/actions/user-subscription-actions"
 import type { ISubscription } from "@/lib/db/models/subscription"
@@ -99,11 +95,11 @@ export default function GuestPurchaseSubscriptionClient({
   })
 
   const steps = [
-    { key: "subscription", label: t("subscriptions.selectSubscription") },
-    { key: "treatment", label: t("treatments.selectTreatment") },
+    { key: "subscription", label: "בחירת מנוי" },
+    { key: "treatment", label: "בחירת טיפול" },
     { key: "guest-info", label: "פרטים אישיים" },
     { key: "payment", label: "פרטי תשלום" },
-    { key: "summary", label: t("subscriptions.purchase.summary") },
+    { key: "summary", label: "סיכום" },
   ]
 
   const selectedSubscriptionData = useMemo(() => {
@@ -397,15 +393,23 @@ export default function GuestPurchaseSubscriptionClient({
 
   if (purchaseComplete) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <PurchaseSuccess
-          title="המנוי נרכש בהצלחה!"
-          message="פרטי המנוי נשלחו אליך באימייל. תוכל להשתמש במנוי להזמנת טיפולים."
-          actionLabel="חזרה לעמוד הבית"
-          onAction={() => router.push("/")}
-          secondaryActionLabel="הזמנת טיפול נוסף"
-          onSecondaryAction={() => router.push("/book-treatment")}
-        />
+      <div className="max-w-4xl mx-auto text-center">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-green-600 text-2xl">המנוי נרכש בהצלחה!</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-600">פרטי המנוי נשלחו אליך באימייל. תוכל להשתמש במנוי להזמנת טיפולים.</p>
+            <div className="flex gap-4 justify-center">
+              <Button onClick={() => router.push("/")} variant="outline">
+                חזרה לעמוד הבית
+              </Button>
+              <Button onClick={() => router.push("/book-treatment")}>
+                הזמנת טיפול נוסף
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -431,15 +435,24 @@ export default function GuestPurchaseSubscriptionClient({
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {subscriptions.map((subscription) => (
-                <PurchaseCard
+                <Card 
                   key={subscription._id.toString()}
-                  title={subscription.name}
-                  description={subscription.description}
-                  badge={`${subscription.quantity + subscription.bonusQuantity} טיפולים`}
-                  icon={<Package className="w-5 h-5" />}
-                  isSelected={selectedSubscriptionId === subscription._id.toString()}
+                  className={`cursor-pointer border-2 transition-all ${selectedSubscriptionId === subscription._id.toString() ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
                   onClick={() => setSelectedSubscriptionId(subscription._id.toString())}
-                />
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="w-5 h-5" />
+                      {subscription.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600 mb-2">{subscription.description}</p>
+                    <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                      {subscription.quantity + subscription.bonusQuantity} טיפולים
+                    </span>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </div>
@@ -454,14 +467,21 @@ export default function GuestPurchaseSubscriptionClient({
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {treatments.map((treatment) => (
-                <PurchaseCard
+                <Card 
                   key={treatment._id.toString()}
-                  title={treatment.name}
-                  description={treatment.description}
-                  icon={<Package className="w-5 h-5" />}
-                  isSelected={selectedTreatmentId === treatment._id.toString()}
+                  className={`cursor-pointer border-2 transition-all ${selectedTreatmentId === treatment._id.toString() ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
                   onClick={() => setSelectedTreatmentId(treatment._id.toString())}
-                />
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="w-5 h-5" />
+                      {treatment.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600">{treatment.description}</p>
+                  </CardContent>
+                </Card>
               ))}
             </div>
 
@@ -470,13 +490,16 @@ export default function GuestPurchaseSubscriptionClient({
                 <h3 className="text-lg font-medium mb-4">בחר משך טיפול</h3>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {selectedTreatmentData.durations?.map((duration) => (
-                    <PurchaseCard
+                    <Card 
                       key={duration._id.toString()}
-                      title={`${duration.durationMinutes} דקות`}
-                      description={`${duration.price} ₪`}
-                      isSelected={selectedDurationId === duration._id.toString()}
+                      className={`cursor-pointer border-2 transition-all ${selectedDurationId === duration._id.toString() ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
                       onClick={() => setSelectedDurationId(duration._id.toString())}
-                    />
+                    >
+                      <CardContent className="p-4 text-center">
+                        <h3 className="font-medium">{duration.durationMinutes} דקות</h3>
+                        <p className="text-lg font-semibold text-blue-600">{duration.price} ₪</p>
+                      </CardContent>
+                    </Card>
                   ))}
                 </div>
               </div>
@@ -501,55 +524,84 @@ export default function GuestPurchaseSubscriptionClient({
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <h3 className="text-lg font-medium mb-3">פרטי המנוי</h3>
-                <PurchaseCard
-                  title={selectedSubscriptionData?.name || ""}
-                  description={selectedSubscriptionData?.description}
-                  badge={`${(selectedSubscriptionData?.quantity || 0) + (selectedSubscriptionData?.bonusQuantity || 0)} טיפולים`}
-                  icon={<Package className="w-5 h-5" />}
-                  className="mb-4"
-                />
+                <Card className="mb-4">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="w-5 h-5" />
+                      {selectedSubscriptionData?.name || ""}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600 mb-2">{selectedSubscriptionData?.description}</p>
+                    <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                      {(selectedSubscriptionData?.quantity || 0) + (selectedSubscriptionData?.bonusQuantity || 0)} טיפולים
+                    </span>
+                  </CardContent>
+                </Card>
 
                 <h3 className="text-lg font-medium mb-3">פרטי הטיפול</h3>
-                <PurchaseCard
-                  title={selectedTreatmentData?.name || ""}
-                  description={
-                    selectedDurationData
-                      ? `${selectedDurationData.durationMinutes} דקות - ${selectedDurationData.price} ₪`
-                      : selectedTreatmentData?.pricingType === "fixed"
-                      ? `${selectedTreatmentData.fixedPrice} ₪`
-                      : ""
-                  }
-                  icon={<Package className="w-5 h-5" />}
-                />
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Package className="w-5 h-5" />
+                      {selectedTreatmentData?.name || ""}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600">
+                      {selectedDurationData
+                        ? `${selectedDurationData.durationMinutes} דקות - ${selectedDurationData.price} ₪`
+                        : selectedTreatmentData?.pricingType === "fixed"
+                        ? `${selectedTreatmentData.fixedPrice} ₪`
+                        : ""
+                      }
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
 
               <div>
-                <PurchaseSummary
-                  items={[
-                    {
-                      label: "מחיר לטיפול",
-                      value: `${singleSessionPrice.toFixed(2)} ₪`,
-                    },
-                    {
-                      label: "כמות טיפולים במנוי",
-                      value: selectedSubscriptionData?.quantity || 0,
-                    },
-                    {
-                      label: "טיפולים בונוס",
-                      value: selectedSubscriptionData?.bonusQuantity || 0,
-                    },
-                  ]}
-                  totalPrice={totalSubscriptionPrice}
-                />
+                <Card>
+                  <CardHeader>
+                    <CardTitle>סיכום מחיר</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>מחיר לטיפול:</span>
+                        <span>{singleSessionPrice.toFixed(2)} ₪</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>כמות טיפולים במנוי:</span>
+                        <span>{selectedSubscriptionData?.quantity || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>טיפולים בונוס:</span>
+                        <span>{selectedSubscriptionData?.bonusQuantity || 0}</span>
+                      </div>
+                      <hr />
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>סך הכל:</span>
+                        <span>{totalSubscriptionPrice.toFixed(2)} ₪</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                                  </Card>
+                </div>
+              </div>
+              
+              <div className="mt-8">
+                <Button onClick={handlePurchase} disabled={isLoading} className="w-full" size="lg">
+                  {isLoading ? "מעבד..." : "אשר ורכוש"}
+                </Button>
               </div>
             </div>
-          </div>
-        )
+          )
 
-      default:
-        return null
+        default:
+          return null
+      }
     }
-  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -558,24 +610,43 @@ export default function GuestPurchaseSubscriptionClient({
         <p className="text-gray-600 mt-2">רכוש מנוי וחסוך בטיפולים</p>
       </div>
 
-      <StepIndicator steps={steps} currentStep={currentStep} />
-
-      <div className="min-h-[400px] relative mb-8">
-        <AnimatedContainer isActive={true}>
-          {renderStep()}
-        </AnimatedContainer>
+      <div className="mb-8">
+        <div className="flex justify-between text-sm text-gray-600 mb-2">
+          {steps.map((step, index) => (
+            <span key={step.key} className={`${steps.findIndex(s => s.key === currentStep) >= index ? 'text-blue-600 font-medium' : ''}`}>
+              {step.label}
+            </span>
+          ))}
+        </div>
+        <div className="w-full bg-gray-200 h-2 rounded">
+          <div 
+            className="bg-blue-600 h-2 rounded transition-all duration-300" 
+            style={{ width: `${((steps.findIndex(s => s.key === currentStep) + 1) / steps.length) * 100}%` }}
+          />
+        </div>
       </div>
 
-      <PurchaseNavigation
-        onNext={handleNextStep}
-        onPrevious={handlePrevStep}
-        onComplete={handlePurchase}
-        canGoNext={canGoNext}
-        canGoPrevious={steps.findIndex((s) => s.key === currentStep) > 0}
-        isLoading={isLoading}
-        isLastStep={currentStep === "summary"}
-        completeLabel="אשר ורכוש"
-      />
+      <div className="min-h-[400px] relative mb-8">
+        {renderStep()}
+      </div>
+
+      {currentStep !== "summary" && (
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={handlePrevStep}
+            disabled={steps.findIndex((s) => s.key === currentStep) === 0}
+          >
+            חזור
+          </Button>
+          <Button
+            onClick={handleNextStep}
+            disabled={!canGoNext}
+          >
+            המשך
+          </Button>
+        </div>
+      )}
     </div>
   )
 } 

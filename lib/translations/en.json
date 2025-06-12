@@ -797,6 +797,35 @@
       "redeemedForBooking": "Redeemed for booking"
     },
     "steps": {
+      "guestInfo": {
+        "title": "Guest Information",
+        "description": "Please fill in your personal details to complete the booking",
+        "firstName": "First Name",
+        "firstNamePlaceholder": "First Name",
+        "lastName": "Last Name",
+        "lastNamePlaceholder": "Last Name",
+        "email": "Email Address",
+        "emailPlaceholder": "example@email.com",
+        "phone": "Phone Number",
+        "phonePlaceholder": "123-456-7890",
+        "birthDate": "Birth Date",
+        "gender": "Gender",
+        "genderPlaceholder": "Select gender",
+        "genderMale": "Male",
+        "genderFemale": "Female",
+        "genderOther": "Other",
+        "notes": "Notes",
+        "notesPlaceholder": "Special notes regarding the booking (optional)",
+        "bookingForSomeoneElse": "I am booking for someone else",
+        "yourDetails": "Your Details",
+        "validation": {
+          "firstNameMin": "First name must be at least 2 characters",
+          "lastNameMin": "Last name must be at least 2 characters",
+          "emailInvalid": "Invalid email address",
+          "phoneMin": "Phone number must be at least 10 digits",
+          "recipientDetailsRequired": "All recipient details are required when booking for someone else"
+        }
+      },
       "source": {
         "title": "Select Booking Source",
         "description": "Choose how you want to make your booking",
@@ -885,37 +914,6 @@
         "confirmBooking": "[bookings.steps.payment.confirmBooking]",
         "confirmDescNoPayment": "[bookings.steps.payment.confirmDescNoPayment]",
         "confirmTitleNoPayment": "[bookings.steps.payment.confirmTitleNoPayment]"
-      },
-      "guestInfo": {
-        "title": "Guest Information",
-        "description": "Please fill in your personal details to complete the booking",
-        "firstName": "First Name",
-        "firstNamePlaceholder": "First Name",
-        "lastName": "Last Name", 
-        "lastNamePlaceholder": "Last Name",
-        "email": "Email",
-        "emailPlaceholder": "example@email.com",
-        "phone": "Phone",
-        "phonePlaceholder": "050-1234567",
-        "birthDate": "Birth Date",
-        "gender": "Gender",
-        "genderPlaceholder": "Select Gender",
-        "genderMale": "Male",
-        "genderFemale": "Female",
-        "genderOther": "Other",
-        "notes": "Notes",
-        "notesPlaceholder": "Special notes about the booking (optional)",
-        "bookingForSomeoneElse": "I'm booking for someone else",
-        "bookerDetails": "Booker Details",
-        "yourDetails": "Your Details",
-        "recipientDetails": "Treatment Recipient Details",
-        "validation": {
-          "firstNameMin": "First name must contain at least 2 characters",
-          "lastNameMin": "Last name must contain at least 2 characters",
-          "emailInvalid": "Invalid email address",
-          "phoneMin": "Phone number must contain at least 10 digits",
-          "recipientDetailsRequired": "All recipient details are required when booking for someone else"
-        }
       },
       "addressStep": {
         "title": "Add Address",

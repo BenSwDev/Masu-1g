@@ -38,45 +38,45 @@ interface GuestInfoStepProps {
   onNext: () => void
 }
 
-const guestInfoSchema = z.object({
-  firstName: z.string().min(2, { message: "שם פרטי חייב להכיל לפחות 2 תווים" }),
-  lastName: z.string().min(2, { message: "שם משפחה חייב להכיל לפחות 2 תווים" }),
-  email: z.string().email({ message: "כתובת אימייל לא תקינה" }),
-  phone: z.string().min(10, { message: "מספר טלפון חייב להכיל לפחות 10 ספרות" }),
-  birthDate: z.string().optional(),
-  gender: z.enum(["male", "female", "other"]).optional(),
-  notes: z.string().optional(),
-  isBookingForSomeoneElse: z.boolean().default(false),
-  recipientFirstName: z.string().optional(),
-  recipientLastName: z.string().optional(),
-  recipientEmail: z.string().optional(),
-  recipientPhone: z.string().optional(),
-  recipientBirthDate: z.string().optional(),
-  recipientGender: z.enum(["male", "female", "other"]).optional(),
-}).refine((data) => {
-  if (data.isBookingForSomeoneElse) {
-    return (
-      data.recipientFirstName &&
-      data.recipientLastName &&
-      data.recipientEmail &&
-      data.recipientPhone &&
-      data.recipientBirthDate &&
-      data.recipientGender
-    )
-  }
-  return true
-}, {
-  message: "כל פרטי המקבל הטיפול נדרשים כאשר מזמינים עבור מישהו אחר",
-  path: ["recipientFirstName"]
-})
-
-type GuestInfoFormData = z.infer<typeof guestInfoSchema>
-
 export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStepProps) {
   const { t, dir } = useTranslation()
   const [isBookingForSomeoneElse, setIsBookingForSomeoneElse] = useState(
     guestInfo.isBookingForSomeoneElse || false
   )
+
+  const guestInfoSchema = z.object({
+    firstName: z.string().min(2, { message: t("bookings.steps.guestInfo.validation.firstNameMin") }),
+    lastName: z.string().min(2, { message: t("bookings.steps.guestInfo.validation.lastNameMin") }),
+    email: z.string().email({ message: t("bookings.steps.guestInfo.validation.emailInvalid") }),
+    phone: z.string().min(10, { message: t("bookings.steps.guestInfo.validation.phoneMin") }),
+    birthDate: z.string().optional(),
+    gender: z.enum(["male", "female", "other"]).optional(),
+    notes: z.string().optional(),
+    isBookingForSomeoneElse: z.boolean().default(false),
+    recipientFirstName: z.string().optional(),
+    recipientLastName: z.string().optional(),
+    recipientEmail: z.string().optional(),
+    recipientPhone: z.string().optional(),
+    recipientBirthDate: z.string().optional(),
+    recipientGender: z.enum(["male", "female", "other"]).optional(),
+  }).refine((data) => {
+    if (data.isBookingForSomeoneElse) {
+      return (
+        data.recipientFirstName &&
+        data.recipientLastName &&
+        data.recipientEmail &&
+        data.recipientPhone &&
+        data.recipientBirthDate &&
+        data.recipientGender
+      )
+    }
+    return true
+  }, {
+    message: t("bookings.steps.guestInfo.validation.recipientDetailsRequired"),
+    path: ["recipientFirstName"]
+  })
+
+  type GuestInfoFormData = z.infer<typeof guestInfoSchema>
 
   const form = useForm<GuestInfoFormData>({
     resolver: zodResolver(guestInfoSchema),
@@ -127,8 +127,8 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
     <div className="space-y-6">
       <div className="text-center">
         <User className="mx-auto h-12 w-12 text-primary mb-4" />
-        <h2 className="text-2xl font-semibold tracking-tight">פרטים אישיים</h2>
-        <p className="text-muted-foreground mt-2">מלא את הפרטים הנדרשים לביצוע ההזמנה</p>
+        <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.guestInfo.title")}</h2>
+        <p className="text-muted-foreground mt-2">{t("bookings.steps.guestInfo.description")}</p>
       </div>
 
       <Form {...form}>
@@ -137,15 +137,15 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
           {/* Booking For Someone Else Option */}
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-center space-x-2">
+              <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
                 <Checkbox
                   id="isBookingForSomeoneElse"
                   checked={isBookingForSomeoneElse}
                   onCheckedChange={handleBookingForSomeoneElseChange}
                 />
-                <label htmlFor="isBookingForSomeoneElse" className="flex items-center gap-2 cursor-pointer">
+                <label htmlFor="isBookingForSomeoneElse" className={`flex items-center gap-2 cursor-pointer ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Users className="h-4 w-4" />
-                  <span>אני מזמין עבור מישהו אחר</span>
+                  <span>{t("bookings.steps.guestInfo.bookingForSomeoneElse")}</span>
                 </label>
               </div>
             </CardContent>
@@ -154,9 +154,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
           {/* Booker Details (Always required) */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                 <User className="h-5 w-5" />
-                {isBookingForSomeoneElse ? "פרטי המזמין" : "הפרטים שלך"}
+                {isBookingForSomeoneElse ? t("bookings.steps.guestInfo.bookerDetails") : t("bookings.steps.guestInfo.yourDetails")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -166,9 +166,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>שם פרטי *</FormLabel>
+                      <FormLabel>{t("bookings.steps.guestInfo.firstName")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="שם פרטי" {...field} />
+                        <Input placeholder={t("bookings.steps.guestInfo.firstNamePlaceholder")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -180,9 +180,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>שם משפחה *</FormLabel>
+                      <FormLabel>{t("bookings.steps.guestInfo.lastName")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder="שם משפחה" {...field} />
+                        <Input placeholder={t("bookings.steps.guestInfo.lastNamePlaceholder")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -195,12 +195,16 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
+                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                       <Mail className="h-4 w-4" />
-                      אימייל *
+                      {t("bookings.steps.guestInfo.email")} *
                     </FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="example@email.com" {...field} />
+                      <Input 
+                        type="email" 
+                        placeholder={t("bookings.steps.guestInfo.emailPlaceholder")} 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -212,15 +216,15 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
+                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                       <Phone className="h-4 w-4" />
-                      טלפון *
+                      {t("bookings.steps.guestInfo.phone")} *
                     </FormLabel>
                     <FormControl>
-                      <PhoneInput
-                        placeholder="050-1234567"
-                        value={field.value}
+                      <PhoneInput 
+                        value={field.value} 
                         onChange={field.onChange}
+                        placeholder={t("bookings.steps.guestInfo.phonePlaceholder")}
                       />
                     </FormControl>
                     <FormMessage />
@@ -236,12 +240,15 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                       name="birthDate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="flex items-center gap-2">
+                          <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                             <Calendar className="h-4 w-4" />
-                            תאריך לידה
+                            {t("bookings.steps.guestInfo.birthDate")} *
                           </FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <Input 
+                              type="date" 
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -253,17 +260,17 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                       name="gender"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>מגדר</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormLabel>{t("bookings.steps.guestInfo.gender")} *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="בחר מגדר" />
+                                <SelectValue placeholder={t("bookings.steps.guestInfo.genderPlaceholder")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="male">גבר</SelectItem>
-                              <SelectItem value="female">אישה</SelectItem>
-                              <SelectItem value="other">אחר</SelectItem>
+                              <SelectItem value="male">{t("bookings.steps.guestInfo.genderMale")}</SelectItem>
+                              <SelectItem value="female">{t("bookings.steps.guestInfo.genderFemale")}</SelectItem>
+                              <SelectItem value="other">{t("bookings.steps.guestInfo.genderOther")}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -273,16 +280,37 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   </div>
                 </>
               )}
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                      <FileText className="h-4 w-4" />
+                      {t("bookings.steps.guestInfo.notes")}
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder={t("bookings.steps.guestInfo.notesPlaceholder")}
+                        className="min-h-[80px]" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
-          {/* Recipient Details (When booking for someone else) */}
+          {/* Recipient Details (Only when booking for someone else) */}
           {isBookingForSomeoneElse && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Users className="h-5 w-5" />
-                  פרטי מקבל הטיפול
+                  {t("bookings.steps.guestInfo.recipientDetails")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -292,9 +320,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     name="recipientFirstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>שם פרטי *</FormLabel>
+                        <FormLabel>{t("bookings.steps.guestInfo.firstName")} *</FormLabel>
                         <FormControl>
-                          <Input placeholder="שם פרטי" {...field} />
+                          <Input placeholder={t("bookings.steps.guestInfo.firstNamePlaceholder")} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -306,9 +334,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     name="recipientLastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>שם משפחה *</FormLabel>
+                        <FormLabel>{t("bookings.steps.guestInfo.lastName")} *</FormLabel>
                         <FormControl>
-                          <Input placeholder="שם משפחה" {...field} />
+                          <Input placeholder={t("bookings.steps.guestInfo.lastNamePlaceholder")} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -321,12 +349,16 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   name="recipientEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                         <Mail className="h-4 w-4" />
-                        אימייל *
+                        {t("bookings.steps.guestInfo.email")} *
                       </FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="example@email.com" {...field} />
+                        <Input 
+                          type="email" 
+                          placeholder={t("bookings.steps.guestInfo.emailPlaceholder")} 
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -338,15 +370,15 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   name="recipientPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                         <Phone className="h-4 w-4" />
-                        טלפון *
+                        {t("bookings.steps.guestInfo.phone")} *
                       </FormLabel>
                       <FormControl>
-                        <PhoneInput
-                          placeholder="050-1234567"
-                          value={field.value || ""}
+                        <PhoneInput 
+                          value={field.value} 
                           onChange={field.onChange}
+                          placeholder={t("bookings.steps.guestInfo.phonePlaceholder")}
                         />
                       </FormControl>
                       <FormMessage />
@@ -360,12 +392,15 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     name="recipientBirthDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center gap-2">
+                        <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                           <Calendar className="h-4 w-4" />
-                          תאריך לידה *
+                          {t("bookings.steps.guestInfo.birthDate")} *
                         </FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} />
+                          <Input 
+                            type="date" 
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -377,17 +412,17 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     name="recipientGender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>מגדר *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>{t("bookings.steps.guestInfo.gender")} *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="בחר מגדר" />
+                              <SelectValue placeholder={t("bookings.steps.guestInfo.genderPlaceholder")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="male">גבר</SelectItem>
-                            <SelectItem value="female">אישה</SelectItem>
-                            <SelectItem value="other">אחר</SelectItem>
+                            <SelectItem value="male">{t("bookings.steps.guestInfo.genderMale")}</SelectItem>
+                            <SelectItem value="female">{t("bookings.steps.guestInfo.genderFemale")}</SelectItem>
+                            <SelectItem value="other">{t("bookings.steps.guestInfo.genderOther")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -399,37 +434,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
             </Card>
           )}
 
-          {/* Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                הערות נוספות
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Textarea
-                        placeholder="הערות מיוחדות לגבי ההזמנה (אופציונלי)"
-                        rows={3}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
           <div className="flex justify-end">
-            <Button type="submit" size="lg">
-              המשך
+            <Button type="submit" size="lg" className="min-w-[120px]">
+              {t("common.continue")}
             </Button>
           </div>
         </form>

@@ -839,20 +839,38 @@
           "title": "פרטי האורח",
           "description": "נא למלא את פרטיך האישיים להשלמת ההזמנה",
           "firstName": "שם פרטי",
+          "firstNamePlaceholder": "שם פרטי",
           "lastName": "שם משפחה",
+          "lastNamePlaceholder": "שם משפחה",
           "email": "כתובת אימייל",
+          "emailPlaceholder": "example@email.com",
           "phone": "מספר טלפון",
+          "phonePlaceholder": "050-1234567",
           "birthDate": "תאריך לידה",
           "gender": "מגדר",
+          "genderPlaceholder": "בחר מגדר",
+          "genderMale": "גבר",
+          "genderFemale": "אישה", 
+          "genderOther": "אחר",
           "notes": "הערות",
-          "isBookingForSomeoneElse": "הזמנה עבור מישהו אחר",
+          "notesPlaceholder": "הערות מיוחדות לגבי ההזמנה (אופציונלי)",
+          "bookingForSomeoneElse": "אני מזמין עבור מישהו אחר",
+          "bookerDetails": "פרטי המזמין",
+          "yourDetails": "הפרטים שלך",
           "recipientDetails": "פרטי מקבל הטיפול",
           "recipientFirstName": "שם פרטי של מקבל הטיפול",
           "recipientLastName": "שם משפחה של מקבל הטיפול", 
           "recipientEmail": "אימייל מקבל הטיפול",
           "recipientPhone": "טלפון מקבל הטיפול",
           "recipientBirthDate": "תאריך לידה של מקבל הטיפול",
-          "recipientGender": "מגדר מקבל הטיפול"
+          "recipientGender": "מגדר מקבל הטיפול",
+          "validation": {
+            "firstNameMin": "שם פרטי חייב להכיל לפחות 2 תווים",
+            "lastNameMin": "שם משפחה חייב להכיל לפחות 2 תווים",
+            "emailInvalid": "כתובת אימייל לא תקינה",
+            "phoneMin": "מספר טלפון חייב להכיל לפחות 10 ספרות",
+            "recipientDetailsRequired": "כל פרטי המקבל הטיפול נדרשים כאשר מזמינים עבור מישהו אחר"
+          }
         },
         "confirmation": {
           "title": "ההזמנה אושרה בהצלחה!",
@@ -860,22 +878,41 @@
           "backToHome": "חזור לעמוד הבית",
           "appointmentDetails": "פרטי התור",
           "contactInformation": "פרטי קשר",
-          "bookingReference": "מספר הזמנה"
+          "bookingReference": "מספר הזמנה",
+          "recipient": "מקבל הטיפול",
+          "recipientEmail": "אימייל מקבל הטיפול",
+          "recipientPhone": "טלפון מקבל הטיפול",
+          "birthDate": "תאריך לידה",
+          "gender": "מגדר",
+          "bookerDetails": "פרטי המזמין"
         },
         "addressStep": {
           "title": "הוסף כתובת",
+          "description": "הזן את הכתובת בה יתבצע הטיפול",
           "city": "עיר",
+          "cityPlaceholder": "בחר עיר",
           "street": "רחוב",
+          "streetPlaceholder": "שם הרחוב",
           "houseNumber": "מספר בית",
+          "houseNumberPlaceholder": "מספר",
           "addressType": "סוג כתובת",
           "floor": "קומה",
+          "floorPlaceholder": "קומה",
           "apartmentNumber": "מספר דירה",
+          "apartmentNumberPlaceholder": "מספר דירה",
           "entrance": "כניסה",
-          "privateParking": "חניה פרטית",
-          "noParking": "אין חניה",
+          "entrancePlaceholder": "כניסה",
+          "parking": "חניה",
+          "parkingYes": "יש חניה פרטית",
+          "parkingNo": "אין חניה",
           "isDefault": "כתובת ברירת מחדל",
-          "notDefault": "לא ברירת מחדל",
-          "notes": "הערות"
+          "notes": "הערות נוספות",
+          "notesPlaceholder": "הוראות נוספות למטפל",
+          "addressTypes": {
+            "apartment": "דירה",
+            "house": "בית פרטי",
+            "office": "משרד"
+          }
         }
       },
       "subscriptions": {
@@ -2957,7 +2994,8 @@
     "minutes": "דקות",
     "anotherProfessional": "מטפל אחר",
     "loading": "טוען",
-    "back": "חזור",שגיאה
+    "back": "חזור",
+    "error": "שגיאה",
     "complete": "השלם",
     "next": "הבא",
     "purchaseSuccessful": "רכישה מוצלחת",
@@ -4174,6 +4212,16 @@
     "hours": "שעות",
     "minute": "דקה",
     "minutes": "דקות",
-    "and": "ו"
+    "and": "ו",
+    "login": "התחבר",
+    "dashboard": "לוח בקרה",
+    "logout": "התנתק",
+    "openMenu": "פתח תפריט"
+  },
+  "navigation": {
+    "home": "בית",
+    "bookTreatment": "הזמן טיפול",
+    "bookSubscription": "הזמן מנוי",
+    "bookGiftVoucher": "הזמן שובר מתנה"
   }
 }

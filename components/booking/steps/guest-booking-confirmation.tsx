@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
-import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, Home } from "lucide-react"
+import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, Home, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import Link from "next/link"
@@ -21,7 +21,7 @@ export function GuestBookingConfirmation({
   bookingResult,
   initialData,
 }: GuestBookingConfirmationProps) {
-  const { t, language } = useTranslation()
+  const { t, language, dir } = useTranslation()
 
   const bookingTreatment = useMemo(() => {
     if (!bookingResult?.treatmentId) return null
@@ -105,15 +105,15 @@ export function GuestBookingConfirmation({
         <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
           <CheckCircle className="h-8 w-8 text-green-600" />
         </div>
-        <h1 className="text-3xl font-bold text-green-600 mb-2">{t("bookings.success.title")}</h1>
-        <p className="text-lg text-muted-foreground">{t("bookings.success.subtitle")}</p>
+        <h1 className="text-3xl font-bold text-green-600 mb-2">{t("bookings.steps.confirmation.title")}</h1>
+        <p className="text-lg text-muted-foreground">{t("bookings.steps.confirmation.description")}</p>
       </div>
 
       {/* Booking Reference */}
       <Alert className="bg-green-50 border-green-200">
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
-          <strong>{t("bookings.bookingReference")}:</strong> {bookingResult._id?.toString().slice(-8).toUpperCase()}
+          <strong>{t("bookings.steps.confirmation.bookingReference")}:</strong> {bookingResult._id?.toString().slice(-8).toUpperCase()}
         </AlertDescription>
       </Alert>
 
@@ -121,61 +121,63 @@ export function GuestBookingConfirmation({
         {/* Guest Information */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
               <Phone className="h-5 w-5" />
-              {t("bookings.contactInformation")}
+              {t("bookings.steps.confirmation.contactInformation")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">מקבל הטיפול:</span>
+                <span className="text-muted-foreground">{t("bookings.steps.confirmation.recipient")}:</span>
                 <span className="font-medium">
                   {bookingResult.recipientName || bookingResult.bookedByUserName}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground flex items-center gap-1">
+                <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Mail className="h-4 w-4" />
-                  אימייל מקבל הטיפול:
+                  {t("bookings.steps.confirmation.recipientEmail")}:
                 </span>
                 <span className="font-medium">{bookingResult.recipientEmail || bookingResult.bookedByUserEmail}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground flex items-center gap-1">
+                <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Phone className="h-4 w-4" />
-                  טלפון מקבל הטיפול:
+                  {t("bookings.steps.confirmation.recipientPhone")}:
                 </span>
                 <span className="font-medium">{bookingResult.recipientPhone || bookingResult.bookedByUserPhone}</span>
               </div>
               {bookingResult.recipientBirthDate && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">תאריך לידה:</span>
+                  <span className="text-muted-foreground">{t("bookings.steps.confirmation.birthDate")}:</span>
                   <span className="font-medium">{format(bookingResult.recipientBirthDate, "dd/MM/yyyy")}</span>
                 </div>
               )}
               {bookingResult.recipientGender && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">מגדר:</span>
+                  <span className="text-muted-foreground">{t("bookings.steps.confirmation.gender")}:</span>
                   <span className="font-medium">
-                    {bookingResult.recipientGender === "male" ? "גבר" : bookingResult.recipientGender === "female" ? "אישה" : "אחר"}
+                    {bookingResult.recipientGender === "male" ? t("bookings.steps.guestInfo.genderMale") : 
+                     bookingResult.recipientGender === "female" ? t("bookings.steps.guestInfo.genderFemale") : 
+                     t("bookings.steps.guestInfo.genderOther")}
                   </span>
                 </div>
               )}
               {(bookingResult.bookedByUserName !== bookingResult.recipientName) && (
                 <div className="mt-4 pt-4 border-t">
-                  <div className="text-sm text-muted-foreground mb-2">פרטי המזמין:</div>
+                  <div className="text-sm text-muted-foreground mb-2">{t("bookings.steps.confirmation.bookerDetails")}:</div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span>שם:</span>
+                      <span>{t("common.name")}:</span>
                       <span>{bookingResult.bookedByUserName}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>אימייל:</span>
+                      <span>{t("common.email")}:</span>
                       <span>{bookingResult.bookedByUserEmail}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>טלפון:</span>
+                      <span>{t("common.phone")}:</span>
                       <span>{bookingResult.bookedByUserPhone}</span>
                     </div>
                   </div>
@@ -194,105 +196,94 @@ export function GuestBookingConfirmation({
         {/* Appointment Details */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
               <Calendar className="h-5 w-5" />
-              {t("bookings.appointmentDetails")}
+              {t("bookings.steps.confirmation.appointmentDetails")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("treatments.treatment")}:</span>
-                <span className="font-medium">{bookingTreatment?.name}</span>
+                <span className="text-muted-foreground">{t("bookings.treatment")}:</span>
+                <span className="font-medium">{bookingTreatment?.name || t("common.unknownTreatment")}</span>
               </div>
+              {getTreatmentDurationText() && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t("bookings.duration")}:</span>
+                  <span className="font-medium">{getTreatmentDurationText()}</span>
+                </div>
+              )}
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("treatments.duration")}:</span>
-                <span className="font-medium">{getTreatmentDurationText()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground flex items-center gap-1">
+                <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Calendar className="h-4 w-4" />
                   {t("bookings.date")}:
                 </span>
-                <span className="font-medium">
-                  {bookingResult.bookingDateTime ? formatDateString(bookingResult.bookingDateTime) : "-"}
-                </span>
+                <span className="font-medium">{formatDateString(bookingResult.scheduledDate)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground flex items-center gap-1">
+                <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Clock className="h-4 w-4" />
                   {t("bookings.time")}:
                 </span>
                 <span className="font-medium">
-                  {bookingResult.bookingDateTime ? formatTimeString(bookingResult.bookingDateTime) : "-"}
+                  {bookingResult.flexibleTime ? t("bookings.flexibleTime") : formatTimeString(bookingResult.scheduledDate)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t("bookings.therapistPreference")}:</span>
                 <span className="font-medium">{getGenderPreferenceText()}</span>
               </div>
-              {bookingResult.finalAmount !== undefined && (
-                <div className="flex justify-between text-lg font-semibold">
-                  <span className="text-muted-foreground">{t("bookings.totalPaid")}:</span>
-                  <span className="text-primary">{formatPrice(bookingResult.finalAmount)}</span>
-                </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{t("bookings.totalAmount")}:</span>
+                <span className="font-medium text-lg">{formatPrice(bookingResult.totalPrice)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Address Information */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+              <MapPin className="h-5 w-5" />
+              {t("bookings.address")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted p-4 rounded-lg">
+              <p className="font-medium">
+                {[
+                  bookingResult.address?.street,
+                  bookingResult.address?.houseNumber,
+                  bookingResult.address?.city
+                ].filter(Boolean).join(", ")}
+              </p>
+              {(bookingResult.address?.floor || bookingResult.address?.apartmentNumber || bookingResult.address?.entrance) && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {[
+                    bookingResult.address?.floor && `${t("bookings.floor")} ${bookingResult.address.floor}`,
+                    bookingResult.address?.apartmentNumber && `${t("bookings.apartment")} ${bookingResult.address.apartmentNumber}`,
+                    bookingResult.address?.entrance && `${t("bookings.entrance")} ${bookingResult.address.entrance}`
+                  ].filter(Boolean).join(", ")}
+                </p>
+              )}
+              {bookingResult.address?.notes && (
+                <p className="text-sm text-muted-foreground mt-2">{bookingResult.address.notes}</p>
               )}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Important Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("bookings.importantInformation")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• {t("bookings.confirmationEmail")}</li>
-            <li>• {t("bookings.arriveEarly")}</li>
-            <li>• {t("bookings.cancellationPolicy")}</li>
-            <li>• {t("bookings.contactSupport")}</li>
-          </ul>
-        </CardContent>
-      </Card>
-
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      {/* Action Buttons */}
+      <div className={`flex gap-4 justify-center ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
         <Button asChild size="lg">
           <Link href="/">
             <Home className="mr-2 h-4 w-4" />
-            {t("navigation.home")}
-          </Link>
-        </Button>
-        <Button variant="outline" asChild size="lg">
-          <Link href="/book-treatment">
-            {t("bookings.bookAnother")}
+            {t("bookings.steps.confirmation.backToHome")}
           </Link>
         </Button>
       </div>
-
-      {/* Contact Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            {t("common.contactUs")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="font-medium mb-1">{t("common.phone")}:</p>
-              <p className="text-muted-foreground">03-1234567</p>
-            </div>
-            <div>
-              <p className="font-medium mb-1">{t("common.email")}:</p>
-              <p className="text-muted-foreground">info@masu.co.il</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 } 

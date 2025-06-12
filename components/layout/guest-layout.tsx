@@ -4,10 +4,10 @@ import { MasuLogo } from "@/components/common/masu-logo"
 import { LanguageSelector } from "@/components/common/language-selector"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { useState } from "react"
-import { Menu, X, Home, Calendar, CreditCard, Gift } from "lucide-react"
+import { Menu, X, Home, Calendar, CreditCard, Gift, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 
 interface GuestLayoutProps {
@@ -15,7 +15,7 @@ interface GuestLayoutProps {
 }
 
 export function GuestLayout({ children }: GuestLayoutProps) {
-  const { t, dir } = useTranslation()
+  const { t, dir, language } = useTranslation()
   const { data: session } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -28,14 +28,18 @@ export function GuestLayout({ children }: GuestLayoutProps) {
 
   const currentYear = new Date().getFullYear()
   const getFooterText = () => {
-    switch (t("common.locale")) {
-      case "he-IL":
+    switch (language) {
+      case "he":
         return `© ${currentYear} Masu. כל הזכויות שמורות.`
-      case "ru-RU":
+      case "ru":
         return `© ${currentYear} Masu. Все права защищены.`
       default:
         return `© ${currentYear} Masu. All rights reserved.`
     }
+  }
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/" })
   }
 
   return (
@@ -86,11 +90,22 @@ export function GuestLayout({ children }: GuestLayoutProps) {
             <div className={`flex items-center gap-4 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
               <LanguageSelector />
               {session ? (
-                <Button asChild>
-                  <Link href="/dashboard">
-                    {t("common.dashboard")}
-                  </Link>
-                </Button>
+                <>
+                  <Button asChild>
+                    <Link href="/dashboard">
+                      {t("common.dashboard")}
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleSignOut}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title={t("common.logout")}
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </>
               ) : (
                 <Button asChild>
                   <Link href="/auth/login">

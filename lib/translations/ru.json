@@ -3,6 +3,10 @@
     "loading": "Загрузка...",
     "error": "Ошибка",
     "success": "Успех",
+    "login": "Войти",
+    "dashboard": "Панель управления",
+    "logout": "Выйти",
+    "openMenu": "Открыть меню",
     "save": "Сохранить",
     "cancel": "Отмена",
     "delete": "Удалить",
@@ -1436,6 +1440,79 @@
         "confirmBooking": "[bookings.steps.payment.confirmBooking]",
         "confirmDescNoPayment": "[bookings.steps.payment.confirmDescNoPayment]",
         "confirmTitleNoPayment": "[bookings.steps.payment.confirmTitleNoPayment]"
+      },
+      "guestInfo": {
+        "title": "Информация о госте",
+        "description": "Пожалуйста, заполните ваши личные данные для завершения бронирования",
+        "firstName": "Имя",
+        "firstNamePlaceholder": "Имя",
+        "lastName": "Фамилия",
+        "lastNamePlaceholder": "Фамилия",
+        "email": "Электронная почта",
+        "emailPlaceholder": "example@email.com",
+        "phone": "Телефон",
+        "phonePlaceholder": "050-1234567",
+        "birthDate": "Дата рождения",
+        "gender": "Пол",
+        "genderPlaceholder": "Выберите пол",
+        "genderMale": "Мужской",
+        "genderFemale": "Женский",
+        "genderOther": "Другой",
+        "notes": "Заметки",
+        "notesPlaceholder": "Особые заметки о бронировании (необязательно)",
+        "bookingForSomeoneElse": "Я бронирую для кого-то другого",
+        "bookerDetails": "Данные бронирующего",
+        "yourDetails": "Ваши данные",
+        "recipientDetails": "Данные получателя процедуры",
+        "validation": {
+          "firstNameMin": "Имя должно содержать не менее 2 символов",
+          "lastNameMin": "Фамилия должна содержать не менее 2 символов",
+          "emailInvalid": "Неверный адрес электронной почты",
+          "phoneMin": "Номер телефона должен содержать не менее 10 цифр",
+          "recipientDetailsRequired": "Все данные получателя обязательны при бронировании для другого человека"
+        }
+      },
+      "addressStep": {
+        "title": "Добавить адрес",
+        "description": "Введите адрес, где будет проводиться процедура",
+        "city": "Город",
+        "cityPlaceholder": "Выберите город",
+        "street": "Улица",
+        "streetPlaceholder": "Название улицы",
+        "houseNumber": "Номер дома",
+        "houseNumberPlaceholder": "Номер",
+        "addressType": "Тип адреса",
+        "floor": "Этаж",
+        "floorPlaceholder": "Этаж",
+        "apartmentNumber": "Номер квартиры",
+        "apartmentNumberPlaceholder": "Номер квартиры",
+        "entrance": "Подъезд",
+        "entrancePlaceholder": "Подъезд",
+        "parking": "Парковка",
+        "parkingYes": "Есть частная парковка",
+        "parkingNo": "Нет парковки",
+        "isDefault": "Адрес по умолчанию",
+        "notes": "Дополнительные заметки",
+        "notesPlaceholder": "Дополнительные инструкции для терапевта",
+        "addressTypes": {
+          "apartment": "Квартира",
+          "house": "Частный дом",
+          "office": "Офис"
+        }
+      },
+      "confirmation": {
+        "title": "Бронирование успешно подтверждено!",
+        "description": "Детали вашего бронирования",
+        "backToHome": "Вернуться на главную",
+        "appointmentDetails": "Детали встречи",
+        "contactInformation": "Контактная информация",
+        "bookingReference": "Номер бронирования",
+        "recipient": "Получатель процедуры",
+        "recipientEmail": "Email получателя",
+        "recipientPhone": "Телефон получателя",
+        "birthDate": "Дата рождения",
+        "gender": "Пол",
+        "bookerDetails": "Данные бронирующего"
       }
     },
     "subscriptions": {
@@ -1638,5 +1715,11 @@
     "professionalInterface": "Интерфейс специалиста",
     "partnerInterface": "Интерфейс партнера",
     "adminInterface": "Интерфейс администратора"
+  },
+  "navigation": {
+    "home": "Главная",
+    "bookTreatment": "Забронировать процедуру",
+    "bookSubscription": "Забронировать подписку",
+    "bookGiftVoucher": "Забронировать подарочный ваучер"
   }
 }

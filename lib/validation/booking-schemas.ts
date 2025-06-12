@@ -219,5 +219,52 @@ export type SchedulingFormValues = z.infer<typeof SchedulingDetailsSchema>
 export type SummaryFormValues = z.infer<typeof SummarySchema>
 export type PaymentFormValues = z.infer<typeof PaymentDetailsSchema>
 
+// Schema for guest booking creation (similar to CreateBookingPayloadSchema but with different userId handling)
+export const CreateGuestBookingPayloadSchema = z.object({
+  userId: z.string().optional(), // Optional for guest bookings
+  treatmentId: z.string(),
+  selectedDurationId: z.string().optional(),
+  bookingDateTime: z.date(),
+  selectedAddressId: z.string().optional(), // Can be undefined if customAddressDetails is provided
+  customAddressDetails: z // New: for one-time address
+    .object({
+      fullAddress: z.string(),
+      city: z.string(),
+      street: z.string(),
+      streetNumber: z.string().optional(),
+      apartment: z.string().optional(),
+      entrance: z.string().optional(),
+      floor: z.string().optional(),
+      notes: z.string().optional(),
+    })
+    .optional(),
+  therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),
+  notes: z.string().max(500).optional(),
+  priceDetails: z.any(), // Assuming priceDetails is pre-calculated and validated
+  paymentDetails: z.object({
+    paymentMethodId: z.string().optional(), // Optional if fully covered
+    paymentStatus: z.enum(["paid", "pending", "failed", "not_required", "refunded"]),
+    transactionId: z.string().optional(),
+  }),
+  source: z.enum(["new_purchase", "subscription_redemption", "gift_voucher_redemption"]),
+  redeemedUserSubscriptionId: z.string().optional(),
+  redeemedGiftVoucherId: z.string().optional(),
+  appliedCouponId: z.string().optional(),
+  isFlexibleTime: z.boolean().optional(),
+  flexibilityRangeHours: z.number().optional(),
+  isBookingForSomeoneElse: z.boolean().optional(),
+  recipientName: z.string().optional(),
+  recipientPhone: z.string().optional(),
+  recipientEmail: z.string().optional(),
+  recipientBirthDate: z.date().optional(),
+  recipientGender: z.enum(["male", "female", "other"]).optional(),
+  guestInfo: z.object({
+    name: z.string(),
+    email: z.string().email(),
+    phone: z.string(),
+  }).required(), // Required for guest bookings
+})
+
 export type CalculatePricePayloadType = z.infer<typeof CalculatePricePayloadSchema>
 export type CreateBookingPayloadType = z.infer<typeof CreateBookingPayloadSchema>
+export type CreateGuestBookingPayloadType = z.infer<typeof CreateGuestBookingPayloadSchema>

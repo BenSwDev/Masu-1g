@@ -31,9 +31,9 @@ import type {
 } from "@/types/booking"
 import { add, format, set, addMinutes, isBefore, isAfter } from "date-fns"
 import { formatInTimeZone, toZonedTime, format as formatTz } from "date-fns-tz"
-import { CalculatePricePayloadSchema, CreateBookingPayloadSchema } from "@/lib/validation/booking-schemas"
+import { CalculatePricePayloadSchema, CreateBookingPayloadSchema, CreateGuestBookingPayloadSchema } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
-import type { CreateBookingPayloadType as CreateBookingPayloadSchemaType } from "@/lib/validation/booking-schemas"
+import type { CreateBookingPayloadType as CreateBookingPayloadSchemaType, CreateGuestBookingPayloadType } from "@/lib/validation/booking-schemas"
 
 import { notificationManager } from "@/lib/notifications/notification-manager"
 import type {
@@ -1851,7 +1851,7 @@ export async function createGuestBooking(
 ): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
   console.log("🔍 createGuestBooking called with payload:", JSON.stringify(payload, null, 2))
   
-  const validationResult = CreateBookingPayloadSchema.safeParse(payload)
+  const validationResult = CreateGuestBookingPayloadSchema.safeParse(payload)
   if (!validationResult.success) {
     console.log("❌ Validation failed:", validationResult.error.issues)
     logger.warn("Invalid payload for createGuestBooking:", { issues: validationResult.error.issues })
@@ -1860,18 +1860,8 @@ export async function createGuestBooking(
   
   console.log("✅ Validation passed")
   
-  const validatedPayload = validationResult.data as CreateBookingPayloadSchemaType & {
+  const validatedPayload = validationResult.data as CreateGuestBookingPayloadType & {
     priceDetails: ClientCalculatedPriceDetails
-    guestInfo?: {
-      name: string
-      email: string
-      phone: string
-    }
-    recipientName?: string
-    recipientEmail?: string
-    recipientPhone?: string
-    recipientBirthDate?: Date
-    recipientGender?: "male" | "female" | "other"
   }
 
   const mongooseDbSession = await mongoose.startSession()

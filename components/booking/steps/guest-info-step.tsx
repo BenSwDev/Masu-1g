@@ -45,10 +45,10 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
   )
 
   const guestInfoSchema = z.object({
-    firstName: z.string().min(2, { message: t("bookings.steps.guestInfo.validation.firstNameMin") }),
-    lastName: z.string().min(2, { message: t("bookings.steps.guestInfo.validation.lastNameMin") }),
-    email: z.string().email({ message: t("bookings.steps.guestInfo.validation.emailInvalid") }),
-    phone: z.string().min(10, { message: t("bookings.steps.guestInfo.validation.phoneMin") }),
+    firstName: z.string().min(2, { message: t("guestInfo.validation.firstNameMin") }),
+    lastName: z.string().min(2, { message: t("guestInfo.validation.lastNameMin") }),
+    email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }),
+    phone: z.string().min(10, { message: t("guestInfo.validation.phoneMin") }),
     birthDate: z.string().optional(),
     gender: z.enum(["male", "female", "other"]).optional(),
     notes: z.string().optional(),
@@ -72,7 +72,7 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
     }
     return true
   }, {
-    message: t("bookings.steps.guestInfo.validation.recipientDetailsRequired"),
+    message: t("guestInfo.validation.recipientDetailsRequired"),
     path: ["recipientFirstName"]
   })
 
@@ -127,8 +127,8 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
     <div className="space-y-6">
       <div className="text-center">
         <User className="mx-auto h-12 w-12 text-primary mb-4" />
-        <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.guestInfo.title")}</h2>
-        <p className="text-muted-foreground mt-2">{t("bookings.steps.guestInfo.description")}</p>
+        <h2 className="text-2xl font-semibold tracking-tight">{t("guestInfo.title")}</h2>
+        <p className="text-muted-foreground mt-2">{t("guestInfo.description")}</p>
       </div>
 
       <Form {...form}>
@@ -145,7 +145,7 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                 />
                 <label htmlFor="isBookingForSomeoneElse" className={`flex items-center gap-2 cursor-pointer ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Users className="h-4 w-4" />
-                  <span>{t("bookings.steps.guestInfo.bookingForSomeoneElse")}</span>
+                  <span>{t("guestInfo.bookingForSomeoneElse")}</span>
                 </label>
               </div>
             </CardContent>
@@ -156,7 +156,7 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
             <CardHeader>
               <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                 <User className="h-5 w-5" />
-                {isBookingForSomeoneElse ? t("bookings.steps.guestInfo.bookerDetails") : t("bookings.steps.guestInfo.yourDetails")}
+                {isBookingForSomeoneElse ? t("guestInfo.bookerDetails") : t("guestInfo.yourDetails")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -166,9 +166,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("bookings.steps.guestInfo.firstName")} *</FormLabel>
+                      <FormLabel>{t("guestInfo.firstName")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder={t("bookings.steps.guestInfo.firstNamePlaceholder")} {...field} />
+                        <Input placeholder={t("guestInfo.firstNamePlaceholder")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -180,9 +180,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t("bookings.steps.guestInfo.lastName")} *</FormLabel>
+                      <FormLabel>{t("guestInfo.lastName")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder={t("bookings.steps.guestInfo.lastNamePlaceholder")} {...field} />
+                        <Input placeholder={t("guestInfo.lastNamePlaceholder")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -197,14 +197,10 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   <FormItem>
                     <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                       <Mail className="h-4 w-4" />
-                      {t("bookings.steps.guestInfo.email")} *
+                      {t("guestInfo.email")} *
                     </FormLabel>
                     <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder={t("bookings.steps.guestInfo.emailPlaceholder")} 
-                        {...field} 
-                      />
+                      <Input type="email" placeholder={t("guestInfo.emailPlaceholder")} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -218,68 +214,57 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   <FormItem>
                     <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                       <Phone className="h-4 w-4" />
-                      {t("bookings.steps.guestInfo.phone")} *
+                      {t("guestInfo.phone")} *
                     </FormLabel>
                     <FormControl>
-                      <PhoneInput 
-                        value={field.value} 
-                        onChange={field.onChange}
-                        placeholder={t("bookings.steps.guestInfo.phonePlaceholder")}
-                      />
+                      <PhoneInput {...field} placeholder={t("guestInfo.phonePlaceholder")} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              {!isBookingForSomeoneElse && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="birthDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                            <Calendar className="h-4 w-4" />
-                            {t("bookings.steps.guestInfo.birthDate")} *
-                          </FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="date" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="birthDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                        <Calendar className="h-4 w-4" />
+                        {t("guestInfo.birthDate")}
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="gender"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("bookings.steps.guestInfo.gender")} *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder={t("bookings.steps.guestInfo.genderPlaceholder")} />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="male">{t("bookings.steps.guestInfo.genderMale")}</SelectItem>
-                              <SelectItem value="female">{t("bookings.steps.guestInfo.genderFemale")}</SelectItem>
-                              <SelectItem value="other">{t("bookings.steps.guestInfo.genderOther")}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </>
-              )}
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("guestInfo.gender")}</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t("guestInfo.genderPlaceholder")} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="male">{t("guestInfo.genderMale")}</SelectItem>
+                          <SelectItem value="female">{t("guestInfo.genderFemale")}</SelectItem>
+                          <SelectItem value="other">{t("guestInfo.genderOther")}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
@@ -288,14 +273,10 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   <FormItem>
                     <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                       <FileText className="h-4 w-4" />
-                      {t("bookings.steps.guestInfo.notes")}
+                      {t("guestInfo.notes")}
                     </FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder={t("bookings.steps.guestInfo.notesPlaceholder")}
-                        className="min-h-[80px]" 
-                        {...field} 
-                      />
+                      <Textarea placeholder={t("guestInfo.notesPlaceholder")} rows={3} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -310,7 +291,7 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
               <CardHeader>
                 <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Users className="h-5 w-5" />
-                  {t("bookings.steps.guestInfo.recipientDetails")}
+                  {t("guestInfo.recipientDetails")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -320,9 +301,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     name="recipientFirstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("bookings.steps.guestInfo.firstName")} *</FormLabel>
+                        <FormLabel>{t("guestInfo.recipientFirstName")} *</FormLabel>
                         <FormControl>
-                          <Input placeholder={t("bookings.steps.guestInfo.firstNamePlaceholder")} {...field} />
+                          <Input placeholder={t("guestInfo.firstNamePlaceholder")} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -334,9 +315,9 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     name="recipientLastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("bookings.steps.guestInfo.lastName")} *</FormLabel>
+                        <FormLabel>{t("guestInfo.recipientLastName")} *</FormLabel>
                         <FormControl>
-                          <Input placeholder={t("bookings.steps.guestInfo.lastNamePlaceholder")} {...field} />
+                          <Input placeholder={t("guestInfo.lastNamePlaceholder")} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -351,14 +332,10 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     <FormItem>
                       <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                         <Mail className="h-4 w-4" />
-                        {t("bookings.steps.guestInfo.email")} *
+                        {t("guestInfo.recipientEmail")} *
                       </FormLabel>
                       <FormControl>
-                        <Input 
-                          type="email" 
-                          placeholder={t("bookings.steps.guestInfo.emailPlaceholder")} 
-                          {...field} 
-                        />
+                        <Input type="email" placeholder={t("guestInfo.emailPlaceholder")} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -372,14 +349,10 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     <FormItem>
                       <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                         <Phone className="h-4 w-4" />
-                        {t("bookings.steps.guestInfo.phone")} *
+                        {t("guestInfo.recipientPhone")} *
                       </FormLabel>
                       <FormControl>
-                        <PhoneInput 
-                          value={field.value} 
-                          onChange={field.onChange}
-                          placeholder={t("bookings.steps.guestInfo.phonePlaceholder")}
-                        />
+                        <PhoneInput {...field} placeholder={t("guestInfo.phonePlaceholder")} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -394,13 +367,10 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                       <FormItem>
                         <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                           <Calendar className="h-4 w-4" />
-                          {t("bookings.steps.guestInfo.birthDate")} *
+                          {t("guestInfo.recipientBirthDate")} *
                         </FormLabel>
                         <FormControl>
-                          <Input 
-                            type="date" 
-                            {...field} 
-                          />
+                          <Input type="date" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -412,17 +382,17 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     name="recipientGender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("bookings.steps.guestInfo.gender")} *</FormLabel>
+                        <FormLabel>{t("guestInfo.recipientGender")} *</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={t("bookings.steps.guestInfo.genderPlaceholder")} />
+                              <SelectValue placeholder={t("guestInfo.genderPlaceholder")} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="male">{t("bookings.steps.guestInfo.genderMale")}</SelectItem>
-                            <SelectItem value="female">{t("bookings.steps.guestInfo.genderFemale")}</SelectItem>
-                            <SelectItem value="other">{t("bookings.steps.guestInfo.genderOther")}</SelectItem>
+                            <SelectItem value="male">{t("guestInfo.genderMale")}</SelectItem>
+                            <SelectItem value="female">{t("guestInfo.genderFemale")}</SelectItem>
+                            <SelectItem value="other">{t("guestInfo.genderOther")}</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -434,8 +404,8 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
             </Card>
           )}
 
-          <div className="flex justify-end">
-            <Button type="submit" size="lg" className="min-w-[120px]">
+          <div className={`flex gap-4 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+            <Button type="submit" className="flex-1">
               {t("common.continue")}
             </Button>
           </div>

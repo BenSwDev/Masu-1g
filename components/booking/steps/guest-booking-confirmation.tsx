@@ -116,15 +116,15 @@ export function GuestBookingConfirmation({
         <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
           <CheckCircle className="h-8 w-8 text-green-600" />
         </div>
-        <h1 className="text-3xl font-bold text-green-600 mb-2">{t("bookings.steps.confirmation.title")}</h1>
-        <p className="text-lg text-muted-foreground">{t("bookings.steps.confirmation.description")}</p>
+        <h1 className="text-3xl font-bold text-green-600 mb-2">{t("confirmation.title")}</h1>
+        <p className="text-lg text-muted-foreground">{t("confirmation.description")}</p>
       </div>
 
       {/* Booking Reference */}
       <Alert className="bg-green-50 border-green-200">
         <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
-          <strong>{t("bookings.steps.confirmation.bookingReference")}:</strong> {bookingResult.bookingNumber || bookingResult._id?.toString().slice(-8).toUpperCase()}
+          <strong>{t("confirmation.bookingReference")}:</strong> {bookingResult.bookingNumber || bookingResult._id?.toString().slice(-8).toUpperCase()}
         </AlertDescription>
       </Alert>
 
@@ -134,13 +134,13 @@ export function GuestBookingConfirmation({
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
               <Phone className="h-5 w-5" />
-              {t("bookings.steps.confirmation.contactInformation")}
+              {t("confirmation.contactInformation")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("bookings.steps.confirmation.recipient")}:</span>
+                <span className="text-muted-foreground">{t("confirmation.recipient")}:</span>
                 <span className="font-medium">
                   {bookingResult.recipientName || bookingResult.bookedByUserName}
                 </span>
@@ -148,36 +148,36 @@ export function GuestBookingConfirmation({
               <div className="flex justify-between">
                 <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Mail className="h-4 w-4" />
-                  {t("bookings.steps.confirmation.recipientEmail")}:
+                  {t("confirmation.recipientEmail")}:
                 </span>
                 <span className="font-medium">{bookingResult.recipientEmail || bookingResult.bookedByUserEmail}</span>
               </div>
               <div className="flex justify-between">
                 <span className={`text-muted-foreground flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                   <Phone className="h-4 w-4" />
-                  {t("bookings.steps.confirmation.recipientPhone")}:
+                  {t("confirmation.recipientPhone")}:
                 </span>
                 <span className="font-medium">{bookingResult.recipientPhone || bookingResult.bookedByUserPhone}</span>
               </div>
               {bookingResult.recipientBirthDate && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("bookings.steps.confirmation.birthDate")}:</span>
+                  <span className="text-muted-foreground">{t("confirmation.birthDate")}:</span>
                   <span className="font-medium">{formatBirthDate(bookingResult.recipientBirthDate)}</span>
                 </div>
               )}
               {bookingResult.recipientGender && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t("bookings.steps.confirmation.gender")}:</span>
+                  <span className="text-muted-foreground">{t("confirmation.gender")}:</span>
                   <span className="font-medium">
-                    {bookingResult.recipientGender === "male" ? t("bookings.steps.guestInfo.genderMale") : 
-                     bookingResult.recipientGender === "female" ? t("bookings.steps.guestInfo.genderFemale") : 
-                     t("bookings.steps.guestInfo.genderOther")}
+                    {bookingResult.recipientGender === "male" ? t("guestInfo.genderMale") : 
+                     bookingResult.recipientGender === "female" ? t("guestInfo.genderFemale") : 
+                     t("guestInfo.genderOther")}
                   </span>
                 </div>
               )}
               {(bookingResult.bookedByUserName !== bookingResult.recipientName) && (
                 <div className="mt-4 pt-4 border-t">
-                  <div className="text-sm text-muted-foreground mb-2">{t("bookings.steps.confirmation.bookerDetails")}:</div>
+                  <div className="text-sm text-muted-foreground mb-2">{t("confirmation.bookerDetails")}:</div>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span>{t("common.name")}:</span>
@@ -209,7 +209,7 @@ export function GuestBookingConfirmation({
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
               <Calendar className="h-5 w-5" />
-              {t("bookings.steps.confirmation.appointmentDetails")}
+              {t("confirmation.appointmentDetails")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -300,7 +300,7 @@ export function GuestBookingConfirmation({
         <Button asChild size="lg">
           <Link href="/">
             <Home className="mr-2 h-4 w-4" />
-            {t("bookings.steps.confirmation.backToHome")}
+                          {t("confirmation.backToHome")}
           </Link>
         </Button>
       </div>

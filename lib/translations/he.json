@@ -4009,5 +4009,142 @@
     "professionalInterface": "כניסה לממשק מטפלים",
     "partnerInterface": "כניסה לממשק שותפים",
     "adminInterface": "כניסה לממשק מנהל"
+  },
+  "bookings": {
+    "steps": {
+      "guestInfo": {
+        "title": "פרטים אישיים",
+        "description": "אנא מלא את הפרטים האישיים שלך",
+        "personalDetails": "פרטים אישיים",
+        "notes": "הערות נוספות",
+        "notesPlaceholder": "הערות או בקשות מיוחדות..."
+      },
+      "treatment": {
+        "title": "בחירת טיפול",
+        "description": "בחר את הטיפול הרצוי"
+      },
+      "scheduling": {
+        "title": "תזמון",
+        "description": "בחר תאריך ושעה"
+      },
+      "summary": {
+        "title": "סיכום",
+        "description": "סקור את פרטי ההזמנה"
+      },
+      "payment": {
+        "title": "תשלום",
+        "description": "השלם את התשלום"
+      },
+      "confirmation": {
+        "title": "אישור",
+        "description": "ההזמנה הושלמה בהצלחה"
+      }
+    },
+    "guestInformation": "פרטי האורח",
+    "bookingDetails": "פרטי ההזמנה",
+    "selectedTreatment": "הטיפול הנבחר",
+    "therapistGenderPreference": "העדפת מטפל",
+    "therapistGenderPreferenceDescription": "בחר את העדפת המין של המטפל",
+    "selectGenderPreference": "בחר העדפה",
+    "genderPreference": {
+      "any": "ללא העדפה",
+      "male": "מטפל",
+      "female": "מטפלת"
+    },
+    "therapistPreference": "העדפת מטפל",
+    "selectDate": "בחר תאריך",
+    "selectDateDescription": "בחר את התאריך הרצוי לטיפול",
+    "selectTime": "בחר שעה",
+    "availableTimesFor": "זמנים פנויים עבור {date}",
+    "selectDateFirst": "בחר תאריך תחילה",
+    "selectDateToShowTimes": "בחר תאריך כדי לראות זמנים פנויים",
+    "noAvailableTimes": "אין זמנים פנויים בתאריך זה",
+    "availableTimes": "זמנים פנויים",
+    "unavailableTimes": "זמנים תפוסים",
+    "date": "תאריך",
+    "time": "שעה",
+    "notes": "הערות",
+    "priceBreakdown": "פירוט מחיר",
+    "basePrice": "מחיר בסיס",
+    "taxes": "מסים",
+    "totalAmount": "סכום כולל",
+    "freeBooking": "הזמנה ללא תשלום",
+    "proceedToPayment": "המשך לתשלום",
+    "confirmBooking": "אשר הזמנה",
+    "priceCalculationFailed": "שגיאה בחישוב המחיר",
+    "processing": "מעבד...",
+    "orderSummary": "סיכום הזמנה",
+    "noPaymentRequired": "אין צורך בתשלום",
+    "freeBookingMessage": "ההזמנה שלך אושרה ללא תשלום",
+    "success": {
+      "title": "הזמנה הושלמה בהצלחה!",
+      "subtitle": "תודה על ההזמנה. קיבלת אישור באימייל.",
+      "bookingCreated": "הזמנה נוצרה בהצלחה",
+      "bookingCreatedDescription": "תקבל אישור באימייל בקרוב"
+    },
+    "errors": {
+      "missingGuestInfo": "חסרים פרטים אישיים",
+      "completeGuestInfo": "אנא השלם את כל הפרטים האישיים",
+      "incompleteBookingDetails": "פרטי הזמנה חסרים",
+      "completeAllFields": "אנא השלם את כל השדות הנדרשים",
+      "unexpectedError": "אירעה שגיאה לא צפויה",
+      "tryAgain": "אנא נסה שוב מאוחר יותר",
+      "bookingNotFound": "הזמנה לא נמצאה",
+      "bookingNotFoundDescription": "אירעה שגיאה בטעינת פרטי ההזמנה",
+      "fetchTimeSlotsFailedTitle": "שגיאה בטעינת זמנים פנויים",
+      "calculatePriceFailedTitle": "שגיאה בחישוב המחיר",
+      "bookingFailedTitle": "שגיאה ביצירת ההזמנה"
+    },
+    "bookingReference": "מספר הזמנה",
+    "contactInformation": "פרטי קשר",
+    "appointmentDetails": "פרטי התור",
+    "totalPaid": "סך ששולם",
+    "importantInformation": "מידע חשוב",
+    "confirmationEmail": "תקבל אימייל עם פרטי ההזמנה",
+    "arriveEarly": "מומלץ להגיע 10 דקות לפני השעה",
+    "cancellationPolicy": "ניתן לבטל עד 24 שעות לפני הטיפול",
+    "contactSupport": "לשינויים צור קשר עם השירות",
+    "bookAnother": "הזמן טיפול נוסף"
+  },
+  "treatments": {
+    "selectCategory": "בחר קטגוריה",
+    "selectCategoryDescription": "בחר את קטגוריית הטיפול",
+    "selectTreatment": "בחר טיפול",
+    "selectTreatmentDescription": "בחר את הטיפול הרצוי",
+    "selectDuration": "בחר משך זמן",
+    "selectDurationDescription": "בחר את משך הטיפול",
+    "treatment": "טיפול",
+    "category": "קטגוריה",
+    "duration": "משך זמן",
+    "durationBased": "בהתאם למשך זמן",
+    "standardDuration": "משך סטנדרטי"
+  },
+  "payments": {
+    "paymentDetails": "פרטי תשלום",
+    "securePaymentDescription": "תשלום מאובטח באמצעות SSL",
+    "cardholderName": "שם בעל הכרטיס",
+    "cardholderNamePlaceholder": "שם מלא כפי שמופיע על הכרטיס",
+    "cardNumber": "מספר כרטיס אשראי",
+    "month": "חודש",
+    "year": "שנה",
+    "securePaymentNotice": "התשלום מוגן באמצעות הצפנת SSL",
+    "encryptedPayment": "תשלום מוצפן ומאובטח",
+    "payNow": "שלם כעת"
+  },
+  "common": {
+    "firstName": "שם פרטי",
+    "lastName": "שם משפחה",
+    "email": "אימייל",
+    "phone": "טלפון",
+    "name": "שם",
+    "continue": "המשך",
+    "back": "חזור",
+    "loading": "טוען...",
+    "contactUs": "צור קשר",
+    "hour": "שעה",
+    "hours": "שעות",
+    "minute": "דקה",
+    "minutes": "דקות",
+    "and": "ו"
   }
 }

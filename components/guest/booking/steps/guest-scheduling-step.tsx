@@ -1,0 +1,273 @@
+"use client"
+
+import { useState, useMemo } from "react"
+import { useTranslation } from "@/lib/translations/i18n"
+import { Button } from "@/components/common/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Calendar } from "@/components/common/ui/calendar"
+import { Skeleton } from "@/components/common/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { Calendar as CalendarIcon, Clock, Info } from "lucide-react"
+import { format } from "date-fns"
+import { he } from "date-fns/locale"
+import type { BookingInitialData, SelectedBookingOptions, TimeSlot } from "@/types/booking"
+
+interface GuestSchedulingStepProps {
+  initialData: BookingInitialData
+  bookingOptions: Partial<SelectedBookingOptions>
+  setBookingOptions: React.Dispatch<React.SetStateAction<Partial<SelectedBookingOptions>>>
+  timeSlots: TimeSlot[]
+  isTimeSlotsLoading: boolean
+  workingHoursNote?: string
+  onNext: () => void
+  onPrev: () => void
+}
+
+export function GuestSchedulingStep({
+  initialData,
+  bookingOptions,
+  setBookingOptions,
+  timeSlots,
+  isTimeSlotsLoading,
+  workingHoursNote,
+  onNext,
+  onPrev,
+}: GuestSchedulingStepProps) {
+  const { t, language } = useTranslation()
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(bookingOptions.bookingDate)
+
+  const selectedTreatment = useMemo(() => {
+    return (initialData?.activeTreatments || []).find(
+      (t) => t._id.toString() === bookingOptions.selectedTreatmentId
+    )
+  }, [initialData?.activeTreatments, bookingOptions.selectedTreatmentId])
+
+  const selectedDuration = useMemo(() => {
+    if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {
+      return selectedTreatment.durations.find((d) => d._id.toString() === bookingOptions.selectedDurationId)
+    }
+    return null
+  }, [selectedTreatment, bookingOptions.selectedDurationId])
+
+  const availableTimeSlots = useMemo(() => {
+    return timeSlots.filter(slot => slot.isAvailable)
+  }, [timeSlots])
+
+  const unavailableTimeSlots = useMemo(() => {
+    return timeSlots.filter(slot => !slot.isAvailable)
+  }, [timeSlots])
+
+  const canProceed = useMemo(() => {
+    return selectedDate && bookingOptions.bookingTime
+  }, [selectedDate, bookingOptions.bookingTime])
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date)
+      setBookingOptions((prev) => ({
+        ...prev,
+        bookingDate: date,
+        bookingTime: undefined, // Reset time when date changes
+      }))
+    }
+  }
+
+  const handleTimeSelect = (time: string) => {
+    setBookingOptions((prev) => ({
+      ...prev,
+      bookingTime: time,
+    }))
+  }
+
+  const formatDateString = (date: Date) => {
+    return format(date, "EEEE, d MMMM yyyy", { locale: language === "he" ? he : undefined })
+  }
+
+  const getTreatmentDurationText = () => {
+    if (selectedTreatment?.pricingType === "fixed") {
+      return selectedTreatment.defaultDuration 
+        ? `${selectedTreatment.defaultDuration} ${t("common.minutes")}`
+        : t("treatments.standardDuration")
+    }
+    if (selectedDuration) {
+      const hours = Math.floor((selectedDuration.minutes || 0) / 60)
+      const mins = (selectedDuration.minutes || 0) % 60
+      let durationString = ""
+      if (hours > 0) {
+        durationString += `${hours} ${t(hours === 1 ? "common.hour" : "common.hours")}`
+      }
+      if (mins > 0) {
+        if (hours > 0) durationString += ` ${t("common.and")} `
+        durationString += `${mins} ${t(mins === 1 ? "common.minute" : "common.minutes")}`
+      }
+      return durationString || `${selectedDuration.minutes} ${t("common.minutes")}`
+    }
+    return ""
+  }
+
+  // Disable past dates and possibly weekends based on business rules
+  const isDateDisabled = (date: Date) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return date < today
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <CalendarIcon className="mx-auto h-12 w-12 text-primary mb-4" />
+        <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.scheduling.title")}</h2>
+        <p className="text-muted-foreground mt-2">{t("bookings.steps.scheduling.description")}</p>
+      </div>
+
+      {/* Treatment Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("bookings.selectedTreatment")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="font-medium">{t("treatments.treatment")}:</span>
+              <span>{selectedTreatment?.name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">{t("treatments.duration")}:</span>
+              <span>{getTreatmentDurationText()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-medium">{t("bookings.therapistPreference")}:</span>
+              <span>
+                {bookingOptions.therapistGenderPreference === "any" && t("bookings.genderPreference.any")}
+                {bookingOptions.therapistGenderPreference === "male" && t("bookings.genderPreference.male")}
+                {bookingOptions.therapistGenderPreference === "female" && t("bookings.genderPreference.female")}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Date Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5" />
+              {t("bookings.selectDate")}
+            </CardTitle>
+            <CardDescription>{t("bookings.selectDateDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              disabled={isDateDisabled}
+              className="rounded-md border"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Time Selection */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              {t("bookings.selectTime")}
+            </CardTitle>
+            <CardDescription>
+              {selectedDate 
+                ? t("bookings.availableTimesFor", { date: formatDateString(selectedDate) })
+                : t("bookings.selectDateFirst")
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!selectedDate ? (
+              <div className="text-center text-muted-foreground py-8">
+                <Clock className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                <p>{t("bookings.selectDateToShowTimes")}</p>
+              </div>
+            ) : isTimeSlotsLoading ? (
+              <div className="space-y-2">
+                {[...Array(6)].map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : availableTimeSlots.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                <Clock className="mx-auto h-8 w-8 mb-2 opacity-50" />
+                <p>{t("bookings.noAvailableTimes")}</p>
+                {workingHoursNote && (
+                  <p className="text-sm mt-2">{workingHoursNote}</p>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Available Times */}
+                <div>
+                  <h4 className="text-sm font-medium mb-3 text-green-700">
+                    {t("bookings.availableTimes")} ({availableTimeSlots.length})
+                  </h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableTimeSlots.map((slot) => (
+                      <Button
+                        key={slot.time}
+                        variant={bookingOptions.bookingTime === slot.time ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handleTimeSelect(slot.time)}
+                        className="text-xs"
+                      >
+                        {slot.time}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Unavailable Times */}
+                {unavailableTimeSlots.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-3 text-gray-500">
+                      {t("bookings.unavailableTimes")} ({unavailableTimeSlots.length})
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      {unavailableTimeSlots.map((slot) => (
+                        <Button
+                          key={slot.time}
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          className="text-xs opacity-50"
+                        >
+                          {slot.time}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Working Hours Note */}
+                {workingHoursNote && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>{workingHoursNote}</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={onPrev}>
+          {t("common.back")}
+        </Button>
+        <Button onClick={onNext} disabled={!canProceed}>
+          {t("common.continue")}
+        </Button>
+      </div>
+    </div>
+  )
+} 

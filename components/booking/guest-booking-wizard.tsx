@@ -214,7 +214,10 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1))
 
   const handleFinalSubmit = async (skipPaymentUI = false) => {
+    console.log("🔄 Starting guest booking submission...")
+    
     if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.phone) {
+      console.log("❌ Missing guest info:", { guestInfo })
       toast({
         variant: "destructive",
         title: t("bookings.errors.missingGuestInfo"),
@@ -228,6 +231,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       !bookingOptions.bookingDate ||
       !bookingOptions.bookingTime
     ) {
+      console.log("❌ Missing booking options:", { bookingOptions })
       toast({
         variant: "destructive",
         title: t("bookings.errors.incompleteBookingDetails"),
@@ -286,8 +290,15 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           : guestInfo.gender,
       } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
 
+      console.log("📦 Payload prepared:", JSON.stringify(payload, null, 2))
+      console.log("🚀 Calling createGuestBooking...")
+
       const result = await createGuestBooking(payload)
+      
+      console.log("📨 Server response:", result)
+      
       if (result.success && result.booking) {
+        console.log("✅ Booking created successfully:", result.booking)
         setBookingResult(result.booking)
         setCurrentStep(CONFIRMATION_STEP_NUMBER)
         toast({
@@ -295,6 +306,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           description: t("bookings.success.bookingCreatedDescription"),
         })
       } else {
+        console.log("❌ Booking failed:", result)
         toast({
           variant: "destructive",
           title: t(result.error || "bookings.errors.bookingFailedTitle") || result.error || "Booking failed",
@@ -304,7 +316,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
         })
       }
     } catch (error) {
-      console.error("Booking submission error:", error)
+      console.error("💥 Booking submission error:", error)
       toast({
         variant: "destructive",
         title: t("bookings.errors.unexpectedError"),

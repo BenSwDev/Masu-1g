@@ -1958,11 +1958,17 @@ export async function updateBookingByAdmin(
 export async function createGuestBooking(
   payload: unknown,
 ): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
+  console.log("🔍 createGuestBooking called with payload:", JSON.stringify(payload, null, 2))
+  
   const validationResult = CreateBookingPayloadSchema.safeParse(payload)
   if (!validationResult.success) {
+    console.log("❌ Validation failed:", validationResult.error.issues)
     logger.warn("Invalid payload for createGuestBooking:", { issues: validationResult.error.issues })
     return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
   }
+  
+  console.log("✅ Validation passed")
+  
   const validatedPayload = validationResult.data as CreateBookingPayloadSchemaType & {
     priceDetails: ClientCalculatedPriceDetails
     guestInfo?: {
@@ -1982,13 +1988,17 @@ export async function createGuestBooking(
   let updatedVoucherDetails: IGiftVoucher | null = null
 
   try {
+    console.log("🔗 Connecting to database...")
     await dbConnect()
+    console.log("✅ Database connected")
 
     // For guest bookings, use provided guest info instead of fetching user
     const guestInfo = validatedPayload.guestInfo
     if (!guestInfo || !guestInfo.name || !guestInfo.email || !guestInfo.phone) {
+      console.log("❌ Missing or invalid guest info:", guestInfo)
       return { success: false, error: "bookings.errors.guestInfoRequired" }
     }
+    console.log("✅ Guest info validated:", guestInfo)
 
     let bookingAddressSnapshot: IBookingAddressSnapshot | undefined
 
@@ -1999,15 +2009,21 @@ export async function createGuestBooking(
         )
       }
       bookingAddressSnapshot = validatedPayload.customAddressDetails
+      console.log("✅ Address details processed:", bookingAddressSnapshot)
     } else {
+      console.log("❌ No address provided for guest booking")
       logger.warn("No address provided for guest booking")
       return { success: false, error: "bookings.errors.addressRequired" }
     }
 
+    console.log("🔄 Starting database transaction...")
     await mongooseDbSession.withTransaction(async () => {
+      console.log("📊 Getting next booking number...")
       const nextBookingNum = await getNextSequenceValue("bookingNumber")
       const bookingNumber = nextBookingNum.toString().padStart(6, "0")
+      console.log("📋 Booking number generated:", bookingNumber)
 
+      console.log("🏗️ Creating new booking object...")
       const newBooking = new Booking({
         ...validatedPayload,
         userId: null, // Guest booking - no user association
@@ -2058,11 +2074,14 @@ export async function createGuestBooking(
         professionalId: null,
       })
 
+      console.log("💾 Saving booking to database...")
       await newBooking.save({ session: mongooseDbSession })
+      console.log("✅ Booking saved successfully with ID:", newBooking._id)
       bookingResult = newBooking
 
       // Handle gift voucher redemption for guest bookings
       if (validatedPayload.priceDetails.appliedGiftVoucherId && validatedPayload.priceDetails.voucherAppliedAmount > 0) {
+        console.log("🎁 Processing gift voucher redemption...")
         const voucher = await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(mongooseDbSession)
         if (!voucher || !voucher.isActive) throw new Error("bookings.errors.voucherRedemptionFailed")
         
@@ -2094,15 +2113,18 @@ export async function createGuestBooking(
         })
         
         await voucher.save({ session: mongooseDbSession })
+        console.log("✅ Gift voucher updated")
         updatedVoucherDetails = voucher
       }
 
       // Handle coupon application for guest bookings
       if (validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
+        console.log("🏷️ Processing coupon application...")
         const coupon = await Coupon.findById(validatedPayload.priceDetails.appliedCouponId).session(mongooseDbSession)
         if (!coupon || !coupon.isActive) throw new Error("bookings.errors.couponApplyFailed")
         coupon.timesUsed += 1
         await coupon.save({ session: mongooseDbSession })
+        console.log("✅ Coupon updated")
       }
 
       if (bookingResult) {
@@ -2111,10 +2133,13 @@ export async function createGuestBooking(
         }
         bookingResult.priceDetails = newBooking.priceDetails
         await bookingResult.save({ session: mongooseDbSession })
+        console.log("✅ Final booking updates saved")
       }
     })
+    console.log("✅ Database transaction completed successfully")
 
     if (bookingResult) {
+      console.log("🔄 Revalidating paths...")
       // Revalidate relevant paths
       revalidatePath("/dashboard/admin/bookings")
 
@@ -2125,6 +2150,7 @@ export async function createGuestBooking(
 
       // Send notification to guest (email only since no user preferences)
       try {
+        console.log("📧 Sending notification email...")
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
         if (treatment) {
@@ -2144,10 +2170,12 @@ export async function createGuestBooking(
             language: "he", // Default to Hebrew for guests
           }
           await notificationManager.sendNotification(emailRecipient, bookingSuccessData)
+          console.log("✅ Notification email sent")
 
           logger.info(`Guest booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
         }
       } catch (notificationError) {
+        console.log("⚠️ Failed to send notification:", notificationError)
         logger.error("Failed to send notification for guest booking:", {
           bookingId: finalBookingObject._id.toString(),
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
@@ -2160,12 +2188,15 @@ export async function createGuestBooking(
         guestEmail: guestInfo.email,
       })
 
+      console.log("🎉 Guest booking process completed successfully!")
       return { success: true, booking: finalBookingObject }
     }
 
+    console.log("❌ No booking result returned from transaction")
     return { success: false, error: "bookings.errors.creationFailed" }
   } catch (error) {
     await mongooseDbSession.abortTransaction()
+    console.error("💥 Error creating guest booking:", error)
     logger.error("Error creating guest booking:", {
       error: error instanceof Error ? error.message : String(error),
       guestInfo: validatedPayload.guestInfo,
@@ -2173,6 +2204,7 @@ export async function createGuestBooking(
     return { success: false, error: error instanceof Error ? error.message : "bookings.errors.creationFailed" }
   } finally {
     await mongooseDbSession.endSession()
+    console.log("🔚 Database session ended")
   }
 }
 

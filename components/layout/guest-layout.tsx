@@ -39,9 +39,9 @@ export function GuestLayout({ children }: GuestLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen max-h-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <header className="flex-shrink-0 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 z-50">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             {/* Logo and mobile menu toggle */}
@@ -130,15 +130,15 @@ export function GuestLayout({ children }: GuestLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
+        <div className="container mx-auto px-4 py-8 max-w-6xl min-h-full">
           {children}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-white">
-        <div className="container mx-auto px-4 py-6">
+      <footer className="flex-shrink-0 border-t bg-white">
+        <div className="container mx-auto px-4 py-4">
           <div className="text-center text-sm text-gray-600">{getFooterText()}</div>
         </div>
       </footer>

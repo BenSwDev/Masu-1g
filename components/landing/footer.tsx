@@ -18,8 +18,8 @@ export function LandingFooter() {
   }
 
   return (
-    <footer className="border-t bg-white">
-      <div className="container mx-auto px-4 py-6">
+    <footer className="flex-shrink-0 border-t bg-white">
+      <div className="container mx-auto px-4 py-4">
         <div className="text-center text-sm text-gray-600">{getFooterText()}</div>
       </div>
     </footer>

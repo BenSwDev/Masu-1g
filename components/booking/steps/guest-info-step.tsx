@@ -52,7 +52,7 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
     birthDate: z.string().optional(),
     gender: z.enum(["male", "female", "other"]).optional(),
     notes: z.string().optional(),
-    isBookingForSomeoneElse: z.boolean().default(false),
+    isBookingForSomeoneElse: z.boolean().optional().default(false),
     recipientFirstName: z.string().optional(),
     recipientLastName: z.string().optional(),
     recipientEmail: z.string().optional(),

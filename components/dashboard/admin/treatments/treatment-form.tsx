@@ -45,10 +45,11 @@ type TreatmentFormValues = {
     professionalPrice: number
     isActive: boolean
   }[]
+  allowTherapistGenderSelection: boolean
 }
 
 export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormProps) {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [pricingType, setPricingType] = useState(treatment?.pricingType || "fixed")
@@ -74,6 +75,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
         isActive: z.boolean()
       })
     ).optional(),
+    allowTherapistGenderSelection: z.boolean(),
   }) satisfies z.ZodType<TreatmentFormValues>
 
   // Initialize form with existing treatment data or defaults
@@ -88,6 +90,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
       fixedPrice: treatment?.fixedPrice || 0,
       fixedProfessionalPrice: treatment?.fixedProfessionalPrice || 0,
       durations: treatment?.durations || [{ minutes: 60, price: 0, professionalPrice: 0, isActive: true }],
+      allowTherapistGenderSelection: treatment?.allowTherapistGenderSelection ?? false,
     },
   })
 
@@ -139,23 +142,23 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
   }
 
   return (
-    <Card>
+    <Card className="max-w-4xl mx-auto">
       <CardContent className="p-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Left column */}
               <div className="space-y-6">
-                <div className="border rounded-md p-4 space-y-4">
-                  <h3 className="text-base font-medium mb-2">{t("treatments.basicInfo")}</h3>
+                <div className="border rounded-lg p-6 space-y-6 bg-card">
+                  <h3 className="text-lg font-semibold">{t("treatments.basicInfo")}</h3>
                   <FormField
                     control={form.control}
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("treatments.fields.name")}</FormLabel>
+                        <FormLabel className="text-base">{t("treatments.fields.name")}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} className="h-10" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -167,10 +170,10 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("treatments.fields.category")}</FormLabel>
+                        <FormLabel className="text-base">{t("treatments.fields.category")}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-10">
                               <SelectValue placeholder={t("treatments.selectCategory")} />
                             </SelectTrigger>
                           </FormControl>
@@ -189,43 +192,61 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("treatments.fields.description")}</FormLabel>
+                        <FormLabel className="text-base">{t("treatments.fields.description")}</FormLabel>
                         <FormControl>
-                          <Textarea {...field} rows={3} />
+                          <Textarea {...field} rows={4} className="resize-none" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="isActive"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                        <div className="space-y-0.5">
-                          <FormLabel>{t("treatments.fields.isActive")}</FormLabel>
-                          <FormDescription className="text-xs">{t("treatments.activeDescription")}</FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch checked={field.value} onCheckedChange={field.onChange} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="isActive"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">{t("treatments.fields.isActive")}</FormLabel>
+                            <FormDescription className="text-sm">{t("treatments.activeDescription")}</FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="allowTherapistGenderSelection"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">{t("treatments.fields.allowTherapistGenderSelection")}</FormLabel>
+                            <FormDescription className="text-sm">{t("treatments.allowTherapistGenderSelectionDescription")}</FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Right column */}
               <div className="space-y-6">
-                <div className="border rounded-md p-4 space-y-4">
-                  <h3 className="text-base font-medium mb-2">{t("treatments.pricing")}</h3>
+                <div className="border rounded-lg p-6 space-y-6 bg-card">
+                  <h3 className="text-lg font-semibold">{t("treatments.pricing")}</h3>
                   <FormField
                     control={form.control}
                     name="pricingType"
                     render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormLabel>{t("treatments.fields.pricingType")}</FormLabel>
+                      <FormItem className="space-y-4">
+                        <FormLabel className="text-base">{t("treatments.fields.pricingType")}</FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={(value) => {
@@ -233,15 +254,15 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                               setPricingType(value)
                             }}
                             defaultValue={field.value}
-                            className="flex space-x-4"
+                            className="flex flex-col space-y-3"
                           >
-                            <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormItem className="flex items-center space-x-3 space-y-0 rounded-lg border p-4">
                               <FormControl>
                                 <RadioGroupItem value="fixed" />
                               </FormControl>
                               <FormLabel className="font-normal">{t("treatments.pricingTypes.fixed")}</FormLabel>
                             </FormItem>
-                            <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormItem className="flex items-center space-x-3 space-y-0 rounded-lg border p-4">
                               <FormControl>
                                 <RadioGroupItem value="duration_based" />
                               </FormControl>
@@ -263,13 +284,14 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                         name="fixedPrice"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("treatments.fields.price")}</FormLabel>
+                            <FormLabel className="text-base">{t("treatments.fields.price")}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
                                 min="0"
                                 {...field}
                                 onChange={(e) => field.onChange(Number(e.target.value))}
+                                className="h-10"
                               />
                             </FormControl>
                             <FormMessage />
@@ -281,13 +303,14 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                         name="fixedProfessionalPrice"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("treatments.fields.professionalPrice")}</FormLabel>
+                            <FormLabel className="text-base">{t("treatments.fields.professionalPrice")}</FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
                                 min="0"
                                 {...field}
                                 onChange={(e) => field.onChange(Number(e.target.value))}
+                                className="h-10"
                               />
                             </FormControl>
                             <FormMessage />
@@ -296,19 +319,19 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                       />
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <h4 className="text-sm font-medium">{t("treatments.fields.durations")}</h4>
-                        <Button type="button" variant="outline" size="sm" onClick={addDuration}>
-                          <PlusIcon className="h-4 w-4 mr-1" />
+                        <h4 className="text-base font-medium">{t("treatments.fields.durations")}</h4>
+                        <Button type="button" variant="outline" size="sm" onClick={addDuration} className="h-9">
+                          <PlusIcon className="h-4 w-4 mr-2" />
                           {t("treatments.addDuration")}
                         </Button>
                       </div>
 
                       {durations.map((duration: { minutes: number; price: number; professionalPrice: number; isActive: boolean }, index: number) => (
-                        <div key={index} className="border rounded-md p-3 space-y-3">
+                        <div key={index} className="border rounded-lg p-4 space-y-4">
                           <div className="flex justify-between items-center">
-                            <h4 className="text-sm font-medium">
+                            <h4 className="text-base font-medium">
                               {t("treatments.duration")} #{index + 1}
                             </h4>
                             <Button
@@ -317,19 +340,20 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                               size="sm"
                               onClick={() => removeDuration(index)}
                               disabled={durations.length <= 1}
+                              className="h-8 w-8 p-0"
                             >
                               <MinusIcon className="h-4 w-4" />
                             </Button>
                           </div>
 
-                          <div className="grid grid-cols-4 gap-3">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                              <FormLabel className="text-xs">{t("treatments.fields.minutes")}</FormLabel>
+                              <FormLabel className="text-sm">{t("treatments.fields.minutes")}</FormLabel>
                               <Select
                                 value={duration.minutes.toString()}
                                 onValueChange={(value) => updateDuration(index, "minutes", Number(value))}
                               >
-                                <SelectTrigger className="h-8">
+                                <SelectTrigger className="h-9">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -341,32 +365,32 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                               </Select>
                             </div>
                             <div>
-                              <FormLabel className="text-xs">{t("treatments.fields.price")}</FormLabel>
+                              <FormLabel className="text-sm">{t("treatments.fields.price")}</FormLabel>
                               <Input
                                 type="number"
                                 min="0"
                                 value={duration.price}
                                 onChange={(e) => updateDuration(index, "price", Number(e.target.value))}
-                                className="h-8"
+                                className="h-9"
                               />
                             </div>
                             <div>
-                              <FormLabel className="text-xs">{t("treatments.fields.professionalPrice")}</FormLabel>
+                              <FormLabel className="text-sm">{t("treatments.fields.professionalPrice")}</FormLabel>
                               <Input
                                 type="number"
                                 min="0"
                                 value={duration.professionalPrice}
                                 onChange={(e) => updateDuration(index, "professionalPrice", Number(e.target.value))}
-                                className="h-8"
+                                className="h-9"
                               />
                             </div>
-                            <div>
-                              <FormLabel className="text-xs">{t("treatments.fields.isActive")}</FormLabel>
-                              <Switch
-                                checked={duration.isActive}
-                                onCheckedChange={(checked: boolean) => updateDuration(index, "isActive", checked ? 1 : 0)}
-                              />
-                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <FormLabel className="text-sm">{t("treatments.fields.isActive")}</FormLabel>
+                            <Switch
+                              checked={duration.isActive}
+                              onCheckedChange={(checked: boolean) => updateDuration(index, "isActive", checked ? 1 : 0)}
+                            />
                           </div>
                         </div>
                       ))}
@@ -376,11 +400,11 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
               </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting} className="h-10">
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting} className="h-10">
                 {isSubmitting ? t("common.loading") : treatment ? t("common.save") : t("common.create")}
               </Button>
             </div>

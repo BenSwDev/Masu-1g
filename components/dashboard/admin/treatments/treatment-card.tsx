@@ -32,7 +32,7 @@ interface TreatmentCardProps {
 }
 
 export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardProps) {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -108,37 +108,37 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
 
   return (
     <>
-      <Card>
+      <Card className="transition-all duration-200 hover:shadow-lg">
         <CardHeader className="pb-2">
           <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-lg">{treatment.name}</CardTitle>
-              <CardDescription className="mt-1">{t(`treatments.categories.${treatment.category}`)}</CardDescription>
+            <div className="space-y-1">
+              <CardTitle className="text-lg font-semibold">{treatment.name}</CardTitle>
+              <CardDescription className="text-sm">{t(`treatments.categories.${treatment.category}`)}</CardDescription>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge variant={treatment.isActive ? "default" : "outline"}>
+              <Badge variant={treatment.isActive ? "default" : "outline"} className="capitalize">
                 {treatment.isActive ? t("common.active") : t("common.inactive")}
               </Badge>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" disabled={isLoading}>
+                  <Button variant="ghost" size="icon" disabled={isLoading} className="hover:bg-muted">
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={onEdit}>
+                <DropdownMenuContent align={dir === 'rtl' ? 'start' : 'end'} className="w-48">
+                  <DropdownMenuItem onClick={onEdit} className="cursor-pointer">
                     <Edit className="h-4 w-4 mr-2" />
                     {t("common.edit")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleToggleStatus}>
+                  <DropdownMenuItem onClick={handleToggleStatus} className="cursor-pointer">
                     <Power className="h-4 w-4 mr-2" />
                     {treatment.isActive ? t("common.deactivate") : t("common.activate")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleDuplicate}>
+                  <DropdownMenuItem onClick={handleDuplicate} className="cursor-pointer">
                     <Copy className="h-4 w-4 mr-2" />
                     {t("common.duplicate")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-600">
+                  <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-destructive cursor-pointer">
                     <Trash className="h-4 w-4 mr-2" />
                     {t("common.delete")}
                   </DropdownMenuItem>
@@ -147,24 +147,26 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {treatment.description && <p className="text-sm text-muted-foreground mb-4">{treatment.description}</p>}
+        <CardContent className="pt-4">
+          {treatment.description && (
+            <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{treatment.description}</p>
+          )}
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="text-sm font-medium">{t("treatments.pricing")}:</div>
             {treatment.pricingType === "fixed" ? (
-              <div className="flex justify-between text-sm">
-                <span>{t("treatments.price")}</span>
+              <div className="flex justify-between text-sm items-center">
+                <span className="text-muted-foreground">{t("treatments.price")}</span>
                 <span className="font-medium">{formatPrice(treatment.fixedPrice || 0)}</span>
               </div>
             ) : (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {treatment.durations?.map((duration: { minutes: number; price: number; professionalPrice: number; isActive: boolean }) => (
-                  <div key={duration.minutes} className="flex justify-between text-sm">
-                    <span>
+                  <div key={duration.minutes} className="flex justify-between text-sm items-center">
+                    <span className="text-muted-foreground">
                       {duration.minutes} {t("treatments.minutes")}
                       {!duration.isActive && (
-                        <Badge variant="outline" className="ml-2">
+                        <Badge variant="outline" className="ml-2 text-xs">
                           {t("common.inactive")}
                         </Badge>
                       )}
@@ -176,9 +178,9 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
             )}
           </div>
         </CardContent>
-        <CardFooter className="pt-0">
+        <CardFooter className="pt-4">
           <div className="w-full flex justify-end">
-            <Button variant="outline" size="sm" onClick={onEdit}>
+            <Button variant="outline" size="sm" onClick={onEdit} className="hover:bg-muted">
               {t("common.edit")}
             </Button>
           </div>
@@ -186,14 +188,14 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
       </Card>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>{t("treatments.deleteConfirm")}</AlertDialogTitle>
             <AlertDialogDescription>{t("treatments.deleteConfirmDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>{t("common.cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={isLoading} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction onClick={handleDelete} disabled={isLoading} className="bg-destructive hover:bg-destructive/90">
               {isLoading ? t("common.loading") : t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

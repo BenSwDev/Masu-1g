@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/common/ui/skeleton"
 import { useToast } from "@/components/common/ui/use-toast"
 
 export function TreatmentsClient() {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [isAddingTreatment, setIsAddingTreatment] = useState(false)
   const [editingTreatment, setEditingTreatment] = useState<any>(null)
@@ -87,29 +87,29 @@ export function TreatmentsClient() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        <h1 className="text-2xl font-bold mb-4 sm:mb-0">{t("treatments.title")}</h1>
-        <Button onClick={() => setIsAddingTreatment(true)}>
+    <div className="container mx-auto p-4" dir={dir}>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+        <h1 className="text-3xl font-bold mb-4 sm:mb-0">{t("treatments.title")}</h1>
+        <Button onClick={() => setIsAddingTreatment(true)} className="w-full sm:w-auto">
           <PlusIcon className="h-4 w-4 mr-2" />
           {t("treatments.addNew")}
         </Button>
       </div>
 
-      <div className="mb-6">
-        <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="mb-8">
+        <div className="relative max-w-md">
+          <SearchIcon className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
           <Input
             placeholder={t("treatments.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} w-full`}
           />
         </div>
       </div>
 
-      <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-6">
-        <TabsList className="mb-4 flex flex-wrap">
+      <Tabs value={activeCategory} onValueChange={setActiveCategory} className="mb-8">
+        <TabsList className="mb-4 flex flex-wrap gap-2">
           {categories.map((category) => (
             <TabsTrigger key={category} value={category} className="capitalize">
               {category === "all" ? t("common.all") : t(`treatments.categories.${category}`)}
@@ -119,9 +119,9 @@ export function TreatmentsClient() {
       </Tabs>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i}>
+            <Card key={i} className="animate-pulse">
               <CardContent className="p-6">
                 <Skeleton className="h-6 w-3/4 mb-4" />
                 <Skeleton className="h-4 w-1/2 mb-2" />
@@ -136,19 +136,19 @@ export function TreatmentsClient() {
           ))}
         </div>
       ) : isError ? (
-        <Card>
+        <Card className="border-destructive">
           <CardContent className="p-6">
-            <p className="text-center text-red-500">{t("common.error")}</p>
+            <p className="text-center text-destructive">{t("common.error")}</p>
           </CardContent>
         </Card>
       ) : filteredTreatments.length === 0 ? (
-        <Card>
+        <Card className="border-muted">
           <CardContent className="p-6">
-            <p className="text-center">{t("treatments.noTreatments")}</p>
+            <p className="text-center text-muted-foreground">{t("treatments.noTreatments")}</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTreatments.map((treatment) => (
             <TreatmentCard
               key={treatment._id}

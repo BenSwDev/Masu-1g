@@ -75,6 +75,7 @@ export interface CustomerSummary {
   activeSubscriptions: number
   activeVouchers: number
   lastActivity: Date
+  userType?: 'guest' | 'member'
   statistics: {
     completedBookings: number
     cancelledBookings: number

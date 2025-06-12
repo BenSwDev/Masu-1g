@@ -5,6 +5,7 @@ export enum UserRole {
   PROFESSIONAL = "professional",
   PARTNER = "partner",
   ADMIN = "admin",
+  GUEST = "guest",
 }
 
 // Define interfaces for preferences

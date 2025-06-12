@@ -344,7 +344,7 @@
       "cancelledByAdmin": "בוטל על ידי המנהל",
       "noShow": "לא הגיע"
     },
-    "statusFilter": "סינון לפי סטטוס",
+    "statusFilter": "סנן לפי סטטוס",
     "street": "רחוב",
     "subscriptionName": "שם מינוי",
     "subtitle": "הצגת כל ההזמנות במערכת עם יכולות עריכה ומעקב",
@@ -1649,6 +1649,8 @@
         "confirmed_short": "מאושר",
         "no_show": "לא הופעת",
         "no_show_short": "לא הופיע",
+        "abandoned_pending_payment": "ננטש - ממתין לתשלום",
+        "abandoned_pending_payment_short": "ננטש",
         "pending_professional_assignment": "ממתין לשיבוץ מטפל",
         "pending_professional_assignment_short": "ממתין להקצאה",
         "professional_en_route": "מטפל בדרך",

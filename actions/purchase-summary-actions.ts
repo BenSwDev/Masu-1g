@@ -349,7 +349,8 @@ export async function getCustomerSummary(customerId: string): Promise<{
 export async function getAllCustomers(
   page = 1,
   limit = 20,
-  search?: string
+  search?: string,
+  userType?: 'all' | 'guests' | 'members'
 ): Promise<{
   success: boolean
   data?: {
@@ -372,7 +373,17 @@ export async function getAllCustomers(
     }
 
     const skip = (page - 1) * limit
-    let userQuery: any = { roles: { $in: ['member'] } }
+    let userQuery: any = {}
+
+    // Filter by user type
+    if (userType === 'guests') {
+      userQuery.roles = { $in: ['guest'] }
+    } else if (userType === 'members') {
+      userQuery.roles = { $in: ['member'] }
+    } else {
+      // Default: show all customers (members and guests)
+      userQuery.roles = { $in: ['member', 'guest'] }
+    }
 
     if (search) {
       userQuery.$or = [
@@ -394,7 +405,12 @@ export async function getAllCustomers(
     for (const user of users) {
       const summaryResult = await getCustomerSummary(user._id.toString())
       if (summaryResult.success && summaryResult.data) {
-        customers.push(summaryResult.data)
+        // Add user type information
+        const customerWithType = {
+          ...summaryResult.data,
+          userType: user.roles.includes('guest') ? 'guest' : 'member'
+        }
+        customers.push(customerWithType as CustomerSummary)
       }
     }
 

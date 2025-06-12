@@ -8,7 +8,8 @@ import { Separator } from "@/components/common/ui/separator"
 import { Badge } from "@/components/common/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
-import { Loader2, CreditCard, CheckCircle, XCircle, Tag, AlertTriangle } from "lucide-react"
+import { Checkbox } from "@/components/common/ui/checkbox"
+import { Loader2, CreditCard, CheckCircle, XCircle, Tag, AlertTriangle, Info } from "lucide-react"
 import type { CalculatedPriceDetails } from "@/types/booking"
 
 interface GuestInfo {
@@ -48,6 +49,8 @@ export function GuestPaymentStep({
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending')
   const [countdown, setCountdown] = useState(0)
   const [isCountingDown, setIsCountingDown] = useState(false)
+  const [marketingConsent, setMarketingConsent] = useState(true)
+  const [termsAccepted, setTermsAccepted] = useState(true)
 
   // Countdown effect
   useEffect(() => {
@@ -67,7 +70,7 @@ export function GuestPaymentStep({
   }
 
   const handlePayNow = () => {
-    if (isCountingDown) return
+    if (isCountingDown || !termsAccepted) return
     setShowPaymentModal(true)
     setPaymentStatus('pending')
   }
@@ -98,15 +101,68 @@ export function GuestPaymentStep({
 
   if (!calculatedPrice || calculatedPrice.finalAmount === 0) {
     return (
-      <div className="text-center py-8">
-        <CheckCircle className="mx-auto h-12 w-12 text-green-600 mb-4" />
-        <h3 className="text-lg font-semibold mb-2">ההזמנה חינמית</h3>
-        <p className="text-muted-foreground mb-6">אין צורך בתשלום</p>
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <CheckCircle className="mx-auto h-12 w-12 text-green-600 mb-4" />
+          <h3 className="text-lg font-semibold mb-2">ההזמנה חינמית</h3>
+          <p className="text-muted-foreground mb-6">אין צורך בתשלום</p>
+        </div>
+
+        {/* Cancellation Policy and Checkboxes for free bookings too */}
+        <Card>
+          <CardContent className="pt-6">
+            {/* Cancellation Policy */}
+            <Alert className="mb-6">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-sm leading-relaxed">
+                <div className="space-y-2">
+                  <div className="font-medium">מדיניות ביטול:</div>
+                  <div>• ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום ההזמנה.</div>
+                  <div>• ביטול הזמנה פחות מ 24 שעות ממועד הטיפול יחוייב בדמי ביטול של 50% מסכום ההזמנה.</div>
+                  <div>• ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול מלאים של 100%.</div>
+                </div>
+              </AlertDescription>
+            </Alert>
+
+            {/* Checkboxes */}
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3 space-x-reverse">
+                <Checkbox
+                  id="marketing-consent"
+                  checked={marketingConsent}
+                  onCheckedChange={(checked) => setMarketingConsent(checked as boolean)}
+                />
+                <label
+                  htmlFor="marketing-consent"
+                  className="text-sm leading-relaxed cursor-pointer"
+                >
+                  אני מאשר/ת קבלת דיוור של חומרים פרסומיים, הצעות ישווקיות ועדכונים באמצעי המדיה השונים, לרבות בדואר אלקטרוני SMS ו/או שיחה טלפונית
+                </label>
+              </div>
+
+              <div className="flex items-start space-x-3 space-x-reverse">
+                <Checkbox
+                  id="terms-accepted"
+                  checked={termsAccepted}
+                  onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                />
+                <label
+                  htmlFor="terms-accepted"
+                  className="text-sm leading-relaxed cursor-pointer"
+                >
+                  בביצוע ההזמנה אני מאשר את הסכמתי לתנאי השימוש ומדיניות הפרטיות
+                  <span className="text-red-500 mr-1">*</span>
+                </label>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="flex justify-between">
           <Button variant="outline" onClick={onPrev}>
             חזור
           </Button>
-          <Button onClick={onConfirm} disabled={isLoading}>
+          <Button onClick={onConfirm} disabled={isLoading || !termsAccepted}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             אשר הזמנה
           </Button>
@@ -217,6 +273,62 @@ export function GuestPaymentStep({
           </CardContent>
         </Card>
 
+        {/* Cancellation Policy and Consent Checkboxes */}
+        <Card>
+          <CardContent className="pt-6">
+            {/* Cancellation Policy */}
+            <Alert className="mb-6">
+              <Info className="h-4 w-4" />
+              <AlertDescription className="text-sm leading-relaxed">
+                <div className="space-y-2">
+                  <div className="font-medium">מדיניות ביטול:</div>
+                  <div>• ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום ההזמנה.</div>
+                  <div>• ביטול הזמנה פחות מ 24 שעות ממועד הטיפול יחוייב בדמי ביטול של 50% מסכום ההזמנה.</div>
+                  <div>• ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול מלאים של 100%.</div>
+                </div>
+              </AlertDescription>
+            </Alert>
+
+            {/* Checkboxes */}
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3 space-x-reverse">
+                <Checkbox
+                  id="marketing-consent"
+                  checked={marketingConsent}
+                  onCheckedChange={(checked) => setMarketingConsent(checked as boolean)}
+                />
+                <label
+                  htmlFor="marketing-consent"
+                  className="text-sm leading-relaxed cursor-pointer"
+                >
+                  אני מאשר/ת קבלת דיוור של חומרים פרסומיים, הצעות ישווקיות ועדכונים באמצעי המדיה השונים, לרבות בדואר אלקטרוני SMS ו/או שיחה טלפונית
+                </label>
+              </div>
+
+              <div className="flex items-start space-x-3 space-x-reverse">
+                <Checkbox
+                  id="terms-accepted"
+                  checked={termsAccepted}
+                  onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                />
+                <label
+                  htmlFor="terms-accepted"
+                  className="text-sm leading-relaxed cursor-pointer"
+                >
+                  בביצוע ההזמנה אני מאשר את הסכמתי לתנאי השימוש ומדיניות הפרטיות
+                  <span className="text-red-500 mr-1">*</span>
+                </label>
+              </div>
+
+              {!termsAccepted && (
+                <div className="text-red-500 text-sm">
+                  יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Navigation */}
         <div className="flex justify-between">
           <Button variant="outline" onClick={onPrev} disabled={isLoading}>
@@ -224,7 +336,7 @@ export function GuestPaymentStep({
           </Button>
           <Button 
             onClick={handlePayNow} 
-            disabled={isLoading || isCountingDown}
+            disabled={isLoading || isCountingDown || !termsAccepted}
             size="lg"
             className="px-8"
           >

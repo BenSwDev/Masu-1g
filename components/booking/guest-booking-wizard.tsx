@@ -16,11 +16,20 @@ import { GuestSummaryStep } from "./steps/guest-summary-step"
 import { GuestPaymentStep } from "./steps/guest-payment-step"
 import { GuestBookingConfirmation } from "./steps/guest-booking-confirmation"
 
-import { calculateBookingPrice, createGuestBooking, getAvailableTimeSlots } from "@/actions/booking-actions"
+import { 
+  calculateBookingPrice, 
+  createGuestBooking, 
+  getAvailableTimeSlots,
+  createGuestUser,
+  saveAbandonedBooking,
+  getAbandonedBooking
+} from "@/actions/booking-actions"
 import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, RotateCcw } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
+import { Button } from "@/components/common/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import type { IBooking } from "@/lib/db/models/booking"
 
 interface GuestInfo {
@@ -86,8 +95,49 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false)
   const [bookingResult, setBookingResult] = useState<IBooking | null>(null)
   const [workingHoursNote, setWorkingHoursNote] = useState<string | undefined>(undefined)
+  
+  // New state for guest user management
+  const [guestUserId, setGuestUserId] = useState<string | null>(null)
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
+  const [abandonedBooking, setAbandonedBooking] = useState<any>(null)
 
   const { toast } = useToast()
+
+  // Check for abandoned booking on component mount
+  useEffect(() => {
+    const checkForAbandonedBooking = async () => {
+      const savedUserId = localStorage.getItem('guestUserId')
+      if (savedUserId) {
+        const result = await getAbandonedBooking(savedUserId)
+        if (result.success && result.booking) {
+          setAbandonedBooking(result.booking)
+          setGuestUserId(savedUserId)
+          setShowRecoveryDialog(true)
+        }
+      }
+    }
+    
+    checkForAbandonedBooking()
+  }, [])
+
+  // Save form state whenever it changes (after step 1)
+  useEffect(() => {
+    if (guestUserId && currentStep > 1) {
+      const saveFormState = async () => {
+        await saveAbandonedBooking(guestUserId, {
+          guestInfo,
+          guestAddress,
+          bookingOptions,
+          calculatedPrice,
+          currentStep,
+        })
+      }
+      
+      // Debounce the save operation
+      const timeoutId = setTimeout(saveFormState, 1000)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [guestUserId, guestInfo, guestAddress, bookingOptions, calculatedPrice, currentStep])
 
   // Effect to fetch time slots with debouncing for better performance
   useEffect(() => {
@@ -167,7 +217,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
     bookingDateTime.setHours(hours, minutes, 0, 0)
 
     const payload: CalculatePricePayloadType = {
-      userId: "guest",
+      userId: guestUserId || "guest",
       treatmentId: bookingOptions.selectedTreatmentId,
       selectedDurationId: bookingOptions.selectedDurationId,
       bookingDateTime,
@@ -188,7 +238,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       setCalculatedPrice(null)
     }
     setIsPriceCalculating(false)
-  }, [bookingOptions, guestInfo.email, toast, initialData.activeTreatments, t])
+  }, [bookingOptions, guestInfo.email, guestUserId, toast, initialData.activeTreatments, t])
 
   useEffect(() => {
     if (currentStep >= 4) {
@@ -218,7 +268,69 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
     }
   }, [timeSlots, bookingOptions.bookingTime])
 
-  const nextStep = () => {
+  const handleRecoverBooking = () => {
+    if (abandonedBooking?.formState) {
+      const formState = abandonedBooking.formState
+      setGuestInfo(formState.guestInfo || {})
+      setGuestAddress(formState.guestAddress || {})
+      setBookingOptions(formState.bookingOptions || {})
+      setCalculatedPrice(formState.calculatedPrice || null)
+      setCurrentStep(formState.currentStep || 1)
+    }
+    setShowRecoveryDialog(false)
+    toast({
+      title: "הטופס שוחזר בהצלחה",
+      description: "ניתן להמשיך מהנקודה בה עצרת",
+    })
+  }
+
+  const handleStartFresh = () => {
+    // Clear abandoned booking and start fresh
+    if (guestUserId) {
+      localStorage.removeItem('guestUserId')
+    }
+    setGuestUserId(null)
+    setAbandonedBooking(null)
+    setShowRecoveryDialog(false)
+    // Reset all form state
+    setGuestInfo({})
+    setGuestAddress({})
+    setBookingOptions({
+      therapistGenderPreference: initialData.userPreferences?.therapistGender || "any",
+      isFlexibleTime: false,
+      source: "new_purchase",
+    })
+    setCalculatedPrice(null)
+    setCurrentStep(1)
+  }
+
+  const nextStep = async () => {
+    // Create guest user after step 1
+    if (currentStep === 1 && !guestUserId) {
+      if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.phone) {
+        const result = await createGuestUser({
+          firstName: guestInfo.firstName,
+          lastName: guestInfo.lastName,
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+          birthDate: guestInfo.birthDate,
+          gender: guestInfo.gender,
+        })
+        
+        if (result.success && result.userId) {
+          setGuestUserId(result.userId)
+          localStorage.setItem('guestUserId', result.userId)
+        } else {
+          toast({
+            variant: "destructive",
+            title: "שגיאה ביצירת משתמש אורח",
+            description: result.error || "נסה שוב",
+          })
+          return
+        }
+      }
+    }
+
     if (
       currentStep === TOTAL_STEPS_WITH_PAYMENT - 1 && // Summary step
       calculatedPrice?.finalAmount === 0 &&
@@ -267,7 +379,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       bookingDateTime.setHours(hours, minutes, 0, 0)
 
       const payload = {
-        userId: "guest",
+        userId: guestUserId || "guest",
         treatmentId: bookingOptions.selectedTreatmentId,
         selectedDurationId: bookingOptions.selectedDurationId,
         bookingDateTime,
@@ -320,6 +432,12 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
         console.log("✅ Booking created successfully:", result.booking)
         setBookingResult(result.booking)
         setCurrentStep(CONFIRMATION_STEP_NUMBER)
+        
+        // Clear saved form state on successful booking
+        if (guestUserId) {
+          localStorage.removeItem('guestUserId')
+        }
+        
         toast({
           title: t("bookings.success.bookingCreated"),
           description: t("bookings.success.bookingCreatedDescription"),
@@ -452,6 +570,29 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Recovery Dialog */}
+      <Dialog open={showRecoveryDialog} onOpenChange={setShowRecoveryDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5" />
+              שחזור הזמנה
+            </DialogTitle>
+            <DialogDescription>
+              נמצאה הזמנה שלא הושלמה מהיום האחרון. האם תרצה להמשיך מהנקודה בה עצרת או להתחיל מחדש?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end">
+            <Button variant="outline" onClick={handleStartFresh}>
+              התחל מחדש
+            </Button>
+            <Button onClick={handleRecoverBooking}>
+              המשך מהנקודה בה עצרתי
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex justify-between text-sm text-muted-foreground mb-2">

@@ -315,6 +315,10 @@ const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"];
     no_show: {
       label: t("memberBookings.status.no_show_short"),
       className: "bg-orange-100 text-orange-800 border-orange-200"
+    },
+    abandoned_pending_payment: {
+      label: t("memberBookings.status.abandoned_pending_payment_short") || "ננטש - ממתין לתשלום",
+      className: "bg-gray-100 text-gray-800 border-gray-200"
     }
   } as const
 

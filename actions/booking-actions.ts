@@ -12,7 +12,7 @@ import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-s
 import Subscription from "@/lib/db/models/subscription"
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
-import User, { type IUser } from "@/lib/db/models/user"
+import User, { type IUser, UserRole } from "@/lib/db/models/user"
 import Address, { type IAddress, constructFullAddress as constructFullAddressHelper } from "@/lib/db/models/address"
 import {
   WorkingHoursSettings,
@@ -2159,5 +2159,206 @@ export async function getGuestBookingInitialData(): Promise<{ success: boolean; 
       error: error instanceof Error ? error.message : String(error),
     })
     return { success: false, error: "Failed to load booking data" }
+  }
+}
+
+export async function createGuestUser(guestInfo: {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  birthDate?: Date
+  gender?: "male" | "female" | "other"
+}): Promise<{ success: boolean; userId?: string; error?: string }> {
+  try {
+    await dbConnect()
+
+    // Check if user already exists with this email or phone
+    const existingUser = await User.findOne({
+      $or: [
+        { email: guestInfo.email },
+        { phone: guestInfo.phone }
+      ]
+    })
+
+    if (existingUser) {
+      // If user exists but is not a guest, don't create duplicate
+      if (!existingUser.roles.includes(UserRole.GUEST)) {
+        return { success: true, userId: existingUser._id.toString() }
+      }
+      // If it's already a guest user, return it
+      return { success: true, userId: existingUser._id.toString() }
+    }
+
+    // Create new guest user
+    const guestUser = new User({
+      name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+      email: guestInfo.email,
+      phone: guestInfo.phone,
+      gender: guestInfo.gender || "other",
+      dateOfBirth: guestInfo.birthDate,
+      password: Math.random().toString(36).substring(2, 15), // Random password for guest
+      roles: [UserRole.GUEST],
+      activeRole: UserRole.GUEST,
+      emailVerified: null,
+      phoneVerified: null,
+    })
+
+    await guestUser.save()
+    
+    logger.info("Guest user created successfully", {
+      userId: guestUser._id.toString(),
+      email: guestInfo.email,
+    })
+
+    return { success: true, userId: guestUser._id.toString() }
+  } catch (error) {
+    logger.error("Error creating guest user:", { error, guestInfo })
+    return { success: false, error: "Failed to create guest user" }
+  }
+}
+
+export async function saveAbandonedBooking(
+  userId: string,
+  formData: {
+    guestInfo?: any
+    guestAddress?: any
+    bookingOptions?: any
+    calculatedPrice?: any
+    currentStep: number
+  }
+): Promise<{ success: boolean; bookingId?: string; error?: string }> {
+  try {
+    await dbConnect()
+
+    // Create abandoned booking record
+    const abandonedBooking = new Booking({
+      userId: new mongoose.Types.ObjectId(userId),
+      bookingNumber: `ABANDONED-${Date.now()}`,
+      status: "abandoned_pending_payment",
+      bookedByUserName: formData.guestInfo?.firstName ? `${formData.guestInfo.firstName} ${formData.guestInfo.lastName}` : "Guest User",
+      bookedByUserEmail: formData.guestInfo?.email || "",
+      bookedByUserPhone: formData.guestInfo?.phone || "",
+      recipientName: formData.guestInfo?.isBookingForSomeoneElse 
+        ? `${formData.guestInfo.recipientFirstName} ${formData.guestInfo.recipientLastName}`
+        : formData.guestInfo?.firstName ? `${formData.guestInfo.firstName} ${formData.guestInfo.lastName}` : "Guest User",
+      recipientEmail: formData.guestInfo?.isBookingForSomeoneElse 
+        ? formData.guestInfo.recipientEmail
+        : formData.guestInfo?.email,
+      recipientPhone: formData.guestInfo?.isBookingForSomeoneElse 
+        ? formData.guestInfo.recipientPhone
+        : formData.guestInfo?.phone,
+      recipientBirthDate: formData.guestInfo?.isBookingForSomeoneElse 
+        ? formData.guestInfo.recipientBirthDate
+        : formData.guestInfo?.birthDate,
+      recipientGender: formData.guestInfo?.isBookingForSomeoneElse 
+        ? formData.guestInfo.recipientGender
+        : formData.guestInfo?.gender,
+      treatmentId: formData.bookingOptions?.selectedTreatmentId ? new mongoose.Types.ObjectId(formData.bookingOptions.selectedTreatmentId) : undefined,
+      selectedDurationId: formData.bookingOptions?.selectedDurationId ? new mongoose.Types.ObjectId(formData.bookingOptions.selectedDurationId) : undefined,
+      bookingDateTime: formData.bookingOptions?.bookingDate && formData.bookingOptions?.bookingTime 
+        ? (() => {
+            const date = new Date(formData.bookingOptions.bookingDate)
+            const [hours, minutes] = formData.bookingOptions.bookingTime.split(":").map(Number)
+            date.setHours(hours, minutes, 0, 0)
+            return date
+          })()
+        : new Date(),
+      therapistGenderPreference: formData.bookingOptions?.therapistGenderPreference || "any",
+      source: "new_purchase",
+      bookingAddressSnapshot: formData.guestAddress ? {
+        fullAddress: `${formData.guestAddress.street || ""} ${formData.guestAddress.houseNumber || ""}, ${formData.guestAddress.city || ""}`,
+        city: formData.guestAddress.city || "",
+        street: formData.guestAddress.street || "",
+        streetNumber: formData.guestAddress.houseNumber || "",
+        apartment: formData.guestAddress.apartmentNumber,
+        entrance: formData.guestAddress.entrance,
+        floor: formData.guestAddress.floor,
+        notes: formData.guestAddress.notes,
+        doorName: formData.guestAddress.doorName,
+        buildingName: formData.guestAddress.buildingName,
+        hotelName: formData.guestAddress.hotelName,
+        roomNumber: formData.guestAddress.roomNumber,
+        otherInstructions: formData.guestAddress.instructions,
+        hasPrivateParking: formData.guestAddress.parking || false,
+      } : undefined,
+      priceDetails: formData.calculatedPrice ? {
+        basePrice: formData.calculatedPrice.basePrice || 0,
+        surcharges: formData.calculatedPrice.surcharges || [],
+        totalSurchargesAmount: formData.calculatedPrice.totalSurchargesAmount || 0,
+        treatmentPriceAfterSubscriptionOrTreatmentVoucher: formData.calculatedPrice.treatmentPriceAfterSubscriptionOrTreatmentVoucher || 0,
+        discountAmount: formData.calculatedPrice.couponDiscount || 0,
+        voucherAppliedAmount: formData.calculatedPrice.voucherAppliedAmount || 0,
+        finalAmount: formData.calculatedPrice.finalAmount || 0,
+        isBaseTreatmentCoveredBySubscription: formData.calculatedPrice.isBaseTreatmentCoveredBySubscription || false,
+        isBaseTreatmentCoveredByTreatmentVoucher: formData.calculatedPrice.isBaseTreatmentCoveredByTreatmentVoucher || false,
+        isFullyCoveredByVoucherOrSubscription: formData.calculatedPrice.isFullyCoveredByVoucherOrSubscription || false,
+      } : {
+        basePrice: 0,
+        surcharges: [],
+        totalSurchargesAmount: 0,
+        treatmentPriceAfterSubscriptionOrTreatmentVoucher: 0,
+        discountAmount: 0,
+        voucherAppliedAmount: 0,
+        finalAmount: 0,
+        isBaseTreatmentCoveredBySubscription: false,
+        isBaseTreatmentCoveredByTreatmentVoucher: false,
+        isFullyCoveredByVoucherOrSubscription: false,
+      },
+      paymentDetails: {
+        paymentStatus: "pending",
+      },
+      professionalId: null,
+      // Store form state for recovery
+      formState: {
+        currentStep: formData.currentStep,
+        guestInfo: formData.guestInfo,
+        guestAddress: formData.guestAddress,
+        bookingOptions: formData.bookingOptions,
+        calculatedPrice: formData.calculatedPrice,
+        savedAt: new Date(),
+      },
+    })
+
+    await abandonedBooking.save()
+    
+    logger.info("Abandoned booking saved", {
+      bookingId: abandonedBooking._id.toString(),
+      userId,
+      currentStep: formData.currentStep,
+    })
+
+    return { success: true, bookingId: abandonedBooking._id.toString() }
+  } catch (error) {
+    logger.error("Error saving abandoned booking:", { error, userId, formData })
+    return { success: false, error: "Failed to save abandoned booking" }
+  }
+}
+
+export async function getAbandonedBooking(userId: string): Promise<{ 
+  success: boolean
+  booking?: any
+  error?: string 
+}> {
+  try {
+    await dbConnect()
+
+    // Find the most recent abandoned booking for this user within 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    
+    const abandonedBooking = await Booking.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "abandoned_pending_payment",
+      createdAt: { $gte: twentyFourHoursAgo }
+    }).sort({ createdAt: -1 }).lean()
+
+    if (!abandonedBooking) {
+      return { success: false, error: "No recent abandoned booking found" }
+    }
+
+    return { success: true, booking: abandonedBooking }
+  } catch (error) {
+    logger.error("Error getting abandoned booking:", { error, userId })
+    return { success: false, error: "Failed to get abandoned booking" }
   }
 }

@@ -322,6 +322,7 @@ const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }
     cancelled_by_user: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
     cancelled_by_admin: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
     no_show: { variant: "destructive" as const, color: "bg-orange-100 text-orange-800" },
+    abandoned_pending_payment: { variant: "secondary" as const, color: "bg-gray-100 text-gray-800" },
   }
 
   const config = statusConfig[status] || statusConfig.pending

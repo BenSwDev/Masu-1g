@@ -124,10 +124,17 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
           badgeClass: "bg-orange-100 text-orange-700 border-orange-300",
           textColor: "text-orange-700",
         }
+      case "abandoned_pending_payment":
+        return {
+          label: t("memberBookings.status.abandoned_pending_payment") || "ננטש - ממתין לתשלום",
+          icon: <Hourglass className="mr-1.5 h-4 w-4 text-gray-600" />,
+          badgeClass: "bg-gray-100 text-gray-700 border-gray-300",
+          textColor: "text-gray-700",
+        }
       default:
         return {
-          label: t(`memberBookings.status.${statusKey}`) || statusKey,
-          icon: <Info className="mr-1.5 h-4 w-4 text-gray-600" />,
+          label: t("common.status.unknown"),
+          icon: <Hourglass className="mr-1.5 h-4 w-4 text-gray-600" />,
           badgeClass: "bg-gray-100 text-gray-700 border-gray-300",
           textColor: "text-gray-700",
         }

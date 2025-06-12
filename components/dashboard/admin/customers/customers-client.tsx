@@ -31,6 +31,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/common/ui/pagination"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
 import { getAllCustomers, getUserPurchaseHistory } from "@/actions/purchase-summary-actions"
@@ -50,6 +57,8 @@ import {
   Phone,
   Mail,
   DollarSign,
+  UserCheck,
+  UserX,
 } from "lucide-react"
 
 export default function CustomersClient() {
@@ -61,15 +70,16 @@ export default function CustomersClient() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
   const [searchQuery, setSearchQuery] = useState("")
+  const [userTypeFilter, setUserTypeFilter] = useState<'all' | 'guests' | 'members'>('all')
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSummary | null>(null)
   const [customerTransactions, setCustomerTransactions] = useState<PurchaseTransaction[]>([])
   const [loadingTransactions, setLoadingTransactions] = useState(false)
   const limit = 20
 
-  const loadCustomers = async (page = 1, search = searchQuery) => {
+  const loadCustomers = async (page = 1, search = searchQuery, userType = userTypeFilter) => {
     try {
       setLoading(true)
-      const result = await getAllCustomers(page, limit, search)
+      const result = await getAllCustomers(page, limit, search, userType)
       
       if (result.success && result.data) {
         setCustomers(result.data.customers)
@@ -122,20 +132,20 @@ export default function CustomersClient() {
   }
 
   useEffect(() => {
-    loadCustomers(1, searchQuery)
+    loadCustomers(1, searchQuery, userTypeFilter)
     setCurrentPage(1)
-  }, [searchQuery])
+  }, [searchQuery, userTypeFilter])
 
   useEffect(() => {
     loadCustomers()
   }, [])
 
   const handlePageChange = (page: number) => {
-    loadCustomers(page, searchQuery)
+    loadCustomers(page, searchQuery, userTypeFilter)
   }
 
   const handleRefresh = () => {
-    loadCustomers(currentPage, searchQuery)
+    loadCustomers(currentPage, searchQuery, userTypeFilter)
   }
 
   const handleCustomerView = async (customer: CustomerSummary) => {
@@ -154,6 +164,23 @@ export default function CustomersClient() {
     return format(new Date(date), "dd/MM/yyyy", { locale: he })
   }
 
+  const getUserTypeBadge = (userType?: 'guest' | 'member') => {
+    if (userType === 'guest') {
+      return (
+        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+          <UserX className="h-3 w-3 mr-1" />
+          אורח
+        </Badge>
+      )
+    }
+    return (
+      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+        <UserCheck className="h-3 w-3 mr-1" />
+        רשום
+      </Badge>
+    )
+  }
+
   // Calculate summary stats
   const summaryStats = {
     totalCustomers: totalCount,
@@ -164,6 +191,8 @@ export default function CustomersClient() {
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
       return c.lastActivity >= thirtyDaysAgo
     }).length,
+    guestCustomers: customers.filter(c => c.userType === 'guest').length,
+    memberCustomers: customers.filter(c => c.userType === 'member').length,
   }
 
   return (
@@ -180,7 +209,7 @@ export default function CustomersClient() {
           <CardContent>
             <div className="text-2xl font-bold">{summaryStats.totalCustomers}</div>
             <p className="text-xs text-muted-foreground">
-              {t('customers.summary.registeredUsers') || 'משתמשים רשומים'}
+              {summaryStats.memberCustomers} רשומים, {summaryStats.guestCustomers} אורחים
             </p>
           </CardContent>
         </Card>
@@ -232,7 +261,7 @@ export default function CustomersClient() {
       </div>
 
       {/* Search and Actions */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
@@ -244,6 +273,17 @@ export default function CustomersClient() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Select value={userTypeFilter} onValueChange={(value: 'all' | 'guests' | 'members') => setUserTypeFilter(value)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">כל הלקוחות</SelectItem>
+              <SelectItem value="members">רשומים</SelectItem>
+              <SelectItem value="guests">אורחים</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Button
             variant="outline"
             size="sm"
@@ -325,7 +365,10 @@ export default function CustomersClient() {
                           <User className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium">{customer.customerName}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{customer.customerName}</p>
+                            {getUserTypeBadge(customer.userType)}
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             ID: {customer.userId.slice(-8)}
                           </p>
@@ -469,6 +512,7 @@ export default function CustomersClient() {
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
               {t('customers.customerDetails') || 'פרטי לקוח'} - {selectedCustomer?.customerName}
+              {selectedCustomer && getUserTypeBadge(selectedCustomer.userType)}
             </DialogTitle>
             <DialogDescription>
               {t('customers.customerDetailsDesc') || 'צפה בכל הפעילות והעסקאות של הלקוח'}
@@ -501,6 +545,10 @@ export default function CustomersClient() {
                     <div>
                       <p className="text-sm text-muted-foreground">{t('customers.joinDate') || 'תאריך הצטרפות'}:</p>
                       <p className="font-medium">{formatDate(selectedCustomer.joinDate)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">סוג משתמש:</p>
+                      {getUserTypeBadge(selectedCustomer.userType)}
                     </div>
                   </CardContent>
                 </Card>

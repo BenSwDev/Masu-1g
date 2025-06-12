@@ -8,6 +8,7 @@ export type BookingStatus =
   | "cancelled_by_user" // בוטל ע"י משתמש
   | "cancelled_by_admin" // בוטל ע"י מנהל
   | "no_show" // לא הופיע
+  | "abandoned_pending_payment" // ננטש - ממתין לתשלום
 
 export interface IPriceDetails {
   basePrice: number
@@ -80,6 +81,14 @@ export interface IBooking extends Document {
   recipientBirthDate?: Date // Birth date of the person receiving the treatment
   recipientGender?: "male" | "female" | "other" // Gender of the person receiving the treatment
   isBookingForSomeoneElse?: boolean // NEW FIELD
+  formState?: { // NEW FIELD for storing form data for recovery
+    currentStep: number
+    guestInfo?: any
+    guestAddress?: any
+    bookingOptions?: any
+    calculatedPrice?: any
+    savedAt: Date
+  }
   createdAt: Date
   updatedAt: Date
 }
@@ -166,6 +175,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
         "cancelled_by_user",
         "cancelled_by_admin",
         "no_show",
+        "abandoned_pending_payment",
       ],
       default: "pending_professional_assignment", // Will be overridden to 'confirmed' in createBooking
       required: true,
@@ -192,6 +202,14 @@ const BookingSchema: Schema<IBooking> = new Schema(
     recipientBirthDate: { type: Date },
     recipientGender: { type: String, enum: ["male", "female", "other"] },
     isBookingForSomeoneElse: { type: Boolean, default: false }, // NEW FIELD
+    formState: { // NEW FIELD for storing form data for recovery
+      currentStep: { type: Number },
+      guestInfo: { type: Schema.Types.Mixed },
+      guestAddress: { type: Schema.Types.Mixed },
+      bookingOptions: { type: Schema.Types.Mixed },
+      calculatedPrice: { type: Schema.Types.Mixed },
+      savedAt: { type: Date },
+    },
   },
   { timestamps: true },
 )

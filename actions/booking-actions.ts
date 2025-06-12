@@ -785,11 +785,10 @@ export async function createBooking(
         voucher.usageHistory = voucher.usageHistory || []
         voucher.usageHistory.push({
           date: new Date(),
-          amountUsed: validatedPayload.priceDetails.voucherAppliedAmount,
-          orderId: bookingResult!._id,
-          description: `bookings.voucherUsage.redeemedForBooking ${bookingResult!._id.toString()}`,
-          userId: new mongoose.Types.ObjectId(validatedPayload.userId),
-        } as any)
+          amount: validatedPayload.priceDetails.voucherAppliedAmount,
+          orderId: newBooking._id,
+          description: `Booking ${bookingNumber}`,
+        })
         await voucher.save({ session: mongooseDbSession })
         updatedVoucherDetails = voucher.toObject() as IGiftVoucher
       }
@@ -1971,6 +1970,11 @@ export async function createGuestBooking(
       email: string
       phone: string
     }
+    recipientName?: string
+    recipientEmail?: string
+    recipientPhone?: string
+    recipientBirthDate?: Date
+    recipientGender?: "male" | "female" | "other"
   }
 
   const mongooseDbSession = await mongoose.startSession()
@@ -2011,8 +2015,36 @@ export async function createGuestBooking(
         bookedByUserName: guestInfo.name,
         bookedByUserEmail: guestInfo.email,
         bookedByUserPhone: guestInfo.phone,
+        recipientName: validatedPayload.recipientName || guestInfo.name,
+        recipientPhone: validatedPayload.recipientPhone || guestInfo.phone,
+        recipientEmail: validatedPayload.recipientEmail || guestInfo.email,
+        recipientBirthDate: validatedPayload.recipientBirthDate,
+        recipientGender: validatedPayload.recipientGender,
         bookingAddressSnapshot,
         status: "confirmed",
+        priceDetails: {
+          basePrice: validatedPayload.priceDetails.basePrice,
+          surcharges: validatedPayload.priceDetails.surcharges,
+          totalSurchargesAmount: validatedPayload.priceDetails.totalSurchargesAmount,
+          treatmentPriceAfterSubscriptionOrTreatmentVoucher:
+            validatedPayload.priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher,
+          discountAmount: validatedPayload.priceDetails.couponDiscount,
+          voucherAppliedAmount: validatedPayload.priceDetails.voucherAppliedAmount,
+          finalAmount: validatedPayload.priceDetails.finalAmount,
+          isBaseTreatmentCoveredBySubscription: validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription,
+          isBaseTreatmentCoveredByTreatmentVoucher:
+            validatedPayload.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher,
+          isFullyCoveredByVoucherOrSubscription: validatedPayload.priceDetails.isFullyCoveredByVoucherOrSubscription,
+          appliedCouponId: validatedPayload.priceDetails.appliedCouponId
+            ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.appliedCouponId)
+            : undefined,
+          appliedGiftVoucherId: validatedPayload.priceDetails.appliedGiftVoucherId
+            ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.appliedGiftVoucherId)
+            : undefined,
+          redeemedUserSubscriptionId: validatedPayload.priceDetails.redeemedUserSubscriptionId
+            ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.redeemedUserSubscriptionId)
+            : undefined,
+        } as IPriceDetails,
         paymentDetails: {
           paymentMethodId: validatedPayload.paymentDetails.paymentMethodId
             ? new mongoose.Types.ObjectId(validatedPayload.paymentDetails.paymentMethodId)
@@ -2030,26 +2062,36 @@ export async function createGuestBooking(
       bookingResult = newBooking
 
       // Handle gift voucher redemption for guest bookings
-      if (validatedPayload.priceDetails.appliedGiftVoucherId && validatedPayload.priceDetails.giftVoucherDiscount > 0) {
+      if (validatedPayload.priceDetails.appliedGiftVoucherId && validatedPayload.priceDetails.voucherAppliedAmount > 0) {
         const voucher = await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(mongooseDbSession)
         if (!voucher || !voucher.isActive) throw new Error("bookings.errors.voucherRedemptionFailed")
         
-        voucher.remainingAmount -= validatedPayload.priceDetails.giftVoucherDiscount
-        if (voucher.remainingAmount <= 0) {
-          voucher.status = "used"
+        if (
+          voucher.voucherType === "treatment" &&
+          validatedPayload.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher
+        ) {
+          voucher.status = "fully_used"
+          voucher.remainingAmount = 0
           voucher.isActive = false
-        } else {
-          voucher.status = "partially_used"
-        }
-        
-        const usageEntry = {
-          date: new Date(),
-          orderId: newBooking._id,
-          amount: validatedPayload.priceDetails.giftVoucherDiscount,
-          description: `Booking ${bookingNumber}`,
+        } else if (voucher.voucherType === "monetary") {
+          if (
+            typeof voucher.remainingAmount !== "number" ||
+            voucher.remainingAmount < validatedPayload.priceDetails.voucherAppliedAmount
+          ) {
+            throw new Error("bookings.errors.voucherInsufficientBalance")
+          }
+          voucher.remainingAmount -= validatedPayload.priceDetails.voucherAppliedAmount
+          voucher.status = voucher.remainingAmount <= 0 ? "fully_used" : "partially_used"
+          if (voucher.remainingAmount < 0) voucher.remainingAmount = 0
+          voucher.isActive = voucher.remainingAmount > 0
         }
         voucher.usageHistory = voucher.usageHistory || []
-        voucher.usageHistory.push(usageEntry)
+        voucher.usageHistory.push({
+          date: new Date(),
+          amount: validatedPayload.priceDetails.voucherAppliedAmount,
+          orderId: newBooking._id,
+          description: `Booking ${bookingNumber}`,
+        })
         
         await voucher.save({ session: mongooseDbSession })
         updatedVoucherDetails = voucher

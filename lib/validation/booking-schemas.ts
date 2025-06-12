@@ -62,6 +62,7 @@ export const SchedulingDetailsSchema = z
     recipientPhone: z.string().optional(),
     recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional(),
     recipientBirthDate: z.date().optional(),
+    recipientGender: z.enum(["male", "female", "other"]).optional(),
   })
   .refine(
     (data) => {
@@ -197,6 +198,7 @@ export const CreateBookingPayloadSchema = z.object({
   recipientPhone: z.string().optional(),
   recipientEmail: z.string().optional(),
   recipientBirthDate: z.date().optional(),
+  recipientGender: z.enum(["male", "female", "other"]).optional(),
 })
 
 export type BookingSourceFormValues = z.infer<typeof BookingSourceSchema>

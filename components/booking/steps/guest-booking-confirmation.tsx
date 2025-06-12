@@ -129,29 +129,62 @@ export function GuestBookingConfirmation({
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{t("common.name")}:</span>
+                <span className="text-muted-foreground">מקבל הטיפול:</span>
                 <span className="font-medium">
-                  {bookingResult.guestInfo?.firstName} {bookingResult.guestInfo?.lastName}
+                  {bookingResult.recipientName || bookingResult.bookedByUserName}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Mail className="h-4 w-4" />
-                  {t("common.email")}:
+                  אימייל מקבל הטיפול:
                 </span>
-                <span className="font-medium">{bookingResult.guestInfo?.email}</span>
+                <span className="font-medium">{bookingResult.recipientEmail || bookingResult.bookedByUserEmail}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Phone className="h-4 w-4" />
-                  {t("common.phone")}:
+                  טלפון מקבל הטיפול:
                 </span>
-                <span className="font-medium">{bookingResult.guestInfo?.phone}</span>
+                <span className="font-medium">{bookingResult.recipientPhone || bookingResult.bookedByUserPhone}</span>
               </div>
-              {bookingResult.guestInfo?.notes && (
+              {bookingResult.recipientBirthDate && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">תאריך לידה:</span>
+                  <span className="font-medium">{format(bookingResult.recipientBirthDate, "dd/MM/yyyy")}</span>
+                </div>
+              )}
+              {bookingResult.recipientGender && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">מגדר:</span>
+                  <span className="font-medium">
+                    {bookingResult.recipientGender === "male" ? "גבר" : bookingResult.recipientGender === "female" ? "אישה" : "אחר"}
+                  </span>
+                </div>
+              )}
+              {(bookingResult.bookedByUserName !== bookingResult.recipientName) && (
+                <div className="mt-4 pt-4 border-t">
+                  <div className="text-sm text-muted-foreground mb-2">פרטי המזמין:</div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>שם:</span>
+                      <span>{bookingResult.bookedByUserName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>אימייל:</span>
+                      <span>{bookingResult.bookedByUserEmail}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>טלפון:</span>
+                      <span>{bookingResult.bookedByUserPhone}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {bookingResult.notes && (
                 <div>
                   <span className="text-muted-foreground mb-2 block">{t("bookings.notes")}:</span>
-                  <p className="text-sm bg-muted p-3 rounded-lg">{bookingResult.guestInfo.notes}</p>
+                  <p className="text-sm bg-muted p-3 rounded-lg">{bookingResult.notes}</p>
                 </div>
               )}
             </div>

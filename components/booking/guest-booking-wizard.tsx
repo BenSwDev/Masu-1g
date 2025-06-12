@@ -28,7 +28,16 @@ interface GuestInfo {
   lastName: string
   email: string
   phone: string
+  birthDate?: Date
+  gender?: "male" | "female" | "other"
   notes?: string
+  isBookingForSomeoneElse?: boolean
+  recipientFirstName?: string
+  recipientLastName?: string
+  recipientEmail?: string
+  recipientPhone?: string
+  recipientBirthDate?: Date
+  recipientGender?: "male" | "female" | "other"
 }
 
 interface GuestAddress {
@@ -260,6 +269,21 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           email: guestInfo.email!,
           phone: guestInfo.phone!,
         },
+        recipientName: guestInfo.isBookingForSomeoneElse 
+          ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
+          : `${guestInfo.firstName} ${guestInfo.lastName}`,
+        recipientEmail: guestInfo.isBookingForSomeoneElse 
+          ? guestInfo.recipientEmail!
+          : guestInfo.email!,
+        recipientPhone: guestInfo.isBookingForSomeoneElse 
+          ? guestInfo.recipientPhone!
+          : guestInfo.phone!,
+        recipientBirthDate: guestInfo.isBookingForSomeoneElse 
+          ? guestInfo.recipientBirthDate
+          : guestInfo.birthDate,
+        recipientGender: guestInfo.isBookingForSomeoneElse 
+          ? guestInfo.recipientGender
+          : guestInfo.gender,
       } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
 
       const result = await createGuestBooking(payload)

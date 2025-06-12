@@ -137,6 +137,7 @@ export interface SelectedBookingOptions {
   recipientPhone?: string
   recipientEmail?: string
   recipientBirthDate?: Date
+  recipientGender?: "male" | "female" | "other"
   isBookingForSomeoneElse?: boolean
   selectedAddressId?: string
   customAddressDetails?: any

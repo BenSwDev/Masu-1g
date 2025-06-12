@@ -19,7 +19,16 @@ interface GuestInfo {
   lastName: string
   email: string
   phone: string
+  birthDate?: Date
+  gender?: "male" | "female" | "other"
   notes?: string
+  isBookingForSomeoneElse?: boolean
+  recipientFirstName?: string
+  recipientLastName?: string
+  recipientEmail?: string
+  recipientPhone?: string
+  recipientBirthDate?: Date
+  recipientGender?: "male" | "female" | "other"
 }
 
 interface GuestSummaryStepProps {
@@ -142,7 +151,7 @@ export function GuestSummaryStep({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
-              פרטי האורח
+              {guestInfo.isBookingForSomeoneElse ? "פרטי המזמין" : "פרטי האורח"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -165,6 +174,24 @@ export function GuestSummaryStep({
                 </span>
                 <span className="font-medium">{guestInfo.phone}</span>
               </div>
+              {!guestInfo.isBookingForSomeoneElse && (
+                <>
+                  {guestInfo.birthDate && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">תאריך לידה:</span>
+                      <span className="font-medium">{format(guestInfo.birthDate, "dd/MM/yyyy")}</span>
+                    </div>
+                  )}
+                  {guestInfo.gender && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">מגדר:</span>
+                      <span className="font-medium">
+                        {guestInfo.gender === "male" ? "גבר" : guestInfo.gender === "female" ? "אישה" : "אחר"}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
               {guestInfo.notes && (
                 <div>
                   <span className="text-muted-foreground flex items-center gap-1 mb-2">
@@ -177,6 +204,54 @@ export function GuestSummaryStep({
             </div>
           </CardContent>
         </Card>
+
+        {/* Recipient Information (when booking for someone else) */}
+        {guestInfo.isBookingForSomeoneElse && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                פרטי מקבל הטיפול
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">שם:</span>
+                  <span className="font-medium">{guestInfo.recipientFirstName} {guestInfo.recipientLastName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Mail className="h-4 w-4" />
+                    אימייל:
+                  </span>
+                  <span className="font-medium">{guestInfo.recipientEmail}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Phone className="h-4 w-4" />
+                    טלפון:
+                  </span>
+                  <span className="font-medium">{guestInfo.recipientPhone}</span>
+                </div>
+                {guestInfo.recipientBirthDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">תאריך לידה:</span>
+                    <span className="font-medium">{format(guestInfo.recipientBirthDate, "dd/MM/yyyy")}</span>
+                  </div>
+                )}
+                {guestInfo.recipientGender && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">מגדר:</span>
+                    <span className="font-medium">
+                      {guestInfo.recipientGender === "male" ? "גבר" : guestInfo.recipientGender === "female" ? "אישה" : "אחר"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Booking Details */}
         <Card>

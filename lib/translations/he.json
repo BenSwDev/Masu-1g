@@ -2468,7 +2468,9 @@
         "name": "שם",
         "price": "מחיר",
         "pricingType": "סוג תמחור",
-        "professionalPrice": "מחיר למטפל"
+        "professionalPrice": "מחיר למטפל",
+        "allowTherapistGenderSelection": "אפשר בחירת מטפל לפי זכר/נקבה",
+        "allowTherapistGenderSelectionDescription": "אם מופעל, יוכלו לבחור מגדר מטפל במעמד הזמנה"
       },
       "minutes": "דקות",
       "name": "שם הטיפול",

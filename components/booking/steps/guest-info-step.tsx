@@ -13,7 +13,12 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { PhoneInput } from "@/components/common/phone-input"
-import { User, Mail, Phone, FileText, Calendar, Users } from "lucide-react"
+import { Calendar } from "@/components/common/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
+import { User, Mail, Phone, FileText, Calendar as CalendarIcon, Users } from "lucide-react"
+import { format } from "date-fns"
+import { he } from "date-fns/locale"
+import { cn } from "@/lib/utils/utils"
 
 interface GuestInfo {
   firstName: string
@@ -39,17 +44,30 @@ interface GuestInfoStepProps {
 }
 
 export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStepProps) {
-  const { t, dir } = useTranslation()
+  const { t, dir, language } = useTranslation()
   const [isBookingForSomeoneElse, setIsBookingForSomeoneElse] = useState(
     guestInfo.isBookingForSomeoneElse || false
   )
+
+  // Helper function to check if date is at least 16 years old
+  const isAtLeast16YearsOld = (date: Date) => {
+    const today = new Date()
+    const birthDate = new Date(date)
+    const age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      return age - 1 >= 16
+    }
+    return age >= 16
+  }
 
   const guestInfoSchema = z.object({
     firstName: z.string().min(2, { message: t("guestInfo.validation.firstNameMin") }),
     lastName: z.string().min(2, { message: t("guestInfo.validation.lastNameMin") }),
     email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }),
     phone: z.string().min(10, { message: t("guestInfo.validation.phoneMin") }),
-    birthDate: z.string().optional(),
+    birthDate: z.date().optional(),
     gender: z.enum(["male", "female", "other"]).optional(),
     notes: z.string().optional(),
     isBookingForSomeoneElse: z.boolean().optional().default(false),
@@ -57,7 +75,7 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
     recipientLastName: z.string().optional(),
     recipientEmail: z.string().optional(),
     recipientPhone: z.string().optional(),
-    recipientBirthDate: z.string().optional(),
+    recipientBirthDate: z.date().optional(),
     recipientGender: z.enum(["male", "female", "other"]).optional(),
   }).refine((data) => {
     if (data.isBookingForSomeoneElse) {
@@ -74,6 +92,19 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
   }, {
     message: t("guestInfo.validation.recipientDetailsRequired"),
     path: ["recipientFirstName"]
+  }).refine((data) => {
+    // Check age requirement for recipient
+    if (data.isBookingForSomeoneElse && data.recipientBirthDate) {
+      return isAtLeast16YearsOld(data.recipientBirthDate)
+    }
+    // Check age requirement for booker when not booking for someone else
+    if (!data.isBookingForSomeoneElse && data.birthDate) {
+      return isAtLeast16YearsOld(data.birthDate)
+    }
+    return true
+  }, {
+    message: "גיל מינימלי הוא 16 שנים",
+    path: ["recipientBirthDate"]
   })
 
   type GuestInfoFormData = z.infer<typeof guestInfoSchema>
@@ -85,7 +116,7 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
       lastName: guestInfo.lastName || "",
       email: guestInfo.email || "",
       phone: guestInfo.phone || "",
-      birthDate: guestInfo.birthDate ? guestInfo.birthDate.toISOString().split('T')[0] : "",
+      birthDate: guestInfo.birthDate || undefined,
       gender: guestInfo.gender || undefined,
       notes: guestInfo.notes || "",
       isBookingForSomeoneElse: guestInfo.isBookingForSomeoneElse || false,
@@ -93,18 +124,13 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
       recipientLastName: guestInfo.recipientLastName || "",
       recipientEmail: guestInfo.recipientEmail || "",
       recipientPhone: guestInfo.recipientPhone || "",
-      recipientBirthDate: guestInfo.recipientBirthDate ? guestInfo.recipientBirthDate.toISOString().split('T')[0] : "",
+      recipientBirthDate: guestInfo.recipientBirthDate || undefined,
       recipientGender: guestInfo.recipientGender || undefined,
     },
   })
 
   const onSubmit = (data: GuestInfoFormData) => {
-    const processedData: Partial<GuestInfo> = {
-      ...data,
-      birthDate: data.birthDate ? new Date(data.birthDate) : undefined,
-      recipientBirthDate: data.recipientBirthDate ? new Date(data.recipientBirthDate) : undefined,
-    }
-    setGuestInfo(processedData)
+    setGuestInfo(data)
     onNext()
   }
 
@@ -118,9 +144,17 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
       form.setValue("recipientLastName", "")
       form.setValue("recipientEmail", "")
       form.setValue("recipientPhone", "")
-      form.setValue("recipientBirthDate", "")
+      form.setValue("recipientBirthDate", undefined)
       form.setValue("recipientGender", undefined)
     }
+  }
+
+  // Date picker helper function
+  const isDateDisabled = (date: Date) => {
+    const today = new Date()
+    const maxDate = new Date()
+    maxDate.setFullYear(today.getFullYear() - 16) // Minimum age 16
+    return date > maxDate || date < new Date(1900, 0, 1)
   }
 
   return (
@@ -224,47 +258,79 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="birthDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                        <Calendar className="h-4 w-4" />
-                        {t("guestInfo.birthDate")}
-                      </FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Only show birth date and gender for booker if NOT booking for someone else */}
+              {!isBookingForSomeoneElse && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="birthDate"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                          <CalendarIcon className="h-4 w-4" />
+                          {t("guestInfo.birthDate")}
+                        </FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP", { locale: language === "he" ? he : undefined })
+                                ) : (
+                                  <span>בחר תאריך לידה</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={isDateDisabled}
+                              initialFocus
+                              captionLayout="dropdown"
+                              fromYear={1900}
+                              toYear={new Date().getFullYear() - 16}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t("guestInfo.gender")}</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t("guestInfo.genderPlaceholder")} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="male">{t("guestInfo.genderMale")}</SelectItem>
-                          <SelectItem value="female">{t("guestInfo.genderFemale")}</SelectItem>
-                          <SelectItem value="other">{t("guestInfo.genderOther")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("guestInfo.gender")}</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t("guestInfo.genderPlaceholder")} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="male">{t("guestInfo.genderMale")}</SelectItem>
+                            <SelectItem value="female">{t("guestInfo.genderFemale")}</SelectItem>
+                            <SelectItem value="other">{t("guestInfo.genderOther")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
               <FormField
                 control={form.control}
@@ -364,14 +430,43 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                     control={form.control}
                     name="recipientBirthDate"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                          <Calendar className="h-4 w-4" />
+                          <CalendarIcon className="h-4 w-4" />
                           {t("guestInfo.recipientBirthDate")} *
                         </FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP", { locale: language === "he" ? he : undefined })
+                                ) : (
+                                  <span>בחר תאריך לידה</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={isDateDisabled}
+                              initialFocus
+                              captionLayout="dropdown"
+                              fromYear={1900}
+                              toYear={new Date().getFullYear() - 16}
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}

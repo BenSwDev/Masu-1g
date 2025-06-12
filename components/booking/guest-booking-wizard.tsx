@@ -44,13 +44,18 @@ interface GuestAddress {
   city: string
   street: string
   houseNumber: string
-  addressType: string
+  addressType: "apartment" | "house" | "office" | "hotel" | "other"
   floor?: string
   apartmentNumber?: string
   entrance?: string
   parking: boolean
-  isDefault: boolean
   notes?: string
+  // Type-specific details
+  doorName?: string // for house
+  buildingName?: string // for office
+  hotelName?: string // for hotel
+  roomNumber?: string // for hotel
+  instructions?: string // for other
 }
 
 interface GuestBookingWizardProps {

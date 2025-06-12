@@ -1907,7 +1907,7 @@ export async function createGuestBooking(
       console.log("🏗️ Creating new booking object...")
       const newBooking = new Booking({
         ...validatedPayload,
-        userId: null, // Guest booking - no user association
+        userId: null, // Guest booking - no user association initially
         bookingNumber,
         bookedByUserName: guestInfo.name,
         bookedByUserEmail: guestInfo.email,
@@ -2161,6 +2161,7 @@ export async function createGuestUser(guestInfo: {
   gender?: "male" | "female" | "other"
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
   try {
+    console.log("🔍 Creating guest user with info:", guestInfo)
     await dbConnect()
 
     // Check if user already exists with this email or phone
@@ -2172,11 +2173,13 @@ export async function createGuestUser(guestInfo: {
     })
 
     if (existingUser) {
-      // If user exists but is not a guest, don't create duplicate
+      console.log("✅ Found existing user:", existingUser._id.toString())
+      // If user exists but is not a guest, add guest role
       if (!existingUser.roles.includes(UserRole.GUEST)) {
-        return { success: true, userId: existingUser._id.toString() }
+        existingUser.roles.push(UserRole.GUEST)
+        await existingUser.save()
+        console.log("✅ Added GUEST role to existing user")
       }
-      // If it's already a guest user, return it
       return { success: true, userId: existingUser._id.toString() }
     }
 
@@ -2196,6 +2199,7 @@ export async function createGuestUser(guestInfo: {
 
     await guestUser.save()
     
+    console.log("✅ Guest user created successfully:", guestUser._id.toString())
     logger.info("Guest user created successfully", {
       userId: guestUser._id.toString(),
       email: guestInfo.email,
@@ -2203,7 +2207,20 @@ export async function createGuestUser(guestInfo: {
 
     return { success: true, userId: guestUser._id.toString() }
   } catch (error) {
+    console.error("❌ Error creating guest user:", error)
     logger.error("Error creating guest user:", { error, guestInfo })
+    
+    // Return more specific error message
+    if (error instanceof Error) {
+      if (error.message.includes('duplicate key')) {
+        return { success: false, error: "User with this email or phone already exists" }
+      }
+      if (error.message.includes('validation')) {
+        return { success: false, error: "Invalid user data provided" }
+      }
+      return { success: false, error: error.message }
+    }
+    
     return { success: false, error: "Failed to create guest user" }
   }
 }
@@ -2219,9 +2236,55 @@ export async function saveAbandonedBooking(
   }
 ): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   try {
+    console.log("💾 Saving abandoned booking for user:", userId, "step:", formData.currentStep)
     await dbConnect()
 
-    // Create abandoned booking record
+    // Check if there's already an abandoned booking for this user
+    const existingAbandoned = await Booking.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "abandoned_pending_payment"
+    }).sort({ createdAt: -1 })
+
+    if (existingAbandoned) {
+      // Update existing abandoned booking
+      existingAbandoned.formState = {
+        currentStep: formData.currentStep,
+        guestInfo: formData.guestInfo,
+        guestAddress: formData.guestAddress,
+        bookingOptions: formData.bookingOptions,
+        calculatedPrice: formData.calculatedPrice,
+        savedAt: new Date(),
+      }
+      
+      // Update other fields if they exist
+      if (formData.guestInfo?.firstName && formData.guestInfo?.lastName) {
+        existingAbandoned.bookedByUserName = `${formData.guestInfo.firstName} ${formData.guestInfo.lastName}`
+        existingAbandoned.bookedByUserEmail = formData.guestInfo.email || ""
+        existingAbandoned.bookedByUserPhone = formData.guestInfo.phone || ""
+      }
+      
+      if (formData.bookingOptions?.selectedTreatmentId) {
+        existingAbandoned.treatmentId = new mongoose.Types.ObjectId(formData.bookingOptions.selectedTreatmentId)
+      }
+      
+      if (formData.bookingOptions?.selectedDurationId) {
+        existingAbandoned.selectedDurationId = new mongoose.Types.ObjectId(formData.bookingOptions.selectedDurationId)
+      }
+      
+      if (formData.bookingOptions?.bookingDate && formData.bookingOptions?.bookingTime) {
+        const date = new Date(formData.bookingOptions.bookingDate)
+        const [hours, minutes] = formData.bookingOptions.bookingTime.split(":").map(Number)
+        date.setHours(hours, minutes, 0, 0)
+        existingAbandoned.bookingDateTime = date
+      }
+
+      await existingAbandoned.save()
+      
+      console.log("✅ Updated existing abandoned booking:", existingAbandoned._id.toString())
+      return { success: true, bookingId: existingAbandoned._id.toString() }
+    }
+
+    // Create new abandoned booking record with minimal required fields
     const abandonedBooking = new Booking({
       userId: new mongoose.Types.ObjectId(userId),
       bookingNumber: `ABANDONED-${Date.now()}`,
@@ -2312,6 +2375,7 @@ export async function saveAbandonedBooking(
 
     await abandonedBooking.save()
     
+    console.log("✅ Created new abandoned booking:", abandonedBooking._id.toString())
     logger.info("Abandoned booking saved", {
       bookingId: abandonedBooking._id.toString(),
       userId,
@@ -2320,6 +2384,7 @@ export async function saveAbandonedBooking(
 
     return { success: true, bookingId: abandonedBooking._id.toString() }
   } catch (error) {
+    console.error("❌ Error saving abandoned booking:", error)
     logger.error("Error saving abandoned booking:", { error, userId, formData })
     return { success: false, error: "Failed to save abandoned booking" }
   }

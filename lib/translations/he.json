@@ -644,7 +644,8 @@
     "balance": "יתרה",
     "status": {
       "confirmed": "אושר",
-      "cancelled": "בוטל"
+      "cancelled": "בוטל",
+      "abandoned_pending_payment": "הזמנה שננטשה"
     },
     "addressStep": {
       "title": "הוסף כתובת",
@@ -4007,6 +4008,7 @@
       "confirmed": "מאושר",
       "professional_en_route": "המטפל בדרך",
       "completed": "הושלם",
+      "abandoned_pending_payment": "הזמנה שננטשה",
       "${statusKey}": "memberBookings.status.${statusKey}",
       "no_show": "לא הגיע",
       "pending_professional_assignment_short": "ממתין לשיבוץ",
@@ -4015,7 +4017,8 @@
       "completed_short": "הושלם",
       "cancelled_by_user_short": "בוטל ע\"י משתמש",
       "cancelled_by_admin_short": "בוטל ע\"י מנהל",
-      "no_show_short": "לא הגיע"
+      "no_show_short": "לא הגיע",
+      "abandoned_pending_payment_short": "ננטשה"
     },
     "reviewNotAvailable": "לא ניתן לדרג הזמנה זו",
     "viewReview": "הצג חוות דעת",

@@ -203,6 +203,7 @@ export default function AdminBookingsClient() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">{t("adminBookings.allStatuses")}</SelectItem>
+                          <SelectItem value="abandoned_pending_payment">הזמנות שננטשו</SelectItem>
                           <SelectItem value="pending_professional_assignment">
                             {t("adminBookings.status.pendingAssignment")}
                           </SelectItem>

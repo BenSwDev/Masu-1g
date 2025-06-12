@@ -53,6 +53,7 @@
     "crypto": "latest",
     "date-fns": "latest",
     "date-fns-tz": "^3.2.0",
+    "dotenv": "^16.5.0",
     "embla-carousel-react": "latest",
     "fs": "latest",
     "gcp-metadata": "latest",
@@ -90,6 +91,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8.5",
+    "puppeteer": "^24.10.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }

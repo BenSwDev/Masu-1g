@@ -103,17 +103,60 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
 
   const { toast } = useToast()
 
+  // Function to create initial pending booking
+  const createInitialPendingBooking = async (userId: string) => {
+    try {
+      console.log("📝 Creating initial pending booking for guest:", userId)
+      
+      // Create a minimal booking with "abandoned_pending_payment" status
+      // This ensures the booking appears in admin bookings list immediately
+      const result = await saveAbandonedBooking(userId, {
+        guestInfo,
+        guestAddress: {}, // Empty initially
+        bookingOptions: {}, // Empty initially  
+        calculatedPrice: null, // Empty initially
+        currentStep: 1,
+      })
+      
+      if (result.success) {
+        console.log("✅ Initial pending booking created:", result.bookingId)
+        toast({
+          title: "התחלת תהליך הזמנה",
+          description: "ההזמנה נשמרה במערכת ותופיע בעמוד הזמנות המנהל",
+        })
+      } else {
+        console.log("⚠️ Failed to create initial pending booking:", result.error)
+      }
+    } catch (error) {
+      console.error("❌ Error creating initial pending booking:", error)
+    }
+  }
+
   // Check for abandoned booking on component mount
   useEffect(() => {
     const checkForAbandonedBooking = async () => {
+      console.log("🔍 Checking for abandoned booking...")
       const savedUserId = localStorage.getItem('guestUserId')
+      console.log("📱 Saved guest user ID:", savedUserId)
+      
       if (savedUserId) {
-        const result = await getAbandonedBooking(savedUserId)
-        if (result.success && result.booking) {
-          setAbandonedBooking(result.booking)
-          setGuestUserId(savedUserId)
-          setShowRecoveryDialog(true)
+        try {
+          const result = await getAbandonedBooking(savedUserId)
+          console.log("📋 Abandoned booking result:", result)
+          
+          if (result.success && result.booking) {
+            console.log("✅ Found abandoned booking, showing recovery dialog")
+            setAbandonedBooking(result.booking)
+            setGuestUserId(savedUserId)
+            setShowRecoveryDialog(true)
+          } else {
+            console.log("ℹ️ No abandoned booking found")
+          }
+        } catch (error) {
+          console.error("❌ Error checking for abandoned booking:", error)
         }
+      } else {
+        console.log("ℹ️ No saved guest user ID found")
       }
     }
     
@@ -124,13 +167,24 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   useEffect(() => {
     if (guestUserId && currentStep > 1) {
       const saveFormState = async () => {
-        await saveAbandonedBooking(guestUserId, {
-          guestInfo,
-          guestAddress,
-          bookingOptions,
-          calculatedPrice,
-          currentStep,
-        })
+        try {
+          console.log("💾 Saving form state for step:", currentStep)
+          const result = await saveAbandonedBooking(guestUserId, {
+            guestInfo,
+            guestAddress,
+            bookingOptions,
+            calculatedPrice,
+            currentStep,
+          })
+          
+          if (result.success) {
+            console.log("✅ Form state saved successfully")
+          } else {
+            console.error("❌ Failed to save form state:", result.error)
+          }
+        } catch (error) {
+          console.error("❌ Error saving form state:", error)
+        }
       }
       
       // Debounce the save operation
@@ -305,29 +359,47 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   }
 
   const nextStep = async () => {
-    // Create guest user after step 1
+    // Create guest user after step 1 AND create pending booking
     if (currentStep === 1 && !guestUserId) {
       if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.phone) {
-        const result = await createGuestUser({
-          firstName: guestInfo.firstName,
-          lastName: guestInfo.lastName,
-          email: guestInfo.email,
-          phone: guestInfo.phone,
-          birthDate: guestInfo.birthDate,
-          gender: guestInfo.gender,
-        })
-        
-        if (result.success && result.userId) {
-          setGuestUserId(result.userId)
-          localStorage.setItem('guestUserId', result.userId)
-        } else {
+        console.log("👤 Creating guest user...")
+        try {
+          const result = await createGuestUser({
+            firstName: guestInfo.firstName,
+            lastName: guestInfo.lastName,
+            email: guestInfo.email,
+            phone: guestInfo.phone,
+            birthDate: guestInfo.birthDate,
+            gender: guestInfo.gender,
+          })
+          
+          if (result.success && result.userId) {
+            console.log("✅ Guest user created/found:", result.userId)
+            setGuestUserId(result.userId)
+            localStorage.setItem('guestUserId', result.userId)
+            
+            // Create initial pending booking immediately
+            await createInitialPendingBooking(result.userId)
+          } else {
+            console.error("❌ Failed to create guest user:", result.error)
+            toast({
+              variant: "destructive",
+              title: "שגיאה ביצירת משתמש אורח",
+              description: result.error || "נסה שוב",
+            })
+            return
+          }
+        } catch (error) {
+          console.error("❌ Error creating guest user:", error)
           toast({
             variant: "destructive",
             title: "שגיאה ביצירת משתמש אורח",
-            description: result.error || "נסה שוב",
+            description: "אירעה שגיאה בלתי צפויה. נסה שוב.",
           })
           return
         }
+      } else {
+        console.log("⚠️ Missing required guest info for user creation")
       }
     }
 
@@ -582,6 +654,18 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
               נמצאה הזמנה שלא הושלמה מהיום האחרון. האם תרצה להמשיך מהנקודה בה עצרת או להתחיל מחדש?
             </DialogDescription>
           </DialogHeader>
+          
+          {/* Debug info */}
+          {abandonedBooking && (
+            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+              <div>שלב: {abandonedBooking.formState?.currentStep || 'לא ידוע'}</div>
+              <div>נשמר: {abandonedBooking.formState?.savedAt ? new Date(abandonedBooking.formState.savedAt).toLocaleString('he-IL') : 'לא ידוע'}</div>
+              {abandonedBooking.formState?.guestInfo?.firstName && (
+                <div>שם: {abandonedBooking.formState.guestInfo.firstName} {abandonedBooking.formState.guestInfo.lastName}</div>
+              )}
+            </div>
+          )}
+          
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={handleStartFresh}>
               התחל מחדש

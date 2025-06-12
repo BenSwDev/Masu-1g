@@ -8,9 +8,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
-import { Stethoscope, Clock, Users } from "lucide-react"
+import { Sparkles, Clock, Users } from "lucide-react"
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
-import type { ITreatment } from "@/lib/db/models"
 
 interface GuestTreatmentSelectionStepProps {
   initialData: BookingInitialData
@@ -48,7 +47,7 @@ export function GuestTreatmentSelectionStep({
 
   const availableDurations = useMemo(() => {
     if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {
-      return selectedTreatment.durations.filter((d) => d.isActive)
+      return selectedTreatment.durations.filter((d: any) => d.isActive)
     }
     return []
   }, [selectedTreatment])
@@ -58,23 +57,14 @@ export function GuestTreatmentSelectionStep({
   }
 
   const formatDurationString = (minutes: number): string => {
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-    let durationString = ""
-    if (hours > 0) {
-      durationString += `${hours} ${t(hours === 1 ? "common.hour" : "common.hours")}`
-    }
-    if (mins > 0) {
-      if (hours > 0) durationString += ` ${t("common.and")} `
-      durationString += `${mins} ${t(mins === 1 ? "common.minute" : "common.minutes")}`
-    }
-    return durationString.trim() || `${minutes} ${t("common.minutes")}`
+    return `${minutes} ${t(minutes === 1 ? "common.minute" : "common.minutes")}`
   }
 
   const canProceed = useMemo(() => {
     if (!bookingOptions.selectedTreatmentId) return false
     if (selectedTreatment?.pricingType === "duration_based" && !bookingOptions.selectedDurationId) return false
-    if (!bookingOptions.therapistGenderPreference) return false
+    // Only require therapist gender preference if the treatment allows gender selection
+    if (selectedTreatment?.allowTherapistGenderSelection && !bookingOptions.therapistGenderPreference) return false
     return true
   }, [bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, bookingOptions.therapistGenderPreference, selectedTreatment])
 
@@ -103,7 +93,7 @@ export function GuestTreatmentSelectionStep({
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <Stethoscope className="mx-auto h-12 w-12 text-primary mb-4" />
+        <Sparkles className="mx-auto h-12 w-12 text-primary mb-4" />
         <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.treatment.title")}</h2>
         <p className="text-muted-foreground mt-2">{t("bookings.steps.treatment.description")}</p>
       </div>
@@ -123,7 +113,7 @@ export function GuestTreatmentSelectionStep({
                 onClick={() => setSelectedCategory(category)}
                 className="h-auto py-3"
               >
-                {category}
+                {t(`treatments.categories.${category}`)}
               </Button>
             ))}
           </div>
@@ -188,7 +178,7 @@ export function GuestTreatmentSelectionStep({
               onValueChange={handleDurationSelect}
               className="space-y-4"
             >
-              {availableDurations.map((duration) => (
+              {availableDurations.map((duration: any) => (
                 <div key={duration._id.toString()} className="flex items-center space-x-3 space-y-0">
                   <RadioGroupItem value={duration._id.toString()} id={duration._id.toString()} />
                   <Label
@@ -212,7 +202,7 @@ export function GuestTreatmentSelectionStep({
         </Card>
       )}
 
-      {/* Therapist Gender Preference */}
+      {/* Therapist Gender Preference - Only show if treatment allows it */}
       {selectedTreatment?.allowTherapistGenderSelection && (
         <Card>
           <CardHeader>

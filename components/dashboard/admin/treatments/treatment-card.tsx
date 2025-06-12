@@ -119,6 +119,11 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
               <Badge variant={treatment.isActive ? "default" : "outline"} className="capitalize">
                 {treatment.isActive ? t("common.active") : t("common.inactive")}
               </Badge>
+              {treatment.allowTherapistGenderSelection && (
+                <Badge variant="secondary" className="text-xs">
+                  {t("treatments.genderSelectionAllowed")}
+                </Badge>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" disabled={isLoading} className="hover:bg-muted">

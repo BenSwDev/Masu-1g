@@ -2472,6 +2472,7 @@
         "allowTherapistGenderSelection": "אפשר בחירת מטפל לפי זכר/נקבה",
         "allowTherapistGenderSelectionDescription": "אם מופעל, יוכלו לבחור מגדר מטפל במעמד הזמנה"
       },
+      "genderSelectionAllowed": "בחירת מגדר מטפל",
       "minutes": "דקות",
       "name": "שם הטיפול",
       "noActiveDurations": "אין משכי זמן פעילים זמינים לטיפול זה.",

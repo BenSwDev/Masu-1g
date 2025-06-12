@@ -1090,6 +1090,7 @@
       "duration": "Продолжительность",
       "isActive": "[treatments.fields.isActive]"
     },
+    "genderSelectionAllowed": "Выбор пола терапевта",
     "selectCategory": "Выберите категорию",
     "categories": {
       "massage": "Массаж",

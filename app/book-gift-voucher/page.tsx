@@ -1,13 +1,14 @@
 import { getTreatmentsForSelection } from "@/actions/gift-voucher-actions"
 import GuestPurchaseGiftVoucherClient from "@/components/guest/gift-vouchers/guest-purchase-gift-voucher-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { GuestLayout } from "@/components/layout/guest-layout"
 
 export default async function GuestBookGiftVoucherPage() {
   const treatmentsResult = await getTreatmentsForSelection()
 
   if (!treatmentsResult.success) {
     return (
-      <div className="container mx-auto py-8">
+      <GuestLayout>
         <Card>
           <CardHeader>
             <CardTitle>שגיאה בטעינת הנתונים</CardTitle>
@@ -16,15 +17,15 @@ export default async function GuestBookGiftVoucherPage() {
             <p>אירעה שגיאה בטעינת הנתונים. אנא נסה שוב מאוחר יותר.</p>
           </CardContent>
         </Card>
-      </div>
+      </GuestLayout>
     )
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <GuestLayout>
       <GuestPurchaseGiftVoucherClient
         treatments={treatmentsResult.treatments || []}
       />
-    </div>
+    </GuestLayout>
   )
 } 

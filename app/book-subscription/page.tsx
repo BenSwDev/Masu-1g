@@ -2,6 +2,7 @@ import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-action
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
 import GuestPurchaseSubscriptionClient from "@/components/guest/subscriptions/guest-purchase-subscription-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { GuestLayout } from "@/components/layout/guest-layout"
 
 export default async function GuestBookSubscriptionPage() {
   const [subscriptionsData, treatmentsData] = await Promise.all([
@@ -11,7 +12,7 @@ export default async function GuestBookSubscriptionPage() {
 
   if (!subscriptionsData.success || !treatmentsData.success) {
     return (
-      <div className="container mx-auto py-8">
+      <GuestLayout>
         <Card>
           <CardHeader>
             <CardTitle>שגיאה בטעינת הנתונים</CardTitle>
@@ -20,16 +21,16 @@ export default async function GuestBookSubscriptionPage() {
             <p>אירעה שגיאה בטעינת הנתונים. אנא נסה שוב מאוחר יותר.</p>
           </CardContent>
         </Card>
-      </div>
+      </GuestLayout>
     )
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <GuestLayout>
       <GuestPurchaseSubscriptionClient
         subscriptions={subscriptionsData.subscriptions || []}
         treatments={treatmentsData.treatments || []}
       />
-    </div>
+    </GuestLayout>
   )
 } 

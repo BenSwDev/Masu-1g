@@ -1009,6 +1009,15 @@
       "dashboard": "לוח בקרה",
       "login": "התחבר"
     },
+    "navigation": {
+      "home": "עמוד ראשי",
+      "bookTreatment": "הזמן טיפול",
+      "bookSubscription": "הזמן מנוי",
+      "bookGiftVoucher": "הזמן שובר מתנה",
+      "services": "שירותים",
+      "booking": "הזמנות",
+      "menu": "תפריט"
+    },
     "common.totalPrice": "מחיר כולל",
     "confirmPassword": "אימות סיסמה",
     "createdAt": "נוצר ב",

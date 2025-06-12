@@ -9,6 +9,7 @@ import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails
 import { useToast } from "@/components/common/ui/use-toast"
 
 import { GuestInfoStep } from "./steps/guest-info-step"
+import { GuestAddressStep } from "./steps/guest-address-step"
 import { GuestTreatmentSelectionStep } from "./steps/guest-treatment-selection-step"
 import { GuestSchedulingStep } from "./steps/guest-scheduling-step"
 import { GuestSummaryStep } from "./steps/guest-summary-step"
@@ -30,11 +31,24 @@ interface GuestInfo {
   notes?: string
 }
 
+interface GuestAddress {
+  city: string
+  street: string
+  houseNumber: string
+  addressType: string
+  floor?: string
+  apartmentNumber?: string
+  entrance?: string
+  parking: boolean
+  isDefault: boolean
+  notes?: string
+}
+
 interface GuestBookingWizardProps {
   initialData: BookingInitialData
 }
 
-const TOTAL_STEPS_WITH_PAYMENT = 5
+const TOTAL_STEPS_WITH_PAYMENT = 6
 const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 
 const TIMEZONE = "Asia/Jerusalem"
@@ -46,6 +60,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   const [isPriceCalculating, setIsPriceCalculating] = useState(false)
   
   const [guestInfo, setGuestInfo] = useState<Partial<GuestInfo>>({})
+  const [guestAddress, setGuestAddress] = useState<Partial<GuestAddress>>({})
   const [bookingOptions, setBookingOptions] = useState<Partial<SelectedBookingOptions>>({
     therapistGenderPreference: initialData.userPreferences?.therapistGender || "any",
     isFlexibleTime: false,
@@ -276,6 +291,15 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
         )
       case 2:
         return (
+          <GuestAddressStep
+            address={guestAddress}
+            setAddress={setGuestAddress}
+            onNext={nextStep}
+            onPrev={prevStep}
+          />
+        )
+      case 3:
+        return (
           <GuestTreatmentSelectionStep
             initialData={initialData}
             bookingOptions={bookingOptions}
@@ -284,7 +308,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             onPrev={prevStep}
           />
         )
-      case 3:
+      case 4:
         return (
           <GuestSchedulingStep
             initialData={initialData}
@@ -297,7 +321,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             onPrev={prevStep}
           />
         )
-      case 4:
+      case 5:
         return (
           <GuestSummaryStep
             initialData={initialData}
@@ -309,7 +333,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             onPrev={prevStep}
           />
         )
-      case 5:
+      case 6:
         return (
           <GuestPaymentStep
             calculatedPrice={calculatedPrice}
@@ -319,7 +343,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             isLoading={isLoading}
           />
         )
-      case 6:
+      case 7:
         return (
           <GuestBookingConfirmation
             bookingResult={bookingResult}
@@ -336,14 +360,16 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       case 1:
         return t("bookings.steps.guestInfo.title")
       case 2:
-        return t("bookings.steps.treatment.title")
+        return t("bookings.addressStep.title", "הוסף כתובת חדשה")
       case 3:
-        return t("bookings.steps.scheduling.title")
+        return t("bookings.steps.treatment.title")
       case 4:
-        return t("bookings.steps.summary.title")
+        return t("bookings.steps.scheduling.title")
       case 5:
-        return t("bookings.steps.payment.title")
+        return t("bookings.steps.summary.title")
       case 6:
+        return t("bookings.steps.payment.title")
+      case 7:
         return t("bookings.steps.confirmation.title")
       default:
         return ""

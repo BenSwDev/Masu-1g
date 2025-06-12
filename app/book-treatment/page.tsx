@@ -1,5 +1,5 @@
 import { getGuestBookingInitialData } from "@/actions/booking-actions"
-import GuestBookingWizard from "@/components/guest/booking/guest-booking-wizard"
+import GuestBookingWizard from "@/components/booking/guest-booking-wizard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
 

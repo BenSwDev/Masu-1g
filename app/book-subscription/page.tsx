@@ -1,6 +1,6 @@
 import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
-import GuestPurchaseSubscriptionClient from "@/components/guest/subscriptions/guest-purchase-subscription-client"
+import GuestPurchaseSubscriptionClient from "@/components/subscriptions/guest-purchase-subscription-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
 

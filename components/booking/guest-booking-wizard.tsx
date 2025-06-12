@@ -83,7 +83,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
         setTimeSlots([])
         setWorkingHoursNote(undefined)
         
-        const localDate = bookingOptions.bookingDate!
+        const localDate = new Date(bookingOptions.bookingDate!)
         const year = localDate.getFullYear()
         const month = (localDate.getMonth() + 1).toString().padStart(2, "0")
         const day = localDate.getDate().toString().padStart(2, "0")

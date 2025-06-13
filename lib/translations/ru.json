@@ -185,6 +185,7 @@
       "signOut": "Выйти",
       "users": "Пользователи",
       "clients": "Клиенты",
+      "customers": "Клиенты",
       "professionals": "Профессионалы",
       "partners": "Партнеры",
       "treatments": "Процедуры",
@@ -871,6 +872,37 @@
         "genderPlaceholder": "Выберите пол",
         "dateOfBirth": "Дата рождения",
         "dateOfBirthPlaceholder": "Выберите дату рождения"
+      }
+    },
+    "professionals": {
+      "title": "[admin.professionals.title]",
+      "description": "[admin.professionals.description]",
+      "addProfessional": "[admin.professionals.addProfessional]",
+      "searchPlaceholder": "[admin.professionals.searchPlaceholder]",
+      "noProfessionalsFound": "[admin.professionals.noProfessionalsFound]",
+      "form": {
+        "name": "[admin.professionals.form.name]",
+        "namePlaceholder": "[admin.professionals.form.namePlaceholder]",
+        "email": "[admin.professionals.form.email]",
+        "emailPlaceholder": "[admin.professionals.form.emailPlaceholder]",
+        "phone": "[admin.professionals.form.phone]",
+        "phonePlaceholder": "[admin.professionals.form.phonePlaceholder]",
+        "password": "[admin.professionals.form.password]",
+        "passwordPlaceholder": "[admin.professionals.form.passwordPlaceholder]"
+      },
+      "table": {
+        "name": "[admin.professionals.table.name]",
+        "email": "[admin.professionals.table.email]",
+        "phone": "[admin.professionals.table.phone]",
+        "number": "[admin.professionals.table.number]",
+        "status": "[admin.professionals.table.status]"
+      },
+      "statuses": {
+        "active": "[admin.professionals.statuses.active]",
+        "inactive": "[admin.professionals.statuses.inactive]",
+        "pending": "[admin.professionals.statuses.pending]",
+        "incomplete": "[admin.professionals.statuses.incomplete]",
+        "rejected": "[admin.professionals.statuses.rejected]"
       }
     }
   },

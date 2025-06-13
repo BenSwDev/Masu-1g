@@ -137,6 +137,37 @@
       "userDeletedToast": "המשתמש נמחק בהצלחה",
       "userListTitle": "ניהול משתמשים",
       "userUpdatedToast": "המשתמש עודכן בהצלחה"
+    },
+    "professionals": {
+      "title": "ניהול מטפלים",
+      "description": "יצירה או שיוך של מטפלים קיימים.",
+      "addProfessional": "הוסף מטפל",
+      "searchPlaceholder": "חפש מטפל...",
+      "noProfessionalsFound": "לא נמצאו מטפלים",
+      "form": {
+        "name": "שם מלא",
+        "namePlaceholder": "הכנס שם מלא",
+        "email": "אימייל",
+        "emailPlaceholder": "הכנס אימייל",
+        "phone": "טלפון",
+        "phonePlaceholder": "הכנס מספר טלפון",
+        "password": "סיסמה",
+        "passwordPlaceholder": "הכנס סיסמה"
+      },
+      "table": {
+        "name": "שם",
+        "email": "אימייל",
+        "phone": "טלפון",
+        "number": "מספר מטפל",
+        "status": "סטטוס"
+      },
+      "statuses": {
+        "active": "פעיל",
+        "inactive": "לא פעיל",
+        "pending": "ממתין לאישור",
+        "incomplete": "לא הושלם",
+        "rejected": "נדחה"
+      }
     }
   },
   "adminBookings": {

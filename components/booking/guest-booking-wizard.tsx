@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { format } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
@@ -267,6 +267,46 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
     
     checkForAbandonedBooking()
   }, [])
+
+  const guestUserCreatedRef = useRef(false)
+
+  // Auto create guest user and initial booking once mandatory info is provided
+  useEffect(() => {
+    const attemptAutoCreate = async () => {
+      if (
+        !guestUserId &&
+        !guestUserCreatedRef.current &&
+        guestInfo.firstName &&
+        guestInfo.lastName &&
+        guestInfo.email &&
+        guestInfo.phone
+      ) {
+        guestUserCreatedRef.current = true
+        try {
+          const result = await createGuestUser({
+            firstName: guestInfo.firstName,
+            lastName: guestInfo.lastName,
+            email: guestInfo.email,
+            phone: guestInfo.phone,
+            birthDate: guestInfo.birthDate,
+            gender: guestInfo.gender,
+          })
+          if (result.success && result.userId) {
+            setGuestUserId(result.userId)
+            localStorage.setItem('guestUserId', result.userId)
+            await createInitialPendingBooking(result.userId, guestInfo)
+          } else {
+            guestUserCreatedRef.current = false
+          }
+        } catch (error) {
+          console.error('❌ Auto guest user creation failed:', error)
+          guestUserCreatedRef.current = false
+        }
+      }
+    }
+
+    attemptAutoCreate()
+  }, [guestInfo.firstName, guestInfo.lastName, guestInfo.email, guestInfo.phone, guestUserId])
 
   // Save form state whenever it changes (after step 1)
   useEffect(() => {

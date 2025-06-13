@@ -13,7 +13,6 @@ import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
 import { notificationManager } from "@/lib/notifications/notification-manager" // Added import
 import type {
-  PurchaseSuccessSubscriptionNotificationData,
   EmailRecipient,
   PhoneRecipient,
 } from "@/lib/notifications/notification-types" // Added import
@@ -178,61 +177,7 @@ export async function purchaseSubscription({
       userSubscriptionId: newUserSubscription._id
     })
 
-    // --- Send purchase success notification ---
-    try {
-      const notificationStart = Date.now()
-      const user = await User.findById(sessionData.user.id).select("name email phone notificationPreferences").lean()
-
-      if (user) {
-        const lang = user.notificationPreferences?.language || "he"
-        const methods = user.notificationPreferences?.methods || ["email", "sms"]
-        const userNameForNotification = user.name || (lang === "he" ? "לקוח" : "Customer")
-
-        const subName = subscription.name || (lang === "he" ? "המנוי שלך" : "Your Subscription")
-        const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-
-        const notificationData: PurchaseSuccessSubscriptionNotificationData = {
-          type: "PURCHASE_SUCCESS_SUBSCRIPTION",
-          userName: userNameForNotification,
-          subscriptionName: subName,
-          purchaseDetailsLink: `${appBaseUrl}/dashboard/member/subscriptions`,
-        }
-
-        if (methods.includes("email") && user.email) {
-          const emailRecipient: EmailRecipient = {
-            type: "email",
-            value: user.email,
-            language: lang,
-            name: userNameForNotification,
-          }
-          await notificationManager.sendNotification(emailRecipient, notificationData)
-        }
-        if (methods.includes("sms") && user.phone) {
-          const phoneRecipient: PhoneRecipient = {
-            type: "phone",
-            value: user.phone,
-            language: lang,
-          }
-          await notificationManager.sendNotification(phoneRecipient, notificationData)
-        }
-        
-        const notificationTime = Date.now() - notificationStart
-        logger.info(`[${requestId}] Notifications sent successfully`, {
-          notificationTime: `${notificationTime}ms`
-        })
-      } else {
-        logger.warn(`[${requestId}] User not found for notification after subscription purchase`, { 
-          userId: sessionData.user.id 
-        })
-      }
-    } catch (notificationError) {
-      logger.error(`[${requestId}] Failed to send purchase success notification for subscription`, {
-        userId: sessionData.user.id,
-        subscriptionId: newUserSubscription._id.toString(),
-        error: notificationError instanceof Error ? notificationError.message : String(notificationError),
-      })
-    }
-    // --- End notification sending ---
+    // Purchase success notifications removed as per requirements
 
     revalidatePath("/dashboard/member/subscriptions")
     revalidatePath("/dashboard/admin/user-subscriptions")
@@ -655,40 +600,7 @@ export async function purchaseGuestSubscription({
       guestEmail: guestInfo.email
     })
 
-    // Send purchase success notification to guest
-    try {
-      const notificationStart = Date.now()
-      const lang = "he" // Default to Hebrew for guests
-      const subName = subscription.name || (lang === "he" ? "המנוי שלך" : "Your Subscription")
-      const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-
-      const notificationData: PurchaseSuccessSubscriptionNotificationData = {
-        type: "PURCHASE_SUCCESS_SUBSCRIPTION",
-        userName: guestInfo.name,
-        subscriptionName: subName,
-        purchaseDetailsLink: `${appBaseUrl}/subscription-status?subscriptionId=${newUserSubscription._id.toString()}`,
-      }
-
-      const emailRecipient: EmailRecipient = {
-        type: "email",
-        value: guestInfo.email,
-        language: lang,
-        name: guestInfo.name,
-      }
-      await notificationManager.sendNotification(emailRecipient, notificationData)
-      
-      const notificationTime = Date.now() - notificationStart
-      logger.info(`[${requestId}] Guest notification sent successfully`, {
-        notificationTime: `${notificationTime}ms`,
-        guestEmail: guestInfo.email
-      })
-    } catch (notificationError) {
-      logger.error(`[${requestId}] Failed to send purchase success notification for guest subscription`, {
-        guestEmail: guestInfo.email,
-        subscriptionId: newUserSubscription._id.toString(),
-        error: notificationError instanceof Error ? notificationError.message : String(notificationError),
-      })
-    }
+    // Guest purchase success notifications removed as per requirements
 
     revalidatePath("/dashboard/admin/user-subscriptions")
 

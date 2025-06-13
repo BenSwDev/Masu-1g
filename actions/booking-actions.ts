@@ -39,7 +39,6 @@ import { notificationManager } from "@/lib/notifications/notification-manager"
 import type {
   EmailRecipient,
   PhoneRecipient,
-  BookingSuccessNotificationData,
   NotificationLanguage,
 } from "@/lib/notifications/notification-types"
 
@@ -718,43 +717,8 @@ export async function createBooking(
           .lean()
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
-        if (userForNotification && treatment) {
-          const userLang = (userForNotification.notificationPreferences?.language as NotificationLanguage) || "he"
-          const userNotificationMethods = userForNotification.notificationPreferences?.methods || ["email"]
-
-          const bookingSuccessData: BookingSuccessNotificationData = {
-            type: "BOOKING_SUCCESS",
-            userName: finalBookingObject.recipientName || userForNotification.name || "User",
-            bookingId: finalBookingObject.bookingNumber,
-            treatmentName: treatment.name,
-            bookingDateTime: finalBookingObject.bookingDateTime,
-            orderDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${finalBookingObject._id.toString()}`,
-          }
-
-          if (userNotificationMethods.includes("email") && userForNotification.email) {
-            const emailRecipient: EmailRecipient = {
-              type: "email",
-              value: userForNotification.email,
-              name: userForNotification.name,
-              language: userLang,
-            }
-            await notificationManager.sendNotification(emailRecipient, bookingSuccessData)
-          }
-          if (userNotificationMethods.includes("sms") && userForNotification.phone) {
-            const phoneRecipient: PhoneRecipient = {
-              type: "phone",
-              value: userForNotification.phone,
-              language: userLang,
-            }
-            await notificationManager.sendNotification(phoneRecipient, bookingSuccessData)
-          }
-
-          logger.info(`Booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
-        } else {
-          logger.warn("Could not send booking notifications: User or Treatment not found", {
-            bookingId: finalBookingObject._id.toString(),
-          })
-        }
+        // Booking notifications removed as per requirements
+        logger.info(`Booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
       } catch (notificationError) {
         logger.error("Failed to send booking notifications:", {
           error: notificationError,
@@ -1319,40 +1283,7 @@ export async function professionalMarkEnRoute(
     await booking.save()
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
 
-    try {
-      const clientUser = await User.findById(booking.userId).select("name email phone notificationPreferences").lean()
-      const treatment = await Treatment.findById(booking.treatmentId).select("name").lean()
-      const professional = await User.findById(professionalId).select("name").lean()
-
-      if (clientUser && treatment && professional) {
-        const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
-        const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
-        const notificationData = {
-          type: "PROFESSIONAL_EN_ROUTE_CLIENT",
-          userName: clientUser.name || "לקוח/ה",
-          professionalName: professional.name || "מטפל/ת",
-          bookingDateTime: booking.bookingDateTime,
-          treatmentName: treatment.name,
-        }
-        if (clientNotificationMethods.includes("email") && clientUser.email) {
-          await notificationManager.sendNotification(
-            { type: "email", value: clientUser.email, name: clientUser.name, language: clientLang },
-            notificationData,
-          )
-        }
-        if (clientNotificationMethods.includes("sms") && clientUser.phone) {
-          await notificationManager.sendNotification(
-            { type: "phone", value: clientUser.phone, language: clientLang },
-            notificationData,
-          )
-        }
-      }
-    } catch (notificationError) {
-      logger.error("Failed to send professional en route notification to client:", {
-        error: notificationError,
-        bookingId,
-      })
-    }
+    // Professional en route notifications removed as per requirements
 
     return { success: true, booking: booking.toObject() }
   } catch (error) {
@@ -1388,36 +1319,7 @@ export async function professionalMarkCompleted(
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
     revalidatePath("/dashboard/admin/bookings")
 
-    try {
-      const clientUser = await User.findById(booking.userId).select("name email phone notificationPreferences").lean()
-      const treatment = await Treatment.findById(booking.treatmentId).select("name").lean()
-      const professional = await User.findById(professionalId).select("name").lean()
-
-      if (clientUser && treatment && professional) {
-        const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
-        const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
-        const notificationData = {
-          type: "BOOKING_COMPLETED_CLIENT",
-          userName: clientUser.name || "לקוח/ה",
-          professionalName: professional.name || "מטפל/ת",
-          treatmentName: treatment.name,
-        }
-        if (clientNotificationMethods.includes("email") && clientUser.email) {
-          await notificationManager.sendNotification(
-            { type: "email", value: clientUser.email, name: clientUser.name, language: clientLang },
-            notificationData,
-          )
-        }
-        if (clientNotificationMethods.includes("sms") && clientUser.phone) {
-          await notificationManager.sendNotification(
-            { type: "phone", value: clientUser.phone, language: clientLang },
-            notificationData,
-          )
-        }
-      }
-    } catch (notificationError) {
-      logger.error("Failed to send booking completed notification to client:", { error: notificationError, bookingId })
-    }
+    // Booking completed notifications removed as per requirements
 
     return { success: true, booking: booking.toObject() }
   } catch (error) {
@@ -2035,22 +1937,7 @@ export async function createGuestBooking(
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
         if (treatment) {
-          const bookingSuccessData: BookingSuccessNotificationData = {
-            type: "BOOKING_SUCCESS",
-            userName: finalBookingObject.recipientName || guestInfo.name || "Guest",
-            bookingId: finalBookingObject.bookingNumber,
-            treatmentName: treatment.name,
-            bookingDateTime: finalBookingObject.bookingDateTime,
-            orderDetailsLink: `${process.env.NEXTAUTH_URL || ""}/booking-status?bookingId=${finalBookingObject._id.toString()}`,
-          }
-
-          const emailRecipient: EmailRecipient = {
-            type: "email",
-            value: guestInfo.email,
-            name: guestInfo.name,
-            language: "he", // Default to Hebrew for guests
-          }
-          await notificationManager.sendNotification(emailRecipient, bookingSuccessData)
+          // Guest booking success notifications removed as per requirements
           console.log("✅ Notification email sent")
 
           logger.info(`Guest booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)

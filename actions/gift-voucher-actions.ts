@@ -13,10 +13,8 @@ import { logger } from "@/lib/logs/logger"
 import { notificationManager } from "@/lib/notifications/notification-manager"
 import type { GiftVoucherPlain as IGiftVoucherPlainFile } from "@/lib/db/models/gift-voucher"
 import type {
-  PurchaseSuccessGiftVoucherNotificationData,
   EmailRecipient,
   PhoneRecipient,
-  GiftVoucherReceivedNotificationData,
 } from "@/lib/notifications/notification-types" // Added imports
 
 // Extended GiftVoucherPlain for client-side use
@@ -908,33 +906,7 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
             treatmentNameForNotif = treatmentDoc?.name
           }
 
-          const notificationData: PurchaseSuccessGiftVoucherNotificationData = {
-            type: "PURCHASE_SUCCESS_GIFT_VOUCHER",
-            userName: userNameForNotification,
-            voucherType: voucher.voucherType,
-            treatmentName: treatmentNameForNotif,
-            voucherValue: voucher.voucherType === "monetary" ? voucher.amount : undefined,
-            voucherCode: voucher.code,
-            purchaseDetailsLink: `${appBaseUrl}/dashboard/member/gift-vouchers`,
-          }
-
-          if (methods.includes("email") && purchaser.email) {
-            const emailRecipient: EmailRecipient = {
-              type: "email",
-              value: purchaser.email,
-              language: lang,
-              name: userNameForNotification,
-            }
-            await notificationManager.sendNotification(emailRecipient, notificationData)
-          }
-          if (methods.includes("sms") && purchaser.phone) {
-            const phoneRecipient: PhoneRecipient = {
-              type: "phone",
-              value: purchaser.phone,
-              language: lang,
-            }
-            await notificationManager.sendNotification(phoneRecipient, notificationData)
-          }
+          // Purchase success notifications removed as per requirements
         } else {
           logger.warn(
             `Purchaser not found for notification after gift voucher purchase confirmation: ${voucher.purchaserUserId.toString()}`,
@@ -1047,21 +1019,7 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
       try {
         const recipientLang = session.user.language || "he" // Or detect recipient's language if possible
 
-        const notificationDataForRecipient: GiftVoucherReceivedNotificationData = {
-          type: "GIFT_VOUCHER_RECEIVED",
-          recipientName: voucher.recipientName,
-          purchaserName: session.user.name || (recipientLang === "he" ? "מישהו שאוהב אותך" : "Someone special"),
-          voucherCode: voucher.code,
-          greetingMessage: voucher.greetingMessage || "",
-        }
-
-        // Send SMS to recipient
-        const phoneRecipient: PhoneRecipient = {
-          type: "phone",
-          value: voucher.recipientPhone, // SMSService will handle formatting
-          language: recipientLang,
-        }
-        await notificationManager.sendNotification(phoneRecipient, notificationDataForRecipient)
+        // Gift voucher received notifications removed as per requirements
         logger.info(`Gift voucher SMS notification sent to ${voucher.recipientPhone} for voucher ${voucher.code}`)
 
         // Optionally, send an email to the recipient if their email is known/collected
@@ -1511,23 +1469,7 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
           treatmentNameForNotif = treatmentDoc?.name
         }
 
-        const notificationData: PurchaseSuccessGiftVoucherNotificationData = {
-          type: "PURCHASE_SUCCESS_GIFT_VOUCHER",
-          userName: guestInfo.name,
-          voucherType: voucher.voucherType,
-          treatmentName: treatmentNameForNotif,
-          voucherValue: voucher.voucherType === "monetary" ? voucher.amount : undefined,
-          voucherCode: voucher.code,
-          purchaseDetailsLink: `${appBaseUrl}/voucher-status?voucherId=${voucher._id.toString()}`,
-        }
-
-        const emailRecipient: EmailRecipient = {
-          type: "email",
-          value: guestInfo.email,
-          language: lang,
-          name: guestInfo.name,
-        }
-        await notificationManager.sendNotification(emailRecipient, notificationData)
+        // Guest purchase success notifications removed as per requirements
       } catch (notificationError) {
         logger.error("Failed to send purchase success notification for guest gift voucher:", {
           guestEmail: guestInfo.email,

@@ -1,62 +1,46 @@
+// Base notification data interface
 export interface BaseNotificationData {
-  id: string
-  createdAt: Date
+  type: string
 }
 
-export interface NewBookingAvailableNotificationData extends BaseNotificationData {
-  type: "NEW_BOOKING_AVAILABLE"
-  bookingId: string
-  treatmentName: string
-  bookingDateTime: Date
-  professionalActionLink: string // שם שדה שונה
-  bookingAddress?: string
-  professionalName?: string // Optional: if addressing a specific group or for personalization
+// OTP notification data
+export interface OTPNotificationData extends BaseNotificationData {
+  type: "otp"
+  code: string
+  expiresIn: number
 }
 
-export interface BookingConfirmedClientNotificationData extends BaseNotificationData {
-  type: "BOOKING_CONFIRMED_CLIENT"
-  userName: string
-  professionalName: string
-  bookingDateTime: Date
-  treatmentName: string
-  bookingDetailsLink: string
+// Welcome notification data
+export interface WelcomeNotificationData extends BaseNotificationData {
+  type: "welcome"
+  name: string
 }
 
-export interface ProfessionalEnRouteClientNotificationData extends BaseNotificationData {
-  type: "PROFESSIONAL_EN_ROUTE_CLIENT"
-  userName: string
-  professionalName: string
-  bookingDateTime: Date // Optional: for context
-  treatmentName: string // Optional: for context
-  // estimatedArrivalTime?: string; // Consider adding later
+// Password reset notification data
+export interface PasswordResetNotificationData extends BaseNotificationData {
+  type: "password-reset"
+  resetUrl: string
+  expiresIn: number
 }
 
-export interface BookingCompletedClientNotificationData extends BaseNotificationData {
-  type: "BOOKING_COMPLETED_CLIENT"
-  userName: string
-  professionalName: string
-  treatmentName: string
-  // feedbackLink?: string; // Consider adding later
-}
-
-// Add missing BookingSuccessNotificationData
-export interface BookingSuccessNotificationData extends BaseNotificationData {
-  type: "BOOKING_SUCCESS"
-  userName: string
-  bookingId: string
-  treatmentName: string
-  bookingDateTime: Date
-  orderDetailsLink: string
-}
-
+// Union type for all notification data
 export type NotificationData =
-  | NewBookingAvailableNotificationData
-  | BookingConfirmedClientNotificationData
-  | ProfessionalEnRouteClientNotificationData
-  | BookingCompletedClientNotificationData
-  | BookingSuccessNotificationData
+  | OTPNotificationData
+  | WelcomeNotificationData
+  | PasswordResetNotificationData
 
-// Add missing recipient types
+// Notification result interface
+export interface NotificationResult {
+  success: boolean
+  messageId?: string
+  error?: string
+  details?: any
+}
+
+// Language type
+export type NotificationLanguage = "he" | "en" | "ru"
+
+// Email recipient interface
 export interface EmailRecipient {
   type: "email"
   value: string
@@ -64,13 +48,12 @@ export interface EmailRecipient {
   language: NotificationLanguage
 }
 
+// Phone recipient interface
 export interface PhoneRecipient {
   type: "phone"
   value: string
   language: NotificationLanguage
 }
 
+// Union type for all recipients
 export type NotificationRecipient = EmailRecipient | PhoneRecipient
-
-// Add missing language type
-export type NotificationLanguage = "he" | "en" | "ru"

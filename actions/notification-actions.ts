@@ -425,7 +425,7 @@ export async function sendWelcomeEmail(
 export async function sendTestNotification(
   recipient: string,
   type: "email" | "phone",
-  notificationType: "otp" | "welcome" | "password-reset" | "appointment" | "custom",
+  notificationType: "otp" | "welcome" | "password-reset",
   language: NotificationLanguage = "en",
   customMessage?: string,
 ): Promise<{
@@ -497,29 +497,6 @@ export async function sendTestNotification(
         } else {
           result = { success: false, error: "Cannot send password reset to phone" }
         }
-        break
-
-      case "appointment":
-        logger.info(`[${testId}] Sending test appointment reminder`)
-        const appointmentDate = new Date()
-        appointmentDate.setDate(appointmentDate.getDate() + 2) // 2 days from now
-
-        result = await notificationManager.sendAppointmentReminder(
-          recipientObj,
-          appointmentDate,
-          "Test Service",
-          "Test Location",
-        )
-        break
-
-      case "custom":
-        logger.info(`[${testId}] Sending test custom notification`)
-        result = await notificationManager.sendCustom(
-          recipientObj,
-          customMessage || "This is a test custom notification",
-          "Test Notification",
-          "Test Title",
-        )
         break
 
       default:

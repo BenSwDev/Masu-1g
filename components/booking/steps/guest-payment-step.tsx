@@ -9,7 +9,8 @@ import { Badge } from "@/components/common/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { Checkbox } from "@/components/common/ui/checkbox"
-import { Loader2, CreditCard, CheckCircle, XCircle, Tag, AlertTriangle, Info } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Loader2, CreditCard, CheckCircle, XCircle, Tag, AlertTriangle, Info, Bell, Mail, MessageSquare, Globe } from "lucide-react"
 import type { CalculatedPriceDetails } from "@/types/booking"
 
 interface GuestInfo {
@@ -27,11 +28,17 @@ interface GuestInfo {
   recipientPhone?: string
   recipientBirthDate?: Date
   recipientGender?: "male" | "female" | "other"
+  // Notification preferences
+  bookerNotificationMethod?: "email" | "sms" | "both"
+  bookerNotificationLanguage?: "he" | "en" | "ru"
+  recipientNotificationMethod?: "email" | "sms" | "both"
+  recipientNotificationLanguage?: "he" | "en" | "ru"
 }
 
 interface GuestPaymentStepProps {
   calculatedPrice: CalculatedPriceDetails | null
   guestInfo: Partial<GuestInfo>
+  setGuestInfo: (info: Partial<GuestInfo>) => void
   onConfirm: () => void
   onPrev: () => void
   isLoading: boolean
@@ -40,6 +47,7 @@ interface GuestPaymentStepProps {
 export function GuestPaymentStep({
   calculatedPrice,
   guestInfo,
+  setGuestInfo,
   onConfirm,
   onPrev,
   isLoading,
@@ -51,6 +59,31 @@ export function GuestPaymentStep({
   const [isCountingDown, setIsCountingDown] = useState(false)
   const [marketingConsent, setMarketingConsent] = useState(true)
   const [termsAccepted, setTermsAccepted] = useState(true)
+  
+  // Notification preferences state
+  const [bookerNotificationMethod, setBookerNotificationMethod] = useState<"email" | "sms" | "both">(
+    guestInfo.bookerNotificationMethod || "email"
+  )
+  const [bookerNotificationLanguage, setBookerNotificationLanguage] = useState<"he" | "en" | "ru">(
+    guestInfo.bookerNotificationLanguage || "he"
+  )
+  const [recipientNotificationMethod, setRecipientNotificationMethod] = useState<"email" | "sms" | "both">(
+    guestInfo.recipientNotificationMethod || "email"
+  )
+  const [recipientNotificationLanguage, setRecipientNotificationLanguage] = useState<"he" | "en" | "ru">(
+    guestInfo.recipientNotificationLanguage || "he"
+  )
+
+  // Update guest info when notification preferences change
+  useEffect(() => {
+    setGuestInfo({
+      ...guestInfo,
+      bookerNotificationMethod,
+      bookerNotificationLanguage,
+      recipientNotificationMethod,
+      recipientNotificationLanguage,
+    })
+  }, [bookerNotificationMethod, bookerNotificationLanguage, recipientNotificationMethod, recipientNotificationLanguage])
 
   // Countdown effect
   useEffect(() => {
@@ -270,6 +303,155 @@ export function GuestPaymentStep({
                 </Alert>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Notification Preferences */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              העדפות התראות
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Booker Notification Preferences */}
+            <div className="space-y-4">
+              <h4 className="font-medium flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                התראות עבור המזמין ({guestInfo.firstName} {guestInfo.lastName})
+              </h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">אמצעי התראה:</label>
+                  <Select value={bookerNotificationMethod} onValueChange={(value: "email" | "sms" | "both") => setBookerNotificationMethod(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="email">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          אימייל בלבד
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="sms">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4" />
+                          SMS בלבד
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="both">
+                        <div className="flex items-center gap-2">
+                          <Bell className="h-4 w-4" />
+                          אימייל + SMS
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">שפת ההתראה:</label>
+                  <Select value={bookerNotificationLanguage} onValueChange={(value: "he" | "en" | "ru") => setBookerNotificationLanguage(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="he">
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4" />
+                          עברית
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="en">
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4" />
+                          English
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="ru">
+                        <div className="flex items-center gap-2">
+                          <Globe className="h-4 w-4" />
+                          Русский
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Recipient Notification Preferences (only if booking for someone else) */}
+            {guestInfo.isBookingForSomeoneElse && (
+              <div className="space-y-4 border-t pt-4">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  התראות עבור מקבל הטיפול ({guestInfo.recipientFirstName} {guestInfo.recipientLastName})
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">אמצעי התראה:</label>
+                    <Select value={recipientNotificationMethod} onValueChange={(value: "email" | "sms" | "both") => setRecipientNotificationMethod(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="email">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4" />
+                            אימייל בלבד
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="sms">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare className="h-4 w-4" />
+                            SMS בלבד
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="both">
+                          <div className="flex items-center gap-2">
+                            <Bell className="h-4 w-4" />
+                            אימייל + SMS
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">שפת ההתראה:</label>
+                    <Select value={recipientNotificationLanguage} onValueChange={(value: "he" | "en" | "ru") => setRecipientNotificationLanguage(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="he">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4" />
+                            עברית
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="en">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4" />
+                            English
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="ru">
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4" />
+                            Русский
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

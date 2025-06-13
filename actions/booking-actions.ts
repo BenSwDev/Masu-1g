@@ -1931,14 +1931,123 @@ export async function createGuestBooking(
         ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
       }
 
-      // Send notification to guest (email only since no user preferences)
+      // Send booking success notifications
       try {
-        console.log("📧 Sending notification email...")
+        console.log("📧 Sending booking success notifications...")
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
         if (treatment) {
-          // Guest booking success notifications removed as per requirements
-          console.log("✅ Notification email sent")
+          const { sendTreatmentBookingSuccess } = await import("@/lib/notifications/notification-manager")
+          
+          const isBookingForSomeoneElse = Boolean(validatedPayload.guestInfo.isBookingForSomeoneElse)
+          const bookerName = `${guestInfo.name}`
+          const recipientName = isBookingForSomeoneElse 
+            ? `${validatedPayload.recipientName}` 
+            : bookerName
+          
+          const bookingAddress = finalBookingObject.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה"
+          
+          // Prepare notification recipients
+          const recipients = []
+          
+          // Add booker notification
+          const bookerNotificationMethod = validatedPayload.guestInfo.bookerNotificationMethod || "email"
+          const bookerNotificationLanguage = validatedPayload.guestInfo.bookerNotificationLanguage || "he"
+          
+          if (bookerNotificationMethod === "email" || bookerNotificationMethod === "both") {
+            recipients.push({
+              type: "email" as const,
+              value: guestInfo.email,
+              name: bookerName,
+              language: bookerNotificationLanguage,
+            })
+          }
+          
+          if (bookerNotificationMethod === "sms" || bookerNotificationMethod === "both") {
+            recipients.push({
+              type: "phone" as const,
+              value: guestInfo.phone,
+              language: bookerNotificationLanguage,
+            })
+          }
+          
+          // Add recipient notification if booking for someone else
+          if (isBookingForSomeoneElse && validatedPayload.recipientEmail && validatedPayload.recipientPhone) {
+            const recipientNotificationMethod = validatedPayload.guestInfo.recipientNotificationMethod || "email"
+            const recipientNotificationLanguage = validatedPayload.guestInfo.recipientNotificationLanguage || "he"
+            
+            if (recipientNotificationMethod === "email" || recipientNotificationMethod === "both") {
+              recipients.push({
+                type: "email" as const,
+                value: validatedPayload.recipientEmail,
+                name: recipientName,
+                language: recipientNotificationLanguage,
+              })
+            }
+            
+            if (recipientNotificationMethod === "sms" || recipientNotificationMethod === "both") {
+              recipients.push({
+                type: "phone" as const,
+                value: validatedPayload.recipientPhone,
+                language: recipientNotificationLanguage,
+              })
+            }
+          }
+          
+          // Send notifications
+          if (recipients.length > 0) {
+            if (isBookingForSomeoneElse) {
+              // Send separate notifications for booker and recipient
+              const bookerRecipients = recipients.filter(r => 
+                r.value === guestInfo.email || r.value === guestInfo.phone
+              )
+              const recipientRecipients = recipients.filter(r => 
+                r.value === validatedPayload.recipientEmail || r.value === validatedPayload.recipientPhone
+              )
+              
+              // Send notification to booker (special message for booking for someone else)
+              if (bookerRecipients.length > 0) {
+                const bookerNotificationResults = await sendTreatmentBookingSuccess(bookerRecipients, {
+                  recipientName: bookerName, // For booker message
+                  bookerName: bookerName,
+                  treatmentName: treatment.name,
+                  bookingDateTime: finalBookingObject.bookingDateTime,
+                  bookingNumber: finalBookingObject.bookingNumber,
+                  bookingAddress: bookingAddress,
+                  isForSomeoneElse: false, // This will trigger the "booking completed" message
+                  isBookerForSomeoneElse: true, // Special flag to indicate this is booker who booked for someone else
+                  actualRecipientName: recipientName, // The person they booked for
+                })
+                console.log("✅ Booker notifications sent:", bookerNotificationResults)
+              }
+              
+              // Send notification to recipient
+              if (recipientRecipients.length > 0) {
+                const recipientNotificationResults = await sendTreatmentBookingSuccess(recipientRecipients, {
+                  recipientName: recipientName,
+                  bookerName: bookerName,
+                  treatmentName: treatment.name,
+                  bookingDateTime: finalBookingObject.bookingDateTime,
+                  bookingNumber: finalBookingObject.bookingNumber,
+                  bookingAddress: bookingAddress,
+                  isForSomeoneElse: true, // Recipient gets "someone booked for you" message
+                })
+                console.log("✅ Recipient notifications sent:", recipientNotificationResults)
+              }
+            } else {
+              // Single notification for self-booking
+              const notificationResults = await sendTreatmentBookingSuccess(recipients, {
+                recipientName: recipientName,
+                bookerName: undefined,
+                treatmentName: treatment.name,
+                bookingDateTime: finalBookingObject.bookingDateTime,
+                bookingNumber: finalBookingObject.bookingNumber,
+                bookingAddress: bookingAddress,
+                isForSomeoneElse: false,
+              })
+              console.log("✅ Self-booking notifications sent:", notificationResults)
+            }
+          }
 
           logger.info(`Guest booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
         }

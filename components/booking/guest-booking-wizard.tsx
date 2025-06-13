@@ -47,6 +47,11 @@ interface GuestInfo {
   recipientPhone?: string
   recipientBirthDate?: Date
   recipientGender?: "male" | "female" | "other"
+  // Notification preferences
+  bookerNotificationMethod?: "email" | "sms" | "both"
+  bookerNotificationLanguage?: "he" | "en" | "ru"
+  recipientNotificationMethod?: "email" | "sms" | "both"
+  recipientNotificationLanguage?: "he" | "en" | "ru"
 }
 
 interface GuestAddress {
@@ -596,6 +601,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           <GuestPaymentStep
             calculatedPrice={calculatedPrice}
             guestInfo={guestInfo}
+            setGuestInfo={setGuestInfo}
             onConfirm={handleFinalSubmit}
             onPrev={prevStep}
             isLoading={isLoading}

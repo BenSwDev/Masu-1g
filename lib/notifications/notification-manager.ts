@@ -11,7 +11,32 @@ import type {
   OTPNotificationData,
   WelcomeNotificationData,
   PasswordResetNotificationData,
+  NotificationLanguage,
+  TreatmentBookingSuccessNotificationData,
 } from "./notification-types"
+import { Resend } from "resend"
+import twilio from "twilio"
+import { getSMSTemplate } from "./templates/sms-templates"
+import { getEmailTemplate } from "./templates/email-templates"
+
+// Initialize services
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+
+// Only initialize Twilio if both credentials are properly set and valid
+let twilioClient: any = null
+try {
+  if (process.env.TWILIO_ACCOUNT_SID && 
+      process.env.TWILIO_AUTH_TOKEN && 
+      process.env.TWILIO_ACCOUNT_SID.startsWith('AC')) {
+    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+  }
+} catch (error) {
+  console.warn("Failed to initialize Twilio client:", error)
+  twilioClient = null
+}
+
+const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@masu.com"
+const FROM_PHONE = process.env.TWILIO_PHONE_NUMBER || ""
 
 /**
  * Notification manager to handle different notification types
@@ -206,3 +231,223 @@ export class NotificationManager {
 
 // Export a singleton instance
 export const notificationManager = new NotificationManager()
+
+/**
+ * Send notification via email
+ */
+async function sendEmailNotification(
+  recipient: string,
+  data: NotificationData,
+  language: NotificationLanguage = "en",
+  recipientName?: string
+): Promise<NotificationResult> {
+  try {
+    if (!resend) {
+      console.warn("RESEND_API_KEY not configured, skipping email notification")
+      return { success: false, error: "Email service not configured" }
+    }
+
+    // Convert notification data to email template data
+    let emailData: any = { type: data.type }
+    
+    switch (data.type) {
+      case "otp":
+        emailData = {
+          type: "otp",
+          code: data.code,
+          expiresIn: data.expiresIn,
+        }
+        break
+      case "welcome":
+        emailData = {
+          type: "welcome",
+          userName: data.name,
+        }
+        break
+      case "password-reset":
+        emailData = {
+          type: "passwordReset",
+          resetLink: data.resetUrl,
+          userName: recipientName,
+        }
+        break
+      case "treatment-booking-success":
+        emailData = {
+          type: "treatment-booking-success",
+          recipientName: data.recipientName,
+          bookerName: data.bookerName,
+          treatmentName: data.treatmentName,
+          bookingDateTime: data.bookingDateTime,
+          bookingNumber: data.bookingNumber,
+          bookingAddress: data.bookingAddress,
+          isForSomeoneElse: data.isForSomeoneElse,
+        }
+        break
+    }
+
+    const template = getEmailTemplate(emailData, language, recipientName)
+
+    const result = await resend!.emails.send({
+      from: FROM_EMAIL,
+      to: recipient,
+      subject: template.subject,
+      text: template.text,
+      html: template.html,
+    })
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+      details: result,
+    }
+  } catch (error) {
+    console.error("Email notification failed:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown email error",
+      details: error,
+    }
+  }
+}
+
+/**
+ * Send notification via SMS
+ */
+async function sendSMSNotification(
+  recipient: string,
+  data: NotificationData,
+  language: NotificationLanguage = "en"
+): Promise<NotificationResult> {
+  try {
+    if (!twilioClient || !FROM_PHONE) {
+      console.warn("Twilio not configured, skipping SMS notification")
+      return { success: false, error: "SMS service not configured" }
+    }
+
+    const message = getSMSTemplate(data, language)
+
+    const result = await twilioClient.messages.create({
+      body: message,
+      from: FROM_PHONE,
+      to: recipient,
+    })
+
+    return {
+      success: true,
+      messageId: result.sid,
+      details: result,
+    }
+  } catch (error) {
+    console.error("SMS notification failed:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown SMS error",
+      details: error,
+    }
+  }
+}
+
+/**
+ * Send notification to a single recipient
+ */
+export async function sendNotification(
+  recipient: NotificationRecipient,
+  data: NotificationData
+): Promise<NotificationResult> {
+  if (recipient.type === "email") {
+    return sendEmailNotification(recipient.value, data, recipient.language, recipient.name)
+  } else if (recipient.type === "phone") {
+    return sendSMSNotification(recipient.value, data, recipient.language)
+  }
+
+  return { success: false, error: "Invalid recipient type" }
+}
+
+/**
+ * Send notification to multiple recipients
+ */
+export async function sendNotificationToMultiple(
+  recipients: NotificationRecipient[],
+  data: NotificationData
+): Promise<NotificationResult[]> {
+  const promises = recipients.map(recipient => sendNotification(recipient, data))
+  return Promise.all(promises)
+}
+
+/**
+ * Send OTP notification
+ */
+export async function sendOTP(
+  recipients: NotificationRecipient[],
+  code: string,
+  expiresIn: number = 10
+): Promise<NotificationResult[]> {
+  const data: NotificationData = {
+    type: "otp",
+    code,
+    expiresIn,
+  }
+
+  return sendNotificationToMultiple(recipients, data)
+}
+
+/**
+ * Send welcome notification
+ */
+export async function sendWelcome(
+  recipients: NotificationRecipient[],
+  name: string
+): Promise<NotificationResult[]> {
+  const data: NotificationData = {
+    type: "welcome",
+    name,
+  }
+
+  return sendNotificationToMultiple(recipients, data)
+}
+
+/**
+ * Send password reset notification
+ */
+export async function sendPasswordReset(
+  recipients: NotificationRecipient[],
+  resetUrl: string,
+  expiresIn: number = 60
+): Promise<NotificationResult[]> {
+  const data: NotificationData = {
+    type: "password-reset",
+    resetUrl,
+    expiresIn,
+  }
+
+  return sendNotificationToMultiple(recipients, data)
+}
+
+/**
+ * Send treatment booking success notification
+ */
+export async function sendTreatmentBookingSuccess(
+  recipients: NotificationRecipient[],
+  bookingData: {
+    recipientName: string
+    bookerName?: string
+    treatmentName: string
+    bookingDateTime: Date
+    bookingNumber: string
+    bookingAddress: string
+    isForSomeoneElse: boolean
+  }
+): Promise<NotificationResult[]> {
+  const data: TreatmentBookingSuccessNotificationData = {
+    type: "treatment-booking-success",
+    recipientName: bookingData.recipientName,
+    bookerName: bookingData.bookerName,
+    treatmentName: bookingData.treatmentName,
+    bookingDateTime: bookingData.bookingDateTime,
+    bookingNumber: bookingData.bookingNumber,
+    bookingAddress: bookingData.bookingAddress,
+    isForSomeoneElse: bookingData.isForSomeoneElse,
+  }
+
+  return sendNotificationToMultiple(recipients, data)
+}

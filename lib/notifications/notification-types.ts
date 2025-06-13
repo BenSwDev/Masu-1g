@@ -23,11 +23,26 @@ export interface PasswordResetNotificationData extends BaseNotificationData {
   expiresIn: number
 }
 
+// Treatment booking success notification data
+export interface TreatmentBookingSuccessNotificationData extends BaseNotificationData {
+  type: "treatment-booking-success"
+  recipientName: string
+  bookerName?: string // Only if different from recipient
+  treatmentName: string
+  bookingDateTime: Date
+  bookingNumber: string
+  bookingAddress: string
+  isForSomeoneElse: boolean
+  isBookerForSomeoneElse?: boolean // Special flag for booker who booked for someone else
+  actualRecipientName?: string // The person they booked for (when isBookerForSomeoneElse is true)
+}
+
 // Union type for all notification data
 export type NotificationData =
   | OTPNotificationData
   | WelcomeNotificationData
   | PasswordResetNotificationData
+  | TreatmentBookingSuccessNotificationData
 
 // Notification result interface
 export interface NotificationResult {

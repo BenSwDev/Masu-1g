@@ -5,6 +5,7 @@ export interface EmailNotificationData {
     | "inviteUser"
     | "adminPasswordReset"
     | "otp"
+    | "treatment-booking-success"
   userName?: string
   email?: string
   resetLink?: string
@@ -12,6 +13,14 @@ export interface EmailNotificationData {
   organizationName?: string
   code?: string
   expiresIn?: number
+  // Treatment booking fields
+  recipientName?: string
+  bookerName?: string
+  treatmentName?: string
+  bookingDateTime?: Date
+  bookingNumber?: string
+  bookingAddress?: string
+  isForSomeoneElse?: boolean
 }
 
 export const getEmailTemplate = (data: EmailNotificationData, language = "en", userName?: string) => {
@@ -20,44 +29,229 @@ export const getEmailTemplate = (data: EmailNotificationData, language = "en", u
   let html = ""
   const appName = process.env.NEXT_PUBLIC_APP_NAME || "Masu"
   const emailFrom = process.env.EMAIL_FROM || "Masu" // Used for "The Masu Team"
+  
+  // Email signature for text content
+  const emailTextSignature = `
+
+────────────────────
+לכל שאלה או בעיה ניתן לפנות אלינו בהודעת WhatsApp או בשיחת טלפון למספר הבא:
+072-330-3000
+בברכה,
+צוות מאסו - masu.co.il
+
+להצטרפות למועדון: 
+https://www.spaplus.co.il/club/?src=masu
+
+נא לא להגיב להודעה זו`
 
   const wrapHtml = (content: string, emailSubject: string): string => `
 <!DOCTYPE html>
 <html lang="${language}" dir="${language === "he" ? "rtl" : "ltr"}">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${emailSubject}</title>
 <style>
-body { font-family: 'Arial', sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; direction: ${
-    language === "he" ? "rtl" : "ltr"
-  }; }
-.container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); }
-.header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-.header img { max-width: 150px; } /* Placeholder for logo */
-.content { padding: 20px 0; color: #333; line-height: 1.6; }
-.button { display: inline-block; padding: 12px 25px; background-color: #007bff; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; text-align: center; }
-.footer { padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 0.9em; color: #777; }
-p { margin: 10px 0; }
-.otp-code { font-size: 24px; font-weight: bold; color: #007bff; text-align: center; padding: 15px; background-color: #f8f9fa; border-radius: 5px; margin: 20px 0; }
+/* Reset styles */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+  margin: 0; 
+  padding: 0; 
+  background-color: #f8f9fa; 
+  direction: ${language === "he" ? "rtl" : "ltr"}; 
+  line-height: 1.6;
+}
+
+/* Container */
+.email-container { 
+  max-width: 600px; 
+  margin: 20px auto; 
+  background-color: #ffffff; 
+  border-radius: 12px; 
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1); 
+  overflow: hidden;
+}
+
+/* Header with brand colors */
+.header { 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 30px 20px; 
+  text-align: center; 
+  color: white;
+}
+.header h1 { 
+  font-size: 28px; 
+  font-weight: 700; 
+  margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.header .tagline { 
+  font-size: 14px; 
+  opacity: 0.9; 
+  font-weight: 300;
+}
+
+/* Content area */
+.content { 
+  padding: 40px 30px; 
+  color: #333; 
+  line-height: 1.7;
+}
+.content h2 {
+  color: #667eea;
+  font-size: 24px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+.content p { 
+  margin: 15px 0; 
+  font-size: 16px;
+}
+
+/* Booking details card */
+.booking-card {
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  padding: 25px;
+  margin: 25px 0;
+  text-align: center;
+}
+.booking-card h3 {
+  color: #667eea;
+  font-size: 20px;
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+.booking-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+  margin-bottom: 8px;
+}
+.booking-detail:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+.booking-detail .label {
+  font-weight: 600;
+  color: #555;
+}
+.booking-detail .value {
+  color: #667eea;
+  font-weight: 500;
+}
+
+/* Button styles */
+.button { 
+  display: inline-block; 
+  padding: 15px 30px; 
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white !important; 
+  text-decoration: none; 
+  border-radius: 8px; 
+  font-weight: 600; 
+  text-align: center; 
+  font-size: 16px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* OTP code styling */
+.otp-code { 
+  font-size: 32px; 
+  font-weight: 700; 
+  color: #667eea; 
+  text-align: center; 
+  padding: 20px; 
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+  border: 2px dashed #667eea;
+  border-radius: 12px; 
+  margin: 25px 0; 
+  letter-spacing: 4px;
+}
+
+/* Footer */
+.footer { 
+  background-color: #f8f9fa;
+  padding: 25px 30px; 
+  text-align: center; 
+  font-size: 14px; 
+  color: #666; 
+  border-top: 1px solid #e9ecef;
+}
+.footer a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+/* Mobile responsive */
+@media only screen and (max-width: 600px) {
+  .email-container { 
+    margin: 10px; 
+    border-radius: 8px;
+  }
+  .header { 
+    padding: 20px 15px; 
+  }
+  .header h1 { 
+    font-size: 24px; 
+  }
+  .content { 
+    padding: 25px 20px; 
+  }
+  .booking-card {
+    padding: 20px 15px;
+  }
+  .booking-detail {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: ${language === "he" ? "right" : "left"};
+  }
+  .booking-detail .value {
+    margin-top: 5px;
+  }
+  .otp-code { 
+    font-size: 28px; 
+    padding: 15px;
+    letter-spacing: 2px;
+  }
+}
 </style>
 </head>
 <body>
-<div class="container">
+<div class="email-container">
 <div class="header">
-  <!-- Placeholder for logo -->
- <h2>${appName}</h2>
+  <h1>${appName}</h1>
+  <div class="tagline">${language === "he" ? "הטיפולים הטובים ביותר עד הבית" : language === "ru" ? "Лучшие процедуры на дому" : "Premium Home Treatments"}</div>
 </div>
 <div class="content">
  ${content}
 </div>
 <div class="footer">
- <p>${
-   language === "he"
-     ? `אם יש לך שאלות, אנא צור קשר. כל הזכויות שמורות &copy; ${new Date().getFullYear()} ${appName}`
-     : language === "ru"
-       ? `Если у вас есть вопросы, пожалуйста, свяжитесь с нами. Все права защищены &copy; ${new Date().getFullYear()} ${appName}`
-       : `If you have any questions, please contact us. All rights reserved &copy; ${new Date().getFullYear()} ${appName}`
- }</p>
+ <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;" />
+ <p style="margin-bottom: 15px;">
+   לכל שאלה או בעיה ניתן לפנות אלינו בהודעת WhatsApp או בשיחת טלפון למספר הבא:<br/>
+   <strong>072-330-3000</strong>
+ </p>
+ <p style="margin-bottom: 15px;">
+   בברכה,<br/>
+   צוות מאסו - <a href="https://masu.co.il" style="color: #667eea; text-decoration: none;">masu.co.il</a>
+ </p>
+ <p style="margin-bottom: 15px;">
+   להצטרפות למועדון:<br/>
+   <a href="https://www.spaplus.co.il/club/?src=masu" style="color: #667eea; text-decoration: none;">https://www.spaplus.co.il/club/?src=masu</a>
+ </p>
+ <p style="font-size: 12px; color: #999; margin-top: 20px;">
+   נא לא להגיב להודעה זו
+ </p>
 </div>
 </div>
 </body>
@@ -65,6 +259,157 @@ p { margin: 10px 0; }
 `
 
   switch (data.type) {
+    case "treatment-booking-success":
+      const isForSomeoneElse = data.isForSomeoneElse || false
+      const recipientName = data.recipientName || "לקוח יקר"
+      const bookerName = data.bookerName || ""
+      const treatmentName = data.treatmentName || ""
+      const bookingNumber = data.bookingNumber || ""
+      const bookingAddress = data.bookingAddress || ""
+      
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { 
+          weekday: "long",
+          day: "2-digit", 
+          month: "long", 
+          year: "numeric",
+          timeZone: "Asia/Jerusalem" 
+        }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { 
+          hour: "2-digit", 
+          minute: "2-digit",
+          timeZone: "Asia/Jerusalem" 
+        }
+      )
+
+      if (isForSomeoneElse) {
+        // Email for recipient when someone else booked for them
+        subject = language === "he" 
+          ? `${bookerName} הזמין עבורך טיפול ב-${appName}!`
+          : language === "ru"
+            ? `${bookerName} заказал для вас процедуру в ${appName}!`
+            : `${bookerName} booked a treatment for you at ${appName}!`
+
+        const treatmentBookingForOtherTextContent = language === "he"
+          ? `שלום ${recipientName},\n\n${bookerName} הזמין עבורך טיפול ${treatmentName} לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.\nבעת האישור הסופי תתקבל הודעת אסמס.\n\nתוכלו לצפות בהזמנה בקישור הבא:\nmasu.co.il${emailTextSignature}`
+          : language === "ru"
+            ? `Здравствуйте, ${recipientName},\n\n${bookerName} заказал для вас процедуру ${treatmentName} на ${formattedDate} в ${formattedTime} и ожидает назначения специалиста.\nПри окончательном подтверждении вы получите SMS-уведомление.\n\nВы можете просмотреть заказ по ссылке:\nmasu.co.il${emailTextSignature}`
+            : `Hello ${recipientName},\n\n${bookerName} has booked a ${treatmentName} treatment for you on ${formattedDate} at ${formattedTime} and is waiting for therapist assignment.\nYou will receive an SMS notification upon final confirmation.\n\nYou can view the booking at:\nmasu.co.il${emailTextSignature}`
+
+        const treatmentBookingForOtherHtmlContent = `
+<h2>${language === "he" ? "הזמנת טיפול חדשה!" : language === "ru" ? "Новый заказ на процедуру!" : "New Treatment Booking!"}</h2>
+<p>${language === "he" ? `שלום ${recipientName},` : language === "ru" ? `Здравствуйте, ${recipientName},` : `Hello ${recipientName},`}</p>
+<p>${language === "he" ? `${bookerName} הזמין עבורך טיפול ${treatmentName} לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.` : language === "ru" ? `${bookerName} заказал для вас процедуру ${treatmentName} на ${formattedDate} в ${formattedTime} и ожидает назначения специалиста.` : `${bookerName} has booked a ${treatmentName} treatment for you on ${formattedDate} at ${formattedTime} and is waiting for therapist assignment.`}</p>
+
+<div class="booking-card">
+  <h3>${language === "he" ? "פרטי ההזמנה" : language === "ru" ? "Детали заказа" : "Booking Details"}</h3>
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+    <span class="value">${treatmentName}</span>
+  </div>
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</span>
+    <span class="value">${formattedDate}</span>
+  </div>
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</span>
+    <span class="value">${formattedTime}</span>
+  </div>
+</div>
+
+<p>${language === "he" ? "בעת האישור הסופי תתקבל הודעת אסמס." : language === "ru" ? "При окончательном подтверждении вы получите SMS-уведомление." : "You will receive an SMS notification upon final confirmation."}</p>
+
+<p style="text-align: center; margin: 20px 0;">
+  <a href="https://masu.co.il" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+</p>
+
+<p>${language === "he" ? "בברכה," : language === "ru" ? "С уважением," : "Best regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
+`
+        text = treatmentBookingForOtherTextContent
+        html = wrapHtml(treatmentBookingForOtherHtmlContent, subject)
+      } else {
+        // Check if this is a booker who booked for someone else
+        if (data.isBookerForSomeoneElse && data.actualRecipientName) {
+          // Email for the booker when they booked for someone else
+          subject = language === "he" 
+            ? `ההזמנה עבור ${data.actualRecipientName} בוצעה בהצלחה!`
+            : language === "ru"
+              ? `Заказ для ${data.actualRecipientName} успешно выполнен!`
+              : `Booking for ${data.actualRecipientName} completed successfully!`
+
+          const bookerForOtherTextContent = language === "he"
+            ? `שלום ${recipientName},\n\nההזמנה שביצעתה עבור ${data.actualRecipientName} בוצעה ונשלחה לו על כך הודעה בנייד ובמייל.\n\nתוכלו לצפות בהזמנה בקישור הבא:\nmasu.co.il${emailTextSignature}`
+            : language === "ru"
+              ? `Здравствуйте, ${recipientName},\n\nЗаказ, который вы сделали для ${data.actualRecipientName}, выполнен, и ему отправлено уведомление по SMS и электронной почте.\n\nВы можете просмотреть заказ по ссылке:\nmasu.co.il${emailTextSignature}`
+              : `Hello ${recipientName},\n\nThe booking you made for ${data.actualRecipientName} has been completed and a notification has been sent to them via SMS and email.\n\nYou can view the booking at:\nmasu.co.il${emailTextSignature}`
+
+          const bookerForOtherHtmlContent = `
+<h2>${language === "he" ? "ההזמנה בוצעה בהצלחה!" : language === "ru" ? "Заказ успешно выполнен!" : "Booking Completed Successfully!"}</h2>
+<p>${language === "he" ? `שלום ${recipientName},` : language === "ru" ? `Здравствуйте, ${recipientName},` : `Hello ${recipientName},`}</p>
+<p>${language === "he" ? `ההזמנה שביצעתה עבור ${data.actualRecipientName} בוצעה ונשלחה לו על כך הודעה בנייד ובמייל.` : language === "ru" ? `Заказ, который вы сделали для ${data.actualRecipientName}, выполнен, и ему отправлено уведомление по SMS и электронной почте.` : `The booking you made for ${data.actualRecipientName} has been completed and a notification has been sent to them via SMS and email.`}</p>
+
+<p style="text-align: center; margin: 20px 0;">
+  <a href="https://masu.co.il" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+</p>
+
+<p>${language === "he" ? "בברכה," : language === "ru" ? "С уважением," : "Best regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
+`
+          text = bookerForOtherTextContent
+          html = wrapHtml(bookerForOtherHtmlContent, subject)
+        } else {
+          // Email for the booker (booking for themselves)
+          subject = language === "he" 
+            ? `ההזמנה שלך ב-${appName} בוצעה בהצלחה!`
+            : language === "ru"
+              ? `Ваш заказ в ${appName} успешно выполнен!`
+              : `Your ${appName} booking has been completed successfully!`
+
+          const treatmentBookingTextContent = language === "he"
+            ? `שלום ${recipientName},\n\nההזמנה שלך בוצעה בהצלחה לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.\nבעת האישור הסופי תתקבל הודעת אסמס.\n\nתוכלו לצפות בהזמנה בקישור הבא:\nmasu.co.il${emailTextSignature}`
+            : language === "ru"
+              ? `Здравствуйте, ${recipientName},\n\nВаш заказ успешно выполнен на ${formattedDate} в ${formattedTime} и ожидает назначения специалиста.\nПри окончательном подтверждении вы получите SMS-уведомление.\n\nВы можете просмотреть заказ по ссылке:\nmasu.co.il${emailTextSignature}`
+              : `Hello ${recipientName},\n\nYour booking has been successfully completed for ${formattedDate} at ${formattedTime} and is waiting for therapist assignment.\nYou will receive an SMS notification upon final confirmation.\n\nYou can view the booking at:\nmasu.co.il${emailTextSignature}`
+
+          const treatmentBookingHtmlContent = `
+<h2>${language === "he" ? "ההזמנה בוצעה בהצלחה!" : language === "ru" ? "Заказ успешно выполнен!" : "Booking Completed Successfully!"}</h2>
+<p>${language === "he" ? `שלום ${recipientName},` : language === "ru" ? `Здравствуйте, ${recipientName},` : `Hello ${recipientName},`}</p>
+<p>${language === "he" ? `ההזמנה שלך בוצעה בהצלחה לתאריך ${formattedDate} בשעה ${formattedTime} ומחכה לשיוך מטפל/ת.` : language === "ru" ? `Ваш заказ успешно выполнен на ${formattedDate} в ${formattedTime} и ожидает назначения специалиста.` : `Your booking has been successfully completed for ${formattedDate} at ${formattedTime} and is waiting for therapist assignment.`}</p>
+
+<div class="booking-card">
+  <h3>${language === "he" ? "פרטי ההזמנה" : language === "ru" ? "Детали заказа" : "Booking Details"}</h3>
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "טיפול:" : language === "ru" ? "Процедура:" : "Treatment:"}</span>
+    <span class="value">${treatmentName}</span>
+  </div>
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "תאריך:" : language === "ru" ? "Дата:" : "Date:"}</span>
+    <span class="value">${formattedDate}</span>
+  </div>
+  <div class="booking-detail">
+    <span class="label">${language === "he" ? "שעה:" : language === "ru" ? "Время:" : "Time:"}</span>
+    <span class="value">${formattedTime}</span>
+  </div>
+</div>
+
+<p>${language === "he" ? "בעת האישור הסופי תתקבל הודעת אסמס." : language === "ru" ? "При окончательном подтверждении вы получите SMS-уведомление." : "You will receive an SMS notification upon final confirmation."}</p>
+
+<p style="text-align: center; margin: 20px 0;">
+  <a href="https://masu.co.il" class="button">${language === "he" ? "צפייה בהזמנה" : language === "ru" ? "Просмотр заказа" : "View Booking"}</a>
+</p>
+
+<p>${language === "he" ? "בברכה," : language === "ru" ? "С уважением," : "Best regards,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
+`
+          text = treatmentBookingTextContent
+          html = wrapHtml(treatmentBookingHtmlContent, subject)
+        }
+      }
+      break
+
     case "otp":
       subject =
         language === "he"
@@ -74,11 +419,12 @@ p { margin: 10px 0; }
             : `Your verification code for ${appName}`
       const otpTextContent =
         language === "he"
-          ? `שלום,\n\nקוד האימות שלך הוא: ${data.code}\nהקוד תקף ל-${data.expiresIn || 10} דקות.\n\nתודה,\nצוות ${emailFrom}`
+          ? `שלום,\n\nקוד האימות שלך הוא: ${data.code}\nהקוד תקף ל-${data.expiresIn || 10} דקות.${emailTextSignature}`
           : language === "ru"
-            ? `Здравствуйте,\n\nВаш код подтверждения: ${data.code}\nКод действителен в течение ${data.expiresIn || 10} минут.\n\nСпасибо,\nКоманда ${emailFrom}`
-            : `Hello,\n\nYour verification code is: ${data.code}\nThis code is valid for ${data.expiresIn || 10} minutes.\n\nThanks,\nThe ${emailFrom} Team`
+            ? `Здравствуйте,\n\nВаш код подтверждения: ${data.code}\nКод действителен в течение ${data.expiresIn || 10} минут.${emailTextSignature}`
+            : `Hello,\n\nYour verification code is: ${data.code}\nThis code is valid for ${data.expiresIn || 10} minutes.${emailTextSignature}`
       const otpHtmlContent = `
+<h2>${language === "he" ? "קוד האימות שלך" : language === "ru" ? "Ваш код подтверждения" : "Your Verification Code"}</h2>
 <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
 <p>${language === "he" ? "קוד האימות שלך הוא:" : language === "ru" ? "Ваш код подтверждения:" : "Your verification code is:"}</p>
 <div class="otp-code">${data.code}</div>
@@ -98,11 +444,12 @@ p { margin: 10px 0; }
             : `Welcome to ${appName}!`
       const welcomeTextContent =
         language === "he"
-          ? `שלום ${data.userName || userName},\n\nברוך הבא ל-${appName}!\n\nתודה,\nצוות ${emailFrom}`
+          ? `שלום ${data.userName || userName},\n\nברוך הבא ל-${appName}!${emailTextSignature}`
           : language === "ru"
-            ? `Здравствуйте, ${data.userName || userName},\n\nДобро пожаловать в ${appName}!\n\nСпасибо,\nКоманда ${emailFrom}`
-            : `Hello ${data.userName || userName},\n\nWelcome to ${appName}!\n\nThanks,\nThe ${emailFrom} Team`
+            ? `Здравствуйте, ${data.userName || userName},\n\nДобро пожаловать в ${appName}!${emailTextSignature}`
+            : `Hello ${data.userName || userName},\n\nWelcome to ${appName}!${emailTextSignature}`
       const welcomeHtmlContent = `
+<h2>${language === "he" ? `ברוך הבא ל-${appName}!` : language === "ru" ? `Добро пожаловать в ${appName}!` : `Welcome to ${appName}!`}</h2>
 <p>${language === "he" ? `שלום ${data.userName || userName},` : language === "ru" ? `Здравствуйте, ${data.userName || userName},` : `Hello ${data.userName || userName},`}</p>
 <p>${language === "he" ? `ברוך הבא ל-${appName}!` : language === "ru" ? `Добро пожаловать в ${appName}!` : `Welcome to ${appName}!`}</p>
 <p>${language === "he" ? "תודה," : language === "ru" ? "Спасибо," : "Thanks,"}<br/>${language === "he" ? `צוות ${emailFrom}` : language === "ru" ? `Команда ${emailFrom}` : `The ${emailFrom} Team`}</p>
@@ -120,11 +467,12 @@ p { margin: 10px 0; }
             : `Password Reset for ${data.userName || userName}`
       const passwordResetTextContent =
         language === "he"
-          ? `שלום ${data.userName || userName},\n\nאנא לחץ על הקישור הבא לאיפוס סיסמתך: ${data.resetLink}\n\nאם לא ביקשת זאת, אנא התעלם ממייל זה.\n\nתודה,\nצוות ${emailFrom}`
+          ? `שלום ${data.userName || userName},\n\nאנא לחץ על הקישור הבא לאיפוס סיסמתך: ${data.resetLink}\n\nאם לא ביקשת זאת, אנא התעלם ממייל זה.${emailTextSignature}`
           : language === "ru"
-            ? `Здравствуйте, ${data.userName || userName},\n\nПожалуйста, нажмите на следующую ссылку, чтобы сбросить пароль: ${data.resetLink}\n\nЕсли вы не запрашивали это, пожалуйста, проигнорируйте это письмо.\n\nСпасибо,\nКоманда ${emailFrom}`
-            : `Hello ${data.userName || userName},\n\nPlease click the following link to reset your password: ${data.resetLink}\n\nIf you did not request this, please ignore this email.\n\nThanks,\nThe ${emailFrom} Team`
+            ? `Здравствуйте, ${data.userName || userName},\n\nПожалуйста, нажмите на следующую ссылку, чтобы сбросить пароль: ${data.resetLink}\n\nЕсли вы не запрашивали это, пожалуйста, проигнорируйте это письмо.${emailTextSignature}`
+            : `Hello ${data.userName || userName},\n\nPlease click the following link to reset your password: ${data.resetLink}\n\nIf you did not request this, please ignore this email.${emailTextSignature}`
       const passwordResetHtmlContent = `
+<h2>${language === "he" ? "איפוס סיסמה" : language === "ru" ? "Сброс пароля" : "Password Reset"}</h2>
 <p>${language === "he" ? `שלום ${data.userName || userName},` : language === "ru" ? `Здравствуйте, ${data.userName || userName},` : `Hello ${data.userName || userName},`}</p>
 <p>${language === "he" ? "אנא לחץ על הקישור הבא לאיפוס סיסמתך:" : language === "ru" ? "Пожалуйста, нажмите на следующую ссылку, чтобы сбросить пароль:" : "Please click the link below to reset your password:"}</p>
 <p style="text-align: center; margin: 20px 0;"><a href="${data.resetLink}" class="button">${language === "he" ? "אפס סיסמה" : language === "ru" ? "Сбросить пароль" : "Reset Password"}</a></p>
@@ -144,6 +492,7 @@ p { margin: 10px 0; }
             : `You're invited to ${data.organizationName}`
       const inviteUserTextContent = `Hello ${data.userName || userName},\n\nYou have been invited to join ${data.organizationName} on ${appName}.\n\nPlease click the following link to accept the invitation: ${data.inviteLink}\n\nThanks,\nThe ${emailFrom} Team`
       const inviteUserHtmlContent = `
+<h2>You're Invited!</h2>
 <p>Hello ${data.userName || userName},</p>
 <p>You have been invited to join ${data.organizationName} on ${appName}.</p>
 <p>Please click the link below to accept the invitation:</p>
@@ -168,6 +517,7 @@ p { margin: 10px 0; }
             ? `Здравствуйте, ${data.userName || userName},\n\nАдминистратор системы запросил сброс вашего пароля.\nПожалуйста, нажмите на следующую ссылку, чтобы сбросить пароль: ${data.resetLink}\n\nСпасибо,\nКоманда ${emailFrom}`
             : `Hello ${data.userName || userName},\n\nA system administrator has requested to reset your password.\nPlease click the following link to reset your password: ${data.resetLink}\n\nThanks,\nThe ${emailFrom} Team`
       const adminPasswordResetHtmlContent = `
+<h2>${language === "he" ? "איפוס סיסמה למנהל" : language === "ru" ? "Сброс пароля администратора" : "Admin Password Reset"}</h2>
 <p>${language === "he" ? `שלום ${data.userName || userName},` : language === "ru" ? `Здравствуйте, ${data.userName || userName},` : `Hello ${data.userName || userName},`}</p>
 <p>${language === "he" ? "מנהל המערכת ביקש לאפס את סיסמתך." : language === "ru" ? "Администратор системы запросил сброс вашего пароля." : "A system administrator has requested to reset your password."}</p>
 <p>${language === "he" ? "אנא לחץ על הקישור הבא לאיפוס סיסמתך:" : language === "ru" ? "Пожалуйста, нажмите на следующую ссылку, чтобы сбросить пароль:" : "Please click the link below to reset your password:"}</p>

@@ -10,8 +10,8 @@
     "update-translations": "node scripts/update-translations.js"
   },
   "dependencies": {
-    "@auth/core": "latest",
-    "@auth/mongodb-adapter": "latest",
+    "@auth/core": "^0.34.2",
+    "@auth/mongodb-adapter": "^3.7.0",
     "@aws-sdk/credential-providers": "latest",
     "@hookform/resolvers": "latest",
     "@mongodb-js/zstd": "latest",
@@ -66,7 +66,7 @@
     "mongodb-client-encryption": "latest",
     "mongoose": "latest",
     "next": "15.2.4",
-    "next-auth": "latest",
+    "next-auth": "^4.24.11",
     "next-themes": "latest",
     "nodemailer": "latest",
     "path": "latest",
@@ -95,5 +95,8 @@
     "puppeteer": "^24.10.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@auth/core": "^0.34.2"
   }
 }

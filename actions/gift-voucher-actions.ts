@@ -51,10 +51,17 @@ async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<strin
     if (purchaserUserIdStr) {
       const purchaser = await User.findById(purchaserUserIdStr).select("name").lean()
       purchaserName = purchaser?.name
+    } else if (voucher.guestInfo) {
+      // Use guest info if no purchaser user ID
+      purchaserName = voucher.guestInfo.name
     }
+    
     if (ownerUserIdStr) {
       const owner = await User.findById(ownerUserIdStr).select("name").lean()
       ownerName = owner?.name
+    } else if (voucher.guestInfo) {
+      // Use guest info if no owner user ID
+      ownerName = voucher.guestInfo.name
     }
     if (voucher.voucherType === "treatment" && treatmentIdStr) {
       const treatmentDoc = (await Treatment.findById(treatmentIdStr)
@@ -463,7 +470,14 @@ export async function getGiftVouchers(
         .lean()
       const userIds = usersByNameOrEmail.map((u) => u._id)
 
-      query.$or = [{ code: searchRegex }, { recipientName: searchRegex }]
+      query.$or = [
+        { code: searchRegex }, 
+        { recipientName: searchRegex },
+        // Add search for guest info
+        { 'guestInfo.name': searchRegex },
+        { 'guestInfo.email': searchRegex },
+        { 'guestInfo.phone': searchRegex }
+      ]
       if (userIds.length > 0) {
         query.$or.push({ purchaserUserId: { $in: userIds } })
         query.$or.push({ ownerUserId: { $in: userIds } })

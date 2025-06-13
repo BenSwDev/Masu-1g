@@ -150,16 +150,36 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
             <TooltipTrigger asChild>
               <div className="flex items-center">
                 <UserCircle className="h-4 w-4 mr-1 text-gray-600" />
-                {voucher.ownerName || voucher.ownerUserId}
+                {voucher.ownerName || 
+                 (voucher.ownerUserId ? voucher.ownerUserId : 
+                  `${t("userSubscriptions.guest")}: ${(voucher as any).guestInfo?.name || t("common.unknown")}`)}
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>
-                {t("giftVouchers.fields.owner")}: {voucher.ownerName || "N/A"}
-              </p>
-              <p>
-                {t("giftVouchers.fields.owner")}: {voucher.ownerUserId}
-              </p>
+              {voucher.ownerName ? (
+                <>
+                  <p>
+                    {t("giftVouchers.fields.owner")}: {voucher.ownerName}
+                  </p>
+                  <p>
+                    {t("giftVouchers.fields.owner")}: {voucher.ownerUserId}
+                  </p>
+                </>
+              ) : (voucher as any).guestInfo ? (
+                <>
+                  <p>
+                    {t("giftVouchers.fields.owner")}: {(voucher as any).guestInfo.name} ({t("userSubscriptions.guest")})
+                  </p>
+                  <p>
+                    {t("common.email")}: {(voucher as any).guestInfo.email}
+                  </p>
+                  <p>
+                    {t("common.phone")}: {(voucher as any).guestInfo.phone}
+                  </p>
+                </>
+              ) : (
+                <p>{t("giftVouchers.fields.owner")}: {t("common.unknown")}</p>
+              )}
               {voucher.isGift && voucher.purchaserName && (
                 <p>
                   {t("giftVouchers.fields.purchaser")}: {voucher.purchaserName}

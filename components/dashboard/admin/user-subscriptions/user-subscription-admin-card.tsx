@@ -41,11 +41,20 @@ import { useTranslation } from "@/lib/translations/i18n"
 import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 
 interface PopulatedUserSubscription extends IUserSubscription {
-  userId: Pick<NextAuthUser, "name" | "email"> & { _id: string }
+  userId?: Pick<NextAuthUser, "name" | "email"> & { _id: string } | null
   subscriptionId: ISubscription
   treatmentId: ITreatment
   selectedDurationDetails?: ITreatmentDuration
   paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+  guestInfo?: {
+    name: string
+    email: string
+    phone: string
+  }
+  cancellationDate?: Date | string | null
+  paymentDate?: Date | string | null
+  transactionId?: string | null
+  usedQuantity?: number
 }
 
 interface UserSubscriptionAdminCardProps {
@@ -146,8 +155,25 @@ export default function UserSubscriptionAdminCard({
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-lg mb-1">{userSubscription.userId?.name || t("common.unknownUser")}</CardTitle>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.userId?.email}</p>
+              {userSubscription.userId ? (
+                <>
+                  <CardTitle className="text-lg mb-1">{userSubscription.userId.name}</CardTitle>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.userId.email}</p>
+                </>
+              ) : userSubscription.guestInfo ? (
+                <>
+                  <CardTitle className="text-lg mb-1 flex items-center gap-2">
+                    {userSubscription.guestInfo.name}
+                    <Badge variant="outline" className="text-xs">
+                      {t("userSubscriptions.guest")}
+                    </Badge>
+                  </CardTitle>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.phone}</p>
+                </>
+              ) : (
+                <CardTitle className="text-lg mb-1">{t("common.unknownUser")}</CardTitle>
+              )}
             </div>
             <Badge className={`${statusInfo.className} font-medium flex items-center gap-1`}>
               <StatusIcon className={`h-3.5 w-3.5 ${statusInfo.iconColor}`} />

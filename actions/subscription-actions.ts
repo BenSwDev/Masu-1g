@@ -308,7 +308,7 @@ export async function getActiveSubscriptionsForPurchase() {
     await dbConnect()
 
     const subscriptions = await Subscription.find({ isActive: true })
-      .select("_id name description quantity bonusQuantity validityMonths")
+      .select("_id name description quantity bonusQuantity validityMonths isActive createdAt updatedAt")
       .sort({ createdAt: -1 })
       .lean()
 

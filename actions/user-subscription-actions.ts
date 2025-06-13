@@ -286,6 +286,16 @@ export async function getAllUserSubscriptions(
     if (options.treatmentId) query.treatmentId = options.treatmentId
     if (options.status) query.status = options.status
 
+    // Add search functionality for guest purchases
+    if (options.search) {
+      const searchRegex = new RegExp(options.search, 'i')
+      query.$or = [
+        { 'guestInfo.name': searchRegex },
+        { 'guestInfo.email': searchRegex },
+        { 'guestInfo.phone': searchRegex }
+      ]
+    }
+
     const page = options.page || 1
     const limit = options.limit || 10
     const skip = (page - 1) * limit
@@ -307,6 +317,7 @@ export async function getAllUserSubscriptions(
       .lean()
 
     const populatedUserSubscriptions = userSubscriptions.map((sub: any) => {
+      // Handle duration details for duration-based treatments
       if (
         sub.treatmentId &&
         (sub.treatmentId as ITreatment).pricingType === "duration_based" &&
@@ -324,6 +335,7 @@ export async function getAllUserSubscriptions(
     })
 
     const total = await UserSubscription.countDocuments(query)
+    const totalPages = Math.ceil(total / limit)
 
     return {
       success: true,
@@ -332,7 +344,7 @@ export async function getAllUserSubscriptions(
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages,
       },
     }
   } catch (error) {
@@ -340,7 +352,7 @@ export async function getAllUserSubscriptions(
       error: error instanceof Error ? error.message : String(error),
       options,
     })
-    return { success: false, error: "Failed to fetch subscriptions", userSubscriptions: [], pagination: undefined }
+    return { success: false, error: "Failed to fetch user subscriptions", userSubscriptions: [], pagination: undefined }
   }
 }
 
@@ -359,7 +371,7 @@ export async function useSubscription(userSubscriptionId: string, quantity = 1) 
       return { success: false, error: "Subscription not found" }
     }
 
-    if (userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes("admin")) {
+    if (userSubscription.userId && userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -405,7 +417,7 @@ export async function cancelSubscription(userSubscriptionId: string) {
       return { success: false, error: "Subscription not found" }
     }
 
-    if (userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes("admin")) {
+    if (userSubscription.userId && userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 

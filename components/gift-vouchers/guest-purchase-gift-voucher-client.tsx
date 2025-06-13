@@ -67,7 +67,7 @@ type PaymentInfo = z.infer<typeof paymentInfoSchema>
 type GiftDetails = z.infer<typeof giftDetailsSchema>
 
 interface GuestPurchaseGiftVoucherClientProps {
-  treatments: ITreatment[]
+  treatments: any[]
 }
 
 const TOTAL_STEPS = 5

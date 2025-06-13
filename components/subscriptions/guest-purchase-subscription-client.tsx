@@ -47,8 +47,8 @@ type GuestInfo = z.infer<typeof guestInfoSchema>
 type PaymentInfo = z.infer<typeof paymentInfoSchema>
 
 interface GuestPurchaseSubscriptionClientProps {
-  subscriptions: ISubscription[]
-  treatments: ITreatment[]
+  subscriptions: any[]
+  treatments: any[]
 }
 
 export default function GuestPurchaseSubscriptionClient({
@@ -586,22 +586,22 @@ export default function GuestPurchaseSubscriptionClient({
                       </div>
                     </div>
                   </CardContent>
-                                  </Card>
-                </div>
-              </div>
-              
-              <div className="mt-8">
-                <Button onClick={handlePurchase} disabled={isLoading} className="w-full" size="lg">
-                  {isLoading ? "מעבד..." : "אשר ורכוש"}
-                </Button>
+                </Card>
               </div>
             </div>
-          )
+            
+            <div className="mt-8">
+              <Button onClick={handlePurchase} disabled={isLoading} className="w-full" size="lg">
+                {isLoading ? "מעבד..." : "אשר ורכוש"}
+              </Button>
+            </div>
+          </div>
+        )
 
-        default:
-          return null
-      }
+      default:
+        return null
     }
+  }
 
   return (
     <div className="max-w-4xl mx-auto">

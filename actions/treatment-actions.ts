@@ -73,6 +73,8 @@ export async function getActiveTreatmentsForPurchase(): Promise<{
           ...d,
           _id: d._id?.toString(), // לוודא שגם _id פנימי הוא string
         })) || [],
+      createdAt: treatment.createdAt,
+      updatedAt: treatment.updatedAt,
     })) as ITreatment[]
 
     return { success: true, treatments: serializedTreatments }

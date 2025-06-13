@@ -28,11 +28,16 @@ import { useTranslation } from "@/lib/translations/i18n"
 import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 
 interface PopulatedUserSubscription extends IUserSubscription {
-  userId: Pick<NextAuthUser, "name" | "email"> & { _id: string }
+  userId?: Pick<NextAuthUser, "name" | "email"> & { _id: string } | null
   subscriptionId: ISubscription
   treatmentId: ITreatment
   selectedDurationDetails?: ITreatmentDuration
   paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+  guestInfo?: {
+    name: string
+    email: string
+    phone: string
+  }
   // Add other optional fields from the modal if they might be accessed,
   // or ensure the base IUserSubscription is accurate.
   // For this specific fix, only purchaseDate and expiryDate are formatted here.
@@ -151,10 +156,29 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
               <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="flex flex-col">
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {userSubscription.userId?.name || t("common.unknownUser")}
-              </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.userId?.email}</span>
+              {userSubscription.userId ? (
+                <>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {userSubscription.userId.name}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.userId.email}</span>
+                </>
+              ) : userSubscription.guestInfo ? (
+                <>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {userSubscription.guestInfo.name}
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      {t("userSubscriptions.guest")}
+                    </Badge>
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.email}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.phone}</span>
+                </>
+              ) : (
+                <span className="font-medium text-gray-900 dark:text-gray-100">
+                  {t("common.unknownUser")}
+                </span>
+              )}
             </div>
           </div>
         </td>

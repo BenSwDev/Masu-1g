@@ -23,15 +23,20 @@ import { Separator } from "@/components/common/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface PopulatedUserSubscription extends IUserSubscription {
-  userId: Pick<NextAuthUser, "name" | "email"> & { _id: string }
+  userId?: Pick<NextAuthUser, "name" | "email"> & { _id: string } | null
   subscriptionId: ISubscription
   treatmentId: ITreatment
   selectedDurationDetails?: ITreatmentDuration
   paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
-  cancellationDate?: Date | string | null // Make optional
-  paymentDate?: Date | string | null // Make optional
-  transactionId?: string | null // Make optional
-  usedQuantity?: number // Make optional
+  guestInfo?: {
+    name: string
+    email: string
+    phone: string
+  }
+  cancellationDate?: Date | string | null
+  paymentDate?: Date | string | null
+  transactionId?: string | null
+  usedQuantity?: number
 }
 
 interface UserSubscriptionDetailsModalProps {
@@ -110,7 +115,7 @@ export default function UserSubscriptionDetailsModal({
           <DialogTitle>{t("userSubscriptions.detailsModal.title")}</DialogTitle>
           <DialogDescription>
             {t("userSubscriptions.detailsModal.description", {
-              userName: userSubscription.userId?.name || t("common.unknownUser"),
+              userName: userSubscription.userId?.name || userSubscription.guestInfo?.name || t("common.unknownUser"),
             })}
           </DialogDescription>
         </DialogHeader>
@@ -118,18 +123,49 @@ export default function UserSubscriptionDetailsModal({
           <div className="space-y-4 py-4">
             <section>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                {t("userSubscriptions.detailsModal.userSectionTitle")}
+                {userSubscription.userId ? t("userSubscriptions.detailsModal.userSectionTitle") : t("userSubscriptions.detailsModal.guestSectionTitle")}
               </h3>
               <dl className="divide-y divide-gray-200 dark:divide-gray-700">
-                <DetailItem
-                  label={t("common.name")}
-                  value={userSubscription.userId?.name || t("common.notAvailable")}
-                />
-                <DetailItem
-                  label={t("common.email")}
-                  value={userSubscription.userId?.email || t("common.notAvailable")}
-                />
-                <DetailItem label={t("common.id")} value={userSubscription.userId?._id || t("common.notAvailable")} />
+                {userSubscription.userId ? (
+                  <>
+                    <DetailItem
+                      label={t("common.name")}
+                      value={userSubscription.userId.name}
+                    />
+                    <DetailItem
+                      label={t("common.email")}
+                      value={userSubscription.userId.email}
+                    />
+                    <DetailItem label={t("common.id")} value={userSubscription.userId._id} />
+                  </>
+                ) : userSubscription.guestInfo ? (
+                  <>
+                    <DetailItem
+                      label={t("common.name")}
+                      value={
+                        <div className="flex items-center gap-2">
+                          {userSubscription.guestInfo.name}
+                          <Badge variant="outline" className="text-xs">
+                            {t("userSubscriptions.guest")}
+                          </Badge>
+                        </div>
+                      }
+                    />
+                    <DetailItem
+                      label={t("common.email")}
+                      value={userSubscription.guestInfo.email}
+                    />
+                    <DetailItem
+                      label={t("common.phone")}
+                      value={userSubscription.guestInfo.phone}
+                    />
+                  </>
+                ) : (
+                  <DetailItem
+                    label={t("common.name")}
+                    value={t("common.unknownUser")}
+                  />
+                )}
               </dl>
             </section>
             <Separator />

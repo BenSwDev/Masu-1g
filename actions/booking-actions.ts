@@ -2442,31 +2442,3 @@ export async function getAbandonedBooking(userId: string): Promise<{
     return { success: false, error: "Failed to get abandoned booking" }
   }
 }
-
-export async function deleteAbandonedBooking(userId: string): Promise<{ 
-  success: boolean
-  error?: string 
-}> {
-  try {
-    console.log("🗑️ Deleting abandoned booking for user:", userId)
-    await dbConnect()
-
-    // Delete all abandoned bookings for this user
-    const result = await Booking.deleteMany({
-      userId: new mongoose.Types.ObjectId(userId),
-      status: "abandoned_pending_payment"
-    })
-
-    console.log("✅ Deleted abandoned bookings:", result.deletedCount)
-    logger.info("Abandoned booking deleted", {
-      userId,
-      deletedCount: result.deletedCount,
-    })
-
-    return { success: true }
-  } catch (error) {
-    console.error("❌ Error deleting abandoned booking:", error)
-    logger.error("Error deleting abandoned booking:", { error, userId })
-    return { success: false, error: "Failed to delete abandoned booking" }
-  }
-}

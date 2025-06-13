@@ -2158,6 +2158,22 @@ export async function createGuestUser(guestInfo: {
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
   try {
     console.log("🔍 Creating guest user with info:", guestInfo)
+    console.log("🔍 Guest info type check:", {
+      firstName: typeof guestInfo.firstName,
+      lastName: typeof guestInfo.lastName,
+      email: typeof guestInfo.email,
+      phone: typeof guestInfo.phone,
+      birthDate: typeof guestInfo.birthDate,
+      gender: typeof guestInfo.gender
+    })
+    console.log("🔍 Guest info values:", {
+      firstName: guestInfo.firstName,
+      lastName: guestInfo.lastName,
+      email: guestInfo.email,
+      phone: guestInfo.phone,
+      birthDate: guestInfo.birthDate,
+      gender: guestInfo.gender
+    })
     await dbConnect()
 
     // Check if user already exists with this email or phone
@@ -2170,12 +2186,25 @@ export async function createGuestUser(guestInfo: {
 
     if (existingUser) {
       console.log("✅ Found existing user:", existingUser._id.toString())
-      // If user exists but is not a guest, add guest role
-      if (!existingUser.roles.includes(UserRole.GUEST)) {
-        existingUser.roles.push(UserRole.GUEST)
-        await existingUser.save()
-        console.log("✅ Added GUEST role to existing user")
+      console.log("🔍 Existing user roles:", existingUser.roles)
+      
+      // Clean up invalid roles and ensure guest role is present
+      const validRoles = existingUser.roles.filter((role: string) => 
+        ['member', 'professional', 'partner', 'admin', 'guest'].includes(role)
+      )
+      
+      if (!validRoles.includes(UserRole.GUEST)) {
+        validRoles.push(UserRole.GUEST)
       }
+      
+      // Update roles if they changed
+      if (JSON.stringify(validRoles) !== JSON.stringify(existingUser.roles)) {
+        existingUser.roles = validRoles
+        console.log("🔧 Updating user roles from:", existingUser.roles, "to:", validRoles)
+        await existingUser.save()
+        console.log("✅ Updated user roles successfully")
+      }
+      
       return { success: true, userId: existingUser._id.toString() }
     }
 
@@ -2411,5 +2440,33 @@ export async function getAbandonedBooking(userId: string): Promise<{
   } catch (error) {
     logger.error("Error getting abandoned booking:", { error, userId })
     return { success: false, error: "Failed to get abandoned booking" }
+  }
+}
+
+export async function deleteAbandonedBooking(userId: string): Promise<{ 
+  success: boolean
+  error?: string 
+}> {
+  try {
+    console.log("🗑️ Deleting abandoned booking for user:", userId)
+    await dbConnect()
+
+    // Delete all abandoned bookings for this user
+    const result = await Booking.deleteMany({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "abandoned_pending_payment"
+    })
+
+    console.log("✅ Deleted abandoned bookings:", result.deletedCount)
+    logger.info("Abandoned booking deleted", {
+      userId,
+      deletedCount: result.deletedCount,
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("❌ Error deleting abandoned booking:", error)
+    logger.error("Error deleting abandoned booking:", { error, userId })
+    return { success: false, error: "Failed to delete abandoned booking" }
   }
 }

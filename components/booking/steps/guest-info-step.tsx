@@ -40,7 +40,7 @@ interface GuestInfo {
 interface GuestInfoStepProps {
   guestInfo: Partial<GuestInfo>
   setGuestInfo: (info: Partial<GuestInfo>) => void
-  onNext: () => void
+  onNext: (info: Partial<GuestInfo>) => void
 }
 
 export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStepProps) {
@@ -70,7 +70,7 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
     birthDate: z.date().optional(),
     gender: z.enum(["male", "female", "other"]).optional(),
     notes: z.string().optional(),
-    isBookingForSomeoneElse: z.boolean().optional().default(false),
+    isBookingForSomeoneElse: z.boolean().default(false),
     recipientFirstName: z.string().optional(),
     recipientLastName: z.string().optional(),
     recipientEmail: z.string().optional(),
@@ -130,8 +130,12 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
   })
 
   const onSubmit = (data: GuestInfoFormData) => {
+    console.log("📝 GuestInfoStep onSubmit called with data:", data)
+    console.log("📝 About to call setGuestInfo...")
     setGuestInfo(data)
-    onNext()
+    console.log("📝 setGuestInfo called, now calling onNext...")
+    onNext(data)
+    console.log("📝 onNext called")
   }
 
   const handleBookingForSomeoneElseChange = (checked: boolean) => {

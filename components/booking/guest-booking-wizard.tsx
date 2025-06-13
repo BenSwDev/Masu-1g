@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { format } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
@@ -22,7 +22,8 @@ import {
   getAvailableTimeSlots,
   createGuestUser,
   saveAbandonedBooking,
-  getAbandonedBooking
+  getAbandonedBooking,
+  deleteAbandonedBooking
 } from "@/actions/booking-actions"
 import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress"
@@ -77,7 +78,7 @@ interface GuestBookingWizardProps {
 }
 
 const TOTAL_STEPS_WITH_PAYMENT = 6
-const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
+const CONFIRMATION_STEP_NUMBER = 7
 
 const TIMEZONE = "Asia/Jerusalem"
 
@@ -99,7 +100,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false)
   const [bookingResult, setBookingResult] = useState<IBooking | null>(null)
-  const [workingHoursNote, setWorkingHoursNote] = useState<string | undefined>(undefined)
+  const [workingHoursNote, setWorkingHoursNote] = useState<string>("")
   
   // New state for guest user management
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
@@ -108,32 +109,111 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
 
   const { toast } = useToast()
 
-  // Function to create initial pending booking
-  const createInitialPendingBooking = async (userId: string) => {
+  // Refs for smart saving
+  const lastSavedData = useRef<string>('')
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isCreatingUser = useRef(false)
+
+  // Create guest user once when needed
+  const createGuestUserOnce = useCallback(async (guestData: Partial<GuestInfo>) => {
+    if (guestUserId || isCreatingUser.current) {
+      console.log("🔄 Guest user already exists or being created:", guestUserId)
+      return guestUserId
+    }
+    
+    if (!guestData.firstName || !guestData.lastName || !guestData.email || !guestData.phone) {
+      console.log("⚠️ Missing required guest info for user creation")
+      return null
+    }
+    
+    isCreatingUser.current = true
+    console.log("👤 Creating guest user once...")
+    
     try {
-      console.log("📝 Creating initial pending booking for guest:", userId)
+      const result = await createGuestUser({
+        firstName: guestData.firstName,
+        lastName: guestData.lastName,
+        email: guestData.email,
+        phone: guestData.phone,
+        birthDate: guestData.birthDate,
+        gender: guestData.gender,
+      })
       
-      // Create a minimal booking with "abandoned_pending_payment" status
-      // This ensures the booking appears in admin bookings list immediately
+      if (result.success && result.userId) {
+        console.log("✅ Guest user created/found:", result.userId)
+        setGuestUserId(result.userId)
+        localStorage.setItem('guestUserId', result.userId)
+        
+        // Create initial abandoned booking
+        await createInitialAbandonedBooking(result.userId, guestData)
+        
+        return result.userId
+      } else {
+        console.error("❌ Failed to create guest user:", result.error)
+        toast({
+          variant: "destructive",
+          title: "שגיאה ביצירת משתמש אורח",
+          description: result.error || "נסה שוב",
+        })
+        return null
+      }
+    } catch (error) {
+      console.error("❌ Error creating guest user:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה ביצירת משתמש אורח",
+        description: "אירעה שגיאה בלתי צפויה. נסה שוב.",
+      })
+      return null
+    } finally {
+      isCreatingUser.current = false
+    }
+  }, [guestUserId, toast])
+
+  // Function to handle guest info submission and proceed to next step
+  const handleGuestInfoSubmit = useCallback(async (newInfo: Partial<GuestInfo>) => {
+    console.log("🔄 handleGuestInfoSubmit called with:", newInfo)
+    
+    // Update the state
+    setGuestInfo(newInfo)
+    
+    // Create guest user if needed
+    if (currentStep === 1) {
+      const userId = await createGuestUserOnce(newInfo)
+      if (!userId) {
+        console.log("❌ Failed to create guest user, not proceeding")
+        return
+      }
+    }
+    
+    // Move to next step
+    setCurrentStep(prev => Math.min(prev + 1, CONFIRMATION_STEP_NUMBER))
+  }, [currentStep, createGuestUserOnce])
+
+  // Function to create initial abandoned booking
+  const createInitialAbandonedBooking = async (userId: string, guestInfoData: Partial<GuestInfo>) => {
+    try {
+      console.log("💾 Creating initial abandoned booking for user:", userId)
+      
       const result = await saveAbandonedBooking(userId, {
-        guestInfo,
-        guestAddress: {}, // Empty initially
-        bookingOptions: {}, // Empty initially  
-        calculatedPrice: null, // Empty initially
+        guestInfo: guestInfoData,
+        guestAddress: {}, 
+        bookingOptions: {}, 
+        calculatedPrice: null,
         currentStep: 1,
       })
       
       if (result.success) {
-        console.log("✅ Initial pending booking created:", result.bookingId)
+        console.log("✅ Initial abandoned booking created:", result.bookingId)
         toast({
           title: "התחלת תהליך הזמנה",
-          description: "ההזמנה נשמרה במערכת ותופיע בעמוד הזמנות המנהל",
+          description: "ההזמנה נשמרה במערכת",
         })
       } else {
-        console.log("⚠️ Failed to create initial pending booking:", result.error)
+        console.log("⚠️ Failed to create initial abandoned booking:", result.error)
       }
     } catch (error) {
-      console.error("❌ Error creating initial pending booking:", error)
+      console.error("❌ Error creating initial abandoned booking:", error)
     }
   }
 
@@ -142,12 +222,10 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
     const checkForAbandonedBooking = async () => {
       console.log("🔍 Checking for abandoned booking...")
       const savedUserId = localStorage.getItem('guestUserId')
-      console.log("📱 Saved guest user ID:", savedUserId)
       
       if (savedUserId) {
         try {
           const result = await getAbandonedBooking(savedUserId)
-          console.log("📋 Abandoned booking result:", result)
           
           if (result.success && result.booking) {
             console.log("✅ Found abandoned booking, showing recovery dialog")
@@ -160,123 +238,136 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
         } catch (error) {
           console.error("❌ Error checking for abandoned booking:", error)
         }
-      } else {
-        console.log("ℹ️ No saved guest user ID found")
       }
     }
     
     checkForAbandonedBooking()
   }, [])
 
-  // Save form state whenever it changes (after step 1)
+  // Smart save form state whenever it changes (after step 1)
   useEffect(() => {
     if (guestUserId && currentStep > 1) {
-      const saveFormState = async () => {
-        try {
-          console.log("💾 Saving form state for step:", currentStep)
-          const result = await saveAbandonedBooking(guestUserId, {
-            guestInfo,
-            guestAddress,
-            bookingOptions,
-            calculatedPrice,
-            currentStep,
-          })
-          
-          if (result.success) {
-            console.log("✅ Form state saved successfully")
-          } else {
-            console.error("❌ Failed to save form state:", result.error)
-          }
-        } catch (error) {
-          console.error("❌ Error saving form state:", error)
-        }
-      }
+      const currentData = JSON.stringify({
+        guestInfo,
+        guestAddress,
+        bookingOptions,
+        calculatedPrice,
+        currentStep,
+      })
       
-      // Debounce the save operation
-      const timeoutId = setTimeout(saveFormState, 1000)
-      return () => clearTimeout(timeoutId)
+      // Only save if data actually changed
+      if (currentData !== lastSavedData.current) {
+        // Clear existing timeout
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current)
+        }
+        
+        // Set new timeout for saving
+        saveTimeoutRef.current = setTimeout(async () => {
+          try {
+            console.log("💾 Smart saving form state for step:", currentStep)
+            const result = await saveAbandonedBooking(guestUserId, {
+              guestInfo,
+              guestAddress,
+              bookingOptions,
+              calculatedPrice,
+              currentStep,
+            })
+            
+            if (result.success) {
+              console.log("✅ Form state saved successfully")
+              lastSavedData.current = currentData
+            } else {
+              console.error("❌ Failed to save form state:", result.error)
+            }
+          } catch (error) {
+            console.error("❌ Error saving form state:", error)
+          }
+        }, 2000) // Save after 2 seconds of inactivity
+      }
+    }
+    
+    // Cleanup timeout on unmount
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
     }
   }, [guestUserId, guestInfo, guestAddress, bookingOptions, calculatedPrice, currentStep])
 
-  // Effect to fetch time slots with debouncing for better performance
+  // Load time slots when needed
   useEffect(() => {
-    if (!bookingOptions.bookingDate || !bookingOptions.selectedTreatmentId) {
-      setTimeSlots([])
-      setWorkingHoursNote(undefined)
-      return
-    }
-
-    // Debounce the API call to prevent rapid requests
-    const timeoutId = setTimeout(async () => {
-      setIsTimeSlotsLoading(true)
-      setTimeSlots([])
-      setWorkingHoursNote(undefined)
-      
-      try {
-        const localDate = new Date(bookingOptions.bookingDate!)
-        const year = localDate.getFullYear()
-        const month = (localDate.getMonth() + 1).toString().padStart(2, "0")
-        const day = localDate.getDate().toString().padStart(2, "0")
-        const dateStr = `${year}-${month}-${day}`
-        
-        const result = await getAvailableTimeSlots(
-          dateStr,
-          bookingOptions.selectedTreatmentId!,
-          bookingOptions.selectedDurationId,
-        )
-        
-        if (result.success) {
-          setTimeSlots(result.timeSlots || [])
-          setWorkingHoursNote(result.workingHoursNote)
-        } else {
-          toast({
-            variant: "destructive",
-            title: t(result.error || "bookings.errors.fetchTimeSlotsFailedTitle") || result.error || "Error fetching time slots",
-            description: t(result.error || "bookings.errors.fetchTimeSlotsFailedTitle"),
-          })
+    const loadTimeSlots = async () => {
+      if (
+        currentStep === 4 &&
+        bookingOptions.selectedTreatmentId &&
+        bookingOptions.bookingDate &&
+        bookingOptions.therapistGenderPreference
+      ) {
+        setIsTimeSlotsLoading(true)
+        try {
+          const localDate = new Date(bookingOptions.bookingDate)
+          const year = localDate.getFullYear()
+          const month = (localDate.getMonth() + 1).toString().padStart(2, "0")
+          const day = localDate.getDate().toString().padStart(2, "0")
+          const dateStr = `${year}-${month}-${day}`
+          
+          const result = await getAvailableTimeSlots(
+            dateStr,
+            bookingOptions.selectedTreatmentId,
+            bookingOptions.selectedDurationId,
+          )
+          
+          if (result.success) {
+            setTimeSlots(result.timeSlots || [])
+            setWorkingHoursNote(result.workingHoursNote || "")
+          } else {
+            console.error("Failed to load time slots:", result.error)
+            setTimeSlots([])
+          }
+        } catch (error) {
+          console.error("Error loading time slots:", error)
+          setTimeSlots([])
+        } finally {
+          setIsTimeSlotsLoading(false)
         }
-      } catch (error) {
-        console.error("Error fetching time slots:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load available times",
-        })
-      } finally {
-        setIsTimeSlotsLoading(false)
       }
-    }, 300) // 300ms debounce
+    }
+    
+    loadTimeSlots()
+  }, [currentStep, bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, bookingOptions.bookingDate, bookingOptions.therapistGenderPreference])
 
-    return () => clearTimeout(timeoutId)
-  }, [bookingOptions.bookingDate, bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, toast, t])
-
+  // Calculate price when needed
   const triggerPriceCalculation = useCallback(async () => {
     if (
       !bookingOptions.selectedTreatmentId ||
       !bookingOptions.bookingDate ||
       !bookingOptions.bookingTime ||
-      !guestInfo.email
+      !guestInfo.email ||
+      !guestUserId
     ) {
-      setCalculatedPrice(null)
-      return
-    }
-
-    const selectedTreatment = initialData.activeTreatments.find(
-      (t) => t._id.toString() === bookingOptions.selectedTreatmentId,
-    )
-    if (selectedTreatment?.pricingType === "duration_based" && !bookingOptions.selectedDurationId) {
-      setCalculatedPrice(null)
+      console.log("⚠️ Missing required data for price calculation")
       return
     }
 
     setIsPriceCalculating(true)
     
+    const selectedTreatment = (initialData?.activeTreatments || []).find(
+      (t) => t._id.toString() === bookingOptions.selectedTreatmentId
+    )
+
+    if (!selectedTreatment) {
+      console.log("⚠️ Selected treatment not found")
+      setIsPriceCalculating(false)
+      return
+    }
+
     const bookingDateTime = new Date(bookingOptions.bookingDate)
     const [hours, minutes] = bookingOptions.bookingTime.split(":").map(Number)
     bookingDateTime.setHours(hours, minutes, 0, 0)
 
     const payload: CalculatePricePayloadType = {
-      userId: guestUserId || "guest",
+      userId: guestUserId,
       treatmentId: bookingOptions.selectedTreatmentId,
       selectedDurationId: bookingOptions.selectedDurationId,
       bookingDateTime,
@@ -343,71 +434,43 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
     })
   }
 
-  const handleStartFresh = () => {
-    // Clear abandoned booking and start fresh
-    if (guestUserId) {
-      localStorage.removeItem('guestUserId')
+  const handleStartFresh = async () => {
+    try {
+      // Delete abandoned booking from database
+      if (guestUserId) {
+        await deleteAbandonedBooking(guestUserId)
+        localStorage.removeItem('guestUserId')
+      }
+      
+      // Reset all state
+      setGuestUserId(null)
+      setAbandonedBooking(null)
+      setShowRecoveryDialog(false)
+      setGuestInfo({})
+      setGuestAddress({})
+      setBookingOptions({
+        therapistGenderPreference: initialData.userPreferences?.therapistGender || "any",
+        isFlexibleTime: false,
+        source: "new_purchase",
+      })
+      setCalculatedPrice(null)
+      setCurrentStep(1)
+      
+      toast({
+        title: "התחלה חדשה",
+        description: "הטופס אופס והתחלת מחדש",
+      })
+    } catch (error) {
+      console.error("❌ Error starting fresh:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "אירעה שגיאה בעת התחלה מחדש",
+      })
     }
-    setGuestUserId(null)
-    setAbandonedBooking(null)
-    setShowRecoveryDialog(false)
-    // Reset all form state
-    setGuestInfo({})
-    setGuestAddress({})
-    setBookingOptions({
-      therapistGenderPreference: initialData.userPreferences?.therapistGender || "any",
-      isFlexibleTime: false,
-      source: "new_purchase",
-    })
-    setCalculatedPrice(null)
-    setCurrentStep(1)
   }
 
   const nextStep = async () => {
-    // Create guest user after step 1 AND create pending booking
-    if (currentStep === 1 && !guestUserId) {
-      if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.phone) {
-        console.log("👤 Creating guest user...")
-        try {
-          const result = await createGuestUser({
-            firstName: guestInfo.firstName,
-            lastName: guestInfo.lastName,
-            email: guestInfo.email,
-            phone: guestInfo.phone,
-            birthDate: guestInfo.birthDate,
-            gender: guestInfo.gender,
-          })
-          
-          if (result.success && result.userId) {
-            console.log("✅ Guest user created/found:", result.userId)
-            setGuestUserId(result.userId)
-            localStorage.setItem('guestUserId', result.userId)
-            
-            // Create initial pending booking immediately
-            await createInitialPendingBooking(result.userId)
-          } else {
-            console.error("❌ Failed to create guest user:", result.error)
-            toast({
-              variant: "destructive",
-              title: "שגיאה ביצירת משתמש אורח",
-              description: result.error || "נסה שוב",
-            })
-            return
-          }
-        } catch (error) {
-          console.error("❌ Error creating guest user:", error)
-          toast({
-            variant: "destructive",
-            title: "שגיאה ביצירת משתמש אורח",
-            description: "אירעה שגיאה בלתי צפויה. נסה שוב.",
-          })
-          return
-        }
-      } else {
-        console.log("⚠️ Missing required guest info for user creation")
-      }
-    }
-
     if (
       currentStep === TOTAL_STEPS_WITH_PAYMENT - 1 && // Summary step
       calculatedPrice?.finalAmount === 0 &&
@@ -467,44 +530,52 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           city: guestAddress.city || "",
           street: guestAddress.street || "",
           streetNumber: guestAddress.houseNumber || "",
-          apartment: guestAddress.apartmentNumber || undefined,
+          apartment: guestAddress.apartmentNumber,
           entrance: guestAddress.entrance,
           floor: guestAddress.floor,
           notes: guestAddress.notes,
-        },
-        priceDetails: calculatedPrice!,
-        paymentDetails: {
-          paymentStatus: calculatedPrice!.finalAmount === 0 ? "not_required" : "pending",
+          doorName: guestAddress.doorName,
+          buildingName: guestAddress.buildingName,
+          hotelName: guestAddress.hotelName,
+          roomNumber: guestAddress.roomNumber,
+          otherInstructions: guestAddress.instructions,
+          hasPrivateParking: guestAddress.parking || false,
         },
         guestInfo: {
           name: `${guestInfo.firstName} ${guestInfo.lastName}`,
-          email: guestInfo.email!,
-          phone: guestInfo.phone!,
+          email: guestInfo.email,
+          phone: guestInfo.phone,
         },
         recipientName: guestInfo.isBookingForSomeoneElse 
           ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
           : `${guestInfo.firstName} ${guestInfo.lastName}`,
         recipientEmail: guestInfo.isBookingForSomeoneElse 
-          ? guestInfo.recipientEmail!
-          : guestInfo.email!,
+          ? guestInfo.recipientEmail
+          : guestInfo.email,
         recipientPhone: guestInfo.isBookingForSomeoneElse 
-          ? guestInfo.recipientPhone!
-          : guestInfo.phone!,
+          ? guestInfo.recipientPhone
+          : guestInfo.phone,
         recipientBirthDate: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientBirthDate
           : guestInfo.birthDate,
         recipientGender: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientGender
           : guestInfo.gender,
-      } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
+        notes: guestInfo.notes,
+        couponCode: bookingOptions.appliedCouponCode,
+        priceDetails: calculatedPrice!,
+        paymentDetails: {
+          paymentStatus: calculatedPrice!.finalAmount === 0 ? "not_required" : "pending",
+        },
+        bookerNotificationMethod: guestInfo.bookerNotificationMethod,
+        bookerNotificationLanguage: guestInfo.bookerNotificationLanguage,
+        recipientNotificationMethod: guestInfo.recipientNotificationMethod,
+        recipientNotificationLanguage: guestInfo.recipientNotificationLanguage,
+      } as CreateBookingPayloadType
 
-      console.log("📦 Payload prepared:", JSON.stringify(payload, null, 2))
-      console.log("🚀 Calling createGuestBooking...")
-
+      console.log("📤 Submitting booking payload:", payload)
       const result = await createGuestBooking(payload)
-      
-      console.log("📨 Server response:", result)
-      
+
       if (result.success && result.booking) {
         console.log("✅ Booking created successfully:", result.booking)
         setBookingResult(result.booking)
@@ -548,7 +619,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           <GuestInfoStep
             guestInfo={guestInfo}
             setGuestInfo={setGuestInfo}
-            onNext={nextStep}
+            onNext={handleGuestInfoSubmit}
           />
         )
       case 2:

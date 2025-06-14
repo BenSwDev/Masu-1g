@@ -592,6 +592,10 @@ export interface PurchaseInitiationData {
   selectedDurationId?: string
   monetaryValue?: number // This is the value from the monetary input field
   isGift: boolean
+  recipientName?: string
+  recipientPhone?: string
+  greetingMessage?: string
+  sendDate?: string
 }
 
 export interface GiftDetailsPayload {
@@ -1379,6 +1383,13 @@ export async function initiateGuestPurchaseGiftVoucher(data: PurchaseInitiationD
       },
     }
 
+    if (isGift) {
+      if (data.recipientName) giftVoucherData.recipientName = data.recipientName
+      if (data.recipientPhone) giftVoucherData.recipientPhone = data.recipientPhone
+      if (data.greetingMessage) giftVoucherData.greetingMessage = data.greetingMessage
+      if (data.sendDate) giftVoucherData.sendDate = data.sendDate === "immediate" ? new Date() : new Date(data.sendDate)
+    }
+
     if (voucherType === "treatment") {
       giftVoucherData.treatmentId = new mongoose.Types.ObjectId(treatmentId!)
       if (selectedDurationId) {
@@ -1467,8 +1478,15 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
         voucher.status = "active"
         voucher.isActive = true
       } else {
-        voucher.status = "active"
-        voucher.isActive = true
+        const sendDate = voucher.sendDate ? new Date(voucher.sendDate) : new Date()
+        if (!voucher.sendDate) voucher.sendDate = sendDate
+        if (sendDate <= new Date()) {
+          voucher.status = "sent"
+          voucher.isActive = true
+        } else {
+          voucher.status = "pending_send"
+          voucher.isActive = false
+        }
       }
       await voucher.save()
 

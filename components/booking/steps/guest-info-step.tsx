@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -35,18 +35,34 @@ interface GuestInfo {
   recipientPhone?: string
   recipientBirthDate?: Date
   recipientGender?: "male" | "female" | "other"
+  // Gift options
+  isGift?: boolean
+  greetingMessage?: string
+  sendOption?: "immediate" | "scheduled"
+  sendDate?: Date
+  sendTime?: string
 }
 
 interface GuestInfoStepProps {
   guestInfo: Partial<GuestInfo>
   setGuestInfo: (info: Partial<GuestInfo>) => void
   onNext: (info: Partial<GuestInfo>) => void
+  defaultBookingForSomeoneElse?: boolean
+  hideRecipientBirthGender?: boolean
+  showGiftOptions?: boolean
 }
 
-export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStepProps) {
+export function GuestInfoStep({
+  guestInfo,
+  setGuestInfo,
+  onNext,
+  defaultBookingForSomeoneElse = false,
+  hideRecipientBirthGender = false,
+  showGiftOptions = false,
+}: GuestInfoStepProps) {
   const { t, dir, language } = useTranslation()
   const [isBookingForSomeoneElse, setIsBookingForSomeoneElse] = useState(
-    guestInfo.isBookingForSomeoneElse || false
+    guestInfo.isBookingForSomeoneElse ?? defaultBookingForSomeoneElse
   )
 
   // Helper function to check if date is at least 16 years old
@@ -77,6 +93,11 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
     recipientPhone: z.string().optional(),
     recipientBirthDate: z.date().optional(),
     recipientGender: z.enum(["male", "female", "other"]).optional(),
+    isGift: z.boolean().default(false),
+    greetingMessage: z.string().optional(),
+    sendOption: z.enum(["immediate", "scheduled"]).optional(),
+    sendDate: z.date().optional(),
+    sendTime: z.string().optional(),
   }).refine((data) => {
     if (data.isBookingForSomeoneElse) {
       return (
@@ -84,8 +105,8 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
         data.recipientLastName &&
         data.recipientEmail &&
         data.recipientPhone &&
-        data.recipientBirthDate &&
-        data.recipientGender
+        (hideRecipientBirthGender ? true : data.recipientBirthDate) &&
+        (hideRecipientBirthGender ? true : data.recipientGender)
       )
     }
     return true
@@ -94,7 +115,7 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
     path: ["recipientFirstName"]
   }).refine((data) => {
     // Check age requirement for recipient
-    if (data.isBookingForSomeoneElse && data.recipientBirthDate) {
+    if (!hideRecipientBirthGender && data.isBookingForSomeoneElse && data.recipientBirthDate) {
       return isAtLeast16YearsOld(data.recipientBirthDate)
     }
     // Check age requirement for booker when not booking for someone else
@@ -126,8 +147,24 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
       recipientPhone: guestInfo.recipientPhone || "",
       recipientBirthDate: guestInfo.recipientBirthDate || undefined,
       recipientGender: guestInfo.recipientGender || undefined,
+      isGift: guestInfo.isGift || false,
+      greetingMessage: guestInfo.greetingMessage || "",
+      sendOption: guestInfo.sendOption || "immediate",
+      sendDate: guestInfo.sendDate || undefined,
+      sendTime: guestInfo.sendTime || "",
     },
   })
+
+  const watchIsGift = form.watch("isGift")
+  const watchSendOption = form.watch("sendOption")
+  const timeOptions = useMemo(() => {
+    const opts = []
+    for (let i = 8; i <= 23; i++) {
+      opts.push(`${String(i).padStart(2, "0")}:00`)
+    }
+    opts.push("00:00")
+    return opts
+  }, [])
 
   const onSubmit = (data: GuestInfoFormData) => {
     console.log("📝 GuestInfoStep onSubmit called with data:", data)
@@ -429,76 +466,174 @@ export function GuestInfoStep({ guestInfo, setGuestInfo, onNext }: GuestInfoStep
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="recipientBirthDate"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                          <CalendarIcon className="h-4 w-4" />
-                          {t("guestInfo.recipientBirthDate")} *
-                        </FormLabel>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant={"outline"}
-                                className={cn(
-                                  "w-full pl-3 text-left font-normal",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                              >
-                                {field.value ? (
-                                  format(field.value, "PPP", { locale: language === "he" ? he : undefined })
-                                ) : (
-                                  <span>בחר תאריך לידה</span>
-                                )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={isDateDisabled}
-                              initialFocus
-                              captionLayout="dropdown"
-                              fromYear={1900}
-                              toYear={new Date().getFullYear() - 16}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {!hideRecipientBirthGender && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="recipientBirthDate"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                            <CalendarIcon className="h-4 w-4" />
+                            {t("guestInfo.recipientBirthDate")} *
+                          </FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP", { locale: language === "he" ? he : undefined })
+                                  ) : (
+                                    <span>בחר תאריך לידה</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={isDateDisabled}
+                                initialFocus
+                                captionLayout="dropdown"
+                                fromYear={1900}
+                                toYear={new Date().getFullYear() - 16}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="recipientGender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("guestInfo.recipientGender")} *</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={t("guestInfo.genderPlaceholder")} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="male">{t("guestInfo.genderMale")}</SelectItem>
-                            <SelectItem value="female">{t("guestInfo.genderFemale")}</SelectItem>
-                            <SelectItem value="other">{t("guestInfo.genderOther")}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
+                    <FormField
+                      control={form.control}
+                      name="recipientGender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("guestInfo.recipientGender")} *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={t("guestInfo.genderPlaceholder")} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="male">{t("guestInfo.genderMale")}</SelectItem>
+                              <SelectItem value="female">{t("guestInfo.genderFemale")}</SelectItem>
+                              <SelectItem value="other">{t("guestInfo.genderOther")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
+                {showGiftOptions && (
+                  <div className="space-y-4">
+                    <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
+                      <Checkbox
+                        id="isGift"
+                        checked={watchIsGift}
+                        onCheckedChange={(checked) => form.setValue("isGift", checked as boolean)}
+                      />
+                      <label htmlFor="isGift" className="flex items-center gap-2 cursor-pointer">
+                        {t("purchaseGiftVoucher.sendAsGift")}
+                      </label>
+                    </div>
+
+                    {watchIsGift && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="greetingMessage"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t("purchaseGiftVoucher.greetingMessage")}</FormLabel>
+                              <FormControl>
+                                <Textarea placeholder={t("purchaseGiftVoucher.greetingPlaceholder")} rows={3} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="sendOption"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t("purchaseGiftVoucher.sendDate")}</FormLabel>
+                              <div className="flex gap-4">
+                                <Button type="button" variant={field.value === "immediate" ? "default" : "outline"} onClick={() => field.onChange("immediate")} className="flex-1">
+                                  {t("purchaseGiftVoucher.sendNow")}
+                                </Button>
+                                <Button type="button" variant={field.value === "scheduled" ? "default" : "outline"} onClick={() => field.onChange("scheduled")} className="flex-1">
+                                  {t("purchaseGiftVoucher.sendOnDate")}
+                                </Button>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        {watchSendOption === "scheduled" && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                            <FormField
+                              control={form.control}
+                              name="sendDate"
+                              render={({ field }) => (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start text-start font-normal h-11">
+                                      <CalendarIcon className={cn("h-4 w-4", dir === "rtl" ? "ml-2" : "mr-2")} />
+                                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0">
+                                    <Calendar
+                                      mode="single"
+                                      selected={field.value}
+                                      onSelect={field.onChange}
+                                      initialFocus
+                                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
+                                    />
+                                  </PopoverContent>
+                                </Popover>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="sendTime"
+                              render={({ field }) => (
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <SelectTrigger className="h-11">
+                                    <SelectValue placeholder={t("purchaseGiftVoucher.selectTime")} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {timeOptions.map((time) => (
+                                      <SelectItem key={time} value={time}>{time}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          </div>
+                        )}
+                      </>
                     )}
-                  />
-                </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

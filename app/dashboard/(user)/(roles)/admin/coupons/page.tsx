@@ -3,6 +3,7 @@ import { getAdminCoupons, getPartnersForSelection } from "@/actions/coupon-actio
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
 import { Heading } from "@/components/common/ui/heading"
 import { ClientAwareCouponsLoadingSkeleton } from "@/components/dashboard/admin/coupons/client-aware-coupons-loading-skeleton"
+import { requireAdminSession } from "@/lib/auth/require-admin-session"
 
 // For metadata, it's often done by fetching translations in a server component or using a dedicated i18n setup for metadata.
 // Assuming a simple approach for now:
@@ -31,6 +32,8 @@ interface AdminCouponsPageProps {
 
 // Improve the page's responsiveness
 export default async function AdminCouponsPage({ searchParams }: AdminCouponsPageProps) {
+  await requireAdminSession()
+
   const page = Number(searchParams.page) || 1
   const limit = Number(searchParams.limit) || 10
   const filters = {

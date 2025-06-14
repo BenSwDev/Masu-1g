@@ -4,6 +4,7 @@ import { getPartnersForSelection } from "@/actions/coupon-actions"
 import PartnerCouponBatchesClient from "@/components/dashboard/admin/partner-coupon-batches/partner-coupon-batches-client"
 import { Heading } from "@/components/common/ui/heading"
 import { ClientAwarePartnerCouponBatchesLoadingSkeleton } from "@/components/dashboard/admin/partner-coupon-batches/client-aware-partner-coupon-batches-loading-skeleton"
+import { requireAdminSession } from "@/lib/auth/require-admin-session"
 
 export const metadata = {
   title: "Manage Partner Coupon Batches",
@@ -21,6 +22,8 @@ interface AdminPartnerCouponBatchesPageProps {
 }
 
 export default async function AdminPartnerCouponBatchesPage({ searchParams }: AdminPartnerCouponBatchesPageProps) {
+  await requireAdminSession()
+
   const page = Number(searchParams.page) || 1
   const limit = Number(searchParams.limit) || 10
   const filters = {

@@ -1,8 +1,10 @@
 import { Suspense } from "react"
+import { redirect } from "next/navigation"
 import { getAllUserSubscriptions } from "@/actions/user-subscription-actions"
 import AdminUserSubscriptionsClient from "@/components/dashboard/admin/user-subscriptions/admin-user-subscriptions-client"
 import { Card, CardContent } from "@/components/common/ui/card"
 import ClientAwareUserSubscriptionsLoading from "./client-aware-user-subscriptions-loading" // New component
+import { requireUserSession } from "@/lib/auth/require-session"
 
 export const dynamic = "force-dynamic"
 
@@ -73,7 +75,12 @@ async function UserSubscriptionsData() {
   }
 }
 
-export default function AdminUserSubscriptionsPage() {
+export default async function AdminUserSubscriptionsPage() {
+  const session = await requireUserSession()
+  if (!session.user.roles?.includes("admin")) {
+    redirect("/dashboard")
+  }
+
   return (
     <Suspense fallback={<ClientAwareUserSubscriptionsLoading />}>
       <UserSubscriptionsData />

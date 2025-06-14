@@ -1,8 +1,10 @@
 import { Suspense } from "react"
+import { redirect } from "next/navigation"
 import { getAdminCoupons, getPartnersForSelection } from "@/actions/coupon-actions"
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
 import { Heading } from "@/components/common/ui/heading"
 import { ClientAwareCouponsLoadingSkeleton } from "@/components/dashboard/admin/coupons/client-aware-coupons-loading-skeleton"
+import { requireUserSession } from "@/lib/auth/require-session"
 
 // For metadata, it's often done by fetching translations in a server component or using a dedicated i18n setup for metadata.
 // Assuming a simple approach for now:
@@ -31,6 +33,11 @@ interface AdminCouponsPageProps {
 
 // Improve the page's responsiveness
 export default async function AdminCouponsPage({ searchParams }: AdminCouponsPageProps) {
+  const session = await requireUserSession()
+  if (!session.user.roles?.includes("admin")) {
+    redirect("/dashboard")
+  }
+
   const page = Number(searchParams.page) || 1
   const limit = Number(searchParams.limit) || 10
   const filters = {

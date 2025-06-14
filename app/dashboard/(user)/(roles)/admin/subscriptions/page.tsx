@@ -1,8 +1,10 @@
 import { Suspense } from "react"
+import { redirect } from "next/navigation"
 import { getSubscriptions, getAllTreatments } from "@/actions/subscription-actions"
 import SubscriptionsClient from "@/components/dashboard/admin/subscriptions/subscriptions-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
+import { requireUserSession } from "@/lib/auth/require-session"
 
 // קומפוננטת טעינה
 function SubscriptionsLoading() {
@@ -73,7 +75,12 @@ async function SubscriptionsData() {
   )
 }
 
-export default function SubscriptionsPage() {
+export default async function SubscriptionsPage() {
+  const session = await requireUserSession()
+  if (!session.user.roles?.includes("admin")) {
+    redirect("/dashboard")
+  }
+
   return (
     <Suspense fallback={<SubscriptionsLoading />}>
       <SubscriptionsData />

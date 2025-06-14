@@ -1,31 +1,29 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/auth"
-import { redirect } from "next/navigation"
-import { getProfessionals } from "@/actions/professional-actions"
-import { ProfessionalManagement } from "@/components/dashboard/admin/professional-management/professional-management"
-import { ScrollArea } from "@/components/common/ui/scroll-area"
-import { Separator } from "@/components/common/ui/separator"
-import { Heading } from "@/components/common/ui/heading"
-import { Briefcase } from "lucide-react"
+import { redirect } from "next/navigation";
+import { requireUserSession } from "@/lib/auth/require-session";
+import { getProfessionals } from "@/actions/professional-actions";
+import { ProfessionalManagement } from "@/components/dashboard/admin/professional-management/professional-management";
+import { ScrollArea } from "@/components/common/ui/scroll-area";
+import { Separator } from "@/components/common/ui/separator";
+import { Heading } from "@/components/common/ui/heading";
+import { Briefcase } from "lucide-react";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 interface AdminProfessionalsPageProps {
-  searchParams: { page?: string; search?: string }
+  searchParams: { page?: string; search?: string };
 }
 
-export default async function AdminProfessionalsPage({ searchParams }: AdminProfessionalsPageProps) {
-  const session = await getServerSession(authOptions)
-  if (!session) {
-    redirect("/auth/login")
-  }
-  if (session.user.activeRole !== "admin") {
-    redirect("/dashboard")
+export default async function AdminProfessionalsPage({
+  searchParams,
+}: AdminProfessionalsPageProps) {
+  const session = await requireUserSession();
+  if (!session.user.roles?.includes("admin")) {
+    redirect("/dashboard");
   }
 
-  const page = Number.parseInt(searchParams.page || "1")
-  const search = searchParams.search || ""
-  const result = await getProfessionals(page, 10, search)
+  const page = Number.parseInt(searchParams.page || "1");
+  const search = searchParams.search || "";
+  const result = await getProfessionals(page, 10, search);
 
   return (
     <ScrollArea className="h-full">
@@ -46,5 +44,5 @@ export default async function AdminProfessionalsPage({ searchParams }: AdminProf
         )}
       </div>
     </ScrollArea>
-  )
+  );
 }

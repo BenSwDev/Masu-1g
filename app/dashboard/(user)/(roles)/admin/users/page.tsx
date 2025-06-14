@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+import { requireUserSession } from "@/lib/auth/require-session"
 import { getAllUsers, getUserStatistics } from "@/actions/admin-actions"
 import { UserManagement } from "@/components/dashboard/admin/user-management/user-management"
 
@@ -35,12 +34,7 @@ interface AdminUsersPageProps {
 }
 
 export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect("/auth/login")
-  }
-
+  const session = await requireUserSession()
   if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }

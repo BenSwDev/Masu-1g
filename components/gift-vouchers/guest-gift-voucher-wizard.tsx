@@ -201,7 +201,7 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
       onNext={nextStep}
       onPrev={prevStep}
       hideGenderPreference
-      showPrice
+      showPrice={false}
     />
   )
 

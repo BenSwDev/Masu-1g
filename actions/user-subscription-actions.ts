@@ -8,6 +8,7 @@ import Subscription from "@/lib/db/models/subscription"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import PaymentMethod from "@/lib/db/models/payment-method"
 import User from "@/lib/db/models/user" // Added import
+import SubscriptionPurchase from "@/lib/db/models/subscription-purchase"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
@@ -643,5 +644,71 @@ export async function purchaseGuestSubscription({
       guestEmail: guestInfo.email,
     })
     return { success: false, error: "Failed to purchase subscription" }
+  }
+}
+
+export async function saveAbandonedSubscriptionPurchase(
+  userId: string,
+  formData: {
+    guestInfo?: any
+    purchaseOptions?: any
+    currentStep: number
+  }
+): Promise<{ success: boolean; purchaseId?: string; error?: string }> {
+  try {
+    await dbConnect()
+    const existing = await SubscriptionPurchase.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "abandoned_pending_payment",
+    }).sort({ createdAt: -1 })
+
+    if (existing) {
+      existing.formState = {
+        currentStep: formData.currentStep,
+        guestInfo: formData.guestInfo,
+        purchaseOptions: formData.purchaseOptions,
+        savedAt: new Date(),
+      }
+      await existing.save()
+      return { success: true, purchaseId: existing._id.toString() }
+    }
+
+    const purchase = new SubscriptionPurchase({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "abandoned_pending_payment",
+      formState: {
+        currentStep: formData.currentStep,
+        guestInfo: formData.guestInfo,
+        purchaseOptions: formData.purchaseOptions,
+        savedAt: new Date(),
+      },
+    })
+    await purchase.save()
+    return { success: true, purchaseId: purchase._id.toString() }
+  } catch (error) {
+    return { success: false, error: "Failed to save abandoned subscription" }
+  }
+}
+
+export async function getAbandonedSubscriptionPurchase(
+  userId: string
+): Promise<{ success: boolean; purchase?: any; error?: string }> {
+  try {
+    await dbConnect()
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const purchase = await SubscriptionPurchase.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "abandoned_pending_payment",
+      createdAt: { $gte: twentyFourHoursAgo },
+    })
+      .sort({ createdAt: -1 })
+      .lean()
+
+    if (!purchase) {
+      return { success: false, error: "No recent abandoned purchase" }
+    }
+    return { success: true, purchase }
+  } catch (error) {
+    return { success: false, error: "Failed to get abandoned purchase" }
   }
 }

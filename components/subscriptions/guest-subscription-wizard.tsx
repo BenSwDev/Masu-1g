@@ -11,6 +11,7 @@ import { createGuestUser } from "@/actions/booking-actions"
 import { purchaseGuestSubscription, saveAbandonedSubscriptionPurchase } from "@/actions/user-subscription-actions"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
+import { useTranslation } from "@/lib/translations/i18n"
 import type { CalculatedPriceDetails } from "@/types/booking"
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 
 export default function GuestSubscriptionWizard({ subscriptions, treatments }: Props) {
   const router = useRouter()
+  const { dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [guestInfo, setGuestInfo] = useState<any>({})
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
@@ -173,5 +175,9 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
     }
   }
 
-  return <div className="max-w-4xl mx-auto">{renderStep()}</div>
+  return (
+    <div className="max-w-4xl mx-auto" dir={dir}>
+      {renderStep()}
+    </div>
+  )
 }

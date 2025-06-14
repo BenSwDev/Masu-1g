@@ -82,7 +82,7 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
     nextStep()
   }
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (_paymentCompleted: boolean) => {
     if (!selectedSubscriptionId || !selectedTreatmentId) return
     setIsLoading(true)
     const result = await purchaseGuestSubscription({
@@ -126,15 +126,24 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
               selectedTreatmentId,
               selectedDurationId,
             }}
-            setBookingOptions={(opts: any) => {
-              setSelectedTreatmentId(opts.selectedTreatmentId || "")
-              if (opts.selectedDurationId !== undefined) {
-                setSelectedDurationId(opts.selectedDurationId)
+            setBookingOptions={(update: any) => {
+              const prev = {
+                selectedTreatmentId,
+                selectedDurationId,
+              }
+              const nextState =
+                typeof update === "function" ? update(prev) : update
+              if ("selectedTreatmentId" in nextState) {
+                setSelectedTreatmentId(nextState.selectedTreatmentId ?? "")
+              }
+              if ("selectedDurationId" in nextState) {
+                setSelectedDurationId(nextState.selectedDurationId ?? "")
               }
             }}
             onNext={nextStep}
             onPrev={prevStep}
             hideGenderPreference
+            showPrice={false}
           />
         )
       case 4:
@@ -154,7 +163,7 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
             calculatedPrice={calculatedPrice}
             guestInfo={guestInfo}
             setGuestInfo={setGuestInfo}
-            onConfirm={handlePurchase}
+            onConfirm={(paid) => handlePurchase(paid)}
             onPrev={prevStep}
             isLoading={isLoading}
           />

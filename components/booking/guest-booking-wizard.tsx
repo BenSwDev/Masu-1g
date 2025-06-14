@@ -569,7 +569,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       calculatedPrice?.finalAmount === 0 &&
       calculatedPrice?.isFullyCoveredByVoucherOrSubscription
     ) {
-      handleFinalSubmit(true)
+      handleFinalSubmit(true, true)
       return
     }
     setCurrentStep((prev) => Math.min(prev + 1, CONFIRMATION_STEP_NUMBER))
@@ -577,7 +577,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
 
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1))
 
-  const handleFinalSubmit = async (skipPaymentUI = false) => {
+  const handleFinalSubmit = async (skipPaymentUI = false, paymentCompleted = false) => {
     console.log("🔄 Starting guest booking submission...")
     
     if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.phone) {
@@ -630,7 +630,12 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
         },
         priceDetails: calculatedPrice!,
         paymentDetails: {
-          paymentStatus: calculatedPrice!.finalAmount === 0 ? "not_required" : "pending",
+          paymentStatus:
+            calculatedPrice!.finalAmount === 0
+              ? "not_required"
+              : paymentCompleted
+                ? "paid"
+                : "pending",
         },
         guestInfo: {
           name: `${guestInfo.firstName} ${guestInfo.lastName}`,
@@ -758,7 +763,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             calculatedPrice={calculatedPrice}
             guestInfo={guestInfo}
             setGuestInfo={setGuestInfo}
-            onConfirm={handleFinalSubmit}
+            onConfirm={(paid) => handleFinalSubmit(false, paid)}
             onPrev={prevStep}
             isLoading={isLoading}
           />

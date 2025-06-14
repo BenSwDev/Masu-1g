@@ -197,14 +197,14 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       calculatedPrice?.isFullyCoveredByVoucherOrSubscription
     ) {
       // Skip payment step, go directly to confirmation by simulating final submit
-      handleFinalSubmit(true) // Pass a flag to indicate skipping payment UI
+      handleFinalSubmit(true, true) // Pass a flag to indicate skipping payment UI
     } else {
       setCurrentStep((prev) => Math.min(prev + 1, CONFIRMATION_STEP_NUMBER))
     }
   }
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1))
 
-  const handleFinalSubmit = async (skipPaymentUI = false) => {
+  const handleFinalSubmit = async (skipPaymentUI = false, paymentCompleted = false) => {
     setIsLoading(true)
     if (
       !bookingOptions.selectedTreatmentId ||
@@ -248,7 +248,12 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
       priceDetails: calculatedPrice,
       paymentDetails: {
         paymentMethodId: bookingOptions.selectedPaymentMethodId,
-        paymentStatus: calculatedPrice.finalAmount === 0 ? "not_required" : "pending",
+        paymentStatus:
+          calculatedPrice.finalAmount === 0
+            ? "not_required"
+            : paymentCompleted
+              ? "paid"
+              : "pending",
       },
       source: bookingOptions.source || "new_purchase",
       redeemedUserSubscriptionId:
@@ -317,7 +322,7 @@ export default function BookingWizard({ initialData, currentUser }: BookingWizar
           <PaymentStep
             {...stepProps}
             calculatedPrice={calculatedPrice}
-            onSubmit={() => handleFinalSubmit(false)} // Explicitly pass false for skipPaymentUI
+            onSubmit={() => handleFinalSubmit(false, true)} // payment completed via UI
             isLoading={isLoading}
           />
         )

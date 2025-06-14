@@ -3,6 +3,7 @@
 import { Package, User, Mail, Phone } from "lucide-react"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { useTranslation } from "@/lib/translations/i18n"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
 
@@ -30,10 +31,11 @@ export default function GuestSubscriptionSummaryStep({
   onNext,
   onPrev,
 }: Props) {
+  const { dir } = useTranslation()
   const totalPrice = subscription ? (subscription.quantity * durationPrice) : 0
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div className="text-center">
         <h2 className="text-2xl font-semibold">סיכום הזמנה</h2>
         <p className="text-muted-foreground mt-2">בדוק את הפרטים לפני התשלום</p>

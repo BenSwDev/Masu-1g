@@ -218,7 +218,7 @@ export default function GuestPurchaseGiftVoucherClient({
     }
   };
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (_paymentCompleted: boolean) => {
     if (
       !guestForm.formState.isValid ||
       (isGift && !giftForm.formState.isValid)

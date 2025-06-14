@@ -126,15 +126,24 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
               selectedTreatmentId,
               selectedDurationId,
             }}
-            setBookingOptions={(opts: any) => {
-              setSelectedTreatmentId(opts.selectedTreatmentId || "")
-              if (opts.selectedDurationId !== undefined) {
-                setSelectedDurationId(opts.selectedDurationId)
+            setBookingOptions={(update: any) => {
+              const prev = {
+                selectedTreatmentId,
+                selectedDurationId,
+              }
+              const nextState =
+                typeof update === "function" ? update(prev) : update
+              if (nextState.selectedTreatmentId !== undefined) {
+                setSelectedTreatmentId(nextState.selectedTreatmentId || "")
+              }
+              if (nextState.selectedDurationId !== undefined) {
+                setSelectedDurationId(nextState.selectedDurationId || "")
               }
             }}
             onNext={nextStep}
             onPrev={prevStep}
             hideGenderPreference
+            showPrice={false}
           />
         )
       case 4:

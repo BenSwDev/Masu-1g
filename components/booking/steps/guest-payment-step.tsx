@@ -52,7 +52,7 @@ export function GuestPaymentStep({
   onPrev,
   isLoading,
 }: GuestPaymentStepProps) {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending')
   const [countdown, setCountdown] = useState(0)
@@ -134,7 +134,7 @@ export function GuestPaymentStep({
 
   if (!calculatedPrice || calculatedPrice.finalAmount === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" dir={dir}>
         <div className="text-center py-8">
           <CheckCircle className="mx-auto h-12 w-12 text-green-600 mb-4" />
           <h3 className="text-lg font-semibold mb-2">ההזמנה חינמית</h3>
@@ -206,7 +206,7 @@ export function GuestPaymentStep({
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6" dir={dir}>
         <div className="text-center">
           <CreditCard className="mx-auto h-12 w-12 text-primary mb-4" />
           <h2 className="text-2xl font-semibold tracking-tight">תשלום</h2>
@@ -539,7 +539,7 @@ export function GuestPaymentStep({
             <DialogTitle className="text-center">תשלום מאובטח</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-6">
+          <div className="space-y-6" dir={dir}>
             {paymentStatus === 'pending' && (
               <>
                 {/* CardComm iframe simulation */}

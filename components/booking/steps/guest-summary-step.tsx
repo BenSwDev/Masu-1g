@@ -52,7 +52,7 @@ export function GuestSummaryStep({
   onPrev,
   setBookingOptions,
 }: GuestSummaryStepProps) {
-  const { t, language } = useTranslation()
+  const { t, language, dir } = useTranslation()
   const [couponCode, setCouponCode] = useState(bookingOptions.appliedCouponCode || "")
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
@@ -138,7 +138,7 @@ export function GuestSummaryStep({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div className="text-center">
         <CheckCircle className="mx-auto h-12 w-12 text-primary mb-4" />
         <h2 className="text-2xl font-semibold tracking-tight">סיכום ההזמנה</h2>

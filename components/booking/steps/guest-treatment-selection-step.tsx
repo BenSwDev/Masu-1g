@@ -13,6 +13,12 @@ import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking
 
 interface GuestTreatmentSelectionStepProps {
   hideGenderPreference?: boolean
+  /**
+   * Whether to show the price of each treatment/duration option. When
+   * purchasing a subscription the price is calculated later so it can be
+   * hidden, while during a normal booking flow the price should be shown.
+   */
+  showPrice?: boolean
 
   initialData: BookingInitialData
   bookingOptions: Partial<SelectedBookingOptions>
@@ -23,6 +29,7 @@ interface GuestTreatmentSelectionStepProps {
 
 export function GuestTreatmentSelectionStep({
   hideGenderPreference,
+  showPrice = true,
   initialData,
   bookingOptions,
   setBookingOptions,
@@ -94,7 +101,7 @@ export function GuestTreatmentSelectionStep({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div className="text-center">
         <Sparkles className="mx-auto h-12 w-12 text-primary mb-4" />
         <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.treatment.title")}</h2>
@@ -137,18 +144,19 @@ export function GuestTreatmentSelectionStep({
               className="space-y-4"
             >
               {filteredTreatmentsByCategory.map((treatment) => (
-                <div key={treatment._id.toString()} className="flex items-center space-x-3 space-y-0">
+                <Label
+                  key={treatment._id.toString()}
+                  htmlFor={treatment._id.toString()}
+                  className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}
+                >
                   <RadioGroupItem value={treatment._id.toString()} id={treatment._id.toString()} />
-                  <Label
-                    htmlFor={treatment._id.toString()}
-                    className="flex-1 cursor-pointer flex justify-between items-center p-4 border rounded-lg hover:bg-muted/50"
-                  >
+                  <div className="flex-1 flex justify-between items-center">
                     <div>
                       <h4 className="font-medium">{treatment.name}</h4>
                       <p className="text-sm text-muted-foreground mt-1">{treatment.description}</p>
                     </div>
                     <div className="text-right">
-                      {treatment.pricingType === "fixed" && (
+                      {showPrice && treatment.pricingType === "fixed" && (
                         <div className="text-lg font-semibold text-primary">
                           {formatPrice(treatment.fixedPrice || 0)}
                         </div>
@@ -157,8 +165,8 @@ export function GuestTreatmentSelectionStep({
                         <Badge variant="secondary">{t("treatments.durationBased")}</Badge>
                       )}
                     </div>
-                  </Label>
-                </div>
+                  </div>
+                </Label>
               ))}
             </RadioGroup>
           </CardContent>
@@ -182,23 +190,26 @@ export function GuestTreatmentSelectionStep({
               className="space-y-4"
             >
               {availableDurations.map((duration: any) => (
-                <div key={duration._id.toString()} className="flex items-center space-x-3 space-y-0">
+                <Label
+                  key={duration._id.toString()}
+                  htmlFor={duration._id.toString()}
+                  className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}
+                >
                   <RadioGroupItem value={duration._id.toString()} id={duration._id.toString()} />
-                  <Label
-                    htmlFor={duration._id.toString()}
-                    className="flex-1 cursor-pointer flex justify-between items-center p-4 border rounded-lg hover:bg-muted/50"
-                  >
+                  <div className="flex-1 flex justify-between items-center">
                     <div>
                       <h4 className="font-medium">{duration.name || formatDurationString(duration.minutes || 0)}</h4>
                       <p className="text-sm text-muted-foreground">
                         {formatDurationString(duration.minutes || 0)}
                       </p>
                     </div>
-                    <div className="text-lg font-semibold text-primary">
-                      {formatPrice(duration.price || 0)}
-                    </div>
-                  </Label>
-                </div>
+                    {showPrice && (
+                      <div className="text-lg font-semibold text-primary">
+                        {formatPrice(duration.price || 0)}
+                      </div>
+                    )}
+                  </div>
+                </Label>
               ))}
             </RadioGroup>
           </CardContent>

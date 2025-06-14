@@ -3,6 +3,7 @@ import { getSubscriptions, getAllTreatments } from "@/actions/subscription-actio
 import SubscriptionsClient from "@/components/dashboard/admin/subscriptions/subscriptions-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
+import { requireAdminSession } from "@/lib/auth/require-admin-session"
 
 // קומפוננטת טעינה
 function SubscriptionsLoading() {
@@ -73,7 +74,9 @@ async function SubscriptionsData() {
   )
 }
 
-export default function SubscriptionsPage() {
+export default async function SubscriptionsPage() {
+  await requireAdminSession()
+
   return (
     <Suspense fallback={<SubscriptionsLoading />}>
       <SubscriptionsData />

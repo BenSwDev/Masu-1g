@@ -2,6 +2,7 @@ import { getGiftVouchers, type GiftVoucherPlain } from "@/actions/gift-voucher-a
 import { GiftVouchersClient } from "@/components/dashboard/admin/gift-vouchers/gift-vouchers-client"
 import { Suspense } from "react"
 import { Skeleton } from "@/components/common/ui/skeleton" // Corrected import path
+import { requireAdminSession } from "@/lib/auth/require-admin-session"
 
 export const dynamic = "force-dynamic" // Ensures fresh data on each request
 export const revalidate = 0 // Disables caching for this page
@@ -64,7 +65,9 @@ function GiftVouchersLoadingSkeleton() {
   )
 }
 
-export default function GiftVouchersPage() {
+export default async function GiftVouchersPage() {
+  await requireAdminSession()
+
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <Suspense fallback={<GiftVouchersLoadingSkeleton />}>

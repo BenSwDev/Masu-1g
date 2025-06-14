@@ -3,6 +3,7 @@ import { getAllUserSubscriptions } from "@/actions/user-subscription-actions"
 import AdminUserSubscriptionsClient from "@/components/dashboard/admin/user-subscriptions/admin-user-subscriptions-client"
 import { Card, CardContent } from "@/components/common/ui/card"
 import ClientAwareUserSubscriptionsLoading from "./client-aware-user-subscriptions-loading" // New component
+import { requireAdminSession } from "@/lib/auth/require-admin-session"
 
 export const dynamic = "force-dynamic"
 
@@ -73,7 +74,9 @@ async function UserSubscriptionsData() {
   }
 }
 
-export default function AdminUserSubscriptionsPage() {
+export default async function AdminUserSubscriptionsPage() {
+  await requireAdminSession()
+
   return (
     <Suspense fallback={<ClientAwareUserSubscriptionsLoading />}>
       <UserSubscriptionsData />

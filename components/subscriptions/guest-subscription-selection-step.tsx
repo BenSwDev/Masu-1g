@@ -1,6 +1,7 @@
 "use client"
 
 import { Package } from "lucide-react"
+import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import type { ISubscription } from "@/lib/db/models/subscription"
@@ -20,8 +21,9 @@ export default function GuestSubscriptionSelectionStep({
   onNext,
   onPrev,
 }: Props) {
+  const { dir } = useTranslation()
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div className="text-center">
         <h2 className="text-2xl font-semibold">בחר מנוי</h2>
         <p className="text-muted-foreground mt-2">בחר את המנוי המתאים עבורך</p>

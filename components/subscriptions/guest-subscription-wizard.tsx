@@ -135,6 +135,7 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
             onNext={nextStep}
             onPrev={prevStep}
             hideGenderPreference
+            showPrice={false}
           />
         )
       case 4:

@@ -61,7 +61,7 @@ const addressSchema = z.object({
 type GuestAddressFormData = z.infer<typeof addressSchema>
 
 export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestAddressStepProps) {
-  const { t } = useTranslation()
+  const { t, dir } = useTranslation()
   const [addressType, setAddressType] = useState<"apartment" | "house" | "office" | "hotel" | "other">(
     (address.addressType as "apartment" | "house" | "office" | "hotel" | "other") || "apartment"
   )
@@ -108,7 +108,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div className="text-center">
         <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.addressStep.title") || "הוסף כתובת חדשה"}</h2>
       </div>

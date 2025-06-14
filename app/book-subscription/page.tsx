@@ -1,16 +1,16 @@
 import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
-import GuestPurchaseSubscriptionClient from "@/components/subscriptions/guest-purchase-subscription-client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import GuestSubscriptionWizard from "@/components/subscriptions/guest-subscription-wizard"
 import { GuestLayout } from "@/components/layout/guest-layout"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 
 export default async function GuestBookSubscriptionPage() {
-  const [subscriptionsData, treatmentsData] = await Promise.all([
+  const [subsData, treatmentsData] = await Promise.all([
     getActiveSubscriptionsForPurchase(),
     getActiveTreatmentsForPurchase(),
   ])
 
-  if (!subscriptionsData.success || !treatmentsData.success) {
+  if (!subsData.success || !treatmentsData.success) {
     return (
       <GuestLayout>
         <Card>
@@ -27,10 +27,10 @@ export default async function GuestBookSubscriptionPage() {
 
   return (
     <GuestLayout>
-      <GuestPurchaseSubscriptionClient
-        subscriptions={subscriptionsData.subscriptions || []}
+      <GuestSubscriptionWizard
+        subscriptions={subsData.subscriptions || []}
         treatments={treatmentsData.treatments || []}
       />
     </GuestLayout>
   )
-} 
+}

@@ -12,6 +12,8 @@ import { Sparkles, Clock, Users } from "lucide-react"
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
 
 interface GuestTreatmentSelectionStepProps {
+  hideGenderPreference?: boolean
+
   initialData: BookingInitialData
   bookingOptions: Partial<SelectedBookingOptions>
   setBookingOptions: React.Dispatch<React.SetStateAction<Partial<SelectedBookingOptions>>>
@@ -20,6 +22,7 @@ interface GuestTreatmentSelectionStepProps {
 }
 
 export function GuestTreatmentSelectionStep({
+  hideGenderPreference,
   initialData,
   bookingOptions,
   setBookingOptions,
@@ -64,7 +67,7 @@ export function GuestTreatmentSelectionStep({
     if (!bookingOptions.selectedTreatmentId) return false
     if (selectedTreatment?.pricingType === "duration_based" && !bookingOptions.selectedDurationId) return false
     // Only require therapist gender preference if the treatment allows gender selection
-    if (selectedTreatment?.allowTherapistGenderSelection && !bookingOptions.therapistGenderPreference) return false
+    if (selectedTreatment?.allowTherapistGenderSelection && !hideGenderPreference && !bookingOptions.therapistGenderPreference) return false
     return true
   }, [bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, bookingOptions.therapistGenderPreference, selectedTreatment])
 
@@ -203,7 +206,7 @@ export function GuestTreatmentSelectionStep({
       )}
 
       {/* Therapist Gender Preference - Only show if treatment allows it */}
-      {selectedTreatment?.allowTherapistGenderSelection && (
+      {selectedTreatment?.allowTherapistGenderSelection && !hideGenderPreference && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

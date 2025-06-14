@@ -1,9 +1,11 @@
 import { Suspense } from "react"
+import { redirect } from "next/navigation"
 import { getPartnerCouponBatches } from "@/actions/partner-coupon-batch-actions"
 import { getPartnersForSelection } from "@/actions/coupon-actions"
 import PartnerCouponBatchesClient from "@/components/dashboard/admin/partner-coupon-batches/partner-coupon-batches-client"
 import { Heading } from "@/components/common/ui/heading"
 import { ClientAwarePartnerCouponBatchesLoadingSkeleton } from "@/components/dashboard/admin/partner-coupon-batches/client-aware-partner-coupon-batches-loading-skeleton"
+import { requireUserSession } from "@/lib/auth/require-session"
 
 export const metadata = {
   title: "Manage Partner Coupon Batches",
@@ -21,6 +23,11 @@ interface AdminPartnerCouponBatchesPageProps {
 }
 
 export default async function AdminPartnerCouponBatchesPage({ searchParams }: AdminPartnerCouponBatchesPageProps) {
+  const session = await requireUserSession()
+  if (!session.user.roles?.includes("admin")) {
+    redirect("/dashboard")
+  }
+
   const page = Number(searchParams.page) || 1
   const limit = Number(searchParams.limit) || 10
   const filters = {

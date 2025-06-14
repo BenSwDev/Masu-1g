@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+import { requireUserSession } from "@/lib/auth/require-session"
 import { BarChart3 } from "lucide-react"
 import PurchaseReportsClient from "@/components/dashboard/admin/purchase-reports/purchase-reports-client"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
@@ -11,9 +10,8 @@ export const dynamic = 'force-dynamic'
 
 export default async function PurchaseReportsPage() {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.roles?.includes('admin')) {
+    const session = await requireUserSession()
+    if (!session.user.roles?.includes('admin')) {
       redirect("/dashboard")
     }
 

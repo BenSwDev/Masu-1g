@@ -1,7 +1,9 @@
 import { getGiftVouchers, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { GiftVouchersClient } from "@/components/dashboard/admin/gift-vouchers/gift-vouchers-client"
 import { Suspense } from "react"
+import { redirect } from "next/navigation"
 import { Skeleton } from "@/components/common/ui/skeleton" // Corrected import path
+import { requireUserSession } from "@/lib/auth/require-session"
 
 export const dynamic = "force-dynamic" // Ensures fresh data on each request
 export const revalidate = 0 // Disables caching for this page
@@ -64,7 +66,12 @@ function GiftVouchersLoadingSkeleton() {
   )
 }
 
-export default function GiftVouchersPage() {
+export default async function GiftVouchersPage() {
+  const session = await requireUserSession()
+  if (!session.user.roles?.includes("admin")) {
+    redirect("/dashboard")
+  }
+
   return (
     <div className="container mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <Suspense fallback={<GiftVouchersLoadingSkeleton />}>

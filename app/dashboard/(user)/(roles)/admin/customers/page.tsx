@@ -1,6 +1,5 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+import { requireUserSession } from "@/lib/auth/require-session"
 import { UserCheck } from "lucide-react"
 import CustomersClient from "@/components/dashboard/admin/customers/customers-client"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
@@ -11,9 +10,8 @@ export const dynamic = 'force-dynamic'
 
 export default async function CustomersPage() {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session?.user?.roles?.includes('admin')) {
+    const session = await requireUserSession()
+    if (!session.user.roles?.includes('admin')) {
       redirect("/dashboard")
     }
 

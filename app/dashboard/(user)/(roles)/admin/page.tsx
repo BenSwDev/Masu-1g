@@ -1,16 +1,9 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+import { requireUserSession } from "@/lib/auth/require-session"
 
 export default async function AdminDashboardPage() {
-  const session = await getServerSession(authOptions)
-
-  if (!session) {
-    redirect("/auth/login")
-  }
-
-  // Only redirect if activeRole is not admin
-  if (session.user.activeRole !== "admin") {
+  const session = await requireUserSession()
+  if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
 

@@ -82,12 +82,24 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
 
   const handlePurchase = async () => {
     setIsLoading(true)
+    let sendDateForPayload: string | undefined = "immediate"
+    if (guestInfo.isGift && guestInfo.sendOption === "scheduled" && guestInfo.sendDate && guestInfo.sendTime) {
+      const [h, m] = guestInfo.sendTime.split(":").map(Number)
+      const combined = new Date(guestInfo.sendDate)
+      combined.setHours(h, m, 0, 0)
+      sendDateForPayload = combined.toISOString()
+    }
+
     const initRes = await initiateGuestPurchaseGiftVoucher({
       voucherType,
       treatmentId: voucherType === "treatment" ? selectedTreatmentId : undefined,
       selectedDurationId: voucherType === "treatment" ? selectedDurationId || undefined : undefined,
       monetaryValue: voucherType === "monetary" ? price : undefined,
-      isGift: false,
+      isGift: guestInfo.isGift || false,
+      recipientName: guestInfo.recipientFirstName ? guestInfo.recipientFirstName + " " + guestInfo.recipientLastName : undefined,
+      recipientPhone: guestInfo.recipientPhone,
+      greetingMessage: guestInfo.greetingMessage,
+      sendDate: sendDateForPayload,
       guestInfo: {
         name: guestInfo.firstName + " " + guestInfo.lastName,
         email: guestInfo.email,
@@ -148,23 +160,30 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
           </CardContent>
         </Card>
       </div>
-      {voucherType === "monetary" && (
-        <div className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>סכום השובר</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input type="number" min={150} value={monetaryValue} onChange={e => setMonetaryValue(Number(e.target.value))} placeholder="150" />
-            </CardContent>
-          </Card>
-        </div>
-      )}
       <div className="flex justify-between mt-6">
         <Button variant="outline" onClick={prevStep}>חזור</Button>
-        <Button onClick={() => {
-          if (voucherType === "monetary") nextStep(); else nextStep();
-        }} disabled={voucherType === "monetary" ? monetaryValue < 150 : false}>המשך</Button>
+        <Button onClick={nextStep}>המשך</Button>
+      </div>
+    </div>
+  )
+
+  const renderMonetaryStep = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-semibold text-gray-900">סכום השובר</h2>
+        <p className="text-gray-600 mt-2">הכנס סכום למימוש החל מ150 ₪</p>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>סכום</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Input type="number" min={150} value={monetaryValue} onChange={e => setMonetaryValue(Number(e.target.value))} placeholder="150" />
+        </CardContent>
+      </Card>
+      <div className="flex justify-between mt-6">
+        <Button variant="outline" onClick={prevStep}>חזור</Button>
+        <Button onClick={nextStep} disabled={monetaryValue < 150}>המשך</Button>
       </div>
     </div>
   )
@@ -211,6 +230,14 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
                   <div className="flex justify-between"><span>מחיר:</span><span>{price} ₪</span></div>
                 </>
               )}
+              {guestInfo.isGift && (
+                <>
+                  <div className="flex justify-between"><span>למי נשלח:</span><span>{guestInfo.recipientFirstName} {guestInfo.recipientLastName}</span></div>
+                  {guestInfo.sendOption === "scheduled" && guestInfo.sendDate && guestInfo.sendTime && (
+                    <div className="flex justify-between"><span>זמן שליחה:</span><span>{guestInfo.sendDate.toLocaleDateString()} {guestInfo.sendTime}</span></div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -236,10 +263,19 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
 
 
   const renderStep = () => {
-    if (currentStep === 1) return <GuestInfoStep guestInfo={guestInfo} setGuestInfo={setGuestInfo} onNext={handleGuestInfoSubmit} />
+    if (currentStep === 1)
+      return (
+        <GuestInfoStep
+          guestInfo={guestInfo}
+          setGuestInfo={setGuestInfo}
+          onNext={handleGuestInfoSubmit}
+          defaultBookingForSomeoneElse
+          hideRecipientBirthGender
+          showGiftOptions
+        />
+      )
     if (currentStep === 2) return renderVoucherTypeStep()
-    if (currentStep === 3 && voucherType === "treatment") return renderTreatmentStep()
-    if (currentStep === 3 && voucherType === "monetary") { nextStep(); return null }
+    if (currentStep === 3) return voucherType === "monetary" ? renderMonetaryStep() : renderTreatmentStep()
     if (currentStep === 4) return renderSummaryStep()
     if (currentStep === 5) return (
       <GuestPaymentStep

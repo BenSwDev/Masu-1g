@@ -10,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Input } from "@/components/common/ui/input"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Progress } from "@/components/common/ui/progress"
-import { initiateGuestPurchaseGiftVoucher, confirmGuestGiftVoucherPurchase } from "@/actions/gift-voucher-actions"
+import { initiateGuestPurchaseGiftVoucher, confirmGuestGiftVoucherPurchase, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import GuestGiftVoucherConfirmation from "./guest-gift-voucher-confirmation"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { CalculatedPriceDetails } from "@/types/booking"
@@ -31,6 +32,7 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
   const [selectedDurationId, setSelectedDurationId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
   const [purchaseComplete, setPurchaseComplete] = useState(false)
+  const [purchasedVoucher, setPurchasedVoucher] = useState<GiftVoucherPlain | null>(null)
 
   const selectedTreatment = treatments.find(t => t._id.toString() === selectedTreatmentId)
   const selectedDuration = selectedTreatment?.pricingType === "duration_based"
@@ -56,7 +58,8 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
     isFullyCoveredByVoucherOrSubscription: false,
   }
 
-  const nextStep = () => setCurrentStep(s => Math.min(s + 1, 5))
+  const TOTAL_STEPS = 6
+  const nextStep = () => setCurrentStep(s => Math.min(s + 1, TOTAL_STEPS))
   const prevStep = () => setCurrentStep(s => Math.max(s - 1, 1))
 
   const handleGuestInfoSubmit = async (info: any) => {
@@ -111,7 +114,9 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
 
     setIsLoading(false)
     if (confirmRes.success) {
+      setPurchasedVoucher(confirmRes.voucher || null)
       setPurchaseComplete(true)
+      setCurrentStep(6)
     } else {
       toast({ variant: "destructive", title: "שגיאה", description: confirmRes.error || "" })
     }
@@ -229,20 +234,6 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
     </div>
   )
 
-  if (purchaseComplete) {
-    return (
-      <div className="max-w-4xl mx-auto text-center">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-green-600 text-2xl">השובר נרכש בהצלחה!</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => router.push("/")}>חזרה לדף הבית</Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
 
   const renderStep = () => {
     if (currentStep === 1) return <GuestInfoStep guestInfo={guestInfo} setGuestInfo={setGuestInfo} onNext={handleGuestInfoSubmit} />
@@ -260,10 +251,11 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
         isLoading={isLoading}
       />
     )
+    if (currentStep === 6 && purchaseComplete) return <GuestGiftVoucherConfirmation voucher={purchasedVoucher} />
     return null
   }
 
-  const progress = (currentStep / 5) * 100
+  const progress = (currentStep / TOTAL_STEPS) * 100
 
   return (
     <div className="max-w-4xl mx-auto">

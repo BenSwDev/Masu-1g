@@ -115,6 +115,10 @@ export default function GuestSubscriptionSummaryStep({
               </div>
             </CardContent>
           </Card>
+          <p className="text-sm text-muted-foreground mt-4">
+            בהזמנת הטיפול ייתכן ותחויבו בסכום של 50 ש"ח על הזמנה בסופ״ש,
+            חגים או מועדים מיוחדים אשר תצטרכו לשלם במעמד הזמנת הטיפול
+          </p>
         </div>
       </div>
       <div className="flex justify-between mt-6">

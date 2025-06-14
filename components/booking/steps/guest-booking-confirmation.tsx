@@ -110,7 +110,7 @@ export function GuestBookingConfirmation({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6" dir={dir}>
       {/* Success Header */}
       <div className="text-center">
         <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">

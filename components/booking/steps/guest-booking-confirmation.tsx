@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatCurrency, formatDate as formatDateUtil } from "@/lib/utils/utils"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
@@ -46,9 +47,7 @@ export function GuestBookingConfirmation({
 
   const formatBirthDate = (date: Date | string | undefined | null) => {
     if (!date) return "-"
-    const dateObj = typeof date === "string" ? new Date(date) : date
-    if (!isValid(dateObj)) return "-"
-    return format(dateObj, "dd/MM/yyyy")
+    return formatDateUtil(date, language)
   }
 
   const getTreatmentDurationText = () => {
@@ -94,7 +93,7 @@ export function GuestBookingConfirmation({
   }
 
   const formatPrice = (amount: number) => {
-    return `₪${amount.toFixed(2)}`
+    return formatCurrency(amount, "ILS", language)
   }
 
   if (!bookingResult) {

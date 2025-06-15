@@ -40,6 +40,7 @@ import {
 } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatCurrency as formatCurrencyUtil, formatDate as formatDateUtil } from "@/lib/utils/utils"
 import { getAllCustomers, getUserPurchaseHistory } from "@/actions/purchase-summary-actions"
 import PurchaseHistoryTable from "@/components/common/purchase/purchase-history-table"
 import type { CustomerSummary, PurchaseTransaction } from "@/lib/types/purchase-summary"
@@ -62,7 +63,7 @@ import {
 } from "lucide-react"
 
 export default function CustomersClient() {
-  const { t, dir } = useTranslation()
+  const { t, dir, language } = useTranslation()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [customers, setCustomers] = useState<CustomerSummary[]>([])
@@ -154,14 +155,14 @@ export default function CustomersClient() {
   }
 
   const formatCurrency = (amount: number | undefined | null) => {
-    if (amount === undefined || amount === null) return '0 ש״ח'
+    if (amount === undefined || amount === null) return formatCurrencyUtil(0, "ILS", language)
     const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount))
-    if (isNaN(numericAmount)) return '0 ש״ח'
-    return `${numericAmount.toLocaleString('he-IL')} ש״ח`
+    if (isNaN(numericAmount)) return formatCurrencyUtil(0, "ILS", language)
+    return formatCurrencyUtil(numericAmount, "ILS", language)
   }
 
   const formatDate = (date: Date) => {
-    return format(new Date(date), "dd/MM/yyyy", { locale: he })
+    return formatDateUtil(date, language)
   }
 
   const getUserTypeBadge = (userType?: 'guest' | 'member') => {

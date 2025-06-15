@@ -5,13 +5,14 @@ import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
+import { formatDate as formatDateUtil } from "@/lib/utils/utils"
 import { ArrowUpDown, Star, Eye, MessageCircle } from "lucide-react"
 import type { PopulatedReview } from "@/types/review"
 
 type TFunction = (key: string, options?: any) => string
 
-const formatDate = (date: string | Date) => {
-  return format(new Date(date), "dd/MM/yyyy")
+const formatDate = (date: string | Date, language: string = "he") => {
+  return formatDateUtil(date, language)
 }
 
 const getLocale = (locale: string) => {
@@ -133,7 +134,7 @@ export const getMemberReviewColumns = (
       const date = new Date(createdAt)
       return (
         <div className="text-sm">
-          {formatDate(date)}
+          {formatDate(date, locale)}
         </div>
       )
     },

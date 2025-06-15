@@ -48,6 +48,7 @@ import {
   Filter,
 } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatDate as formatDateUtil } from "@/lib/utils/utils"
 // 1. Add import for UserFormDialog
 import { UserFormDialog } from "./user-form-dialog"
 
@@ -109,17 +110,9 @@ const calculateAge = (dateOfBirth?: string | null): number | null => {
 }
 
 // Helper function to format date (can be moved to lib/utils)
-const formatDate = (dateString?: string | null, locale = "en-GB"): string => {
+const formatDate = (dateString?: string | null, language = "he"): string => {
   if (!dateString) return "-"
-  try {
-    return new Date(dateString).toLocaleDateString(locale, {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
-  } catch (e) {
-    return "-"
-  }
+  return formatDateUtil(dateString, language)
 }
 
 // Helper function to get avatar gradient based on name

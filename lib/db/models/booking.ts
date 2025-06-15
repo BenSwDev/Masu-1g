@@ -1,14 +1,12 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
 
 export type BookingStatus =
-  | "abandoned_pending_payment" // ננטש - ממתין לתשלום
-  | "confirmed" // אושר - ממתין לשיוך מטפל
-  | "confirmed_professional_assigned" // אושר - מטפל נמצא
-  | "professional_en_route" // מטפל בדרך
-  | "completed" // הושלם
-  | "cancelled_by_user" // בוטל ע"י משתמש
-  | "cancelled_by_admin" // בוטל ע"י מנהל
-  | "no_show" // לא הופיע
+  | "pending_payment" // ממתין לתשלום - הזמנות לא שולמו
+  | "in_process" // בטיפול - שולם אבל לא שויך מטפל (מה שהמנהל רואה)
+  | "confirmed" // מאושר - מה שהלקוח רואה במקום "in_process"
+  | "completed" // הושלם - שויך מטפל והושלם
+  | "cancelled" // בוטל - בוטל ללא החזר
+  | "refunded" // הוחזר - בוטל עם החזר
 
 export interface IPriceDetails {
   basePrice: number
@@ -74,6 +72,8 @@ export interface IBooking extends Document {
   flexibilityRangeHours?: number // e.g., 1 or 2 hours before/after
   cancellationReason?: string // If cancelled
   cancelledBy?: "user" | "admin"
+  refundAmount?: number // Amount refunded if status is "refunded"
+  refundTransactionId?: string // Transaction ID for refund
   professionalId?: Types.ObjectId // Assigned professional (can be null)
   recipientName?: string // Name of the person receiving the treatment if not the user
   recipientPhone?: string // Phone of the person receiving the treatment
@@ -168,16 +168,14 @@ const BookingSchema: Schema<IBooking> = new Schema(
     status: {
       type: String,
       enum: [
-        "abandoned_pending_payment",
+        "pending_payment",
+        "in_process",
         "confirmed",
-        "confirmed_professional_assigned",
-        "professional_en_route",
         "completed",
-        "cancelled_by_user",
-        "cancelled_by_admin",
-        "no_show",
+        "cancelled",
+        "refunded",
       ],
-      default: "abandoned_pending_payment", // Will be updated after successful payment
+      default: "pending_payment",
       required: true,
       index: true,
     },
@@ -195,14 +193,16 @@ const BookingSchema: Schema<IBooking> = new Schema(
     flexibilityRangeHours: { type: Number, min: 0 },
     cancellationReason: { type: String },
     cancelledBy: { type: String, enum: ["user", "admin"] },
+    refundAmount: { type: Number, min: 0 },
+    refundTransactionId: { type: String },
     professionalId: { type: Schema.Types.ObjectId, ref: "User", default: null },
     recipientName: { type: String, trim: true },
     recipientPhone: { type: String, trim: true },
     recipientEmail: { type: String, trim: true },
     recipientBirthDate: { type: Date },
     recipientGender: { type: String, enum: ["male", "female", "other"] },
-    isBookingForSomeoneElse: { type: Boolean, default: false }, // NEW FIELD
-    formState: { // NEW FIELD for storing form data for recovery
+    isBookingForSomeoneElse: { type: Boolean, default: false },
+    formState: {
       currentStep: { type: Number },
       guestInfo: { type: Schema.Types.Mixed },
       guestAddress: { type: Schema.Types.Mixed },

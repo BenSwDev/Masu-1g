@@ -587,7 +587,7 @@ export async function createBooking(
         bookedByUserEmail: bookingUser.email,
         bookedByUserPhone: bookingUser.phone,
         bookingAddressSnapshot,
-        status: "confirmed",
+        status: "pending_payment", // Will be updated to "in_process" after successful payment
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
           surcharges: validatedPayload.priceDetails.surcharges,
@@ -828,14 +828,14 @@ export async function getUserBookings(
     if (status && status !== "all") {
       switch (status) {
         case "upcoming":
-          query.status = { $in: ["pending_professional_assignment", "confirmed", "professional_en_route"] }
+          query.status = { $in: ["in_process", "confirmed"] }
           query.bookingDateTime = { $gte: new Date() }
           break
         case "past":
-          query.status = { $in: ["completed", "no_show"] }
+          query.status = { $in: ["completed"] }
           break
         case "cancelled":
-          query.status = { $in: ["cancelled_by_user", "cancelled_by_admin"] }
+          query.status = { $in: ["cancelled", "refunded"] }
           break
         default:
           query.status = status
@@ -998,11 +998,11 @@ export async function cancelBooking(
       const booking = (await Booking.findById(bookingId).session(mongooseDbSession)) as IBooking | null
       if (!booking) throw new Error("bookings.errors.bookingNotFound")
       if (booking.userId.toString() !== userId && cancelledByRole !== "admin") throw new Error("common.unauthorized")
-      if (["completed", "cancelled_by_user", "cancelled_by_admin"].includes(booking.status)) {
+      if (["completed", "cancelled", "refunded"].includes(booking.status)) {
         throw new Error("bookings.errors.cannotCancelAlreadyProcessed")
       }
 
-      booking.status = cancelledByRole === "user" ? "cancelled_by_user" : "cancelled_by_admin"
+      booking.status = "cancelled"
       booking.cancellationReason = reason
       booking.cancelledBy = cancelledByRole
 
@@ -1244,7 +1244,7 @@ export async function professionalAcceptBooking(
       if (!booking) {
         throw new Error("bookings.errors.bookingNotFound")
       }
-      if (booking.status !== "confirmed" || booking.professionalId) {
+      if (booking.status !== "in_process" || booking.professionalId) {
         throw new Error("bookings.errors.bookingNotAvailableForProfessionalAssignment")
       }
 
@@ -1333,7 +1333,7 @@ export async function professionalMarkEnRoute(
       return { success: false, error: "bookings.errors.bookingNotInCorrectStateForEnRoute" }
     }
 
-    booking.status = "professional_en_route"
+    booking.status = "confirmed" // Keep as confirmed when en route
     await booking.save()
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
 
@@ -1364,7 +1364,7 @@ export async function professionalMarkCompleted(
     if (booking.professionalId?.toString() !== professionalId) {
       return { success: false, error: "common.forbidden" }
     }
-    if (!["confirmed", "professional_en_route"].includes(booking.status)) {
+    if (!["confirmed", "in_process"].includes(booking.status)) {
       return { success: false, error: "bookings.errors.bookingNotInCorrectStateForCompletion" }
     }
 
@@ -1593,7 +1593,7 @@ export async function assignProfessionalToBooking(
         throw new Error("bookings.errors.bookingAlreadyHasProfessional")
       }
 
-      if (["completed", "cancelled_by_user", "cancelled_by_admin", "no_show"].includes(booking.status)) {
+      if (["completed", "cancelled", "refunded"].includes(booking.status)) {
         throw new Error("bookings.errors.bookingCannotBeAssigned")
       }
 
@@ -1874,7 +1874,7 @@ export async function createGuestBooking(
         recipientBirthDate: validatedPayload.recipientBirthDate,
         recipientGender: validatedPayload.recipientGender,
         bookingAddressSnapshot,
-        status: "confirmed",
+        status: "pending_payment", // Will be updated to "in_process" after successful payment
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
           surcharges: validatedPayload.priceDetails.surcharges,
@@ -2321,7 +2321,7 @@ export async function saveAbandonedBooking(
     // Check if there's already an abandoned booking for this user
     const existingAbandoned = await Booking.findOne({
       userId: new mongoose.Types.ObjectId(userId),
-      status: "abandoned_pending_payment"
+      status: "pending_payment"
     }).sort({ createdAt: -1 })
 
     if (existingAbandoned) {
@@ -2367,7 +2367,7 @@ export async function saveAbandonedBooking(
     const abandonedBooking = new Booking({
       userId: new mongoose.Types.ObjectId(userId),
       bookingNumber: `ABANDONED-${Date.now()}`,
-      status: "abandoned_pending_payment",
+      status: "pending_payment",
       bookedByUserName: formData.guestInfo?.firstName ? `${formData.guestInfo.firstName} ${formData.guestInfo.lastName}` : "Guest User",
       bookedByUserEmail: formData.guestInfo?.email || "",
       bookedByUserPhone: formData.guestInfo?.phone || "",
@@ -2482,7 +2482,7 @@ export async function getAbandonedBooking(userId: string): Promise<{
     
     const abandonedBooking = await Booking.findOne({
       userId: new mongoose.Types.ObjectId(userId),
-      status: "abandoned_pending_payment",
+      status: "pending_payment",
       createdAt: { $gte: twentyFourHoursAgo }
     }).sort({ createdAt: -1 }).lean()
 
@@ -2496,3 +2496,142 @@ export async function getAbandonedBooking(userId: string): Promise<{
     return { success: false, error: "Failed to get abandoned booking" }
   }
 }
+
+export async function updateBookingStatusAfterPayment(
+  bookingId: string,
+  paymentStatus: "success" | "failed",
+  transactionId?: string
+): Promise<{ success: boolean; booking?: IBooking; error?: string }> {
+  try {
+    await dbConnect()
+    
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    if (paymentStatus === "success") {
+      // Update payment status and booking status
+      booking.paymentDetails.paymentStatus = "paid"
+      booking.paymentDetails.transactionId = transactionId
+      booking.status = "in_process" // Now in process - paid but not assigned professional
+      
+      await booking.save()
+      
+      // Find suitable professionals and send SMS notifications
+      const suitableProfessionals = await findSuitableProfessionals(bookingId)
+      
+      if (suitableProfessionals.success && suitableProfessionals.professionals && suitableProfessionals.professionals.length > 0) {
+        console.log(`Found ${suitableProfessionals.professionals.length} suitable professionals for booking ${bookingId}`)
+        
+        // Send SMS notifications to all suitable professionals
+        const { sendProfessionalNotifications } = await import("@/actions/professional-sms-actions")
+        const smsResult = await sendProfessionalNotifications(bookingId)
+        
+        if (smsResult.success) {
+          console.log(`✅ Sent SMS to ${smsResult.sentCount} professionals for booking ${bookingId}`)
+        } else {
+          console.error(`❌ Failed to send SMS notifications for booking ${bookingId}:`, smsResult.error)
+        }
+      } else {
+        console.log(`⚠️ No suitable professionals found for booking ${bookingId}`)
+      }
+      
+      // TODO: Send confirmation notifications to user
+      
+      revalidatePath("/dashboard/admin/bookings")
+      revalidatePath("/dashboard/member/bookings")
+      
+      return { success: true, booking: booking.toObject() as IBooking }
+    } else {
+      // Payment failed - keep as pending payment
+      booking.paymentDetails.paymentStatus = "failed"
+      if (transactionId) {
+        booking.paymentDetails.transactionId = transactionId
+      }
+      
+      await booking.save()
+      
+      return { success: true, booking: booking.toObject() as IBooking }
+    }
+  } catch (error) {
+    console.error("Error updating booking status after payment:", error)
+    return { success: false, error: "Failed to update booking status" }
+  }
+}
+
+export async function findSuitableProfessionals(
+  bookingId: string
+): Promise<{ success: boolean; professionals?: any[]; error?: string }> {
+  try {
+    await dbConnect()
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('treatmentId')
+      .populate('selectedDurationId')
+    
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    // Import models
+    const ProfessionalProfile = (await import("@/lib/db/models/professional-profile")).default
+    const User = (await import("@/lib/db/models/user")).default
+    
+    // Extract booking details
+    const treatmentId = booking.treatmentId._id.toString()
+    const cityName = booking.bookingAddressSnapshot?.city
+    const genderPreference = booking.therapistGenderPreference
+    const durationId = booking.selectedDurationId?._id.toString()
+    
+    if (!cityName) {
+      return { success: false, error: "Booking city not found" }
+    }
+
+    // Build query for suitable professionals
+    const query: any = {
+      status: 'active',
+      'treatments.treatmentId': new mongoose.Types.ObjectId(treatmentId)
+    }
+    
+    // Add city coverage check
+    query.$or = [
+      { 'workAreas.cityName': cityName },
+      { 'workAreas.coveredCities': cityName }
+    ]
+    
+    // Find professionals
+    let professionals = await ProfessionalProfile.find(query)
+      .populate({
+        path: 'userId',
+        select: 'name email phone gender',
+        model: User
+      })
+      .populate('treatments.treatmentId')
+      .lean()
+    
+    // Filter by gender preference if specified
+    if (genderPreference && genderPreference !== 'any') {
+      professionals = professionals.filter(prof => 
+        prof.userId && prof.userId.gender === genderPreference
+      )
+    }
+    
+    // Filter by duration if specified
+    if (durationId) {
+      professionals = professionals.filter(prof =>
+        prof.treatments.some(t => 
+          t.treatmentId._id.toString() === treatmentId &&
+          (!t.durationId || t.durationId.toString() === durationId)
+        )
+      )
+    }
+    
+    return { success: true, professionals }
+  } catch (error) {
+    console.error("Error finding suitable professionals:", error)
+    return { success: false, error: "Failed to find suitable professionals" }
+  }
+}
+
+

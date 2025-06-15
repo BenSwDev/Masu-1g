@@ -1,300 +1,332 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useTranslation } from "@/lib/translations/i18n"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
-import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Badge } from "@/components/common/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
-import { useTranslation } from "@/lib/translations/i18n"
+import { Separator } from "@/components/common/ui/separator"
+import { useToast } from "@/components/common/ui/use-toast"
+import { 
+  User, 
+  Stethoscope, 
+  MapPin, 
+  Calendar, 
+  DollarSign,
+  UserCheck,
+  UserX,
+  Clock,
+  AlertTriangle,
+  Phone,
+  Mail,
+  Edit
+} from "lucide-react"
 import { updateProfessionalStatus } from "@/actions/professional-actions"
-import { ProfessionalData } from "./professionals-management"
-import { toast } from "sonner"
+import ProfessionalBasicInfoTab from "./tabs/professional-basic-info-tab"
+import ProfessionalTreatmentsTab from "./tabs/professional-treatments-tab"
+import ProfessionalWorkAreasTab from "./tabs/professional-work-areas-tab"
+import ProfessionalBookingsTab from "./tabs/professional-bookings-tab"
+import ProfessionalFinancialTab from "./tabs/professional-financial-tab"
+import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+
+interface Professional {
+  _id: string
+  userId: {
+    _id: string
+    name: string
+    email: string
+    phone: string
+    gender: string
+    birthDate?: string
+  }
+  status: ProfessionalStatus
+  specialization?: string
+  experience?: string
+  certifications?: string[]
+  bio?: string
+  treatments: any[]
+  workAreas: any[]
+  totalEarnings: number
+  pendingPayments: number
+  financialTransactions: any[]
+  adminNotes?: string
+  rejectionReason?: string
+  appliedAt: string
+  approvedAt?: string
+  rejectedAt?: string
+  lastActiveAt?: string
+  bookings?: any[]
+}
 
 interface ProfessionalEditModalProps {
+  professional: Professional
   open: boolean
-  onOpenChange: (open: boolean) => void
-  professional: ProfessionalData
   onClose: () => void
 }
 
-const statusOptions = [
-  { value: "active", label: "פעיל", description: "המטפל פעיל ויכול לקבל הזמנות" },
-  { value: "pending_admin_approval", label: "ממתין לאישור מנהל", description: "המטפל ממתין לאישור מנהל" },
-  { value: "pending_user_action", label: "ממתין למשתמש", description: "המטפל צריך לבצע פעולה" },
-  { value: "rejected", label: "נדחה", description: "הבקשה נדחתה" },
-  { value: "suspended", label: "מושהה", description: "המטפל מושהה זמנית" },
-]
-
-const getStatusBadge = (status: string) => {
-  const statusConfig = {
-    active: { label: "פעיל", variant: "default" as const },
-    pending_admin_approval: { label: "ממתין לאישור", variant: "secondary" as const },
-    pending_user_action: { label: "ממתין למשתמש", variant: "outline" as const },
-    rejected: { label: "נדחה", variant: "destructive" as const },
-    suspended: { label: "מושהה", variant: "destructive" as const },
-  }
-  
-  const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "outline" as const }
-  return <Badge variant={config.variant}>{config.label}</Badge>
-}
-
-export function ProfessionalEditModal({ 
-  open, 
-  onOpenChange, 
+export default function ProfessionalEditModal({ 
   professional, 
+  open, 
   onClose 
 }: ProfessionalEditModalProps) {
   const { t, dir } = useTranslation()
+  const { toast } = useToast()
+  
+  const [activeTab, setActiveTab] = useState("basic")
   const [loading, setLoading] = useState(false)
-  const [currentStatus, setCurrentStatus] = useState(professional.professionalProfile?.status || "")
+  const [professionalData, setProfessionalData] = useState<Professional>(professional)
 
-  const handleStatusUpdate = async (newStatus: string) => {
-    setLoading(true)
-    try {
-      const result = await updateProfessionalStatus(professional.id, newStatus)
-      if (result.success) {
-        setCurrentStatus(newStatus)
-        toast.success("סטטוס המטפל עודכן בהצלחה")
-      } else {
-        toast.error("שגיאה בעדכון סטטוס המטפל")
-      }
-    } catch (error) {
-      toast.error("שגיאה בעדכון סטטוס המטפל")
+  // Update professional data when prop changes
+  useEffect(() => {
+    setProfessionalData(professional)
+  }, [professional])
+
+  const getStatusBadge = (status: ProfessionalStatus) => {
+    const statusConfig = {
+      active: { variant: "default" as const, icon: UserCheck, text: "פעיל", color: "text-green-600" },
+      pending_admin_approval: { variant: "secondary" as const, icon: Clock, text: "ממתין לאישור", color: "text-orange-600" },
+      pending_user_action: { variant: "outline" as const, icon: Clock, text: "ממתין למשתמש", color: "text-blue-600" },
+      rejected: { variant: "destructive" as const, icon: UserX, text: "נדחה", color: "text-red-600" },
+      suspended: { variant: "destructive" as const, icon: AlertTriangle, text: "מושהה", color: "text-red-600" }
     }
-    setLoading(false)
+
+    const config = statusConfig[status]
+    const Icon = config.icon
+
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="w-3 h-3" />
+        {config.text}
+      </Badge>
+    )
   }
 
-  const profile = professional.professionalProfile
+  const handleStatusChange = async (newStatus: ProfessionalStatus, adminNote?: string, rejectionReason?: string) => {
+    setLoading(true)
+    try {
+      const result = await updateProfessionalStatus(
+        professionalData._id,
+        newStatus,
+        adminNote,
+        rejectionReason
+      )
+
+      if (result.success) {
+        setProfessionalData(prev => ({
+          ...prev,
+          status: newStatus,
+          adminNotes: adminNote,
+          rejectionReason: newStatus === 'rejected' ? rejectionReason : undefined,
+          approvedAt: newStatus === 'active' ? new Date().toISOString() : prev.approvedAt,
+          rejectedAt: newStatus === 'rejected' ? new Date().toISOString() : prev.rejectedAt
+        }))
+
+        toast({
+          title: "הצלחה",
+          description: "סטטוס המטפל עודכן בהצלחה"
+        })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה בעדכון סטטוס המטפל"
+        })
+      }
+    } catch (error) {
+      console.error("Error updating professional status:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בעדכון סטטוס המטפל"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "-"
+    return new Date(dateString).toLocaleDateString("he-IL", {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const formatCurrency = (amount: number) => {
+    return `₪${amount.toLocaleString()}`
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir={dir}>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <span>פרופיל מטפל: {professional.name}</span>
-            {profile && getStatusBadge(currentStatus)}
-          </DialogTitle>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden" dir={dir}>
+        <DialogHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                <DialogTitle className="text-xl">
+                  {professionalData.userId.name}
+                </DialogTitle>
+              </div>
+              {getStatusBadge(professionalData.status)}
+            </div>
+            
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Mail className="w-4 h-4" />
+              {professionalData.userId.email}
+              <Separator orientation="vertical" className="h-4" />
+              <Phone className="w-4 h-4" />
+              {professionalData.userId.phone}
+            </div>
+          </div>
         </DialogHeader>
 
-        <Tabs defaultValue="basic" className="w-full">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <Stethoscope className="w-4 h-4 text-blue-600" />
+                <div>
+                  <div className="text-sm text-muted-foreground">טיפולים</div>
+                  <div className="font-semibold">{professionalData.treatments.length}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-green-600" />
+                <div>
+                  <div className="text-sm text-muted-foreground">איזורי פעילות</div>
+                  <div className="font-semibold">{professionalData.workAreas.length}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-purple-600" />
+                <div>
+                  <div className="text-sm text-muted-foreground">הזמנות</div>
+                  <div className="font-semibold">{professionalData.bookings?.length || 0}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-orange-600" />
+                <div>
+                  <div className="text-sm text-muted-foreground">סה"כ רווחים</div>
+                  <div className="font-semibold">{formatCurrency(professionalData.totalEarnings)}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 overflow-hidden">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="basic">פרטים בסיסיים</TabsTrigger>
-            <TabsTrigger value="treatments">טיפולים</TabsTrigger>
-            <TabsTrigger value="areas">איזורי פעילות</TabsTrigger>
-            <TabsTrigger value="bookings">הזמנות</TabsTrigger>
-            <TabsTrigger value="financial">דוח כספי</TabsTrigger>
+            <TabsTrigger value="basic" className="flex items-center gap-2">
+              <User className="w-4 h-4" />
+              פרטים בסיסיים
+            </TabsTrigger>
+            <TabsTrigger value="treatments" className="flex items-center gap-2">
+              <Stethoscope className="w-4 h-4" />
+              טיפולים
+            </TabsTrigger>
+            <TabsTrigger value="work-areas" className="flex items-center gap-2">
+              <MapPin className="w-4 h-4" />
+              איזורי פעילות
+            </TabsTrigger>
+            <TabsTrigger value="bookings" className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              הזמנות
+            </TabsTrigger>
+            <TabsTrigger value="financial" className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4" />
+              דוחות כספיים
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>פרטי המשתמש</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium">שם מלא</label>
-                    <p className="text-sm text-muted-foreground">{professional.name}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">אימייל</label>
-                    <p className="text-sm text-muted-foreground">{professional.email}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">טלפון</label>
-                    <p className="text-sm text-muted-foreground">{professional.phone || "לא צוין"}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">מגדר</label>
-                    <p className="text-sm text-muted-foreground">
-                      {professional.gender === "male" ? "זכר" : 
-                       professional.gender === "female" ? "נקבה" : 
-                       professional.gender === "other" ? "אחר" : "לא צוין"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">תאריך הצטרפות</label>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(professional.createdAt).toLocaleDateString("he-IL")}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="mt-4 overflow-y-auto max-h-[60vh]">
+            <TabsContent value="basic" className="mt-0">
+              <ProfessionalBasicInfoTab
+                professional={professionalData}
+                onUpdate={setProfessionalData}
+                onStatusChange={handleStatusChange}
+                loading={loading}
+              />
+            </TabsContent>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>פרטי מטפל</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {profile ? (
-                    <>
-                      <div>
-                        <label className="text-sm font-medium">מספר מטפל</label>
-                        <p className="text-sm text-muted-foreground">{profile.professionalNumber}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">סטטוס נוכחי</label>
-                        <div className="flex items-center gap-2 mt-1">
-                          {getStatusBadge(currentStatus)}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">עדכון סטטוס</label>
-                        <Select value={currentStatus} onValueChange={handleStatusUpdate} disabled={loading}>
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {statusOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                <div>
-                                  <div className="font-medium">{option.label}</div>
-                                  <div className="text-xs text-muted-foreground">{option.description}</div>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium">סה"כ רווחים</label>
-                        <p className="text-sm text-muted-foreground">
-                          ₪{profile.totalEarnings.toLocaleString()}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">אין פרופיל מטפל</p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+            <TabsContent value="treatments" className="mt-0">
+              <ProfessionalTreatmentsTab
+                professional={professionalData}
+                onUpdate={setProfessionalData}
+              />
+            </TabsContent>
 
-          <TabsContent value="treatments" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>טיפולים שהמטפל מבצע</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {profile?.treatments && profile.treatments.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>שם הטיפול</TableHead>
-                        <TableHead>קטגוריה</TableHead>
-                        <TableHead>מחיר למטפל</TableHead>
-                        <TableHead>סטטוס</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {profile.treatments.map((treatment) => (
-                        <TableRow key={treatment.id}>
-                          <TableCell className="font-medium">{treatment.treatmentName}</TableCell>
-                          <TableCell>
-                            {treatment.treatmentCategory === "massages" ? "עיסויים" : "טיפולי פנים"}
-                          </TableCell>
-                          <TableCell>₪{treatment.professionalPrice.toLocaleString()}</TableCell>
-                          <TableCell>
-                            <Badge variant={treatment.isActive ? "default" : "secondary"}>
-                              {treatment.isActive ? "פעיל" : "לא פעיל"}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-center py-8 text-muted-foreground">
-                    אין טיפולים מוגדרים למטפל זה
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="work-areas" className="mt-0">
+              <ProfessionalWorkAreasTab
+                professional={professionalData}
+                onUpdate={setProfessionalData}
+              />
+            </TabsContent>
 
-          <TabsContent value="areas" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>איזורי פעילות</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {profile?.workAreas && profile.workAreas.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>עיר מוצא</TableHead>
-                        <TableHead>טווח מקסימלי</TableHead>
-                        <TableHead>ערים מכוסות</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {profile.workAreas.map((area) => (
-                        <TableRow key={area.id}>
-                          <TableCell className="font-medium">{area.cityName}</TableCell>
-                          <TableCell>
-                            {area.maxDistanceKm === 0 ? "ללא הגבלה" : `${area.maxDistanceKm} ק"מ`}
-                          </TableCell>
-                          <TableCell>
-                            {area.coveredCities.length} ערים
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-center py-8 text-muted-foreground">
-                    אין איזורי פעילות מוגדרים למטפל זה
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="bookings" className="mt-0">
+              <ProfessionalBookingsTab
+                professional={professionalData}
+              />
+            </TabsContent>
 
-          <TabsContent value="bookings" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>הזמנות שהמטפל משויך אליהן</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center py-8 text-muted-foreground">
-                  רשימת ההזמנות תוצג כאן (בפיתוח)
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="financial" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>דוח כספי</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold">₪{profile?.totalEarnings.toLocaleString() || "0"}</div>
-                    <div className="text-sm text-muted-foreground">סה"כ רווחים</div>
-                  </div>
-                  <div className="text-center p-4 bg-muted rounded-lg">
-                    <div className="text-2xl font-bold">0</div>
-                    <div className="text-sm text-muted-foreground">הזמנות השבוע</div>
-                  </div>
-                </div>
-                <p className="text-center py-8 text-muted-foreground">
-                  דוח מפורט יוצג כאן (בפיתוח)
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="financial" className="mt-0">
+              <ProfessionalFinancialTab
+                professional={professionalData}
+                onUpdate={setProfessionalData}
+              />
+            </TabsContent>
+          </div>
         </Tabs>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
-            סגור
-          </Button>
+        {/* Footer with timestamps */}
+        <div className="pt-4 border-t">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
+            <div>
+              <span className="font-medium">הצטרף:</span>
+              <div>{formatDate(professionalData.appliedAt)}</div>
+            </div>
+            {professionalData.approvedAt && (
+              <div>
+                <span className="font-medium">אושר:</span>
+                <div>{formatDate(professionalData.approvedAt)}</div>
+              </div>
+            )}
+            {professionalData.rejectedAt && (
+              <div>
+                <span className="font-medium">נדחה:</span>
+                <div>{formatDate(professionalData.rejectedAt)}</div>
+              </div>
+            )}
+            {professionalData.lastActiveAt && (
+              <div>
+                <span className="font-medium">פעיל לאחרונה:</span>
+                <div>{formatDate(professionalData.lastActiveAt)}</div>
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

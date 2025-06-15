@@ -42,6 +42,8 @@ interface GuestPaymentStepProps {
   onConfirm: () => void
   onPrev: () => void
   isLoading: boolean
+  createPendingBooking: () => Promise<string | null>
+  pendingBookingId: string | null
 }
 
 export function GuestPaymentStep({
@@ -51,6 +53,8 @@ export function GuestPaymentStep({
   onConfirm,
   onPrev,
   isLoading,
+  createPendingBooking,
+  pendingBookingId,
 }: GuestPaymentStepProps) {
   const { t, dir } = useTranslation()
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -102,8 +106,18 @@ export function GuestPaymentStep({
     return `₪${amount.toFixed(2)}`
   }
 
-  const handlePayNow = () => {
+  const handlePayNow = async () => {
     if (isCountingDown || !termsAccepted) return
+    
+    // Create pending booking if not already created
+    if (!pendingBookingId) {
+      const bookingId = await createPendingBooking()
+      if (!bookingId) {
+        // Error creating booking - createPendingBooking already shows error toast
+        return
+      }
+    }
+    
     setShowPaymentModal(true)
     setPaymentStatus('pending')
   }
@@ -195,7 +209,16 @@ export function GuestPaymentStep({
           <Button variant="outline" onClick={onPrev}>
             חזור
           </Button>
-          <Button onClick={onConfirm} disabled={isLoading || !termsAccepted}>
+          <Button onClick={async () => {
+            // Create pending booking if not already created
+            if (!pendingBookingId) {
+              const bookingId = await createPendingBooking()
+              if (!bookingId) {
+                return
+              }
+            }
+            onConfirm()
+          }} disabled={isLoading || !termsAccepted}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             אשר הזמנה
           </Button>

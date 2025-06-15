@@ -203,16 +203,12 @@ export default function AdminBookingsClient() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">{t("adminBookings.allStatuses")}</SelectItem>
-                          <SelectItem value="abandoned_pending_payment">הזמנות שננטשו</SelectItem>
-                          <SelectItem value="pending_professional_assignment">
-                            {t("adminBookings.status.pendingAssignment")}
-                          </SelectItem>
-                          <SelectItem value="confirmed">{t("adminBookings.status.confirmed")}</SelectItem>
-                          <SelectItem value="professional_en_route">{t("adminBookings.status.enRoute")}</SelectItem>
-                          <SelectItem value="completed">{t("adminBookings.status.completed")}</SelectItem>
-                          <SelectItem value="cancelled_by_user">{t("adminBookings.status.cancelledByUser")}</SelectItem>
-                          <SelectItem value="cancelled_by_admin">{t("adminBookings.status.cancelledByAdmin")}</SelectItem>
-                          <SelectItem value="no_show">{t("adminBookings.status.noShow")}</SelectItem>
+                          <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
+                          <SelectItem value="in_process">בטיפול</SelectItem>
+                          <SelectItem value="confirmed">מאושר</SelectItem>
+                          <SelectItem value="completed">הושלם</SelectItem>
+                          <SelectItem value="cancelled">בוטל</SelectItem>
+                          <SelectItem value="refunded">הוחזר</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

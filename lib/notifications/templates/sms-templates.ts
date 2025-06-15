@@ -42,6 +42,9 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
     case "purchase-success":
       return data.message + smsSignature
 
+    case "professional-booking-notification":
+      return getProfessionalBookingNotificationSmsTemplate(data, language)
+
     default:
       const defaultMessage = {
         he: `התקבלה הודעה מ${appName}.`,
@@ -50,6 +53,83 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
       }
       return defaultMessage[language] || defaultMessage.en
   }
+}
+
+// Professional Booking Notification SMS Template
+function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSLanguage): string {
+  const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+  
+  const bookingTime = new Date(data.bookingDateTime).toLocaleTimeString(
+    language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+    { 
+      hour: "2-digit", 
+      minute: "2-digit",
+      timeZone: "Asia/Jerusalem" 
+    }
+  )
+
+  const responseUrl = `${process.env.NEXT_PUBLIC_APP_URL}/professional/booking-response/${data.responseId}`
+
+  let message: string
+  switch (language) {
+    case "he":
+      message = `🔔 הזמנה חדשה זמינה!
+
+📋 טיפול: ${data.treatmentName}
+📅 תאריך: ${bookingDate}
+🕐 שעה: ${bookingTime}
+📍 כתובת: ${data.address}
+💰 תשלום: ${data.price}₪
+
+⏰ יש לך 30 דקות לענות!
+
+✅ לקבלת ההזמנה: ${responseUrl}?action=accept
+❌ לדחיית ההזמנה: ${responseUrl}?action=decline
+
+או הכנס לאפליקציה: masu.co.il`
+      break
+    case "ru":
+      message = `🔔 Доступен новый заказ!
+
+📋 Процедура: ${data.treatmentName}
+📅 Дата: ${bookingDate}
+🕐 Время: ${bookingTime}
+📍 Адрес: ${data.address}
+💰 Оплата: ${data.price}₪
+
+⏰ У вас есть 30 минут для ответа!
+
+✅ Принять заказ: ${responseUrl}?action=accept
+❌ Отклонить заказ: ${responseUrl}?action=decline
+
+Или войдите в приложение: masu.co.il`
+      break
+    default: // English
+      message = `🔔 New booking available!
+
+📋 Treatment: ${data.treatmentName}
+📅 Date: ${bookingDate}
+🕐 Time: ${bookingTime}
+📍 Address: ${data.address}
+💰 Payment: ${data.price}₪
+
+⏰ You have 30 minutes to respond!
+
+✅ Accept booking: ${responseUrl}?action=accept
+❌ Decline booking: ${responseUrl}?action=decline
+
+Or enter the app: masu.co.il`
+  }
+  
+  return message
 }
 
 // OTP SMS Template

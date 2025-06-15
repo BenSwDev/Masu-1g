@@ -1,364 +1,426 @@
 "use server"
 
-import { getServerSession } from "next-auth/next"
+import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import User from "@/lib/db/models/user"
-import ProfessionalProfile from "@/lib/db/models/professional-profile"
-import Treatment from "@/lib/db/models/treatment"
-import City from "@/lib/db/models/city"
-import CityDistance from "@/lib/db/models/city-distance"
-import Booking from "@/lib/db/models/booking"
 import mongoose from "mongoose"
+import { revalidatePath } from "next/cache"
+import ProfessionalProfile, { 
+  type IProfessionalProfile, 
+  type ProfessionalStatus,
+  type ITreatmentPricing,
+  type IWorkArea,
+  type IFinancialTransaction
+} from "@/lib/db/models/professional-profile"
+import User from "@/lib/db/models/user"
+import Booking from "@/lib/db/models/booking"
+import Treatment from "@/lib/db/models/treatment"
+import { City, CityDistance } from "@/lib/db/models/city-distance"
 
-export async function getProfessionals(page = 1, limit = 10, searchTerm = "", status = "") {
+// Get all professionals with filtering and pagination
+export async function getProfessionals(params?: {
+  page?: number
+  limit?: number
+  search?: string
+  status?: ProfessionalStatus
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+}) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, professionals: [], totalPages: 0 }
+    if (!session?.user || session.user.role !== "admin") {
+      return { success: false, error: "Unauthorized" }
     }
 
     await dbConnect()
 
-    const query: any = { roles: "professional" }
-    if (searchTerm) {
-      query.$or = [
-        { name: { $regex: searchTerm, $options: "i" } },
-        { email: { $regex: searchTerm, $options: "i" } },
-        { phone: { $regex: searchTerm, $options: "i" } },
-      ]
-    }
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      status,
+      sortBy = "createdAt",
+      sortOrder = "desc"
+    } = params || {}
 
-    const skip = (page - 1) * limit
+    // Build query
+    const query: any = {}
     
-    // Get users with professional role
-    const users = await User.find(query)
-      .select("name email phone gender roles createdAt")
-      .skip(skip)
-      .limit(limit)
-      .lean()
-
-    // Get professional profiles for these users
-    const userIds = users.map(u => u._id)
-    const profiles = await ProfessionalProfile.find({ userId: { $in: userIds } })
-      .populate("treatments.treatmentId", "name category")
-      .populate("workAreas.cityId", "name")
-      .lean()
-
-    // Filter by professional status if specified
-    let filteredProfiles = profiles
     if (status) {
-      filteredProfiles = profiles.filter(p => p.status === status)
+      query.status = status
     }
 
-    // Combine user data with professional profiles
-    const professionals = users.map(user => {
-      const profile = profiles.find(p => p.userId.toString() === user._id.toString())
-      return {
-        ...user,
-        id: user._id.toString(),
-        professionalProfile: profile ? {
-          ...profile,
-          id: profile._id.toString(),
-          treatments: profile.treatments.map(t => ({
-            ...t,
-            id: t._id.toString(),
-            treatmentId: t.treatmentId._id.toString(),
-            treatmentName: t.treatmentId.name,
-            treatmentCategory: t.treatmentId.category,
-          })),
-          workAreas: profile.workAreas.map(w => ({
-            ...w,
-            id: w._id.toString(),
-            cityId: w.cityId._id.toString(),
-            cityName: w.cityId.name,
-          })),
-        } : null,
+    // Build aggregation pipeline
+    const pipeline: any[] = [
+      { $match: query },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      { $unwind: "$user" },
+      {
+        $lookup: {
+          from: "treatments",
+          localField: "treatments.treatmentId",
+          foreignField: "_id",
+          as: "treatmentDetails"
+        }
       }
-    }).filter(p => !status || (p.professionalProfile && p.professionalProfile.status === status))
+    ]
 
-    const total = await User.countDocuments(query)
-    
+    // Add search filter
+    if (search) {
+      pipeline.push({
+        $match: {
+          $or: [
+            { "user.name": { $regex: search, $options: "i" } },
+            { "user.email": { $regex: search, $options: "i" } },
+            { "user.phone": { $regex: search, $options: "i" } },
+            { specialization: { $regex: search, $options: "i" } }
+          ]
+        }
+      })
+    }
+
+    // Add sorting
+    const sortObj: any = {}
+    if (sortBy.startsWith('user.')) {
+      sortObj[sortBy] = sortOrder === 'asc' ? 1 : -1
+    } else {
+      sortObj[sortBy] = sortOrder === 'asc' ? 1 : -1
+    }
+    pipeline.push({ $sort: sortObj })
+
+    // Get total count
+    const countPipeline = [...pipeline, { $count: "total" }]
+    const countResult = await ProfessionalProfile.aggregate(countPipeline)
+    const total = countResult[0]?.total || 0
+
+    // Add pagination
+    pipeline.push(
+      { $skip: (page - 1) * limit },
+      { $limit: limit }
+    )
+
+    const professionals = await ProfessionalProfile.aggregate(pipeline)
+
     return {
       success: true,
       professionals,
-      totalPages: Math.ceil(total / limit),
-    }
-  } catch (err) {
-    console.error("Error in getProfessionals:", err)
-    return { success: false, professionals: [], totalPages: 0 }
-  }
-}
-
-function generateNumber() {
-  return Math.floor(1000 + Math.random() * 9000).toString()
-}
-
-async function getUniqueProfessionalNumber() {
-  let num = generateNumber()
-  let exists = await ProfessionalProfile.findOne({ professionalNumber: num }).lean()
-  while (exists) {
-    num = generateNumber()
-    exists = await ProfessionalProfile.findOne({ professionalNumber: num }).lean()
-  }
-  return num
-}
-
-export async function createProfessional(formData: FormData) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
-    await dbConnect()
-    const userId = formData.get("userId") as string | null
-    const name = formData.get("name") as string | null
-    const email = formData.get("email") as string | null
-    const phone = formData.get("phone") as string | null
-    const password = formData.get("password") as string | null
-    let user
-    if (userId) {
-      user = await User.findById(userId)
-      if (!user) return { success: false, message: "userNotFound" }
-    } else {
-      if (!name || !email || !phone || !password) {
-        return { success: false, message: "missingFields" }
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
       }
-      const hashed = await bcrypt.hash(password, 10)
-      user = new User({
-        name,
-        email: email.toLowerCase(),
-        phone,
-        password: hashed,
-        roles: ["professional"],
-        activeRole: "professional",
-        emailVerified: new Date(),
-        phoneVerified: new Date(),
-      })
-      await user.save()
     }
-    if (!user.roles.includes("professional")) {
-      user.roles.push("professional")
-    }
-    user.activeRole = "professional"
-    await user.save()
-    const profNumber = await getUniqueProfessionalNumber()
-    const profile = new ProfessionalProfile({
-      userId: user._id,
-      professionalNumber: profNumber,
-      status: "pending" as ProfessionalStatus,
-    })
-    await profile.save()
-    return { success: true, professionalId: user._id.toString() }
-  } catch (err) {
-    console.error("Error in createProfessional:", err)
-    return { success: false, message: "creationFailed" }
+  } catch (error) {
+    console.error("Error fetching professionals:", error)
+    return { success: false, error: "Failed to fetch professionals" }
   }
 }
 
+// Get single professional by ID
 export async function getProfessionalById(professionalId: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
+    if (!session?.user || session.user.role !== "admin") {
+      return { success: false, error: "Unauthorized" }
     }
+
     await dbConnect()
-    const user = await User.findById(professionalId).lean()
-    if (!user || !user.roles.includes("professional")) {
-      return { success: false, message: "notFound" }
+
+    const professional = await ProfessionalProfile.findById(professionalId)
+      .populate('userId', 'name email phone gender birthDate')
+      .populate('treatments.treatmentId')
+      .populate('workAreas.cityId')
+      .lean()
+
+    if (!professional) {
+      return { success: false, error: "Professional not found" }
     }
-    const profile = await ProfessionalProfile.findOne({ userId: user._id }).lean()
+
+    // Get professional's bookings
+    const bookings = await Booking.find({ 
+      professionalId: professional.userId._id 
+    })
+      .populate('treatmentId', 'name')
+      .sort({ bookingDateTime: -1 })
+      .limit(10)
+      .lean()
+
     return {
       success: true,
       professional: {
-        id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        professionalNumber: profile?.professionalNumber || "",
-        status: (profile?.status as ProfessionalStatus) || "pending",
-      },
+        ...professional,
+        bookings
+      }
     }
-  } catch (err) {
-    console.error("Error in getProfessionalById:", err)
-    return { success: false, message: "fetchFailed" }
+  } catch (error) {
+    console.error("Error fetching professional:", error)
+    return { success: false, error: "Failed to fetch professional" }
   }
 }
 
-export async function updateProfessionalStatus(professionalId: string, status: string) {
+// Update professional status
+export async function updateProfessionalStatus(
+  professionalId: string,
+  status: ProfessionalStatus,
+  adminNote?: string,
+  rejectionReason?: string
+) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
+    if (!session?.user || session.user.role !== "admin") {
+      return { success: false, error: "Unauthorized" }
     }
 
     await dbConnect()
 
-    const profile = await ProfessionalProfile.findOneAndUpdate(
-      { userId: professionalId },
-      { status },
-      { new: true }
+    const professional = await ProfessionalProfile.findById(professionalId)
+    if (!professional) {
+      return { success: false, error: "Professional not found" }
+    }
+
+    const updateData: any = {
+      status,
+      adminNotes: adminNote
+    }
+
+    if (status === "active" && professional.status !== "active") {
+      updateData.approvedAt = new Date()
+    } else if (status === "rejected") {
+      updateData.rejectedAt = new Date()
+      updateData.rejectionReason = rejectionReason
+    }
+
+    await ProfessionalProfile.findByIdAndUpdate(professionalId, updateData)
+
+    revalidatePath("/dashboard/admin/professionals")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error updating professional status:", error)
+    return { success: false, error: "Failed to update professional status" }
+  }
+}
+
+// Update professional treatments
+export async function updateProfessionalTreatments(
+  professionalId: string,
+  treatments: ITreatmentPricing[]
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role !== "admin") {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    await ProfessionalProfile.findByIdAndUpdate(professionalId, {
+      treatments
+    })
+
+    revalidatePath("/dashboard/admin/professionals")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error updating professional treatments:", error)
+    return { success: false, error: "Failed to update professional treatments" }
+  }
+}
+
+// Update professional work areas
+export async function updateProfessionalWorkAreas(
+  professionalId: string,
+  workAreas: IWorkArea[]
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role !== "admin") {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    // Calculate covered cities for each work area
+    const updatedWorkAreas = await Promise.all(
+      workAreas.map(async (area) => {
+        const coveredCities = await CityDistance.getCoveredCities(
+          area.cityName,
+          area.distanceRadius
+        )
+        
+        return {
+          ...area,
+          coveredCities: coveredCities.map((city: any) => city.toCityName || city.name)
+        }
+      })
     )
 
-    if (!profile) {
-      return { success: false, message: "notFound" }
-    }
+    await ProfessionalProfile.findByIdAndUpdate(professionalId, {
+      workAreas: updatedWorkAreas
+    })
 
-    return { success: true, professionalId: profile._id.toString() }
-  } catch (err) {
-    console.error("Error in updateProfessionalStatus:", err)
-    return { success: false, message: "updateFailed" }
+    revalidatePath("/dashboard/admin/professionals")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error updating professional work areas:", error)
+    return { success: false, error: "Failed to update professional work areas" }
   }
 }
 
-export async function findSuitableProfessionals(bookingId: string) {
+// Add financial transaction
+export async function addProfessionalFinancialTransaction(
+  professionalId: string,
+  transaction: Omit<IFinancialTransaction, 'date'>
+) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, professionals: [] }
+    if (!session?.user || session.user.role !== "admin") {
+      return { success: false, error: "Unauthorized" }
     }
 
     await dbConnect()
 
-    // Get booking details
-    const booking = await Booking.findById(bookingId)
-      .populate("treatmentId")
-      .populate("bookingAddressSnapshot")
-      .lean()
-
-    if (!booking) {
-      return { success: false, message: "bookingNotFound", professionals: [] }
+    const professional = await ProfessionalProfile.findById(professionalId)
+    if (!professional) {
+      return { success: false, error: "Professional not found" }
     }
 
-    // Find city for the booking address
-    const bookingCity = await City.findOne({ 
-      name: booking.bookingAddressSnapshot?.city 
-    }).lean()
+    await professional.addFinancialTransaction(transaction)
 
-    if (!bookingCity) {
-      return { success: false, message: "cityNotFound", professionals: [] }
+    revalidatePath("/dashboard/admin/professionals")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error adding financial transaction:", error)
+    return { success: false, error: "Failed to add financial transaction" }
+  }
+}
+
+// Get professional financial report
+export async function getProfessionalFinancialReport(
+  professionalId: string,
+  period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+  date?: Date
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role !== "admin") {
+      return { success: false, error: "Unauthorized" }
     }
 
-    // Find all active professionals
-    const activeProfessionals = await ProfessionalProfile.find({ 
-      status: "active" 
-    })
-    .populate({
-      path: "userId",
-      select: "name email phone gender",
-    })
-    .populate("treatments.treatmentId")
-    .populate("workAreas.cityId")
-    .lean()
+    await dbConnect()
 
-    const suitableProfessionals = []
+    const professional = await ProfessionalProfile.findById(professionalId)
+    if (!professional) {
+      return { success: false, error: "Professional not found" }
+    }
 
-    for (const professional of activeProfessionals) {
-      // Check gender preference
-      if (booking.therapistGenderPreference !== "any" && 
-          professional.userId.gender !== booking.therapistGenderPreference) {
-        continue
-      }
+    const now = date || new Date()
+    let startDate: Date
+    let endDate: Date = new Date(now)
 
-      // Check if professional offers the required treatment
-      const hasRequiredTreatment = professional.treatments.some(t => 
-        t.treatmentId._id.toString() === booking.treatmentId._id.toString() &&
-        t.isActive &&
-        (!booking.selectedDurationId || t.durationId?.toString() === booking.selectedDurationId.toString())
-      )
+    switch (period) {
+      case 'daily':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+        break
+      case 'weekly':
+        const weekStart = now.getDate() - now.getDay()
+        startDate = new Date(now.getFullYear(), now.getMonth(), weekStart)
+        endDate = new Date(now.getFullYear(), now.getMonth(), weekStart + 7)
+        break
+      case 'monthly':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+        break
+      case 'yearly':
+        startDate = new Date(now.getFullYear(), 0, 1)
+        endDate = new Date(now.getFullYear() + 1, 0, 1)
+        break
+    }
 
-      if (!hasRequiredTreatment) {
-        continue
-      }
+    const transactions = professional.financialTransactions.filter(
+      t => t.date >= startDate && t.date < endDate
+    )
 
-      // Check work area coverage
-      let canServeLocation = false
-      for (const workArea of professional.workAreas) {
-        if (workArea.maxDistanceKm === 0) {
-          // Unlimited range
-          canServeLocation = true
-          break
-        }
-
-        // Check if booking city is in covered cities
-        if (workArea.coveredCities.some(cityId => 
-          cityId.toString() === bookingCity._id.toString()
-        )) {
-          canServeLocation = true
-          break
-        }
-      }
-
-      if (!canServeLocation) {
-        continue
-      }
-
-      // Get professional's price for this treatment
-      const treatmentPrice = professional.treatments.find(t => 
-        t.treatmentId._id.toString() === booking.treatmentId._id.toString() &&
-        (!booking.selectedDurationId || t.durationId?.toString() === booking.selectedDurationId.toString())
-      )?.professionalPrice || 0
-
-      suitableProfessionals.push({
-        id: professional._id.toString(),
-        userId: professional.userId._id.toString(),
-        name: professional.userId.name,
-        email: professional.userId.email,
-        phone: professional.userId.phone,
-        gender: professional.userId.gender,
-        professionalNumber: professional.professionalNumber,
-        treatmentPrice,
-        totalEarnings: professional.totalEarnings,
-      })
+    const summary = {
+      totalEarnings: transactions
+        .filter(t => t.type === 'booking_payment' || t.type === 'bonus')
+        .reduce((sum, t) => sum + t.amount, 0),
+      totalPenalties: transactions
+        .filter(t => t.type === 'penalty')
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0),
+      totalAdjustments: transactions
+        .filter(t => t.type === 'adjustment')
+        .reduce((sum, t) => sum + t.amount, 0),
+      transactionCount: transactions.length
     }
 
     return {
       success: true,
-      professionals: suitableProfessionals,
-      bookingDetails: {
-        id: booking._id.toString(),
-        bookingNumber: booking.bookingNumber,
-        treatmentName: booking.treatmentId.name,
-        city: booking.bookingAddressSnapshot?.city,
-        therapistGenderPreference: booking.therapistGenderPreference,
+      report: {
+        period,
+        startDate,
+        endDate,
+        transactions,
+        summary
       }
     }
-  } catch (err) {
-    console.error("Error in findSuitableProfessionals:", err)
-    return { success: false, message: "searchFailed", professionals: [] }
+  } catch (error) {
+    console.error("Error generating financial report:", error)
+    return { success: false, error: "Failed to generate financial report" }
   }
 }
 
-export async function assignProfessionalToBooking(bookingId: string, professionalId: string) {
+// Get available treatments for professional assignment
+export async function getAvailableTreatments() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
+    if (!session?.user || session.user.role !== "admin") {
+      return { success: false, error: "Unauthorized" }
     }
 
     await dbConnect()
 
-    // Update booking with assigned professional and change status
-    const booking = await Booking.findByIdAndUpdate(
-      bookingId,
-      { 
-        professionalId: new mongoose.Types.ObjectId(professionalId),
-        status: "confirmed_professional_assigned"
-      },
-      { new: true }
-    )
+    const treatments = await Treatment.find({ isActive: true })
+      .populate('durations')
+      .lean()
 
-    if (!booking) {
-      return { success: false, message: "bookingNotFound" }
+    return { success: true, treatments }
+  } catch (error) {
+    console.error("Error fetching treatments:", error)
+    return { success: false, error: "Failed to fetch treatments" }
+  }
+}
+
+// Get available cities for work area assignment
+export async function getAvailableCities() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role !== "admin") {
+      return { success: false, error: "Unauthorized" }
     }
 
-    // TODO: Send SMS notification to professional
-    // TODO: Send notification to customer
+    await dbConnect()
 
-    return { success: true, bookingId: booking._id.toString() }
-  } catch (err) {
-    console.error("Error in assignProfessionalToBooking:", err)
-    return { success: false, message: "assignmentFailed" }
+    const cities = await City.find({ isActive: true })
+      .select('name coordinates')
+      .sort({ name: 1 })
+      .lean()
+
+    return { success: true, cities }
+  } catch (error) {
+    console.error("Error fetching cities:", error)
+    return { success: false, error: "Failed to fetch cities" }
   }
 }
 

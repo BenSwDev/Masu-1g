@@ -1,0 +1,364 @@
+{
+  "projectInfo": {
+    "name": "MASU - Massage Booking System",
+    "analysisDate": "2025-06-15",
+    "totalFiles": 384,
+    "mainDirectories": [
+      "app", "actions", "components", "lib", "hooks", "types", "styles", "public"
+    ]
+  },
+  "architecture": {
+    "framework": "Next.js 15.2.4",
+    "language": "TypeScript",
+    "styling": "Tailwind CSS",
+    "database": "MongoDB (Mongoose)",
+    "authentication": "NextAuth.js",
+    "deployment": "Vercel"
+  },
+  "modules": {
+    "authentication": {
+      "status": "complete",
+      "completionPercentage": 95,
+      "files": [
+        "lib/auth/auth.ts (306 lines)",
+        "lib/auth/require-session.ts",
+        "lib/auth/require-admin-session.ts",
+        "actions/auth-actions.ts (180 lines)",
+        "actions/password-reset-actions.ts",
+        "app/auth/"
+      ],
+      "features": [
+        "User registration with validation ✓",
+        "Email/Phone login ✓",
+        "Password hashing (bcrypt) ✓",
+        "JWT sessions ✓",
+        "Role-based access control ✓",
+        "Password reset ✓",
+        "Phone number validation (Israeli) ✓",
+        "Email validation ✓",
+        "OTP authentication ✓",
+        "Session management ✓"
+      ],
+      "technicalDetails": {
+        "provider": "NextAuth.js",
+        "adapter": "MongoDB",
+        "sessionStrategy": "JWT",
+        "passwordHashing": "bcryptjs",
+        "supportedRoles": ["admin", "professional", "partner", "member"],
+        "phoneValidation": "Israeli mobile numbers (+972)",
+        "sessionDuration": "30 days"
+      },
+      "issues": [
+        "Missing 2FA implementation",
+        "No social login providers"
+      ]
+    },
+    "bookingSystem": {
+      "status": "complete",
+      "completionPercentage": 90,
+      "files": [
+        "actions/booking-actions.ts (2638 lines)",
+        "lib/db/models/booking.ts (224 lines)",
+        "components/dashboard/admin/bookings/",
+        "components/dashboard/member/bookings/",
+        "components/dashboard/professional/booking-management/"
+      ],
+      "features": [
+        "Time slot availability calculation ✓",
+        "Booking creation (registered users) ✓",
+        "Guest booking creation ✓",
+        "Price calculation with discounts ✓",
+        "Status management (6 statuses) ✓",
+        "Professional assignment ✓",
+        "SMS notifications to professionals ✓",
+        "Working hours integration ✓",
+        "Timezone handling (Asia/Jerusalem) ✓",
+        "Booking cancellation ✓",
+        "Admin booking management ✓",
+        "Professional booking acceptance ✓",
+        "Abandoned booking recovery ✓",
+        "Payment integration ✓"
+      ],
+      "technicalDetails": {
+        "statuses": ["pending_payment", "in_process", "confirmed", "completed", "cancelled", "refunded"],
+        "timezone": "Asia/Jerusalem",
+        "slotInterval": "30 minutes",
+        "minimumAdvance": "2 hours",
+        "maxLinesOfCode": 2638,
+        "keyFunctions": [
+          "getAvailableTimeSlots",
+          "calculateBookingPrice", 
+          "createBooking",
+          "createGuestBooking",
+          "assignProfessionalToBooking",
+          "updateBookingStatusAfterPayment"
+        ]
+      },
+      "issues": [
+        "Very large file (2638 lines) - needs refactoring",
+        "Complex timezone logic could be simplified"
+      ]
+    },
+    "professionalManagement": {
+      "status": "complete",
+      "completionPercentage": 95,
+      "files": [
+        "actions/professional-actions.ts (427 lines)",
+        "actions/professional-sms-actions.ts (313 lines)",
+        "lib/db/models/professional-profile.ts (238 lines)",
+        "lib/db/models/professional-response.ts (125 lines)"
+      ],
+      "features": [
+        "Professional registration & approval ✓",
+        "Profile management with treatments ✓",
+        "Work area management ✓",
+        "SMS notification system ✓",
+        "Professional response handling ✓",
+        "Booking assignment ✓",
+        "Financial transaction tracking ✓",
+        "Status management (5 statuses) ✓",
+        "Admin approval workflow ✓",
+        "Professional search & filtering ✓"
+      ],
+      "technicalDetails": {
+        "statuses": ["active", "pending_admin_approval", "pending_user_action", "rejected", "suspended"],
+        "smsResponseTime": "30 minutes",
+        "keyFunctions": [
+          "sendProfessionalNotifications",
+          "handleProfessionalResponse",
+          "getProfessionals",
+          "updateProfessionalStatus",
+          "findSuitableProfessionals"
+        ],
+        "features": [
+          "Treatment pricing per professional",
+          "Work area radius management",
+          "Financial reporting",
+          "SMS response tracking"
+        ]
+      },
+      "issues": [
+        "SMS service dependency not fully tested",
+        "Financial reporting could be more detailed"
+      ]
+    },
+    "paymentSystem": {
+      "status": "partial",
+      "completionPercentage": 60,
+      "files": [
+        "actions/payment-method-actions.ts (204 lines)",
+        "lib/db/models/payment-method.ts (64 lines)"
+      ],
+      "features": [
+        "Payment method storage ✓",
+        "Credit card management ✓",
+        "Default payment method ✓",
+        "Card masking for security ✓",
+        "Payment processing ○",
+        "Refund handling ○",
+        "Payment gateway integration ○",
+        "Transaction logging ○"
+      ],
+      "technicalDetails": {
+        "supportedMethods": ["Credit Card"],
+        "cardMasking": "****-****-****-1234",
+        "keyFunctions": [
+          "createPaymentMethod",
+          "updatePaymentMethod",
+          "deletePaymentMethod",
+          "setDefaultPaymentMethod",
+          "getActivePaymentMethods"
+        ]
+      },
+      "issues": [
+        "No actual payment processing implementation",
+        "Missing payment gateway integration",
+        "No transaction history",
+        "No refund system",
+        "Card data stored without encryption",
+        "Missing PCI compliance measures"
+      ]
+    },
+    "subscriptionSystem": {
+      "status": "complete",
+      "completionPercentage": 85,
+      "files": [
+        "actions/subscription-actions.ts (327 lines)",
+        "actions/user-subscription-actions.ts (790 lines)",
+        "lib/db/models/subscription.ts (41 lines)",
+        "lib/db/models/user-subscription.ts (127 lines)"
+      ],
+      "features": [
+        "Subscription creation and management ✓",
+        "User subscription tracking ✓",
+        "Usage counting and limits ✓",
+        "Subscription renewal ✓",
+        "Multiple subscription types ✓",
+        "Subscription status management ✓"
+      ],
+      "technicalDetails": {
+        "statuses": ["active", "expired", "depleted", "cancelled"],
+        "keyFunctions": [
+          "createSubscription",
+          "getUserSubscriptions",
+          "useSubscriptionCredit",
+          "renewSubscription"
+        ]
+      }
+    },
+    "giftVoucherSystem": {
+      "status": "analyzing",
+      "files": [
+        "actions/gift-voucher-actions.ts",
+        "lib/db/models/gift-voucher.ts",
+        "lib/db/models/gift-voucher-purchase.ts"
+      ],
+      "features": [
+        "Gift voucher creation",
+        "Voucher redemption",
+        "Purchase tracking"
+      ]
+    },
+    "treatmentManagement": {
+      "status": "analyzing",
+      "files": [
+        "actions/treatment-actions.ts",
+        "lib/db/models/treatment.ts"
+      ],
+      "features": [
+        "Treatment catalog",
+        "Pricing management",
+        "Categories"
+      ]
+    },
+    "locationServices": {
+      "status": "analyzing",
+      "files": [
+        "actions/city-actions.ts",
+        "actions/address-actions.ts",
+        "lib/db/models/city.ts",
+        "lib/db/models/address.ts",
+        "lib/db/models/city-distance.ts"
+      ],
+      "features": [
+        "City management",
+        "Address handling",
+        "Distance calculations"
+      ]
+    },
+    "reviewSystem": {
+      "status": "analyzing",
+      "files": [
+        "actions/review-actions.ts",
+        "lib/db/models/review.ts"
+      ],
+      "features": [
+        "Review submission",
+        "Rating system",
+        "Review management"
+      ]
+    },
+    "couponSystem": {
+      "status": "analyzing",
+      "files": [
+        "actions/coupon-actions.ts",
+        "actions/partner-coupon-batch-actions.ts",
+        "lib/db/models/coupon.ts",
+        "lib/db/models/coupon-usage.ts",
+        "lib/db/models/partner-coupon-batch.ts"
+      ],
+      "features": [
+        "Coupon creation",
+        "Partner coupons",
+        "Usage tracking",
+        "Batch management"
+      ]
+    },
+    "workingHours": {
+      "status": "analyzing",
+      "files": [
+        "actions/working-hours-actions.ts",
+        "lib/db/models/working-hours.ts"
+      ],
+      "features": [
+        "Schedule management",
+        "Availability tracking",
+        "Time slot management"
+      ]
+    },
+    "notifications": {
+      "status": "analyzing",
+      "files": [
+        "actions/notification-actions.ts",
+        "lib/notifications/"
+      ],
+      "features": [
+        "Email notifications",
+        "SMS notifications",
+        "Push notifications"
+      ]
+    },
+    "reporting": {
+      "status": "analyzing",
+      "files": [
+        "actions/purchase-summary-actions.ts"
+      ],
+      "features": [
+        "Purchase reports",
+        "Analytics",
+        "Statistics"
+      ]
+    },
+    "userManagement": {
+      "status": "analyzing",
+      "files": [
+        "actions/profile-actions.ts",
+        "actions/preferences-actions.ts",
+        "actions/role-actions.ts",
+        "actions/account-actions.ts",
+        "lib/db/models/user.ts"
+      ],
+      "features": [
+        "User profiles",
+        "Preferences",
+        "Role management",
+        "Account settings"
+      ]
+    },
+    "internationalization": {
+      "status": "analyzing",
+      "files": [
+        "lib/translations/"
+      ],
+      "features": [
+        "Hebrew support",
+        "English support",
+        "Russian support",
+        "RTL layout"
+      ]
+    }
+  },
+  "dataModels": {
+    "total": 22,
+    "models": [
+      "booking", "professional-response", "city-distance", "professional-profile",
+      "city", "gift-voucher-purchase", "subscription-purchase", "user", "address",
+      "treatment", "gift-voucher", "user-subscription", "partner-coupon-batch",
+      "review", "working-hours", "verification-token", "payment-method",
+      "subscription", "coupon-usage", "coupon", "password-reset-token", "counter"
+    ]
+  },
+  "apiEndpoints": {
+    "total": 24,
+    "actions": [
+      "professional-booking-view-actions", "professional-sms-actions", "booking-actions",
+      "professional-actions", "city-actions", "user-subscription-actions",
+      "gift-voucher-actions", "address-actions", "treatment-actions",
+      "subscription-actions", "notification-actions", "purchase-summary-actions",
+      "profile-actions", "partner-coupon-batch-actions", "review-actions",
+      "working-hours-actions", "preferences-actions", "role-actions",
+      "password-reset-actions", "payment-method-actions", "auth-actions",
+      "coupon-actions", "admin-actions", "account-actions"
+    ]
+  }
+} 

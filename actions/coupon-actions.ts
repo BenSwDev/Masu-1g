@@ -243,3 +243,49 @@ export async function getAssignedPartnerCoupons(
     totalCoupons,
   }
 }
+
+// Member/User Actions - Get available coupons for current user
+export async function getUserAvailableCoupons(): Promise<{
+  coupons: (ICoupon & { effectiveStatus: string })[]
+  totalCoupons: number
+}> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return { coupons: [], totalCoupons: 0 }
+  }
+
+  await connectDB()
+  
+  // Get coupons assigned to this user if they are a partner
+  const query: any = {}
+  
+  if (isPartnerUser(session.user)) {
+    // For partners, get their assigned coupons
+    query.assignedPartnerId = session.user.id
+  } else {
+    // For regular members, get general coupons (not assigned to specific partners)
+    query.assignedPartnerId = { $exists: false }
+  }
+  
+  // Only get active coupons that are currently valid
+  const now = new Date()
+  query.isActive = true
+  query.validFrom = { $lte: now }
+  query.validUntil = { $gte: now }
+  
+  const couponsData = await Coupon.find(query)
+    .sort({ validUntil: 1 }) // Sort by expiration date
+    .lean()
+
+  const couponsWithEffectiveStatus = couponsData
+    .map((coupon) => ({
+      ...coupon,
+      effectiveStatus: calculateEffectiveStatus(coupon as ICoupon),
+    }))
+    .filter(coupon => coupon.effectiveStatus === 'active') // Only return truly active coupons
+
+  return {
+    coupons: JSON.parse(JSON.stringify(couponsWithEffectiveStatus)),
+    totalCoupons: couponsWithEffectiveStatus.length,
+  }
+}

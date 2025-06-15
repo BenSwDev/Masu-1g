@@ -9,10 +9,11 @@ import { Label } from "@/components/common/ui/label"
 import { Separator } from "@/components/common/ui/separator"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Badge } from "@/components/common/ui/badge"
-import { CheckCircle, Calendar, Clock, User, Mail, Phone, FileText, CreditCard, Tag, Loader2 } from "lucide-react"
+import { CheckCircle, Calendar, Clock, User, Mail, Phone, FileText, CreditCard, Tag, Loader2, Star } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
+import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 
 interface GuestInfo {
   firstName: string
@@ -40,6 +41,7 @@ interface GuestSummaryStepProps {
   onNext: () => void
   onPrev: () => void
   setBookingOptions?: React.Dispatch<React.SetStateAction<Partial<SelectedBookingOptions>>>
+  showSourceOptions?: boolean
 }
 
 export function GuestSummaryStep({
@@ -51,6 +53,7 @@ export function GuestSummaryStep({
   onNext,
   onPrev,
   setBookingOptions,
+  showSourceOptions,
 }: GuestSummaryStepProps) {
   const { t, language, dir } = useTranslation()
   const [couponCode, setCouponCode] = useState(bookingOptions.appliedCouponCode || "")
@@ -299,6 +302,92 @@ export function GuestSummaryStep({
           </CardContent>
         </Card>
       </div>
+
+      {/* Source Options for Members */}
+      {showSourceOptions && (initialData.activeUserSubscriptions?.length > 0 || initialData.usableGiftVouchers?.length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              אפשרויות תשלום
+            </CardTitle>
+            <CardDescription>
+              בחר כיצד תרצה לשלם עבור הטיפול
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup
+              value={bookingOptions.source || "new_purchase"}
+              onValueChange={(value) => setBookingOptions?.(prev => ({ ...prev, source: value as any }))}
+              className="space-y-4"
+            >
+              {/* Subscription Options */}
+              {initialData.activeUserSubscriptions?.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">מנויים זמינים:</Label>
+                  {initialData.activeUserSubscriptions.map((subscription: any) => (
+                    <div key={subscription._id} className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="subscription_redemption" id={`sub-${subscription._id}`} />
+                      <Label htmlFor={`sub-${subscription._id}`} className="flex-1 cursor-pointer">
+                        <div className="p-3 border rounded-lg hover:bg-muted/50">
+                          <div className="font-medium">{subscription.subscriptionId?.name}</div>
+                          <div className="text-sm text-muted-foreground">
+                            נותרו {subscription.remainingQuantity} טיפולים
+                            {subscription.expiryDate && (
+                              <span> • תוקף עד {format(new Date(subscription.expiryDate), "dd/MM/yyyy")}</span>
+                            )}
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Gift Voucher Options */}
+              {initialData.usableGiftVouchers?.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-muted-foreground">שוברי מתנה זמינים:</Label>
+                  {initialData.usableGiftVouchers.map((voucher: any) => (
+                    <div key={voucher._id} className="flex items-center space-x-2 space-x-reverse">
+                      <RadioGroupItem value="gift_voucher_redemption" id={`voucher-${voucher._id}`} />
+                      <Label htmlFor={`voucher-${voucher._id}`} className="flex-1 cursor-pointer">
+                        <div className="p-3 border rounded-lg hover:bg-muted/50">
+                          <div className="font-medium">
+                            {voucher.voucherType === "monetary" 
+                              ? `שובר כספי - ₪${voucher.remainingAmount}`
+                              : `שובר טיפול - ${voucher.treatmentName}`
+                            }
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            קוד: {voucher.code}
+                            {voucher.validUntil && (
+                              <span> • תוקף עד {format(new Date(voucher.validUntil), "dd/MM/yyyy")}</span>
+                            )}
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* New Purchase Option */}
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <RadioGroupItem value="new_purchase" id="new-purchase" />
+                <Label htmlFor="new-purchase" className="flex-1 cursor-pointer">
+                  <div className="p-3 border rounded-lg hover:bg-muted/50">
+                    <div className="font-medium">רכישה חדשה</div>
+                    <div className="text-sm text-muted-foreground">
+                      שלם עבור הטיפול באמצעי תשלום
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Coupon Code Section */}
       {setBookingOptions && (

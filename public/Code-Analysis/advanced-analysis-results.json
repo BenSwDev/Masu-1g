@@ -1,0 +1,5226 @@
+{
+  "summary": {
+    "totalEndToEndFlows": 4,
+    "totalScenarios": 27,
+    "totalValidationScenarios": 38,
+    "totalUserJourneys": 3,
+    "userRolesCovered": 5
+  },
+  "endToEndFlows": [
+    {
+      "name": "Booking Process",
+      "userRoles": [
+        "guest",
+        "member"
+      ],
+      "steps": [],
+      "scenarios": [
+        {
+          "id": "booking_process_happy_path",
+          "name": "Booking Process - Happy Path",
+          "type": "happy_path",
+          "userRoles": [
+            "guest",
+            "member"
+          ],
+          "steps": [],
+          "integrations": [
+            "payment_gateway",
+            "sms_service",
+            "database"
+          ]
+        }
+      ],
+      "validationScenarios": [],
+      "errorScenarios": [
+        {
+          "id": "payment_gateway_failure",
+          "type": "integration_failure",
+          "integration": "payment_gateway",
+          "scenario": "payment_gateway service unavailable",
+          "expectedResult": "Graceful degradation or retry mechanism",
+          "userRoles": [
+            "guest",
+            "member"
+          ]
+        },
+        {
+          "id": "sms_service_failure",
+          "type": "integration_failure",
+          "integration": "sms_service",
+          "scenario": "sms_service service unavailable",
+          "expectedResult": "Graceful degradation or retry mechanism",
+          "userRoles": [
+            "guest",
+            "member"
+          ]
+        },
+        {
+          "id": "database_failure",
+          "type": "integration_failure",
+          "integration": "database",
+          "scenario": "database service unavailable",
+          "expectedResult": "Graceful degradation or retry mechanism",
+          "userRoles": [
+            "guest",
+            "member"
+          ]
+        }
+      ],
+      "integrationPoints": [
+        "payment_gateway",
+        "sms_service",
+        "database"
+      ]
+    },
+    {
+      "name": "Professional Response Process",
+      "userRoles": [
+        "professional",
+        "admin"
+      ],
+      "steps": [
+        {
+          "function": "sendProfessionalNotifications",
+          "file": "actions\\professional-sms-actions.ts",
+          "userRoles": [
+            "professional"
+          ],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!booking",
+              "line": 24,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "booking.status !== \"confirmed\"",
+              "line": 26,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!suitableResult.success || !suitableResult.professionals",
+              "line": 33,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!professional.userId?.phone",
+              "line": 48,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "smsResult.success",
+              "line": 75,
+              "hasElse": true,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 12,
+              "hasCatch": true,
+              "hasFinally": false
+            },
+            {
+              "type": "try-catch",
+              "line": 47,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "sendProfessionalNotifications_if_1",
+              "type": "conditional",
+              "description": "When !booking is true",
+              "userRoles": [
+                "professional"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "sendProfessionalNotifications_if_2",
+              "type": "conditional",
+              "description": "When booking.status !== \"confirmed\" is true",
+              "userRoles": [
+                "professional"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "sendProfessionalNotifications_if_3",
+              "type": "conditional",
+              "description": "When !suitableResult.success || !suitableResult.professionals is true",
+              "userRoles": [
+                "professional"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "sendProfessionalNotifications_if_4",
+              "type": "conditional",
+              "description": "When !professional.userId?.phone is true",
+              "userRoles": [
+                "professional"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "sendProfessionalNotifications_if_5",
+              "type": "conditional",
+              "description": "When smsResult.success is true",
+              "userRoles": [
+                "professional"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "sendProfessionalNotifications_else_5",
+              "type": "conditional",
+              "description": "When smsResult.success is false",
+              "userRoles": [
+                "professional"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute else branch logic"
+            },
+            {
+              "id": "sendProfessionalNotifications_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "professional"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            },
+            {
+              "id": "sendProfessionalNotifications_error_2",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "professional"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "handleProfessionalResponse",
+          "file": "actions\\professional-sms-actions.ts",
+          "userRoles": [
+            "professional",
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "phone",
+              "rule": "Israeli phone number validation",
+              "line": 95
+            },
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 95
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!response",
+              "line": 109,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "response.status !== \"pending\"",
+              "line": 110,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "response.expiresAt < new Date()",
+              "line": 114,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!booking || booking.status !== \"in_process\" || booking.professionalId",
+              "line": 120,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "action === \"accept\"",
+              "line": 123,
+              "hasElse": true,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "assignResult.success",
+              "line": 131,
+              "hasElse": true,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "action === \"decline\"",
+              "line": 148,
+              "hasElse": false,
+              "nestedLevel": 1
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 101,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "handleProfessionalResponse_if_1",
+              "type": "conditional",
+              "description": "When !response is true",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "handleProfessionalResponse_if_2",
+              "type": "conditional",
+              "description": "When response.status !== \"pending\" is true",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "handleProfessionalResponse_if_3",
+              "type": "conditional",
+              "description": "When response.expiresAt < new Date() is true",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "handleProfessionalResponse_if_4",
+              "type": "conditional",
+              "description": "When !booking || booking.status !== \"in_process\" || booking.professionalId is true",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "handleProfessionalResponse_if_5",
+              "type": "conditional",
+              "description": "When action === \"accept\" is true",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "handleProfessionalResponse_else_5",
+              "type": "conditional",
+              "description": "When action === \"accept\" is false",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Execute else branch logic"
+            },
+            {
+              "id": "handleProfessionalResponse_if_6",
+              "type": "conditional",
+              "description": "When assignResult.success is true",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "handleProfessionalResponse_else_6",
+              "type": "conditional",
+              "description": "When assignResult.success is false",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Execute else branch logic"
+            },
+            {
+              "id": "handleProfessionalResponse_if_7",
+              "type": "conditional",
+              "description": "When action === \"decline\" is true",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "handleProfessionalResponse_validation_1",
+              "type": "validation",
+              "description": "Validate phone: Israeli phone number validation",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for phone"
+            },
+            {
+              "id": "handleProfessionalResponse_validation_2",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 95
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "handleProfessionalResponse_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "resendProfessionalNotifications",
+          "file": "actions\\professional-sms-actions.ts",
+          "userRoles": [
+            "professional",
+            "admin"
+          ],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!session?.user || session.user.role !== \"admin\"",
+              "line": 199,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!booking || booking.status !== \"confirmed\" || booking.professionalId",
+              "line": 207,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 198,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "resendProfessionalNotifications_if_1",
+              "type": "conditional",
+              "description": "When !session?.user || session.user.role !== \"admin\" is true",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "resendProfessionalNotifications_if_2",
+              "type": "conditional",
+              "description": "When !booking || booking.status !== \"confirmed\" || booking.professionalId is true",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "resendProfessionalNotifications_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "professional",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        }
+      ],
+      "scenarios": [
+        {
+          "id": "professional_response_process_happy_path",
+          "name": "Professional Response Process - Happy Path",
+          "type": "happy_path",
+          "userRoles": [
+            "professional",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Execute sendProfessionalNotifications",
+              "userRole": "professional",
+              "expectedResult": "sendProfessionalNotifications completes successfully",
+              "validations": "",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 2,
+              "action": "Execute handleProfessionalResponse",
+              "userRole": "professional or admin",
+              "expectedResult": "handleProfessionalResponse completes successfully",
+              "validations": "Israeli phone number validation, Date validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 3,
+              "action": "Execute resendProfessionalNotifications",
+              "userRole": "professional or admin",
+              "expectedResult": "resendProfessionalNotifications completes successfully",
+              "validations": "",
+              "sideEffects": "database_modification"
+            }
+          ],
+          "integrations": [
+            "sms_service",
+            "database"
+          ]
+        },
+        {
+          "id": "professional_response_process_error_step_1_1",
+          "name": "Professional Response Process - Error at Step 1",
+          "type": "error_path",
+          "userRoles": [
+            "professional"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Execute sendProfessionalNotifications with error condition",
+              "userRole": "professional",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "sms_service",
+            "database"
+          ]
+        },
+        {
+          "id": "professional_response_process_error_step_1_2",
+          "name": "Professional Response Process - Error at Step 1",
+          "type": "error_path",
+          "userRoles": [
+            "professional"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Execute sendProfessionalNotifications with error condition",
+              "userRole": "professional",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "sms_service",
+            "database"
+          ]
+        },
+        {
+          "id": "professional_response_process_error_step_2_1",
+          "name": "Professional Response Process - Error at Step 2",
+          "type": "error_path",
+          "userRoles": [
+            "professional",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 2,
+              "action": "Execute handleProfessionalResponse with error condition",
+              "userRole": "professional or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Israeli phone number validation, Date validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "sms_service",
+            "database"
+          ]
+        },
+        {
+          "id": "professional_response_process_error_step_3_1",
+          "name": "Professional Response Process - Error at Step 3",
+          "type": "error_path",
+          "userRoles": [
+            "professional",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 3,
+              "action": "Execute resendProfessionalNotifications with error condition",
+              "userRole": "professional or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "sms_service",
+            "database"
+          ]
+        }
+      ],
+      "validationScenarios": [
+        {
+          "id": "validation_phone_valid",
+          "type": "validation_success",
+          "field": "phone",
+          "rule": "Israeli phone number validation",
+          "testCase": "Valid phone input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "professional",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_phone_invalid",
+          "type": "validation_failure",
+          "field": "phone",
+          "rule": "Israeli phone number validation",
+          "testCase": "Invalid phone input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "professional",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "professional",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "professional",
+            "admin"
+          ]
+        }
+      ],
+      "errorScenarios": [
+        {
+          "id": "sms_service_failure",
+          "type": "integration_failure",
+          "integration": "sms_service",
+          "scenario": "sms_service service unavailable",
+          "expectedResult": "Graceful degradation or retry mechanism",
+          "userRoles": [
+            "professional",
+            "admin"
+          ]
+        },
+        {
+          "id": "database_failure",
+          "type": "integration_failure",
+          "integration": "database",
+          "scenario": "database service unavailable",
+          "expectedResult": "Graceful degradation or retry mechanism",
+          "userRoles": [
+            "professional",
+            "admin"
+          ]
+        }
+      ],
+      "integrationPoints": [
+        "sms_service",
+        "database"
+      ]
+    },
+    {
+      "name": "Payment Process",
+      "userRoles": [
+        "guest",
+        "member"
+      ],
+      "steps": [
+        {
+          "function": "GuestPaymentStep",
+          "file": "components\\booking\\steps\\guest-payment-step.tsx",
+          "userRoles": [
+            "guest"
+          ],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "isCountingDown && countdown > 0",
+              "line": 75,
+              "hasElse": true,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "countdown === 0 && isCountingDown",
+              "line": 78,
+              "hasElse": false,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "isCountingDown || !termsAccepted",
+              "line": 84,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!pendingBookingId",
+              "line": 85,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!bookingId",
+              "line": 87,
+              "hasElse": false,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "!calculatedPrice || calculatedPrice.finalAmount === 0",
+              "line": 102,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!pendingBookingId",
+              "line": 159,
+              "hasElse": false,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "!bookingId",
+              "line": 163,
+              "hasElse": false,
+              "nestedLevel": 2
+            }
+          ],
+          "errorHandling": [],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "GuestPaymentStep_if_1",
+              "type": "conditional",
+              "description": "When isCountingDown && countdown > 0 is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_else_1",
+              "type": "conditional",
+              "description": "When isCountingDown && countdown > 0 is false",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute else branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_2",
+              "type": "conditional",
+              "description": "When countdown === 0 && isCountingDown is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_3",
+              "type": "conditional",
+              "description": "When isCountingDown || !termsAccepted is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_4",
+              "type": "conditional",
+              "description": "When !pendingBookingId is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_5",
+              "type": "conditional",
+              "description": "When !bookingId is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_6",
+              "type": "conditional",
+              "description": "When !calculatedPrice || calculatedPrice.finalAmount === 0 is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_7",
+              "type": "conditional",
+              "description": "When !pendingBookingId is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_8",
+              "type": "conditional",
+              "description": "When !bookingId is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            }
+          ]
+        },
+        {
+          "function": "anonymous",
+          "file": "components\\booking\\steps\\guest-payment-step.tsx",
+          "userRoles": [],
+          "validations": [],
+          "conditionalPaths": [],
+          "errorHandling": [],
+          "sideEffects": [],
+          "subScenarios": []
+        },
+        {
+          "function": "GuestPaymentStep",
+          "file": "components\\booking\\steps\\guest-payment-step.tsx",
+          "userRoles": [
+            "guest"
+          ],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "isCountingDown && countdown > 0",
+              "line": 75,
+              "hasElse": true,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "countdown === 0 && isCountingDown",
+              "line": 78,
+              "hasElse": false,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "isCountingDown || !termsAccepted",
+              "line": 84,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!pendingBookingId",
+              "line": 85,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!bookingId",
+              "line": 87,
+              "hasElse": false,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "!calculatedPrice || calculatedPrice.finalAmount === 0",
+              "line": 102,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!pendingBookingId",
+              "line": 159,
+              "hasElse": false,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "!bookingId",
+              "line": 163,
+              "hasElse": false,
+              "nestedLevel": 2
+            }
+          ],
+          "errorHandling": [],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "GuestPaymentStep_if_1",
+              "type": "conditional",
+              "description": "When isCountingDown && countdown > 0 is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_else_1",
+              "type": "conditional",
+              "description": "When isCountingDown && countdown > 0 is false",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute else branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_2",
+              "type": "conditional",
+              "description": "When countdown === 0 && isCountingDown is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_3",
+              "type": "conditional",
+              "description": "When isCountingDown || !termsAccepted is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_4",
+              "type": "conditional",
+              "description": "When !pendingBookingId is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_5",
+              "type": "conditional",
+              "description": "When !bookingId is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_6",
+              "type": "conditional",
+              "description": "When !calculatedPrice || calculatedPrice.finalAmount === 0 is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_7",
+              "type": "conditional",
+              "description": "When !pendingBookingId is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "GuestPaymentStep_if_8",
+              "type": "conditional",
+              "description": "When !bookingId is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            }
+          ]
+        },
+        {
+          "function": "anonymous",
+          "file": "components\\booking\\steps\\guest-payment-step.tsx",
+          "userRoles": [],
+          "validations": [],
+          "conditionalPaths": [],
+          "errorHandling": [],
+          "sideEffects": [],
+          "subScenarios": []
+        }
+      ],
+      "scenarios": [
+        {
+          "id": "payment_process_happy_path",
+          "name": "Payment Process - Happy Path",
+          "type": "happy_path",
+          "userRoles": [
+            "guest",
+            "member"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Execute GuestPaymentStep",
+              "userRole": "guest",
+              "expectedResult": "GuestPaymentStep completes successfully",
+              "validations": "",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 2,
+              "action": "Execute anonymous",
+              "userRole": "",
+              "expectedResult": "anonymous completes successfully",
+              "validations": "",
+              "sideEffects": ""
+            },
+            {
+              "stepNumber": 3,
+              "action": "Execute GuestPaymentStep",
+              "userRole": "guest",
+              "expectedResult": "GuestPaymentStep completes successfully",
+              "validations": "",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Execute anonymous",
+              "userRole": "",
+              "expectedResult": "anonymous completes successfully",
+              "validations": "",
+              "sideEffects": ""
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        }
+      ],
+      "validationScenarios": [],
+      "errorScenarios": [
+        {
+          "id": "payment_gateway_failure",
+          "type": "integration_failure",
+          "integration": "payment_gateway",
+          "scenario": "payment_gateway service unavailable",
+          "expectedResult": "Graceful degradation or retry mechanism",
+          "userRoles": [
+            "guest",
+            "member"
+          ]
+        },
+        {
+          "id": "database_failure",
+          "type": "integration_failure",
+          "integration": "database",
+          "scenario": "database service unavailable",
+          "expectedResult": "Graceful degradation or retry mechanism",
+          "userRoles": [
+            "guest",
+            "member"
+          ]
+        }
+      ],
+      "integrationPoints": [
+        "payment_gateway",
+        "database"
+      ]
+    },
+    {
+      "name": "Subscription Management",
+      "userRoles": [
+        "member",
+        "admin"
+      ],
+      "steps": [
+        {
+          "function": "createSubscription",
+          "file": "actions\\subscription-actions.ts",
+          "userRoles": [
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 19
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!session?.user?.roles.includes(\"admin\")",
+              "line": 22,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "error instanceof z.ZodError",
+              "line": 42,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 20,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "createSubscription_if_1",
+              "type": "conditional",
+              "description": "When !session?.user?.roles.includes(\"admin\") is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 19
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "createSubscription_if_2",
+              "type": "conditional",
+              "description": "When error instanceof z.ZodError is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 19
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "createSubscription_validation_1",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 19
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "createSubscription_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "updateSubscription",
+          "file": "actions\\subscription-actions.ts",
+          "userRoles": [
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 46
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!session?.user?.roles.includes(\"admin\")",
+              "line": 49,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!subscription",
+              "line": 68,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "error instanceof z.ZodError",
+              "line": 73,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 48,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "updateSubscription_if_1",
+              "type": "conditional",
+              "description": "When !session?.user?.roles.includes(\"admin\") is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 46
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "updateSubscription_if_2",
+              "type": "conditional",
+              "description": "When !subscription is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 46
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "updateSubscription_if_3",
+              "type": "conditional",
+              "description": "When error instanceof z.ZodError is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 46
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "updateSubscription_validation_1",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 46
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "updateSubscription_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "deleteSubscription",
+          "file": "actions\\subscription-actions.ts",
+          "userRoles": [
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 77
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!session?.user?.roles.includes(\"admin\")",
+              "line": 80,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!subscription",
+              "line": 84,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 78,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "deleteSubscription_if_1",
+              "type": "conditional",
+              "description": "When !session?.user?.roles.includes(\"admin\") is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 77
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "deleteSubscription_if_2",
+              "type": "conditional",
+              "description": "When !subscription is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 77
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "deleteSubscription_validation_1",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 77
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "deleteSubscription_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "getSubscriptions",
+          "file": "actions\\subscription-actions.ts",
+          "userRoles": [],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "options.isActive !== undefined",
+              "line": 96,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "options.search",
+              "line": 97,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "options.sort",
+              "line": 104,
+              "hasElse": true,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 94,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification",
+            "external_api_call"
+          ],
+          "subScenarios": [
+            {
+              "id": "getSubscriptions_if_1",
+              "type": "conditional",
+              "description": "When options.isActive !== undefined is true",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getSubscriptions_if_2",
+              "type": "conditional",
+              "description": "When options.search is true",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getSubscriptions_if_3",
+              "type": "conditional",
+              "description": "When options.sort is true",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getSubscriptions_else_3",
+              "type": "conditional",
+              "description": "When options.sort is false",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Execute else branch logic"
+            },
+            {
+              "id": "getSubscriptions_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "getSubscriptionById",
+          "file": "actions\\subscription-actions.ts",
+          "userRoles": [],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!subscription",
+              "line": 126,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 124,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "external_api_call"
+          ],
+          "subScenarios": [
+            {
+              "id": "getSubscriptionById_if_1",
+              "type": "conditional",
+              "description": "When !subscription is true",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getSubscriptionById_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "toggleSubscriptionStatus",
+          "file": "actions\\subscription-actions.ts",
+          "userRoles": [
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 135
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!session?.user?.roles.includes(\"admin\")",
+              "line": 138,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!subscription",
+              "line": 142,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 137,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "toggleSubscriptionStatus_if_1",
+              "type": "conditional",
+              "description": "When !session?.user?.roles.includes(\"admin\") is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 135
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "toggleSubscriptionStatus_if_2",
+              "type": "conditional",
+              "description": "When !subscription is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 135
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "toggleSubscriptionStatus_validation_1",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 135
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "toggleSubscriptionStatus_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "getActiveSubscriptions",
+          "file": "actions\\subscription-actions.ts",
+          "userRoles": [],
+          "validations": [],
+          "conditionalPaths": [],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 167,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification",
+            "external_api_call"
+          ],
+          "subScenarios": [
+            {
+              "id": "getActiveSubscriptions_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "getActiveSubscriptionsForPurchase",
+          "file": "actions\\subscription-actions.ts",
+          "userRoles": [],
+          "validations": [],
+          "conditionalPaths": [],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 179,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification",
+            "external_api_call"
+          ],
+          "subScenarios": [
+            {
+              "id": "getActiveSubscriptionsForPurchase_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "purchaseSubscription",
+          "file": "actions\\user-subscription-actions.ts",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "email",
+              "rule": "Email format validation",
+              "line": 21
+            },
+            {
+              "type": "phone",
+              "rule": "Israeli phone number validation",
+              "line": 21
+            },
+            {
+              "type": "required",
+              "rule": "Required field validation",
+              "line": 21
+            },
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 21
+            },
+            {
+              "type": "payment",
+              "rule": "Payment validation",
+              "line": 21
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!sessionData || !sessionData.user",
+              "line": 32,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "subscriptionResult.status === \"rejected\" || treatmentResult.status === \"rejected\" || paymentMethodResult.status === \"rejected\"",
+              "line": 49,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!subscription || !subscription.isActive",
+              "line": 73,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!treatment || !treatment.isActive",
+              "line": 77,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!paymentMethod || paymentMethod.userId.toString() !== sessionData.user.id",
+              "line": 82,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "treatment.pricingType === \"fixed\"",
+              "line": 91,
+              "hasElse": true,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "treatment.pricingType === \"duration_based\"",
+              "line": 93,
+              "hasElse": false,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "!selectedDurationId",
+              "line": 94,
+              "hasElse": false,
+              "nestedLevel": 2
+            },
+            {
+              "type": "if",
+              "condition": "!duration || !duration.isActive",
+              "line": 101,
+              "hasElse": false,
+              "nestedLevel": 2
+            },
+            {
+              "type": "if",
+              "condition": "singleSessionPrice === undefined || singleSessionPrice < 0",
+              "line": 108,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "purchaser",
+              "line": 146,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "methods.includes(\"email\") && purchaser.email",
+              "line": 159,
+              "hasElse": false,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "methods.includes(\"sms\") && purchaser.phone",
+              "line": 164,
+              "hasElse": false,
+              "nestedLevel": 1
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 28,
+              "hasCatch": true,
+              "hasFinally": false
+            },
+            {
+              "type": "try-catch",
+              "line": 143,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "purchaseSubscription_if_1",
+              "type": "conditional",
+              "description": "When !sessionData || !sessionData.user is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_2",
+              "type": "conditional",
+              "description": "When subscriptionResult.status === \"rejected\" || treatmentResult.status === \"rejected\" || paymentMethodResult.status === \"rejected\" is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_3",
+              "type": "conditional",
+              "description": "When !subscription || !subscription.isActive is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_4",
+              "type": "conditional",
+              "description": "When !treatment || !treatment.isActive is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_5",
+              "type": "conditional",
+              "description": "When !paymentMethod || paymentMethod.userId.toString() !== sessionData.user.id is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_6",
+              "type": "conditional",
+              "description": "When treatment.pricingType === \"fixed\" is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_else_6",
+              "type": "conditional",
+              "description": "When treatment.pricingType === \"fixed\" is false",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute else branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_7",
+              "type": "conditional",
+              "description": "When treatment.pricingType === \"duration_based\" is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_8",
+              "type": "conditional",
+              "description": "When !selectedDurationId is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_9",
+              "type": "conditional",
+              "description": "When !duration || !duration.isActive is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_10",
+              "type": "conditional",
+              "description": "When singleSessionPrice === undefined || singleSessionPrice < 0 is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_11",
+              "type": "conditional",
+              "description": "When purchaser is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_12",
+              "type": "conditional",
+              "description": "When methods.includes(\"email\") && purchaser.email is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_if_13",
+              "type": "conditional",
+              "description": "When methods.includes(\"sms\") && purchaser.phone is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseSubscription_validation_1",
+              "type": "validation",
+              "description": "Validate email: Email format validation",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for email"
+            },
+            {
+              "id": "purchaseSubscription_validation_2",
+              "type": "validation",
+              "description": "Validate phone: Israeli phone number validation",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for phone"
+            },
+            {
+              "id": "purchaseSubscription_validation_3",
+              "type": "validation",
+              "description": "Validate required: Required field validation",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for required"
+            },
+            {
+              "id": "purchaseSubscription_validation_4",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "purchaseSubscription_validation_5",
+              "type": "validation",
+              "description": "Validate payment: Payment validation",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 21
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for payment"
+            },
+            {
+              "id": "purchaseSubscription_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            },
+            {
+              "id": "purchaseSubscription_error_2",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "getUserSubscriptions",
+          "file": "actions\\user-subscription-actions.ts",
+          "userRoles": [],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!sessionData || !sessionData.user",
+              "line": 197,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "sub.treatmentId &&\r\n        (sub.treatmentId as ITreatment).pricingType === \"duration_based\" &&\r\n        sub.selectedDurationId",
+              "line": 209,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "treatmentDoc.durations",
+              "line": 214,
+              "hasElse": false,
+              "nestedLevel": 1
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 196,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "external_api_call"
+          ],
+          "subScenarios": [
+            {
+              "id": "getUserSubscriptions_if_1",
+              "type": "conditional",
+              "description": "When !sessionData || !sessionData.user is true",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getUserSubscriptions_if_2",
+              "type": "conditional",
+              "description": "When sub.treatmentId &&\r\n        (sub.treatmentId as ITreatment).pricingType === \"duration_based\" &&\r\n        sub.selectedDurationId is true",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getUserSubscriptions_if_3",
+              "type": "conditional",
+              "description": "When treatmentDoc.durations is true",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getUserSubscriptions_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "getAllUserSubscriptions",
+          "file": "actions\\user-subscription-actions.ts",
+          "userRoles": [
+            "guest",
+            "admin"
+          ],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!sessionData?.user?.roles.includes(\"admin\")",
+              "line": 234,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "options.userId",
+              "line": 239,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "options.subscriptionId",
+              "line": 240,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "options.treatmentId",
+              "line": 241,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "options.status",
+              "line": 243,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "options.search",
+              "line": 244,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "sub.treatmentId &&\r\n        (sub.treatmentId as ITreatment).pricingType === \"duration_based\" &&\r\n        sub.selectedDurationId",
+              "line": 263,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "treatmentDoc.durations",
+              "line": 268,
+              "hasElse": false,
+              "nestedLevel": 1
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 233,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "external_api_call"
+          ],
+          "subScenarios": [
+            {
+              "id": "getAllUserSubscriptions_if_1",
+              "type": "conditional",
+              "description": "When !sessionData?.user?.roles.includes(\"admin\") is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getAllUserSubscriptions_if_2",
+              "type": "conditional",
+              "description": "When options.userId is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getAllUserSubscriptions_if_3",
+              "type": "conditional",
+              "description": "When options.subscriptionId is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getAllUserSubscriptions_if_4",
+              "type": "conditional",
+              "description": "When options.treatmentId is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getAllUserSubscriptions_if_5",
+              "type": "conditional",
+              "description": "When options.status is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getAllUserSubscriptions_if_6",
+              "type": "conditional",
+              "description": "When options.search is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getAllUserSubscriptions_if_7",
+              "type": "conditional",
+              "description": "When sub.treatmentId &&\r\n        (sub.treatmentId as ITreatment).pricingType === \"duration_based\" &&\r\n        sub.selectedDurationId is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getAllUserSubscriptions_if_8",
+              "type": "conditional",
+              "description": "When treatmentDoc.durations is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getAllUserSubscriptions_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "useSubscription",
+          "file": "actions\\user-subscription-actions.ts",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 288
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!sessionData || !sessionData.user",
+              "line": 291,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!userSubscription",
+              "line": 295,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "userSubscription.userId && userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes(\"admin\")",
+              "line": 297,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "userSubscription.status !== \"active\"",
+              "line": 301,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "userSubscription.remainingQuantity < quantity",
+              "line": 304,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "userSubscription.remainingQuantity <= 0",
+              "line": 308,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 290,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "useSubscription_if_1",
+              "type": "conditional",
+              "description": "When !sessionData || !sessionData.user is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 288
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "useSubscription_if_2",
+              "type": "conditional",
+              "description": "When !userSubscription is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 288
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "useSubscription_if_3",
+              "type": "conditional",
+              "description": "When userSubscription.userId && userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes(\"admin\") is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 288
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "useSubscription_if_4",
+              "type": "conditional",
+              "description": "When userSubscription.status !== \"active\" is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 288
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "useSubscription_if_5",
+              "type": "conditional",
+              "description": "When userSubscription.remainingQuantity < quantity is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 288
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "useSubscription_if_6",
+              "type": "conditional",
+              "description": "When userSubscription.remainingQuantity <= 0 is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 288
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "useSubscription_validation_1",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 288
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "useSubscription_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "cancelSubscription",
+          "file": "actions\\user-subscription-actions.ts",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 320
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!sessionData || !sessionData.user",
+              "line": 323,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!userSubscription",
+              "line": 328,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "userSubscription.userId && userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes(\"admin\")",
+              "line": 330,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 322,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "cancelSubscription_if_1",
+              "type": "conditional",
+              "description": "When !sessionData || !sessionData.user is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 320
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "cancelSubscription_if_2",
+              "type": "conditional",
+              "description": "When !userSubscription is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 320
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "cancelSubscription_if_3",
+              "type": "conditional",
+              "description": "When userSubscription.userId && userSubscription.userId.toString() !== sessionData.user.id && !sessionData.user.roles.includes(\"admin\") is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 320
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "cancelSubscription_validation_1",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 320
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "cancelSubscription_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "deleteUserSubscription",
+          "file": "actions\\user-subscription-actions.ts",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 344
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!sessionData?.user?.roles.includes(\"admin\")",
+              "line": 347,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!result",
+              "line": 352,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 346,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "deleteUserSubscription_if_1",
+              "type": "conditional",
+              "description": "When !sessionData?.user?.roles.includes(\"admin\") is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 344
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "deleteUserSubscription_if_2",
+              "type": "conditional",
+              "description": "When !result is true",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 344
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "deleteUserSubscription_validation_1",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 344
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "deleteUserSubscription_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "member",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "purchaseGuestSubscription",
+          "file": "actions\\user-subscription-actions.ts",
+          "userRoles": [
+            "guest",
+            "admin"
+          ],
+          "validations": [
+            {
+              "type": "email",
+              "rule": "Email format validation",
+              "line": 364
+            },
+            {
+              "type": "phone",
+              "rule": "Israeli phone number validation",
+              "line": 364
+            },
+            {
+              "type": "required",
+              "rule": "Required field validation",
+              "line": 364
+            },
+            {
+              "type": "date",
+              "rule": "Date validation",
+              "line": 364
+            },
+            {
+              "type": "payment",
+              "rule": "Payment validation",
+              "line": 364
+            }
+          ],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "subscriptionResult.status === \"rejected\" || treatmentResult.status === \"rejected\"",
+              "line": 388,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!subscription || !subscription.isActive",
+              "line": 407,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!treatment || !treatment.isActive",
+              "line": 411,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "treatment.pricingType === \"fixed\"",
+              "line": 418,
+              "hasElse": true,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "treatment.pricingType === \"duration_based\"",
+              "line": 420,
+              "hasElse": false,
+              "nestedLevel": 1
+            },
+            {
+              "type": "if",
+              "condition": "!selectedDurationId",
+              "line": 421,
+              "hasElse": false,
+              "nestedLevel": 2
+            },
+            {
+              "type": "if",
+              "condition": "!duration || !duration.isActive",
+              "line": 428,
+              "hasElse": false,
+              "nestedLevel": 2
+            },
+            {
+              "type": "if",
+              "condition": "singleSessionPrice === undefined || singleSessionPrice < 0",
+              "line": 435,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "guestInfo.email",
+              "line": 483,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "guestInfo.phone",
+              "line": 489,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 372,
+              "hasCatch": true,
+              "hasFinally": false
+            },
+            {
+              "type": "try-catch",
+              "line": 478,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "purchaseGuestSubscription_if_1",
+              "type": "conditional",
+              "description": "When subscriptionResult.status === \"rejected\" || treatmentResult.status === \"rejected\" is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_if_2",
+              "type": "conditional",
+              "description": "When !subscription || !subscription.isActive is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_if_3",
+              "type": "conditional",
+              "description": "When !treatment || !treatment.isActive is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_if_4",
+              "type": "conditional",
+              "description": "When treatment.pricingType === \"fixed\" is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_else_4",
+              "type": "conditional",
+              "description": "When treatment.pricingType === \"fixed\" is false",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute else branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_if_5",
+              "type": "conditional",
+              "description": "When treatment.pricingType === \"duration_based\" is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_if_6",
+              "type": "conditional",
+              "description": "When !selectedDurationId is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_if_7",
+              "type": "conditional",
+              "description": "When !duration || !duration.isActive is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_if_8",
+              "type": "conditional",
+              "description": "When singleSessionPrice === undefined || singleSessionPrice < 0 is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_if_9",
+              "type": "conditional",
+              "description": "When guestInfo.email is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_if_10",
+              "type": "conditional",
+              "description": "When guestInfo.phone is true",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                },
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                },
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                },
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                },
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "purchaseGuestSubscription_validation_1",
+              "type": "validation",
+              "description": "Validate email: Email format validation",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "email",
+                  "rule": "Email format validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for email"
+            },
+            {
+              "id": "purchaseGuestSubscription_validation_2",
+              "type": "validation",
+              "description": "Validate phone: Israeli phone number validation",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "phone",
+                  "rule": "Israeli phone number validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for phone"
+            },
+            {
+              "id": "purchaseGuestSubscription_validation_3",
+              "type": "validation",
+              "description": "Validate required: Required field validation",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "required",
+                  "rule": "Required field validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for required"
+            },
+            {
+              "id": "purchaseGuestSubscription_validation_4",
+              "type": "validation",
+              "description": "Validate date: Date validation",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "date",
+                  "rule": "Date validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for date"
+            },
+            {
+              "id": "purchaseGuestSubscription_validation_5",
+              "type": "validation",
+              "description": "Validate payment: Payment validation",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [
+                {
+                  "type": "payment",
+                  "rule": "Payment validation",
+                  "line": 364
+                }
+              ],
+              "expectedOutcome": "Validation passes/fails for payment"
+            },
+            {
+              "id": "purchaseGuestSubscription_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            },
+            {
+              "id": "purchaseGuestSubscription_error_2",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "guest",
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "saveAbandonedSubscriptionPurchase",
+          "file": "actions\\user-subscription-actions.ts",
+          "userRoles": [
+            "guest"
+          ],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "existing",
+              "line": 527,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 523,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "database_modification"
+          ],
+          "subScenarios": [
+            {
+              "id": "saveAbandonedSubscriptionPurchase_if_1",
+              "type": "conditional",
+              "description": "When existing is true",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "saveAbandonedSubscriptionPurchase_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "guest"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        },
+        {
+          "function": "getUserSubscriptionById",
+          "file": "actions\\user-subscription-actions.ts",
+          "userRoles": [
+            "admin"
+          ],
+          "validations": [],
+          "conditionalPaths": [
+            {
+              "type": "if",
+              "condition": "!mongoose.Types.ObjectId.isValid(id)",
+              "line": 564,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!sub",
+              "line": 569,
+              "hasElse": false,
+              "nestedLevel": 0
+            },
+            {
+              "type": "if",
+              "condition": "!isGuest && !isOwner && !isAdmin",
+              "line": 575,
+              "hasElse": false,
+              "nestedLevel": 0
+            }
+          ],
+          "errorHandling": [
+            {
+              "type": "try-catch",
+              "line": 562,
+              "hasCatch": true,
+              "hasFinally": false
+            }
+          ],
+          "sideEffects": [
+            "external_api_call"
+          ],
+          "subScenarios": [
+            {
+              "id": "getUserSubscriptionById_if_1",
+              "type": "conditional",
+              "description": "When !mongoose.Types.ObjectId.isValid(id) is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getUserSubscriptionById_if_2",
+              "type": "conditional",
+              "description": "When !sub is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getUserSubscriptionById_if_3",
+              "type": "conditional",
+              "description": "When !isGuest && !isOwner && !isAdmin is true",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Execute if branch logic"
+            },
+            {
+              "id": "getUserSubscriptionById_error_1",
+              "type": "error_handling",
+              "description": "Handle try-catch error",
+              "userRoles": [
+                "admin"
+              ],
+              "validations": [],
+              "expectedOutcome": "Error handled gracefully"
+            }
+          ]
+        }
+      ],
+      "scenarios": [
+        {
+          "id": "subscription_management_happy_path",
+          "name": "Subscription Management - Happy Path",
+          "type": "happy_path",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Execute createSubscription",
+              "userRole": "admin",
+              "expectedResult": "createSubscription completes successfully",
+              "validations": "Date validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 2,
+              "action": "Execute updateSubscription",
+              "userRole": "admin",
+              "expectedResult": "updateSubscription completes successfully",
+              "validations": "Date validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 3,
+              "action": "Execute deleteSubscription",
+              "userRole": "admin",
+              "expectedResult": "deleteSubscription completes successfully",
+              "validations": "Date validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 4,
+              "action": "Execute getSubscriptions",
+              "userRole": "",
+              "expectedResult": "getSubscriptions completes successfully",
+              "validations": "",
+              "sideEffects": "database_modification, external_api_call"
+            },
+            {
+              "stepNumber": 5,
+              "action": "Execute getSubscriptionById",
+              "userRole": "",
+              "expectedResult": "getSubscriptionById completes successfully",
+              "validations": "",
+              "sideEffects": "external_api_call"
+            },
+            {
+              "stepNumber": 6,
+              "action": "Execute toggleSubscriptionStatus",
+              "userRole": "admin",
+              "expectedResult": "toggleSubscriptionStatus completes successfully",
+              "validations": "Date validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 7,
+              "action": "Execute getActiveSubscriptions",
+              "userRole": "",
+              "expectedResult": "getActiveSubscriptions completes successfully",
+              "validations": "",
+              "sideEffects": "database_modification, external_api_call"
+            },
+            {
+              "stepNumber": 8,
+              "action": "Execute getActiveSubscriptionsForPurchase",
+              "userRole": "",
+              "expectedResult": "getActiveSubscriptionsForPurchase completes successfully",
+              "validations": "",
+              "sideEffects": "database_modification, external_api_call"
+            },
+            {
+              "stepNumber": 9,
+              "action": "Execute purchaseSubscription",
+              "userRole": "member or admin",
+              "expectedResult": "purchaseSubscription completes successfully",
+              "validations": "Email format validation, Israeli phone number validation, Required field validation, Date validation, Payment validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 10,
+              "action": "Execute getUserSubscriptions",
+              "userRole": "",
+              "expectedResult": "getUserSubscriptions completes successfully",
+              "validations": "",
+              "sideEffects": "external_api_call"
+            },
+            {
+              "stepNumber": 11,
+              "action": "Execute getAllUserSubscriptions",
+              "userRole": "guest or admin",
+              "expectedResult": "getAllUserSubscriptions completes successfully",
+              "validations": "",
+              "sideEffects": "external_api_call"
+            },
+            {
+              "stepNumber": 12,
+              "action": "Execute useSubscription",
+              "userRole": "member or admin",
+              "expectedResult": "useSubscription completes successfully",
+              "validations": "Date validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 13,
+              "action": "Execute cancelSubscription",
+              "userRole": "member or admin",
+              "expectedResult": "cancelSubscription completes successfully",
+              "validations": "Date validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 14,
+              "action": "Execute deleteUserSubscription",
+              "userRole": "member or admin",
+              "expectedResult": "deleteUserSubscription completes successfully",
+              "validations": "Date validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 15,
+              "action": "Execute purchaseGuestSubscription",
+              "userRole": "guest or admin",
+              "expectedResult": "purchaseGuestSubscription completes successfully",
+              "validations": "Email format validation, Israeli phone number validation, Required field validation, Date validation, Payment validation",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 16,
+              "action": "Execute saveAbandonedSubscriptionPurchase",
+              "userRole": "guest",
+              "expectedResult": "saveAbandonedSubscriptionPurchase completes successfully",
+              "validations": "",
+              "sideEffects": "database_modification"
+            },
+            {
+              "stepNumber": 17,
+              "action": "Execute getUserSubscriptionById",
+              "userRole": "admin",
+              "expectedResult": "getUserSubscriptionById completes successfully",
+              "validations": "",
+              "sideEffects": "external_api_call"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_1_1",
+          "name": "Subscription Management - Error at Step 1",
+          "type": "error_path",
+          "userRoles": [
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 1,
+              "action": "Execute createSubscription with error condition",
+              "userRole": "admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Date validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_2_1",
+          "name": "Subscription Management - Error at Step 2",
+          "type": "error_path",
+          "userRoles": [
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 2,
+              "action": "Execute updateSubscription with error condition",
+              "userRole": "admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Date validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_3_1",
+          "name": "Subscription Management - Error at Step 3",
+          "type": "error_path",
+          "userRoles": [
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 3,
+              "action": "Execute deleteSubscription with error condition",
+              "userRole": "admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Date validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_4_1",
+          "name": "Subscription Management - Error at Step 4",
+          "type": "error_path",
+          "userRoles": [],
+          "steps": [
+            {
+              "stepNumber": 4,
+              "action": "Execute getSubscriptions with error condition",
+              "userRole": "",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_5_1",
+          "name": "Subscription Management - Error at Step 5",
+          "type": "error_path",
+          "userRoles": [],
+          "steps": [
+            {
+              "stepNumber": 5,
+              "action": "Execute getSubscriptionById with error condition",
+              "userRole": "",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_6_1",
+          "name": "Subscription Management - Error at Step 6",
+          "type": "error_path",
+          "userRoles": [
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 6,
+              "action": "Execute toggleSubscriptionStatus with error condition",
+              "userRole": "admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Date validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_7_1",
+          "name": "Subscription Management - Error at Step 7",
+          "type": "error_path",
+          "userRoles": [],
+          "steps": [
+            {
+              "stepNumber": 7,
+              "action": "Execute getActiveSubscriptions with error condition",
+              "userRole": "",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_8_1",
+          "name": "Subscription Management - Error at Step 8",
+          "type": "error_path",
+          "userRoles": [],
+          "steps": [
+            {
+              "stepNumber": 8,
+              "action": "Execute getActiveSubscriptionsForPurchase with error condition",
+              "userRole": "",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_9_1",
+          "name": "Subscription Management - Error at Step 9",
+          "type": "error_path",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 9,
+              "action": "Execute purchaseSubscription with error condition",
+              "userRole": "member or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Email format validation, Israeli phone number validation, Required field validation, Date validation, Payment validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_9_2",
+          "name": "Subscription Management - Error at Step 9",
+          "type": "error_path",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 9,
+              "action": "Execute purchaseSubscription with error condition",
+              "userRole": "member or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Email format validation, Israeli phone number validation, Required field validation, Date validation, Payment validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_10_1",
+          "name": "Subscription Management - Error at Step 10",
+          "type": "error_path",
+          "userRoles": [],
+          "steps": [
+            {
+              "stepNumber": 10,
+              "action": "Execute getUserSubscriptions with error condition",
+              "userRole": "",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_11_1",
+          "name": "Subscription Management - Error at Step 11",
+          "type": "error_path",
+          "userRoles": [
+            "guest",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 11,
+              "action": "Execute getAllUserSubscriptions with error condition",
+              "userRole": "guest or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_12_1",
+          "name": "Subscription Management - Error at Step 12",
+          "type": "error_path",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 12,
+              "action": "Execute useSubscription with error condition",
+              "userRole": "member or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Date validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_13_1",
+          "name": "Subscription Management - Error at Step 13",
+          "type": "error_path",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 13,
+              "action": "Execute cancelSubscription with error condition",
+              "userRole": "member or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Date validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_14_1",
+          "name": "Subscription Management - Error at Step 14",
+          "type": "error_path",
+          "userRoles": [
+            "member",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 14,
+              "action": "Execute deleteUserSubscription with error condition",
+              "userRole": "member or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Date validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_15_1",
+          "name": "Subscription Management - Error at Step 15",
+          "type": "error_path",
+          "userRoles": [
+            "guest",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 15,
+              "action": "Execute purchaseGuestSubscription with error condition",
+              "userRole": "guest or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Email format validation, Israeli phone number validation, Required field validation, Date validation, Payment validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_15_2",
+          "name": "Subscription Management - Error at Step 15",
+          "type": "error_path",
+          "userRoles": [
+            "guest",
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 15,
+              "action": "Execute purchaseGuestSubscription with error condition",
+              "userRole": "guest or admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "Email format validation, Israeli phone number validation, Required field validation, Date validation, Payment validation",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_16_1",
+          "name": "Subscription Management - Error at Step 16",
+          "type": "error_path",
+          "userRoles": [
+            "guest"
+          ],
+          "steps": [
+            {
+              "stepNumber": 16,
+              "action": "Execute saveAbandonedSubscriptionPurchase with error condition",
+              "userRole": "guest",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        },
+        {
+          "id": "subscription_management_error_step_17_1",
+          "name": "Subscription Management - Error at Step 17",
+          "type": "error_path",
+          "userRoles": [
+            "admin"
+          ],
+          "steps": [
+            {
+              "stepNumber": 17,
+              "action": "Execute getUserSubscriptionById with error condition",
+              "userRole": "admin",
+              "expectedResult": "Error handled: try-catch",
+              "validations": "",
+              "sideEffects": "Error logging, user notification"
+            }
+          ],
+          "integrations": [
+            "payment_gateway",
+            "database"
+          ]
+        }
+      ],
+      "validationScenarios": [
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_email_valid",
+          "type": "validation_success",
+          "field": "email",
+          "rule": "Email format validation",
+          "testCase": "Valid email input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_email_invalid",
+          "type": "validation_failure",
+          "field": "email",
+          "rule": "Email format validation",
+          "testCase": "Invalid email input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_phone_valid",
+          "type": "validation_success",
+          "field": "phone",
+          "rule": "Israeli phone number validation",
+          "testCase": "Valid phone input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_phone_invalid",
+          "type": "validation_failure",
+          "field": "phone",
+          "rule": "Israeli phone number validation",
+          "testCase": "Invalid phone input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_required_valid",
+          "type": "validation_success",
+          "field": "required",
+          "rule": "Required field validation",
+          "testCase": "Valid required input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_required_invalid",
+          "type": "validation_failure",
+          "field": "required",
+          "rule": "Required field validation",
+          "testCase": "Invalid required input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_payment_valid",
+          "type": "validation_success",
+          "field": "payment",
+          "rule": "Payment validation",
+          "testCase": "Valid payment input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_payment_invalid",
+          "type": "validation_failure",
+          "field": "payment",
+          "rule": "Payment validation",
+          "testCase": "Invalid payment input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_email_valid",
+          "type": "validation_success",
+          "field": "email",
+          "rule": "Email format validation",
+          "testCase": "Valid email input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_email_invalid",
+          "type": "validation_failure",
+          "field": "email",
+          "rule": "Email format validation",
+          "testCase": "Invalid email input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_phone_valid",
+          "type": "validation_success",
+          "field": "phone",
+          "rule": "Israeli phone number validation",
+          "testCase": "Valid phone input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_phone_invalid",
+          "type": "validation_failure",
+          "field": "phone",
+          "rule": "Israeli phone number validation",
+          "testCase": "Invalid phone input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_required_valid",
+          "type": "validation_success",
+          "field": "required",
+          "rule": "Required field validation",
+          "testCase": "Valid required input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_required_invalid",
+          "type": "validation_failure",
+          "field": "required",
+          "rule": "Required field validation",
+          "testCase": "Invalid required input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_valid",
+          "type": "validation_success",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Valid date input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_date_invalid",
+          "type": "validation_failure",
+          "field": "date",
+          "rule": "Date validation",
+          "testCase": "Invalid date input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_payment_valid",
+          "type": "validation_success",
+          "field": "payment",
+          "rule": "Payment validation",
+          "testCase": "Valid payment input",
+          "expectedResult": "Validation passes",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        },
+        {
+          "id": "validation_payment_invalid",
+          "type": "validation_failure",
+          "field": "payment",
+          "rule": "Payment validation",
+          "testCase": "Invalid payment input",
+          "expectedResult": "Validation fails with appropriate error message",
+          "userRoles": [
+            "guest",
+            "admin"
+          ]
+        }
+      ],
+      "errorScenarios": [
+        {
+          "id": "payment_gateway_failure",
+          "type": "integration_failure",
+          "integration": "payment_gateway",
+          "scenario": "payment_gateway service unavailable",
+          "expectedResult": "Graceful degradation or retry mechanism",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        },
+        {
+          "id": "database_failure",
+          "type": "integration_failure",
+          "integration": "database",
+          "scenario": "database service unavailable",
+          "expectedResult": "Graceful degradation or retry mechanism",
+          "userRoles": [
+            "member",
+            "admin"
+          ]
+        }
+      ],
+      "integrationPoints": [
+        "payment_gateway",
+        "database"
+      ]
+    }
+  ],
+  "userJourneys": [
+    {
+      "userRole": "guest",
+      "journey": "Complete Booking",
+      "steps": [
+        "Navigate to booking page",
+        "Fill guest information",
+        "Select treatment",
+        "Choose date and time",
+        "Enter address",
+        "Make payment",
+        "Receive confirmation"
+      ]
+    },
+    {
+      "userRole": "member",
+      "journey": "Book with Subscription",
+      "steps": [
+        "Login to account",
+        "Navigate to booking",
+        "Select subscription treatment",
+        "Choose date and time",
+        "Select saved address",
+        "Confirm booking (no payment)",
+        "Receive confirmation"
+      ]
+    },
+    {
+      "userRole": "professional",
+      "journey": "Respond to Booking",
+      "steps": [
+        "Receive SMS notification",
+        "Click response link",
+        "View booking details",
+        "Accept or decline",
+        "Update booking status",
+        "Complete service",
+        "Mark as completed"
+      ]
+    }
+  ],
+  "crossRoleScenarios": [
+    {
+      "id": "booking_professional_assignment",
+      "name": "Booking with Professional Assignment",
+      "involvedRoles": [
+        "guest/member",
+        "professional",
+        "admin"
+      ],
+      "flow": [
+        "Customer creates booking",
+        "System finds suitable professionals",
+        "SMS sent to professionals",
+        "Professional responds within 30 minutes",
+        "Booking assigned to professional",
+        "Other professionals notified",
+        "Admin monitors if no response"
+      ]
+    }
+  ],
+  "integrationScenarios": [
+    {
+      "integration": "SMS Service",
+      "scenarios": [
+        "SMS sent successfully",
+        "SMS service unavailable",
+        "SMS delivery delayed",
+        "Invalid phone number"
+      ]
+    },
+    {
+      "integration": "Payment Gateway",
+      "scenarios": [
+        "Payment processed successfully",
+        "Payment declined",
+        "Payment gateway timeout",
+        "Invalid payment method"
+      ]
+    }
+  ],
+  "securityScenarios": [
+    {
+      "type": "Authentication",
+      "scenarios": [
+        "Valid user login",
+        "Invalid credentials",
+        "Session expiry",
+        "Unauthorized access attempt"
+      ]
+    },
+    {
+      "type": "Authorization",
+      "scenarios": [
+        "Admin accessing admin functions",
+        "Member accessing member functions",
+        "Cross-role access attempt",
+        "Unauthenticated access attempt"
+      ]
+    }
+  ]
+}

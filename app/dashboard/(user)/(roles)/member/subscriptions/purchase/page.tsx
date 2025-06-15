@@ -1,13 +1,21 @@
 import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
 import { getActivePaymentMethods } from "@/actions/payment-method-actions"
-import PurchaseSubscriptionClient from "@/components/dashboard/member/subscriptions/purchase-subscription-client"
+import UnifiedSubscriptionWizard from "@/components/subscriptions/unified-subscription-wizard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth/auth"
+import { redirect } from "next/navigation"
 
 // Force this page to be dynamic since it requires user authentication
 export const dynamic = 'force-dynamic'
 
 export default async function PurchaseSubscriptionPage() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    redirect("/auth/login")
+  }
+
   const [subscriptionsData, treatmentsData, paymentMethodsData] = await Promise.all([
     getActiveSubscriptionsForPurchase(),
     getActiveTreatmentsForPurchase(),
@@ -15,7 +23,6 @@ export default async function PurchaseSubscriptionPage() {
   ])
 
   if (!subscriptionsData.success || !treatmentsData.success || !paymentMethodsData.success) {
-    // Handle error state more gracefully
     console.error("Failed to load data for purchase page:", {
       subscriptionsError: subscriptionsData.error,
       treatmentsError: treatmentsData.error,
@@ -34,14 +41,12 @@ export default async function PurchaseSubscriptionPage() {
     )
   }
 
-  // Debug log to verify treatments are being fetched
-  console.log("Treatments fetched:", treatmentsData.treatments?.length || 0)
-
   return (
-    <PurchaseSubscriptionClient
+    <UnifiedSubscriptionWizard
       subscriptions={subscriptionsData.subscriptions || []}
       treatments={treatmentsData.treatments || []}
-      paymentMethods={paymentMethodsData.paymentMethods || []}
+      initialPaymentMethods={paymentMethodsData.paymentMethods || []}
+      currentUser={session.user}
     />
   )
 }

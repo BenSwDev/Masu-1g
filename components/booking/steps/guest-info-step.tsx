@@ -50,6 +50,7 @@ interface GuestInfoStepProps {
   defaultBookingForSomeoneElse?: boolean
   hideRecipientBirthGender?: boolean
   showGiftOptions?: boolean
+  isRegisteredUser?: boolean
 }
 
 export function GuestInfoStep({
@@ -59,6 +60,7 @@ export function GuestInfoStep({
   defaultBookingForSomeoneElse = false,
   hideRecipientBirthGender = false,
   showGiftOptions = false,
+  isRegisteredUser = false,
 }: GuestInfoStepProps) {
   const { t, dir, language } = useTranslation()
   const [isBookingForSomeoneElse, setIsBookingForSomeoneElse] = useState(
@@ -243,7 +245,12 @@ export function GuestInfoStep({
                     <FormItem>
                       <FormLabel>{t("guestInfo.firstName")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder={t("guestInfo.firstNamePlaceholder")} {...field} />
+                        <Input 
+                          placeholder={t("guestInfo.firstNamePlaceholder")} 
+                          {...field} 
+                          disabled={isRegisteredUser}
+                          className={isRegisteredUser ? "bg-muted" : ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -257,7 +264,12 @@ export function GuestInfoStep({
                     <FormItem>
                       <FormLabel>{t("guestInfo.lastName")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder={t("guestInfo.lastNamePlaceholder")} {...field} />
+                        <Input 
+                          placeholder={t("guestInfo.lastNamePlaceholder")} 
+                          {...field} 
+                          disabled={isRegisteredUser}
+                          className={isRegisteredUser ? "bg-muted" : ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -275,7 +287,13 @@ export function GuestInfoStep({
                       {t("guestInfo.email")} *
                     </FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder={t("guestInfo.emailPlaceholder")} {...field} />
+                      <Input 
+                        type="email" 
+                        placeholder={t("guestInfo.emailPlaceholder")} 
+                        {...field} 
+                        disabled={isRegisteredUser}
+                        className={isRegisteredUser ? "bg-muted" : ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -292,7 +310,11 @@ export function GuestInfoStep({
                       {t("guestInfo.phone")} *
                     </FormLabel>
                     <FormControl>
-                      <PhoneInput {...field} placeholder={t("guestInfo.phonePlaceholder")} />
+                      <PhoneInput 
+                        {...field} 
+                        placeholder={t("guestInfo.phonePlaceholder")} 
+                        disabled={isRegisteredUser}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

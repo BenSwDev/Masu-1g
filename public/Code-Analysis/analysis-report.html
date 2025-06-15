@@ -1,0 +1,1748 @@
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MASU Code Analysis Report</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; text-align: center; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 30px 0; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        .stat-number { font-size: 2.5rem; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; margin-top: 10px; }
+        .section { background: white; margin: 20px 0; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .file-item { background: #f8f9fa; margin: 10px 0; padding: 15px; border-radius: 8px; border-right: 4px solid #667eea; }
+        .complexity-high { border-right-color: #e74c3c; }
+        .complexity-medium { border-right-color: #f39c12; }
+        .complexity-low { border-right-color: #2ecc71; }
+        .conditional-item { background: #e8f4fd; margin: 5px 0; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: right; }
+        th { background: #f8f9fa; font-weight: bold; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .scenario-item { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 MASU Code Analysis Report</h1>
+            <p>ניתוח אוטומטי מלא של הקוד - 15.6.2025</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">380</div>
+                <div class="stat-label">קבצים נותחו</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">6400</div>
+                <div class="stat-label">מורכבות כוללת</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1868</div>
+                <div class="stat-label">תנאים נמצאו</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1680</div>
+                <div class="stat-label">תרחישי בדיקה</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 קבצים לפי מורכבות</h2>
+            
+                <div class="file-item complexity-high">
+                    <h3>actions\booking-actions.ts</h3>
+                    <p><strong>שורות:</strong> 2638 | <strong>מורכבות:</strong> 501 | <strong>פונקציות:</strong> 53</p>
+                    
+                        <h4>תנאים (211):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 64: settings.specialDateEvents
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 68: isSameDay(new Date(eventDate), date)
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 73: specialDateSetting
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 87: isNaN(selectedDateUTC.getTime())
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 98: !treatment || !treatment.isActive
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>actions\gift-voucher-actions.ts</h3>
+                    <p><strong>שורות:</strong> 1664 | <strong>מורכבות:</strong> 295 | <strong>פונקציות:</strong> 41</p>
+                    
+                        <h4>תנאים (153):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 22: !exists
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 33: !voucherDocOrPlain
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 38: typeof (voucherDocOrPlain as IGiftVoucher).toObject === "function"
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 49: purchaserUserIdStr
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 53: voucher.guestInfo
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>lib\notifications\templates\email-templates.ts</h3>
+                    <p><strong>שורות:</strong> 553 | <strong>מורכבות:</strong> 199 | <strong>פונקציות:</strong> 2</p>
+                    
+                        <h4>תנאים (3):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>SWITCH</strong> בשורה 123: data.type
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 145: isForSomeoneElse
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 218: data.isBookerForSomeoneElse && data.actualRecipientName
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>actions\purchase-summary-actions.ts</h3>
+                    <p><strong>שורות:</strong> 775 | <strong>מורכבות:</strong> 154 | <strong>פונקציות:</strong> 50</p>
+                    
+                        <h4>תנאים (33):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 27: !session?.user?.id
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 30: !isConnected
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 36: !filters?.type || filters.type.includes('booking')
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 73: !filters?.type || filters.type.includes('subscription')
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 103: !filters?.type || filters.type.includes('gift_voucher')
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\common\purchase\purchase-history-table.tsx</h3>
+                    <p><strong>שורות:</strong> 755 | <strong>מורכבות:</strong> 149 | <strong>פונקציות:</strong> 15</p>
+                    
+                        <h4>תנאים (11):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>SWITCH</strong> בשורה 29: status
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>SWITCH</strong> בשורה 38: status
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>SWITCH</strong> בשורה 53: type
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>SWITCH</strong> בשורה 60: type
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 69: amount === undefined || amount === null
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\dashboard\admin\bookings\admin-bookings-columns.tsx</h3>
+                    <p><strong>שורות:</strong> 873 | <strong>מורכבות:</strong> 122 | <strong>פונקציות:</strong> 44</p>
+                    
+                        <h4>תנאים (36):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 27: !date
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 31: !date
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 35: !date
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 42: !date
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 56: !selectedProfessional
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\dashboard\admin\bookings\comprehensive-booking-edit-modal.tsx</h3>
+                    <p><strong>שורות:</strong> 1002 | <strong>מורכבות:</strong> 122 | <strong>פונקציות:</strong> 36</p>
+                    
+                        <h4>תנאים (18):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 40: booking
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 42: !booking
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 43: !date
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 45: isNaN(d.getTime())
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 52: !date
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\booking\guest-booking-wizard.tsx</h3>
+                    <p><strong>שורות:</strong> 911 | <strong>מורכבות:</strong> 111 | <strong>פונקציות:</strong> 36</p>
+                    
+                        <h4>תנאים (33):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 112: currentStep === 1 && !guestUserId
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 121: updatedState.firstName && updatedState.lastName && updatedState.email && updatedState.phone
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 142: result.success && result.userId
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 190: result.success
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 206: savedUserId
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>actions\user-subscription-actions.ts</h3>
+                    <p><strong>שורות:</strong> 790 | <strong>מורכבות:</strong> 104 | <strong>פונקציות:</strong> 16</p>
+                    
+                        <h4>תנאים (50):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 32: !sessionData || !sessionData.user
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 49: subscriptionResult.status === "rejected" || treatmentResult.status === "rejected" || paymentMethodResult.status === "rejected"
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 73: !subscription || !subscription.isActive
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 77: !treatment || !treatment.isActive
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 82: !paymentMethod || paymentMethod.userId.toString() !== sessionData.user.id
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\dashboard\admin\working-hours\working-hours-client.tsx</h3>
+                    <p><strong>שורות:</strong> 1935 | <strong>מורכבות:</strong> 104 | <strong>פונקציות:</strong> 101</p>
+                    
+                        <h4>תנאים (9):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 130: !result.success
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 160: workingHoursData?.fixedHours
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 229: editingSpecialDateIndex !== null
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 246: !date
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 274: editingSpecialEventIndex !== null
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\dashboard\member\bookings\booking-details-view.tsx</h3>
+                    <p><strong>שורות:</strong> 666 | <strong>מורכבות:</strong> 102 | <strong>פונקציות:</strong> 15</p>
+                    
+                        <h4>תנאים (12):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 40: populatedTreatment?.pricingType === "duration_based" && selectedDurationId && populatedTreatment.durations
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>SWITCH</strong> בשורה 48: statusKey
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 104: !preferenceKey
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 109: source === "subscription_redemption"
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 111: source === "gift_voucher_redemption"
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\dashboard\member\gift-vouchers\purchase-gift-voucher-client.tsx</h3>
+                    <p><strong>שורות:</strong> 852 | <strong>מורכבות:</strong> 101 | <strong>פונקציות:</strong> 52</p>
+                    
+                        <h4>תנאים (38):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 56: !minutes
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 59: hours > 0
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 61: mins > 0
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 61: hours > 0
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 110: isGift
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>actions\working-hours-actions.ts</h3>
+                    <p><strong>שורות:</strong> 556 | <strong>מורכבות:</strong> 87 | <strong>פונקציות:</strong> 24</p>
+                    
+                        <h4>תנאים (26):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 11: !settings
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 27: settings.fixedHours
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 57: !fixedHours || fixedHours.length !== 7
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 65: !dayExists
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 79: !settings
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\dashboard\admin\customers\customers-client.tsx</h3>
+                    <p><strong>שורות:</strong> 614 | <strong>מורכבות:</strong> 83 | <strong>פונקציות:</strong> 27</p>
+                    
+                        <h4>תנאים (9):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 52: result.success && result.data
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 73: result.success && result.data
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 100: amount === undefined || amount === null
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 103: isNaN(numericAmount)
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 109: userType === 'guest'
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\common\purchase\purchase-filters.tsx</h3>
+                    <p><strong>שורות:</strong> 421 | <strong>מורכבות:</strong> 81 | <strong>פונקציות:</strong> 28</p>
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\dashboard\member\book-treatment\steps\scheduling-step.tsx</h3>
+                    <p><strong>שורות:</strong> 529 | <strong>מורכבות:</strong> 80 | <strong>פונקציות:</strong> 34</p>
+                    
+                        <h4>תנאים (26):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 47: !address
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 51: address.addressType === "apartment" && address.apartmentDetails
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 53: address.apartmentDetails.floor !== undefined && address.apartmentDetails.floor !== null
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 57: address.apartmentDetails.apartmentNumber
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 60: address.apartmentDetails.entrance
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\dashboard\member\book-treatment\steps\treatment-selection-step.tsx</h3>
+                    <p><strong>שורות:</strong> 474 | <strong>מורכבות:</strong> 79 | <strong>פונקציות:</strong> 35</p>
+                    
+                        <h4>תנאים (17):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 61: !selectedCategory
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 87: currentSource === "new_purchase"
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 92: bookingOptions.source === "subscription_redemption" && form.getValues("selectedUserSubscriptionId")
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 100: sub && sub.treatmentId
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 107: sub.selectedDurationId || sub.selectedDurationDetails?._id
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\dashboard\layout\sidebar.tsx</h3>
+                    <p><strong>שורות:</strong> 720 | <strong>מורכבות:</strong> 78 | <strong>פונקציות:</strong> 43</p>
+                    
+                        <h4>תנאים (17):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 42: !session?.user
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 44: !roles || roles.length <= 1
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>SWITCH</strong> בשורה 46: role
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>SWITCH</strong> בשורה 54: role
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 62: role === activeRole
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>lib\auth\auth.ts</h3>
+                    <p><strong>שורות:</strong> 306 | <strong>מורכבות:</strong> 77 | <strong>פונקציות:</strong> 15</p>
+                    
+                        <h4>תנאים (42):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 25: password.length < 8
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 27: !/[A-Z]/.test(password)
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 30: !/[a-z]/.test(password)
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 32: !/[0-9]/.test(password)
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 40: !cleaned.startsWith("+")
+                            </div>
+                        
+                    
+                </div>
+            
+                <div class="file-item complexity-high">
+                    <h3>components\booking\steps\guest-booking-confirmation.tsx</h3>
+                    <p><strong>שורות:</strong> 309 | <strong>מורכבות:</strong> 73 | <strong>פונקציות:</strong> 10</p>
+                    
+                        <h4>תנאים (16):</h4>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 20: !bookingResult?.treatmentId
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 27: !date
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 29: !isValid(dateObj)
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 33: !date
+                            </div>
+                        
+                            <div class="conditional-item">
+                                <strong>IF</strong> בשורה 35: !isValid(dateObj)
+                            </div>
+                        
+                    
+                </div>
+            
+        </div>
+
+        <div class="section">
+            <h2>🧪 תרחישי בדיקה מומלצים</h2>
+            <p>תרחישים שנוצרו אוטומטית על בסיס ניתוח הקוד:</p>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 1: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 64</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when settings.specialDateEvents is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 2: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 68</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when isSameDay(new Date(eventDate), date) is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 3: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 73</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when specialDateSetting is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 4: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 87</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when isNaN(selectedDateUTC.getTime()) is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 5: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 98</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !treatment || !treatment.isActive is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 6: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 100</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !settings is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 7: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 104</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when treatment.pricingType === "fixed" is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 8: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 107</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when treatment.pricingType === "duration_based" is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 9: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 108</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !selectedDurationId is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 10: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 112</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !durationObj is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 11: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 115</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when treatmentDurationMinutes <= 0 is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 12: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 119</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !daySettings || !daySettings.isActive is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 13: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 130</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when isToday && 'cutoffTime' in daySettings && daySettings.cutoffTime is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 14: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 137</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when isToday && isCutoffTimeReached is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 15: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 159</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when endTimeMinutes <= startTimeMinutes is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 16: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 170</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when daySettings.hasPriceAddition && daySettings.priceAddition && daySettings.priceAddition.amount > 0 is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 17: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 194</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when isSlotAvailable is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 18: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 197</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when surchargeAmount > 0 is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 19: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 204</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !isToday && 'cutoffTime' in daySettings && daySettings.cutoffTime is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 20: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 220</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !validationResult.success is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 21: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 237</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !treatment || !treatment.isActive is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 22: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 240</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when treatment.pricingType === "fixed" is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 23: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 242</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when treatment.pricingType === "duration_based" is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 24: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 243</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !selectedDurationId is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 25: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 247</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !duration is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 26: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 260</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when settings is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 27: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 262</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when daySettings?.isActive &&
+        daySettings.hasPriceAddition &&
+        daySettings.priceAddition?.amount &&
+        daySettings.priceAddition.amount > 0 is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 28: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 271</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when surchargeAmount > 0 is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 29: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 279</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when userSubscriptionId is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 30: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 286</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when userSub &&
+        ((userSub.userId && userId && userSub.userId.toString() === userId) || (userSub.userId == null && userId == null)) &&
+        userSub.status === "active" &&
+        userSub.remainin is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 31: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 294</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when isTreatmentMatch && subTreatment.pricingType === "duration_based" is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 32: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 301</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when isTreatmentMatch && isDurationMatch is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 33: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 307</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when giftVoucherCode is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 34: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 312</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when voucher && voucher.isActive is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 35: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 314</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when voucher.voucherType === "treatment" is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 36: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 318</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when treatment.pricingType === "duration_based" is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 37: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 322</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !voucher.selectedDurationId is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 38: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 325</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when treatmentMatches && durationMatches && !priceDetails.isBaseTreatmentCoveredBySubscription is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 39: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 335</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when priceDetails.appliedGiftVoucherId && subtotalBeforeGeneralReductions > 0 is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 40: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 340</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when voucherToApply &&
+        voucherToApply.isActive &&
+        voucherToApply.voucherType === "monetary" &&
+        voucherToApply.remainingAmount &&
+        voucherToApply.remainingAmount > 0 is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 41: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 346</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when amountToApplyFromMonetary > 0 is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 42: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 352</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when currentTotalDue > 0 && couponCode && !giftVoucherCode && !userSubscriptionId is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 43: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 356</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when coupon &&
+        coupon.isActive &&
+        new Date(coupon.validFrom) <= now &&
+        new Date(coupon.validUntil) >= now &&
+        (coupon.usageLimit === 0 || coupon.timesUsed < coupon.usageLimit is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 44: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 361</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when coupon.discountType === "percentage" is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 45: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 371</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when priceDetails.isBaseTreatmentCoveredBySubscription || priceDetails.isBaseTreatmentCoveredByTreatmentVoucher is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 46: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 386</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !validationResult.success is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 47: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 395</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !session || session.user.id !== validatedPayload.userId is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 48: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 403</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !bookingUser is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 49: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 407</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when validatedPayload.customAddressDetails is true/false</p>
+                </div>
+            
+                <div class="scenario-item">
+                    <h4>תרחיש 50: booking-actions.ts</h4>
+                    <p><strong>קובץ:</strong> actions\booking-actions.ts</p>
+                    <p><strong>סוג:</strong> if</p>
+                    <p><strong>שורה:</strong> 408</p>
+                    <p><strong>תיאור:</strong> Test booking-actions: Verify behavior when !validatedPayload.customAddressDetails.fullAddress is true/false</p>
+                </div>
+            
+        </div>
+
+        <div class="section">
+            <h2>📋 סיכום פונקציות</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>קובץ</th>
+                        <th>פונקציה</th>
+                        <th>פרמטרים</th>
+                        <th>אסינכרונית</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                            <tr>
+                                <td>booking-actions.ts</td>
+                                <td>isSameDay</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-actions.ts</td>
+                                <td>getDayWorkingHours</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-actions.ts</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>gift-voucher-actions.ts</td>
+                                <td>generateUniqueVoucherCode</td>
+                                <td>0</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>gift-voucher-actions.ts</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>gift-voucher-actions.ts</td>
+                                <td>toGiftVoucherPlain</td>
+                                <td>1</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>email-templates.ts</td>
+                                <td>getEmailTemplate</td>
+                                <td>3</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>email-templates.ts</td>
+                                <td>wrapHtml</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-summary-actions.ts</td>
+                                <td>safeDbConnect</td>
+                                <td>0</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-summary-actions.ts</td>
+                                <td>getUserPurchaseHistory</td>
+                                <td>3</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-summary-actions.ts</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-history-table.tsx</td>
+                                <td>PurchaseHistoryTable</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-history-table.tsx</td>
+                                <td>getStatusBadgeVariant</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-history-table.tsx</td>
+                                <td>getStatusText</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>admin-bookings-columns.tsx</td>
+                                <td>formatDateSafe</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>admin-bookings-columns.tsx</td>
+                                <td>formatTimeSafe</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>admin-bookings-columns.tsx</td>
+                                <td>formatDateTimeSafe</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>comprehensive-booking-edit-modal.tsx</td>
+                                <td>ComprehensiveBookingEditModal</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>comprehensive-booking-edit-modal.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>comprehensive-booking-edit-modal.tsx</td>
+                                <td>formatDateTime</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-booking-wizard.tsx</td>
+                                <td>GuestBookingWizard</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-booking-wizard.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-booking-wizard.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>user-subscription-actions.ts</td>
+                                <td>purchaseSubscription</td>
+                                <td>1</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>user-subscription-actions.ts</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>user-subscription-actions.ts</td>
+                                <td>getUserSubscriptions</td>
+                                <td>0</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>working-hours-client.tsx</td>
+                                <td>getDefaultFixedHours</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>working-hours-client.tsx</td>
+                                <td>WorkingHoursClient</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>working-hours-client.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-details-view.tsx</td>
+                                <td>BookingDetailsView</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-details-view.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-details-view.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-gift-voucher-client.tsx</td>
+                                <td>formatMinutesToDurationString</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-gift-voucher-client.tsx</td>
+                                <td>PurchaseGiftVoucherClient</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-gift-voucher-client.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>working-hours-actions.ts</td>
+                                <td>getWorkingHoursSettings</td>
+                                <td>0</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>working-hours-actions.ts</td>
+                                <td>anonymous</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>working-hours-actions.ts</td>
+                                <td>anonymous</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>customers-client.tsx</td>
+                                <td>CustomersClient</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>customers-client.tsx</td>
+                                <td>loadCustomers</td>
+                                <td>3</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>customers-client.tsx</td>
+                                <td>loadCustomerTransactions</td>
+                                <td>1</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-filters.tsx</td>
+                                <td>PurchaseFiltersComponent</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-filters.tsx</td>
+                                <td>handleTypeChange</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-filters.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>scheduling-step.tsx</td>
+                                <td>SelectedAddressDetailsDisplay</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>scheduling-step.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>scheduling-step.tsx</td>
+                                <td>anonymous</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>treatment-selection-step.tsx</td>
+                                <td>TreatmentSelectionStep</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>treatment-selection-step.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>treatment-selection-step.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>sidebar.tsx</td>
+                                <td>RoleSwitcher</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>sidebar.tsx</td>
+                                <td>getRoleIcon</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>sidebar.tsx</td>
+                                <td>getRoleLabel</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>auth.ts</td>
+                                <td>hashPassword</td>
+                                <td>1</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>auth.ts</td>
+                                <td>verifyPassword</td>
+                                <td>2</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>auth.ts</td>
+                                <td>validatePassword</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-booking-confirmation.tsx</td>
+                                <td>GuestBookingConfirmation</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-booking-confirmation.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-booking-confirmation.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-wizard.tsx</td>
+                                <td>BookingWizard</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-wizard.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-wizard.tsx</td>
+                                <td>fetchSlots</td>
+                                <td>0</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>bookings-columns.tsx</td>
+                                <td>ReviewAction</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>bookings-columns.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>bookings-columns.tsx</td>
+                                <td>handleCreateReview</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-info-step.tsx</td>
+                                <td>GuestInfoStep</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-info-step.tsx</td>
+                                <td>isAtLeast16YearsOld</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-info-step.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>user-management.tsx</td>
+                                <td>calculateAge</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>user-management.tsx</td>
+                                <td>formatDate</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>user-management.tsx</td>
+                                <td>getAvatarGradient</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-confirmation.tsx</td>
+                                <td>BookingConfirmation</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-confirmation.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>booking-confirmation.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>admin-actions.ts</td>
+                                <td>sanitizeUser</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>admin-actions.ts</td>
+                                <td>getAllUsers</td>
+                                <td>6</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>admin-actions.ts</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>otp-form.tsx</td>
+                                <td>OTPForm</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>otp-form.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>otp-form.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>summary-step.tsx</td>
+                                <td>SummaryStep</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>summary-step.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>summary-step.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>notification-actions.ts</td>
+                                <td>generateAndSendOTP</td>
+                                <td>3</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>notification-actions.ts</td>
+                                <td>verifyOTP</td>
+                                <td>3</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>notification-actions.ts</td>
+                                <td>sendWelcomeEmail</td>
+                                <td>3</td>
+                                <td>✅</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>chart.tsx</td>
+                                <td>useChart</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>chart.tsx</td>
+                                <td>anonymous</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>chart.tsx</td>
+                                <td>ChartStyle</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>chart.tsx</td>
+                                <td>useChart</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>chart.tsx</td>
+                                <td>anonymous</td>
+                                <td>2</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>chart.tsx</td>
+                                <td>ChartStyle</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-stats-overview.tsx</td>
+                                <td>PurchaseStatsOverview</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-stats-overview.tsx</td>
+                                <td>formatCurrency</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-stats-overview.tsx</td>
+                                <td>formatPercentage</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-subscription-client.tsx</td>
+                                <td>PurchaseSubscriptionClient</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-subscription-client.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>purchase-subscription-client.tsx</td>
+                                <td>anonymous</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-summary-step.tsx</td>
+                                <td>GuestSummaryStep</td>
+                                <td>1</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>guest-summary-step.tsx</td>
+                                <td>anonymous</td>
+                                <td>0</td>
+                                <td>❌</td>
+                            </tr>
+                        
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

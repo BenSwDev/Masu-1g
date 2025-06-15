@@ -1,6 +1,6 @@
 import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
-import GuestSubscriptionWizard from "@/components/subscriptions/guest-subscription-wizard"
+import UnifiedSubscriptionWizard from "@/components/subscriptions/unified-subscription-wizard"
 import { GuestLayout } from "@/components/layout/guest-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 
@@ -27,9 +27,10 @@ export default async function GuestBookSubscriptionPage() {
 
   return (
     <GuestLayout>
-      <GuestSubscriptionWizard
+      <UnifiedSubscriptionWizard
         subscriptions={subsData.subscriptions || []}
         treatments={treatmentsData.treatments || []}
+        currentUser={null}
       />
     </GuestLayout>
   )

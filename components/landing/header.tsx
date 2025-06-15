@@ -20,6 +20,7 @@ export function LandingHeader() {
     { name: t("navigation.bookTreatment"), href: "/book-treatment", icon: Calendar },
     { name: t("navigation.bookSubscription"), href: "/book-subscription", icon: CreditCard },
     { name: t("navigation.bookGiftVoucher"), href: "/book-gift-voucher", icon: Gift },
+    { name: "מימוש שובר/מנוי", href: "/redeem", icon: Gift },
   ]
 
   const handleSignOut = async () => {

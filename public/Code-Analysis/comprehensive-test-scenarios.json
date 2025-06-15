@@ -1,0 +1,916 @@
+{
+  "summary": {
+    "total_business_flows": 2,
+    "total_user_interactions": 2,
+    "total_validation_rules": 3,
+    "total_edge_cases": 25,
+    "total_cross_system_scenarios": 2
+  },
+  "business_flows": {
+    "booking_complete_flow": {
+      "name": "Complete Booking Flow",
+      "startTriggers": [
+        "User clicks \"Book Treatment\"",
+        "User navigates to /book-treatment",
+        "User selects treatment from homepage"
+      ],
+      "userTypes": [
+        {
+          "type": "guest",
+          "variations": [
+            "first_time",
+            "returning_guest",
+            "mobile_user",
+            "desktop_user"
+          ],
+          "requiredData": [
+            "name",
+            "email",
+            "phone",
+            "address",
+            "payment_method"
+          ],
+          "optionalData": [
+            "birth_date",
+            "gender",
+            "preferences"
+          ]
+        },
+        {
+          "type": "member",
+          "variations": [
+            "new_member",
+            "active_subscriber",
+            "expired_subscriber",
+            "premium_member"
+          ],
+          "requiredData": [
+            "session_token"
+          ],
+          "optionalData": [
+            "preferred_address",
+            "payment_method"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "name": "Authentication Check",
+          "conditions": [
+            "user_authenticated",
+            "user_not_authenticated",
+            "session_expired",
+            "invalid_session"
+          ],
+          "validations": [
+            "session_validity",
+            "user_role_check",
+            "account_status"
+          ],
+          "outcomes": [
+            "proceed_as_member",
+            "proceed_as_guest",
+            "redirect_to_login",
+            "show_session_expired_error"
+          ]
+        },
+        {
+          "step": 2,
+          "name": "User Information Collection",
+          "conditions": [
+            "guest_user",
+            "member_with_complete_profile",
+            "member_with_incomplete_profile",
+            "member_with_multiple_addresses"
+          ],
+          "validations": [
+            "email_format_validation",
+            "phone_israeli_format",
+            "required_fields_check",
+            "duplicate_email_check",
+            "age_verification",
+            "address_completeness"
+          ],
+          "subScenarios": [
+            {
+              "scenario": "email_validation",
+              "testCases": [
+                "valid_email@domain.com",
+                "invalid_email_format",
+                "email_without_domain",
+                "email_with_special_chars",
+                "existing_email_in_system",
+                "email_too_long",
+                "empty_email"
+              ]
+            },
+            {
+              "scenario": "phone_validation",
+              "testCases": [
+                "+972501234567 (valid)",
+                "0501234567 (auto-format)",
+                "972501234567 (missing +)",
+                "501234567 (missing country)",
+                "+972401234567 (invalid prefix)",
+                "phone_with_spaces",
+                "phone_with_dashes",
+                "international_non_israeli",
+                "empty_phone",
+                "phone_too_short",
+                "phone_too_long"
+              ]
+            }
+          ]
+        },
+        {
+          "step": 3,
+          "name": "Treatment Selection",
+          "conditions": [
+            "active_treatments_available",
+            "no_treatments_available",
+            "user_has_subscription",
+            "user_has_gift_voucher",
+            "treatment_requires_special_permission"
+          ],
+          "validations": [
+            "treatment_availability",
+            "subscription_coverage",
+            "voucher_validity",
+            "user_eligibility",
+            "treatment_restrictions"
+          ],
+          "subScenarios": [
+            {
+              "scenario": "treatment_pricing",
+              "testCases": [
+                "fixed_price_treatment",
+                "duration_based_treatment",
+                "subscription_covered_treatment",
+                "partially_covered_treatment",
+                "gift_voucher_applicable",
+                "coupon_code_applicable",
+                "multiple_discounts_conflict"
+              ]
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "name": "Date and Time Selection",
+          "conditions": [
+            "working_hours_available",
+            "fully_booked_date",
+            "professional_unavailable",
+            "special_closure_date",
+            "same_day_booking",
+            "advance_booking_limit"
+          ],
+          "validations": [
+            "date_in_future",
+            "within_working_hours",
+            "minimum_advance_time",
+            "maximum_advance_time",
+            "slot_availability",
+            "professional_availability"
+          ],
+          "subScenarios": [
+            {
+              "scenario": "date_validation",
+              "testCases": [
+                "today_before_cutoff",
+                "today_after_cutoff",
+                "tomorrow",
+                "weekend_date",
+                "holiday_date",
+                "past_date",
+                "date_too_far_future",
+                "invalid_date_format"
+              ]
+            },
+            {
+              "scenario": "time_slot_validation",
+              "testCases": [
+                "morning_slot_available",
+                "afternoon_slot_available",
+                "evening_slot_available",
+                "slot_just_taken",
+                "slot_outside_hours",
+                "slot_too_close_to_existing",
+                "slot_during_break_time"
+              ]
+            }
+          ]
+        },
+        {
+          "step": 5,
+          "name": "Address Selection/Entry",
+          "conditions": [
+            "member_with_saved_addresses",
+            "member_without_addresses",
+            "guest_new_address",
+            "address_outside_service_area",
+            "address_requires_special_handling"
+          ],
+          "validations": [
+            "address_completeness",
+            "service_area_coverage",
+            "address_format",
+            "postal_code_validity",
+            "building_accessibility"
+          ],
+          "subScenarios": [
+            {
+              "scenario": "address_validation",
+              "testCases": [
+                "complete_valid_address",
+                "missing_street_number",
+                "missing_city",
+                "invalid_postal_code",
+                "address_outside_service_area",
+                "apartment_building_address",
+                "special_instructions_needed"
+              ]
+            }
+          ]
+        },
+        {
+          "step": 6,
+          "name": "Price Calculation",
+          "conditions": [
+            "base_price_only",
+            "subscription_discount_applied",
+            "gift_voucher_applied",
+            "coupon_code_applied",
+            "multiple_discounts",
+            "free_treatment"
+          ],
+          "validations": [
+            "price_calculation_accuracy",
+            "discount_application_order",
+            "minimum_price_limits",
+            "currency_formatting",
+            "tax_calculation"
+          ]
+        },
+        {
+          "step": 7,
+          "name": "Payment Processing",
+          "conditions": [
+            "payment_required",
+            "no_payment_required",
+            "partial_payment",
+            "payment_method_saved",
+            "new_payment_method"
+          ],
+          "validations": [
+            "payment_method_validity",
+            "card_expiration",
+            "security_code_check",
+            "billing_address_match",
+            "fraud_detection"
+          ],
+          "subScenarios": [
+            {
+              "scenario": "payment_processing",
+              "testCases": [
+                "successful_payment",
+                "declined_card",
+                "insufficient_funds",
+                "expired_card",
+                "invalid_security_code",
+                "payment_gateway_timeout",
+                "network_error_during_payment"
+              ]
+            }
+          ]
+        },
+        {
+          "step": 8,
+          "name": "Booking Creation",
+          "conditions": [
+            "payment_successful",
+            "payment_failed",
+            "system_error",
+            "database_unavailable"
+          ],
+          "validations": [
+            "booking_data_integrity",
+            "unique_booking_id",
+            "status_initialization",
+            "audit_trail_creation"
+          ]
+        },
+        {
+          "step": 9,
+          "name": "Professional Notification",
+          "conditions": [
+            "professionals_available",
+            "no_professionals_available",
+            "sms_service_available",
+            "sms_service_down"
+          ],
+          "validations": [
+            "professional_selection_criteria",
+            "sms_content_accuracy",
+            "response_link_validity",
+            "timeout_mechanism"
+          ],
+          "subScenarios": [
+            {
+              "scenario": "professional_response",
+              "testCases": [
+                "professional_accepts_immediately",
+                "professional_declines_immediately",
+                "professional_responds_near_timeout",
+                "professional_responds_after_timeout",
+                "multiple_professionals_respond",
+                "no_professional_responds",
+                "sms_delivery_failure"
+              ]
+            }
+          ]
+        }
+      ],
+      "integrationPoints": [
+        "sms_service",
+        "payment_gateway",
+        "database",
+        "email_service",
+        "working_hours_system"
+      ],
+      "errorScenarios": [
+        "database_connection_lost",
+        "sms_service_unavailable",
+        "payment_gateway_timeout",
+        "email_service_down",
+        "server_overload",
+        "network_interruption"
+      ]
+    },
+    "professional_response_flow": {
+      "name": "Professional Response Flow",
+      "startTriggers": [
+        "SMS received by professional",
+        "Professional clicks response link",
+        "Professional accesses booking management"
+      ],
+      "userTypes": [
+        {
+          "type": "professional",
+          "variations": [
+            "new_professional",
+            "experienced_professional",
+            "busy_professional",
+            "available_professional"
+          ],
+          "requiredData": [
+            "professional_id",
+            "response_token"
+          ],
+          "optionalData": [
+            "decline_reason",
+            "estimated_arrival"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "step": 1,
+          "name": "SMS Reception",
+          "conditions": [
+            "sms_delivered_successfully",
+            "sms_delivery_failed",
+            "phone_number_invalid",
+            "professional_phone_changed"
+          ]
+        },
+        {
+          "step": 2,
+          "name": "Response Link Click",
+          "conditions": [
+            "link_valid_and_active",
+            "link_expired",
+            "booking_already_assigned",
+            "booking_cancelled"
+          ]
+        },
+        {
+          "step": 3,
+          "name": "Response Processing",
+          "conditions": [
+            "accept_response",
+            "decline_response",
+            "timeout_reached",
+            "system_error"
+          ]
+        }
+      ]
+    }
+  },
+  "user_interactions": {
+    "booking_interactions": [
+      {
+        "scenario": "Guest_Books_Treatment_Professional_Accepts",
+        "users": [
+          "guest",
+          "professional",
+          "system"
+        ],
+        "flow": [
+          {
+            "user": "guest",
+            "action": "fills_booking_form",
+            "validations": [
+              "email",
+              "phone",
+              "address"
+            ]
+          },
+          {
+            "user": "system",
+            "action": "validates_data",
+            "conditions": [
+              "all_valid",
+              "some_invalid"
+            ]
+          },
+          {
+            "user": "system",
+            "action": "processes_payment",
+            "conditions": [
+              "success",
+              "failure"
+            ]
+          },
+          {
+            "user": "system",
+            "action": "creates_booking",
+            "conditions": [
+              "success",
+              "db_error"
+            ]
+          },
+          {
+            "user": "system",
+            "action": "notifies_professionals",
+            "conditions": [
+              "sms_sent",
+              "sms_failed"
+            ]
+          },
+          {
+            "user": "professional",
+            "action": "receives_notification",
+            "conditions": [
+              "received",
+              "not_received"
+            ]
+          },
+          {
+            "user": "professional",
+            "action": "responds_to_booking",
+            "conditions": [
+              "accept",
+              "decline",
+              "timeout"
+            ]
+          },
+          {
+            "user": "system",
+            "action": "assigns_professional",
+            "conditions": [
+              "assigned",
+              "conflict"
+            ]
+          },
+          {
+            "user": "system",
+            "action": "notifies_customer",
+            "conditions": [
+              "notified",
+              "notification_failed"
+            ]
+          }
+        ]
+      },
+      {
+        "scenario": "Member_Books_With_Subscription_Multiple_Professionals",
+        "users": [
+          "member",
+          "professional1",
+          "professional2",
+          "professional3",
+          "admin"
+        ],
+        "flow": [
+          {
+            "user": "member",
+            "action": "logs_in",
+            "validations": [
+              "session_valid"
+            ]
+          },
+          {
+            "user": "member",
+            "action": "selects_subscription_treatment",
+            "conditions": [
+              "credits_available",
+              "credits_depleted"
+            ]
+          },
+          {
+            "user": "system",
+            "action": "deducts_subscription_credit",
+            "conditions": [
+              "success",
+              "insufficient_credits"
+            ]
+          },
+          {
+            "user": "system",
+            "action": "notifies_multiple_professionals",
+            "conditions": [
+              "all_notified",
+              "some_failed"
+            ]
+          },
+          {
+            "user": "professional1",
+            "action": "responds_first",
+            "conditions": [
+              "accept",
+              "decline"
+            ]
+          },
+          {
+            "user": "professional2",
+            "action": "responds_second",
+            "conditions": [
+              "accept",
+              "decline",
+              "too_late"
+            ]
+          },
+          {
+            "user": "professional3",
+            "action": "responds_third",
+            "conditions": [
+              "accept",
+              "decline",
+              "too_late"
+            ]
+          },
+          {
+            "user": "system",
+            "action": "handles_multiple_responses",
+            "conditions": [
+              "first_wins",
+              "conflict_resolution"
+            ]
+          },
+          {
+            "user": "admin",
+            "action": "monitors_assignment",
+            "conditions": [
+              "auto_assigned",
+              "manual_intervention_needed"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "validation_matrix": {
+    "all_validations": {
+      "email_validation": {
+        "field": "email",
+        "rules": [
+          {
+            "rule": "format_check",
+            "regex": "/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/"
+          },
+          {
+            "rule": "length_check",
+            "min": 5,
+            "max": 255
+          },
+          {
+            "rule": "domain_check",
+            "allowed_domains": [
+              "gmail.com",
+              "yahoo.com",
+              "hotmail.com",
+              "walla.co.il"
+            ]
+          },
+          {
+            "rule": "uniqueness_check",
+            "scope": "guest_bookings"
+          }
+        ],
+        "test_cases": [
+          {
+            "input": "valid@gmail.com",
+            "expected": "pass",
+            "category": "valid"
+          },
+          {
+            "input": "invalid-email",
+            "expected": "fail",
+            "category": "format_error"
+          },
+          {
+            "input": "test@",
+            "expected": "fail",
+            "category": "incomplete_domain"
+          },
+          {
+            "input": "@domain.com",
+            "expected": "fail",
+            "category": "missing_local"
+          },
+          {
+            "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@domain.com",
+            "expected": "fail",
+            "category": "too_long"
+          },
+          {
+            "input": "",
+            "expected": "fail",
+            "category": "empty"
+          },
+          {
+            "input": "test@suspicious-domain.xyz",
+            "expected": "warn",
+            "category": "suspicious_domain"
+          }
+        ]
+      },
+      "phone_validation": {
+        "field": "phone",
+        "rules": [
+          {
+            "rule": "israeli_format",
+            "pattern": "+972[5-9]\\d{8}"
+          },
+          {
+            "rule": "auto_formatting",
+            "transforms": [
+              "remove_spaces",
+              "add_country_code"
+            ]
+          },
+          {
+            "rule": "carrier_validation",
+            "carriers": [
+              "cellcom",
+              "partner",
+              "pelephone",
+              "hot_mobile"
+            ]
+          }
+        ],
+        "test_cases": [
+          {
+            "input": "+972501234567",
+            "expected": "pass",
+            "category": "valid_full"
+          },
+          {
+            "input": "0501234567",
+            "expected": "pass_after_format",
+            "category": "auto_format"
+          },
+          {
+            "input": "972501234567",
+            "expected": "pass_after_format",
+            "category": "missing_plus"
+          },
+          {
+            "input": "501234567",
+            "expected": "pass_after_format",
+            "category": "local_format"
+          },
+          {
+            "input": "+972401234567",
+            "expected": "fail",
+            "category": "invalid_prefix"
+          },
+          {
+            "input": "+1234567890",
+            "expected": "fail",
+            "category": "non_israeli"
+          },
+          {
+            "input": "050-123-4567",
+            "expected": "pass_after_format",
+            "category": "with_dashes"
+          },
+          {
+            "input": "050 123 4567",
+            "expected": "pass_after_format",
+            "category": "with_spaces"
+          }
+        ]
+      },
+      "date_validation": {
+        "field": "booking_date",
+        "rules": [
+          {
+            "rule": "future_date",
+            "min_advance_hours": 2
+          },
+          {
+            "rule": "working_days",
+            "allowed_days": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "rule": "working_hours",
+            "start": "08:00",
+            "end": "22:00"
+          },
+          {
+            "rule": "max_advance",
+            "max_days": 90
+          }
+        ],
+        "test_cases": [
+          {
+            "input": "tomorrow_10am",
+            "expected": "pass",
+            "category": "valid_future"
+          },
+          {
+            "input": "today_1_hour_ahead",
+            "expected": "fail",
+            "category": "too_soon"
+          },
+          {
+            "input": "yesterday",
+            "expected": "fail",
+            "category": "past_date"
+          },
+          {
+            "input": "100_days_future",
+            "expected": "fail",
+            "category": "too_far"
+          },
+          {
+            "input": "sunday_10am",
+            "expected": "pass",
+            "category": "weekend_allowed"
+          },
+          {
+            "input": "tuesday_6am",
+            "expected": "fail",
+            "category": "before_hours"
+          },
+          {
+            "input": "friday_11pm",
+            "expected": "fail",
+            "category": "after_hours"
+          }
+        ]
+      }
+    }
+  },
+  "edge_cases": [
+    {
+      "category": "Timing Edge Cases",
+      "cases": [
+        "User submits booking exactly at midnight",
+        "Professional responds exactly at 30-minute timeout",
+        "Multiple users book same slot simultaneously",
+        "System clock changes during booking process",
+        "Booking submitted during daylight saving time change"
+      ]
+    },
+    {
+      "category": "Data Edge Cases",
+      "cases": [
+        "User with extremely long name (255+ characters)",
+        "Address with special Unicode characters",
+        "Phone number with international format variations",
+        "Email with maximum allowed length",
+        "Treatment name with special characters"
+      ]
+    },
+    {
+      "category": "System Edge Cases",
+      "cases": [
+        "Database connection lost mid-transaction",
+        "SMS service rate limit exceeded",
+        "Payment gateway returns unexpected response",
+        "Memory limit reached during processing",
+        "Concurrent booking modifications"
+      ]
+    },
+    {
+      "category": "User Behavior Edge Cases",
+      "cases": [
+        "User rapidly clicks submit button multiple times",
+        "User navigates away during payment processing",
+        "User closes browser during booking creation",
+        "User submits form with JavaScript disabled",
+        "User uses browser back button during multi-step process"
+      ]
+    },
+    {
+      "category": "Business Logic Edge Cases",
+      "cases": [
+        "Subscription expires exactly during booking process",
+        "Gift voucher used simultaneously by multiple users",
+        "Professional becomes unavailable after accepting booking",
+        "Treatment price changes during booking process",
+        "Working hours updated while user selecting time"
+      ]
+    }
+  ],
+  "cross_system_scenarios": [
+    {
+      "name": "Complete Booking with All Integrations",
+      "systems": [
+        "frontend",
+        "backend",
+        "database",
+        "sms_service",
+        "payment_gateway",
+        "email_service"
+      ],
+      "scenario": "Guest books treatment, payment processes, professional notified, booking confirmed",
+      "failure_points": [
+        "Frontend validation fails",
+        "Backend API timeout",
+        "Database write fails",
+        "SMS service unavailable",
+        "Payment gateway rejects",
+        "Email service down"
+      ],
+      "recovery_mechanisms": [
+        "Client-side retry logic",
+        "Backend circuit breaker",
+        "Database transaction rollback",
+        "SMS queue for retry",
+        "Payment retry with different method",
+        "Email queue for later delivery"
+      ]
+    },
+    {
+      "name": "Professional Response Chain",
+      "systems": [
+        "sms_service",
+        "response_handler",
+        "database",
+        "notification_service"
+      ],
+      "scenario": "Multiple professionals receive SMS, first one accepts, others notified",
+      "failure_points": [
+        "SMS delivery partial failure",
+        "Response handler overload",
+        "Database lock timeout",
+        "Notification service delay"
+      ],
+      "race_conditions": [
+        "Multiple professionals accept simultaneously",
+        "Booking cancelled while professional responding",
+        "System assigns professional while admin manually assigns"
+      ]
+    }
+  ],
+  "test_execution_plan": {
+    "phase_1_unit_tests": {
+      "description": "Test individual validation functions",
+      "estimated_tests": 150,
+      "priority": "high"
+    },
+    "phase_2_integration_tests": {
+      "description": "Test component interactions",
+      "estimated_tests": 75,
+      "priority": "high"
+    },
+    "phase_3_end_to_end_tests": {
+      "description": "Test complete user journeys",
+      "estimated_tests": 50,
+      "priority": "medium"
+    },
+    "phase_4_edge_case_tests": {
+      "description": "Test edge cases and error scenarios",
+      "estimated_tests": 100,
+      "priority": "medium"
+    },
+    "phase_5_performance_tests": {
+      "description": "Test system under load",
+      "estimated_tests": 25,
+      "priority": "low"
+    }
+  }
+}

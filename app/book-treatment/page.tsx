@@ -1,11 +1,11 @@
-import { getGuestBookingInitialData } from "@/actions/booking-actions"
-import GuestBookingWizard from "@/components/booking/guest-booking-wizard"
+import { getBookingInitialData } from "@/actions/booking-actions"
+import UnifiedBookingWizard from "@/components/booking/unified-booking-wizard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
 
 export default async function GuestBookTreatmentPage() {
   try {
-    const initialDataResult = await getGuestBookingInitialData()
+    const initialDataResult = await getBookingInitialData() // No userId for guests
     
     if (!initialDataResult?.success || !initialDataResult?.data) {
       console.error('Guest booking data fetch failed:', initialDataResult?.error)
@@ -25,7 +25,7 @@ export default async function GuestBookTreatmentPage() {
 
     return (
       <GuestLayout>
-        <GuestBookingWizard
+        <UnifiedBookingWizard
           initialData={initialDataResult.data}
         />
       </GuestLayout>

@@ -1,0 +1,472 @@
+{
+  "systemName": "Booking System - מערכת הזמנות",
+  "analysisDate": "2025-06-15",
+  
+  "flowchart": {
+    "description": "זרימת תהליך הזמנה מלאה - כל הענפים והתנאים",
+    "mainFlow": [
+      "START → User Authentication Check",
+      "├─ NOT_AUTHENTICATED → Guest Booking Flow (GB)",
+      "└─ AUTHENTICATED → Member Booking Flow (MB)",
+      "",
+      "GUEST_BOOKING_FLOW (GB):",
+      "GB1 → Collect Guest Info (Name, Email, Phone, Address)",
+      "GB2 → Validate Guest Data",
+      "├─ INVALID → Show Validation Errors → Return to GB1",
+      "└─ VALID → Continue to Treatment Selection (TS)",
+      "",
+      "MEMBER_BOOKING_FLOW (MB):",
+      "MB1 → Load User Profile & Addresses",
+      "MB2 → Check User Subscriptions",
+      "├─ HAS_ACTIVE_SUBSCRIPTION → Show Subscription Options",
+      "└─ NO_SUBSCRIPTION → Continue to Treatment Selection",
+      "",
+      "TREATMENT_SELECTION (TS):",
+      "TS1 → Display Available Treatments",
+      "TS2 → User Selects Treatment",
+      "TS3 → Check Treatment Type",
+      "├─ FIXED_PRICE → Set Default Duration",
+      "└─ DURATION_BASED → Show Duration Options",
+      "TS4 → User Selects Duration (if applicable)",
+      "",
+      "DATE_TIME_SELECTION (DT):",
+      "DT1 → User Selects Date",
+      "DT2 → Load Working Hours for Date",
+      "DT3 → Check Date Validity",
+      "├─ PAST_DATE → Show Error → Return to DT1",
+      "├─ CLOSED_DATE → Show 'Closed' Message → Return to DT1",
+      "└─ VALID_DATE → Calculate Available Time Slots",
+      "DT4 → Display Available Time Slots",
+      "DT5 → User Selects Time Slot",
+      "DT6 → Validate Time Slot Availability",
+      "├─ SLOT_TAKEN → Refresh Slots → Return to DT4",
+      "└─ SLOT_AVAILABLE → Continue to Address Selection",
+      "",
+      "ADDRESS_SELECTION (AS):",
+      "AS1 → Check User Type",
+      "├─ GUEST → Use Guest Address from GB1",
+      "└─ MEMBER → Show Saved Addresses + Add New Option",
+      "AS2 → User Selects/Enters Address",
+      "AS3 → Validate Address",
+      "├─ INVALID → Show Validation Errors → Return to AS2",
+      "└─ VALID → Continue to Price Calculation",
+      "",
+      "PRICE_CALCULATION (PC):",
+      "PC1 → Calculate Base Price",
+      "PC2 → Check for Applicable Discounts",
+      "├─ SUBSCRIPTION_DISCOUNT → Apply Subscription Pricing",
+      "├─ COUPON_CODE → Validate & Apply Coupon",
+      "└─ GIFT_VOUCHER → Validate & Apply Voucher",
+      "PC3 → Calculate Final Price",
+      "PC4 → Display Price Breakdown",
+      "",
+      "PAYMENT_PROCESSING (PP):",
+      "PP1 → Check Final Price",
+      "├─ PRICE = 0 → Skip Payment → Create Booking",
+      "└─ PRICE > 0 → Show Payment Options",
+      "PP2 → User Selects Payment Method",
+      "PP3 → Process Payment",
+      "├─ PAYMENT_FAILED → Show Error → Return to PP2",
+      "└─ PAYMENT_SUCCESS → Create Booking",
+      "",
+      "BOOKING_CREATION (BC):",
+      "BC1 → Create Booking Record (Status: pending_payment → in_process)",
+      "BC2 → Send Confirmation Email/SMS to Customer",
+      "BC3 → Find Suitable Professionals",
+      "BC4 → Send SMS Notifications to Professionals",
+      "BC5 → Wait for Professional Response (30 min timeout)",
+      "├─ PROFESSIONAL_ACCEPTS → Assign Professional → Status: confirmed",
+      "├─ TIMEOUT_NO_RESPONSE → Admin Notification",
+      "└─ ALL_DECLINE → Admin Notification",
+      "",
+      "PROFESSIONAL_WORKFLOW (PW):",
+      "PW1 → Professional Receives SMS",
+      "PW2 → Professional Clicks Accept/Decline Link",
+      "PW3 → Validate Response",
+      "├─ EXPIRED → Show 'Too Late' Message",
+      "├─ ALREADY_ASSIGNED → Show 'Already Taken' Message",
+      "└─ VALID → Process Response",
+      "PW4 → If ACCEPT → Assign to Booking → Notify Other Professionals",
+      "PW5 → Professional Manages Booking → Mark En Route → Mark Completed",
+      "",
+      "END → Booking Complete"
+    ]
+  },
+
+  "testScenarios": [
+    {
+      "scenarioId": "TS001",
+      "category": "Guest Booking - Happy Path",
+      "steps": [
+        {
+          "stepNumber": 1,
+          "userRole": "Guest User",
+          "action": "Navigate to booking page without authentication",
+          "expectedResult": "Guest booking form displayed with fields: firstName, lastName, email, phone, birthDate, gender"
+        },
+        {
+          "stepNumber": 2,
+          "userRole": "Guest User", 
+          "action": "Fill valid guest information",
+          "expectedResult": "Form accepts input, no validation errors shown"
+        },
+        {
+          "stepNumber": 3,
+          "userRole": "Guest User",
+          "action": "Proceed to treatment selection",
+          "expectedResult": "Treatment list displayed with active treatments only"
+        },
+        {
+          "stepNumber": 4,
+          "userRole": "Guest User",
+          "action": "Select fixed-price treatment",
+          "expectedResult": "Treatment selected, default duration set automatically"
+        },
+        {
+          "stepNumber": 5,
+          "userRole": "Guest User",
+          "action": "Select future date (tomorrow)",
+          "expectedResult": "Available time slots calculated and displayed based on working hours"
+        },
+        {
+          "stepNumber": 6,
+          "userRole": "Guest User",
+          "action": "Select available time slot",
+          "expectedResult": "Time slot selected, address form displayed"
+        },
+        {
+          "stepNumber": 7,
+          "userRole": "Guest User",
+          "action": "Enter valid address details",
+          "expectedResult": "Address validated, price calculation triggered"
+        },
+        {
+          "stepNumber": 8,
+          "userRole": "Guest User",
+          "action": "Review price breakdown",
+          "expectedResult": "Base price shown, no discounts applied for guest"
+        },
+        {
+          "stepNumber": 9,
+          "userRole": "Guest User",
+          "action": "Proceed to payment",
+          "expectedResult": "Payment form displayed with credit card fields"
+        },
+        {
+          "stepNumber": 10,
+          "userRole": "Guest User",
+          "action": "Enter valid payment details and submit",
+          "expectedResult": "Payment processed, booking created with status 'in_process'"
+        },
+        {
+          "stepNumber": 11,
+          "userRole": "System",
+          "action": "Auto-trigger professional notification system",
+          "expectedResult": "SMS sent to suitable professionals, professional response records created"
+        }
+      ]
+    },
+    {
+      "scenarioId": "TS002", 
+      "category": "Member Booking with Subscription",
+      "steps": [
+        {
+          "stepNumber": 1,
+          "userRole": "Authenticated Member",
+          "action": "Navigate to booking page",
+          "expectedResult": "Member booking form displayed, user profile pre-loaded"
+        },
+        {
+          "stepNumber": 2,
+          "userRole": "Authenticated Member",
+          "action": "System checks user subscriptions",
+          "expectedResult": "Active subscription found, subscription pricing options displayed"
+        },
+        {
+          "stepNumber": 3,
+          "userRole": "Authenticated Member", 
+          "action": "Select treatment covered by subscription",
+          "expectedResult": "Treatment selected, subscription discount applied automatically"
+        },
+        {
+          "stepNumber": 4,
+          "userRole": "Authenticated Member",
+          "action": "Select date and time",
+          "expectedResult": "Available slots displayed, member can book with minimum advance time"
+        },
+        {
+          "stepNumber": 5,
+          "userRole": "Authenticated Member",
+          "action": "Select saved address",
+          "expectedResult": "Address pre-filled from user profile"
+        },
+        {
+          "stepNumber": 6,
+          "userRole": "Authenticated Member",
+          "action": "Review final price",
+          "expectedResult": "Subscription discount applied, final price = 0 or reduced amount"
+        },
+        {
+          "stepNumber": 7,
+          "userRole": "Authenticated Member",
+          "action": "Confirm booking (no payment needed)",
+          "expectedResult": "Booking created immediately, subscription credit deducted"
+        }
+      ]
+    },
+    {
+      "scenarioId": "TS003",
+      "category": "Professional Response Workflow",
+      "steps": [
+        {
+          "stepNumber": 1,
+          "userRole": "System",
+          "action": "Booking created, find suitable professionals",
+          "expectedResult": "Algorithm finds professionals based on: location, treatment expertise, availability"
+        },
+        {
+          "stepNumber": 2,
+          "userRole": "System", 
+          "action": "Send SMS to suitable professionals",
+          "expectedResult": "SMS sent with booking details and response links (accept/decline)"
+        },
+        {
+          "stepNumber": 3,
+          "userRole": "Professional",
+          "action": "Receive SMS notification",
+          "expectedResult": "SMS contains: treatment type, time, address, price, response deadline (30 min)"
+        },
+        {
+          "stepNumber": 4,
+          "userRole": "Professional",
+          "action": "Click 'Accept' link in SMS",
+          "expectedResult": "Response page opens, booking details displayed"
+        },
+        {
+          "stepNumber": 5,
+          "userRole": "Professional",
+          "action": "Confirm acceptance",
+          "expectedResult": "Booking assigned to professional, status changed to 'confirmed'"
+        },
+        {
+          "stepNumber": 6,
+          "userRole": "System",
+          "action": "Professional assigned",
+          "expectedResult": "Other pending responses marked as 'expired', notifications sent"
+        },
+        {
+          "stepNumber": 7,
+          "userRole": "Professional",
+          "action": "Mark as 'En Route' before appointment",
+          "expectedResult": "Booking status updated, customer notified"
+        },
+        {
+          "stepNumber": 8,
+          "userRole": "Professional",
+          "action": "Mark as 'Completed' after service",
+          "expectedResult": "Booking status = 'completed', payment finalized"
+        }
+      ]
+    }
+  ],
+
+  "conditionalBranches": [
+    {
+      "branchId": "CB001",
+      "triggerCondition": "User not authenticated",
+      "decisionPoint": "Initial page load",
+      "outcomes": [
+        {
+          "condition": "Guest chooses to continue as guest",
+          "result": "Guest booking flow initiated",
+          "dependencies": ["Guest info validation", "Address collection"]
+        },
+        {
+          "condition": "Guest chooses to register/login",
+          "result": "Redirect to authentication flow",
+          "dependencies": ["Auth completion", "Return to booking"]
+        }
+      ]
+    },
+    {
+      "branchId": "CB002", 
+      "triggerCondition": "Treatment type selection",
+      "decisionPoint": "Treatment selection step",
+      "outcomes": [
+        {
+          "condition": "Fixed price treatment selected",
+          "result": "Default duration set automatically",
+          "dependencies": ["Skip duration selection"]
+        },
+        {
+          "condition": "Duration-based treatment selected", 
+          "result": "Duration selection required",
+          "dependencies": ["Duration validation", "Price recalculation"]
+        }
+      ]
+    },
+    {
+      "branchId": "CB003",
+      "triggerCondition": "Date selection validation",
+      "decisionPoint": "Date/time selection",
+      "outcomes": [
+        {
+          "condition": "Past date selected",
+          "result": "Error message displayed",
+          "dependencies": ["Return to date selection"]
+        },
+        {
+          "condition": "Date is closed/unavailable",
+          "result": "Closed message with working hours note",
+          "dependencies": ["Return to date selection"]
+        },
+        {
+          "condition": "Valid future date",
+          "result": "Time slots calculated and displayed",
+          "dependencies": ["Working hours check", "Existing bookings check"]
+        }
+      ]
+    },
+    {
+      "branchId": "CB004",
+      "triggerCondition": "Professional response timeout",
+      "decisionPoint": "30 minutes after SMS sent",
+      "outcomes": [
+        {
+          "condition": "No professional responded",
+          "result": "Admin notification triggered",
+          "dependencies": ["Manual assignment required"]
+        },
+        {
+          "condition": "All professionals declined",
+          "result": "Admin notification with decline reasons",
+          "dependencies": ["Manual intervention needed"]
+        },
+        {
+          "condition": "At least one professional accepted",
+          "result": "Booking assigned to first accepter",
+          "dependencies": ["Other responses expired"]
+        }
+      ]
+    }
+  ],
+
+  "validationRules": [
+    {
+      "field": "Guest Email",
+      "rules": [
+        "Required field",
+        "Valid email format (regex: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/)",
+        "Must not already exist in system for guest bookings",
+        "Maximum 255 characters"
+      ]
+    },
+    {
+      "field": "Guest Phone",
+      "rules": [
+        "Required field",
+        "Israeli mobile format validation (+972xxxxxxxxx)",
+        "Auto-formatting applied (removes spaces, adds +972 if missing)",
+        "Must start with 5-9 after country code",
+        "Exactly 9 digits after +972"
+      ]
+    },
+    {
+      "field": "Date Selection",
+      "rules": [
+        "Must be future date (not today if past cutoff time)",
+        "Must be within working hours date range",
+        "Cannot be on special closed dates",
+        "Must respect minimum booking advance time (default 2 hours)"
+      ]
+    },
+    {
+      "field": "Time Slot",
+      "rules": [
+        "Must be within working hours for selected date",
+        "Must not conflict with existing bookings",
+        "Must allow sufficient time for treatment duration",
+        "Must respect slot interval (default 30 minutes)"
+      ]
+    },
+    {
+      "field": "Address",
+      "rules": [
+        "Street name required (minimum 2 characters)",
+        "House number required (numeric or alphanumeric)",
+        "City required (must exist in cities database)",
+        "Postal code optional but validated if provided"
+      ]
+    },
+    {
+      "field": "Payment Amount",
+      "rules": [
+        "Must be >= 0",
+        "If 0, skip payment processing",
+        "If > 0, payment method required",
+        "Currency validation (ILS)",
+        "Maximum amount limits apply"
+      ]
+    }
+  ],
+
+  "qaChecklist": [
+    {
+      "category": "Authentication Scenarios",
+      "items": [
+        "Guest booking flow works without authentication",
+        "Member booking flow requires valid session",
+        "Session expiry during booking handled gracefully",
+        "Login/register redirect preserves booking state"
+      ]
+    },
+    {
+      "category": "Treatment Selection",
+      "items": [
+        "Only active treatments displayed",
+        "Fixed-price treatments auto-set duration",
+        "Duration-based treatments require duration selection",
+        "Treatment pricing calculated correctly"
+      ]
+    },
+    {
+      "category": "Date/Time Validation",
+      "items": [
+        "Past dates rejected with error message",
+        "Closed dates show appropriate message",
+        "Time slots respect working hours",
+        "Minimum advance time enforced",
+        "Timezone handling correct (Asia/Jerusalem)"
+      ]
+    },
+    {
+      "category": "Professional Assignment",
+      "items": [
+        "SMS sent to suitable professionals only",
+        "Response timeout (30 min) enforced",
+        "First acceptance wins assignment",
+        "Other responses expired after assignment",
+        "Admin notified if no responses"
+      ]
+    },
+    {
+      "category": "Payment Processing",
+      "items": [
+        "Zero-amount bookings skip payment",
+        "Payment validation works correctly",
+        "Failed payments prevent booking creation",
+        "Successful payments trigger booking creation"
+      ]
+    },
+    {
+      "category": "Data Validation",
+      "items": [
+        "All required fields validated",
+        "Email format validation works",
+        "Phone number formatting applied",
+        "Address validation prevents invalid entries",
+        "Error messages clear and helpful"
+      ]
+    }
+  ]
+} 

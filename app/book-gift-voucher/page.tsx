@@ -1,5 +1,5 @@
 import { getTreatmentsForSelection } from "@/actions/gift-voucher-actions"
-import GuestGiftVoucherWizard from "@/components/gift-vouchers/guest-gift-voucher-wizard"
+import UnifiedGiftVoucherWizard from "@/components/gift-vouchers/unified-gift-voucher-wizard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
 
@@ -23,7 +23,10 @@ export default async function GuestBookGiftVoucherPage() {
 
   return (
     <GuestLayout>
-      <GuestGiftVoucherWizard treatments={treatmentsResult.treatments || []} />
+      <UnifiedGiftVoucherWizard 
+        treatments={treatmentsResult.treatments || []} 
+        currentUser={null}
+      />
     </GuestLayout>
   )
 } 

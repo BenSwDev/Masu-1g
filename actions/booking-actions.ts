@@ -1084,14 +1084,76 @@ export async function cancelBooking(
   }
 }
 
-export async function getBookingInitialData(userId: string): Promise<{ success: boolean; data?: any; error?: string }> {
+export async function getBookingInitialData(userId?: string): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const authSession = await getServerSession(authOptions)
-    if (!authSession || authSession.user.id !== userId) {
-      return { success: false, error: "common.unauthorized" }
+    // If userId is provided, verify authentication
+    if (userId) {
+      const authSession = await getServerSession(authOptions)
+      if (!authSession || authSession.user.id !== userId) {
+        return { success: false, error: "common.unauthorized" }
+      }
     }
     await dbConnect()
 
+    // For guests, only fetch treatments and working hours
+    if (!userId) {
+      const [treatmentsResult, workingHoursResult] = await Promise.allSettled([
+        Treatment.find({ isActive: true }).populate("durations").lean(),
+        WorkingHoursSettings.findOne().lean(),
+      ])
+
+      const getFulfilledValue = (result: PromiseSettledResult<any>, defaultValue: any = null) =>
+        result.status === "fulfilled" ? result.value : defaultValue
+
+      const treatments = getFulfilledValue(treatmentsResult, [])
+      const workingHours = getFulfilledValue(workingHoursResult)
+
+      if (!treatments || treatments.length === 0) {
+        return { success: false, error: "No active treatments available" }
+      }
+
+      if (!workingHours) {
+        return { success: false, error: "Working hours not configured" }
+      }
+
+      // Prepare serialized data for guest booking
+      const serializedTreatments = treatments.map((treatment: any) => ({
+        ...treatment,
+        _id: treatment._id.toString(),
+        durations: treatment.durations?.map((duration: any) => ({
+          ...duration,
+          _id: duration._id.toString(),
+        })) || [],
+      }))
+
+      const serializedWorkingHours = {
+        ...workingHours,
+        _id: workingHours._id.toString(),
+      }
+
+      return {
+        success: true,
+        data: {
+          treatments: serializedTreatments,
+          activeTreatments: serializedTreatments, // Alias for compatibility
+          workingHours: serializedWorkingHours,
+          workingHoursSettings: serializedWorkingHours, // Alias for compatibility
+          activeUserSubscriptions: [], // No subscriptions for guests
+          usableGiftVouchers: [], // No gift vouchers for guests
+          userAddresses: [], // No saved addresses for guests
+          userPaymentMethods: [], // No saved payment methods for guests
+          user: null, // No user data for guests
+          userPreferences: {
+            therapistGender: "any",
+            notificationMethods: ["email"],
+            notificationLanguage: "he",
+          }, // Default preferences for guests
+        },
+      }
+    }
+
+    // For authenticated users, fetch all data
+    const authSession = await getServerSession(authOptions)
     const [
       userSubscriptionsResult,
       giftVouchersResult,
@@ -1106,7 +1168,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         .populate({ path: "treatmentId", model: Treatment, populate: { path: "durations" } })
         .lean(),
       GiftVoucher.find({
-        $or: [{ ownerUserId: userId }, { recipientEmail: authSession.user.email }],
+        $or: [{ ownerUserId: userId }, { recipientEmail: authSession?.user?.email }],
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() },
         isActive: true,
@@ -2139,68 +2201,7 @@ export async function createGuestBooking(
   }
 }
 
-export async function getGuestBookingInitialData(): Promise<{ success: boolean; data?: any; error?: string }> {
-  try {
-    await dbConnect()
 
-    const [
-      treatmentsResult,
-      workingHoursResult,
-    ] = await Promise.allSettled([
-      Treatment.find({ isActive: true }).populate("durations").lean(),
-      WorkingHoursSettings.findOne().lean(),
-    ])
-
-    const getFulfilledValue = (result: PromiseSettledResult<any>, defaultValue: any = null) =>
-      result.status === "fulfilled" ? result.value : defaultValue
-
-    const treatments = getFulfilledValue(treatmentsResult, [])
-    const workingHours = getFulfilledValue(workingHoursResult)
-
-    if (!treatments || treatments.length === 0) {
-      return { success: false, error: "No active treatments available" }
-    }
-
-    if (!workingHours) {
-      return { success: false, error: "Working hours not configured" }
-    }
-
-    // Prepare serialized data for guest booking
-    const serializedTreatments = treatments.map((treatment: any) => ({
-      ...treatment,
-      _id: treatment._id.toString(),
-      durations: treatment.durations?.map((duration: any) => ({
-        ...duration,
-        _id: duration._id.toString(),
-      })) || [],
-    }))
-
-    const serializedWorkingHours = {
-      ...workingHours,
-      _id: workingHours._id.toString(),
-    }
-
-    return {
-      success: true,
-      data: {
-        treatments: serializedTreatments,
-        activeTreatments: serializedTreatments, // Alias for compatibility
-        workingHours: serializedWorkingHours,
-        activeUserSubscriptions: [], // No subscriptions for guests
-        usableGiftVouchers: [], // No gift vouchers for guests
-        userAddresses: [], // No saved addresses for guests
-        paymentMethods: [], // No saved payment methods for guests
-        user: null, // No user data for guests
-        userPreferences: null, // No preferences for guests
-      },
-    }
-  } catch (error) {
-    logger.error("Error getting guest booking initial data:", {
-      error: error instanceof Error ? error.message : String(error),
-    })
-    return { success: false, error: "Failed to load booking data" }
-  }
-}
 
 export async function createGuestUser(guestInfo: {
   firstName: string

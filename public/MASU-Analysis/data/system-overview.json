@@ -1,0 +1,348 @@
+{
+  "projectName": "MASU - מערכת הזמנות עיסויים",
+  "analysisDate": "2025-06-15",
+  "overallStatus": "מערכת פעילה ומתפקדת",
+  
+  "systemsOverview": {
+    "1_authenticationSystem": {
+      "name": "מערכת אימות וזיהוי",
+      "status": "מוכן",
+      "completionLevel": "95%",
+      "coreFiles": [
+        "lib/auth/auth.ts (NextAuth.js configuration)",
+        "lib/auth/auth-options.ts (JWT & session config)",
+        "actions/auth-actions.ts (login/register/reset)",
+        "middleware.ts (route protection)"
+      ],
+      "features": [
+        "✓ NextAuth.js integration with JWT sessions",
+        "✓ Role-based access control (admin, member, partner, professional)",
+        "✓ Password hashing with bcryptjs",
+        "✓ Israeli phone number validation (+972)",
+        "✓ Email verification system",
+        "✓ Password reset functionality",
+        "✓ Session management and middleware protection",
+        "✓ Multi-provider support (credentials, future OAuth)"
+      ],
+      "userRoles": ["admin", "member", "partner", "professional"],
+      "keyFunctions": [
+        "signIn", "signUp", "resetPassword", "verifyEmail", 
+        "updateProfile", "changePassword"
+      ]
+    },
+
+    "2_bookingSystem": {
+      "name": "מערכת הזמנות",
+      "status": "מוכן",
+      "completionLevel": "90%",
+      "coreFiles": [
+        "actions/booking-actions.ts (2,638 lines - main logic)",
+        "lib/db/models/booking.ts (booking schema)",
+        "lib/db/models/professional-response.ts (SMS responses)",
+        "components/booking/ (UI components)"
+      ],
+      "features": [
+        "✓ Guest and member booking flows",
+        "✓ Treatment selection with duration options",
+        "✓ Date/time slot management with timezone (Asia/Jerusalem)",
+        "✓ Address management and validation",
+        "✓ Price calculation with discounts",
+        "✓ Professional assignment via SMS",
+        "✓ 30-minute response timeout system",
+        "✓ Booking status tracking (6 statuses)",
+        "✓ SMS notifications to customers and professionals",
+        "✓ Working hours integration"
+      ],
+      "bookingStatuses": [
+        "pending_payment", "in_process", "confirmed", 
+        "completed", "cancelled", "refunded"
+      ],
+      "keyFunctions": [
+        "createBooking", "findSuitableProfessionals", 
+        "sendProfessionalNotifications", "assignProfessional",
+        "updateBookingStatus", "calculatePrice"
+      ]
+    },
+
+    "3_professionalManagement": {
+      "name": "ניהול מטפלים",
+      "status": "מוכן", 
+      "completionLevel": "95%",
+      "coreFiles": [
+        "actions/professional-actions.ts (professional management)",
+        "actions/professional-response-actions.ts (SMS responses)",
+        "lib/db/models/professional.ts (professional schema)",
+        "app/professional/booking-response/ (response handling)"
+      ],
+      "features": [
+        "✓ Professional registration and approval",
+        "✓ SMS-based booking notifications",
+        "✓ Accept/decline response system",
+        "✓ Professional profile management",
+        "✓ Location and service area settings",
+        "✓ Bank account information storage",
+        "✓ Document upload system",
+        "✓ Booking management dashboard",
+        "✓ Professional status tracking"
+      ],
+      "responseSystem": {
+        "timeout": "30 minutes",
+        "statuses": ["pending", "accepted", "declined", "expired"],
+        "notificationMethod": "SMS with response links"
+      }
+    },
+
+    "4_subscriptionSystem": {
+      "name": "מערכת מנויים",
+      "status": "מוכן",
+      "completionLevel": "85%",
+      "coreFiles": [
+        "actions/subscription-actions.ts (327 lines)",
+        "actions/user-subscription-actions.ts (790 lines)",
+        "lib/db/models/subscription.ts (subscription types)",
+        "lib/db/models/user-subscription.ts (user subscriptions)"
+      ],
+      "features": [
+        "✓ Subscription type management",
+        "✓ User subscription tracking",
+        "✓ Credit/usage counting system",
+        "✓ Automatic renewal handling",
+        "✓ Subscription status management",
+        "✓ Pricing integration with bookings",
+        "✓ Multiple subscription tiers",
+        "✓ Expiration and depletion tracking"
+      ],
+      "subscriptionStatuses": ["active", "expired", "depleted", "cancelled"],
+      "keyFunctions": [
+        "createSubscription", "getUserSubscriptions",
+        "useSubscriptionCredit", "renewSubscription",
+        "checkSubscriptionValidity"
+      ]
+    },
+
+    "5_giftVoucherSystem": {
+      "name": "מערכת שוברי מתנה",
+      "status": "מוכן",
+      "completionLevel": "80%",
+      "coreFiles": [
+        "actions/gift-voucher-actions.ts (voucher management)",
+        "lib/db/models/gift-voucher.ts (voucher schema)",
+        "app/redeem/[code]/ (redemption pages)"
+      ],
+      "features": [
+        "✓ Gift voucher creation and management",
+        "✓ Unique code generation",
+        "✓ Voucher redemption system",
+        "✓ Expiration date handling",
+        "✓ Usage tracking and validation",
+        "✓ Integration with booking system",
+        "✓ Purchase and gifting workflow"
+      ],
+      "voucherTypes": ["fixed_amount", "percentage", "treatment_specific"],
+      "keyFunctions": [
+        "createGiftVoucher", "redeemVoucher", 
+        "validateVoucherCode", "getVoucherDetails"
+      ]
+    },
+
+    "6_treatmentManagement": {
+      "name": "ניהול טיפולים",
+      "status": "מוכן",
+      "completionLevel": "90%",
+      "coreFiles": [
+        "actions/treatment-actions.ts (treatment CRUD)",
+        "lib/db/models/treatment.ts (treatment schema)",
+        "components/dashboard/admin/treatments/ (admin UI)"
+      ],
+      "features": [
+        "✓ Treatment type management",
+        "✓ Pricing configuration (fixed/duration-based)",
+        "✓ Duration options and constraints",
+        "✓ Treatment categories",
+        "✓ Active/inactive status management",
+        "✓ Professional assignment to treatments",
+        "✓ Treatment descriptions and details"
+      ],
+      "pricingTypes": ["fixed_price", "duration_based"],
+      "keyFunctions": [
+        "createTreatment", "updateTreatment",
+        "getTreatments", "assignProfessionalToTreatment"
+      ]
+    },
+
+    "7_userManagement": {
+      "name": "ניהול משתמשים",
+      "status": "מוכן",
+      "completionLevel": "85%",
+      "coreFiles": [
+        "actions/user-actions.ts (user CRUD)",
+        "lib/db/models/user.ts (user schema)",
+        "components/dashboard/admin/user-management/ (admin UI)"
+      ],
+      "features": [
+        "✓ User profile management",
+        "✓ Role assignment and management",
+        "✓ Address book functionality",
+        "✓ User status tracking",
+        "✓ Registration and verification",
+        "✓ Profile updates and preferences",
+        "✓ Admin user management interface"
+      ],
+      "userStatuses": ["active", "inactive", "pending_verification"],
+      "keyFunctions": [
+        "createUser", "updateUserProfile",
+        "getUserDetails", "manageUserAddresses"
+      ]
+    },
+
+    "8_paymentSystem": {
+      "name": "מערכת תשלומים",
+      "status": "חלקי",
+      "completionLevel": "60%",
+      "coreFiles": [
+        "actions/payment-actions.ts (basic payment logic)",
+        "lib/db/models/payment-method.ts (payment storage)",
+        "components/common/purchase/ (payment UI)"
+      ],
+      "features": [
+        "✓ Payment method storage",
+        "✓ Basic payment validation",
+        "✓ Payment history tracking",
+        "✓ Integration with booking system",
+        "⚠ Missing: Actual payment gateway integration",
+        "⚠ Missing: PCI compliance measures",
+        "⚠ Missing: Card data encryption"
+      ],
+      "paymentMethods": ["credit_card", "bank_transfer"],
+      "keyFunctions": [
+        "savePaymentMethod", "processPayment",
+        "getPaymentHistory", "validatePaymentData"
+      ]
+    },
+
+    "9_reviewSystem": {
+      "name": "מערכת ביקורות",
+      "status": "מוכן",
+      "completionLevel": "75%",
+      "coreFiles": [
+        "actions/review-actions.ts (review management)",
+        "lib/db/models/review.ts (review schema)",
+        "components/dashboard/member/reviews/ (review UI)"
+      ],
+      "features": [
+        "✓ Customer review submission",
+        "✓ Rating system (1-5 stars)",
+        "✓ Review moderation",
+        "✓ Professional rating aggregation",
+        "✓ Review display and filtering",
+        "✓ Review response system"
+      ],
+      "ratingScale": "1-5 stars",
+      "keyFunctions": [
+        "createReview", "getReviews",
+        "moderateReview", "calculateAverageRating"
+      ]
+    },
+
+    "10_couponSystem": {
+      "name": "מערכת קופונים",
+      "status": "מוכן",
+      "completionLevel": "80%",
+      "coreFiles": [
+        "actions/coupon-actions.ts (coupon management)",
+        "lib/db/models/coupon.ts (coupon schema)",
+        "components/dashboard/admin/coupons/ (admin UI)"
+      ],
+      "features": [
+        "✓ Coupon creation and management",
+        "✓ Discount type configuration",
+        "✓ Usage limits and tracking",
+        "✓ Expiration date management",
+        "✓ Partner coupon batches",
+        "✓ Coupon validation system"
+      ],
+      "discountTypes": ["percentage", "fixed_amount"],
+      "keyFunctions": [
+        "createCoupon", "validateCoupon",
+        "applyCouponDiscount", "trackCouponUsage"
+      ]
+    },
+
+    "11_workingHoursSystem": {
+      "name": "מערכת שעות עבודה",
+      "status": "מוכן",
+      "completionLevel": "90%",
+      "coreFiles": [
+        "actions/working-hours-actions.ts (hours management)",
+        "lib/db/models/working-hours.ts (hours schema)"
+      ],
+      "features": [
+        "✓ Daily working hours configuration",
+        "✓ Special dates and closures",
+        "✓ Timezone handling (Asia/Jerusalem)",
+        "✓ Integration with booking system",
+        "✓ Holiday and closure management"
+      ],
+      "keyFunctions": [
+        "setWorkingHours", "getAvailableSlots",
+        "checkDateAvailability", "manageSpecialDates"
+      ]
+    },
+
+    "12_notificationSystem": {
+      "name": "מערכת התראות",
+      "status": "מוכן",
+      "completionLevel": "85%",
+      "coreFiles": [
+        "lib/notifications/ (SMS and email)",
+        "lib/notifications/templates/ (message templates)"
+      ],
+      "features": [
+        "✓ SMS notifications via external service",
+        "✓ Email notifications",
+        "✓ Template-based messaging",
+        "✓ Professional booking notifications",
+        "✓ Customer confirmation messages",
+        "✓ Admin alert system"
+      ],
+      "notificationTypes": ["sms", "email", "in_app"],
+      "keyFunctions": [
+        "sendSMS", "sendEmail",
+        "notifyProfessionals", "sendBookingConfirmation"
+      ]
+    }
+  },
+
+  "databaseModels": [
+    "User", "Booking", "Professional", "Treatment", "Subscription",
+    "UserSubscription", "GiftVoucher", "Review", "Coupon", "PaymentMethod",
+    "WorkingHours", "Address", "City", "ProfessionalResponse"
+  ],
+
+  "apiEndpoints": [
+    "/api/auth/[...nextauth]", "/api/bookings", "/api/professionals",
+    "/api/treatments", "/api/subscriptions", "/api/gift-vouchers",
+    "/api/reviews", "/api/coupons", "/api/payments", "/api/users"
+  ],
+
+  "technicalStack": {
+    "framework": "Next.js 15.2.4",
+    "language": "TypeScript",
+    "database": "MongoDB with Mongoose",
+    "authentication": "NextAuth.js with JWT",
+    "styling": "Tailwind CSS",
+    "ui_components": "Custom components + shadcn/ui",
+    "notifications": "SMS service integration",
+    "timezone": "Asia/Jerusalem"
+  },
+
+  "keyStatistics": {
+    "totalFiles": 384,
+    "totalLines": "~50,000+",
+    "mainModules": 12,
+    "databaseModels": 22,
+    "apiEndpoints": 24,
+    "userRoles": 4,
+    "bookingStatuses": 6
+  }
+} 

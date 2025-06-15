@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ניתוח מערכת MASU - לוח בקרה</title>
+    <link rel="stylesheet" href="./assets/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>📊 ניתוח מערכת MASU</h1>
+            <p>לוח בקרה מקיף לניתוח מצב הפרויקט והתקדמות הפיתוח</p>
+        </div>
+    </header>
+
+    <nav class="navigation">
+        <div class="container">
+            <div class="nav-links">
+                <a href="#overview">סקירה כללית</a>
+                <a href="#modules">מודולים</a>
+                <a href="#roadmap">זרימת הזמנות</a>
+                <a href="#reports">תרחישי בדיקה</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Overview Section -->
+        <section id="overview">
+            <div class="summary-section">
+                <h2>סיכום מצב הפרויקט</h2>
+                <p>מערכת הזמנת עיסויים MASU - ניתוח מקיף של כל המודולים והתכונות</p>
+                <p><strong>תאריך ניתוח:</strong> <span id="analysisDate">15/06/2025</span></p>
+            </div>
+
+            <!-- Statistics Grid -->
+            <div class="stats-grid" id="stats">
+                <div class="stat-card">
+                    <span class="stat-number">-</span>
+                    <div class="stat-label">טוען נתונים...</div>
+                </div>
+            </div>
+
+            <!-- Completion Chart -->
+            <div class="chart-container">
+                <h3>התפלגות סטטוס מודולים</h3>
+                <canvas id="completionChart" width="400" height="400"></canvas>
+                <div style="text-align: center; margin-top: 1rem;">
+                    <span style="color: #2ecc71;">● מוכן</span>
+                    <span style="color: #f39c12; margin: 0 1rem;">● חלקי</span>
+                    <span style="color: #e74c3c; margin: 0 1rem;">● חסר</span>
+                    <span style="color: #3498db;">● בבדיקה</span>
+                </div>
+            </div>
+
+            <!-- Modules Dashboard -->
+            <h2>מודולי המערכת</h2>
+            <div class="dashboard" id="dashboard">
+                <div class="loading">טוען נתוני מודולים...</div>
+            </div>
+        </section>
+
+        <!-- Modules Section -->
+        <section id="modules" style="display: none;">
+            <div class="loading">טוען פירוט מודולים...</div>
+        </section>
+
+        <!-- Roadmap Section -->
+        <section id="roadmap" style="display: none;">
+            <div class="loading">טוען מפת דרכים...</div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="reports" style="display: none;">
+            <div class="loading">טוען דוחות...</div>
+        </section>
+    </main>
+
+    <footer style="text-align: center; padding: 2rem; color: #7f8c8d; border-top: 1px solid #ecf0f1; margin-top: 3rem;">
+        <p>© 2025 MASU Project Analysis Dashboard | נוצר אוטומטית על ידי מערכת ניתוח הפרויקט</p>
+        <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+            עדכון אחרון: <span id="lastUpdate">15/06/2025 18:37</span>
+        </p>
+    </footer>
+
+    <script src="./assets/script.js"></script>
+    <script>
+        // Update timestamps
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const hebrewDate = now.toLocaleDateString('he-IL');
+            const hebrewTime = now.toLocaleTimeString('he-IL', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            const analysisDateEl = document.getElementById('analysisDate');
+            const lastUpdateEl = document.getElementById('lastUpdate');
+            
+            if (analysisDateEl) analysisDateEl.textContent = hebrewDate;
+            if (lastUpdateEl) lastUpdateEl.textContent = `${hebrewDate} ${hebrewTime}`;
+        });
+    </script>
+</body>
+</html> 

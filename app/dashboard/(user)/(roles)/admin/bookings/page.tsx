@@ -4,6 +4,8 @@ import { requireUserSession } from "@/lib/auth/require-session";
 import AdminBookingsClient from "@/components/dashboard/admin/bookings/admin-bookings-client";
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton";
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminBookingsPage() {
   const session = await requireUserSession();
   if (!session.user.roles?.includes("admin")) {

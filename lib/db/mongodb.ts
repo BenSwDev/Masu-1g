@@ -1,36 +1,49 @@
-import { MongoClient } from "mongodb"
+import mongoose from "mongoose"
+import { logger } from "@/lib/logs/logger"
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"')
+const MONGODB_URI = process.env.MONGODB_URI
+
+if (!MONGODB_URI) {
+  throw new Error("Please define the MONGODB_URI environment variable inside .env.local")
 }
 
-const uri = process.env.MONGODB_URI
-const options = { compressors: ["zlib"] } // Specify zlib compressor, excluding snappy and zstd
+/**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections growing exponentially
+ * during API Route usage.
+ */
+let cached = global.mongoose
 
-let client
-let clientPromise: Promise<MongoClient>
-
-if (process.env.NODE_ENV === "development") {
-  // In development mode, use a global variable so that the value
-  // is preserved across module reloads caused by HMR (Hot Module Replacement).
-  const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>
-  }
-
-  if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options) // New line with updated options
-    globalWithMongo._mongoClientPromise = client.connect()
-  }
-  clientPromise = globalWithMongo._mongoClientPromise
-} else {
-  // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options) // New line with updated options
-  clientPromise = client.connect()
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null }
 }
 
-// Export a module-scoped MongoClient promise. By doing this in a
-// separate module, the client can be shared across functions.
-export default clientPromise
+async function connectToDatabase() {
+  if (cached.conn) {
+    return cached.conn
+  }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+    }
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      return mongoose
+    })
+  }
+
+  try {
+    cached.conn = await cached.promise
+  } catch (error) {
+    logger.error("Failed to connect to MongoDB", { error })
+    throw error
+  }
+
+  return cached.conn
+}
+
+export default connectToDatabase
 
 /**
  * Connects to MongoDB and returns the client
@@ -38,10 +51,10 @@ export default clientPromise
  */
 export async function connectDB() {
   try {
-    const client = await clientPromise
+    const client = await connectToDatabase()
     return client
   } catch (error) {
-    console.error("Failed to connect to MongoDB:", error)
+    logger.error("Failed to connect to MongoDB", { error })
     throw new Error("Failed to connect to the database")
   }
 }

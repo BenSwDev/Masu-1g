@@ -16,20 +16,23 @@ export function AnimatedContainer({ children, isActive, className }: AnimatedCon
   const [animationClass, setAnimationClass] = useState("")
 
   useEffect(() => {
+    let timer: NodeJS.Timeout
+    
     if (isActive) {
       setShouldRender(true)
       // Small delay to ensure the element is in the DOM before animating
-      setTimeout(() => {
+      timer = setTimeout(() => {
         setAnimationClass("opacity-100 translate-y-0")
       }, 50)
     } else {
       setAnimationClass("opacity-0 translate-y-4")
       // Wait for animation to complete before removing from DOM
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setShouldRender(false)
       }, 300) // Match this with the transition duration
-      return () => clearTimeout(timer)
     }
+    
+    return () => clearTimeout(timer)
   }, [isActive])
 
   if (!shouldRender) return null

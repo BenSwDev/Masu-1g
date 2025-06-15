@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminClientsPage() {
   const session = await requireUserSession()
   if (!session.user.roles?.includes("admin")) {

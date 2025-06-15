@@ -13,7 +13,7 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Checkbox } from "@/components/common/ui/checkbox"
 
-interface GuestAddress {
+export interface GuestAddress {
   city: string
   street: string
   houseNumber: string

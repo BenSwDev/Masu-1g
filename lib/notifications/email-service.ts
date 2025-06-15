@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer"
 import type { NotificationResult, EmailRecipient, NotificationData } from "./notification-types"
 import { getEmailTemplate } from "./templates/email-templates"
-import { logNotification } from "./notification-utils"
+import { logger } from "@/lib/logs/logger"
 
 /**
  * Email service implementation
@@ -34,9 +34,7 @@ export class EmailService {
       const { subject, html, text } = getEmailTemplate(data, recipient.language || "en", recipient.name)
 
       // Log the notification in development
-      logNotification("email", recipient.value, { subject, text })
-
-      console.log("Email configuration:", {
+      logger.debug("Email configuration", {
         host: process.env.EMAIL_SERVER_HOST,
         port: process.env.EMAIL_SERVER_PORT,
         user: process.env.EMAIL_SERVER_USER ? "Set" : "Not set",
@@ -53,13 +51,13 @@ export class EmailService {
         html,
       })
 
-      console.log("Email sent successfully:", info.messageId)
+      logger.info("Email sent successfully", { messageId: info.messageId })
       return {
         success: true,
         messageId: info.messageId,
       }
     } catch (error) {
-      console.error("Email send error:", error)
+      logger.error("Email send error", { error, to: recipient.value, subject })
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error sending email",
@@ -78,7 +76,7 @@ export class EmailService {
         process.env.EMAIL_SERVER_PASSWORD,
     )
 
-    console.log("Email service configured:", isConfigured)
+    logger.debug("Email service configured", { isConfigured })
     return isConfigured
   }
 
@@ -88,10 +86,10 @@ export class EmailService {
   async verifyConnection(): Promise<boolean> {
     try {
       await this.transporter.verify()
-      console.log("Email service connection verified successfully")
+      logger.info("Email service connection verified successfully")
       return true
     } catch (error) {
-      console.error("Email service connection error:", error)
+      logger.error("Email service connection error", { error })
       return false
     }
   }

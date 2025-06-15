@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { getBookingInitialData } from "@/actions/booking-actions"
 import UnifiedBookingWizard from "@/components/booking/unified-booking-wizard"
-import type { UserSessionData } from "@/types/next-auth"
+import type { User } from "next-auth"
 
 export default async function BookTreatmentPage({ params }: { params?: { lang?: string } }) {
   const session = await getServerSession(authOptions)
@@ -16,7 +16,7 @@ export default async function BookTreatmentPage({ params }: { params?: { lang?: 
   return (
     <UnifiedBookingWizard
       initialData={initialDataResult.data}
-      currentUser={session.user as UserSessionData}
+      currentUser={session.user as User}
     />
   )
 }

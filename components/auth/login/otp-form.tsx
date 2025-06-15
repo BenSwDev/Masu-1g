@@ -29,8 +29,10 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
   const [error, setError] = useState("")
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""])
   const [cooldown, setCooldown] = useState(0)
-  const [currentIdentifier, setCurrentIdentifier] = useState(identifier || "")
-  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null, null, null, null])
+  const [currentIdentifier, setCurrentIdentifier] = useState(identifier)
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const identifierInputRef = useRef<HTMLInputElement>(null)
+  const phoneInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const { toast } = useToast()
   const { data: session } = useSession()
@@ -181,20 +183,12 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
 
   // Get current identifier from input field (client-side only)
   const getCurrentIdentifier = () => {
-    if (typeof window !== "undefined") {
-      if (loginType === "email") {
-        const inputEl = document.getElementById("otp-identifier") as HTMLInputElement
-        return inputEl?.value || currentIdentifier
-      } else {
-        // For phone, get the value from the hidden input that PhoneInput creates
-        const hiddenInput = document.querySelector('input[name="phone"][type="hidden"]') as HTMLInputElement
-        if (hiddenInput && hiddenInput.value) {
-          return hiddenInput.value
-        }
-        return currentIdentifier
-      }
+    if (loginType === "email") {
+      return identifierInputRef.current?.value || currentIdentifier
+    } else {
+      // For phone, try to get the value from the phone input ref
+      return phoneInputRef.current?.value || currentIdentifier
     }
-    return currentIdentifier
   }
 
   // Send OTP code

@@ -6,6 +6,8 @@ import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
 import { requireUserSession } from "@/lib/auth/require-session"
 
+export const dynamic = 'force-dynamic'
+
 // קומפוננטת טעינה
 function SubscriptionsLoading() {
   return (

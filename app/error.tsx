@@ -4,6 +4,7 @@ import { useEffect } from "react"
 import { Button } from "@/components/common/ui/button"
 import { AlertTriangle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { logger } from "@/lib/logs/logger"
 
 export default function Error({
   error,
@@ -15,8 +16,14 @@ export default function Error({
   const router = useRouter()
 
   useEffect(() => {
-    // Log the error to an error reporting service
-    console.error(error)
+    // Log the error to the logging service
+    logger.error("Application error boundary triggered", {
+      error: {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 10), // First 10 lines of stack
+        digest: error.digest
+      }
+    })
   }, [error])
 
   return (

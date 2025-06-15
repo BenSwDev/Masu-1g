@@ -2201,8 +2201,6 @@ export async function createGuestBooking(
   }
 }
 
-
-
 export async function createGuestUser(guestInfo: {
   firstName: string
   lastName: string
@@ -2212,83 +2210,55 @@ export async function createGuestUser(guestInfo: {
   gender?: "male" | "female" | "other"
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
   try {
-    console.log("🔍 Creating guest user with info:", guestInfo)
-    console.log("🔍 Guest info type check:", {
-      firstName: typeof guestInfo.firstName,
-      lastName: typeof guestInfo.lastName,
-      email: typeof guestInfo.email,
-      phone: typeof guestInfo.phone,
-      birthDate: typeof guestInfo.birthDate,
-      gender: typeof guestInfo.gender
+    await connectToDatabase()
+
+    // Check if user already exists by email or phone
+    const existingUser = await User.findOne({
+      $or: [{ email: guestInfo.email }, { phone: guestInfo.phone }],
     })
-    console.log("🔍 Guest info values:", {
+
+    if (existingUser) {
+      logger.info("Guest user already exists, returning existing user", { 
+        userId: existingUser._id,
+        email: guestInfo.email 
+      })
+      return { success: true, userId: existingUser._id.toString() }
+    }
+
+    // Create new guest user
+    const newUser = new User({
       firstName: guestInfo.firstName,
       lastName: guestInfo.lastName,
       email: guestInfo.email,
       phone: guestInfo.phone,
       birthDate: guestInfo.birthDate,
-      gender: guestInfo.gender
-    })
-    await dbConnect()
-
-    // Check if user already exists with this email or phone
-    const existingUser = await User.findOne({
-      $or: [
-        { email: guestInfo.email },
-        { phone: guestInfo.phone }
-      ]
+      gender: guestInfo.gender,
+      roles: ["guest"],
+      isActive: true,
+      isGuest: true,
+      createdAt: new Date(),
     })
 
-    if (existingUser) {
-      console.log("✅ Found existing user:", existingUser._id.toString())
-      console.log("🔍 Existing user roles:", existingUser.roles)
-      
-      // Clean up invalid roles and ensure guest role is present
-      const validRoles = existingUser.roles.filter((role: string) => 
-        ['member', 'professional', 'partner', 'admin', 'guest'].includes(role)
-      )
-      
-      if (!validRoles.includes(UserRole.GUEST)) {
-        validRoles.push(UserRole.GUEST)
-      }
-      
-      // Update roles if they changed
-      if (JSON.stringify(validRoles) !== JSON.stringify(existingUser.roles)) {
-        existingUser.roles = validRoles
-        console.log("🔧 Updating user roles from:", existingUser.roles, "to:", validRoles)
-        await existingUser.save()
-        console.log("✅ Updated user roles successfully")
-      }
-      
-      return { success: true, userId: existingUser._id.toString() }
-    }
-
-    // Create new guest user
-    const guestUser = new User({
-      name: `${guestInfo.firstName} ${guestInfo.lastName}`,
-      email: guestInfo.email,
-      phone: guestInfo.phone,
-      gender: guestInfo.gender || "other",
-      dateOfBirth: guestInfo.birthDate,
-      password: Math.random().toString(36).substring(2, 15), // Random password for guest
-      roles: [UserRole.GUEST],
-      activeRole: UserRole.GUEST,
-      emailVerified: null,
-      phoneVerified: null,
+    const savedUser = await newUser.save()
+    logger.info("Guest user created successfully", { 
+      userId: savedUser._id,
+      email: guestInfo.email 
     })
 
-    await guestUser.save()
-    
-    console.log("✅ Guest user created successfully:", guestUser._id.toString())
-    logger.info("Guest user created successfully", {
-      userId: guestUser._id.toString(),
-      email: guestInfo.email,
-    })
-
-    return { success: true, userId: guestUser._id.toString() }
+    return { success: true, userId: savedUser._id.toString() }
   } catch (error) {
-    console.error("❌ Error creating guest user:", error)
-    logger.error("Error creating guest user:", { error, guestInfo })
+    logger.error("Error creating guest user", { 
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5)
+      } : String(error),
+      guestInfo: {
+        email: guestInfo.email,
+        phone: guestInfo.phone,
+        firstName: guestInfo.firstName,
+        lastName: guestInfo.lastName
+      }
+    })
     
     // Return more specific error message
     if (error instanceof Error) {

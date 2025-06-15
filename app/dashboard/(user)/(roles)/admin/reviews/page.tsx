@@ -5,6 +5,8 @@ import { Metadata } from "next";
 import AdminReviewsClient from "@/components/dashboard/admin/reviews/admin-reviews-client";
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton";
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Reviews Management",
   description: "Manage customer reviews and ratings",

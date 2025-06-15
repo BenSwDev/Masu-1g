@@ -6,6 +6,8 @@ import { Heading } from "@/components/common/ui/heading"
 import { ClientAwareCouponsLoadingSkeleton } from "@/components/dashboard/admin/coupons/client-aware-coupons-loading-skeleton"
 import { requireUserSession } from "@/lib/auth/require-session"
 
+export const dynamic = 'force-dynamic'
+
 // For metadata, it's often done by fetching translations in a server component or using a dedicated i18n setup for metadata.
 // Assuming a simple approach for now:
 // Replace:

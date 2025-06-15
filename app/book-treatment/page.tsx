@@ -1,48 +1,51 @@
+import { Suspense } from "react"
 import { getBookingInitialData } from "@/actions/booking-actions"
 import UnifiedBookingWizard from "@/components/booking/unified-booking-wizard"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { GuestLayout } from "@/components/layout/guest-layout"
+import { logger } from "@/lib/logs/logger"
 
-export default async function GuestBookTreatmentPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function BookTreatmentPage() {
   try {
-    const initialDataResult = await getBookingInitialData() // No userId for guests
+    const initialDataResult = await getBookingInitialData()
     
-    if (!initialDataResult?.success || !initialDataResult?.data) {
-      console.error('Guest booking data fetch failed:', initialDataResult?.error)
+    if (!initialDataResult.success || !initialDataResult.data) {
+      logger.error("Guest booking data fetch failed", { 
+        error: initialDataResult.error 
+      })
+      
       return (
-        <GuestLayout>
-          <Card>
-            <CardHeader>
-              <CardTitle>שגיאה בטעינת הנתונים</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>אירעה שגיאה בטעינת הנתונים. אנא נסה שוב מאוחר יותר.</p>
-            </CardContent>
-          </Card>
-        </GuestLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">שגיאה בטעינת הנתונים</h1>
+            <p className="text-muted-foreground">
+              {initialDataResult.error || "אירעה שגיאה בטעינת נתוני ההזמנה"}
+            </p>
+          </div>
+        </div>
       )
     }
 
     return (
-      <GuestLayout>
-        <UnifiedBookingWizard
-          initialData={initialDataResult.data}
-        />
-      </GuestLayout>
+      <div className="container mx-auto px-4 py-8">
+        <Suspense fallback={<div>טוען...</div>}>
+          <UnifiedBookingWizard 
+            initialData={initialDataResult.data}
+            // No currentUser for guest booking
+          />
+        </Suspense>
+      </div>
     )
   } catch (error) {
-    console.error('Error in guest book treatment page:', error)
+    logger.error("Error in guest book treatment page", { error })
+    
     return (
-      <GuestLayout>
-        <Card>
-          <CardHeader>
-            <CardTitle>שגיאה בטעינת הנתונים</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>אירעה שגיאה בטעינת הנתונים. אנא נסה שוב מאוחר יותר.</p>
-          </CardContent>
-        </Card>
-      </GuestLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">שגיאה</h1>
+          <p className="text-muted-foreground">אירעה שגיאה בלתי צפויה. אנא נסה שוב מאוחר יותר.</p>
+        </div>
+      </div>
     )
   }
 } 

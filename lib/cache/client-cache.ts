@@ -3,6 +3,8 @@
  * to improve performance on subsequent visits
  */
 
+import { logger } from "@/lib/logs/logger"
+
 // Cache keys
 export const CACHE_KEYS = {
   USER_PROFILE: "masu_user_profile",
@@ -40,7 +42,7 @@ export function setCacheItem<T>(key: string, value: T, expiryTime: number = CACH
     }
     localStorage.setItem(key, JSON.stringify(item))
   } catch (error) {
-    console.error("Error setting cache item:", error)
+    logger.error("Error setting cache item", { error, key })
   }
 }
 
@@ -64,7 +66,7 @@ export function getCacheItem<T>(key: string): T | null {
 
     return item.value
   } catch (error) {
-    console.error("Error getting cache item:", error)
+    logger.error("Error getting cache item", { error, key })
     return null
   }
 }
@@ -78,7 +80,7 @@ export function removeCacheItem(key: string): void {
   try {
     localStorage.removeItem(key)
   } catch (error) {
-    console.error("Error removing cache item:", error)
+    logger.error("Error removing cache item", { error, key })
   }
 }
 
@@ -95,7 +97,7 @@ export function clearAllCache(): void {
       }
     })
   } catch (error) {
-    console.error("Error clearing cache:", error)
+    logger.error("Error clearing cache", { error })
   }
 }
 
@@ -114,6 +116,6 @@ export function updateCacheExpiry<T>(key: string, newExpiryTime: number = CACHE_
 
     localStorage.setItem(key, JSON.stringify(item))
   } catch (error) {
-    console.error("Error updating cache expiry:", error)
+    logger.error("Error updating cache expiry", { error, key })
   }
 }

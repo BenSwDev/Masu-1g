@@ -7,6 +7,8 @@ import { Heading } from "@/components/common/ui/heading"
 import { ClientAwarePartnerCouponBatchesLoadingSkeleton } from "@/components/dashboard/admin/partner-coupon-batches/client-aware-partner-coupon-batches-loading-skeleton"
 import { requireUserSession } from "@/lib/auth/require-session"
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: "Manage Partner Coupon Batches",
 }

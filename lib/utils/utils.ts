@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { logger } from "@/lib/logs/logger"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -11,30 +12,26 @@ export function cn(...inputs: ClassValue[]) {
  * @param language The language code (e.g., "en", "he", "ru") for localization. Defaults to "en-US".
  * @returns A localized date string (e.g., "Jan 01, 2023") or an empty string if the date is invalid.
  */
-export function formatDate(date: Date | string, language = "en-US"): string {
+export function formatDate(date: Date | string | null | undefined, language: string = "he"): string {
   if (!date) return ""
-
-  const d = typeof date === "string" ? new Date(date) : date
-
-  if (isNaN(d.getTime())) {
-    console.warn(`[Utils] Invalid date provided to formatDate: ${date}`)
-    return ""
-  }
-
+  
   try {
-    return d.toLocaleDateString(language, {
-      day: "2-digit",
-      month: "short",
+    const dateObj = typeof date === "string" ? new Date(date) : date
+    if (isNaN(dateObj.getTime())) {
+      logger.warn("Invalid date provided to formatDate", { date })
+      return ""
+    }
+
+    const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
-    })
+      month: "2-digit",
+      day: "2-digit",
+    }
+
+    return dateObj.toLocaleDateString(language === "he" ? "he-IL" : language === "en" ? "en-US" : "ru-RU", options)
   } catch (error) {
-    console.error(`[Utils] Error formatting date for language ${language}:`, error)
-    // Fallback to default language if specific one fails
-    return d.toLocaleDateString("en-US", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    })
+    logger.error("Error formatting date", { error, date, language })
+    return ""
   }
 }
 
@@ -45,26 +42,30 @@ export function formatDate(date: Date | string, language = "en-US"): string {
  * @param language The language code (e.g., "en", "he", "ru") for localization. Defaults to "he-IL" for ILS, "en-US" for USD.
  * @returns A localized currency string (e.g., "₪100.00") or a fallback string if formatting fails.
  */
-export function formatCurrency(amount: number | undefined | null, currency = "ILS", language = "en-US"): string {
-  // Handle undefined/null values
-  if (amount === undefined || amount === null) {
-    return `0.00 ${currency}`
-  }
+export function formatCurrency(
+  amount: number | string | null | undefined,
+  currency: string = "ILS",
+  language: string = "he",
+): string {
+  if (amount === null || amount === undefined) return ""
   
-  // Ensure amount is a number
-  const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount))
+  const numericAmount = typeof amount === "string" ? parseFloat(amount) : amount
+  
   if (isNaN(numericAmount)) {
-    console.warn(`[Utils] Invalid amount provided to formatCurrency: ${amount}`)
-    return `0.00 ${currency}`
+    logger.warn("Invalid amount provided to formatCurrency", { amount })
+    return ""
   }
-
-  let effectiveLanguage = language
-  // Specific language defaults for certain currencies if a generic language like "en" is passed.
-  if (language === "he" && currency === "ILS") effectiveLanguage = "he-IL"
-  if (language === "en" && currency === "USD") effectiveLanguage = "en-US"
-  if (language === "en" && currency === "EUR") effectiveLanguage = "de-DE" // Or any other Eurozone locale like "fr-FR"
 
   try {
+    // Map language codes to locale codes
+    const localeMap: Record<string, string> = {
+      he: "he-IL",
+      en: "en-US",
+      ru: "ru-RU",
+    }
+
+    const effectiveLanguage = localeMap[language] || "he-IL"
+
     return new Intl.NumberFormat(effectiveLanguage, {
       style: "currency",
       currency: currency,
@@ -72,8 +73,8 @@ export function formatCurrency(amount: number | undefined | null, currency = "IL
       maximumFractionDigits: 2,
     }).format(numericAmount)
   } catch (error) {
-    console.error(`[Utils] Error formatting currency ${currency} for language ${effectiveLanguage}:`, error)
-    // Fallback for unsupported currencies or errors
+    logger.error("Error formatting currency", { error, currency, language })
+    // Fallback formatting
     return `${numericAmount.toFixed(2)} ${currency}`
   }
 }

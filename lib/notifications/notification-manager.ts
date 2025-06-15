@@ -31,7 +31,7 @@ try {
     twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
   }
 } catch (error) {
-  console.warn("Failed to initialize Twilio client:", error)
+  logger.warn("Failed to initialize Twilio client", { error })
   twilioClient = null
 }
 
@@ -42,10 +42,21 @@ const FROM_PHONE = process.env.TWILIO_PHONE_NUMBER || ""
  * Notification manager to handle different notification types
  */
 export class NotificationManager {
+  private static instance: NotificationManager
   private isDevelopment: boolean
+  private twilioClient: any | null = null
 
-  constructor() {
+  private constructor() {
     this.isDevelopment = process.env.NODE_ENV === "development"
+    try {
+      if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+        this.twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
+      } else {
+        logger.warn("Twilio credentials not configured")
+      }
+    } catch (error) {
+      logger.warn("Failed to initialize Twilio client", { error })
+    }
   }
 
   /**
@@ -227,6 +238,69 @@ export class NotificationManager {
       }
     }
   }
+
+  async sendEmailNotification(
+    to: string,
+    subject: string,
+    content: NotificationContent,
+    language: Language = "he",
+  ): Promise<boolean> {
+    try {
+      if (!process.env.RESEND_API_KEY) {
+        logger.warn("RESEND_API_KEY not configured, skipping email notification")
+        return false
+      }
+
+      const resend = new Resend(process.env.RESEND_API_KEY)
+
+      const htmlContent = await this.generateEmailTemplate(content, language)
+
+      const result = await resend.emails.send({
+        from: process.env.FROM_EMAIL || "noreply@masu.co.il",
+        to,
+        subject,
+        html: htmlContent,
+      })
+
+      if (result.error) {
+        logger.error("Email notification failed", { error: result.error, to, subject })
+        return false
+      }
+
+      logger.info("Email notification sent successfully", { to, subject, messageId: result.data?.id })
+      return true
+    } catch (error) {
+      logger.error("Email notification failed", { error, to, subject })
+      return false
+    }
+  }
+
+  async sendSMSNotification(
+    to: string,
+    content: NotificationContent,
+    language: Language = "he",
+  ): Promise<boolean> {
+    try {
+      if (!this.twilioClient) {
+        logger.warn("Twilio not configured, skipping SMS notification")
+        return false
+      }
+
+      const message = this.generateSMSMessage(content, language)
+
+      const result = await this.twilioClient.messages.create({
+        body: message,
+        from: process.env.TWILIO_PHONE_NUMBER,
+        to,
+      })
+
+      logger.info("SMS notification sent successfully", { to, messageId: result.sid })
+      return true
+    } catch (error) {
+      logger.error("SMS notification failed", { error, to })
+      return false
+    }
+  }
 }
 
 // Export a singleton instance
@@ -243,7 +317,7 @@ async function sendEmailNotification(
 ): Promise<NotificationResult> {
   try {
     if (!resend) {
-      console.warn("RESEND_API_KEY not configured, skipping email notification")
+      logger.warn("RESEND_API_KEY not configured, skipping email notification")
       return { success: false, error: "Email service not configured" }
     }
 
@@ -301,7 +375,7 @@ async function sendEmailNotification(
       details: result,
     }
   } catch (error) {
-    console.error("Email notification failed:", error)
+    logger.error("Email notification failed", { error })
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown email error",
@@ -320,7 +394,7 @@ async function sendSMSNotification(
 ): Promise<NotificationResult> {
   try {
     if (!twilioClient || !FROM_PHONE) {
-      console.warn("Twilio not configured, skipping SMS notification")
+      logger.warn("Twilio not configured, skipping SMS notification")
       return { success: false, error: "SMS service not configured" }
     }
 
@@ -338,7 +412,7 @@ async function sendSMSNotification(
       details: result,
     }
   } catch (error) {
-    console.error("SMS notification failed:", error)
+    logger.error("SMS notification failed", { error })
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown SMS error",

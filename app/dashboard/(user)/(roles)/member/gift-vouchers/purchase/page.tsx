@@ -1,37 +1,59 @@
+import { requireUserSession } from "@/lib/auth/require-session"
 import { getTreatmentsForSelection } from "@/actions/gift-voucher-actions"
 import { getPaymentMethods } from "@/actions/payment-method-actions"
 import UnifiedGiftVoucherWizard from "@/components/gift-vouchers/unified-gift-voucher-wizard"
-import { ScrollArea } from "@/components/common/ui/scroll-area"
-import { Heading } from "@/components/common/ui/heading"
-import { Separator } from "@/components/common/ui/separator"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/auth"
-import { redirect } from "next/navigation"
+import { logger } from "@/lib/logs/logger"
+
+export const dynamic = 'force-dynamic'
 
 export default async function PurchaseGiftVoucherPage() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user) {
-    redirect("/auth/login")
+  const session = await requireUserSession()
+  
+  if (!session) {
+    return <div>Unauthorized</div>
   }
 
-  const treatmentsResult = await getTreatmentsForSelection()
-  const paymentMethodsResult = await getPaymentMethods()
+  try {
+    const [treatmentsResult, paymentMethodsResult] = await Promise.all([
+      getTreatmentsForSelection(),
+      getPaymentMethods()
+    ])
 
-  if (!treatmentsResult.success || !paymentMethodsResult.success) {
-    console.error("Failed to load data for voucher purchase:", treatmentsResult.error, paymentMethodsResult.error)
-  }
+    if (!treatmentsResult.success || !paymentMethodsResult.success) {
+      logger.error("Failed to load data for voucher purchase", {
+        treatmentsError: treatmentsResult.error,
+        paymentMethodsError: paymentMethodsResult.error
+      })
+      
+      return (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">שגיאה בטעינת הנתונים</h1>
+            <p className="text-muted-foreground">אירעה שגיאה בטעינת הנתונים. אנא נסה שוב מאוחר יותר.</p>
+          </div>
+        </div>
+      )
+    }
 
-  return (
-    <ScrollArea className="h-full">
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <Heading title="Purchase Gift Voucher" description="Select and purchase a gift voucher." />
-        <Separator />
+    return (
+      <div className="container mx-auto px-4 py-8">
         <UnifiedGiftVoucherWizard
-          treatments={treatmentsResult.treatments || []}
+          treatments={treatmentsResult.treatments as any || []}
           initialPaymentMethods={paymentMethodsResult.paymentMethods || []}
           currentUser={session.user}
         />
       </div>
-    </ScrollArea>
-  )
+    )
+  } catch (error) {
+    logger.error("Error in gift voucher purchase page", { error })
+    
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">שגיאה</h1>
+          <p className="text-muted-foreground">אירעה שגיאה בלתי צפויה. אנא נסה שוב מאוחר יותר.</p>
+        </div>
+      </div>
+    )
+  }
 }

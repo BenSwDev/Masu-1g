@@ -132,19 +132,17 @@ export function clearDevOTP(identifier: string, type: "email" | "phone"): void {
 }
 
 // Enhanced logging for development
-export function logNotification(type: "email" | "sms", recipient: string, content: any): void {
+export function logNotification(type: "email" | "phone", recipient: string, content: any): void {
   if (process.env.NODE_ENV === "development") {
-    console.log("\n=== Development Mode Notification ===");
-    console.log(`Type: ${type.toUpperCase()}`);
-    console.log(`Recipient: ${recipient}`);
-    console.log("Content:", content);
-    
-    if (content.code) {
-      console.log("\n🔑 OTP Code:", content.code);
-      console.log("⚠️  This code is valid for 10 minutes");
-      console.log("📝 Use this code to verify in development mode");
-    }
-    
-    console.log("===================================\n");
+    logger.info("Development Mode Notification", {
+      type: type.toUpperCase(),
+      recipient,
+      content,
+      ...(content.code && {
+        otpCode: content.code,
+        validity: "This code is valid for 10 minutes",
+        note: "Use this code to verify in development mode"
+      })
+    })
   }
 }

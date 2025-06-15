@@ -74,7 +74,7 @@ export class SMSService {
         messageId: message.sid,
       }
     } catch (error) {
-      console.error("SMS send error:", error)
+      logger.error("SMS send error", { error, phoneNumber })
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error sending SMS",

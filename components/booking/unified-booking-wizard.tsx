@@ -6,20 +6,19 @@ import { format } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
 
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails, TimeSlot } from "@/types/booking"
-import type { UserSessionData } from "@/types/next-auth"
+import type { User } from "next-auth"
 import { useToast } from "@/components/common/ui/use-toast"
 
 // Import unified steps (will be renamed from guest-* to unified)
 import { GuestInfoStep } from "./steps/guest-info-step"
-import { GuestAddressStep } from "./steps/guest-address-step"
+import { GuestAddressStep, type GuestAddress } from "./steps/guest-address-step"
 import { GuestTreatmentSelectionStep } from "./steps/guest-treatment-selection-step"
 import { GuestSchedulingStep } from "./steps/guest-scheduling-step"
 import { GuestSummaryStep } from "./steps/guest-summary-step"
 import { GuestPaymentStep } from "./steps/guest-payment-step"
 import { GuestBookingConfirmation } from "./steps/guest-booking-confirmation"
 
-// Import member-specific step for source selection
-import BookingSourceStep from "@/components/dashboard/member/book-treatment/steps/booking-source-step"
+
 
 import { 
   calculateBookingPrice, 
@@ -37,6 +36,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/aler
 import { Button } from "@/components/common/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import type { IBooking } from "@/lib/db/models/booking"
+import { logger } from "@/lib/logs/logger"
+import { setCacheItem, getCacheItem, removeCacheItem, CACHE_KEYS, CACHE_EXPIRY } from "@/lib/cache/client-cache"
+
+// Add new cache key for guest user ID
+const GUEST_USER_CACHE_KEY = "masu_guest_user_id"
 
 interface GuestInfo {
   firstName: string
@@ -60,27 +64,11 @@ interface GuestInfo {
   recipientNotificationLanguage?: "he" | "en" | "ru"
 }
 
-interface GuestAddress {
-  city: string
-  street: string
-  houseNumber: string
-  addressType: "apartment" | "house" | "office" | "hotel" | "other"
-  floor?: string
-  apartmentNumber?: string
-  entrance?: string
-  parking: boolean
-  notes?: string
-  // Type-specific details
-  doorName?: string // for house
-  buildingName?: string // for office
-  hotelName?: string // for hotel
-  roomNumber?: string // for hotel
-  instructions?: string // for other
-}
+
 
 interface UnifiedBookingWizardProps {
   initialData: BookingInitialData
-  currentUser?: UserSessionData // Optional - if provided, user is logged in
+  currentUser?: User // Optional - if provided, user is logged in
 }
 
 const TIMEZONE = "Asia/Jerusalem"
@@ -123,9 +111,7 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false)
   const [bookingResult, setBookingResult] = useState<IBooking | null>(null)
-  const [guestUserId, setGuestUserId] = useState<string | null>(
-    typeof window !== "undefined" ? localStorage.getItem('guestUserId') : null
-  )
+  const [guestUserId, setGuestUserId] = useState<string | null>(null)
   const [pendingBookingId, setPendingBookingId] = useState<string | null>(null)
   const [workingHoursNote, setWorkingHoursNote] = useState<string>("")
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
@@ -133,24 +119,43 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
   const guestUserCreatedRef = useRef(false)
   const { toast } = useToast()
 
+  // Load guestUserId from cache on client side only
+  useEffect(() => {
+    const storedGuestUserId = getCacheItem<string>(GUEST_USER_CACHE_KEY)
+    if (storedGuestUserId) {
+      setGuestUserId(storedGuestUserId)
+    }
+  }, [])
+
+  // Helper function to save guest user ID to cache
+  const saveGuestUserIdToCache = (userId: string) => {
+    setGuestUserId(userId)
+    setCacheItem(GUEST_USER_CACHE_KEY, userId, CACHE_EXPIRY.PERSISTENT)
+  }
+
+  // Helper function to clear guest user ID from cache
+  const clearGuestUserIdFromCache = () => {
+    setGuestUserId(null)
+    removeCacheItem(GUEST_USER_CACHE_KEY)
+  }
+
   // Enhanced setGuestInfo function with proper state merging
   const setGuestInfo = useCallback((newInfo: Partial<GuestInfo>) => {
-    console.log("🔄 setGuestInfo called with:", newInfo)
-    console.log("🔄 Current guestInfo state:", guestInfo)
+    logger.debug("setGuestInfo called", { newInfo })
     
     setGuestInfoState(prevState => {
       const updatedState = { ...prevState, ...newInfo }
-      console.log("✅ Updated guestInfo state:", updatedState)
+      logger.debug("Updated guestInfo state", { updatedState })
       return updatedState
     })
-  }, [guestInfo])
+  }, [])
 
   // Function to create initial pending booking (guest only)
   const createInitialPendingBooking = async (userId: string, guestInfoData: Partial<GuestInfo>) => {
     if (!isGuestBooking) return // Only for guests
     
     try {
-      console.log("📝 Creating initial pending booking for guest:", userId)
+      logger.debug("Creating initial pending booking for guest", { userId })
       
       const result = await saveAbandonedBooking(userId, {
         guestInfo: guestInfoData,
@@ -161,31 +166,31 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
       })
       
       if (result.success) {
-        console.log("✅ Initial pending booking created:", result.bookingId)
+        logger.info("Initial pending booking created", { bookingId: result.bookingId })
         toast({
           title: "התחלת תהליך הזמנה",
           description: "ההזמנה נשמרה במערכת ותופיע בעמוד הזמנות המנהל",
         })
       }
     } catch (error) {
-      console.error("❌ Error creating initial pending booking:", error)
+      logger.error("Error creating initial pending booking", { error, userId })
     }
   }
 
   // Function to handle guest info submission and proceed to next step
   const handleGuestInfoSubmit = useCallback(async (newInfo: Partial<GuestInfo>) => {
-    console.log("🔄 handleGuestInfoSubmit called with:", newInfo)
+    logger.debug("handleGuestInfoSubmit called", { newInfo })
     
     // Update the state
     setGuestInfoState(prevState => {
       const updatedState = { ...prevState, ...newInfo }
-      console.log("✅ Updated guestInfo state in handleGuestInfoSubmit:", updatedState)
+      logger.debug("Updated guestInfo state in handleGuestInfoSubmit", { updatedState })
       
       // For guest bookings, create guest user after step 1
       if (isGuestBooking && currentStep === 1 && !guestUserId) {
         setTimeout(async () => {
           if (updatedState.firstName && updatedState.lastName && updatedState.email && updatedState.phone) {
-            console.log("👤 Creating guest user...")
+            logger.debug("Creating guest user")
             const guestUserData = {
               firstName: updatedState.firstName,
               lastName: updatedState.lastName,
@@ -199,12 +204,12 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
               const result = await createGuestUser(guestUserData)
               
               if (result.success && result.userId) {
-                console.log("✅ Guest user created/found:", result.userId)
+                logger.info("Guest user created/found", { userId: result.userId })
                 setGuestUserId(result.userId)
-                localStorage.setItem('guestUserId', result.userId)
+                saveGuestUserIdToCache(result.userId)
                 await createInitialPendingBooking(result.userId, updatedState)
               } else {
-                console.error("❌ Failed to create guest user:", result.error)
+                logger.error("Failed to create guest user", { error: result.error })
                 toast({
                   variant: "destructive",
                   title: "שגיאה ביצירת משתמש אורח",
@@ -213,7 +218,7 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
                 return
               }
             } catch (error) {
-              console.error("❌ Error creating guest user:", error)
+              logger.error("Error creating guest user", { error })
               toast({
                 variant: "destructive",
                 title: "שגיאה ביצירת משתמש אורח",
@@ -238,7 +243,7 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
       const fetchSlots = async () => {
         setIsTimeSlotsLoading(true)
         setTimeSlots([])
-        setWorkingHoursNote(undefined)
+        setWorkingHoursNote("")
         
         const localDate = bookingOptions.bookingDate!
         const year = localDate.getFullYear()
@@ -253,7 +258,7 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
         )
         if (result.success) {
           setTimeSlots(result.timeSlots || [])
-          setWorkingHoursNote(result.workingHoursNote)
+          setWorkingHoursNote(result.workingHoursNote || "")
         } else {
           toast({
             variant: "destructive",
@@ -266,7 +271,7 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
       fetchSlots()
     } else {
       setTimeSlots([])
-      setWorkingHoursNote(undefined)
+      setWorkingHoursNote("")
     }
   }, [bookingOptions.bookingDate, bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, toast, t])
 
@@ -384,13 +389,13 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
           })
           if (result.success && result.userId) {
             setGuestUserId(result.userId)
-            localStorage.setItem('guestUserId', result.userId)
+            saveGuestUserIdToCache(result.userId)
             await createInitialPendingBooking(result.userId, guestInfo)
           } else {
             guestUserCreatedRef.current = false
           }
         } catch (error) {
-          console.error('❌ Auto guest user creation failed:', error)
+          logger.error('Auto guest user creation failed', { error })
           guestUserCreatedRef.current = false
         }
       }
@@ -413,7 +418,7 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
           currentStep,
         })
       } catch (error) {
-        console.error("Error saving form state:", error)
+        logger.error("Error saving form state", { error })
       }
     }
 
@@ -591,7 +596,7 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
         if (result.success && result.booking) {
           setBookingResult(result.booking)
           setCurrentStep(CONFIRMATION_STEP_NUMBER)
-          localStorage.removeItem('guestUserId')
+          clearGuestUserIdFromCache()
         } else {
           throw new Error(result.error || "Failed to create booking")
         }
@@ -674,12 +679,10 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
       case 2:
         return (
           <GuestAddressStep
-            guestAddress={guestAddress}
-            setGuestAddress={setGuestAddress}
+            address={guestAddress}
+            setAddress={setGuestAddress}
             onNext={nextStep}
             onPrev={prevStep}
-            // For members, show saved addresses as options
-            savedAddresses={currentUser ? initialData.userAddresses : undefined}
           />
         )
       case 3:
@@ -731,8 +734,6 @@ export default function UnifiedBookingWizard({ initialData, currentUser }: Unifi
             isLoading={isLoading}
             createPendingBooking={createPendingBooking}
             pendingBookingId={pendingBookingId}
-            // For members, show saved payment methods
-            savedPaymentMethods={currentUser ? initialData.userPaymentMethods : undefined}
           />
         )
     }

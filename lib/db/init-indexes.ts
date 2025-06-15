@@ -1,55 +1,54 @@
 import mongoose from "mongoose"
+import { logger } from "@/lib/logs/logger"
 
-async function initIndexes() {
+async function createIndexes() {
   try {
-    // Drop indexes and references to bundles
-    // Get a list of all collections
-    const collections = await mongoose.connection.db?.listCollections().toArray() || []
+    const db = mongoose.connection.db
+    if (!db) {
+      logger.warn("Database connection not available for index creation")
+      return
+    }
 
-    for (const collectionInfo of collections) {
-      const collectionName = collectionInfo.name
-      const collection = mongoose.connection.collection(collectionName)
-
+    // Helper function to safely get existing indexes
+    const getExistingIndexes = async (collectionName: string) => {
       try {
-        // Get existing indexes
-        const indexes = await collection.indexes()
-
+        const collection = db.collection(collectionName)
+        return await collection.indexes()
       } catch (indexError) {
-        console.error(`Error getting indexes for collection ${collectionName}:`, indexError)
+        logger.error("Error getting indexes for collection", { 
+          collectionName, 
+          error: indexError 
+        })
+        return []
       }
     }
 
-    // Subscription collection indexes
-    const subscriptionIndexes = [
-      { name: 1 },
-      { isActive: 1 },
-      { createdAt: -1 },
-      { treatments: 1 },
-      { name: "text", description: "text" }
-    ] as const
-
-    // Create Subscription indexes
-    const Subscription = mongoose.connection.collection("subscriptions")
-    for (const index of subscriptionIndexes) {
-      try {
-        await Subscription.createIndex(index as any)
-      } catch (error) {
-        console.error("Error creating subscription index:", error)
-      }
-    }
-
-    // Create GiftVoucher indexes
-    const GiftVoucher = mongoose.connection.collection("giftvouchers")
+    // Create subscription indexes
     try {
-      await GiftVoucher.createIndex({ code: 1 }, { unique: true })
-      await GiftVoucher.createIndex({ validFrom: 1, validUntil: 1 })
-      await GiftVoucher.createIndex({ isActive: 1 })
+      const subscriptionIndexes = await getExistingIndexes("subscriptions")
+      const hasUserIdIndex = subscriptionIndexes.some((index: any) => 
+        index.key && index.key.userId
+      )
+      
+      if (!hasUserIdIndex) {
+        await db.collection("subscriptions").createIndex({ userId: 1 })
+        logger.info("Created userId index on subscriptions collection")
+      }
     } catch (error) {
-      console.error("Error creating gift voucher indexes:", error)
+      logger.error("Error creating subscription index", { error })
+    }
+
+    // Create gift voucher indexes
+    try {
+      await db.collection("giftvouchers").createIndex({ code: 1 }, { unique: true })
+      await db.collection("giftvouchers").createIndex({ userId: 1 })
+      logger.info("Created indexes on giftvouchers collection")
+    } catch (error) {
+      logger.error("Error creating gift voucher indexes", { error })
     }
   } catch (error) {
-    console.error("Error initializing indexes:", error)
+    logger.error("Error initializing indexes", { error })
   }
 }
 
-export default initIndexes
+export { createIndexes }

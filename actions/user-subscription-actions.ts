@@ -7,17 +7,16 @@ import UserSubscription from "@/lib/db/models/user-subscription"
 import Subscription from "@/lib/db/models/subscription"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import PaymentMethod from "@/lib/db/models/payment-method"
-import User from "@/lib/db/models/user" // Added import
+import User from "@/lib/db/models/user"
 import SubscriptionPurchase from "@/lib/db/models/subscription-purchase"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
-import { notificationManager } from "@/lib/notifications/notification-manager" // Added import
+import { notificationManager } from "@/lib/notifications/notification-manager"
 import type {
   EmailRecipient,
   PhoneRecipient,
-} from "@/lib/notifications/notification-types" // Added import
-
+} from "@/lib/notifications/notification-types"
 interface PurchaseSubscriptionArgs {
   subscriptionId: string
   treatmentId: string
@@ -34,7 +33,7 @@ export async function purchaseSubscription({
   const requestId = `sub_purchase_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
   const startTime = Date.now()
   
-  let sessionData // Renamed to avoid conflict with mongoose session
+  let sessionData
   try {
     logger.info(`[${requestId}] Starting subscription purchase`, {
       subscriptionId,
@@ -760,7 +759,9 @@ export async function getAbandonedSubscriptionPurchase(
 }
 
 export async function getUserSubscriptionById(id: string) {
+  let sessionData
   try {
+    sessionData = await getServerSession(authOptions)
     await dbConnect()
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return { success: false, error: "Invalid ID" }
@@ -769,7 +770,17 @@ export async function getUserSubscriptionById(id: string) {
       .populate("subscriptionId")
       .populate({ path: "treatmentId", model: "Treatment" })
       .lean()
+
     if (!sub) return { success: false, error: "Subscription not found" }
+
+    const isGuest = !sub.userId
+    const isOwner = sub.userId && sessionData?.user?.id && sub.userId.toString() === sessionData.user.id
+    const isAdmin = !!sessionData?.user?.roles?.includes("admin")
+
+    if (!isGuest && !isOwner && !isAdmin) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     return { success: true, subscription: JSON.parse(JSON.stringify(sub)) }
   } catch (error) {
     logger.error("Failed to fetch user subscription", { error })

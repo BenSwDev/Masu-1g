@@ -760,7 +760,9 @@ export async function getAbandonedSubscriptionPurchase(
 }
 
 export async function getUserSubscriptionById(id: string) {
+  let sessionData
   try {
+    sessionData = await getServerSession(authOptions)
     await dbConnect()
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return { success: false, error: "Invalid ID" }
@@ -769,7 +771,17 @@ export async function getUserSubscriptionById(id: string) {
       .populate("subscriptionId")
       .populate({ path: "treatmentId", model: "Treatment" })
       .lean()
+
     if (!sub) return { success: false, error: "Subscription not found" }
+
+    const isGuest = !sub.userId
+    const isOwner = sub.userId && sessionData?.user?.id && sub.userId.toString() === sessionData.user.id
+    const isAdmin = !!sessionData?.user?.roles?.includes("admin")
+
+    if (!isGuest && !isOwner && !isAdmin) {
+      return { success: false, error: "Unauthorized" }
+    }
+
     return { success: true, subscription: JSON.parse(JSON.stringify(sub)) }
   } catch (error) {
     logger.error("Failed to fetch user subscription", { error })

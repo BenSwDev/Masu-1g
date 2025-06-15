@@ -167,6 +167,11 @@
         "pending": "ממתין לאישור",
         "incomplete": "לא הושלם",
         "rejected": "נדחה"
+      },
+      "dialog": {
+        "title": "פרופיל מטפל",
+        "statusLabel": "סטטוס",
+        "numberLabel": "מספר מטפל"
       }
     },
     "cities": {

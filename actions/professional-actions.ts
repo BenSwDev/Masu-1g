@@ -110,3 +110,53 @@ export async function createProfessional(formData: FormData) {
     return { success: false, message: "creationFailed" }
   }
 }
+
+export async function getProfessionalById(professionalId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "notAuthorized" }
+    }
+    await dbConnect()
+    const user = await User.findById(professionalId).lean()
+    if (!user || !user.roles.includes("professional")) {
+      return { success: false, message: "notFound" }
+    }
+    const profile = await ProfessionalProfile.findOne({ userId: user._id }).lean()
+    return {
+      success: true,
+      professional: {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        professionalNumber: profile?.professionalNumber || "",
+        status: (profile?.status as ProfessionalStatus) || "pending",
+      },
+    }
+  } catch (err) {
+    console.error("Error in getProfessionalById:", err)
+    return { success: false, message: "fetchFailed" }
+  }
+}
+
+export async function updateProfessionalStatus(professionalId: string, status: ProfessionalStatus) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "notAuthorized" }
+    }
+    await dbConnect()
+    const profile = await ProfessionalProfile.findOne({ userId: professionalId })
+    if (!profile) {
+      return { success: false, message: "notFound" }
+    }
+    profile.status = status
+    await profile.save()
+    return { success: true }
+  } catch (err) {
+    console.error("Error in updateProfessionalStatus:", err)
+    return { success: false, message: "updateFailed" }
+  }
+}
+

@@ -561,6 +561,11 @@
         "pending": "[admin.professionals.statuses.pending]",
         "incomplete": "[admin.professionals.statuses.incomplete]",
         "rejected": "[admin.professionals.statuses.rejected]"
+      },
+      "dialog": {
+        "title": "[admin.professionals.dialog.title]",
+        "statusLabel": "[admin.professionals.dialog.statusLabel]",
+        "numberLabel": "[admin.professionals.dialog.numberLabel]"
       }
     },
     "cities": {

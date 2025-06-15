@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/common/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
 import { CustomPagination } from "@/components/common/ui/pagination"
 import { ProfessionalFormDialog } from "./professional-form-dialog"
+import { ProfessionalProfileDialog } from "./professional-profile-dialog"
 import { useTranslation } from "@/lib/translations/i18n"
 import { getProfessionals } from "@/actions/professional-actions"
 
@@ -31,6 +32,8 @@ export function ProfessionalManagement({ initialProfessionals, totalPages: initi
   const { t, dir } = useTranslation()
   const [professionals, setProfessionals] = useState(initialProfessionals)
   const [open, setOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState(initialSearch)
   const [page, setPage] = useState(initialPage)
   const [pages, setPages] = useState(initialTotalPages)
@@ -84,7 +87,14 @@ export function ProfessionalManagement({ initialProfessionals, totalPages: initi
                 </TableRow>
               ) : (
                 professionals.map((p) => (
-                  <TableRow key={p.id}>
+                  <TableRow
+                    key={p.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => {
+                      setSelectedId(p.id)
+                      setProfileOpen(true)
+                    }}
+                  >
                     <TableCell>{p.name}</TableCell>
                     <TableCell>{p.email}</TableCell>
                     <TableCell>{p.phone}</TableCell>
@@ -100,6 +110,17 @@ export function ProfessionalManagement({ initialProfessionals, totalPages: initi
       {pages > 1 && (
         <CustomPagination currentPage={page} totalPages={pages} onPageChange={loadProfessionals} isLoading={loading} />
       )}
+      <ProfessionalProfileDialog
+        professionalId={selectedId}
+        open={profileOpen}
+        onOpenChange={(o) => {
+          setProfileOpen(o)
+          if (!o) {
+            setSelectedId(null)
+            loadProfessionals(page, search)
+          }
+        }}
+      />
     </div>
   )
 }

@@ -182,7 +182,7 @@
       "noCitiesFound": "לא נמצאו ערים",
       "form": {"name": "שם העיר", "lat": "קו רוחב", "lng": "קו אורך", "active": "פעיל"},
       "table": {"name": "שם", "coordinates": "קואורדינטות", "status": "סטטוס"}
-    },
+    }
   },
   "adminBookings": {
     "accountCreated": "חשבון נוצר",

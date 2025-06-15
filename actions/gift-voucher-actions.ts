@@ -1637,3 +1637,18 @@ export async function getAbandonedGiftVoucherPurchase(
     return { success: false, error: "Failed to get abandoned purchase" }
   }
 }
+
+export async function getGiftVoucherByCode(code: string) {
+  try {
+    await dbConnect()
+    const voucherDoc = await GiftVoucher.findOne({ code: code.trim() }).lean()
+    if (!voucherDoc) {
+      return { success: false, error: "Voucher not found" }
+    }
+    const voucher = await toGiftVoucherPlain(voucherDoc as IGiftVoucher)
+    return { success: true, voucher }
+  } catch (error) {
+    logger.error("Error fetching gift voucher by code:", { code, error })
+    return { success: false, error: "Failed to fetch voucher" }
+  }
+}

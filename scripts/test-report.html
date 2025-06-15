@@ -1,0 +1,426 @@
+
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>דוח בדיקות E2E - מערכת MASU</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            direction: rtl;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .header .subtitle {
+            margin-top: 10px;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-card .number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .summary-card .label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .success { color: #28a745; }
+        .danger { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+        
+        .content {
+            padding: 30px;
+        }
+        .scenario-section {
+            margin-bottom: 40px;
+        }
+        .scenario-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .test-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: right;
+            font-weight: 600;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .test-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: top;
+        }
+        .test-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .duration {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .user-action {
+            font-style: italic;
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .expected-result {
+            font-size: 0.9em;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        .flow-diagram {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-right: 4px solid #007bff;
+        }
+        .step-flow {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .step-number {
+            background: #007bff;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-left: 15px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            flex: 1;
+        }
+        .step-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .step-description {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .edge-cases {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 6px;
+            border-right: 4px solid #ffc107;
+        }
+        .edge-case-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        .edge-case-item {
+            margin: 5px 0;
+            padding: 5px 10px;
+            background: white;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>דוח בדיקות E2E - מערכת MASU</h1>
+            <div class="subtitle">תאריך ביצוע: 15.6.2025, 1:03:11</div>
+        </div>
+        
+        <div class="summary">
+            <div class="summary-card">
+                <div class="number info">6</div>
+                <div class="label">סה"כ בדיקות</div>
+            </div>
+            <div class="summary-card">
+                <div class="number success">3</div>
+                <div class="label">בדיקות שעברו</div>
+            </div>
+            <div class="summary-card">
+                <div class="number danger">3</div>
+                <div class="label">בדיקות שנכשלו</div>
+            </div>
+            <div class="summary-card">
+                <div class="number danger">50.0%</div>
+                <div class="label">אחוז הצלחה</div>
+            </div>
+            <div class="summary-card">
+                <div class="number info">192.8s</div>
+                <div class="label">זמן ביצוע</div>
+            </div>
+        </div>
+        
+        <div class="content">
+            
+        <div class="scenario-section">
+            <div class="scenario-title">זרימת הזמנת טיפול מלאה</div>
+            
+            
+      <div class="flow-diagram">
+          <h3>תרשים זרימה - זרימת הזמנת טיפול מלאה</h3>
+          
+      <div class="step-flow">
+          <div class="step-number" style="background: #28a745">1</div>
+          <div class="step-content">
+              <div class="step-title">ניווט לדף הבית</div>
+              <div class="step-description">המשתמש פותח את הדף הראשי של האתר</div>
+          </div>
+      </div>
+    
+      <div class="step-flow">
+          <div class="step-number" style="background: #dc3545">2</div>
+          <div class="step-content">
+              <div class="step-title">לחיצה על כפתור הזמנת טיפול</div>
+              <div class="step-description">המשתמש מנסה ללחוץ על קישור 'הזמנת טיפול' אך נתקל בשגיאה</div>
+          </div>
+      </div>
+    
+          
+      <div class="edge-cases">
+          <div class="edge-case-title">מקרי קצה ותרחישים חריגים:</div>
+          <div class="edge-case-item">• בדיקת התנהגות כאשר המשתמש חוזר לשלב קודם</div><div class="edge-case-item">• בדיקת פקיעת סשן במהלך התהליך</div><div class="edge-case-item">• בדיקת טעינה איטית של הדף</div><div class="edge-case-item">• בדיקת התנהגות עם נתונים לא תקינים</div><div class="edge-case-item">• בדיקת מצב ללא חיבור לאינטרנט</div><div class="edge-case-item">• בדיקת התנהגות כאשר השירות לא זמין</div>
+      </div>
+    
+      </div>
+    
+            
+            <table class="test-table">
+                <thead>
+                    <tr>
+                        <th>שלב</th>
+                        <th>סטטוס</th>
+                        <th>זמן ביצוע</th>
+                        <th>פעולת משתמש</th>
+                        <th>תוצאה צפויה</th>
+                        <th>זמן</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                        <tr>
+                            <td><strong>ניווט לדף הבית</strong></td>
+                            <td><span class="status-badge status-pass">עבר</span></td>
+                            <td><span class="duration">2390ms</span></td>
+                            <td class="user-action">המשתמש פותח את הדף הראשי של האתר</td>
+                            <td class="expected-result">צפוי: הדף הראשי נטען בהצלחה</td>
+                            <td class="timestamp">15.6.2025, 1:00:04</td>
+                        </tr>
+                    
+                        <tr>
+                            <td><strong>לחיצה על כפתור הזמנת טיפול</strong></td>
+                            <td><span class="status-badge status-fail">נכשל</span></td>
+                            <td><span class="duration">60225ms</span></td>
+                            <td class="user-action">המשתמש מנסה ללחוץ על קישור 'הזמנת טיפול' אך נתקל בשגיאה</td>
+                            <td class="expected-result">צפוי: אשף הזמנת הטיפול נפתח, שגיאה: לא ניתן למצוא קישור: הזמנת טיפול</td>
+                            <td class="timestamp">15.6.2025, 1:01:04</td>
+                        </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+      
+        <div class="scenario-section">
+            <div class="scenario-title">זרימת רכישת מנוי מלאה</div>
+            
+            
+      <div class="flow-diagram">
+          <h3>תרשים זרימה - זרימת רכישת מנוי מלאה</h3>
+          
+      <div class="step-flow">
+          <div class="step-number" style="background: #28a745">1</div>
+          <div class="step-content">
+              <div class="step-title">ניווט לדף הבית</div>
+              <div class="step-description">המשתמש פותח את הדף הראשי של האתר</div>
+          </div>
+      </div>
+    
+      <div class="step-flow">
+          <div class="step-number" style="background: #dc3545">2</div>
+          <div class="step-content">
+              <div class="step-title">לחיצה על כפתור רכישת מנוי</div>
+              <div class="step-description">המשתמש מנסה ללחוץ על קישור 'רכישת מנוי' אך נתקל בשגיאה</div>
+          </div>
+      </div>
+    
+          
+      </div>
+    
+            
+            <table class="test-table">
+                <thead>
+                    <tr>
+                        <th>שלב</th>
+                        <th>סטטוס</th>
+                        <th>זמן ביצוע</th>
+                        <th>פעולת משתמש</th>
+                        <th>תוצאה צפויה</th>
+                        <th>זמן</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                        <tr>
+                            <td><strong>ניווט לדף הבית</strong></td>
+                            <td><span class="status-badge status-pass">עבר</span></td>
+                            <td><span class="duration">2407ms</span></td>
+                            <td class="user-action">המשתמש פותח את הדף הראשי של האתר</td>
+                            <td class="expected-result">צפוי: הדף הראשי נטען בהצלחה</td>
+                            <td class="timestamp">15.6.2025, 1:01:07</td>
+                        </tr>
+                    
+                        <tr>
+                            <td><strong>לחיצה על כפתור רכישת מנוי</strong></td>
+                            <td><span class="status-badge status-fail">נכשל</span></td>
+                            <td><span class="duration">60208ms</span></td>
+                            <td class="user-action">המשתמש מנסה ללחוץ על קישור 'רכישת מנוי' אך נתקל בשגיאה</td>
+                            <td class="expected-result">צפוי: אשף רכישת המנוי נפתח, שגיאה: לא ניתן למצוא קישור: רכישת מנוי</td>
+                            <td class="timestamp">15.6.2025, 1:02:08</td>
+                        </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+      
+        <div class="scenario-section">
+            <div class="scenario-title">Complete Gift Voucher Purchase Flow</div>
+            
+            
+      <div class="flow-diagram">
+          <h3>תרשים זרימה - Complete Gift Voucher Purchase Flow</h3>
+          
+      <div class="step-flow">
+          <div class="step-number" style="background: #28a745">1</div>
+          <div class="step-content">
+              <div class="step-title">ניווט לדף הבית</div>
+              <div class="step-description">המשתמש פותח את הדף הראשי של האתר</div>
+          </div>
+      </div>
+    
+      <div class="step-flow">
+          <div class="step-number" style="background: #dc3545">2</div>
+          <div class="step-content">
+              <div class="step-title">Click Gift Voucher Purchase Button</div>
+              <div class="step-description">המשתמש מנסה ללחוץ על קישור 'רכישת שובר מתנה' אך נתקל בשגיאה</div>
+          </div>
+      </div>
+    
+          
+      </div>
+    
+            
+            <table class="test-table">
+                <thead>
+                    <tr>
+                        <th>שלב</th>
+                        <th>סטטוס</th>
+                        <th>זמן ביצוע</th>
+                        <th>פעולת משתמש</th>
+                        <th>תוצאה צפויה</th>
+                        <th>זמן</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                        <tr>
+                            <td><strong>ניווט לדף הבית</strong></td>
+                            <td><span class="status-badge status-pass">עבר</span></td>
+                            <td><span class="duration">2455ms</span></td>
+                            <td class="user-action">המשתמש פותח את הדף הראשי של האתר</td>
+                            <td class="expected-result">צפוי: הדף הראשי נטען בהצלחה</td>
+                            <td class="timestamp">15.6.2025, 1:02:11</td>
+                        </tr>
+                    
+                        <tr>
+                            <td><strong>Click Gift Voucher Purchase Button</strong></td>
+                            <td><span class="status-badge status-fail">נכשל</span></td>
+                            <td><span class="duration">60254ms</span></td>
+                            <td class="user-action">המשתמש מנסה ללחוץ על קישור 'רכישת שובר מתנה' אך נתקל בשגיאה</td>
+                            <td class="expected-result">Expected: Gift voucher purchase wizard opens, שגיאה: לא ניתן למצוא קישור: רכישת שובר מתנה</td>
+                            <td class="timestamp">15.6.2025, 1:03:11</td>
+                        </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+      
+        </div>
+    </div>
+</body>
+</html>

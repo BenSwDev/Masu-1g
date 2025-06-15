@@ -1,0 +1,72 @@
+{
+  "title": "דוח בדיקות E2E - מערכת MASU",
+  "executionDate": "15.6.2025, 1:03:11",
+  "totalTests": 6,
+  "passedTests": 3,
+  "failedTests": 3,
+  "successRate": 50,
+  "executionTime": 192805,
+  "scenarios": [],
+  "results": [
+    {
+      "scenario": "זרימת הזמנת טיפול מלאה",
+      "stepName": "ניווט לדף הבית",
+      "status": "PASS",
+      "duration": 2390,
+      "timestamp": "15.6.2025, 1:00:04",
+      "expectedResult": "צפוי: הדף הראשי נטען בהצלחה",
+      "userAction": "המשתמש פותח את הדף הראשי של האתר",
+      "actualResult": "צפוי: הדף הראשי נטען בהצלחה"
+    },
+    {
+      "scenario": "זרימת הזמנת טיפול מלאה",
+      "stepName": "לחיצה על כפתור הזמנת טיפול",
+      "status": "FAIL",
+      "duration": 60225,
+      "timestamp": "15.6.2025, 1:01:04",
+      "expectedResult": "צפוי: אשף הזמנת הטיפול נפתח, שגיאה: לא ניתן למצוא קישור: הזמנת טיפול",
+      "userAction": "המשתמש מנסה ללחוץ על קישור 'הזמנת טיפול' אך נתקל בשגיאה",
+      "actualResult": "נכשל: צפוי: אשף הזמנת הטיפול נפתח, שגיאה: לא ניתן למצוא קישור: הזמנת טיפול"
+    },
+    {
+      "scenario": "זרימת רכישת מנוי מלאה",
+      "stepName": "ניווט לדף הבית",
+      "status": "PASS",
+      "duration": 2407,
+      "timestamp": "15.6.2025, 1:01:07",
+      "expectedResult": "צפוי: הדף הראשי נטען בהצלחה",
+      "userAction": "המשתמש פותח את הדף הראשי של האתר",
+      "actualResult": "צפוי: הדף הראשי נטען בהצלחה"
+    },
+    {
+      "scenario": "זרימת רכישת מנוי מלאה",
+      "stepName": "לחיצה על כפתור רכישת מנוי",
+      "status": "FAIL",
+      "duration": 60208,
+      "timestamp": "15.6.2025, 1:02:08",
+      "expectedResult": "צפוי: אשף רכישת המנוי נפתח, שגיאה: לא ניתן למצוא קישור: רכישת מנוי",
+      "userAction": "המשתמש מנסה ללחוץ על קישור 'רכישת מנוי' אך נתקל בשגיאה",
+      "actualResult": "נכשל: צפוי: אשף רכישת המנוי נפתח, שגיאה: לא ניתן למצוא קישור: רכישת מנוי"
+    },
+    {
+      "scenario": "Complete Gift Voucher Purchase Flow",
+      "stepName": "ניווט לדף הבית",
+      "status": "PASS",
+      "duration": 2455,
+      "timestamp": "15.6.2025, 1:02:11",
+      "expectedResult": "צפוי: הדף הראשי נטען בהצלחה",
+      "userAction": "המשתמש פותח את הדף הראשי של האתר",
+      "actualResult": "צפוי: הדף הראשי נטען בהצלחה"
+    },
+    {
+      "scenario": "Complete Gift Voucher Purchase Flow",
+      "stepName": "Click Gift Voucher Purchase Button",
+      "status": "FAIL",
+      "duration": 60254,
+      "timestamp": "15.6.2025, 1:03:11",
+      "expectedResult": "Expected: Gift voucher purchase wizard opens, שגיאה: לא ניתן למצוא קישור: רכישת שובר מתנה",
+      "userAction": "המשתמש מנסה ללחוץ על קישור 'רכישת שובר מתנה' אך נתקל בשגיאה",
+      "actualResult": "נכשל: Expected: Gift voucher purchase wizard opens, שגיאה: לא ניתן למצוא קישור: רכישת שובר מתנה"
+    }
+  ]
+}

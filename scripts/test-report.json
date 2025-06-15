@@ -1,0 +1,170 @@
+{
+  "summary": {
+    "totalTests": 7,
+    "passed": 4,
+    "failed": 3,
+    "skipped": 0,
+    "successRate": "57.14",
+    "executionTime": "2025-06-14T21:02:26.372Z"
+  },
+  "results": [
+    {
+      "testName": "Treatment Booking",
+      "scenario": "Complete Treatment Booking Flow",
+      "step": "Navigate to Home Page",
+      "status": "PASS",
+      "message": "Expected: Home page loads successfully",
+      "duration": 1415,
+      "timestamp": "2025-06-14T21:01:34.180Z",
+      "apiRequests": [],
+      "dbChanges": []
+    },
+    {
+      "testName": "Treatment Booking",
+      "scenario": "Complete Treatment Booking Flow",
+      "step": "Click Treatment Booking Button",
+      "status": "PASS",
+      "message": "Expected: Treatment booking wizard opens",
+      "duration": 2629,
+      "timestamp": "2025-06-14T21:01:36.810Z",
+      "apiRequests": [],
+      "dbChanges": []
+    },
+    {
+      "testName": "Treatment Booking",
+      "scenario": "Complete Treatment Booking Flow",
+      "step": "Fill Guest Information",
+      "status": "PASS",
+      "message": "Expected: Guest information is filled and validated",
+      "duration": 2593,
+      "timestamp": "2025-06-14T21:01:39.404Z",
+      "apiRequests": [],
+      "dbChanges": []
+    },
+    {
+      "testName": "Treatment Booking",
+      "scenario": "Complete Treatment Booking Flow",
+      "step": "Fill Address Information",
+      "status": "FAIL",
+      "message": "Expected: Address information is filled and validated, Error: Waiting for element to be located By(css selector, *[name=\"city\"])\nWait timed out after 10148ms",
+      "duration": 10148,
+      "timestamp": "2025-06-14T21:01:49.553Z",
+      "apiRequests": [],
+      "dbChanges": []
+    },
+    {
+      "testName": "Treatment Booking",
+      "scenario": "Validation Tests",
+      "step": "Test Empty Form Validation",
+      "status": "PASS",
+      "message": "Expected: Validation errors are shown for empty fields",
+      "duration": 7438,
+      "timestamp": "2025-06-14T21:01:56.992Z",
+      "apiRequests": [],
+      "dbChanges": []
+    },
+    {
+      "testName": "Treatment Booking",
+      "scenario": "Validation Tests",
+      "step": "Test Invalid Email Format",
+      "status": "FAIL",
+      "message": "Expected: Email validation error is shown, Error: Waiting for element to be located By(css selector, [data-testid=\"next-button\"])\nWait timed out after 10188ms",
+      "duration": 14752,
+      "timestamp": "2025-06-14T21:02:11.744Z",
+      "apiRequests": [],
+      "dbChanges": []
+    },
+    {
+      "testName": "Treatment Booking",
+      "scenario": "Navigation Tests",
+      "step": "Test Back Navigation",
+      "status": "FAIL",
+      "message": "Expected: Can navigate back between steps, Error: Waiting for element to be located By(css selector, [data-testid=\"next-button\"])\nWait timed out after 10166ms",
+      "duration": 14546,
+      "timestamp": "2025-06-14T21:02:26.292Z",
+      "apiRequests": [],
+      "dbChanges": []
+    }
+  ],
+  "flowResults": {
+    "Treatment Booking": [
+      {
+        "testName": "Treatment Booking",
+        "scenario": "Complete Treatment Booking Flow",
+        "step": "Navigate to Home Page",
+        "status": "PASS",
+        "message": "Expected: Home page loads successfully",
+        "duration": 1415,
+        "timestamp": "2025-06-14T21:01:34.180Z",
+        "apiRequests": [],
+        "dbChanges": []
+      },
+      {
+        "testName": "Treatment Booking",
+        "scenario": "Complete Treatment Booking Flow",
+        "step": "Click Treatment Booking Button",
+        "status": "PASS",
+        "message": "Expected: Treatment booking wizard opens",
+        "duration": 2629,
+        "timestamp": "2025-06-14T21:01:36.810Z",
+        "apiRequests": [],
+        "dbChanges": []
+      },
+      {
+        "testName": "Treatment Booking",
+        "scenario": "Complete Treatment Booking Flow",
+        "step": "Fill Guest Information",
+        "status": "PASS",
+        "message": "Expected: Guest information is filled and validated",
+        "duration": 2593,
+        "timestamp": "2025-06-14T21:01:39.404Z",
+        "apiRequests": [],
+        "dbChanges": []
+      },
+      {
+        "testName": "Treatment Booking",
+        "scenario": "Complete Treatment Booking Flow",
+        "step": "Fill Address Information",
+        "status": "FAIL",
+        "message": "Expected: Address information is filled and validated, Error: Waiting for element to be located By(css selector, *[name=\"city\"])\nWait timed out after 10148ms",
+        "duration": 10148,
+        "timestamp": "2025-06-14T21:01:49.553Z",
+        "apiRequests": [],
+        "dbChanges": []
+      },
+      {
+        "testName": "Treatment Booking",
+        "scenario": "Validation Tests",
+        "step": "Test Empty Form Validation",
+        "status": "PASS",
+        "message": "Expected: Validation errors are shown for empty fields",
+        "duration": 7438,
+        "timestamp": "2025-06-14T21:01:56.992Z",
+        "apiRequests": [],
+        "dbChanges": []
+      },
+      {
+        "testName": "Treatment Booking",
+        "scenario": "Validation Tests",
+        "step": "Test Invalid Email Format",
+        "status": "FAIL",
+        "message": "Expected: Email validation error is shown, Error: Waiting for element to be located By(css selector, [data-testid=\"next-button\"])\nWait timed out after 10188ms",
+        "duration": 14752,
+        "timestamp": "2025-06-14T21:02:11.744Z",
+        "apiRequests": [],
+        "dbChanges": []
+      },
+      {
+        "testName": "Treatment Booking",
+        "scenario": "Navigation Tests",
+        "step": "Test Back Navigation",
+        "status": "FAIL",
+        "message": "Expected: Can navigate back between steps, Error: Waiting for element to be located By(css selector, [data-testid=\"next-button\"])\nWait timed out after 10166ms",
+        "duration": 14546,
+        "timestamp": "2025-06-14T21:02:26.292Z",
+        "apiRequests": [],
+        "dbChanges": []
+      }
+    ]
+  }
+}

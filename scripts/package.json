@@ -1,0 +1,20 @@
+{
+  "name": "masu-e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end testing for MASU booking flows",
+  "main": "index.js",
+  "scripts": {
+    "test": "ts-node test-runner.ts",
+    "test:treatment": "ts-node test-runner.ts --flow=treatment",
+    "test:subscription": "ts-node test-runner.ts --flow=subscription",
+    "test:voucher": "ts-node test-runner.ts --flow=voucher"
+  },
+  "dependencies": {
+    "selenium-webdriver": "^4.26.1",
+    "typescript": "^5.2.0",
+    "ts-node": "^10.9.0",
+    "@types/selenium-webdriver": "^4.1.20",
+    "colors": "^1.4.0",
+    "@types/node": "^20.8.0"
+  }
+} 

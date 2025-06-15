@@ -68,7 +68,6 @@ export async function createCity(formData: FormData) {
     return { success: false, message: "creationFailed" }
   }
 }
-
 export async function updateCity(cityId: string, formData: FormData) {
   try {
     const session = await getServerSession(authOptions)
@@ -83,17 +82,17 @@ export async function updateCity(cityId: string, formData: FormData) {
     const lng = formData.get("lng") as string | null
     const isActive = formData.get("isActive")
 
-  const updates: any = {}
-  if (name) updates.name = name
-  if (
-    lat !== null &&
-    lng !== null &&
-    !isNaN(parseFloat(lat)) &&
-    !isNaN(parseFloat(lng))
-  ) {
-    updates.coordinates = { lat: parseFloat(lat), lng: parseFloat(lng) }
-  }
-  updates.isActive = isActive === "true"
+    const updates: any = {}
+    if (name) updates.name = name
+    if (
+      lat !== null &&
+      lng !== null &&
+      !isNaN(parseFloat(lat)) &&
+      !isNaN(parseFloat(lng))
+    ) {
+      updates.coordinates = { lat: parseFloat(lat), lng: parseFloat(lng) }
+    }
+    updates.isActive = isActive === "true"
 
     const city = await City.findByIdAndUpdate(cityId, updates, { new: true })
     if (!city) {

@@ -24,7 +24,7 @@ interface GiftVoucherRowProps {
   voucher: GiftVoucherPlain
   onEdit: (voucher: GiftVoucherPlain) => void
   onDelete: (id: string) => void
-  // onViewDetails?: (voucher: GiftVoucherPlain) => void; // Optional: for a detailed view modal
+  onViewDetails?: (voucher: GiftVoucherPlain) => void
 }
 
 const getStatusBadgeVariant = (
@@ -75,7 +75,7 @@ const getStatusIcon = (status: GiftVoucherPlain["status"], isActive: boolean) =>
   }
 }
 
-export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProps) {
+export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: GiftVoucherRowProps) {
   const { t } = useTranslation()
   const validFromDate = typeof voucher.validFrom === "string" ? parseISO(voucher.validFrom) : voucher.validFrom
   const validUntilDate = typeof voucher.validUntil === "string" ? parseISO(voucher.validUntil) : voucher.validUntil
@@ -85,7 +85,10 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
 
   return (
     <TooltipProvider delayDuration={100}>
-      <div className="grid grid-cols-1 md:grid-cols-8 gap-4 items-center p-4 border-b last:border-b-0 hover:bg-gray-50/50 transition-colors text-sm">
+      <div
+        className="grid grid-cols-1 md:grid-cols-8 gap-4 items-center p-4 border-b last:border-b-0 hover:bg-gray-50/50 transition-colors text-sm cursor-pointer"
+        onClick={() => onViewDetails?.(voucher)}
+      >
         <div className="font-medium truncate">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -323,7 +326,15 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
         */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => onEdit(voucher)} title="Edit voucher">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEdit(voucher)
+                }}
+                title="Edit voucher"
+              >
                 <Edit className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
@@ -336,7 +347,10 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete }: GiftVoucherRowProp
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => onDelete(voucher._id)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete(voucher._id)
+                }}
                 title="Delete voucher"
                 className="text-red-500 hover:text-red-700"
               >

@@ -7,6 +7,7 @@ import { Badge } from "@/components/common/ui/badge"
 import { Progress } from "@/components/common/ui/progress"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
+import { formatCurrency, formatDate as formatDateUtil } from "@/lib/utils/utils"
 import { Package, Calendar, CreditCard, Ban, Info, Tag, Clock } from "lucide-react"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription" // Import the type
 import type { ISubscription } from "@/lib/db/models/subscription"
@@ -60,7 +61,7 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
   }
 
   const formatDate = (date: Date | string) => {
-    return format(new Date(date), "dd/MM/yyyy", { locale: currentLocale })
+    return formatDateUtil(date, language)
   }
 
   return (
@@ -124,7 +125,7 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
             <div>
               <span className="font-medium text-gray-700 dark:text-gray-300">{t("subscriptions.pricePaid")}:</span>
               <span className="ml-1 text-gray-600 dark:text-gray-400">
-                {userSubscription.paymentAmount?.toFixed(2)} ₪
+                {formatCurrency(userSubscription.paymentAmount || 0, "ILS", language)}
               </span>
             </div>
           </div>
@@ -137,7 +138,7 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
                   {t("subscriptions.pricePerSession")}:
                 </span>
                 <span className="ml-1 text-gray-600 dark:text-gray-400">
-                  {userSubscription.pricePerSession?.toFixed(2)} ₪
+                  {formatCurrency(userSubscription.pricePerSession || 0, "ILS", language)}
                 </span>
               </div>
             </div>

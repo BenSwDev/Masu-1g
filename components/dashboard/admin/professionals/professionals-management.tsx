@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatCurrency as formatCurrencyUtil, formatDate as formatDateUtil } from "@/lib/utils/utils"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
@@ -43,7 +44,7 @@ interface PaginationInfo {
 }
 
 export default function ProfessionalsManagement() {
-  const { t, dir } = useTranslation()
+  const { t, dir, language } = useTranslation()
   const { toast } = useToast()
   
   const [professionals, setProfessionals] = useState<Professional[]>([])
@@ -152,11 +153,11 @@ export default function ProfessionalsManagement() {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "-"
-    return new Date(dateString).toLocaleDateString("he-IL")
+    return formatDateUtil(dateString, language)
   }
 
   const formatCurrency = (amount: number) => {
-    return `₪${amount.toFixed(2)}`
+    return formatCurrencyUtil(amount, "ILS", language)
   }
 
   // Statistics

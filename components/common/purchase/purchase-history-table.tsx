@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/common/ui/dialog"
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatCurrency as formatCurrencyUtil, formatDateTimeIsraeli } from "@/lib/utils/utils"
 import type { PurchaseTransaction } from "@/lib/types/purchase-summary"
 import {
   Calendar,
@@ -55,7 +56,7 @@ export default function PurchaseHistoryTable({
   isLoading = false,
   showCustomerInfo = false,
 }: PurchaseHistoryTableProps) {
-  const { t, dir } = useTranslation()
+  const { t, dir, language } = useTranslation()
   const [selectedTransaction, setSelectedTransaction] = useState<PurchaseTransaction | null>(null)
 
   const getStatusBadgeVariant = (status: string) => {
@@ -125,14 +126,14 @@ export default function PurchaseHistoryTable({
   }
 
   const formatCurrency = (amount: number | undefined | null) => {
-    if (amount === undefined || amount === null) return '0 ש״ח'
+    if (amount === undefined || amount === null) return formatCurrencyUtil(0, "ILS", language)
     const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount))
-    if (isNaN(numericAmount)) return '0 ש״ח'
-    return `${numericAmount.toFixed(0)} ש״ח`
+    if (isNaN(numericAmount)) return formatCurrencyUtil(0, "ILS", language)
+    return formatCurrencyUtil(numericAmount, "ILS", language)
   }
 
   const formatDate = (date: Date) => {
-    return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: he })
+    return formatDateTimeIsraeli(date)
   }
 
   const renderTransactionDetails = (transaction: PurchaseTransaction) => {

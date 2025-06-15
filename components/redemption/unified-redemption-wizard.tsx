@@ -27,7 +27,8 @@ import {
 import { getGiftVoucherByCode } from "@/actions/gift-voucher-actions"
 import { getUserSubscriptionById } from "@/actions/user-subscription-actions"
 import { getUserAvailableCoupons } from "@/actions/coupon-actions"
-import { cn } from "@/lib/utils/utils"
+import { cn, formatCurrency, formatDate } from "@/lib/utils/utils"
+import { useTranslation } from "@/lib/translations/i18n"
 import Link from "next/link"
 
 interface UnifiedRedemptionWizardProps {
@@ -51,6 +52,7 @@ export default function UnifiedRedemptionWizard({
   const router = useRouter()
   const { toast } = useToast()
   const { data: session } = useSession()
+  const { language } = useTranslation()
   
   const [searchType, setSearchType] = useState<"voucher" | "subscription">(type || "voucher")
   const [searchValue, setSearchValue] = useState(initialCode || initialId || "")
@@ -341,7 +343,7 @@ export default function UnifiedRedemptionWizard({
           <div>
             <Label className="text-sm font-medium text-muted-foreground">יתרה</Label>
             <p className="text-lg font-bold text-green-600">
-              ₪{voucher.remainingAmount?.toFixed(2) || "0.00"}
+              {formatCurrency(voucher.remainingAmount || 0, "ILS", language)}
             </p>
           </div>
         ) : (
@@ -358,7 +360,7 @@ export default function UnifiedRedemptionWizard({
             )}
             <div>
               <Label className="text-sm font-medium text-muted-foreground">ערך</Label>
-              <p className="text-lg font-bold text-green-600">₪{voucher.amount?.toFixed(2) || "0.00"}</p>
+              <p className="text-lg font-bold text-green-600">{formatCurrency(voucher.amount || 0, "ILS", language)}</p>
             </div>
           </div>
         )}
@@ -370,14 +372,14 @@ export default function UnifiedRedemptionWizard({
             <Label className="text-sm font-medium text-muted-foreground">תקף מ</Label>
             <p className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {new Date(voucher.validFrom).toLocaleDateString("he-IL")}
+              {formatDate(voucher.validFrom, language)}
             </p>
           </div>
           <div>
             <Label className="text-sm font-medium text-muted-foreground">תקף עד</Label>
             <p className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {new Date(voucher.validUntil).toLocaleDateString("he-IL")}
+              {formatDate(voucher.validUntil, language)}
             </p>
           </div>
         </div>
@@ -430,7 +432,7 @@ export default function UnifiedRedemptionWizard({
           <div>
             <Label className="text-sm font-medium text-muted-foreground">מחיר לטיפול</Label>
             <p className="text-lg font-bold text-green-600">
-              ₪{subscription.pricePerSession?.toFixed(2) || "0.00"}
+              {formatCurrency(subscription.pricePerSession || 0, "ILS", language)}
             </p>
           </div>
         </div>
@@ -442,14 +444,14 @@ export default function UnifiedRedemptionWizard({
             <Label className="text-sm font-medium text-muted-foreground">תאריך רכישה</Label>
             <p className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {new Date(subscription.purchaseDate).toLocaleDateString("he-IL")}
+              {formatDate(subscription.purchaseDate, language)}
             </p>
           </div>
           <div>
             <Label className="text-sm font-medium text-muted-foreground">תאריך תפוגה</Label>
             <p className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              {new Date(subscription.expiryDate).toLocaleDateString("he-IL")}
+              {formatDate(subscription.expiryDate, language)}
             </p>
           </div>
         </div>

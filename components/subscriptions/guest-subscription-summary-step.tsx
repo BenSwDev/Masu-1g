@@ -4,6 +4,7 @@ import { Package, User, Mail, Phone } from "lucide-react"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatCurrency } from "@/lib/utils/utils"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
 
@@ -31,7 +32,7 @@ export default function GuestSubscriptionSummaryStep({
   onNext,
   onPrev,
 }: Props) {
-  const { dir } = useTranslation()
+  const { dir, language } = useTranslation()
   const totalPrice = subscription ? (subscription.quantity * durationPrice) : 0
 
   return (
@@ -98,7 +99,7 @@ export default function GuestSubscriptionSummaryStep({
             <CardContent>
               <div className="flex justify-between mb-2">
                 <span>מחיר לטיפול:</span>
-                <span>{durationPrice.toFixed(2)} ₪</span>
+                <span>{formatCurrency(durationPrice, "ILS", language)}</span>
               </div>
               <div className="flex justify-between mb-2">
                 <span>כמות טיפולים במנוי:</span>
@@ -111,7 +112,7 @@ export default function GuestSubscriptionSummaryStep({
               <hr className="my-2" />
               <div className="flex justify-between font-bold text-lg">
                 <span>סה"כ:</span>
-                <span>{totalPrice.toFixed(2)} ₪</span>
+                <span>{formatCurrency(totalPrice, "ILS", language)}</span>
               </div>
             </CardContent>
           </Card>

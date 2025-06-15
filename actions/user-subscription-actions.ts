@@ -643,8 +643,7 @@ export async function purchaseGuestSubscription({
     try {
       const lang = "he"
       const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-      const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
-      const message = `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`
+      const message = `תודה על רכישתך`
       if (guestInfo.email) {
         await notificationManager.sendNotification(
           { type: "email", value: guestInfo.email, name: guestInfo.name, language: lang as any },

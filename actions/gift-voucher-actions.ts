@@ -1528,11 +1528,8 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
         const lang = "he" // Default to Hebrew for guests
         const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
 
-        const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
         const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
-        const message =
-          `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}. ` +
-          `למימוש השובר לחץ כאן: ${redeemLink}`
+        const message = `תודה על רכישתך. למימוש השובר לחץ כאן: ${redeemLink}`
 
         if (guestInfo.email) {
           await notificationManager.sendNotification(

@@ -171,20 +171,24 @@ export default function PurchaseGiftVoucherClient({
   }, [paymentMethods])
 
   useEffect(() => {
-    if (session?.user?.id && currentStep !== "complete") {
-      const stepIndex = steps.findIndex((s) => s.key === currentStep) + 1
-      saveAbandonedGiftVoucherPurchase(session.user.id, {
-        purchaseOptions: {
-          voucherType,
-          treatmentId,
-          selectedDurationId,
-          monetaryValue: voucherType === "monetary" ? monetaryValue : undefined,
-          isGift,
-        },
-        currentStep: stepIndex,
-      })
+    const save = async () => {
+      if (session?.user?.id && currentStep !== "complete") {
+        const stepIndex = steps.findIndex((s) => s.key === currentStep) + 1
+        await saveAbandonedGiftVoucherPurchase(session.user.id, {
+          purchaseOptions: {
+            voucherType,
+            treatmentId,
+            selectedDurationId,
+            monetaryValue: voucherType === "monetary" ? monetaryValue : undefined,
+            isGift,
+          },
+          currentStep: stepIndex,
+        })
+      }
     }
-  }, [session?.user?.id, voucherType, treatmentId, selectedDurationId, monetaryValue, isGift, currentStep])
+
+    void save()
+  }, [session?.user?.id, voucherType, treatmentId, selectedDurationId, monetaryValue, isGift, currentStep, steps])
 
   const treatmentCategories = useMemo(() => {
     const categories = new Set(treatments.map((t) => t.category))

@@ -146,18 +146,22 @@ const PurchaseSubscriptionClient = ({
   }, [selectedTreatmentId])
 
   useEffect(() => {
-    if (session?.user?.id) {
-      const stepIndex = steps.findIndex((s) => s.key === currentStep) + 1
-      saveAbandonedSubscriptionPurchase(session.user.id, {
-        purchaseOptions: {
-          selectedSubscriptionId,
-          selectedTreatmentId,
-          selectedDurationId,
-        },
-        currentStep: stepIndex,
-      })
+    const save = async () => {
+      if (session?.user?.id && currentStep !== "complete") {
+        const stepIndex = steps.findIndex((s) => s.key === currentStep) + 1
+        await saveAbandonedSubscriptionPurchase(session.user.id, {
+          purchaseOptions: {
+            selectedSubscriptionId,
+            selectedTreatmentId,
+            selectedDurationId,
+          },
+          currentStep: stepIndex,
+        })
+      }
     }
-  }, [session?.user?.id, selectedSubscriptionId, selectedTreatmentId, selectedDurationId, currentStep])
+
+    void save()
+  }, [session?.user?.id, selectedSubscriptionId, selectedTreatmentId, selectedDurationId, currentStep, steps])
 
   const handleNextStep = () => {
     const currentIndex = steps.findIndex((s) => s.key === currentStep)

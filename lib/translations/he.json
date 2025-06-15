@@ -167,8 +167,22 @@
         "pending": "ממתין לאישור",
         "incomplete": "לא הושלם",
         "rejected": "נדחה"
+      },
+      "dialog": {
+        "title": "פרופיל מטפל",
+        "statusLabel": "סטטוס",
+        "numberLabel": "מספר מטפל"
       }
-    }
+    },
+    "cities": {
+      "title": "איזורי פעילות",
+      "description": "ניהול רשימת ערים",
+      "addCity": "הוסף עיר",
+      "searchPlaceholder": "חפש עיר...",
+      "noCitiesFound": "לא נמצאו ערים",
+      "form": {"name": "שם העיר", "lat": "קו רוחב", "lng": "קו אורך", "active": "פעיל"},
+      "table": {"name": "שם", "coordinates": "קואורדינטות", "status": "סטטוס"}
+    },
   },
   "adminBookings": {
     "accountCreated": "חשבון נוצר",

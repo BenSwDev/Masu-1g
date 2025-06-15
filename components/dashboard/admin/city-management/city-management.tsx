@@ -1,0 +1,125 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/common/ui/button"
+import { Input } from "@/components/common/ui/input"
+import { Card, CardContent } from "@/components/common/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
+import { CustomPagination } from "@/components/common/ui/pagination"
+import { CityFormDialog } from "./city-form-dialog"
+import { useTranslation } from "@/lib/translations/i18n"
+import { getCities } from "@/actions/city-actions"
+
+export interface CityData {
+  id: string
+  name: string
+  isActive: boolean
+  coordinates: { lat: number; lng: number }
+}
+
+interface CityManagementProps {
+  initialCities: CityData[]
+  totalPages: number
+  currentPage: number
+  initialSearch?: string
+}
+
+export function CityManagement({ initialCities, totalPages: initialTotalPages, currentPage: initialPage, initialSearch = "" }: CityManagementProps) {
+  const { t, dir } = useTranslation()
+  const [cities, setCities] = useState(initialCities)
+  const [open, setOpen] = useState(false)
+  const [selectedCity, setSelectedCity] = useState<CityData | null>(null)
+  const [search, setSearch] = useState(initialSearch)
+  const [page, setPage] = useState(initialPage)
+  const [pages, setPages] = useState(initialTotalPages)
+  const [loading, setLoading] = useState(false)
+
+  const loadCities = async (newPage = 1, term = search) => {
+    setLoading(true)
+    const result = await getCities(newPage, 10, term)
+    if (result.success) {
+      setCities(result.cities as CityData[])
+      setPages(result.totalPages)
+      setPage(newPage)
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    loadCities(1, search)
+  }, [search])
+
+  return (
+    <div dir={dir} className="space-y-6">
+      <div className="flex items-center justify-between gap-2">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t("admin.cities.searchPlaceholder") as string}
+          className="max-w-xs"
+        />
+        <Button
+          onClick={() => {
+            setSelectedCity(null)
+            setOpen(true)
+          }}
+        >
+          {t("admin.cities.addCity")}
+        </Button>
+      </div>
+      <CityFormDialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o)
+          if (!o) {
+            setSelectedCity(null)
+            loadCities(page, search)
+          }
+        }}
+        city={selectedCity}
+      />
+      <Card>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("admin.cities.table.name")}</TableHead>
+                <TableHead>{t("admin.cities.table.coordinates")}</TableHead>
+                <TableHead>{t("admin.cities.table.status")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cities.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center py-8">
+                    {t("admin.cities.noCitiesFound")}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                cities.map((c) => (
+                  <TableRow
+                    key={c.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => {
+                      setSelectedCity(c)
+                      setOpen(true)
+                    }}
+                  >
+                    <TableCell>{c.name}</TableCell>
+                    <TableCell>
+                      {c.coordinates.lat}, {c.coordinates.lng}
+                    </TableCell>
+                    <TableCell>{c.isActive ? t("common.active") : t("common.inactive")}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      {pages > 1 && (
+        <CustomPagination currentPage={page} totalPages={pages} onPageChange={loadCities} isLoading={loading} />
+      )}
+    </div>
+  )
+}

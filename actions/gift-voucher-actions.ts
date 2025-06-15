@@ -18,6 +18,16 @@ import type {
   PhoneRecipient,
 } from "@/lib/notifications/notification-types" // Added imports
 
+async function generateUniqueVoucherCode(): Promise<string> {
+  await dbConnect()
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join("")
+    const exists = await GiftVoucher.exists({ code })
+    if (!exists) return code
+  }
+  throw new Error("Failed to generate unique voucher code")
+}
+
 // Extended GiftVoucherPlain for client-side use
 export interface GiftVoucherPlain extends IGiftVoucherPlainFile {
   _id: string
@@ -1635,5 +1645,20 @@ export async function getAbandonedGiftVoucherPurchase(
     return { success: true, purchase }
   } catch (error) {
     return { success: false, error: "Failed to get abandoned purchase" }
+  }
+}
+
+export async function getGiftVoucherByCode(code: string) {
+  try {
+    await dbConnect()
+    const voucherDoc = await GiftVoucher.findOne({ code: code.trim() }).lean()
+    if (!voucherDoc) {
+      return { success: false, error: "Voucher not found" }
+    }
+    const voucher = await toGiftVoucherPlain(voucherDoc as IGiftVoucher)
+    return { success: true, voucher }
+  } catch (error) {
+    logger.error("Error fetching gift voucher by code:", { code, error })
+    return { success: false, error: "Failed to fetch voucher" }
   }
 }

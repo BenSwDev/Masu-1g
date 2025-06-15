@@ -363,7 +363,7 @@ export async function calculateBookingPrice(
 
       if (
         userSub &&
-        userSub.userId.toString() === userId &&
+        ((userSub.userId && userId && userSub.userId.toString() === userId) || (!userSub.userId && !userId)) &&
         userSub.status === "active" &&
         userSub.remainingQuantity > 0
       ) {
@@ -440,7 +440,7 @@ export async function calculateBookingPrice(
 
     let currentTotalDue = subtotalBeforeGeneralReductions
 
-    if (currentTotalDue > 0 && couponCode) {
+    if (currentTotalDue > 0 && couponCode && !giftVoucherCode && !userSubscriptionId) {
       const coupon = await Coupon.findOne({ code: couponCode }).lean()
       const now = new Date()
       if (
@@ -717,7 +717,48 @@ export async function createBooking(
           .lean()
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
-        // Booking notifications removed as per requirements
+        if (userForNotification && treatment) {
+          const { sendTreatmentBookingSuccess } = await import("@/lib/notifications/notification-manager")
+
+          const lang = userForNotification.notificationPreferences?.language || "he"
+          const methods = userForNotification.notificationPreferences?.methods || ["email"]
+          const recipients: any[] = []
+
+          if (methods.includes("email") && userForNotification.email) {
+            recipients.push({ type: "email", value: userForNotification.email, name: userForNotification.name, language: lang as any })
+          }
+          if (methods.includes("sms") && userForNotification.phone) {
+            recipients.push({ type: "phone", value: userForNotification.phone, language: lang as any })
+          }
+
+          if (
+            finalBookingObject.recipientEmail &&
+            finalBookingObject.recipientPhone &&
+            finalBookingObject.recipientEmail !== userForNotification.email
+          ) {
+            if (methods.includes("email")) {
+              recipients.push({ type: "email", value: finalBookingObject.recipientEmail, name: finalBookingObject.recipientName || "", language: lang as any })
+            }
+            if (methods.includes("sms")) {
+              recipients.push({ type: "phone", value: finalBookingObject.recipientPhone, language: lang as any })
+            }
+          }
+
+          if (recipients.length > 0) {
+            await sendTreatmentBookingSuccess(recipients, {
+              recipientName: finalBookingObject.recipientName || userForNotification.name,
+              bookerName: userForNotification.name,
+              treatmentName: treatment.name,
+              bookingDateTime: finalBookingObject.bookingDateTime,
+              bookingNumber: finalBookingObject.bookingNumber,
+              bookingAddress: finalBookingObject.bookingAddressSnapshot?.fullAddress || "",
+              isForSomeoneElse: Boolean(
+                finalBookingObject.recipientName && finalBookingObject.recipientName !== userForNotification.name,
+              ),
+            })
+          }
+        }
+
         logger.info(`Booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
       } catch (notificationError) {
         logger.error("Failed to send booking notifications:", {

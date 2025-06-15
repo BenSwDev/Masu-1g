@@ -643,7 +643,8 @@ export async function purchaseGuestSubscription({
     try {
       const lang = "he"
       const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-      const message = `תודה על רכישתך`
+      const redeemLink = `${appBaseUrl}/redeem-subscription/${newUserSubscription._id}`
+      const message = `תודה על רכישתך. למימוש המנוי לחץ כאן: ${redeemLink}`
       if (guestInfo.email) {
         await notificationManager.sendNotification(
           { type: "email", value: guestInfo.email, name: guestInfo.name, language: lang as any },
@@ -755,5 +756,23 @@ export async function getAbandonedSubscriptionPurchase(
     return { success: true, purchase }
   } catch (error) {
     return { success: false, error: "Failed to get abandoned purchase" }
+  }
+}
+
+export async function getUserSubscriptionById(id: string) {
+  try {
+    await dbConnect()
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return { success: false, error: "Invalid ID" }
+    }
+    const sub = await UserSubscription.findById(id)
+      .populate("subscriptionId")
+      .populate({ path: "treatmentId", model: "Treatment" })
+      .lean()
+    if (!sub) return { success: false, error: "Subscription not found" }
+    return { success: true, subscription: JSON.parse(JSON.stringify(sub)) }
+  } catch (error) {
+    logger.error("Failed to fetch user subscription", { error })
+    return { success: false, error: "Failed to fetch subscription" }
   }
 }

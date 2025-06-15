@@ -528,6 +528,12 @@ body {
       html = wrapHtml(adminPasswordResetHtmlContent, subject)
       break
 
+    case "purchase-success":
+      subject = language === "he" ? "תודה על רכישתך" : "Purchase Confirmation"
+      text = data.message
+      html = wrapHtml(`<p>${data.message}</p>`, subject)
+      break
+
     default:
       subject = language === "he" ? "הודעה" : language === "ru" ? "Уведомление" : "Notification"
       const defaultTextContent =

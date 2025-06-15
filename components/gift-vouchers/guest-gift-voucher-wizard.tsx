@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import { GuestTreatmentSelectionStep } from "@/components/booking/steps/guest-treatment-selection-step"
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Input } from "@/components/common/ui/input"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Progress } from "@/components/common/ui/progress"
-import { initiateGuestPurchaseGiftVoucher, confirmGuestGiftVoucherPurchase, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import { initiateGuestPurchaseGiftVoucher, confirmGuestGiftVoucherPurchase, saveAbandonedGiftVoucherPurchase, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import GuestGiftVoucherConfirmation from "./guest-gift-voucher-confirmation"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
@@ -61,6 +61,22 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
   const TOTAL_STEPS = 6
   const nextStep = () => setCurrentStep(s => Math.min(s + 1, TOTAL_STEPS))
   const prevStep = () => setCurrentStep(s => Math.max(s - 1, 1))
+
+  useEffect(() => {
+    if (guestUserId) {
+      saveAbandonedGiftVoucherPurchase(guestUserId, {
+        guestInfo,
+        purchaseOptions: {
+          voucherType,
+          treatmentId: selectedTreatmentId,
+          selectedDurationId,
+          monetaryValue: voucherType === "monetary" ? monetaryValue : undefined,
+          isGift: guestInfo.isGift,
+        },
+        currentStep,
+      })
+    }
+  }, [guestUserId, guestInfo, voucherType, selectedTreatmentId, selectedDurationId, monetaryValue, currentStep])
 
   const handleGuestInfoSubmit = async (info: any) => {
     setGuestInfo(info)

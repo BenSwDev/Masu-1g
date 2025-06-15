@@ -6,6 +6,7 @@ import mongoose, { type FilterQuery } from "mongoose"
 
 import { authOptions } from "@/lib/auth/auth"
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
+import GiftVoucherPurchase from "@/lib/db/models/gift-voucher-purchase"
 import User from "@/lib/db/models/user"
 import Treatment from "@/lib/db/models/treatment"
 import dbConnect from "@/lib/db/mongoose"
@@ -152,7 +153,8 @@ export interface AdminGiftVoucherFormData {
   voucherType: "treatment" | "monetary"
   treatmentId?: string
   selectedDurationId?: string
-  amount: string // Use 'amount' as the primary value input for admin form
+  amount?: string
+  monetaryValue?: string
   ownerUserId: string
   validFrom: string
   validUntil: string
@@ -193,10 +195,16 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
     }
 
     let effectiveAmount = 0
-    if (String(data.amount).trim() === "" || isNaN(Number(data.amount)) || Number(data.amount) <= 0) {
+    const amountInput = data.amount ?? data.monetaryValue
+    if (
+      amountInput === undefined ||
+      String(amountInput).trim() === "" ||
+      isNaN(Number(amountInput)) ||
+      Number(amountInput) <= 0
+    ) {
       return { success: false, error: "Valid positive amount is required." }
     }
-    effectiveAmount = Number(data.amount)
+    effectiveAmount = Number(amountInput)
 
     // If treatment type, ensure treatmentId is valid and potentially selectedDurationId
     // The 'amount' provided in the admin form for a treatment voucher should ideally match the treatment's price.
@@ -304,8 +312,9 @@ export async function updateGiftVoucherByAdmin(
 
     const updateData: any = { ...data }
 
-    if (data.amount !== undefined) {
-      const newAmount = Number(data.amount)
+    const amountUpdateInput = data.amount ?? data.monetaryValue
+    if (amountUpdateInput !== undefined) {
+      const newAmount = Number(amountUpdateInput)
       if (isNaN(newAmount) || newAmount <= 0) {
         return { success: false, error: "Valid positive amount is required." }
       }
@@ -371,7 +380,11 @@ export async function updateGiftVoucherByAdmin(
       // Nullify monetaryValue if switching to treatment and it's not set by treatment logic
       // This is now handled by setting effectiveAmount from treatment price if not user-provided.
     } else if (newVoucherType === "monetary") {
-      if (data.amount === undefined && existingVoucher.voucherType !== "monetary") {
+      if (
+        data.amount === undefined &&
+        data.monetaryValue === undefined &&
+        existingVoucher.voucherType !== "monetary"
+      ) {
         return { success: false, error: "Amount is required when changing to monetary voucher type." }
       }
       updateData.treatmentId = null
@@ -918,13 +931,33 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
           const userNameForNotification = purchaser.name || (lang === "he" ? "לקוח" : "Customer")
           const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
 
-          let treatmentNameForNotif: string | undefined
-          if (voucher.voucherType === "treatment" && voucher.treatmentId) {
-            const treatmentDoc = await Treatment.findById(voucher.treatmentId).select("name").lean()
-            treatmentNameForNotif = treatmentDoc?.name
+
+
+          const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
+          const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
+          const messageHe =
+            `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}. ` +
+            `למימוש השובר לחץ כאן: ${redeemLink}`
+          const messageEn =
+            `Thank you for your purchase. View your receipt here: ${summaryLink}. ` +
+            `Redeem your voucher at: ${redeemLink}`
+          const notificationData = {
+            type: "purchase-success" as const,
+            message: lang === "he" ? messageHe : messageEn,
           }
 
-          // Purchase success notifications removed as per requirements
+          if (methods.includes("email") && purchaser.email) {
+            await notificationManager.sendNotification(
+              { type: "email", value: purchaser.email, name: purchaser.name, language: lang as any },
+              notificationData as any,
+            )
+          }
+          if (methods.includes("sms") && purchaser.phone) {
+            await notificationManager.sendNotification(
+              { type: "phone", value: purchaser.phone, language: lang as any },
+              notificationData as any,
+            )
+          }
         } else {
           logger.warn(
             `Purchaser not found for notification after gift voucher purchase confirmation: ${voucher.purchaserUserId.toString()}`,
@@ -1495,13 +1528,24 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
         const lang = "he" // Default to Hebrew for guests
         const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
 
-        let treatmentNameForNotif: string | undefined
-        if (voucher.voucherType === "treatment" && voucher.treatmentId) {
-          const treatmentDoc = await Treatment.findById(voucher.treatmentId).select("name").lean()
-          treatmentNameForNotif = treatmentDoc?.name
-        }
+        const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
+        const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
+        const message =
+          `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}. ` +
+          `למימוש השובר לחץ כאן: ${redeemLink}`
 
-        // Guest purchase success notifications removed as per requirements
+        if (guestInfo.email) {
+          await notificationManager.sendNotification(
+            { type: "email", value: guestInfo.email, name: guestInfo.name, language: lang as any },
+            { type: "purchase-success", message } as any,
+          )
+        }
+        if (guestInfo.phone) {
+          await notificationManager.sendNotification(
+            { type: "phone", value: guestInfo.phone, language: lang as any },
+            { type: "purchase-success", message } as any,
+          )
+        }
       } catch (notificationError) {
         logger.error("Failed to send purchase success notification for guest gift voucher:", {
           guestEmail: guestInfo.email,
@@ -1528,5 +1572,71 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
       details: error,
     })
     return { success: false, error: "Failed to confirm purchase. Please contact support." }
+  }
+}
+
+export async function saveAbandonedGiftVoucherPurchase(
+  userId: string,
+  formData: {
+    guestInfo?: any
+    purchaseOptions?: any
+    currentStep: number
+  },
+): Promise<{ success: boolean; purchaseId?: string; error?: string }> {
+  try {
+    await dbConnect()
+    const existing = await GiftVoucherPurchase.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "abandoned_pending_payment",
+    }).sort({ createdAt: -1 })
+
+    if (existing) {
+      existing.formState = {
+        currentStep: formData.currentStep,
+        guestInfo: formData.guestInfo,
+        purchaseOptions: formData.purchaseOptions,
+        savedAt: new Date(),
+      }
+      await existing.save()
+      return { success: true, purchaseId: existing._id.toString() }
+    }
+
+    const purchase = new GiftVoucherPurchase({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "abandoned_pending_payment",
+      formState: {
+        currentStep: formData.currentStep,
+        guestInfo: formData.guestInfo,
+        purchaseOptions: formData.purchaseOptions,
+        savedAt: new Date(),
+      },
+    })
+    await purchase.save()
+    return { success: true, purchaseId: purchase._id.toString() }
+  } catch (error) {
+    return { success: false, error: "Failed to save abandoned purchase" }
+  }
+}
+
+export async function getAbandonedGiftVoucherPurchase(
+  userId: string,
+): Promise<{ success: boolean; purchase?: any; error?: string }> {
+  try {
+    await dbConnect()
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const purchase = await GiftVoucherPurchase.findOne({
+      userId: new mongoose.Types.ObjectId(userId),
+      status: "abandoned_pending_payment",
+      createdAt: { $gte: twentyFourHoursAgo },
+    })
+      .sort({ createdAt: -1 })
+      .lean()
+
+    if (!purchase) {
+      return { success: false, error: "No recent abandoned purchase" }
+    }
+    return { success: true, purchase }
+  } catch (error) {
+    return { success: false, error: "Failed to get abandoned purchase" }
   }
 }

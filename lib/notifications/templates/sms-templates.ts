@@ -39,6 +39,9 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
     case "treatment-booking-success":
       return getTreatmentBookingSuccessSmsTemplate(data, language)
 
+    case "purchase-success":
+      return data.message + smsSignature
+
     default:
       const defaultMessage = {
         he: `התקבלה הודעה מ${appName}.`,

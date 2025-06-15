@@ -37,12 +37,18 @@ export interface TreatmentBookingSuccessNotificationData extends BaseNotificatio
   actualRecipientName?: string // The person they booked for (when isBookerForSomeoneElse is true)
 }
 
+export interface PurchaseSuccessNotificationData extends BaseNotificationData {
+  type: "purchase-success"
+  message: string
+}
+
 // Union type for all notification data
 export type NotificationData =
   | OTPNotificationData
   | WelcomeNotificationData
   | PasswordResetNotificationData
   | TreatmentBookingSuccessNotificationData
+  | PurchaseSuccessNotificationData
 
 // Notification result interface
 export interface NotificationResult {

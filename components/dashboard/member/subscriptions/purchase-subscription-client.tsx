@@ -3,9 +3,10 @@
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent } from "@/components/common/ui/card"
-import { purchaseSubscription } from "@/actions/user-subscription-actions"
+import { purchaseSubscription, saveAbandonedSubscriptionPurchase } from "@/actions/user-subscription-actions"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import { StepIndicator } from "@/components/common/purchase/step-indicator"
@@ -49,6 +50,7 @@ const PurchaseSubscriptionClient = ({
 }: PurchaseSubscriptionClientProps) => {
   const { t } = useTranslation()
   const router = useRouter()
+  const { data: session } = useSession()
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string>("")
   const [selectedTreatmentId, setSelectedTreatmentId] = useState<string>("")
   const [selectedDurationId, setSelectedDurationId] = useState<string>("")
@@ -142,6 +144,20 @@ const PurchaseSubscriptionClient = ({
   useEffect(() => {
     setSelectedDurationId("")
   }, [selectedTreatmentId])
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      const stepIndex = steps.findIndex((s) => s.key === currentStep) + 1
+      saveAbandonedSubscriptionPurchase(session.user.id, {
+        purchaseOptions: {
+          selectedSubscriptionId,
+          selectedTreatmentId,
+          selectedDurationId,
+        },
+        currentStep: stepIndex,
+      })
+    }
+  }, [session?.user?.id, selectedSubscriptionId, selectedTreatmentId, selectedDurationId, currentStep])
 
   const handleNextStep = () => {
     const currentIndex = steps.findIndex((s) => s.key === currentStep)

@@ -178,7 +178,34 @@ export async function purchaseSubscription({
       userSubscriptionId: newUserSubscription._id
     })
 
-    // Purchase success notifications removed as per requirements
+    try {
+      const purchaser = await User.findById(sessionData.user.id)
+        .select("name email phone notificationPreferences")
+        .lean()
+      if (purchaser) {
+        const lang = purchaser.notificationPreferences?.language || "he"
+        const methods = purchaser.notificationPreferences?.methods || ["email", "sms"]
+        const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+        const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
+        const messageHe = `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`
+        const messageEn = `Thank you for your purchase. View your receipt here: ${summaryLink}`
+        const data = { type: "purchase-success" as const, message: lang === "he" ? messageHe : messageEn }
+        if (methods.includes("email") && purchaser.email) {
+          await notificationManager.sendNotification(
+            { type: "email", value: purchaser.email, name: purchaser.name, language: lang as any },
+            data as any,
+          )
+        }
+        if (methods.includes("sms") && purchaser.phone) {
+          await notificationManager.sendNotification(
+            { type: "phone", value: purchaser.phone, language: lang as any },
+            data as any,
+          )
+        }
+      }
+    } catch (notificationError) {
+      logger.error("Failed to send subscription purchase notification", { error: notificationError })
+    }
 
     revalidatePath("/dashboard/member/subscriptions")
     revalidatePath("/dashboard/admin/user-subscriptions")
@@ -613,7 +640,26 @@ export async function purchaseGuestSubscription({
       guestEmail: guestInfo.email
     })
 
-    // Guest purchase success notifications removed as per requirements
+    try {
+      const lang = "he"
+      const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+      const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
+      const message = `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`
+      if (guestInfo.email) {
+        await notificationManager.sendNotification(
+          { type: "email", value: guestInfo.email, name: guestInfo.name, language: lang as any },
+          { type: "purchase-success", message } as any,
+        )
+      }
+      if (guestInfo.phone) {
+        await notificationManager.sendNotification(
+          { type: "phone", value: guestInfo.phone, language: lang as any },
+          { type: "purchase-success", message } as any,
+        )
+      }
+    } catch (notificationError) {
+      logger.error("Failed to send guest subscription purchase notification", { error: notificationError })
+    }
 
     revalidatePath("/dashboard/admin/user-subscriptions")
 

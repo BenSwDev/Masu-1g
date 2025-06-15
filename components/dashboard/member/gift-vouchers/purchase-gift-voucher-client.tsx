@@ -15,10 +15,12 @@ import { Calendar } from "@/components/common/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { useToast } from "@/components/common/ui/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
+import { useSession } from "next-auth/react"
 import {
   initiatePurchaseGiftVoucher,
   confirmGiftVoucherPurchase,
   setGiftDetails,
+  saveAbandonedGiftVoucherPurchase,
   type PurchaseInitiationData,
   type GiftDetailsPayload,
 } from "@/actions/gift-voucher-actions"
@@ -101,6 +103,7 @@ export default function PurchaseGiftVoucherClient({
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const router = useRouter()
+  const { data: session } = useSession()
 
   const [currentStep, setCurrentStep] = useState("select")
   const [loading, setLoading] = useState(false)
@@ -166,6 +169,22 @@ export default function PurchaseGiftVoucherClient({
       setSelectedPaymentMethodId(defaultPmId)
     }
   }, [paymentMethods])
+
+  useEffect(() => {
+    if (session?.user?.id && currentStep !== "complete") {
+      const stepIndex = steps.findIndex((s) => s.key === currentStep) + 1
+      saveAbandonedGiftVoucherPurchase(session.user.id, {
+        purchaseOptions: {
+          voucherType,
+          treatmentId,
+          selectedDurationId,
+          monetaryValue: voucherType === "monetary" ? monetaryValue : undefined,
+          isGift,
+        },
+        currentStep: stepIndex,
+      })
+    }
+  }, [session?.user?.id, voucherType, treatmentId, selectedDurationId, monetaryValue, isGift, currentStep])
 
   const treatmentCategories = useMemo(() => {
     const categories = new Set(treatments.map((t) => t.category))

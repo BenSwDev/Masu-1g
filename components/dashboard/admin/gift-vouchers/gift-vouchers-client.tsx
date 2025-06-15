@@ -23,6 +23,7 @@ import { useToast } from "@/components/common/ui/use-toast" // Corrected import 
 
 import { GiftVoucherForm } from "./gift-voucher-form"
 import { GiftVoucherRow } from "./gift-voucher-row"
+import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
 import { getGiftVouchers, deleteGiftVoucher, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { Calendar } from "@/components/common/ui/calendar"
@@ -67,6 +68,8 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
   const [editingVoucher, setEditingVoucher] = useState<GiftVoucherPlain | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [voucherToDeleteId, setVoucherToDeleteId] = useState<string | null>(null)
+  const [selectedVoucher, setSelectedVoucher] = useState<GiftVoucherPlain | null>(null)
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
 
   const { t } = useTranslation()
 
@@ -118,6 +121,11 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
     setIsFormModalOpen(true)
   }
 
+  const handleViewDetails = (voucher: GiftVoucherPlain) => {
+    setSelectedVoucher(voucher)
+    setIsDetailsOpen(true)
+  }
+
   const handleFormSuccess = () => {
     setIsFormModalOpen(false)
     setEditingVoucher(null)
@@ -151,6 +159,11 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       setIsDeleteDialogOpen(false)
       setVoucherToDeleteId(null)
     }
+  }
+
+  const handleCloseDetails = () => {
+    setIsDetailsOpen(false)
+    setSelectedVoucher(null)
   }
 
   const resetFilters = () => {
@@ -284,6 +297,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
               voucher={voucher}
               onEdit={() => handleOpenFormModal(voucher)}
               onDelete={() => handleOpenDeleteDialog(voucher._id)}
+              onViewDetails={handleViewDetails}
             />
           ))}
         </div>
@@ -344,6 +358,12 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AdminGiftVoucherDetailsModal
+        voucher={selectedVoucher}
+        isOpen={isDetailsOpen}
+        onClose={handleCloseDetails}
+      />
     </div>
   )
 }

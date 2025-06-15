@@ -152,7 +152,8 @@ export interface AdminGiftVoucherFormData {
   voucherType: "treatment" | "monetary"
   treatmentId?: string
   selectedDurationId?: string
-  amount: string // Use 'amount' as the primary value input for admin form
+  amount?: string
+  monetaryValue?: string
   ownerUserId: string
   validFrom: string
   validUntil: string
@@ -193,10 +194,16 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
     }
 
     let effectiveAmount = 0
-    if (String(data.amount).trim() === "" || isNaN(Number(data.amount)) || Number(data.amount) <= 0) {
+    const amountInput = data.amount ?? data.monetaryValue
+    if (
+      amountInput === undefined ||
+      String(amountInput).trim() === "" ||
+      isNaN(Number(amountInput)) ||
+      Number(amountInput) <= 0
+    ) {
       return { success: false, error: "Valid positive amount is required." }
     }
-    effectiveAmount = Number(data.amount)
+    effectiveAmount = Number(amountInput)
 
     // If treatment type, ensure treatmentId is valid and potentially selectedDurationId
     // The 'amount' provided in the admin form for a treatment voucher should ideally match the treatment's price.
@@ -304,8 +311,9 @@ export async function updateGiftVoucherByAdmin(
 
     const updateData: any = { ...data }
 
-    if (data.amount !== undefined) {
-      const newAmount = Number(data.amount)
+    const amountUpdateInput = data.amount ?? data.monetaryValue
+    if (amountUpdateInput !== undefined) {
+      const newAmount = Number(amountUpdateInput)
       if (isNaN(newAmount) || newAmount <= 0) {
         return { success: false, error: "Valid positive amount is required." }
       }
@@ -371,7 +379,11 @@ export async function updateGiftVoucherByAdmin(
       // Nullify monetaryValue if switching to treatment and it's not set by treatment logic
       // This is now handled by setting effectiveAmount from treatment price if not user-provided.
     } else if (newVoucherType === "monetary") {
-      if (data.amount === undefined && existingVoucher.voucherType !== "monetary") {
+      if (
+        data.amount === undefined &&
+        data.monetaryValue === undefined &&
+        existingVoucher.voucherType !== "monetary"
+      ) {
         return { success: false, error: "Amount is required when changing to monetary voucher type." }
       }
       updateData.treatmentId = null

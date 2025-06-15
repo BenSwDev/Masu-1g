@@ -363,7 +363,7 @@ export async function calculateBookingPrice(
 
       if (
         userSub &&
-        userSub.userId.toString() === userId &&
+        ((userSub.userId && userId && userSub.userId.toString() === userId) || (!userSub.userId && !userId)) &&
         userSub.status === "active" &&
         userSub.remainingQuantity > 0
       ) {

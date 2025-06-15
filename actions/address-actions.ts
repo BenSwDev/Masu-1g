@@ -37,7 +37,6 @@ const houseSchema = addressBaseSchema.extend({
   }),
 })
 
-// Added 'private' type to use houseDetails for simplicity, can be separated if needed
 const privateSchema = addressBaseSchema.extend({
   addressType: z.literal("private"),
   houseDetails: z.object({
@@ -74,7 +73,7 @@ const otherSchema = addressBaseSchema.extend({
 const addressSchema = z.discriminatedUnion("addressType", [
   apartmentSchema,
   houseSchema,
-  privateSchema, // Added private schema
+  privateSchema,
   officeSchema,
   hotelSchema,
   otherSchema,

@@ -16,8 +16,7 @@ import type { GiftVoucherPlain as IGiftVoucherPlainFile } from "@/lib/db/models/
 import type {
   EmailRecipient,
   PhoneRecipient,
-} from "@/lib/notifications/notification-types" // Added imports
-
+} from "@/lib/notifications/notification-types"
 async function generateUniqueVoucherCode(): Promise<string> {
   await dbConnect()
   for (let attempt = 0; attempt < 5; attempt++) {

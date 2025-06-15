@@ -363,7 +363,7 @@ export async function calculateBookingPrice(
 
       if (
         userSub &&
-        ((userSub.userId && userId && userSub.userId.toString() === userId) || (!userSub.userId && !userId)) &&
+        ((userSub.userId && userId && userSub.userId.toString() === userId) || (userSub.userId == null && userId == null)) &&
         userSub.status === "active" &&
         userSub.remainingQuantity > 0
       ) {
@@ -731,17 +731,30 @@ export async function createBooking(
             recipients.push({ type: "phone", value: userForNotification.phone, language: lang as any })
           }
 
+          // Send notification to recipient independently from the booker's
+          // notification preferences. Only send via the channels that are
+          // actually provided and avoid duplicate SMS messages when the
+          // booker and recipient share the same phone number.
           if (
             finalBookingObject.recipientEmail &&
-            finalBookingObject.recipientPhone &&
             finalBookingObject.recipientEmail !== userForNotification.email
           ) {
-            if (methods.includes("email")) {
-              recipients.push({ type: "email", value: finalBookingObject.recipientEmail, name: finalBookingObject.recipientName || "", language: lang as any })
-            }
-            if (methods.includes("sms")) {
-              recipients.push({ type: "phone", value: finalBookingObject.recipientPhone, language: lang as any })
-            }
+            recipients.push({
+              type: "email",
+              value: finalBookingObject.recipientEmail,
+              name: finalBookingObject.recipientName || "",
+              language: lang as any,
+            })
+          }
+          if (
+            finalBookingObject.recipientPhone &&
+            finalBookingObject.recipientPhone !== userForNotification.phone
+          ) {
+            recipients.push({
+              type: "phone",
+              value: finalBookingObject.recipientPhone,
+              language: lang as any,
+            })
           }
 
           if (recipients.length > 0) {

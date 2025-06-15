@@ -276,6 +276,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       admin: [
         { titleKey: "users", icon: User, hrefSuffix: "users" },
         { titleKey: "customers", icon: Users, hrefSuffix: "customers" },
+        { titleKey: "professionals", icon: Briefcase, hrefSuffix: "professionals" },
         { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
         { titleKey: "reviews", icon: Star, hrefSuffix: "reviews" },
         { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments" },

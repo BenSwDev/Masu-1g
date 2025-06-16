@@ -367,9 +367,9 @@ export async function calculateBookingPrice(
         userSub.remainingQuantity > 0 &&
         (
           // For registered users
-          (userSub.userId && userId && userSub.userId.toString() === userId) || 
-          // For guest subscriptions
-          (userSub.userId == null && (userId == null || userId === "guest"))
+          (userSub.userId && userId && userSub.userId.toString() === userId) ||
+          // For guest subscriptions (no owner)
+          userSub.userId == null
         )
       ) {
         const subTreatment = userSub.treatmentId as ITreatment

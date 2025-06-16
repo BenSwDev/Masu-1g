@@ -61,7 +61,7 @@ export async function createProfessional(formData: FormData) {
     }
 
     if (birthDate) {
-      userData.birthDate = new Date(birthDate)
+      userData.dateOfBirth = new Date(birthDate)
     }
 
     const user = new User(userData)
@@ -81,8 +81,13 @@ export async function createProfessional(formData: FormData) {
 
     // Return complete professional data with user info
     const completeProfile = await ProfessionalProfile.findById(professionalProfile._id)
-      .populate('userId', 'name email phone gender birthDate')
+      .populate('userId', 'name email phone gender dateOfBirth')
       .lean()
+
+    if (completeProfile?.userId && (completeProfile.userId as any).dateOfBirth) {
+      ;(completeProfile.userId as any).birthDate = (completeProfile.userId as any).dateOfBirth
+      delete (completeProfile.userId as any).dateOfBirth
+    }
 
     revalidatePath("/dashboard/admin/professional-management")
 
@@ -123,10 +128,15 @@ export async function updateProfessionalProfile(
 
     // Return updated professional with populated data
     const updatedProfessional = await ProfessionalProfile.findById(professionalId)
-      .populate('userId', 'name email phone gender birthDate')
+      .populate('userId', 'name email phone gender dateOfBirth')
       .populate('treatments.treatmentId')
       .populate('workAreas.cityId')
       .lean()
+
+    if (updatedProfessional?.userId && (updatedProfessional.userId as any).dateOfBirth) {
+      ;(updatedProfessional.userId as any).birthDate = (updatedProfessional.userId as any).dateOfBirth
+      delete (updatedProfessional.userId as any).dateOfBirth
+    }
 
     revalidatePath("/dashboard/admin/professional-management")
 
@@ -164,13 +174,19 @@ export async function updateProfessionalUserInfo(
     if (updates.name) user.name = updates.name
     if (updates.phone) user.phone = updates.phone
     if (updates.gender) user.gender = updates.gender as "male" | "female" | "other"
-    if (updates.birthDate) (user as any).birthDate = new Date(updates.birthDate)
+    if (updates.birthDate) user.dateOfBirth = new Date(updates.birthDate)
 
     await user.save()
 
     revalidatePath("/dashboard/admin/professional-management")
 
-    return { success: true, user: user.toObject() }
+    const userObj: any = user.toObject()
+    if (userObj.dateOfBirth) {
+      userObj.birthDate = userObj.dateOfBirth
+      delete userObj.dateOfBirth
+    }
+
+    return { success: true, user: userObj }
   } catch (error) {
     console.error("Error updating professional user info:", error)
     return { success: false, error: "עדכון פרטי המשתמש נכשל" }
@@ -218,10 +234,14 @@ export async function getProfessionals(params?: {
           from: "users",
           localField: "userId",
           foreignField: "_id",
-          as: "user"
+          as: "userId"
         }
       },
-      { $unwind: "$user" },
+      { $unwind: "$userId" },
+      {
+        $addFields: { "userId.birthDate": "$userId.dateOfBirth" }
+      },
+      { $project: { "userId.dateOfBirth": 0 } },
       {
         $lookup: {
           from: "treatments",
@@ -237,9 +257,9 @@ export async function getProfessionals(params?: {
       pipeline.push({
         $match: {
           $or: [
-            { "user.name": { $regex: search, $options: "i" } },
-            { "user.email": { $regex: search, $options: "i" } },
-            { "user.phone": { $regex: search, $options: "i" } }
+            { "userId.name": { $regex: search, $options: "i" } },
+            { "userId.email": { $regex: search, $options: "i" } },
+            { "userId.phone": { $regex: search, $options: "i" } }
           ]
         }
       })
@@ -248,7 +268,8 @@ export async function getProfessionals(params?: {
     // Add sorting
     const sortObj: any = {}
     if (sortBy.startsWith('user.')) {
-      sortObj[sortBy] = sortOrder === 'asc' ? 1 : -1
+      const field = sortBy.replace('user.', 'userId.')
+      sortObj[field] = sortOrder === 'asc' ? 1 : -1
     } else {
       sortObj[sortBy] = sortOrder === 'asc' ? 1 : -1
     }
@@ -296,10 +317,15 @@ export async function getProfessionalById(professionalId: string) {
     await dbConnect()
 
     const professional = await ProfessionalProfile.findById(professionalId)
-      .populate('userId', 'name email phone gender birthDate')
+      .populate('userId', 'name email phone gender dateOfBirth')
       .populate('treatments.treatmentId')
       .populate('workAreas.cityId')
       .lean()
+
+    if (professional?.userId && (professional.userId as any).dateOfBirth) {
+      ;(professional.userId as any).birthDate = (professional.userId as any).dateOfBirth
+      delete (professional.userId as any).dateOfBirth
+    }
 
     if (!professional) {
       return { success: false, error: "מטפל לא נמצא" }

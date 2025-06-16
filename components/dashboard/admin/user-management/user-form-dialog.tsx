@@ -1,79 +1,131 @@
 "use client"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Button } from "@/components/common/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
-import { Input } from "@/components/common/ui/input"
-import { zodResolver } from "@hookform/resolvers/zod"
+
+import { useEffect, useState } from "react"
 import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { useTranslation } from "@/lib/translations/i18n"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/common/ui/dialog"
+import { Button } from "@/components/common/ui/button"
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/common/ui/form"
+import { Input } from "@/components/common/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Checkbox } from "@/components/common/ui/checkbox"
 import { PhoneInput } from "@/components/common/phone-input"
+import { useToast } from "@/components/common/ui/use-toast"
+import { createUserByAdmin, updateUserByAdmin } from "@/actions/admin-actions"
+import { useTranslation } from "@/lib/translations/i18n"
 
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  phone: z.string().optional(),
-  role: z.enum(["admin", "user"]),
-})
-
-interface UserFormDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSubmit: (values: z.infer<typeof formSchema>) => void
+export interface UserData {
+  id: string
+  name: string | null
+  email: string | null
+  phone?: string | null
+  roles: string[]
+  gender?: string | null
+  dateOfBirth?: string | null
 }
 
-export function UserFormDialog({ open, onOpenChange, onSubmit }: UserFormDialogProps) {
-  const { t } = useTranslation()
+interface UserFormDialogProps {
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  initialData?: UserData | null
+  onSuccess: () => void
+}
 
-  const form = useForm<z.infer<typeof formSchema>>({
+const formSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().min(5),
+  password: z.string().min(6).optional(),
+  gender: z.enum(["male", "female", "other"]),
+  dateOfBirth: z.string().optional(),
+  roles: z.array(z.enum(["admin", "member", "professional", "partner"])).min(1),
+})
+
+type FormValues = z.infer<typeof formSchema>
+
+export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }: UserFormDialogProps) {
+  const { t } = useTranslation()
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(false)
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      role: "user",
+      name: initialData?.name || "",
+      email: initialData?.email || "",
+      phone: initialData?.phone || "",
+      password: "",
+      gender: (initialData?.gender as "male" | "female" | "other") || "male",
+      dateOfBirth: initialData?.dateOfBirth || "",
+      roles: initialData?.roles || ["member"],
     },
   })
 
-  function handleFormSubmit(values: z.infer<typeof formSchema>) {
-    onSubmit(values)
-    onOpenChange(false)
+  useEffect(() => {
+    form.reset({
+      name: initialData?.name || "",
+      email: initialData?.email || "",
+      phone: initialData?.phone || "",
+      password: "",
+      gender: (initialData?.gender as "male" | "female" | "other") || "male",
+      dateOfBirth: initialData?.dateOfBirth || "",
+      roles: initialData?.roles || ["member"],
+    })
+  }, [initialData, form])
+
+  async function onSubmit(values: FormValues) {
+    try {
+      setLoading(true)
+      const data = new FormData()
+      data.append("name", values.name)
+      data.append("email", values.email)
+      data.append("phone", values.phone)
+      values.roles.forEach((r) => data.append("roles[]", r))
+      data.append("gender", values.gender)
+      if (values.dateOfBirth) data.append("dateOfBirth", values.dateOfBirth)
+      if (!initialData && values.password) data.append("password", values.password)
+
+      const result = initialData
+        ? await updateUserByAdmin(initialData.id, data)
+        : await createUserByAdmin(data)
+
+      if (!result.success) {
+        toast({ title: t("common.error"), description: result.message || t("common.unknownError"), variant: "destructive" })
+        return
+      }
+
+      toast({ title: t("common.success"), description: result.message })
+      onSuccess()
+      onOpenChange(false)
+    } catch (error) {
+      toast({ title: t("common.error"), description: t("common.unknownError"), variant: "destructive" })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline">{t("users.addUser")}</Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t("users.addUser")}</AlertDialogTitle>
-          <AlertDialogDescription>{t("users.addUserDescription")}</AlertDialogDescription>
-        </AlertDialogHeader>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
+            {initialData ? t("admin.users.editUserTitle") : t("admin.users.createUserTitle")}
+          </DialogTitle>
+          <DialogDescription>
+            {initialData ? t("admin.users.editUserDescription") : t("admin.users.createUserDescription")}
+          </DialogDescription>
+        </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("users.fields.name")}</FormLabel>
+                  <FormLabel>{t("admin.users.form.name")}</FormLabel>
                   <FormControl>
-                    <Input placeholder={t("users.fields.namePlaceholder")} {...field} />
+                    <Input {...field} disabled={loading} placeholder={t("admin.users.form.namePlaceholder") || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -84,36 +136,120 @@ export function UserFormDialog({ open, onOpenChange, onSubmit }: UserFormDialogP
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("users.fields.email")}</FormLabel>
+                  <FormLabel>{t("admin.users.form.email")}</FormLabel>
                   <FormControl>
-                    <Input placeholder={t("users.fields.emailPlaceholder")} {...field} />
+                    <Input type="email" {...field} disabled={loading} placeholder={t("admin.users.form.emailPlaceholder") || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Controller
+            <FormField
+              control={form.control}
               name="phone"
-              control={form.control} // Assuming 'control' is from the useForm hook instance
               render={({ field }) => (
-                <PhoneInput
-                  id="phone"
-                  name={field.name}
-                  placeholder={t("users.fields.phonePlaceholder")}
-                  fullNumberValue={field.value || ""}
-                  onPhoneChange={field.onChange}
-                  ref={field.ref}
-                  className="border-turquoise-200 focus-visible:ring-turquoise-500"
-                />
+                <FormItem>
+                  <FormLabel>{t("admin.users.form.phone")}</FormLabel>
+                  <FormControl>
+                    <PhoneInput
+                      id="phone"
+                      name={field.name}
+                      fullNumberValue={field.value}
+                      onPhoneChange={field.onChange}
+                      ref={field.ref}
+                      placeholder={t("admin.users.form.phonePlaceholder") || ""}
+                      className="border-turquoise-200 focus-visible:ring-turquoise-500"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )}
             />
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
-              <AlertDialogAction type="submit">{t("common.save")}</AlertDialogAction>
-            </AlertDialogFooter>
+            {!initialData && (
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("admin.users.form.password")}</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} disabled={loading} placeholder={t("admin.users.form.passwordPlaceholder") || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("admin.users.form.gender")}</FormLabel>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange} disabled={loading}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("admin.users.form.genderPlaceholder") || ""} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">{t("gender.male", "Male")}</SelectItem>
+                        <SelectItem value="female">{t("gender.female", "Female")}</SelectItem>
+                        <SelectItem value="other">{t("gender.other", "Other")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dateOfBirth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("admin.users.form.dateOfBirth")}</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} disabled={loading} placeholder={t("admin.users.form.dateOfBirthPlaceholder") || ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="roles"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("admin.users.form.roles")}</FormLabel>
+                  <div className="space-y-2">
+                    {(["admin", "member", "professional", "partner"] as const).map((role) => (
+                      <label key={role} className="flex items-center gap-2">
+                        <Checkbox
+                          checked={field.value.includes(role)}
+                          onCheckedChange={(checked) => {
+                            const checkedBool = checked === true
+                            const newRoles = checkedBool
+                              ? [...field.value, role]
+                              : field.value.filter((r) => r !== role)
+                            field.onChange(newRoles)
+                          }}
+                        />
+                        {t(`roles.${role}`)}
+                      </label>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter className="pt-4">
+              <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+                {loading ? t("common.loading") : initialData ? t("common.saveChanges") : t("common.create")}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   )
 }

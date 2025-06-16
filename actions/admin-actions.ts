@@ -126,16 +126,18 @@ export async function createUserByAdmin(formData: FormData) {
 
     const name = formData.get("name") as string
     const email = formData.get("email") as string
-    const phone = formData.get("phone") as string
-    const password = formData.get("password") as string
+    const phoneRaw = formData.get("phone") as string | null
+    const phone = phoneRaw && phoneRaw.trim() !== "" ? phoneRaw : undefined
+    const passwordRaw = formData.get("password") as string | null
+    const password = passwordRaw && passwordRaw !== "" ? passwordRaw : undefined
     const roles = formData.getAll("roles[]") as string[]
     const dateOfBirthStr = formData.get("dateOfBirth") as string | null
     const gender = formData.get("gender") as string
 
-    if (!name || !email || !phone || !password || !roles.length || !gender) {
+    if (!name || !email || !roles.length || !gender) {
       return { success: false, message: "missingFields" }
     }
-    if (password.length < 6) {
+    if (password && password.length < 6) {
       return { success: false, message: "errors.weakPassword" } // Using existing translation key
     }
 
@@ -143,12 +145,14 @@ export async function createUserByAdmin(formData: FormData) {
     if (existingEmail) {
       return { success: false, message: "errors.emailExists" }
     }
-    const existingPhone = await User.findOne({ phone }).lean()
-    if (existingPhone) {
-      return { success: false, message: "errors.phoneExists" }
+    if (phone) {
+      const existingPhone = await User.findOne({ phone }).lean()
+      if (existingPhone) {
+        return { success: false, message: "errors.phoneExists" }
+      }
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined
     const dateOfBirth = dateOfBirthStr ? new Date(dateOfBirthStr) : undefined
     if (dateOfBirthStr && isNaN(dateOfBirth?.getTime())) {
       return { success: false, message: "errors.invalidDateOfBirth" }
@@ -164,7 +168,7 @@ export async function createUserByAdmin(formData: FormData) {
       dateOfBirth,
       gender,
       emailVerified: new Date(),
-      phoneVerified: new Date(),
+      phoneVerified: phone ? new Date() : undefined,
     })
 
     await newUserDoc.save()
@@ -192,12 +196,13 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
 
     const name = formData.get("name") as string
     const email = formData.get("email") as string
-    const phone = formData.get("phone") as string
+    const phoneRaw = formData.get("phone") as string | null
+    const phone = phoneRaw && phoneRaw.trim() !== "" ? phoneRaw : undefined
     const roles = formData.getAll("roles[]") as string[]
     const dateOfBirthStr = formData.get("dateOfBirth") as string | null
     const gender = formData.get("gender") as string
 
-    if (!name || !email || !phone || !roles.length || !gender) {
+    if (!name || !email || !roles.length || !gender) {
       return { success: false, message: "missingFields" }
     }
 
@@ -211,10 +216,14 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
       if (existingEmail) return { success: false, message: "errors.emailExists" }
       userToUpdate.email = email.toLowerCase()
     }
-    if (phone !== userToUpdate.phone) {
-      const existingPhone = await User.findOne({ phone, _id: { $ne: userId } }).lean()
-      if (existingPhone) return { success: false, message: "errors.phoneExists" }
-      userToUpdate.phone = phone
+    if (phone !== undefined && phone !== userToUpdate.phone) {
+      if (phone) {
+        const existingPhone = await User.findOne({ phone, _id: { $ne: userId } }).lean()
+        if (existingPhone) return { success: false, message: "errors.phoneExists" }
+        userToUpdate.phone = phone
+      } else {
+        userToUpdate.phone = undefined
+      }
     }
 
     userToUpdate.name = name

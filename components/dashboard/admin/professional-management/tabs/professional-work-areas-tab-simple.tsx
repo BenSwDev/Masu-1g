@@ -105,18 +105,28 @@ export default function ProfessionalWorkAreasTab({
     try {
       // Update professional's work areas
       const city = allCities.find(c => c._id === selectedCityId)
+      const updatedAreas = [
+        {
+          cityId: selectedCityId,
+          cityName: city?.name,
+          distanceRadius,
+          coveredCities
+        }
+      ]
+
+      if (professional?._id) {
+        const { updateProfessionalWorkAreas } = await import("@/actions/professional-actions")
+        const result = await updateProfessionalWorkAreas(professional._id, updatedAreas)
+        if (!result.success) {
+          throw new Error(result.error || "Failed to update work areas")
+        }
+      }
+
       const updatedProfessional = {
         ...professional,
-        workAreas: [
-          {
-            cityId: selectedCityId,
-            cityName: city?.name,
-            distanceRadius,
-            coveredCities
-          }
-        ]
+        workAreas: updatedAreas
       }
-      
+
       onUpdate(updatedProfessional)
       
       toast({

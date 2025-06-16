@@ -74,18 +74,28 @@ export default function ProfessionalTreatmentsTab({
     setSaving(true)
     try {
       // Update professional's treatments
+      const updatedTreatments = selectedTreatments.map(treatmentId => {
+        const treatment = allTreatments.find(t => t._id === treatmentId)
+        return {
+          treatmentId,
+          treatmentName: treatment?.name,
+          professionalPrice: 0 // Default price, can be edited later
+        }
+      })
+
+      if (professional?._id) {
+        const { updateProfessionalTreatments } = await import("@/actions/professional-actions")
+        const result = await updateProfessionalTreatments(professional._id, updatedTreatments)
+        if (!result.success) {
+          throw new Error(result.error || "Failed to update treatments")
+        }
+      }
+
       const updatedProfessional = {
         ...professional,
-        treatments: selectedTreatments.map(treatmentId => {
-          const treatment = allTreatments.find(t => t._id === treatmentId)
-          return {
-            treatmentId,
-            treatmentName: treatment?.name,
-            professionalPrice: 0 // Default price, can be edited later
-          }
-        })
+        treatments: updatedTreatments
       }
-      
+
       onUpdate(updatedProfessional)
       
       toast({

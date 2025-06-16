@@ -227,6 +227,43 @@ export class NotificationManager {
       }
     }
   }
+
+  /**
+   * Send treatment booking success notification
+   * @param recipients Recipients list
+   * @param bookingData Booking details
+   * @returns Send results
+   */
+  async sendTreatmentBookingSuccess(
+    recipients: NotificationRecipient[],
+    bookingData: {
+      recipientName: string
+      bookerName?: string
+      treatmentName: string
+      bookingDateTime: Date
+      bookingNumber: string
+      bookingAddress: string
+      isForSomeoneElse: boolean
+      isBookerForSomeoneElse?: boolean
+      actualRecipientName?: string
+    },
+  ): Promise<NotificationResult[]> {
+    const data: TreatmentBookingSuccessNotificationData = {
+      type: "treatment-booking-success",
+      recipientName: bookingData.recipientName,
+      bookerName: bookingData.bookerName,
+      treatmentName: bookingData.treatmentName,
+      bookingDateTime: bookingData.bookingDateTime,
+      bookingNumber: bookingData.bookingNumber,
+      bookingAddress: bookingData.bookingAddress,
+      isForSomeoneElse: bookingData.isForSomeoneElse,
+      isBookerForSomeoneElse: bookingData.isBookerForSomeoneElse,
+      actualRecipientName: bookingData.actualRecipientName,
+    }
+
+    const promises = recipients.map(recipient => this.sendNotification(recipient, data))
+    return Promise.all(promises)
+  }
 }
 
 // Export a singleton instance
@@ -436,18 +473,9 @@ export async function sendTreatmentBookingSuccess(
     bookingNumber: string
     bookingAddress: string
     isForSomeoneElse: boolean
+    isBookerForSomeoneElse?: boolean
+    actualRecipientName?: string
   }
 ): Promise<NotificationResult[]> {
-  const data: TreatmentBookingSuccessNotificationData = {
-    type: "treatment-booking-success",
-    recipientName: bookingData.recipientName,
-    bookerName: bookingData.bookerName,
-    treatmentName: bookingData.treatmentName,
-    bookingDateTime: bookingData.bookingDateTime,
-    bookingNumber: bookingData.bookingNumber,
-    bookingAddress: bookingData.bookingAddress,
-    isForSomeoneElse: bookingData.isForSomeoneElse,
-  }
-
-  return sendNotificationToMultiple(recipients, data)
+  return notificationManager.sendTreatmentBookingSuccess(recipients, bookingData)
 }

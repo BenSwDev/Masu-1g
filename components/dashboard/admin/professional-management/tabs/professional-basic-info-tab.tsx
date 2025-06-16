@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 // import { useTranslation } from "@/hooks/use-translation"
@@ -32,12 +31,7 @@ interface Professional {
     birthDate?: string
   }
   status: ProfessionalStatus
-  specialization?: string
-  experience?: string
-  bio?: string
-  certifications?: string[]
   profileImage?: string
-  isActive?: boolean
   appliedAt: string
   approvedAt?: string
   rejectedAt?: string
@@ -63,7 +57,6 @@ export default function ProfessionalBasicInfoTab({
   
   // Dialog states
   const [showStatusDialog, setShowStatusDialog] = useState(false)
-  const [showEditDialog, setShowEditDialog] = useState(false)
   const [showUserEditDialog, setShowUserEditDialog] = useState(false)
   
   // Form states
@@ -77,22 +70,9 @@ export default function ProfessionalBasicInfoTab({
     email: "",
     phone: "",
     gender: "male" as "male" | "female",
-    birthDate: "",
-    password: "",
-    isActive: true,
-    specialization: "",
-    experience: "",
-    bio: ""
+    birthDate: ""
   })
 
-  // Form state for editing professional profile
-  const [editFormData, setEditFormData] = useState({
-    specialization: professional.specialization || "",
-    experience: professional.experience || "",
-    bio: professional.bio || "",
-    certifications: professional.certifications || [],
-    isActive: professional.isActive ?? true
-  })
 
   // Form state for editing user info
   const [userEditFormData, setUserEditFormData] = useState({
@@ -103,7 +83,7 @@ export default function ProfessionalBasicInfoTab({
   })
 
   const handleCreateProfessional = async () => {
-    if (!createFormData.name || !createFormData.email || !createFormData.phone || !createFormData.password) {
+    if (!createFormData.name || !createFormData.email || !createFormData.phone) {
       toast({
         variant: "destructive",
         title: "שגיאה",
@@ -118,11 +98,6 @@ export default function ProfessionalBasicInfoTab({
       formDataToSend.append("email", createFormData.email)
       formDataToSend.append("phone", createFormData.phone)
       formDataToSend.append("gender", createFormData.gender)
-      formDataToSend.append("password", createFormData.password)
-      formDataToSend.append("isActive", String(createFormData.isActive))
-      formDataToSend.append("specialization", createFormData.specialization)
-      formDataToSend.append("experience", createFormData.experience)
-      formDataToSend.append("bio", createFormData.bio)
       if (createFormData.birthDate) {
         formDataToSend.append("birthDate", createFormData.birthDate)
       }
@@ -153,34 +128,6 @@ export default function ProfessionalBasicInfoTab({
     }
   }
 
-  const handleUpdateProfile = async () => {
-    try {
-      const { updateProfessionalProfile } = await import("@/actions/professional-actions")
-      const result = await updateProfessionalProfile(professional._id, editFormData)
-      
-      if (result.success && result.professional) {
-        toast({
-          title: "הצלחה",
-          description: "פרופיל המטפל עודכן בהצלחה"
-        })
-        onUpdate(result.professional as unknown as Professional)
-        setShowEditDialog(false)
-      } else {
-        toast({
-          variant: "destructive",
-          title: "שגיאה",
-          description: result.error || "שגיאה בעדכון הפרופיל"
-        })
-      }
-    } catch (error) {
-      console.error("Error updating professional profile:", error)
-      toast({
-        variant: "destructive",
-        title: "שגיאה",
-        description: "שגיאה בעדכון הפרופיל"
-      })
-    }
-  }
 
   const handleUpdateUserInfo = async () => {
     try {
@@ -357,16 +304,6 @@ export default function ProfessionalBasicInfoTab({
                 />
               </div>
               
-              <div>
-                <Label htmlFor="password">סיסמה *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={createFormData.password}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="הכנס סיסמה"
-                />
-              </div>
               
               <div>
                 <Label htmlFor="gender">מגדר *</Label>
@@ -391,54 +328,12 @@ export default function ProfessionalBasicInfoTab({
                 />
               </div>
 
-              <div className="flex items-center gap-2 md:col-span-2">
-                <Checkbox
-                  id="isActive"
-                  checked={createFormData.isActive}
-                  onCheckedChange={(checked) =>
-                    setCreateFormData((prev) => ({ ...prev, isActive: !!checked }))
-                  }
-                />
-                <Label htmlFor="isActive">פעיל</Label>
-              </div>
-              
-              <div className="md:col-span-2">
-                <Label htmlFor="specialization">התמחות</Label>
-                <Input
-                  id="specialization"
-                  value={createFormData.specialization}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, specialization: e.target.value }))}
-                  placeholder="הכנס התמחות"
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <Label htmlFor="experience">ניסיון</Label>
-                <Textarea
-                  id="experience"
-                  value={createFormData.experience}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, experience: e.target.value }))}
-                  placeholder="תיאור ניסיון מקצועי"
-                  rows={3}
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <Label htmlFor="bio">אודות</Label>
-                <Textarea
-                  id="bio"
-                  value={createFormData.bio}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, bio: e.target.value }))}
-                  placeholder="תיאור אישי קצר"
-                  rows={3}
-                />
-              </div>
             </div>
             
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 onClick={handleCreateProfessional}
-                disabled={loading || !createFormData.name || !createFormData.email || !createFormData.phone || !createFormData.password}
+                disabled={loading || !createFormData.name || !createFormData.email || !createFormData.phone}
                 className="flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
@@ -574,108 +469,6 @@ export default function ProfessionalBasicInfoTab({
         </CardContent>
       </Card>
 
-      {/* Professional Profile */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              פרופיל מקצועי
-            </div>
-            
-            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Edit className="w-4 h-4 mr-2" />
-                  ערוך פרופיל
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>עריכת פרופיל מקצועי</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>התמחות</Label>
-                    <Input
-                      value={editFormData.specialization}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, specialization: e.target.value }))}
-                      placeholder="הכנס התמחות"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>ניסיון</Label>
-                    <Textarea
-                      value={editFormData.experience}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, experience: e.target.value }))}
-                      placeholder="תיאור ניסיון מקצועי"
-                      rows={3}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label>אודות</Label>
-                    <Textarea
-                      value={editFormData.bio}
-                      onChange={(e) => setEditFormData(prev => ({ ...prev, bio: e.target.value }))}
-                      placeholder="תיאור אישי קצר"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="editIsActive"
-                      checked={editFormData.isActive}
-                      onCheckedChange={(checked) => setEditFormData(prev => ({ ...prev, isActive: !!checked }))}
-                    />
-                    <Label htmlFor="editIsActive">פעיל</Label>
-                  </div>
-                  
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                      <X className="w-4 h-4 mr-2" />
-                      ביטול
-                    </Button>
-                    <Button onClick={handleUpdateProfile} disabled={loading}>
-                      <Save className="w-4 h-4 mr-2" />
-                      {loading ? "שומר..." : "שמור"}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium">התמחות</Label>
-              <div className="mt-1 text-sm">{professional.specialization || "לא צוין"}</div>
-            </div>
-            
-            <div>
-              <Label className="text-sm font-medium">פעיל</Label>
-              <div className="mt-1">
-                <Badge variant={professional.isActive ? "default" : "secondary"}>
-                  {professional.isActive ? "פעיל" : "לא פעיל"}
-                </Badge>
-              </div>
-            </div>
-            
-            <div className="md:col-span-2">
-              <Label className="text-sm font-medium">ניסיון</Label>
-              <div className="mt-1 text-sm">{professional.experience || "לא צוין"}</div>
-            </div>
-            
-            <div className="md:col-span-2">
-              <Label className="text-sm font-medium">אודות</Label>
-              <div className="mt-1 text-sm">{professional.bio || "לא צוין"}</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Status Management */}
       <Card>

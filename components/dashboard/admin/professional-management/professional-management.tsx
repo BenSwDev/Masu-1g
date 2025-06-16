@@ -26,15 +26,8 @@ interface Professional {
     birthDate?: string
   }
   status: ProfessionalStatus
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
   treatments: any[]
   workAreas: any[]
-  totalEarnings: number
-  pendingPayments: number
-  financialTransactions: any[]
   adminNotes?: string
   rejectionReason?: string
   appliedAt: string
@@ -166,15 +159,8 @@ export function ProfessionalManagement({
         birthDate: ""
       },
       status: "pending_admin_approval",
-      specialization: "",
-      experience: "",
-      certifications: [],
-      bio: "",
       treatments: [],
       workAreas: [],
-      totalEarnings: 0,
-      pendingPayments: 0,
-      financialTransactions: [],
       adminNotes: "",
       rejectionReason: "",
       appliedAt: new Date().toISOString(),
@@ -216,9 +202,6 @@ export function ProfessionalManagement({
     return new Date(dateString).toLocaleDateString("he-IL")
   }
 
-  const formatCurrency = (amount: number) => {
-    return `₪${amount.toFixed(2)}`
-  }
 
   // Statistics
   const stats = {
@@ -432,7 +415,7 @@ export function ProfessionalManagement({
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {professional.workAreas?.length || 0} איזורים
+                        {professional.workAreas.length} איזורים
                       </div>
                     </TableCell>
                     <TableCell>

@@ -17,7 +17,6 @@ const profileFormSchema = z.object({
     message: "Please enter a valid email address.",
   }),
   phone: z.string().optional(),
-  bio: z.string().optional(),
 })
 
 interface ProfileFormProps {
@@ -34,7 +33,6 @@ export function ProfileForm({ initialValues, onSubmit }: ProfileFormProps) {
       name: "",
       email: "",
       phone: "",
-      bio: "",
     },
     mode: "onChange",
   })
@@ -88,19 +86,6 @@ export function ProfileForm({ initialValues, onSubmit }: ProfileFormProps) {
                   ref={field.ref}
                   className="border-turquoise-200 focus-visible:ring-turquoise-500"
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="bio"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("profile.bio")}</FormLabel>
-              <FormControl>
-                <Input placeholder={t("profile.bioPlaceholder")} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -96,10 +96,11 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
     if (voucher?.isGift && voucher.recipientName) {
       const [first, ...rest] = voucher.recipientName.split(" ")
       return {
-        recipientFirstName: first,
-        recipientLastName: rest.join(" "),
-        recipientPhone: voucher.recipientPhone,
-        isBookingForSomeoneElse: true,
+        firstName: first,
+        lastName: rest.join(" "),
+        phone: voucher.recipientPhone,
+        email: voucher.recipientEmail,
+        isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
       }
     }
     if (userSubscription?.guestInfo) {
@@ -109,19 +110,27 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
         lastName: rest.join(" "),
         email: userSubscription.guestInfo.email,
         phone: userSubscription.guestInfo.phone,
+        isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
       }
     }
-    return {}
+    return {
+      isBookingForSomeoneElse: false, // Default to false for redemption
+    }
   }, [voucher, userSubscription])
 
   const lockedFields = useMemo<(keyof GuestInfo)[]>(() => {
-    if (voucher?.isGift) {
-      return ["recipientFirstName", "recipientLastName", "recipientPhone"]
+    if (voucher) {
+      return ["firstName", "lastName", "phone", "email"]
     }
     if (userSubscription?.guestInfo) {
       return ["firstName", "lastName", "email", "phone"]
     }
     return []
+  }, [voucher, userSubscription])
+
+  // Hide "booking for someone else" option when redeeming voucher/subscription
+  const hideBookingForSomeoneElse = useMemo(() => {
+    return Boolean(voucher || userSubscription)
   }, [voucher, userSubscription])
 
   const [guestInfo, setGuestInfoState] = useState<Partial<GuestInfo>>(prefilledGuestInfo)
@@ -564,7 +573,8 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
       calculatedPrice?.finalAmount === 0 &&
       calculatedPrice?.isFullyCoveredByVoucherOrSubscription
     ) {
-      handleFinalSubmit(true)
+      // Skip payment step, go directly to confirmation by simulating final submit
+      handleFinalSubmit()
       return
     }
     setCurrentStep((prev) => Math.min(prev + 1, CONFIRMATION_STEP_NUMBER))
@@ -737,6 +747,7 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
             setGuestInfo={setGuestInfo}
             onNext={handleGuestInfoSubmit}
             lockedFields={lockedFields}
+            hideBookingForSomeoneElse={hideBookingForSomeoneElse}
           />
         )
       case 2:
@@ -756,6 +767,8 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
             setBookingOptions={setBookingOptions}
             onNext={nextStep}
             onPrev={prevStep}
+            voucher={voucher}
+            userSubscription={userSubscription}
           />
         )
       case 4:
@@ -782,6 +795,8 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
             onNext={nextStep}
             onPrev={prevStep}
             setBookingOptions={setBookingOptions}
+            voucher={voucher}
+            userSubscription={userSubscription}
           />
         )
       case 6:
@@ -795,6 +810,7 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
             isLoading={isLoading}
             createPendingBooking={createPendingBooking}
             pendingBookingId={pendingBookingId}
+            isRedeeming={Boolean(voucher || userSubscription)}
           />
         )
       case 7:
@@ -895,4 +911,6 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
       {renderStep()}
     </div>
   )
+} 
+} 
 } 

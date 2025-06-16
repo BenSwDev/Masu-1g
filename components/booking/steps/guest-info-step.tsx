@@ -51,6 +51,7 @@ interface GuestInfoStepProps {
   hideRecipientBirthGender?: boolean
   showGiftOptions?: boolean
   lockedFields?: (keyof GuestInfo)[]
+  hideBookingForSomeoneElse?: boolean
 }
 
 export function GuestInfoStep({
@@ -61,6 +62,7 @@ export function GuestInfoStep({
   hideRecipientBirthGender = false,
   showGiftOptions = false,
   lockedFields = [],
+  hideBookingForSomeoneElse = false,
 }: GuestInfoStepProps) {
   const { t, dir, language } = useTranslation()
   const [isBookingForSomeoneElse, setIsBookingForSomeoneElse] = useState(
@@ -207,22 +209,24 @@ export function GuestInfoStep({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           
-          {/* Booking For Someone Else Option */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
-                <Checkbox
-                  id="isBookingForSomeoneElse"
-                  checked={isBookingForSomeoneElse}
-                  onCheckedChange={handleBookingForSomeoneElseChange}
-                />
-                <label htmlFor="isBookingForSomeoneElse" className={`flex items-center gap-2 cursor-pointer ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                  <Users className="h-4 w-4" />
-                  <span>{t("guestInfo.bookingForSomeoneElse")}</span>
-                </label>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Booking For Someone Else Option - Hide when redeeming voucher/subscription */}
+          {!hideBookingForSomeoneElse && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
+                  <Checkbox
+                    id="isBookingForSomeoneElse"
+                    checked={isBookingForSomeoneElse}
+                    onCheckedChange={handleBookingForSomeoneElseChange}
+                  />
+                  <label htmlFor="isBookingForSomeoneElse" className={`flex items-center gap-2 cursor-pointer ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                    <Users className="h-4 w-4" />
+                    <span>{t("guestInfo.bookingForSomeoneElse")}</span>
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Booker Details (Always required) */}
           <Card>

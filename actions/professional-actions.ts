@@ -9,7 +9,8 @@ import ProfessionalProfile, {
   type IProfessionalProfile,
   type ProfessionalStatus,
   type ITreatmentPricing,
-  type IWorkArea
+  type IWorkArea,
+  type IFinancialTransaction
 } from "@/lib/db/models/professional-profile"
 import bcrypt from "bcryptjs"
 import User from "@/lib/db/models/user"
@@ -34,6 +35,7 @@ export async function createProfessional(formData: FormData) {
     const birthDate = formData.get("birthDate") as string
     const password = null
     const status: ProfessionalStatus = "pending_admin_approval"
+    const isActive = status === "active"
 
     if (!name || !email || !phone) {
       return { success: false, error: "שם, אימייל וטלפון נדרשים" }
@@ -73,7 +75,7 @@ export async function createProfessional(formData: FormData) {
       status,
       treatments: [],
       workAreas: [],
-      isActive: false,
+      isActive,
       adminNotes: "נוצר על ידי מנהל - המטפל צריך להשלים הגדרה"
     })
 
@@ -448,7 +450,37 @@ export async function updateProfessionalWorkAreas(
   }
 }
 
+// Add financial transaction
+export async function addProfessionalFinancialTransaction(
+  professionalId: string,
+  transaction: Omit<IFinancialTransaction, 'date'>
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.activeRole !== "admin") {
+      return { success: false, error: "לא מורשה" }
+    }
 
+    await dbConnect()
+
+    const professional = await ProfessionalProfile.findById(professionalId)
+    if (!professional) {
+      return { success: false, error: "מטפל לא נמצא" }
+    }
+
+    await professional.addFinancialTransaction({
+      ...transaction,
+      adminUserId: new mongoose.Types.ObjectId(session.user.id)
+    })
+
+    revalidatePath("/dashboard/admin/professional-management")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error adding financial transaction:", error)
+    return { success: false, error: "הוספת עסקה כספית נכשלה" }
+  }
+}
 
 // Simple list of professionals for dropdowns
 export async function getProfessionalList() {
@@ -477,9 +509,96 @@ export async function getProfessionalList() {
   }
 }
 
+// Admin adjustment (credit or penalty)
+export async function adminAdjustProfessionalBalance(
+  professionalId: string,
+  amount: number,
+  note?: string
+) {
+  const type = amount >= 0 ? 'bonus' : 'penalty'
+  return addProfessionalFinancialTransaction(professionalId, {
+    type,
+    amount: Math.abs(amount),
+    description: type === 'bonus' ? 'זיכוי מנהל' : 'קנס מנהל',
+    adminNote: note,
+  })
+}
 
+// Get professional financial report
+export async function getProfessionalFinancialReport(
+  professionalId: string,
+  period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+  date?: Date
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.activeRole !== "admin") {
+      return { success: false, error: "לא מורשה" }
+    }
 
+    await dbConnect()
 
+    const professional = await ProfessionalProfile.findById(professionalId)
+    if (!professional) {
+      return { success: false, error: "מטפל לא נמצא" }
+    }
+
+    const now = date || new Date()
+    let startDate: Date
+    let endDate: Date = new Date(now)
+
+    switch (period) {
+      case 'daily':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+        break
+      case 'weekly':
+        const weekStart = now.getDate() - now.getDay()
+        startDate = new Date(now.getFullYear(), now.getMonth(), weekStart)
+        endDate = new Date(now.getFullYear(), now.getMonth(), weekStart + 7)
+        break
+      case 'monthly':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+        break
+      case 'yearly':
+        startDate = new Date(now.getFullYear(), 0, 1)
+        endDate = new Date(now.getFullYear() + 1, 0, 1)
+        break
+    }
+
+    const transactions = professional.financialTransactions.filter(
+      (t: any) => t.date >= startDate && t.date < endDate
+    )
+
+    const summary = {
+      totalEarnings: transactions
+        .filter((t: any) => t.type === 'payment' || t.type === 'bonus')
+        .reduce((sum: any, t: any) => sum + t.amount, 0),
+      totalPenalties: transactions
+        .filter((t: any) => t.type === 'penalty')
+        .reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0),
+      totalAdjustments: transactions
+        .filter((t: any) => t.type === 'adjustment')
+        .reduce((sum: any, t: any) => sum + t.amount, 0),
+      transactionCount: transactions.length
+    }
+
+    return {
+      success: true,
+      report: {
+        period,
+        startDate,
+        endDate,
+        transactions,
+        summary
+      }
+    }
+  } catch (error) {
+    console.error("Error generating financial report:", error)
+    return { success: false, error: "יצירת דוח כספי נכשלה" }
+  }
+}
 
 // Get available treatments for professional assignment
 export async function getAvailableTreatments() {

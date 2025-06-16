@@ -26,7 +26,16 @@ export interface IWorkArea {
   coveredCities: string[] // List of cities covered by this work area
 }
 
-
+// Financial transaction interface  
+export interface IFinancialTransaction {
+  type: "payment" | "adjustment" | "withdrawal" | "bonus" | "penalty"
+  amount: number
+  description: string
+  date: Date
+  bookingId?: mongoose.Types.ObjectId
+  adminUserId?: mongoose.Types.ObjectId
+  adminNote?: string
+}
 
 // Professional profile interface
 export interface IProfessionalProfile extends Document {
@@ -36,6 +45,10 @@ export interface IProfessionalProfile extends Document {
   isActive: boolean
   
   // Professional details
+  specialization?: string
+  experience?: string
+  certifications?: string[]
+  bio?: string
   profileImage?: string
   
   // Treatments and pricing
@@ -44,7 +57,10 @@ export interface IProfessionalProfile extends Document {
   // Work areas
   workAreas: IWorkArea[]
   
-
+  // Financial tracking
+  totalEarnings: number
+  pendingPayments: number
+  financialTransactions: IFinancialTransaction[]
   
   // Admin notes
   adminNotes?: string
@@ -61,6 +77,7 @@ export interface IProfessionalProfile extends Document {
 
   // Methods
   updateCoveredCities(workAreaIndex?: number): Promise<string[]>
+  addFinancialTransaction(transaction: Omit<IFinancialTransaction, 'date'>): Promise<any>
   canHandleTreatment(treatmentId: string, durationId?: string): boolean
   coversCity(cityName: string): boolean
 }
@@ -111,7 +128,20 @@ const WorkAreaSchema = new Schema<IWorkArea>({
   coveredCities: [{ type: String }]
 }, { _id: false })
 
-
+// Financial transaction schema
+const FinancialTransactionSchema = new Schema<IFinancialTransaction>({
+  type: { 
+    type: String, 
+    enum: ["payment", "adjustment", "withdrawal", "bonus", "penalty"], 
+    required: true 
+  },
+  amount: { type: Number, required: true },
+  description: { type: String, required: true },
+  date: { type: Date, default: Date.now, required: true },
+  bookingId: { type: Schema.Types.ObjectId, ref: "Booking" },
+  adminUserId: { type: Schema.Types.ObjectId, ref: "User" },
+  adminNote: { type: String, trim: true }
+}, { _id: false })
 
 // Professional profile schema
 const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
@@ -130,6 +160,10 @@ const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
   isActive: { type: Boolean, default: true },
   
   // Professional details
+  specialization: { type: String, trim: true },
+  experience: { type: String, trim: true },
+  certifications: [{ type: String, trim: true }],
+  bio: { type: String, trim: true },
   profileImage: { type: String, trim: true },
   
   // Treatments and pricing
@@ -138,7 +172,10 @@ const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
   // Work areas
   workAreas: [WorkAreaSchema],
   
-
+  // Financial tracking
+  totalEarnings: { type: Number, default: 0, min: 0 },
+  pendingPayments: { type: Number, default: 0, min: 0 },
+  financialTransactions: [FinancialTransactionSchema],
   
   // Admin notes
   adminNotes: { type: String, trim: true },
@@ -201,7 +238,29 @@ ProfessionalProfileSchema.methods.updateCoveredCities = async function(workAreaI
   }
 }
 
-
+// Method to add financial transaction
+ProfessionalProfileSchema.methods.addFinancialTransaction = function(transaction: Omit<IFinancialTransaction, 'date'>) {
+  const newTransaction = {
+    ...transaction,
+    date: new Date()
+  }
+  
+  this.financialTransactions.push(newTransaction)
+  
+  // Update totals based on transaction type
+  if (transaction.type === "payment" || transaction.type === "bonus") {
+    this.totalEarnings += transaction.amount
+    if (transaction.type === "payment") {
+      this.pendingPayments = Math.max(0, this.pendingPayments - transaction.amount)
+    }
+  } else if (transaction.type === "adjustment") {
+    this.totalEarnings += transaction.amount
+  } else if (transaction.type === "penalty") {
+    this.totalEarnings = Math.max(0, this.totalEarnings - transaction.amount)
+  }
+  
+  return this.save()
+}
 
 // Method to check if professional can handle a treatment
 ProfessionalProfileSchema.methods.canHandleTreatment = function(treatmentId: string, durationId?: string) {

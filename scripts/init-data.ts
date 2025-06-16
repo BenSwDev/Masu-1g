@@ -191,7 +191,9 @@ export async function initializeData() {
             distanceRadius: "40km" as const,
             coveredCities: []
           }],
-          
+          totalEarnings: 0,
+          pendingPayments: 0,
+          financialTransactions: [],
           adminNotes: "מטפל לדוגמא שנוצר באתחול המערכת",
           appliedAt: new Date(),
           approvedAt: new Date(),

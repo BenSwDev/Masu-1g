@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -8,8 +8,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
-import { Sparkles, Clock, Users } from "lucide-react"
+import { Sparkles, Clock, Users, GiftIcon, Ticket } from "lucide-react"
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
+import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
+import type { ITreatment } from "@/lib/db/models"
 
 interface GuestTreatmentSelectionStepProps {
   hideGenderPreference?: boolean
@@ -25,6 +27,8 @@ interface GuestTreatmentSelectionStepProps {
   setBookingOptions: React.Dispatch<React.SetStateAction<Partial<SelectedBookingOptions>>>
   onNext: () => void
   onPrev: () => void
+  voucher?: IGiftVoucher
+  userSubscription?: any
 }
 
 export function GuestTreatmentSelectionStep({
@@ -35,25 +39,80 @@ export function GuestTreatmentSelectionStep({
   setBookingOptions,
   onNext,
   onPrev,
+  voucher,
+  userSubscription,
 }: GuestTreatmentSelectionStepProps) {
   const { t, dir } = useTranslation()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [availableTreatmentsForStep, setAvailableTreatmentsForStep] = useState<ITreatment[]>(
+    initialData?.activeTreatments || [],
+  )
+  const [isTreatmentLockedBySource, setIsTreatmentLockedBySource] = useState(false)
 
   const treatmentCategories = useMemo(() => {
-    const categories = new Set((initialData?.activeTreatments || []).map((t) => t.category || "Uncategorized"))
+    const categories = new Set(availableTreatmentsForStep.map((t) => t.category || "Uncategorized"))
     return Array.from(categories)
-  }, [initialData?.activeTreatments])
+  }, [availableTreatmentsForStep])
 
   const filteredTreatmentsByCategory = useMemo(() => {
     if (!selectedCategory) return []
-    return (initialData?.activeTreatments || []).filter((t) => (t.category || "Uncategorized") === selectedCategory)
-  }, [selectedCategory, initialData?.activeTreatments])
+    return availableTreatmentsForStep.filter((t) => (t.category || "Uncategorized") === selectedCategory)
+  }, [selectedCategory, availableTreatmentsForStep])
 
   const selectedTreatment = useMemo(() => {
-    return (initialData?.activeTreatments || []).find(
+    return availableTreatmentsForStep.find(
       (t) => t._id.toString() === bookingOptions.selectedTreatmentId
     )
-  }, [initialData?.activeTreatments, bookingOptions.selectedTreatmentId])
+  }, [availableTreatmentsForStep, bookingOptions.selectedTreatmentId])
+
+  const showCategorySelection =
+    (bookingOptions.source === "new_purchase" ||
+      (bookingOptions.source === "gift_voucher_redemption" && voucher?.voucherType === "monetary")) &&
+    !isTreatmentLockedBySource
+
+  // Effect to handle voucher/subscription specific treatment locking
+  useEffect(() => {
+    setIsTreatmentLockedBySource(false)
+    setSelectedCategory(null)
+    
+    if (bookingOptions.source === "gift_voucher_redemption" && voucher) {
+      if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+        const treatmentFromVoucher = (initialData.activeTreatments || []).find(
+          (t) => t._id.toString() === voucher.treatmentId?.toString(),
+        )
+        if (treatmentFromVoucher) {
+          setAvailableTreatmentsForStep([treatmentFromVoucher])
+          setSelectedCategory(treatmentFromVoucher.category || "Uncategorized")
+          setBookingOptions((prev) => ({
+            ...prev,
+            selectedTreatmentId: treatmentFromVoucher._id.toString(),
+            selectedDurationId: voucher.selectedDurationId?.toString(),
+          }))
+          setIsTreatmentLockedBySource(true)
+        }
+      } else {
+        // Monetary voucher - show all treatments
+        setAvailableTreatmentsForStep(initialData.activeTreatments || [])
+        setIsTreatmentLockedBySource(false)
+      }
+    } else if (bookingOptions.source === "subscription_redemption" && userSubscription) {
+      if (userSubscription.treatmentId) {
+        const treatmentFromSub = userSubscription.treatmentId
+        setAvailableTreatmentsForStep([treatmentFromSub])
+        setSelectedCategory(treatmentFromSub.category || "Uncategorized")
+        setBookingOptions((prev) => ({
+          ...prev,
+          selectedTreatmentId: treatmentFromSub._id.toString(),
+          selectedDurationId: userSubscription.selectedDurationId?.toString(),
+        }))
+        setIsTreatmentLockedBySource(true)
+      }
+    } else {
+      // New purchase
+      setAvailableTreatmentsForStep(initialData.activeTreatments || [])
+      setIsTreatmentLockedBySource(false)
+    }
+  }, [bookingOptions.source, voucher, userSubscription, initialData.activeTreatments, setBookingOptions])
 
   const availableDurations = useMemo(() => {
     if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {
@@ -108,34 +167,103 @@ export function GuestTreatmentSelectionStep({
         <p className="text-muted-foreground mt-2">{t("bookings.steps.treatment.description")}</p>
       </div>
 
+      {/* Show voucher/subscription selection for redemption */}
+      {bookingOptions.source === "gift_voucher_redemption" && voucher && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GiftIcon className="h-5 w-5 text-primary" />
+              {t("bookings.steps.treatment.selectedVoucher")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-semibold text-green-800">
+                    {voucher.code}
+                  </p>
+                  <p className="text-sm text-green-600">
+                    {voucher.voucherType === "treatment" 
+                      ? `${voucher.treatmentName}${voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""}`
+                      : `${t("bookings.monetaryVoucher")} - ${t("bookings.balance")}: ${voucher.remainingAmount?.toFixed(2)} ${t("common.currency")}`
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {bookingOptions.source === "subscription_redemption" && userSubscription && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-primary" />
+              {t("bookings.steps.treatment.selectedSubscription")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="font-semibold text-blue-800">
+                    {userSubscription.subscriptionId?.name || t("bookings.unknownSubscription")}
+                  </p>
+                  <p className="text-sm text-blue-600">
+                    {t("bookings.subscriptions.remaining")}: {userSubscription.remainingQuantity}
+                  </p>
+                  {userSubscription.treatmentId && (
+                    <p className="text-sm text-blue-600">
+                      {userSubscription.treatmentId.name}
+                      {userSubscription.selectedDurationDetails && 
+                        ` (${userSubscription.selectedDurationDetails.minutes} ${t("common.minutes")})`
+                      }
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Category Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("treatments.selectCategory")}</CardTitle>
-          <CardDescription>{t("treatments.selectCategoryDescription")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {treatmentCategories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? "default" : "outline"}
-                onClick={() => setSelectedCategory(category)}
-                className="h-auto py-3"
-              >
-                {t(`treatments.categories.${category}`)}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {showCategorySelection && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("treatments.selectCategory")}</CardTitle>
+            <CardDescription>{t("treatments.selectCategoryDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {treatmentCategories.map((category) => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  onClick={() => setSelectedCategory(category)}
+                  className="h-auto py-3"
+                >
+                  {t(`treatments.categories.${category}`)}
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Treatment Selection */}
-      {selectedCategory && (
+      {((showCategorySelection && selectedCategory) || !showCategorySelection) && (
         <Card>
           <CardHeader>
             <CardTitle>{t("treatments.selectTreatment")}</CardTitle>
-            <CardDescription>{t("treatments.selectTreatmentDescription")}</CardDescription>
+            <CardDescription>
+              {isTreatmentLockedBySource 
+                ? t("treatments.treatmentLockedBySource")
+                : t("treatments.selectTreatmentDescription")
+              }
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <RadioGroup
@@ -143,31 +271,44 @@ export function GuestTreatmentSelectionStep({
               onValueChange={handleTreatmentSelect}
               className="space-y-4"
             >
-              {filteredTreatmentsByCategory.map((treatment) => (
-                <Label
-                  key={treatment._id.toString()}
-                  htmlFor={treatment._id.toString()}
-                  className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}
-                >
-                  <RadioGroupItem value={treatment._id.toString()} id={treatment._id.toString()} />
-                  <div className="flex-1 flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">{treatment.name}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">{treatment.description}</p>
+              {(showCategorySelection ? filteredTreatmentsByCategory : availableTreatmentsForStep).map((treatment) => {
+                const isSelected = bookingOptions.selectedTreatmentId === treatment._id.toString()
+                const isLocked = isTreatmentLockedBySource && !isSelected
+                
+                return (
+                  <Label
+                    key={treatment._id.toString()}
+                    htmlFor={treatment._id.toString()}
+                    className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${
+                      dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""
+                    } ${isLocked ? "opacity-50 cursor-not-allowed" : ""} ${
+                      isSelected ? "ring-2 ring-primary border-primary" : ""
+                    }`}
+                  >
+                    <RadioGroupItem 
+                      value={treatment._id.toString()} 
+                      id={treatment._id.toString()}
+                      disabled={isLocked}
+                    />
+                    <div className="flex-1 flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium">{treatment.name}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">{treatment.description}</p>
+                      </div>
+                      <div className="text-right">
+                        {showPrice && treatment.pricingType === "fixed" && (
+                          <div className="text-lg font-semibold text-primary">
+                            {formatPrice(treatment.fixedPrice || 0)}
+                          </div>
+                        )}
+                        {treatment.pricingType === "duration_based" && (
+                          <Badge variant="secondary">{t("treatments.durationBased")}</Badge>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      {showPrice && treatment.pricingType === "fixed" && (
-                        <div className="text-lg font-semibold text-primary">
-                          {formatPrice(treatment.fixedPrice || 0)}
-                        </div>
-                      )}
-                      {treatment.pricingType === "duration_based" && (
-                        <Badge variant="secondary">{t("treatments.durationBased")}</Badge>
-                      )}
-                    </div>
-                  </div>
-                </Label>
-              ))}
+                  </Label>
+                )
+              })}
             </RadioGroup>
           </CardContent>
         </Card>

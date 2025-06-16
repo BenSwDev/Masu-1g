@@ -8,7 +8,6 @@ import { User, Stethoscope, MapPin } from "lucide-react"
 import ProfessionalBasicInfoTab from "./tabs/professional-basic-info-tab"
 import ProfessionalTreatmentsTab from "./tabs/professional-treatments-tab-simple"
 import ProfessionalWorkAreasTab from "./tabs/professional-work-areas-tab-simple"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 
 interface Professional {
   _id: string
@@ -17,10 +16,10 @@ interface Professional {
     name: string
     email: string
     phone: string
-    gender: "male" | "female"
+    gender: string
     birthDate?: string
   }
-  status: ProfessionalStatus
+  status: string
   treatments: any[]
   workAreas: any[]
   adminNotes?: string
@@ -29,6 +28,7 @@ interface Professional {
   approvedAt?: string
   rejectedAt?: string
   lastActiveAt?: string
+  bookings?: any[]
 }
 
 interface ProfessionalEditModalProps {

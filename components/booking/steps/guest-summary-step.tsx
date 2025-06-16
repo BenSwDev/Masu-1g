@@ -40,6 +40,8 @@ interface GuestSummaryStepProps {
   onNext: () => void
   onPrev: () => void
   setBookingOptions?: React.Dispatch<React.SetStateAction<Partial<SelectedBookingOptions>>>
+  voucher?: any
+  userSubscription?: any
 }
 
 export function GuestSummaryStep({
@@ -51,10 +53,31 @@ export function GuestSummaryStep({
   onNext,
   onPrev,
   setBookingOptions,
+  voucher,
+  userSubscription,
 }: GuestSummaryStepProps) {
   const { t, language, dir } = useTranslation()
   const [couponCode, setCouponCode] = useState(bookingOptions.appliedCouponCode || "")
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
+
+  const isRedeeming = Boolean(voucher || userSubscription)
+
+  const getSubscriptionName = () => {
+    if (bookingOptions.source === "subscription_redemption" && userSubscription) {
+      return userSubscription.subscriptionId?.name || t("bookings.unknownSubscription")
+    }
+    return null
+  }
+
+  const selectedGiftVoucherDisplay = useMemo(() => {
+    if (bookingOptions.source === "gift_voucher_redemption" && voucher) {
+      if (voucher.voucherType === "treatment") {
+        return `${voucher.code} (${voucher.treatmentName}${voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""})`
+      }
+      return `${voucher.code} (שובר כספי - יתרה: ${voucher.remainingAmount?.toFixed(2)} ₪)`
+    }
+    return null
+  }, [bookingOptions.source, voucher])
 
   const selectedTreatment = useMemo(() => {
     return (initialData?.activeTreatments || []).find(
@@ -263,9 +286,21 @@ export function GuestSummaryStep({
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-start">
                 <span className="text-muted-foreground">טיפול:</span>
-                <span className="font-medium">{selectedTreatment?.name}</span>
+                <div className="font-medium text-right">
+                  <span>{selectedTreatment?.name}</span>
+                  {getSubscriptionName() && (
+                    <span className="block text-xs text-primary mt-1">
+                      🎫 משתמש במנוי: {getSubscriptionName()}
+                    </span>
+                  )}
+                  {selectedGiftVoucherDisplay && (
+                    <span className="block text-xs text-primary mt-1">
+                      🎁 משתמש בשובר: {selectedGiftVoucherDisplay}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">קטגוריה:</span>
@@ -300,8 +335,8 @@ export function GuestSummaryStep({
         </Card>
       </div>
 
-      {/* Coupon Code Section */}
-      {setBookingOptions && (
+      {/* Coupon Code Section - Hide when redeeming voucher/subscription */}
+      {setBookingOptions && !isRedeeming && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

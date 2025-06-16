@@ -72,6 +72,7 @@ interface GuestPaymentStepProps {
   isLoading: boolean;
   createPendingBooking?: () => Promise<string | null>;
   pendingBookingId?: string | null;
+  isRedeeming?: boolean;
 }
 
 export function GuestPaymentStep({
@@ -83,6 +84,7 @@ export function GuestPaymentStep({
   isLoading,
   createPendingBooking,
   pendingBookingId = null,
+  isRedeeming = false,
 }: GuestPaymentStepProps) {
   const { t, dir } = useTranslation();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -191,13 +193,67 @@ export function GuestPaymentStep({
     }
   };
 
-  if (!calculatedPrice || calculatedPrice.finalAmount === 0) {
+  if (!calculatedPrice || (calculatedPrice.finalAmount === 0 && calculatedPrice.isFullyCoveredByVoucherOrSubscription)) {
     return (
-      <div className="space-y-6" dir={dir}>
-        <div className="text-center py-8">
-          <CheckCircle className="mx-auto h-12 w-12 text-green-600 mb-4" />
-          <h3 className="text-lg font-semibold mb-2">ההזמנה חינמית</h3>
-          <p className="text-muted-foreground mb-6">אין צורך בתשלום</p>
+      <div className="space-y-6 text-center">
+        <div className="flex flex-col items-center">
+          <CheckCircle className="h-16 w-16 text-green-500 mb-4" />
+          <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.payment.confirmTitleNoPayment")}</h2>
+          <p className="text-muted-foreground mt-1 max-w-md mx-auto">
+            {t("bookings.steps.payment.confirmDescNoPayment")}
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row justify-center gap-4 pt-6">
+          <Button variant="outline" onClick={onPrev} disabled={isLoading} type="button" size="lg">
+            {t("common.back")}
+          </Button>
+          <Button onClick={onConfirm} disabled={isLoading} type="button" size="lg">
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t("bookings.steps.payment.confirmBooking")}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Regular payment flow
+  return (
+    <div className="space-y-6" dir={dir}>
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.payment.title")}</h2>
+        <p className="text-muted-foreground mt-1">
+          {t("bookings.steps.payment.description")}
+          <span className="font-semibold text-primary">
+            {" "}
+            {t("common.totalPrice")}: {calculatedPrice?.finalAmount?.toFixed(2) || '0.00'} {t("common.currency")}
+          </span>
+        </p>
+      </div>
+
+      {/* Coupon Section - Hide when redeeming voucher/subscription */}
+      {!isRedeeming && (
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Tag className="mr-2 h-5 w-5 text-primary" />
+              {t("bookings.steps.summary.couponCode")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground">
+              {t("bookings.steps.summary.couponDesc")}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="text-center py-8">
+        <CheckCircle className="mx-auto h-12 w-12 text-green-600 mb-4" />
+        <h3 className="text-lg font-semibold mb-2">
+          {calculatedPrice?.finalAmount === 0 ? "ההזמנה חינמית" : "תשלום נדרש"}
+        </h3>
+        <p className="text-muted-foreground mb-6">
+          {calculatedPrice?.finalAmount === 0 ? "אין צורך בתשלום" : `סה"כ לתשלום: ${formatPrice(calculatedPrice?.finalAmount || 0)}`}</p>
         </div>
 
         {/* Cancellation Policy and Checkboxes for free bookings too */}

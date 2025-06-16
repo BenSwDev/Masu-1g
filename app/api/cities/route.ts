@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import dbConnect from "@/lib/db/mongoose"
-import City from "@/lib/db/models/city"
+import { City } from "@/lib/db/models/city-distance"
 
 export async function GET() {
   try {
@@ -8,7 +8,7 @@ export async function GET() {
     
     // Get all active cities
     const cities = await City.find({ isActive: true })
-      .select("name isActive")
+      .select("name isActive coordinates")
       .sort({ name: 1 })
       .lean()
 
@@ -17,7 +17,8 @@ export async function GET() {
       cities: cities.map(city => ({
         _id: city._id.toString(),
         name: city.name,
-        isActive: city.isActive
+        isActive: city.isActive,
+        coordinates: city.coordinates
       }))
     })
   } catch (error) {

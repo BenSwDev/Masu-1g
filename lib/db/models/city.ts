@@ -23,7 +23,9 @@ const CitySchema = new Schema<ICity>(
   { timestamps: true },
 )
 
-// Note: unique: true already creates an index, so no need for additional index
+// Index for better performance
+CitySchema.index({ name: 1 })
+CitySchema.index({ isActive: 1 })
 
 const City: Model<ICity> = mongoose.models.City || mongoose.model<ICity>("City", CitySchema)
 export default City

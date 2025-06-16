@@ -11,13 +11,26 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/common/ui/select"
+import { Badge } from "@/components/common/ui/badge"
 import { useToast } from "@/components/common/ui/use-toast"
-import { MapPin, Save, Loader2 } from "lucide-react"
+import { MapPin, Save, Loader2, Plus, X } from "lucide-react"
+import { updateProfessionalWorkAreas } from "@/actions/professional-actions"
 
 interface City {
   _id: string
   name: string
   isActive: boolean
+  coordinates: {
+    lat: number
+    lng: number
+  }
+}
+
+interface WorkArea {
+  cityId: string
+  cityName: string
+  distanceRadius: string
+  coveredCities: string[]
 }
 
 interface ProfessionalWorkAreasTabProps {
@@ -33,14 +46,13 @@ export default function ProfessionalWorkAreasTab({
   const { toast } = useToast()
   
   const [allCities, setAllCities] = useState<City[]>([])
-  const [selectedCityId, setSelectedCityId] = useState<string>(
-    professional?.workAreas?.[0]?.cityId || ""
-  )
-  const [distanceRadius, setDistanceRadius] = useState<string>(
-    professional?.workAreas?.[0]?.distanceRadius || "20km"
-  )
-  const [coveredCities, setCoveredCities] = useState<string[]>(
-    professional?.workAreas?.[0]?.coveredCities || []
+  const [workAreas, setWorkAreas] = useState<WorkArea[]>(
+    professional?.workAreas?.map((area: any) => ({
+      cityId: area.cityId || "",
+      cityName: area.cityName || "",
+      distanceRadius: area.distanceRadius || "20km",
+      coveredCities: area.coveredCities || []
+    })) || []
   )
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -54,9 +66,12 @@ export default function ProfessionalWorkAreasTab({
 
         if (data.success) {
           setAllCities(data.cities || [])
-          if (!selectedCityId && data.cities.length > 0) {
-            setSelectedCityId(data.cities[0]._id)
-          }
+        } else {
+          toast({
+            variant: "destructive",
+            title: "שגיאה",
+            description: "שגיאה בטעינת רשימת הערים"
+          })
         }
       } catch (error) {
         console.error('Error fetching cities:', error)
@@ -71,74 +86,120 @@ export default function ProfessionalWorkAreasTab({
     }
 
     fetchCities()
-  }, [professional, toast, selectedCityId])
+  }, [toast])
 
-  // Load covered cities when selection changes
-  useEffect(() => {
-    const fetchCovered = async () => {
-      if (!selectedCityId) return
-      try {
-        const city = allCities.find(c => c._id === selectedCityId)
-        if (!city) return
-        const params = new URLSearchParams({
-          cityName: city.name,
-          distanceRadius
-        })
-        const res = await fetch(`/api/cities/coverage?${params.toString()}`)
-        const data = await res.json()
-        if (data.success) {
-          setCoveredCities(data.cities || [])
-        } else {
-          setCoveredCities([])
-        }
-      } catch (err) {
-        console.error('Error fetching covered cities:', err)
-        setCoveredCities([])
-      }
-    }
+  // Update covered cities when work area changes
+  const updateCoveredCities = async (workAreaIndex: number) => {
+    const workArea = workAreas[workAreaIndex]
+    if (!workArea.cityName || !workArea.distanceRadius) return
 
-    fetchCovered()
-  }, [selectedCityId, distanceRadius, allCities])
-
-  const handleSave = async () => {
-    setSaving(true)
     try {
-      // Update professional's work areas
-      const city = allCities.find(c => c._id === selectedCityId)
-      const updatedAreas = [
-        {
-          cityId: selectedCityId,
-          cityName: city?.name,
-          distanceRadius,
-          coveredCities
-        }
-      ]
-
-      if (professional?._id) {
-        const { updateProfessionalWorkAreas } = await import("@/actions/professional-actions")
-        const result = await updateProfessionalWorkAreas(professional._id, updatedAreas)
-        if (!result.success) {
-          throw new Error(result.error || "Failed to update work areas")
-        }
-      }
-
-      const updatedProfessional = {
-        ...professional,
-        workAreas: updatedAreas
-      }
-
-      onUpdate(updatedProfessional)
-      
-      toast({
-        title: "הצלחה",
-        description: "איזורי הפעילות עודכנו בהצלחה"
+      const params = new URLSearchParams({
+        cityName: workArea.cityName,
+        distanceRadius: workArea.distanceRadius
       })
+      
+      const response = await fetch(`/api/cities/coverage?${params.toString()}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        const updatedWorkAreas = [...workAreas]
+        updatedWorkAreas[workAreaIndex].coveredCities = data.cities || []
+        setWorkAreas(updatedWorkAreas)
+      }
+    } catch (error) {
+      console.error('Error fetching covered cities:', error)
+    }
+  }
+
+  // Add new work area
+  const addWorkArea = () => {
+    setWorkAreas([...workAreas, {
+      cityId: "",
+      cityName: "",
+      distanceRadius: "20km",
+      coveredCities: []
+    }])
+  }
+
+  // Remove work area
+  const removeWorkArea = (index: number) => {
+    const updated = workAreas.filter((_, i) => i !== index)
+    setWorkAreas(updated)
+  }
+
+  // Update work area city
+  const updateWorkAreaCity = (index: number, cityId: string) => {
+    const city = allCities.find(c => c._id === cityId)
+    if (!city) return
+
+    const updated = [...workAreas]
+    updated[index].cityId = cityId
+    updated[index].cityName = city.name
+    setWorkAreas(updated)
+
+    // Update covered cities
+    updateCoveredCities(index)
+  }
+
+  // Update work area distance radius
+  const updateWorkAreaRadius = (index: number, radius: string) => {
+    const updated = [...workAreas]
+    updated[index].distanceRadius = radius
+    setWorkAreas(updated)
+
+    // Update covered cities
+    updateCoveredCities(index)
+  }
+
+  // Save changes
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+
+      // Validate work areas
+      const validWorkAreas = workAreas.filter(area => 
+        area.cityId && area.cityName && area.distanceRadius
+      )
+
+      if (validWorkAreas.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: "יש להגדיר לפחות איזור עבודה אחד"
+        })
+        return
+      }
+
+      const result = await updateProfessionalWorkAreas(
+        professional._id,
+        validWorkAreas
+      )
+
+      if (result.success) {
+        toast({
+          title: "הצלחה",
+          description: "איזורי העבודה עודכנו בהצלחה"
+        })
+
+        // Update parent component
+        onUpdate({
+          ...professional,
+          workAreas: validWorkAreas
+        })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: "שגיאה בעדכון איזורי העבודה"
+        })
+      }
     } catch (error) {
       console.error('Error saving work areas:', error)
       toast({
         variant: "destructive",
-        title: "שגיאה", 
-        description: "שגיאה בשמירת איזורי הפעילות"
+        title: "שגיאה",
+        description: "שגיאה בשמירת השינויים"
       })
     } finally {
       setSaving(false)
@@ -147,49 +208,56 @@ export default function ProfessionalWorkAreasTab({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-6 h-6 animate-spin" />
-        <span className="mr-2">טוען ערים...</span>
-      </div>
+      <Card dir={dir}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            איזורי עבודה
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className="space-y-6" dir={dir}>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              בחירת איזורי פעילות
-            </CardTitle>
-            <Button 
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              שמור
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {allCities.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-              <h3 className="text-lg font-medium mb-2">אין ערים במערכת</h3>
-              <p className="text-sm">צריך להוסיף ערים במערכת קודם</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium block">עיר מוצא</label>
-                  <Select value={selectedCityId} onValueChange={setSelectedCityId}>
+    <Card dir={dir}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <MapPin className="h-5 w-5" />
+          איזורי עבודה
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          {workAreas.map((workArea, index) => (
+            <div key={index} className="border rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">איזור עבודה {index + 1}</h4>
+                {workAreas.length > 1 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeWorkArea(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    עיר מרכזית
+                  </label>
+                  <Select
+                    value={workArea.cityId}
+                    onValueChange={(value) => updateWorkAreaCity(index, value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="בחר עיר" />
                     </SelectTrigger>
@@ -202,37 +270,92 @@ export default function ProfessionalWorkAreasTab({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium block">טווח פעילות</label>
-                  <Select value={distanceRadius} onValueChange={setDistanceRadius}>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    טווח פעילות
+                  </label>
+                  <Select
+                    value={workArea.distanceRadius}
+                    onValueChange={(value) => updateWorkAreaRadius(index, value)}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="בחר טווח" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="20km">20 ק"מ</SelectItem>
-                      <SelectItem value="40km">40 ק"מ</SelectItem>
-                      <SelectItem value="60km">60 ק"מ</SelectItem>
-                      <SelectItem value="80km">80 ק"מ</SelectItem>
+                      <SelectItem value="20km">עד 20 ק״מ</SelectItem>
+                      <SelectItem value="40km">עד 40 ק״מ</SelectItem>
+                      <SelectItem value="60km">עד 60 ק״מ</SelectItem>
+                      <SelectItem value="80km">עד 80 ק״מ</SelectItem>
                       <SelectItem value="unlimited">ללא הגבלה</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
-              {coveredCities.length > 0 && (
-                <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                  <h4 className="font-medium text-green-900 mb-2">ערים מכוסות:</h4>
-                  <div className="text-sm text-green-700 flex flex-wrap gap-2">
-                    {[allCities.find(c => c._id === selectedCityId)?.name, ...coveredCities].map((city, idx) => (
-                      <span key={idx}>{city}</span>
+              {workArea.coveredCities.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    ערים מכוסות ({workArea.coveredCities.length + 1} ערים כולל {workArea.cityName})
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="default">{workArea.cityName}</Badge>
+                    {workArea.coveredCities.slice(0, 10).map((city, cityIndex) => (
+                      <Badge key={cityIndex} variant="secondary">
+                        {city}
+                      </Badge>
                     ))}
+                    {workArea.coveredCities.length > 10 && (
+                      <Badge variant="outline">
+                        +{workArea.coveredCities.length - 10} נוספות
+                      </Badge>
+                    )}
                   </div>
                 </div>
               )}
             </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            onClick={addWorkArea}
+            disabled={workAreas.length >= 3} // Limit to 3 work areas
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            הוסף איזור עבודה
+          </Button>
+
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Save className="h-4 w-4 mr-2" />
+            )}
+            שמור שינויים
+          </Button>
+        </div>
+
+        {workAreas.length > 0 && (
+          <div className="bg-muted/50 rounded-lg p-4">
+            <h4 className="font-medium mb-2">סיכום איזורי עבודה</h4>
+            <div className="text-sm text-muted-foreground">
+              <p>
+                סה״כ ערים מכוסות: {' '}
+                {workAreas.reduce((total, area) => 
+                  total + area.coveredCities.length + 1, 0
+                )} ערים
+              </p>
+              <p>
+                איזורי עבודה פעילים: {workAreas.filter(area => 
+                  area.cityId && area.cityName
+                ).length}
+              </p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

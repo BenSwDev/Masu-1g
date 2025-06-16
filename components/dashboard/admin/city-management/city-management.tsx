@@ -59,7 +59,11 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
         />
         <Button onClick={() => setOpen(true)}>{t("admin.cities.addCity")}</Button>
       </div>
-      <CityFormDialog open={open} onOpenChange={setOpen} />
+      <CityFormDialog 
+        open={open} 
+        onOpenChange={setOpen} 
+        onSuccess={() => loadCities(1, search)}
+      />
       <Card>
         <CardContent className="p-0 overflow-x-auto">
           <Table>

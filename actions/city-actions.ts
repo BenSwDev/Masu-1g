@@ -3,7 +3,8 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import City from "@/lib/db/models/city"
+import { City } from "@/lib/db/models/city-distance"
+import { revalidatePath } from "next/cache"
 
 export async function getCities(page = 1, limit = 10, searchTerm = "") {
   try {
@@ -62,13 +63,28 @@ export async function createCity(formData: FormData) {
       return { success: false, message: "missingFields" }
     }
 
+    // Validate coordinates are within Israel bounds (approximately)
+    if (lat < 29.0 || lat > 33.5 || lng < 34.0 || lng > 36.0) {
+      return { success: false, message: "coordinatesOutOfBounds" }
+    }
+
     const existing = await City.findOne({ name }).lean()
     if (existing) {
       return { success: false, message: "cityExists" }
     }
 
-    const city = new City({ name, coordinates: { lat, lng }, isActive })
+    const city = new City({ 
+      name, 
+      coordinates: { lat, lng }, 
+      isActive 
+    })
     await city.save()
+
+    // Calculate distances to all existing cities
+    console.log("Calculating distances for new city:", name)
+    await (City as any).calculateDistancesForNewCity(city._id.toString())
+
+    revalidatePath("/dashboard/admin/cities")
 
     return { success: true, cityId: city._id.toString() }
   } catch (err) {
@@ -76,3 +92,19 @@ export async function createCity(formData: FormData) {
     return { success: false, message: "creationFailed" }
   }
 }
+
+export async function updateCity(cityId: string, formData: FormData) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || session.user.activeRole !== "admin") {
+      return { success: false, message: "notAuthorized" }
+    }
+
+    await dbConnect()
+
+    const name = formData.get("name") as string
+    const lat = parseFloat(formData.get("lat") as string)
+    const lng = parseFloat(formData.get("lng") as string)
+    const isActive = formData.get("isActive") === "true"
+
+    if (!name || isNaN(lat) || isNaN(lng)) {

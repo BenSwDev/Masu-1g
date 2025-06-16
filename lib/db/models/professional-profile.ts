@@ -8,7 +8,7 @@ export type ProfessionalStatus =
   | "rejected" 
   | "suspended"
 
-// Distance options for work areas
+// Distance radius options
 export type DistanceRadius = "20km" | "40km" | "60km" | "80km" | "unlimited"
 
 // Treatment pricing interface
@@ -26,14 +26,14 @@ export interface IWorkArea {
   coveredCities: string[] // List of cities covered by this work area
 }
 
-// Financial transaction interface
+// Financial transaction interface  
 export interface IFinancialTransaction {
-  date: Date
-  type: "booking_payment" | "bonus" | "penalty" | "adjustment"
+  type: "payment" | "adjustment" | "withdrawal"
   amount: number
   description: string
+  date: Date
   bookingId?: mongoose.Types.ObjectId
-  adminNote?: string
+  adminUserId?: mongoose.Types.ObjectId
 }
 
 // Professional profile interface
@@ -76,35 +76,47 @@ export interface IProfessionalProfile extends Document {
 
 // Treatment pricing schema
 const TreatmentPricingSchema = new Schema<ITreatmentPricing>({
-  treatmentId: { type: Schema.Types.ObjectId, ref: "Treatment", required: true },
-  durationId: { type: Schema.Types.ObjectId, ref: "TreatmentDuration" },
+  treatmentId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "Treatment", 
+    required: true 
+  },
+  durationId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "TreatmentDuration" 
+  },
   professionalPrice: { type: Number, required: true, min: 0 }
 }, { _id: false })
 
 // Work area schema
 const WorkAreaSchema = new Schema<IWorkArea>({
-  cityId: { type: Schema.Types.ObjectId, ref: "City", required: true },
+  cityId: { 
+    type: Schema.Types.ObjectId, 
+    ref: "City", 
+    required: true 
+  },
   cityName: { type: String, required: true },
   distanceRadius: { 
     type: String, 
     enum: ["20km", "40km", "60km", "80km", "unlimited"], 
-    required: true 
+    required: true,
+    default: "20km"
   },
   coveredCities: [{ type: String }]
 }, { _id: false })
 
 // Financial transaction schema
 const FinancialTransactionSchema = new Schema<IFinancialTransaction>({
-  date: { type: Date, required: true, default: Date.now },
   type: { 
     type: String, 
-    enum: ["booking_payment", "bonus", "penalty", "adjustment"], 
+    enum: ["payment", "adjustment", "withdrawal"], 
     required: true 
   },
   amount: { type: Number, required: true },
   description: { type: String, required: true },
+  date: { type: Date, default: Date.now, required: true },
   bookingId: { type: Schema.Types.ObjectId, ref: "Booking" },
-  adminNote: { type: String }
+  adminUserId: { type: Schema.Types.ObjectId, ref: "User" }
 }, { _id: false })
 
 // Professional profile schema
@@ -162,9 +174,11 @@ ProfessionalProfileSchema.index({ userId: 1 })
 ProfessionalProfileSchema.index({ status: 1 })
 ProfessionalProfileSchema.index({ "treatments.treatmentId": 1 })
 ProfessionalProfileSchema.index({ "workAreas.cityId": 1 })
+ProfessionalProfileSchema.index({ "workAreas.cityName": 1 })
 ProfessionalProfileSchema.index({ createdAt: -1 })
+ProfessionalProfileSchema.index({ isActive: 1, status: 1 })
 
-// Virtual for user details
+// Virtual for user relationship
 ProfessionalProfileSchema.virtual('user', {
   ref: 'User',
   localField: 'userId',
@@ -172,25 +186,49 @@ ProfessionalProfileSchema.virtual('user', {
   justOne: true
 })
 
-// Method to calculate available cities for a work area
-ProfessionalProfileSchema.methods.calculateCoveredCities = function(cityId: string, distanceRadius: DistanceRadius) {
-  // This would integrate with the city distance calculation system
-  // For now, return empty array - will be implemented with city management
-  return []
+// Method to update covered cities based on distance radius
+ProfessionalProfileSchema.methods.updateCoveredCities = async function(workAreaIndex: number = 0) {
+  if (!this.workAreas[workAreaIndex]) return
+  
+  const workArea = this.workAreas[workAreaIndex]
+  const { CityDistance } = await import("@/lib/db/models/city-distance")
+  
+  try {
+    const coveredCitiesResult = await (CityDistance as any).getCoveredCities(
+      workArea.cityName, 
+      workArea.distanceRadius
+    )
+    
+    // Extract city names from the result
+    const coveredCityNames = coveredCitiesResult.map((city: any) => 
+      city.toCityName || city.name
+    ).filter((name: string) => name !== workArea.cityName)
+    
+    this.workAreas[workAreaIndex].coveredCities = coveredCityNames
+    await this.save()
+    
+    return coveredCityNames
+  } catch (error) {
+    console.error("Error updating covered cities:", error)
+    return []
+  }
 }
 
 // Method to add financial transaction
 ProfessionalProfileSchema.methods.addFinancialTransaction = function(transaction: Omit<IFinancialTransaction, 'date'>) {
-  this.financialTransactions.push({
+  const newTransaction = {
     ...transaction,
     date: new Date()
-  })
+  }
+  
+  this.financialTransactions.push(newTransaction)
   
   // Update totals based on transaction type
-  if (transaction.type === 'booking_payment' || transaction.type === 'bonus') {
+  if (transaction.type === "payment") {
     this.totalEarnings += transaction.amount
-  } else if (transaction.type === 'penalty') {
-    this.totalEarnings = Math.max(0, this.totalEarnings - Math.abs(transaction.amount))
+    this.pendingPayments = Math.max(0, this.pendingPayments - transaction.amount)
+  } else if (transaction.type === "adjustment") {
+    this.totalEarnings += transaction.amount
   }
   
   return this.save()
@@ -198,15 +236,15 @@ ProfessionalProfileSchema.methods.addFinancialTransaction = function(transaction
 
 // Method to check if professional can handle a treatment
 ProfessionalProfileSchema.methods.canHandleTreatment = function(treatmentId: string, durationId?: string) {
-  return this.treatments.some(t => 
-    t.treatmentId.toString() === treatmentId && 
+  return this.treatments.some((t: ITreatmentPricing) => 
+    t.treatmentId.toString() === treatmentId &&
     (!durationId || !t.durationId || t.durationId.toString() === durationId)
   )
 }
 
 // Method to check if professional covers a city
 ProfessionalProfileSchema.methods.coversCity = function(cityName: string) {
-  return this.workAreas.some(area => 
+  return this.workAreas.some((area: IWorkArea) => 
     area.cityName === cityName || area.coveredCities.includes(cityName)
   )
 }
@@ -220,6 +258,7 @@ ProfessionalProfileSchema.statics.findSuitableForBooking = function(
 ) {
   const query: any = {
     status: 'active',
+    isActive: true,
     'treatments.treatmentId': new mongoose.Types.ObjectId(treatmentId)
   }
   
@@ -229,10 +268,44 @@ ProfessionalProfileSchema.statics.findSuitableForBooking = function(
     { 'workAreas.coveredCities': cityName }
   ]
   
-  return this.find(query)
+  let professionalQuery = this.find(query)
     .populate('userId', 'name email phone gender')
     .populate('treatments.treatmentId')
     .populate('workAreas.cityId')
+  
+  // Filter by gender preference if specified
+  if (genderPreference && genderPreference !== 'any') {
+    // We'll filter this after the query since it's in the populated user data
+  }
+  
+  return professionalQuery
+}
+
+// Static method to get professional statistics
+ProfessionalProfileSchema.statics.getStatistics = async function() {
+  const stats = await this.aggregate([
+    {
+      $group: {
+        _id: "$status",
+        count: { $sum: 1 }
+      }
+    }
+  ])
+  
+  const totalProfessionals = await this.countDocuments()
+  const activeProfessionals = await this.countDocuments({ 
+    status: "active", 
+    isActive: true 
+  })
+  
+  return {
+    total: totalProfessionals,
+    active: activeProfessionals,
+    byStatus: stats.reduce((acc, stat) => {
+      acc[stat._id] = stat.count
+      return acc
+    }, {} as Record<string, number>)
+  }
 }
 
 export default mongoose.models.ProfessionalProfile || 

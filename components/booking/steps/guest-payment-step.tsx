@@ -146,6 +146,14 @@ export function GuestPaymentStep({
     setPaymentStatus('pending')
   }
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      closeModal()
+    } else {
+      setShowPaymentModal(true)
+    }
+  }
+
   if (!calculatedPrice || calculatedPrice.finalAmount === 0) {
     return (
       <div className="space-y-6" dir={dir}>
@@ -556,7 +564,7 @@ export function GuestPaymentStep({
       </div>
 
       {/* Payment Modal */}
-      <Dialog open={showPaymentModal} onOpenChange={closeModal}>
+      <Dialog open={showPaymentModal} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-center">תשלום מאובטח</DialogTitle>

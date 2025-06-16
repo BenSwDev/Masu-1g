@@ -30,10 +30,11 @@ export async function createProfessional(formData: FormData) {
     const name = formData.get("name") as string
     const email = formData.get("email") as string
     const phone = formData.get("phone") as string
-    const password = formData.get("password") as string
+    const gender = formData.get("gender") as string || "male"
+    const birthDate = formData.get("birthDate") as string
 
-    if (!name || !email || !phone || !password) {
-      return { success: false, error: "All fields are required" }
+    if (!name || !email || !phone) {
+      return { success: false, error: "Name, email and phone are required" }
     }
 
     // Check if user already exists
@@ -42,26 +43,31 @@ export async function createProfessional(formData: FormData) {
       return { success: false, error: "User with this email already exists" }
     }
 
-    // Create user account
-    const user = new User({
+    // Create user account without password (will need to set password later via email/reset)
+    const userData: any = {
       name,
       email,
       phone,
-      password,
+      gender,
       roles: ["professional"],
-      activeRole: "professional"
-    })
+      activeRole: "professional",
+      isEmailVerified: false // Will need to verify email to set password
+    }
 
+    if (birthDate) {
+      userData.birthDate = new Date(birthDate)
+    }
+
+    const user = new User(userData)
     await user.save()
 
-    // Create professional profile
+    // Create empty professional profile
     const professionalProfile = new ProfessionalProfile({
       userId: user._id,
-      status: "pending_admin_approval",
-      specialization: "",
+      status: "pending_user_action", // User needs to complete setup
       treatments: [],
       workAreas: [],
-      adminNotes: "Created by admin"
+      adminNotes: "Created by admin - user needs to complete setup"
     })
 
     await professionalProfile.save()

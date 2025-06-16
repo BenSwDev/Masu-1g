@@ -27,24 +27,21 @@ export default function ProfessionalBasicInfoTab({
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
-  // Form state for creating new professional
+  // Form state for creating new professional - only basic user info
   const [formData, setFormData] = useState({
     name: professional?.userId?.name || "",
     email: professional?.userId?.email || "",
     phone: professional?.userId?.phone || "",
     gender: professional?.userId?.gender || "male",
-    password: "",
-    specialization: professional?.specialization || "",
-    experience: professional?.experience || "",
-    bio: professional?.bio || ""
+    birthDate: professional?.userId?.birthDate || ""
   })
 
   const handleCreateProfessional = async () => {
-    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
+    if (!formData.name || !formData.email || !formData.phone) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "נא למלא את כל השדות הנדרשים"
+        description: "נא למלא את השדות החובה: שם, אימייל וטלפון"
       })
       return
     }
@@ -55,10 +52,9 @@ export default function ProfessionalBasicInfoTab({
       formDataToSend.append("email", formData.email)
       formDataToSend.append("phone", formData.phone)
       formDataToSend.append("gender", formData.gender)
-      formDataToSend.append("password", formData.password)
-      formDataToSend.append("specialization", formData.specialization)
-      formDataToSend.append("experience", formData.experience)
-      formDataToSend.append("bio", formData.bio)
+      if (formData.birthDate) {
+        formDataToSend.append("birthDate", formData.birthDate)
+      }
 
       const { createProfessional } = await import("@/actions/professional-actions")
       const result = await createProfessional(formDataToSend)
@@ -98,6 +94,9 @@ export default function ProfessionalBasicInfoTab({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="text-sm text-muted-foreground mb-4">
+              פרטים בסיסיים ליצירת חשבון משתמש. יוצר אוטומטית יוזר עם תפקיד מטפל.
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="name">שם מלא *</Label>
@@ -131,18 +130,7 @@ export default function ProfessionalBasicInfoTab({
               </div>
               
               <div>
-                <Label htmlFor="password">סיסמה *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="הכנס סיסמה"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="gender">מגדר *</Label>
+                <Label htmlFor="gender">מגדר</Label>
                 <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
                   <SelectTrigger>
                     <SelectValue />
@@ -154,35 +142,13 @@ export default function ProfessionalBasicInfoTab({
                 </Select>
               </div>
               
-              <div>
-                <Label htmlFor="specialization">התמחות</Label>
+              <div className="md:col-span-2">
+                <Label htmlFor="birthDate">תאריך לידה</Label>
                 <Input
-                  id="specialization"
-                  value={formData.specialization}
-                  onChange={(e) => setFormData(prev => ({ ...prev, specialization: e.target.value }))}
-                  placeholder="הכנס התמחות"
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <Label htmlFor="experience">ניסיון</Label>
-                <Textarea
-                  id="experience"
-                  value={formData.experience}
-                  onChange={(e) => setFormData(prev => ({ ...prev, experience: e.target.value }))}
-                  placeholder="תיאור ניסיון מקצועי"
-                  rows={3}
-                />
-              </div>
-              
-              <div className="md:col-span-2">
-                <Label htmlFor="bio">אודות</Label>
-                <Textarea
-                  id="bio"
-                  value={formData.bio}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                  placeholder="תיאור אישי קצר"
-                  rows={3}
+                  id="birthDate"
+                  type="date"
+                  value={formData.birthDate}
+                  onChange={(e) => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
                 />
               </div>
             </div>
@@ -190,7 +156,7 @@ export default function ProfessionalBasicInfoTab({
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 onClick={handleCreateProfessional}
-                disabled={loading || !formData.name || !formData.email || !formData.phone || !formData.password}
+                disabled={loading || !formData.name || !formData.email || !formData.phone}
                 className="flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
@@ -238,18 +204,13 @@ export default function ProfessionalBasicInfoTab({
             </div>
             
             <div className="md:col-span-2">
-              <Label className="text-sm font-medium">התמחות</Label>
-              <div className="mt-1 text-sm">{professional?.specialization || 'לא צוין'}</div>
-            </div>
-            
-            <div className="md:col-span-2">
-              <Label className="text-sm font-medium">ניסיון</Label>
-              <div className="mt-1 text-sm">{professional?.experience || 'לא צוין'}</div>
-            </div>
-            
-            <div className="md:col-span-2">
-              <Label className="text-sm font-medium">אודות</Label>
-              <div className="mt-1 text-sm">{professional?.bio || 'לא צוין'}</div>
+              <Label className="text-sm font-medium">תאריך לידה</Label>
+              <div className="mt-1 text-sm">
+                {professional?.userId?.birthDate 
+                  ? new Date(professional.userId.birthDate).toLocaleDateString('he-IL')
+                  : 'לא צוין'
+                }
+              </div>
             </div>
           </div>
         </CardContent>

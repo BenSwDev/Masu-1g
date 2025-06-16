@@ -108,3 +108,36 @@ export async function updateCity(cityId: string, formData: FormData) {
     const isActive = formData.get("isActive") === "true"
 
     if (!name || isNaN(lat) || isNaN(lng)) {
+      return { success: false, message: "missingFields" }
+    }
+
+    // Validate coordinates are within Israel bounds (approximately)
+    if (lat < 29.0 || lat > 33.5 || lng < 34.0 || lng > 36.0) {
+      return { success: false, message: "coordinatesOutOfBounds" }
+    }
+
+    const existingByName = await City.findOne({ name, _id: { $ne: cityId } }).lean()
+    if (existingByName) {
+      return { success: false, message: "cityExists" }
+    }
+
+    const updated = await City.findByIdAndUpdate(
+      cityId,
+      { name, coordinates: { lat, lng }, isActive },
+      { new: true }
+    ).lean()
+
+    if (!updated) {
+      return { success: false, message: "cityNotFound" }
+    }
+
+    await (City as any).calculateDistancesForNewCity(updated._id.toString())
+
+    revalidatePath("/dashboard/admin/cities")
+
+    return { success: true, cityId: updated._id.toString() }
+  } catch (err) {
+    console.error("Error in updateCity:", err)
+    return { success: false, message: "updateFailed" }
+  }
+}

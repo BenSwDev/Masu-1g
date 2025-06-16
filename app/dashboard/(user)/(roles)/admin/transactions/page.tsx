@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function AdminTransactionsPage() {
   const session = await requireUserSession()
-  if (!session.user.roles?.includes('admin')) {
+  if (session.user.activeRole !== "admin") {
     redirect("/dashboard")
   }
 

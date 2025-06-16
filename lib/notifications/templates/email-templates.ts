@@ -569,14 +569,14 @@ body {
       subject = language === "he" ? "הזמנה חדשה זמינה" : language === "ru" ? "Доступен новый заказ" : "New booking available"
       const textContent =
         (language === "he"
-          ? `שלום,\nהוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.address}.\nלהשיב להזמנה: ${responseLink}`
+          ? `שלום,\nהוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.bookingAddress}.\nלהשיב להזמנה: ${responseLink}`
           : language === "ru"
-            ? `Здравствуйте,\nДоступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.address}.\nОтветить на заказ: ${responseLink}`
-            : `Hello,\nA new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.address} is available.\nRespond here: ${responseLink}`) +
+            ? `Здравствуйте,\nДоступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.bookingAddress}.\nОтветить на заказ: ${responseLink}`
+            : `Hello,\nA new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.bookingAddress} is available.\nRespond here: ${responseLink}`) +
         emailTextSignature
       const htmlContent = `
         <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
-        <p>${language === "he" ? `הוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.address}.` : language === "ru" ? `Доступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.address}.` : `A new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.address} is available.`}</p>
+        <p>${language === "he" ? `הוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.bookingAddress}.` : language === "ru" ? `Доступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.bookingAddress}.` : `A new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.bookingAddress} is available.`}</p>
         <p style="text-align:center;margin:20px 0;"><a href="${responseLink}" class="button">${language === "he" ? "לצפייה והענות" : language === "ru" ? "Посмотреть" : "View"}</a></p>
       `
       text = textContent

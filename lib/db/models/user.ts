@@ -61,7 +61,7 @@ const UserSchema: Schema = new Schema(
     password: {
       type: String,
       required: function (this: IUser) {
-        return this.isNew || (this.isModified("password") && this.password != null)
+        return this.isModified("password") && this.password != null
       },
       select: false, // Don't include password by default in queries
     },

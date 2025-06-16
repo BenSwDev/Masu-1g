@@ -3,7 +3,7 @@ import { Metadata } from "next"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
-import ProfessionalsManagement from "@/components/dashboard/admin/professionals/professionals-management"
+import { ProfessionalManagement } from "@/components/dashboard/admin/professional-management/professional-management"
 import { Skeleton } from "@/components/common/ui/skeleton"
 
 export const metadata: Metadata = {
@@ -57,7 +57,7 @@ function ProfessionalsLoadingSkeleton() {
 export default async function ProfessionalsPage() {
   const session = await getServerSession(authOptions)
   
-  if (!session?.user || session.user.role !== "admin") {
+  if (!session?.user || session.user.activeRole !== "admin") {
     redirect("/auth/login")
   }
 
@@ -73,7 +73,12 @@ export default async function ProfessionalsPage() {
       </div>
 
       <Suspense fallback={<ProfessionalsLoadingSkeleton />}>
-        <ProfessionalsManagement />
+        <ProfessionalManagement 
+          initialProfessionals={[]}
+          totalPages={1}
+          currentPage={1}
+          initialSearch=""
+        />
       </Suspense>
     </div>
   )

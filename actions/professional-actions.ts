@@ -17,6 +17,64 @@ import Booking from "@/lib/db/models/booking"
 import Treatment from "@/lib/db/models/treatment"
 import { City, CityDistance } from "@/lib/db/models/city-distance"
 
+// Create a new professional
+export async function createProfessional(formData: FormData) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.activeRole !== "admin") {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const name = formData.get("name") as string
+    const email = formData.get("email") as string
+    const phone = formData.get("phone") as string
+    const password = formData.get("password") as string
+
+    if (!name || !email || !phone || !password) {
+      return { success: false, error: "All fields are required" }
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email })
+    if (existingUser) {
+      return { success: false, error: "User with this email already exists" }
+    }
+
+    // Create user account
+    const user = new User({
+      name,
+      email,
+      phone,
+      password,
+      roles: ["professional"],
+      activeRole: "professional"
+    })
+
+    await user.save()
+
+    // Create professional profile
+    const professionalProfile = new ProfessionalProfile({
+      userId: user._id,
+      status: "pending_admin_approval",
+      specialization: "",
+      treatments: [],
+      workAreas: [],
+      adminNotes: "Created by admin"
+    })
+
+    await professionalProfile.save()
+
+    revalidatePath("/dashboard/admin/professional-management")
+
+    return { success: true, professional: professionalProfile }
+  } catch (error) {
+    console.error("Error creating professional:", error)
+    return { success: false, error: "Failed to create professional" }
+  }
+}
+
 // Get all professionals with filtering and pagination
 export async function getProfessionals(params?: {
   page?: number
@@ -28,7 +86,7 @@ export async function getProfessionals(params?: {
 }) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || session.user.activeRole !== "admin") {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -128,7 +186,7 @@ export async function getProfessionals(params?: {
 export async function getProfessionalById(professionalId: string) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || session.user.activeRole !== "admin") {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -146,7 +204,7 @@ export async function getProfessionalById(professionalId: string) {
 
     // Get professional's bookings
     const bookings = await Booking.find({ 
-      professionalId: professional.userId._id 
+      professionalId: (professional as any)._id 
     })
       .populate('treatmentId', 'name')
       .sort({ bookingDateTime: -1 })
@@ -175,7 +233,7 @@ export async function updateProfessionalStatus(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || session.user.activeRole !== "admin") {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -216,7 +274,7 @@ export async function updateProfessionalTreatments(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || session.user.activeRole !== "admin") {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -242,7 +300,7 @@ export async function updateProfessionalWorkAreas(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || session.user.activeRole !== "admin") {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -251,7 +309,7 @@ export async function updateProfessionalWorkAreas(
     // Calculate covered cities for each work area
     const updatedWorkAreas = await Promise.all(
       workAreas.map(async (area) => {
-        const coveredCities = await CityDistance.getCoveredCities(
+        const coveredCities = await (CityDistance as any).getCoveredCities(
           area.cityName,
           area.distanceRadius
         )
@@ -283,7 +341,7 @@ export async function addProfessionalFinancialTransaction(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || session.user.activeRole !== "admin") {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -313,7 +371,7 @@ export async function getProfessionalFinancialReport(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || session.user.activeRole !== "admin") {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -349,19 +407,19 @@ export async function getProfessionalFinancialReport(
     }
 
     const transactions = professional.financialTransactions.filter(
-      t => t.date >= startDate && t.date < endDate
+      (t: any) => t.date >= startDate && t.date < endDate
     )
 
     const summary = {
       totalEarnings: transactions
-        .filter(t => t.type === 'booking_payment' || t.type === 'bonus')
-        .reduce((sum, t) => sum + t.amount, 0),
+        .filter((t: any) => t.type === 'booking_payment' || t.type === 'bonus')
+        .reduce((sum: any, t: any) => sum + t.amount, 0),
       totalPenalties: transactions
-        .filter(t => t.type === 'penalty')
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0),
+        .filter((t: any) => t.type === 'penalty')
+        .reduce((sum: any, t: any) => sum + Math.abs(t.amount), 0),
       totalAdjustments: transactions
-        .filter(t => t.type === 'adjustment')
-        .reduce((sum, t) => sum + t.amount, 0),
+        .filter((t: any) => t.type === 'adjustment')
+        .reduce((sum: any, t: any) => sum + t.amount, 0),
       transactionCount: transactions.length
     }
 
@@ -385,7 +443,7 @@ export async function getProfessionalFinancialReport(
 export async function getAvailableTreatments() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || session.user.activeRole !== "admin") {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -406,7 +464,7 @@ export async function getAvailableTreatments() {
 export async function getAvailableCities() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || session.user.activeRole !== "admin") {
       return { success: false, error: "Unauthorized" }
     }
 

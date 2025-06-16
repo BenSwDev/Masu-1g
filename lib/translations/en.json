@@ -192,6 +192,7 @@
       "clients": "Clients",
       "customers": "Customers",
       "professionals": "Professionals",
+      "professional-management": "Professional Management",
       "partners": "Partners",
       "treatments": "Treatments",
       "subscriptions": "Subscriptions",
@@ -533,39 +534,39 @@
       }
     },
     "professionals": {
-      "title": "[admin.professionals.title]",
-      "description": "[admin.professionals.description]",
-      "addProfessional": "[admin.professionals.addProfessional]",
-      "searchPlaceholder": "[admin.professionals.searchPlaceholder]",
-      "noProfessionalsFound": "[admin.professionals.noProfessionalsFound]",
+      "title": "Professional Management",
+      "description": "Manage professionals in the system",
+      "addProfessional": "Add Professional",
+      "searchPlaceholder": "Search professionals...",
+      "noProfessionalsFound": "No professionals found",
       "form": {
-        "name": "[admin.professionals.form.name]",
-        "namePlaceholder": "[admin.professionals.form.namePlaceholder]",
-        "email": "[admin.professionals.form.email]",
-        "emailPlaceholder": "[admin.professionals.form.emailPlaceholder]",
-        "phone": "[admin.professionals.form.phone]",
-        "phonePlaceholder": "[admin.professionals.form.phonePlaceholder]",
-        "password": "[admin.professionals.form.password]",
-        "passwordPlaceholder": "[admin.professionals.form.passwordPlaceholder]"
+        "name": "Full Name",
+        "namePlaceholder": "Enter full name",
+        "email": "Email Address",
+        "emailPlaceholder": "Enter email address",
+        "phone": "Phone Number",
+        "phonePlaceholder": "Enter phone number",
+        "password": "Password",
+        "passwordPlaceholder": "Enter password"
       },
       "table": {
-        "name": "[admin.professionals.table.name]",
-        "email": "[admin.professionals.table.email]",
-        "phone": "[admin.professionals.table.phone]",
-        "number": "[admin.professionals.table.number]",
-        "status": "[admin.professionals.table.status]"
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "number": "Professional Number",
+        "status": "Status"
       },
       "statuses": {
-        "active": "[admin.professionals.statuses.active]",
-        "inactive": "[admin.professionals.statuses.inactive]",
-        "pending": "[admin.professionals.statuses.pending]",
-        "incomplete": "[admin.professionals.statuses.incomplete]",
-        "rejected": "[admin.professionals.statuses.rejected]"
+        "active": "Active",
+        "pending_admin_approval": "Pending Admin Approval",
+        "pending_user_action": "Pending User Action",
+        "rejected": "Rejected",
+        "suspended": "Suspended"
       },
       "dialog": {
-        "title": "[admin.professionals.dialog.title]",
-        "statusLabel": "[admin.professionals.dialog.statusLabel]",
-        "numberLabel": "[admin.professionals.dialog.numberLabel]"
+        "title": "Professional Profile",
+        "statusLabel": "Status",
+        "numberLabel": "Professional Number"
       }
     },
     "cities": {

@@ -182,8 +182,6 @@
       "noCitiesFound": "לא נמצאו ערים",
       "form": {"name": "שם העיר", "lat": "קו רוחב", "lng": "קו אורך", "active": "פעיל"},
       "table": {"name": "שם", "coordinates": "קואורדינטות", "status": "סטטוס"}
- staging
-
     },
     "professionalSms": {
       "responsesTitle": "תגובות מטפלים להזמנה",
@@ -4022,8 +4020,9 @@
       "purchaseGiftVoucher": "רכוש שובר מתנה",
       "users": "משתמשים",
       "customers": "לקוחות",
-      "professionals": "מטפלים",
-      "bookings": "הזמנות",
+              "professionals": "מטפלים",
+        "professional-management": "ניהול מטפלים",
+        "bookings": "הזמנות",
       "treatments": "טיפולים",
       "workingHours": "שעות פעילות",
       "subscriptions": "מנויים",

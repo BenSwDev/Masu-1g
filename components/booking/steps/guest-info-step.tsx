@@ -167,12 +167,8 @@ export function GuestInfoStep({
   }, [])
 
   const onSubmit = (data: GuestInfoFormData) => {
-    console.log("📝 GuestInfoStep onSubmit called with data:", data)
-    console.log("📝 About to call setGuestInfo...")
     setGuestInfo(data)
-    console.log("📝 setGuestInfo called, now calling onNext...")
     onNext(data)
-    console.log("📝 onNext called")
   }
 
   const handleBookingForSomeoneElseChange = (checked: boolean) => {

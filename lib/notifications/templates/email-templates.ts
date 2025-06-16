@@ -6,6 +6,7 @@ export interface EmailNotificationData {
     | "adminPasswordReset"
     | "otp"
     | "treatment-booking-success"
+    | "professional-booking-notification"
   userName?: string
   email?: string
   resetLink?: string
@@ -21,6 +22,9 @@ export interface EmailNotificationData {
   bookingNumber?: string
   bookingAddress?: string
   isForSomeoneElse?: boolean
+  // Professional booking notification fields
+  responseLink?: string
+  price?: number
 }
 
 export const getEmailTemplate = (data: EmailNotificationData, language = "en", userName?: string) => {
@@ -550,6 +554,35 @@ body {
       text = reviewTextContent
       html = wrapHtml(reviewHtmlContent, subject)
       break
+
+    case "professional-booking-notification": {
+      const bookingDateTime = data.bookingDateTime ? new Date(data.bookingDateTime) : new Date()
+      const formattedDate = bookingDateTime.toLocaleDateString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Jerusalem" }
+      )
+      const formattedTime = bookingDateTime.toLocaleTimeString(
+        language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jerusalem" }
+      )
+      const responseLink = data.responseLink || "https://masu.co.il"
+      subject = language === "he" ? "הזמנה חדשה זמינה" : language === "ru" ? "Доступен новый заказ" : "New booking available"
+      const textContent =
+        (language === "he"
+          ? `שלום,\nהוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.address}.\nלהשיב להזמנה: ${responseLink}`
+          : language === "ru"
+            ? `Здравствуйте,\nДоступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.address}.\nОтветить на заказ: ${responseLink}`
+            : `Hello,\nA new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.address} is available.\nRespond here: ${responseLink}`) +
+        emailTextSignature
+      const htmlContent = `
+        <p>${language === "he" ? "שלום," : language === "ru" ? "Здравствуйте," : "Hello,"}</p>
+        <p>${language === "he" ? `הוזמנה חדשה לטיפול ${data.treatmentName} בתאריך ${formattedDate} בשעה ${formattedTime} בכתובת ${data.address}.` : language === "ru" ? `Доступен новый заказ на процедуру ${data.treatmentName} ${formattedDate} в ${formattedTime} по адресу ${data.address}.` : `A new booking for ${data.treatmentName} on ${formattedDate} at ${formattedTime} at ${data.address} is available.`}</p>
+        <p style="text-align:center;margin:20px 0;"><a href="${responseLink}" class="button">${language === "he" ? "לצפייה והענות" : language === "ru" ? "Посмотреть" : "View"}</a></p>
+      `
+      text = textContent
+      html = wrapHtml(htmlContent, subject)
+      break
+    }
 
     default:
       subject = language === "he" ? "הודעה" : language === "ru" ? "Уведомление" : "Notification"

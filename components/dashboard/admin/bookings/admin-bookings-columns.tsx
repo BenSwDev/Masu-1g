@@ -7,7 +7,7 @@ import { Badge } from "@/components/common/ui/badge"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { cn } from "@/lib/utils"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { 
   ArrowUpDown, 
   MoreHorizontal, 
@@ -109,11 +109,17 @@ const ProfessionalAssignmentDialog = ({
   const [isAssigning, setIsAssigning] = useState(false)
   const queryClient = useQueryClient()
 
-  const { data: professionalsData } = useQuery({
+  const { data: professionalsData, refetch } = useQuery({
     queryKey: ["availableProfessionals"],
     queryFn: getAvailableProfessionals,
     enabled: isOpen,
   })
+
+  useEffect(() => {
+    if (isOpen) {
+      refetch()
+    }
+  }, [isOpen, refetch])
 
   const handleAssign = async () => {
     if (!selectedProfessional) return

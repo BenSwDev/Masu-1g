@@ -6,6 +6,7 @@ import dbConnect from "@/lib/db/mongoose"
 import mongoose from "mongoose"
 import { smsService } from "@/lib/notifications/sms-service"
 import { getSMSTemplate } from "@/lib/notifications/templates/sms-templates"
+import { notificationManager } from "@/lib/notifications/notification-manager"
 import { revalidatePath } from "next/cache"
 
 // Send SMS notifications to suitable professionals
@@ -47,7 +48,7 @@ export async function sendProfessionalNotifications(
     const professionals = suitableResult.professionals
     let sentCount = 0
     
-    // Prepare SMS data
+    // Prepare notification data
     const treatmentName = booking.treatmentId?.name || "טיפול"
     const bookingDateTime = booking.bookingDateTime
     const address = `${booking.bookingAddressSnapshot?.street || ""} ${booking.bookingAddressSnapshot?.houseNumber || ""}, ${booking.bookingAddressSnapshot?.city || ""}`
@@ -72,41 +73,58 @@ export async function sendProfessionalNotifications(
         
         await response.save()
         
-        // Prepare SMS content
-        const smsData = {
-          type: "professional-booking-notification",
+        // Prepare notification content
+        const responseLink = `${process.env.NEXT_PUBLIC_APP_URL}/professional/booking-response/${response._id.toString()}`
+        const notificationData = {
+          type: "professional-booking-notification" as const,
           treatmentName,
           bookingDateTime,
           address,
           price,
-          responseId: response._id.toString()
+          responseLink
         }
-        
+
         // Get user's preferred language (default to Hebrew)
         const userLanguage = professional.userId.preferredLanguage || "he"
-        const smsContent = getSMSTemplate(smsData, userLanguage as "he" | "en" | "ru")
-        
+        const smsContent = getSMSTemplate({
+          ...notificationData,
+          responseId: response._id.toString()
+        }, userLanguage as "he" | "en" | "ru")
+
         // Send SMS
         const smsResult = await smsService.sendNotification(
-          { 
-            value: professional.userId.phone, 
-            language: userLanguage as "he" | "en" | "ru" 
+          {
+            value: professional.userId.phone,
+            language: userLanguage as "he" | "en" | "ru"
           },
-          smsData
+          { ...notificationData, responseId: response._id.toString() }
         )
-        
+
         if (smsResult.success) {
           // Update response with SMS message ID
           response.smsMessageId = smsResult.messageId
           await response.save()
           sentCount++
-          
+
           console.log(`✅ SMS sent to professional ${professional.userId.name} (${professional.userId.phone})`)
         } else {
           console.error(`❌ Failed to send SMS to ${professional.userId.name}:`, smsResult.error)
           // Mark response as failed
           response.status = "expired"
           await response.save()
+        }
+
+        // Send email if available
+        if (professional.userId.email) {
+          await notificationManager.sendNotification(
+            {
+              type: "email",
+              value: professional.userId.email,
+              name: professional.userId.name,
+              language: userLanguage as any
+            },
+            notificationData
+          )
         }
         
       } catch (error) {

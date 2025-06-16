@@ -470,7 +470,6 @@ export async function sendReviewReminder(
         recipients.push({ type: "email", value: (booking.userId as any).email, name: (booking.userId as any).name, language: lang as any })
       }
     }
-
     if (opts.sms) {
       if (booking.recipientPhone) {
         recipients.push({ type: "phone", value: booking.recipientPhone, language: lang as any })

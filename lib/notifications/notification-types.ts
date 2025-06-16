@@ -48,6 +48,15 @@ export interface ReviewReminderNotificationData extends BaseNotificationData {
   reviewLink: string
 }
 
+export interface ProfessionalBookingNotificationData extends BaseNotificationData {
+  type: "professional-booking-notification"
+  treatmentName: string
+  bookingDateTime: Date
+  address: string
+  price: number
+  responseLink: string
+}
+
 // Union type for all notification data
 export type NotificationData =
   | OTPNotificationData
@@ -56,6 +65,7 @@ export type NotificationData =
   | TreatmentBookingSuccessNotificationData
   | PurchaseSuccessNotificationData
   | ReviewReminderNotificationData
+  | ProfessionalBookingNotificationData
 
 // Notification result interface
 export interface NotificationResult {

@@ -1,9 +1,7 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { requireUserSession } from "@/lib/auth/require-session";
 import { Metadata } from "next";
-import AdminReviewsClient from "@/components/dashboard/admin/reviews/admin-reviews-client";
-import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton";
+import { requireUserSession } from "@/lib/auth/require-session";
+import AdminReviewsPageClient from "@/components/dashboard/admin/reviews/admin-reviews-page-client";
 
 export const metadata: Metadata = {
   title: "Reviews Management",
@@ -16,11 +14,5 @@ export default async function AdminReviewsPage() {
     redirect("/dashboard");
   }
 
-  return (
-    <div className="h-full">
-      <Suspense fallback={<BookingsTableSkeleton />}>
-        <AdminReviewsClient />
-      </Suspense>
-    </div>
-  );
+  return <AdminReviewsPageClient />;
 }

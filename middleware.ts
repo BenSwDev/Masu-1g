@@ -5,25 +5,29 @@ import { NextResponse } from "next/server"
 let isInitialized = false
 let isInitializing = false
 
-async function initializeDataIfNeeded() {
+async function initializeDataIfNeeded(origin: string) {
   if (isInitialized || isInitializing) {
     return
   }
 
   isInitializing = true
-  
+
   try {
-    console.log("🚀 Starting automatic data initialization...")
-    
-    // Import and run initialization
-    const { initializeData } = await import("@/scripts/init-data")
-    await initializeData()
-    
-    isInitialized = true
-    console.log("✅ Automatic data initialization completed")
+    console.log("🚀 Starting automatic data initialization via API...")
+
+    const res = await fetch(`${origin}/api/init`, { method: "POST" })
+
+    if (!res.ok) {
+      console.error(
+        "❌ Automatic data initialization failed:",
+        await res.text()
+      )
+    } else {
+      isInitialized = true
+      console.log("✅ Automatic data initialization completed")
+    }
   } catch (error) {
     console.error("❌ Automatic data initialization failed:", error)
-    // Don't block the app if initialization fails
   } finally {
     isInitializing = false
   }
@@ -34,7 +38,7 @@ export default withAuth(
     // Only run initialization once on first request
     if (!isInitialized && !isInitializing) {
       // Run initialization in background without blocking the request
-      initializeDataIfNeeded().catch(console.error)
+      initializeDataIfNeeded(req.nextUrl.origin).catch(console.error)
     }
     
     return NextResponse.next()

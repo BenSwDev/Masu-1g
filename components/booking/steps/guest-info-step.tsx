@@ -136,7 +136,7 @@ export function GuestInfoStep({
 
   const form = useForm<GuestInfoFormData>({
     resolver: zodResolver(guestInfoSchema),
-    defaultValues: {
+    values: {
       firstName: guestInfo.firstName || "",
       lastName: guestInfo.lastName || "",
       email: guestInfo.email || "",

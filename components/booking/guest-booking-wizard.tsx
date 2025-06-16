@@ -99,8 +99,19 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
         firstName: first,
         lastName: rest.join(" "),
         phone: voucher.recipientPhone,
-        email: voucher.recipientEmail,
+        email: "", // Gift vouchers usually don't have recipient email
         isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
+      }
+    }
+    if (voucher?.guestInfo) {
+      // For non-gift vouchers purchased by guests
+      const [first, ...rest] = voucher.guestInfo.name.split(" ")
+      return {
+        firstName: first,
+        lastName: rest.join(" "),
+        email: voucher.guestInfo.email,
+        phone: voucher.guestInfo.phone,
+        isBookingForSomeoneElse: false,
       }
     }
     if (userSubscription?.guestInfo) {
@@ -119,7 +130,16 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
   }, [voucher, userSubscription])
 
   const lockedFields = useMemo<(keyof GuestInfo)[]>(() => {
-    if (voucher) {
+    if (voucher?.isGift && voucher.recipientName) {
+      // For gift vouchers - lock name and phone, but email might be empty so allow editing
+      const fields: (keyof GuestInfo)[] = ["firstName", "lastName", "phone"]
+      if (voucher.recipientEmail) {
+        fields.push("email")
+      }
+      return fields
+    }
+    if (voucher?.guestInfo) {
+      // For non-gift vouchers purchased by guests - lock all fields
       return ["firstName", "lastName", "phone", "email"]
     }
     if (userSubscription?.guestInfo) {

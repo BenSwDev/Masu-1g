@@ -422,6 +422,7 @@ export async function getCompletedBookingsWithoutReviews(): Promise<{
 
 export async function sendReviewReminder(
   bookingId: string,
+  options: { sms?: boolean; email?: boolean } = {},
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const session = await getServerSession(authOptions)
@@ -430,6 +431,8 @@ export async function sendReviewReminder(
     }
 
     await dbConnect()
+
+    const opts = { sms: true, email: true, ...options }
 
     const booking = await Booking.findById(bookingId).populate(
       "userId",
@@ -460,16 +463,19 @@ export async function sendReviewReminder(
 
     const recipients: NotificationRecipient[] = []
 
-    if (booking.recipientEmail) {
-      recipients.push({ type: "email", value: booking.recipientEmail, name: recipientName, language: lang as any })
-    } else if ((booking.userId as any)?.email) {
-      recipients.push({ type: "email", value: (booking.userId as any).email, name: (booking.userId as any).name, language: lang as any })
+    if (opts.email) {
+      if (booking.recipientEmail) {
+        recipients.push({ type: "email", value: booking.recipientEmail, name: recipientName, language: lang as any })
+      } else if ((booking.userId as any)?.email) {
+        recipients.push({ type: "email", value: (booking.userId as any).email, name: (booking.userId as any).name, language: lang as any })
+      }
     }
-
-    if (booking.recipientPhone) {
-      recipients.push({ type: "phone", value: booking.recipientPhone, language: lang as any })
-    } else if ((booking.userId as any)?.phone) {
-      recipients.push({ type: "phone", value: (booking.userId as any).phone, language: lang as any })
+    if (opts.sms) {
+      if (booking.recipientPhone) {
+        recipients.push({ type: "phone", value: booking.recipientPhone, language: lang as any })
+      } else if ((booking.userId as any)?.phone) {
+        recipients.push({ type: "phone", value: (booking.userId as any).phone, language: lang as any })
+      }
     }
 
     if (recipients.length === 0) {

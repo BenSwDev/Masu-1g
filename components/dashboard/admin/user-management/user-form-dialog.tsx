@@ -35,8 +35,16 @@ interface UserFormDialogProps {
 const formSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
-  phone: z.string().min(5),
-  password: z.string().min(6).optional(),
+  phone: z
+    .preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      z.string().min(5).optional(),
+    ),
+  password: z
+    .preprocess(
+      (v) => (typeof v === "string" && v === "" ? undefined : v),
+      z.string().min(6).optional(),
+    ),
   gender: z.enum(["male", "female", "other"]),
   dateOfBirth: z.string().optional(),
   roles: z.array(z.enum(["admin", "member", "professional", "partner"])).min(1),
@@ -80,7 +88,7 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       const data = new FormData()
       data.append("name", values.name)
       data.append("email", values.email)
-      data.append("phone", values.phone)
+      data.append("phone", values.phone ?? "")
       values.roles.forEach((r) => data.append("roles[]", r))
       data.append("gender", values.gender)
       if (values.dateOfBirth) data.append("dateOfBirth", values.dateOfBirth)

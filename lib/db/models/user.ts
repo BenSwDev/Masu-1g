@@ -53,13 +53,16 @@ const UserSchema: Schema = new Schema(
     },
     phone: {
       type: String,
-      required: [true, "Phone is required"],
+      required: false,
       unique: true,
       trim: true,
+      sparse: true,
     },
     password: {
       type: String,
-      required: true,
+      required: function (this: IUser) {
+        return this.isNew || (this.isModified("password") && this.password != null)
+      },
       select: false, // Don't include password by default in queries
     },
     gender: {

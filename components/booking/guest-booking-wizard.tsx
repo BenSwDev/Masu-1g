@@ -499,11 +499,12 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           return
         }
       } else {
-          firstName: !guestInfo.firstName,
-          lastName: !guestInfo.lastName,
-          email: !guestInfo.email,
-          phone: !guestInfo.phone
+        toast({
+          variant: "destructive",
+          title: t("bookings.errors.missingGuestInfo"),
+          description: t("bookings.errors.completeGuestInfo"),
         })
+        return
       }
     }
 

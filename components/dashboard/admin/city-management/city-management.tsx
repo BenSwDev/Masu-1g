@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CustomPagination } from "@/components/common/ui/pagination"
 import { CityFormDialog } from "./city-form-dialog"
 import { useTranslation } from "@/lib/translations/i18n"
-import { getCities } from "@/actions/city-actions"
 
 export interface CityData {
   id: string
@@ -35,6 +34,7 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
 
   const loadCities = async (newPage = 1, term = search) => {
     setLoading(true)
+    const { getCities } = await import("@/actions/city-actions")
     const result = await getCities(newPage, 10, term)
     if (result.success) {
       setCities(result.cities as CityData[])

@@ -23,7 +23,7 @@ export async function createProfessional(formData: FormData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
@@ -36,15 +36,20 @@ export async function createProfessional(formData: FormData) {
     const password = formData.get("password") as string | null
     const isActiveStr = formData.get("isActive") as string | null
     const isActive = isActiveStr ? isActiveStr === "true" || isActiveStr === "on" : true
+    
+    // Professional-specific fields
+    const specialization = formData.get("specialization") as string || ""
+    const experience = formData.get("experience") as string || ""
+    const bio = formData.get("bio") as string || ""
 
     if (!name || !email || !phone || !password) {
-      return { success: false, error: "Name, email, phone and password are required" }
+      return { success: false, error: "שם, אימייל, טלפון וסיסמה נדרשים" }
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email })
     if (existingUser) {
-      return { success: false, error: "User with this email already exists" }
+      return { success: false, error: "משתמש עם אימייל זה כבר קיים" }
     }
 
     // Hash password
@@ -69,14 +74,17 @@ export async function createProfessional(formData: FormData) {
     const user = new User(userData)
     await user.save()
 
-    // Create empty professional profile
+    // Create professional profile with initial data
     const professionalProfile = new ProfessionalProfile({
       userId: user._id,
-      status: "pending_user_action", // User needs to complete setup
+      status: "pending_admin_approval",
+      specialization,
+      experience,
+      bio,
       treatments: [],
       workAreas: [],
       isActive,
-      adminNotes: "Created by admin - user needs to complete setup"
+      adminNotes: "נוצר על ידי מנהל - המטפל צריך להשלים הגדרה"
     })
 
     await professionalProfile.save()
@@ -91,7 +99,101 @@ export async function createProfessional(formData: FormData) {
     return { success: true, professional: completeProfile }
   } catch (error) {
     console.error("Error creating professional:", error)
-    return { success: false, error: "Failed to create professional" }
+    return { success: false, error: "יצירת המטפל נכשלה" }
+  }
+}
+
+// Update professional profile (complete update)
+export async function updateProfessionalProfile(
+  professionalId: string,
+  updates: {
+    specialization?: string
+    experience?: string
+    bio?: string
+    certifications?: string[]
+    profileImage?: string
+    isActive?: boolean
+  }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.activeRole !== "admin") {
+      return { success: false, error: "לא מורשה" }
+    }
+
+    await dbConnect()
+
+    const professional = await ProfessionalProfile.findById(professionalId)
+    if (!professional) {
+      return { success: false, error: "מטפל לא נמצא" }
+    }
+
+    // Update only provided fields
+    if (updates.specialization !== undefined) professional.specialization = updates.specialization
+    if (updates.experience !== undefined) professional.experience = updates.experience
+    if (updates.bio !== undefined) professional.bio = updates.bio
+    if (updates.certifications !== undefined) professional.certifications = updates.certifications
+    if (updates.profileImage !== undefined) professional.profileImage = updates.profileImage
+    if (updates.isActive !== undefined) professional.isActive = updates.isActive
+
+    // Update last active time
+    professional.lastActiveAt = new Date()
+
+    await professional.save()
+
+    // Return updated professional with populated data
+    const updatedProfessional = await ProfessionalProfile.findById(professionalId)
+      .populate('userId', 'name email phone gender birthDate')
+      .populate('treatments.treatmentId')
+      .populate('workAreas.cityId')
+      .lean()
+
+    revalidatePath("/dashboard/admin/professional-management")
+
+    return { success: true, professional: updatedProfessional }
+  } catch (error) {
+    console.error("Error updating professional profile:", error)
+    return { success: false, error: "עדכון הפרופיל נכשל" }
+  }
+}
+
+// Update user info for professional
+export async function updateProfessionalUserInfo(
+  userId: string,
+  updates: {
+    name?: string
+    phone?: string
+    gender?: string
+    birthDate?: string
+  }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.activeRole !== "admin") {
+      return { success: false, error: "לא מורשה" }
+    }
+
+    await dbConnect()
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return { success: false, error: "משתמש לא נמצא" }
+    }
+
+    // Update only provided fields
+    if (updates.name) user.name = updates.name
+    if (updates.phone) user.phone = updates.phone
+    if (updates.gender) user.gender = updates.gender as "male" | "female" | "other"
+    if (updates.birthDate) (user as any).birthDate = new Date(updates.birthDate)
+
+    await user.save()
+
+    revalidatePath("/dashboard/admin/professional-management")
+
+    return { success: true, user: user.toObject() }
+  } catch (error) {
+    console.error("Error updating professional user info:", error)
+    return { success: false, error: "עדכון פרטי המשתמש נכשל" }
   }
 }
 
@@ -107,7 +209,7 @@ export async function getProfessionals(params?: {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
@@ -200,7 +302,7 @@ export async function getProfessionals(params?: {
     }
   } catch (error) {
     console.error("Error fetching professionals:", error)
-    return { success: false, error: "Failed to fetch professionals" }
+    return { success: false, error: "השגת המטפלים נכשלה" }
   }
 }
 
@@ -209,7 +311,7 @@ export async function getProfessionalById(professionalId: string) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
@@ -221,7 +323,7 @@ export async function getProfessionalById(professionalId: string) {
       .lean()
 
     if (!professional) {
-      return { success: false, error: "Professional not found" }
+      return { success: false, error: "מטפל לא נמצא" }
     }
 
     // Get professional's bookings
@@ -242,7 +344,7 @@ export async function getProfessionalById(professionalId: string) {
     }
   } catch (error) {
     console.error("Error fetching professional:", error)
-    return { success: false, error: "Failed to fetch professional" }
+    return { success: false, error: "השגת המטפל נכשלה" }
   }
 }
 
@@ -256,19 +358,20 @@ export async function updateProfessionalStatus(
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
 
     const professional = await ProfessionalProfile.findById(professionalId)
     if (!professional) {
-      return { success: false, error: "Professional not found" }
+      return { success: false, error: "מטפל לא נמצא" }
     }
 
     const updateData: any = {
       status,
-      adminNotes: adminNote
+      adminNotes: adminNote,
+      lastActiveAt: new Date()
     }
 
     if (status === "active" && professional.status !== "active") {
@@ -280,12 +383,12 @@ export async function updateProfessionalStatus(
 
     await ProfessionalProfile.findByIdAndUpdate(professionalId, updateData)
 
-    revalidatePath("/dashboard/admin/professionals")
+    revalidatePath("/dashboard/admin/professional-management")
 
     return { success: true }
   } catch (error) {
     console.error("Error updating professional status:", error)
-    return { success: false, error: "Failed to update professional status" }
+    return { success: false, error: "עדכון סטטוס המטפל נכשל" }
   }
 }
 
@@ -297,21 +400,22 @@ export async function updateProfessionalTreatments(
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
 
     await ProfessionalProfile.findByIdAndUpdate(professionalId, {
-      treatments
+      treatments,
+      lastActiveAt: new Date()
     })
 
-    revalidatePath("/dashboard/admin/professionals")
+    revalidatePath("/dashboard/admin/professional-management")
 
     return { success: true }
   } catch (error) {
     console.error("Error updating professional treatments:", error)
-    return { success: false, error: "Failed to update professional treatments" }
+    return { success: false, error: "עדכון טיפולי המטפל נכשל" }
   }
 }
 
@@ -323,7 +427,7 @@ export async function updateProfessionalWorkAreas(
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
@@ -331,28 +435,36 @@ export async function updateProfessionalWorkAreas(
     // Calculate covered cities for each work area
     const updatedWorkAreas = await Promise.all(
       workAreas.map(async (area) => {
-        const coveredCities = await (CityDistance as any).getCoveredCities(
-          area.cityName,
-          area.distanceRadius
-        )
-        
-        return {
-          ...area,
-          coveredCities: coveredCities.map((city: any) => city.toCityName || city.name)
+        try {
+          const coveredCities = await (CityDistance as any).getCoveredCities(
+            area.cityName,
+            area.distanceRadius
+          )
+          
+          return {
+            ...area,
+            coveredCities: coveredCities
+              .map((city: any) => city.toCityName || city.name)
+              .filter((name: string) => name && name !== area.cityName)
+          }
+        } catch (error) {
+          console.error("Error calculating covered cities:", error)
+          return area // Return original area if calculation fails
         }
       })
     )
 
     await ProfessionalProfile.findByIdAndUpdate(professionalId, {
-      workAreas: updatedWorkAreas
+      workAreas: updatedWorkAreas,
+      lastActiveAt: new Date()
     })
 
-    revalidatePath("/dashboard/admin/professionals")
+    revalidatePath("/dashboard/admin/professional-management")
 
     return { success: true }
   } catch (error) {
     console.error("Error updating professional work areas:", error)
-    return { success: false, error: "Failed to update professional work areas" }
+    return { success: false, error: "עדכון איזורי פעילות המטפל נכשל" }
   }
 }
 
@@ -364,24 +476,27 @@ export async function addProfessionalFinancialTransaction(
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
 
     const professional = await ProfessionalProfile.findById(professionalId)
     if (!professional) {
-      return { success: false, error: "Professional not found" }
+      return { success: false, error: "מטפל לא נמצא" }
     }
 
-    await professional.addFinancialTransaction(transaction)
+    await professional.addFinancialTransaction({
+      ...transaction,
+      adminUserId: new mongoose.Types.ObjectId(session.user.id)
+    })
 
-    revalidatePath("/dashboard/admin/professionals")
+    revalidatePath("/dashboard/admin/professional-management")
 
     return { success: true }
   } catch (error) {
     console.error("Error adding financial transaction:", error)
-    return { success: false, error: "Failed to add financial transaction" }
+    return { success: false, error: "הוספת עסקה כספית נכשלה" }
   }
 }
 
@@ -390,7 +505,7 @@ export async function getProfessionalList() {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
@@ -402,13 +517,13 @@ export async function getProfessionalList() {
 
     const list = professionals.map((p: any) => ({
       id: p._id.toString(),
-      name: p.userId?.name || 'Unnamed'
+      name: p.userId?.name || 'ללא שם'
     }))
 
     return { success: true, data: { professionals: list } }
   } catch (error) {
     console.error("Error fetching professional list:", error)
-    return { success: false, error: "Failed to fetch professionals" }
+    return { success: false, error: "השגת רשימת המטפלים נכשלה" }
   }
 }
 
@@ -422,7 +537,7 @@ export async function adminAdjustProfessionalBalance(
   return addProfessionalFinancialTransaction(professionalId, {
     type,
     amount: Math.abs(amount),
-    description: type === 'bonus' ? 'Admin credit' : 'Admin penalty',
+    description: type === 'bonus' ? 'זיכוי מנהל' : 'קנס מנהל',
     adminNote: note,
   })
 }
@@ -436,14 +551,14 @@ export async function getProfessionalFinancialReport(
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
 
     const professional = await ProfessionalProfile.findById(professionalId)
     if (!professional) {
-      return { success: false, error: "Professional not found" }
+      return { success: false, error: "מטפל לא נמצא" }
     }
 
     const now = date || new Date()
@@ -476,7 +591,7 @@ export async function getProfessionalFinancialReport(
 
     const summary = {
       totalEarnings: transactions
-        .filter((t: any) => t.type === 'booking_payment' || t.type === 'bonus')
+        .filter((t: any) => t.type === 'payment' || t.type === 'bonus')
         .reduce((sum: any, t: any) => sum + t.amount, 0),
       totalPenalties: transactions
         .filter((t: any) => t.type === 'penalty')
@@ -499,7 +614,7 @@ export async function getProfessionalFinancialReport(
     }
   } catch (error) {
     console.error("Error generating financial report:", error)
-    return { success: false, error: "Failed to generate financial report" }
+    return { success: false, error: "יצירת דוח כספי נכשלה" }
   }
 }
 
@@ -508,7 +623,7 @@ export async function getAvailableTreatments() {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
@@ -520,7 +635,7 @@ export async function getAvailableTreatments() {
     return { success: true, treatments }
   } catch (error) {
     console.error("Error fetching treatments:", error)
-    return { success: false, error: "Failed to fetch treatments" }
+    return { success: false, error: "השגת הטיפולים נכשלה" }
   }
 }
 
@@ -529,7 +644,7 @@ export async function getAvailableCities() {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user || session.user.activeRole !== "admin") {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "לא מורשה" }
     }
 
     await dbConnect()
@@ -542,7 +657,50 @@ export async function getAvailableCities() {
     return { success: true, cities }
   } catch (error) {
     console.error("Error fetching cities:", error)
-    return { success: false, error: "Failed to fetch cities" }
+    return { success: false, error: "השגת הערים נכשלה" }
+  }
+}
+
+// Delete professional (for admin use only)
+export async function deleteProfessional(professionalId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.activeRole !== "admin") {
+      return { success: false, error: "לא מורשה" }
+    }
+
+    await dbConnect()
+
+    const professional = await ProfessionalProfile.findById(professionalId)
+    if (!professional) {
+      return { success: false, error: "מטפל לא נמצא" }
+    }
+
+    // Check if professional has active bookings
+    const activeBookings = await Booking.countDocuments({
+      professionalId: professionalId,
+      status: { $in: ['confirmed', 'in_process'] }
+    })
+
+    if (activeBookings > 0) {
+      return { 
+        success: false, 
+        error: "לא ניתן למחוק מטפל עם הזמנות פעילות" 
+      }
+    }
+
+    // Delete professional profile
+    await ProfessionalProfile.findByIdAndDelete(professionalId)
+
+    // Note: We don't delete the user account, just remove the professional profile
+    // The user can still exist as a regular user
+
+    revalidatePath("/dashboard/admin/professional-management")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting professional:", error)
+    return { success: false, error: "מחיקת המטפל נכשלה" }
   }
 }
 

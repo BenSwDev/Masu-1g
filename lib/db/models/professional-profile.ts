@@ -28,12 +28,13 @@ export interface IWorkArea {
 
 // Financial transaction interface  
 export interface IFinancialTransaction {
-  type: "payment" | "adjustment" | "withdrawal"
+  type: "payment" | "adjustment" | "withdrawal" | "bonus" | "penalty"
   amount: number
   description: string
   date: Date
   bookingId?: mongoose.Types.ObjectId
   adminUserId?: mongoose.Types.ObjectId
+  adminNote?: string
 }
 
 // Professional profile interface
@@ -48,6 +49,7 @@ export interface IProfessionalProfile extends Document {
   experience?: string
   certifications?: string[]
   bio?: string
+  profileImage?: string
   
   // Treatments and pricing
   treatments: ITreatmentPricing[]
@@ -72,6 +74,27 @@ export interface IProfessionalProfile extends Document {
   
   createdAt: Date
   updatedAt: Date
+
+  // Methods
+  updateCoveredCities(workAreaIndex?: number): Promise<string[]>
+  addFinancialTransaction(transaction: Omit<IFinancialTransaction, 'date'>): Promise<any>
+  canHandleTreatment(treatmentId: string, durationId?: string): boolean
+  coversCity(cityName: string): boolean
+}
+
+// Add static methods interface
+export interface IProfessionalProfileModel extends mongoose.Model<IProfessionalProfile> {
+  findSuitableForBooking(
+    treatmentId: string, 
+    cityName: string, 
+    genderPreference?: string,
+    durationId?: string
+  ): mongoose.Query<IProfessionalProfile[], IProfessionalProfile>
+  getStatistics(): Promise<{
+    total: number
+    active: number
+    byStatus: Record<string, number>
+  }>
 }
 
 // Treatment pricing schema
@@ -109,14 +132,15 @@ const WorkAreaSchema = new Schema<IWorkArea>({
 const FinancialTransactionSchema = new Schema<IFinancialTransaction>({
   type: { 
     type: String, 
-    enum: ["payment", "adjustment", "withdrawal"], 
+    enum: ["payment", "adjustment", "withdrawal", "bonus", "penalty"], 
     required: true 
   },
   amount: { type: Number, required: true },
   description: { type: String, required: true },
   date: { type: Date, default: Date.now, required: true },
   bookingId: { type: Schema.Types.ObjectId, ref: "Booking" },
-  adminUserId: { type: Schema.Types.ObjectId, ref: "User" }
+  adminUserId: { type: Schema.Types.ObjectId, ref: "User" },
+  adminNote: { type: String, trim: true }
 }, { _id: false })
 
 // Professional profile schema
@@ -140,6 +164,7 @@ const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
   experience: { type: String, trim: true },
   certifications: [{ type: String, trim: true }],
   bio: { type: String, trim: true },
+  profileImage: { type: String, trim: true },
   
   // Treatments and pricing
   treatments: [TreatmentPricingSchema],
@@ -167,14 +192,14 @@ const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
   toObject: { virtuals: true }
 })
 
-// Indexes for better performance
-ProfessionalProfileSchema.index({ userId: 1 })
-ProfessionalProfileSchema.index({ status: 1 })
+// Create compound indexes for better performance - no duplicate field indexes
+ProfessionalProfileSchema.index({ userId: 1 }, { unique: true })
+ProfessionalProfileSchema.index({ status: 1, isActive: 1 })
 ProfessionalProfileSchema.index({ "treatments.treatmentId": 1 })
-ProfessionalProfileSchema.index({ "workAreas.cityId": 1 })
 ProfessionalProfileSchema.index({ "workAreas.cityName": 1 })
+ProfessionalProfileSchema.index({ "workAreas.cityId": 1 })
 ProfessionalProfileSchema.index({ createdAt: -1 })
-ProfessionalProfileSchema.index({ isActive: 1, status: 1 })
+ProfessionalProfileSchema.index({ lastActiveAt: -1 })
 
 // Virtual for user relationship
 ProfessionalProfileSchema.virtual('user', {
@@ -186,21 +211,22 @@ ProfessionalProfileSchema.virtual('user', {
 
 // Method to update covered cities based on distance radius
 ProfessionalProfileSchema.methods.updateCoveredCities = async function(workAreaIndex: number = 0) {
-  if (!this.workAreas[workAreaIndex]) return
+  if (!this.workAreas[workAreaIndex]) return []
   
   const workArea = this.workAreas[workAreaIndex]
-  const { CityDistance } = await import("@/lib/db/models/city-distance")
   
   try {
+    const { CityDistance } = await import("@/lib/db/models/city-distance")
+    
     const coveredCitiesResult = await (CityDistance as any).getCoveredCities(
       workArea.cityName, 
       workArea.distanceRadius
     )
     
     // Extract city names from the result
-    const coveredCityNames = coveredCitiesResult.map((city: any) => 
-      city.toCityName || city.name
-    ).filter((name: string) => name !== workArea.cityName)
+    const coveredCityNames = coveredCitiesResult
+      .map((city: any) => city.toCityName || city.name)
+      .filter((name: string) => name && name !== workArea.cityName)
     
     this.workAreas[workAreaIndex].coveredCities = coveredCityNames
     await this.save()
@@ -222,11 +248,15 @@ ProfessionalProfileSchema.methods.addFinancialTransaction = function(transaction
   this.financialTransactions.push(newTransaction)
   
   // Update totals based on transaction type
-  if (transaction.type === "payment") {
+  if (transaction.type === "payment" || transaction.type === "bonus") {
     this.totalEarnings += transaction.amount
-    this.pendingPayments = Math.max(0, this.pendingPayments - transaction.amount)
+    if (transaction.type === "payment") {
+      this.pendingPayments = Math.max(0, this.pendingPayments - transaction.amount)
+    }
   } else if (transaction.type === "adjustment") {
     this.totalEarnings += transaction.amount
+  } else if (transaction.type === "penalty") {
+    this.totalEarnings = Math.max(0, this.totalEarnings - transaction.amount)
   }
   
   return this.save()
@@ -310,5 +340,5 @@ ProfessionalProfileSchema.statics.getStatistics = async function() {
   }
 }
 
-export default mongoose.models.ProfessionalProfile || 
-  mongoose.model<IProfessionalProfile>("ProfessionalProfile", ProfessionalProfileSchema)
+export default mongoose.models.ProfessionalProfile as IProfessionalProfileModel || 
+  mongoose.model<IProfessionalProfile, IProfessionalProfileModel>("ProfessionalProfile", ProfessionalProfileSchema)

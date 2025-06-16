@@ -13,7 +13,6 @@ import { useToast } from "@/components/common/ui/use-toast"
 import { Search, Filter, Users, UserCheck, UserX, Clock, AlertTriangle, Plus } from "lucide-react"
 import { getProfessionals } from "@/actions/professional-actions"
 import ProfessionalEditModal from "./professional-edit-modal"
-import { ProfessionalFormDialog } from "./professional-form-dialog"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 
 interface Professional {
@@ -82,7 +81,8 @@ export function ProfessionalManagement({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
-  const [showCreateModal, setShowCreateModal] = useState(false)
+
+  const [isCreatingNew, setIsCreatingNew] = useState(false)
 
   // Fetch professionals
   const fetchProfessionals = async (page = 1) => {
@@ -153,10 +153,43 @@ export function ProfessionalManagement({
     fetchProfessionals(pagination.page) // Refresh current page
   }
 
-  const handleCreateModalClose = () => {
-    setShowCreateModal(false)
-    fetchProfessionals(pagination.page) // Refresh current page
+  const handleCreateNew = () => {
+    // Create empty professional object for new professional
+    const newProfessional: Professional = {
+      _id: "",
+      userId: {
+        _id: "",
+        name: "",
+        email: "",
+        phone: "",
+        gender: "male",
+        birthDate: ""
+      },
+      status: "pending_admin_approval",
+      specialization: "",
+      experience: "",
+      certifications: [],
+      bio: "",
+      treatments: [],
+      workAreas: [],
+      totalEarnings: 0,
+      pendingPayments: 0,
+      financialTransactions: [],
+      adminNotes: "",
+      rejectionReason: "",
+      appliedAt: new Date().toISOString(),
+      approvedAt: "",
+      rejectedAt: "",
+      lastActiveAt: "",
+      bookings: []
+    }
+    
+    setSelectedProfessional(newProfessional)
+    setIsCreatingNew(true)
+    setShowEditModal(true)
   }
+
+
 
   const getStatusBadge = (status: ProfessionalStatus) => {
     const statusConfig = {
@@ -332,7 +365,7 @@ export function ProfessionalManagement({
               </SelectContent>
             </Select>
 
-            <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
+            <Button onClick={handleCreateNew} className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
               הוסף מטפל
             </Button>
@@ -468,23 +501,18 @@ export function ProfessionalManagement({
         </div>
       )}
 
-      {/* Create Modal */}
-      <ProfessionalFormDialog 
-        open={showCreateModal} 
-        onOpenChange={(open) => {
-          setShowCreateModal(open)
-          if (!open) {
-            handleCreateModalClose()
-          }
-        }} 
-      />
-
-      {/* Edit Modal */}
+      {/* Edit/Create Modal */}
       {selectedProfessional && (
         <ProfessionalEditModal
           professional={selectedProfessional}
           open={showEditModal}
-          onClose={handleModalClose}
+          onClose={() => {
+            setShowEditModal(false)
+            setSelectedProfessional(null)
+            setIsCreatingNew(false)
+            fetchProfessionals(pagination.page)
+          }}
+          isCreatingNew={isCreatingNew}
         />
       )}
     </div>

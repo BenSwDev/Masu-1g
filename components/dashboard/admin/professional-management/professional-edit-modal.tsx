@@ -64,12 +64,14 @@ interface ProfessionalEditModalProps {
   professional: Professional
   open: boolean
   onClose: () => void
+  isCreatingNew?: boolean
 }
 
 export default function ProfessionalEditModal({ 
   professional, 
   open, 
-  onClose 
+  onClose,
+  isCreatingNew = false
 }: ProfessionalEditModalProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
@@ -170,7 +172,7 @@ export default function ProfessionalEditModal({
               <div className="flex items-center gap-2">
                 <User className="w-5 h-5" />
                 <DialogTitle className="text-xl">
-                  {professionalData.userId.name}
+                  {isCreatingNew ? "הוספת מטפל חדש" : professionalData.userId.name}
                 </DialogTitle>
               </div>
               {getStatusBadge(professionalData.status)}
@@ -269,6 +271,7 @@ export default function ProfessionalEditModal({
                 onUpdate={setProfessionalData}
                 onStatusChange={handleStatusChange}
                 loading={loading}
+                isCreatingNew={isCreatingNew}
               />
             </TabsContent>
 

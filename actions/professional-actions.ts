@@ -66,9 +66,14 @@ export async function createProfessional(formData: FormData) {
 
     await professionalProfile.save()
 
+    // Return complete professional data with user info
+    const completeProfile = await ProfessionalProfile.findById(professionalProfile._id)
+      .populate('userId', 'name email phone gender birthDate')
+      .lean()
+
     revalidatePath("/dashboard/admin/professional-management")
 
-    return { success: true, professional: professionalProfile }
+    return { success: true, professional: completeProfile }
   } catch (error) {
     console.error("Error creating professional:", error)
     return { success: false, error: "Failed to create professional" }

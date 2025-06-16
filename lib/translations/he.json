@@ -4015,6 +4015,7 @@
       "${item": {
         "titleKey}": "dashboard.sidebar.${item.titleKey}"
       },
+      "city-management": "איזורי פעילות",
       "bookTreatment": "הזמן טיפול",
       "purchaseSubscription": "רכוש מנוי",
       "purchaseGiftVoucher": "רכוש שובר מתנה",

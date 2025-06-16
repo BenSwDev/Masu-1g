@@ -277,7 +277,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "users", icon: User, hrefSuffix: "users" },
         { titleKey: "customers", icon: Users, hrefSuffix: "customers" },
         { titleKey: "professional-management", icon: Users, hrefSuffix: "professional-management" },
-        { titleKey: "city-management", icon: Users, hrefSuffix: "city-management" },
+        { titleKey: "cities", icon: Users, hrefSuffix: "cities" },
         { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
         { titleKey: "reviews", icon: Star, hrefSuffix: "reviews" },
         { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments" },

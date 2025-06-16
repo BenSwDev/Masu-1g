@@ -2884,10 +2884,10 @@
         "selectDuration": "בחר משך טיפול"
       },
       "confirmation": {
-        "title": "כותרת"
+        "title": "אישור הזמנה"
       },
       "guestInfo": {
-        "title": "כותרת"
+        "title": "הכנסת פרטים אישיים"
       }
     },
     "validation": {
@@ -3657,7 +3657,7 @@
       "sendAsGift": "שלח כשובר"
     },
     "searchPlaceholder": "חפש שובר לפי קוד או שם",
-    "title": "כותרת",
+    "title": "רכישת שובר מתנה",
     "types": {
       "monetary": "כספי",
       "treatment": "טיפול"
@@ -3830,7 +3830,7 @@
     "selectDurationError": "יש לבחור משך זמן",
     "selectTreatmentDesc": "בחר טיפול מהרשימה",
     "statusUpdateError": "שגיאה בעדכון סטטוס טיפול",
-    "title": "כותרת",
+    "title": "בחירת טיפול",
     "unknownTreatment": "טיפול לא ידוע",
     "updateError": "שגיאה בעדכון טיפול",
     "updateSuccess": "הטיפול עודכן בהצלחה"
@@ -3851,17 +3851,17 @@
     "usageTooltip": "לחץ לפרטי שימוש",
     "cancelDialog": {
       "description": "האם אתה בטוח שברצונך לבטל מנוי זה?",
-      "title": "כותרת"
+      "title": "ביטול מנוי"
     },
     "deleteDialog": {
       "description": "האם אתה בטוח שברצונך למחוק מנוי זה?",
-      "title": "כותרת"
+      "title": "מחיקת מנוי"
     },
     "detailsModal": {
       "description": "פרטי המנוי ושימוש",
       "paymentSectionTitle": "פרטי תשלום",
       "subscriptionSectionTitle": "פרטי מנוי",
-      "title": "כותרת",
+      "title": "פרטי מנוי",
       "treatmentSectionTitle": "פרטי טיפול",
       "usageSectionTitle": "שימושים",
       "userSectionTitle": "פרטי משתמש"
@@ -4274,7 +4274,7 @@
       "pageInfo": "עמוד"
     },
     "description": "תיאור",
-    "title": "כותרת",
+    "title": "קופונים",
     "totalAssigned": "סך כל הקופונים"
   },
   "partnerCoupons": {
@@ -4327,7 +4327,7 @@
     "recipient": "מקבל",
     "recipientEmail": "אימייל של המקבל",
     "recipientPhone": "טלפון של המקבל",
-    "title": "כותרת"
+    "title": "אישור הזמנה"
   },
   "guestInfo": {
     "birthDate": "תאריך לידה",
@@ -4356,7 +4356,7 @@
     "recipientGender": "מגדר של המקבל",
     "recipientLastName": "שם משפחה של המקבל",
     "recipientPhone": "טלפון של המקבל",
-    "title": "כותרת",
+    "title": "מילוי פרטים",
     "validation": {
       "emailInvalid": "כתובת אימייל לא תקינה",
       "firstNameMin": "יש להזין שם פרטי (לפחות 2 תווים)",

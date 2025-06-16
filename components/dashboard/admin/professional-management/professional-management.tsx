@@ -410,7 +410,7 @@ export function ProfessionalManagement({
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {professional.treatments.length} טיפולים
+                        {professional.treatments?.length || 0} טיפולים
                       </div>
                     </TableCell>
                     <TableCell>

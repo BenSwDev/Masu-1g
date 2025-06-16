@@ -15,7 +15,7 @@ interface AdminCitiesPageProps {
 
 export default async function AdminCitiesPage({ searchParams }: AdminCitiesPageProps) {
   const session = await requireUserSession()
-  if (!session.user.roles?.includes("admin")) {
+  if (session.user.activeRole !== "admin") {
     redirect("/dashboard")
   }
 

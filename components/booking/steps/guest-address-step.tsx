@@ -12,6 +12,7 @@ import { Input } from "@/components/common/ui/input"
 import { Textarea } from "@/components/common/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Checkbox } from "@/components/common/ui/checkbox"
+import { CitySelectForm } from "@/components/common/ui/city-select-form"
 
 interface GuestAddress {
   city: string
@@ -127,7 +128,11 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                     <FormItem>
                       <FormLabel>{t("bookings.addressStep.city") || "עיר"}</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <CitySelectForm 
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder={t("bookings.addressStep.cityPlaceholder") || "בחר עיר"}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -8,7 +8,7 @@ import City from "@/lib/db/models/city"
 export async function getCities(page = 1, limit = 10, searchTerm = "") {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+    if (!session?.user?.id || session.user.activeRole !== "admin") {
       return { success: false, cities: [], totalPages: 0 }
     }
 
@@ -39,7 +39,7 @@ export async function getCities(page = 1, limit = 10, searchTerm = "") {
 export async function createCity(formData: FormData) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+    if (!session?.user?.id || session.user.activeRole !== "admin") {
       return { success: false, message: "notAuthorized" }
     }
 

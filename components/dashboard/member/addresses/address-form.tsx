@@ -10,6 +10,7 @@ import { Label } from "@/components/common/ui/label"
 import { Textarea } from "@/components/common/ui/textarea"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { CitySelect } from "@/components/common/ui/city-select"
 import { createAddress, updateAddress } from "@/actions/address-actions"
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
@@ -109,7 +110,14 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="city">{t("addresses.fields.city")}</Label>
-          <Input id="city" name="city" defaultValue={address?.city} required className="focus:ring-turquoise-500" />
+          <CitySelect 
+            id="city" 
+            name="city" 
+            defaultValue={address?.city} 
+            required 
+            className="focus:ring-turquoise-500"
+            placeholder={t("addresses.fields.cityPlaceholder") || "בחר עיר"}
+          />
         </div>
 
         <div className="space-y-2">

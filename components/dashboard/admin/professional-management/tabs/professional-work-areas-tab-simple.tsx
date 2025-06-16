@@ -3,8 +3,14 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Checkbox } from "@/components/common/ui/checkbox"
 import { Button } from "@/components/common/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/common/ui/select"
 import { useToast } from "@/components/common/ui/use-toast"
 import { MapPin, Save, Loader2 } from "lucide-react"
 
@@ -27,7 +33,15 @@ export default function ProfessionalWorkAreasTab({
   const { toast } = useToast()
   
   const [allCities, setAllCities] = useState<City[]>([])
-  const [selectedCities, setSelectedCities] = useState<string[]>([])
+  const [selectedCityId, setSelectedCityId] = useState<string>(
+    professional?.workAreas?.[0]?.cityId || ""
+  )
+  const [distanceRadius, setDistanceRadius] = useState<string>(
+    professional?.workAreas?.[0]?.distanceRadius || "20km"
+  )
+  const [coveredCities, setCoveredCities] = useState<string[]>(
+    professional?.workAreas?.[0]?.coveredCities || []
+  )
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -37,12 +51,12 @@ export default function ProfessionalWorkAreasTab({
       try {
         const response = await fetch('/api/cities')
         const data = await response.json()
-        
+
         if (data.success) {
           setAllCities(data.cities || [])
-          // Set selected cities based on professional's current work areas
-          const currentCityIds = professional?.workAreas?.map((area: any) => area.cityId || area._id) || []
-          setSelectedCities(currentCityIds)
+          if (!selectedCityId && data.cities.length > 0) {
+            setSelectedCityId(data.cities[0]._id)
+          }
         }
       } catch (error) {
         console.error('Error fetching cities:', error)
@@ -57,31 +71,50 @@ export default function ProfessionalWorkAreasTab({
     }
 
     fetchCities()
-  }, [professional, toast])
+  }, [professional, toast, selectedCityId])
 
-  const handleCityToggle = (cityId: string, checked: boolean) => {
-    setSelectedCities(prev => {
-      if (checked) {
-        return [...prev, cityId]
-      } else {
-        return prev.filter(id => id !== cityId)
+  // Load covered cities when selection changes
+  useEffect(() => {
+    const fetchCovered = async () => {
+      if (!selectedCityId) return
+      try {
+        const city = allCities.find(c => c._id === selectedCityId)
+        if (!city) return
+        const params = new URLSearchParams({
+          cityName: city.name,
+          distanceRadius
+        })
+        const res = await fetch(`/api/cities/coverage?${params.toString()}`)
+        const data = await res.json()
+        if (data.success) {
+          setCoveredCities(data.cities || [])
+        } else {
+          setCoveredCities([])
+        }
+      } catch (err) {
+        console.error('Error fetching covered cities:', err)
+        setCoveredCities([])
       }
-    })
-  }
+    }
+
+    fetchCovered()
+  }, [selectedCityId, distanceRadius, allCities])
 
   const handleSave = async () => {
     setSaving(true)
     try {
       // Update professional's work areas
+      const city = allCities.find(c => c._id === selectedCityId)
       const updatedProfessional = {
         ...professional,
-        workAreas: selectedCities.map(cityId => {
-          const city = allCities.find(c => c._id === cityId)
-          return {
-            cityId,
-            cityName: city?.name
+        workAreas: [
+          {
+            cityId: selectedCityId,
+            cityName: city?.name,
+            distanceRadius,
+            coveredCities
           }
-        })
+        ]
       }
       
       onUpdate(updatedProfessional)
@@ -143,44 +176,46 @@ export default function ProfessionalWorkAreasTab({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="text-sm text-muted-foreground mb-4">
-                בחר את הערים בהן המטפל יכול לפעול ({selectedCities.length} נבחרו)
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium block">עיר מוצא</label>
+                  <Select value={selectedCityId} onValueChange={setSelectedCityId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="בחר עיר" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allCities.map((city) => (
+                        <SelectItem key={city._id} value={city._id}>
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium block">טווח פעילות</label>
+                  <Select value={distanceRadius} onValueChange={setDistanceRadius}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="בחר טווח" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="20km">20 ק"מ</SelectItem>
+                      <SelectItem value="40km">40 ק"מ</SelectItem>
+                      <SelectItem value="60km">60 ק"מ</SelectItem>
+                      <SelectItem value="80km">80 ק"מ</SelectItem>
+                      <SelectItem value="unlimited">ללא הגבלה</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {allCities.map((city) => (
-                  <div 
-                    key={city._id}
-                    className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50"
-                  >
-                    <Checkbox
-                      id={city._id}
-                      checked={selectedCities.includes(city._id)}
-                      onCheckedChange={(checked) => 
-                        handleCityToggle(city._id, checked as boolean)
-                      }
-                    />
-                    <label 
-                      htmlFor={city._id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1 text-right"
-                    >
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        {city.name}
-                      </div>
-                    </label>
-                  </div>
-                ))}
-              </div>
-              
-              {selectedCities.length > 0 && (
+
+              {coveredCities.length > 0 && (
                 <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                  <h4 className="font-medium text-green-900 mb-2">איזורי פעילות נבחרים:</h4>
-                  <div className="text-sm text-green-700">
-                    {selectedCities.map(cityId => {
-                      const city = allCities.find(c => c._id === cityId)
-                      return city?.name
-                    }).join(', ')}
+                  <h4 className="font-medium text-green-900 mb-2">ערים מכוסות:</h4>
+                  <div className="text-sm text-green-700 flex flex-wrap gap-2">
+                    {[allCities.find(c => c._id === selectedCityId)?.name, ...coveredCities].map((city, idx) => (
+                      <span key={idx}>{city}</span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -190,4 +225,4 @@ export default function ProfessionalWorkAreasTab({
       </Card>
     </div>
   )
-} 
+}

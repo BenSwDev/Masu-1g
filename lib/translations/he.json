@@ -177,7 +177,7 @@
       "noCitiesFound": "לא נמצאו ערים",
       "form": {"name": "שם העיר", "lat": "קו רוחב", "lng": "קו אורך", "active": "פעיל"},
       "table": {"name": "שם", "coordinates": "קואורדינטות", "status": "סטטוס"}
-    },
+    }
   },
   "adminBookings": {
     "accountCreated": "חשבון נוצר",
@@ -191,10 +191,7 @@
       "hotel": "מלון",
       "house": "בית",
       "office": "משרד",
-      "other": "אחר",
-      "${address": {
-        "addressType}": "adminBookings.addressType.${address.addressType}"
-      }
+      "other": "אחר"
     },
     "adminNotes": "הערות מנהל",
     "adminNotesPlaceholder": "הערות פנימיות למנהל...",

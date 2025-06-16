@@ -363,9 +363,14 @@ export async function calculateBookingPrice(
 
       if (
         userSub &&
-        ((userSub.userId && userId && userSub.userId.toString() === userId) || (userSub.userId == null && userId == null)) &&
         userSub.status === "active" &&
-        userSub.remainingQuantity > 0
+        userSub.remainingQuantity > 0 &&
+        (
+          // For registered users
+          (userSub.userId && userId && userSub.userId.toString() === userId) || 
+          // For guest subscriptions
+          (userSub.userId == null && (userId == null || userId === "guest"))
+        )
       ) {
         const subTreatment = userSub.treatmentId as ITreatment
         const isTreatmentMatch = subTreatment && subTreatment._id.toString() === treatmentId

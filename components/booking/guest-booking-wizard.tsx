@@ -111,61 +111,39 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
 
   // Enhanced setGuestInfo function with proper state merging and debugging
   const setGuestInfo = useCallback((newInfo: Partial<GuestInfo>) => {
-    console.log("🔄 setGuestInfo called with:", newInfo)
-    console.log("🔄 Current guestInfo state:", guestInfo)
     
     setGuestInfoState(prevState => {
       const updatedState = { ...prevState, ...newInfo }
-      console.log("✅ Updated guestInfo state:", updatedState)
       return updatedState
     })
   }, [guestInfo])
 
   // Function to handle guest info submission and proceed to next step
   const handleGuestInfoSubmit = useCallback(async (newInfo: Partial<GuestInfo>) => {
-    console.log("🔄 handleGuestInfoSubmit called with:", newInfo)
     
     // Update the state
     setGuestInfoState(prevState => {
       const updatedState = { ...prevState, ...newInfo }
-      console.log("✅ Updated guestInfo state in handleGuestInfoSubmit:", updatedState)
       
       // Now proceed to next step with the updated data
       setTimeout(async () => {
-        console.log("🔄 Proceeding to next step with updated data:", updatedState)
         
         // Create guest user after step 1 AND create pending booking
         if (currentStep === 1 && !guestUserId) {
-          console.log("🔍 Checking guest info for user creation...")
-          console.log("🔍 firstName:", updatedState.firstName)
-          console.log("🔍 lastName:", updatedState.lastName)
-          console.log("🔍 email:", updatedState.email)
-          console.log("🔍 phone:", updatedState.phone)
           
           if (updatedState.firstName && updatedState.lastName && updatedState.email && updatedState.phone) {
-            console.log("👤 Creating guest user...")
-            const guestUserData = {
-              firstName: updatedState.firstName,
-              lastName: updatedState.lastName,
-              email: updatedState.email,
-              phone: updatedState.phone,
-              birthDate: updatedState.birthDate,
-              gender: updatedState.gender,
-            }
-            console.log("📤 Sending guest user data:", guestUserData)
-            console.log("📤 Data types:", {
-              firstName: typeof guestUserData.firstName,
-              lastName: typeof guestUserData.lastName,
-              email: typeof guestUserData.email,
-              phone: typeof guestUserData.phone,
-              birthDate: typeof guestUserData.birthDate,
-              gender: typeof guestUserData.gender,
-            })
+          const guestUserData = {
+            firstName: updatedState.firstName,
+            lastName: updatedState.lastName,
+            email: updatedState.email,
+            phone: updatedState.phone,
+            birthDate: updatedState.birthDate,
+            gender: updatedState.gender,
+          }
             try {
               const result = await createGuestUser(guestUserData)
               
               if (result.success && result.userId) {
-                console.log("✅ Guest user created/found:", result.userId)
                 setGuestUserId(result.userId)
                 localStorage.setItem('guestUserId', result.userId)
                 
@@ -189,14 +167,6 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
               })
               return
             }
-          } else {
-            console.log("⚠️ Missing required guest info for user creation")
-            console.log("⚠️ Missing fields:", {
-              firstName: !updatedState.firstName,
-              lastName: !updatedState.lastName,
-              email: !updatedState.email,
-              phone: !updatedState.phone
-            })
           }
         }
         
@@ -211,8 +181,6 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   // Function to create initial pending booking
   const createInitialPendingBooking = async (userId: string, guestInfoData: Partial<GuestInfo>) => {
     try {
-      console.log("📝 Creating initial pending booking for guest:", userId)
-      console.log("📝 Using guest info data:", guestInfoData)
       
       // Create a minimal booking with "abandoned_pending_payment" status
       // This ensures the booking appears in admin bookings list immediately
@@ -225,13 +193,10 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       })
       
       if (result.success) {
-        console.log("✅ Initial pending booking created:", result.bookingId)
         toast({
           title: "התחלת תהליך הזמנה",
           description: "ההזמנה נשמרה במערכת ותופיע בעמוד הזמנות המנהל",
         })
-      } else {
-        console.log("⚠️ Failed to create initial pending booking:", result.error)
       }
     } catch (error) {
       console.error("❌ Error creating initial pending booking:", error)
@@ -241,28 +206,20 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   // Check for abandoned booking on component mount
   useEffect(() => {
     const checkForAbandonedBooking = async () => {
-      console.log("🔍 Checking for abandoned booking...")
       const savedUserId = localStorage.getItem('guestUserId')
-      console.log("📱 Saved guest user ID:", savedUserId)
       
       if (savedUserId) {
         try {
           const result = await getAbandonedBooking(savedUserId)
-          console.log("📋 Abandoned booking result:", result)
           
           if (result.success && result.booking) {
-            console.log("✅ Found abandoned booking, showing recovery dialog")
             setAbandonedBooking(result.booking)
             setGuestUserId(savedUserId)
             setShowRecoveryDialog(true)
-          } else {
-            console.log("ℹ️ No abandoned booking found")
           }
         } catch (error) {
           console.error("❌ Error checking for abandoned booking:", error)
         }
-      } else {
-        console.log("ℹ️ No saved guest user ID found")
       }
     }
     
@@ -314,7 +271,6 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
     if (guestUserId && currentStep > 1) {
       const saveFormState = async () => {
         try {
-          console.log("💾 Saving form state for step:", currentStep)
           const result = await saveAbandonedBooking(guestUserId, {
             guestInfo,
             guestAddress,
@@ -323,9 +279,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             currentStep,
           })
           
-          if (result.success) {
-            console.log("✅ Form state saved successfully")
-          } else {
+          if (!result.success) {
             console.error("❌ Failed to save form state:", result.error)
           }
         } catch (error) {
@@ -505,20 +459,11 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   }
 
   const nextStep = async () => {
-    console.log("🔄 nextStep called - currentStep:", currentStep)
-    console.log("🔄 Current guestInfo state:", guestInfo)
-    console.log("🔄 Current guestUserId:", guestUserId)
     
     // Create guest user after step 1 AND create pending booking
     if (currentStep === 1 && !guestUserId) {
-      console.log("🔍 Checking guest info for user creation...")
-      console.log("🔍 firstName:", guestInfo.firstName)
-      console.log("🔍 lastName:", guestInfo.lastName)
-      console.log("🔍 email:", guestInfo.email)
-      console.log("🔍 phone:", guestInfo.phone)
       
       if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.phone) {
-        console.log("👤 Creating guest user...")
         try {
           const result = await createGuestUser({
             firstName: guestInfo.firstName,
@@ -530,7 +475,6 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           })
           
           if (result.success && result.userId) {
-            console.log("✅ Guest user created/found:", result.userId)
             setGuestUserId(result.userId)
             localStorage.setItem('guestUserId', result.userId)
             
@@ -555,8 +499,6 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           return
         }
       } else {
-        console.log("⚠️ Missing required guest info for user creation")
-        console.log("⚠️ Missing fields:", {
           firstName: !guestInfo.firstName,
           lastName: !guestInfo.lastName,
           email: !guestInfo.email,
@@ -580,10 +522,8 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
 
   // Create booking before payment
   const createPendingBooking = async () => {
-    console.log("🔄 Creating pending booking...")
     
     if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.phone) {
-      console.log("❌ Missing guest info:", { guestInfo })
       toast({
         variant: "destructive",
         title: t("bookings.errors.missingGuestInfo"),
@@ -597,7 +537,6 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       !bookingOptions.bookingDate ||
       !bookingOptions.bookingTime
     ) {
-      console.log("❌ Missing booking options:", { bookingOptions })
       toast({
         variant: "destructive",
         title: t("bookings.errors.incompleteBookingDetails"),
@@ -654,19 +593,14 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           : guestInfo.gender,
       } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
 
-      console.log("📦 Payload prepared:", JSON.stringify(payload, null, 2))
-      console.log("🚀 Calling createGuestBooking...")
 
       const result = await createGuestBooking(payload)
       
-      console.log("📨 Server response:", result)
       
       if (result.success && result.booking) {
-        console.log("✅ Pending booking created successfully:", result.booking)
         setPendingBookingId(result.booking._id.toString())
         return result.booking._id.toString()
       } else {
-        console.log("❌ Booking creation failed:", result)
         toast({
           variant: "destructive",
           title: t(result.error || "bookings.errors.bookingFailedTitle") || result.error || "Booking failed",
@@ -689,10 +623,8 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
 
   // Handle final confirmation after successful payment
   const handleFinalSubmit = async () => {
-    console.log("🔄 Finalizing booking after payment...")
     
     if (!pendingBookingId) {
-      console.log("❌ No pending booking ID found")
       return
     }
 
@@ -709,7 +641,6 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       )
       
       if (result.success && result.booking) {
-        console.log("✅ Booking status updated successfully:", result.booking)
         setBookingResult(result.booking)
         setCurrentStep(CONFIRMATION_STEP_NUMBER)
         
@@ -723,7 +654,6 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           description: t("bookings.success.bookingCreatedDescription"),
         })
       } else {
-        console.log("❌ Booking status update failed:", result)
         toast({
           variant: "destructive",
           title: "שגיאה בעדכון ההזמנה",

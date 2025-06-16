@@ -43,7 +43,9 @@ import {
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { assignProfessionalToBooking, getAvailableProfessionals } from "@/actions/booking-actions"
+import { sendProfessionalNotifications } from "@/actions/professional-sms-actions"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { ProfessionalResponsesDialog } from "./professional-responses-dialog"
 
 type TFunction = (key: string, options?: any) => string
 
@@ -198,6 +200,9 @@ const AdminBookingActions = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
   const [showAssignModal, setShowAssignModal] = useState(false)
+  const [sendingNotifications, setSendingNotifications] = useState(false)
+  const [showResponsesModal, setShowResponsesModal] = useState(false)
+  const queryClient = useQueryClient()
 
   if (!booking) {
     return <div className="text-sm text-muted-foreground">-</div>
@@ -206,9 +211,31 @@ const AdminBookingActions = ({
   const canAssignProfessional = !booking.professionalId && !["completed", "cancelled", "refunded"].includes(booking.status)
   const hasNotes = booking.notes && booking.notes.trim().length > 0
   const canCancel = !["completed", "cancelled", "refunded"].includes(booking.status)
+  const canSendToProfessionals = !booking.professionalId && ["confirmed", "in_process"].includes(booking.status)
+  const canViewResponses = ["confirmed", "in_process"].includes(booking.status)
 
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent row click when clicking dropdown
+  }
+
+  const handleSendToProfessionals = async () => {
+    if (!booking._id) return
+    
+    setSendingNotifications(true)
+    try {
+      const result = await sendProfessionalNotifications(booking._id)
+      if (result.success) {
+        toast.success(`נשלחו הודעות ל-${result.sentCount} מטפלים מתאימים`)
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+      } else {
+        toast.error(result.error || "שגיאה בשליחת הודעות למטפלים")
+      }
+    } catch (error) {
+      console.error("Error sending notifications:", error)
+      toast.error("שגיאה בשליחת הודעות למטפלים")
+    } finally {
+      setSendingNotifications(false)
+    }
   }
 
   return (
@@ -255,10 +282,38 @@ const AdminBookingActions = ({
             </DropdownMenuItem>
           )}
 
-          <DropdownMenuItem className="cursor-pointer text-muted-foreground" disabled>
-            <MessageSquare className="mr-2 h-4 w-4" />
-            <span>{t("adminBookings.sendToProfessionals")} ({t("common.notActive")})</span>
-          </DropdownMenuItem>
+          {canSendToProfessionals ? (
+            <DropdownMenuItem
+              onClick={handleSendToProfessionals}
+              className="cursor-pointer"
+              disabled={sendingNotifications}
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              {sendingNotifications ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <span>שולח הודעות...</span>
+                </>
+              ) : (
+                <span>שלח הודעות למטפלים מתאימים</span>
+              )}
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem className="cursor-pointer text-muted-foreground" disabled>
+              <MessageSquare className="mr-2 h-4 w-4" />
+              <span>{t("adminBookings.sendToProfessionals")} ({t("common.notActive")})</span>
+            </DropdownMenuItem>
+          )}
+
+          {canViewResponses && (
+            <DropdownMenuItem
+              onClick={() => setShowResponsesModal(true)}
+              className="cursor-pointer"
+            >
+              <Phone className="mr-2 h-4 w-4" />
+              <span>בדוק תגובות מטפלים</span>
+            </DropdownMenuItem>
+          )}
 
           {canCancel && (
             <DropdownMenuItem className="cursor-pointer text-red-600">
@@ -301,6 +356,14 @@ const AdminBookingActions = ({
         isOpen={showAssignModal}
         onClose={() => setShowAssignModal(false)}
         t={t}
+      />
+
+      {/* Professional Responses Modal */}
+      <ProfessionalResponsesDialog
+        open={showResponsesModal}
+        onOpenChange={setShowResponsesModal}
+        bookingId={booking._id}
+        bookingStatus={booking.status}
       />
     </>
   )

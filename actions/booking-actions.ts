@@ -1701,19 +1701,37 @@ export async function getAvailableProfessionals(): Promise<{ success: boolean; p
   try {
     await dbConnect()
 
-    const professionals = await User.find({ roles: "professional" })
-      .select("_id name email phone gender")
+    // Import ProfessionalProfile model
+    const ProfessionalProfile = (await import("@/lib/db/models/professional-profile")).default
+
+    // Get all active professionals with proper population
+    const professionals = await ProfessionalProfile.find({ 
+      status: 'active',
+      isActive: true
+    })
+      .populate({
+        path: 'userId',
+        select: 'name email phone gender roles',
+        // Only get users who have professional role
+        match: { roles: 'professional' }
+      })
       .lean()
+
+    // Filter out professionals where userId is null (didn't match professional role)
+    const validProfessionals = professionals.filter(prof => prof.userId !== null)
 
     return {
       success: true,
-      professionals: professionals.map((p) => ({
-        _id: p._id.toString(),
-        name: p.name,
-        email: p.email,
-        phone: p.phone,
-        gender: p.gender,
-      })),
+      professionals: validProfessionals.map((p: any) => ({
+        _id: p.userId._id.toString(),
+        name: p.userId.name,
+        email: p.userId.email,
+        phone: p.userId.phone,
+        gender: p.userId.gender,
+        profileId: p._id.toString(),
+        workAreas: p.workAreas,
+        treatments: p.treatments
+      }))
     }
   } catch (error) {
     logger.error("Error in getAvailableProfessionals:", { error })
@@ -2588,27 +2606,35 @@ export async function findSuitableProfessionals(
       return { success: false, error: "Booking city not found" }
     }
 
-    // Build query for suitable professionals
+    // Build query for suitable professionals - INCLUDING ALL REQUIRED CRITERIA
     const query: any = {
+      // Professional must be active in our system
       status: 'active',
+      isActive: true,
+      // Professional must offer this treatment
       'treatments.treatmentId': new mongoose.Types.ObjectId(treatmentId)
     }
     
-    // Add city coverage check
+    // Add city coverage check - professional must cover this city
     query.$or = [
       { 'workAreas.cityName': cityName },
       { 'workAreas.coveredCities': cityName }
     ]
     
-    // Find professionals
+    // Find professionals with all criteria
     let professionals = await ProfessionalProfile.find(query)
       .populate({
         path: 'userId',
-        select: 'name email phone gender',
-        model: User
+        select: 'name email phone gender roles',
+        model: User,
+        // CRITICAL: Only users with professional role
+        match: { roles: 'professional' }
       })
       .populate('treatments.treatmentId')
       .lean()
+    
+    // Filter out professionals where userId is null (didn't match professional role)
+    professionals = professionals.filter(prof => prof.userId !== null)
     
     // Filter by gender preference if specified
     if (genderPreference && genderPreference !== 'any') {
@@ -2617,7 +2643,7 @@ export async function findSuitableProfessionals(
       )
     }
     
-    // Filter by duration if specified
+    // Filter by duration if specified - professional must support this duration
     if (durationId) {
       professionals = professionals.filter(prof =>
         prof.treatments.some(t => 
@@ -2626,6 +2652,12 @@ export async function findSuitableProfessionals(
         )
       )
     }
+    
+    console.log(`🔍 Found ${professionals.length} suitable professionals for booking ${bookingId}:`)
+    console.log(`   - Treatment: ${treatmentId}`)
+    console.log(`   - City: ${cityName}`)
+    console.log(`   - Gender preference: ${genderPreference || 'any'}`)
+    console.log(`   - Duration: ${durationId || 'any'}`)
     
     return { success: true, professionals }
   } catch (error) {

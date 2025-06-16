@@ -1,3 +1,5 @@
+"use server"
+
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
@@ -29,8 +31,9 @@ export async function sendProfessionalNotifications(
       return { success: false, error: "Booking not found" }
     }
     
-    if (booking.status !== "confirmed") {
-      return { success: false, error: "Booking is not confirmed" }
+    // Allow sending notifications for both "confirmed" and "in_process" status
+    if (!["confirmed", "in_process"].includes(booking.status)) {
+      return { success: false, error: "Booking is not in correct status for notifications" }
     }
     
     // Find suitable professionals using existing logic

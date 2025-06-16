@@ -288,6 +288,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "partnerCouponBatches", icon: Handshake, hrefSuffix: "partner-coupon-batches" },
         { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
         { titleKey: "purchaseReports", icon: BarChart3, hrefSuffix: "purchase-reports" },
+        { titleKey: "transactions", icon: BarChart3, hrefSuffix: "transactions" },
       ],
       member: [
         { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },

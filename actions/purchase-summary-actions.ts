@@ -7,6 +7,7 @@ import Booking from "@/lib/db/models/booking"
 import UserSubscription from "@/lib/db/models/user-subscription"
 import GiftVoucher from "@/lib/db/models/gift-voucher"
 import User from "@/lib/db/models/user"
+import ProfessionalProfile from "@/lib/db/models/professional-profile"
 import Treatment from "@/lib/db/models/treatment"
 import Subscription from "@/lib/db/models/subscription"
 import mongoose from "mongoose"
@@ -18,6 +19,7 @@ import type {
   BookingDetails,
   SubscriptionDetails,
   GiftVoucherDetails,
+  DailyTransactionStats,
 } from "@/lib/types/purchase-summary"
 
 // Helper function to handle database connection errors
@@ -772,4 +774,90 @@ export async function getPurchaseStats(): Promise<{
     console.error('Error fetching purchase stats:', error)
     return { success: false, error: 'Failed to fetch purchase statistics' }
   }
-} 
+}
+
+// Weekly transaction summary for admin dashboard
+export async function getWeeklyAdminTransactionStats() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes('admin')) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    const isConnected = await safeDbConnect()
+    if (!isConnected) {
+      return { success: false, error: "Database connection failed" }
+    }
+
+    const start = new Date()
+    start.setHours(0, 0, 0, 0)
+    start.setDate(start.getDate() - start.getDay())
+    const end = new Date(start)
+    end.setDate(start.getDate() + 7)
+
+    const days: Record<string, any> = {}
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start)
+      d.setDate(start.getDate() + i)
+      const key = d.toISOString().slice(0, 10)
+      days[key] = {
+        date: key,
+        bookings: 0,
+        subscriptionPurchases: 0,
+        subscriptionRedemptions: 0,
+        voucherUsages: 0,
+        penalties: 0,
+        credits: 0,
+        couponUsages: 0,
+      }
+    }
+
+    const bookings = await Booking.find({
+      bookingDateTime: { $gte: start, $lt: end }
+    }).lean()
+    bookings.forEach(b => {
+      const key = new Date(b.bookingDateTime).toISOString().slice(0, 10)
+      if (days[key]) {
+        days[key].bookings += 1
+        if (b.priceDetails.redeemedUserSubscriptionId) {
+          days[key].subscriptionRedemptions += 1
+        }
+        if (b.priceDetails.appliedGiftVoucherId) {
+          days[key].voucherUsages += 1
+        }
+        if (b.priceDetails.appliedCouponId) {
+          days[key].couponUsages += 1
+        }
+      }
+    })
+
+    const subs = await UserSubscription.find({
+      purchaseDate: { $gte: start, $lt: end }
+    }).lean()
+    subs.forEach(s => {
+      const key = new Date(s.purchaseDate).toISOString().slice(0, 10)
+      if (days[key]) days[key].subscriptionPurchases += 1
+    })
+
+    const professionals = await ProfessionalProfile.find({
+      'financialTransactions.date': { $gte: start, $lt: end }
+    }, { financialTransactions: 1 }).lean()
+    professionals.forEach(p => {
+      p.financialTransactions?.forEach((t: any) => {
+        const d = new Date(t.date)
+        if (d >= start && d < end) {
+          const key = d.toISOString().slice(0, 10)
+          if (!days[key]) return
+          if (t.type === 'penalty') days[key].penalties += 1
+          if (t.type === 'bonus' || t.type === 'adjustment') days[key].credits += 1
+        }
+      })
+    })
+
+    const summary = Object.values(days)
+    return { success: true, data: summary }
+  } catch (error) {
+    console.error('Error fetching weekly transaction stats:', error)
+    return { success: false, error: 'Failed to fetch statistics' }
+  }
+}

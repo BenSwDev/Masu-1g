@@ -35,7 +35,7 @@ export default function ProfessionalFinancialTab({
   onUpdate
 }: ProfessionalFinancialTabProps) {
   const { t, dir } = useTranslation()
-  const [typeFilter, setTypeFilter] = useState<string>("")
+  const [typeFilter, setTypeFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("date")
 
   const transactions = professional.financialTransactions || []
@@ -74,7 +74,7 @@ export default function ProfessionalFinancialTab({
   }
 
   const filteredTransactions = transactions.filter(transaction => 
-    !typeFilter || transaction.type === typeFilter
+    typeFilter === "all" || transaction.type === typeFilter
   )
 
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
@@ -205,7 +205,7 @@ export default function ProfessionalFinancialTab({
                   <SelectValue placeholder="סנן לפי סוג" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">כל הסוגים</SelectItem>
+                  <SelectItem value="all">כל הסוגים</SelectItem>
                   <SelectItem value="booking_payment">תשלום הזמנה</SelectItem>
                   <SelectItem value="bonus">בונוס</SelectItem>
                   <SelectItem value="penalty">קנס</SelectItem>
@@ -251,10 +251,10 @@ export default function ProfessionalFinancialTab({
             <div className="text-center py-8 text-muted-foreground">
               <DollarSign className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
               <h3 className="text-lg font-medium mb-2">
-                {typeFilter ? "אין תנועות מסוננות" : "אין תנועות כספיות"}
+                {typeFilter !== "all" ? "אין תנועות מסוננות" : "אין תנועות כספיות"}
               </h3>
               <p className="text-sm mb-4">
-                {typeFilter 
+                {typeFilter !== "all"
                   ? "לא נמצאו תנועות מהסוג הנבחר"
                   : "עדיין לא בוצעו תנועות כספיות"
                 }

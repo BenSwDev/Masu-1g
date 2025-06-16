@@ -40,7 +40,7 @@ export default function ProfessionalBookingsTab({
   professional
 }: ProfessionalBookingsTabProps) {
   const { t, dir } = useTranslation()
-  const [statusFilter, setStatusFilter] = useState<string>("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("scheduledDate")
 
   const bookings = professional.bookings || []
@@ -76,7 +76,7 @@ export default function ProfessionalBookingsTab({
   }
 
   const filteredBookings = bookings.filter(booking => 
-    !statusFilter || booking.status === statusFilter
+    statusFilter === "all" || booking.status === statusFilter
   )
 
   const sortedBookings = [...filteredBookings].sort((a, b) => {
@@ -160,7 +160,7 @@ export default function ProfessionalBookingsTab({
                 <SelectValue placeholder="סנן לפי סטטוס" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">כל הסטטוסים</SelectItem>
+                <SelectItem value="all">כל הסטטוסים</SelectItem>
                 <SelectItem value="pending">ממתין</SelectItem>
                 <SelectItem value="confirmed">מאושר</SelectItem>
                 <SelectItem value="in_progress">בביצוע</SelectItem>
@@ -196,10 +196,10 @@ export default function ProfessionalBookingsTab({
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
               <h3 className="text-lg font-medium mb-2">
-                {statusFilter ? "אין הזמנות מסוננות" : "אין הזמנות"}
+                {statusFilter !== "all" ? "אין הזמנות מסוננות" : "אין הזמנות"}
               </h3>
               <p className="text-sm">
-                {statusFilter 
+                {statusFilter !== "all"
                   ? "לא נמצאו הזמנות עם הסטטוס הנבחר"
                   : "המטפל עדיין לא קיבל הזמנות"
                 }

@@ -77,7 +77,7 @@ export function ProfessionalManagement({
   })
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState(initialSearch)
-  const [statusFilter, setStatusFilter] = useState<ProfessionalStatus | "">("")
+  const [statusFilter, setStatusFilter] = useState<ProfessionalStatus | "all">("all")
   const [sortBy, setSortBy] = useState("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null)
@@ -92,7 +92,7 @@ export function ProfessionalManagement({
         page,
         limit: pagination.limit,
         search: searchTerm,
-        status: statusFilter || undefined,
+        status: statusFilter === "all" ? undefined : statusFilter,
         sortBy,
         sortOrder
       })
@@ -299,13 +299,13 @@ export function ProfessionalManagement({
               </div>
             </div>
             
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ProfessionalStatus | "")}>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as ProfessionalStatus | "all")}>
               <SelectTrigger className="w-full md:w-48">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="סנן לפי סטטוס" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">כל הסטטוסים</SelectItem>
+                <SelectItem value="all">כל הסטטוסים</SelectItem>
                 <SelectItem value="active">פעיל</SelectItem>
                 <SelectItem value="pending_admin_approval">ממתין לאישור</SelectItem>
                 <SelectItem value="pending_user_action">ממתין למשתמש</SelectItem>

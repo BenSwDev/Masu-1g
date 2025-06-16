@@ -360,8 +360,6 @@ export function ProfessionalManagement({
                 <SelectItem value="createdAt-asc">תאריך הצטרפות (ישן לחדש)</SelectItem>
                 <SelectItem value="user.name-asc">שם (א-ת)</SelectItem>
                 <SelectItem value="user.name-desc">שם (ת-א)</SelectItem>
-                <SelectItem value="totalEarnings-desc">רווחים (גבוה לנמוך)</SelectItem>
-                <SelectItem value="totalEarnings-asc">רווחים (נמוך לגבוה)</SelectItem>
               </SelectContent>
             </Select>
 
@@ -381,11 +379,9 @@ export function ProfessionalManagement({
               <TableRow>
                 <TableHead>שם המטפל</TableHead>
                 <TableHead>פרטי קשר</TableHead>
-                <TableHead>התמחות</TableHead>
                 <TableHead>סטטוס</TableHead>
                 <TableHead>טיפולים</TableHead>
                 <TableHead>איזורי פעילות</TableHead>
-                <TableHead>רווחים</TableHead>
                 <TableHead>תאריך הצטרפות</TableHead>
               </TableRow>
             </TableHeader>
@@ -395,17 +391,15 @@ export function ProfessionalManagement({
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-48" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                   </TableRow>
                 ))
               ) : professionals.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                     לא נמצאו מטפלים
                   </TableCell>
                 </TableRow>
@@ -429,26 +423,16 @@ export function ProfessionalManagement({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        {professional.specialization || "-"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       {getStatusBadge(professional.status)}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {professional.treatments.length} טיפולים
+                        {professional.treatments?.length || 0} טיפולים
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {professional.workAreas.length} איזורים
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm font-medium">
-                        {formatCurrency(professional.totalEarnings)}
+                        {professional.workAreas?.length || 0} איזורים
                       </div>
                     </TableCell>
                     <TableCell>

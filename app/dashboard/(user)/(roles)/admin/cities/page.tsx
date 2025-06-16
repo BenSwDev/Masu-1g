@@ -28,8 +28,12 @@ export default async function AdminCitiesPage({ searchParams }: AdminCitiesPageP
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <Heading icon={MapPin} titleKey="admin.cities.title" descriptionKey="admin.cities.description" />
         <Separator />
-        {result.success && (
+        {result.success ? (
           <CityManagement initialCities={result.cities as any} totalPages={result.totalPages} currentPage={page} initialSearch={search} />
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-red-600">שגיאה בטעינת הערים. אנא נסה שוב.</p>
+          </div>
         )}
       </div>
     </ScrollArea>

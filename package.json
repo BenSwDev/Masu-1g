@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "update-translations": "node scripts/update-translations.js"
+    "update-translations": "node scripts/update-translations.js",
+    "cities": "node scripts/seed-cities-temp.js"
   },
   "dependencies": {
     "@auth/core": "^0.34.2",

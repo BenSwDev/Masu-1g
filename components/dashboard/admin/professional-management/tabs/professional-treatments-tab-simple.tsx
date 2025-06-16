@@ -167,11 +167,6 @@ export default function ProfessionalTreatmentsTab({
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1 text-right"
                     >
                       {treatment.name}
-                      {treatment.description && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {treatment.description}
-                        </div>
-                      )}
                     </label>
                   </div>
                 ))}

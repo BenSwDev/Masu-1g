@@ -47,6 +47,9 @@ import { sendProfessionalNotifications } from "@/actions/professional-sms-action
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ProfessionalResponsesDialog } from "./professional-responses-dialog"
 import { SuitableProfessionalsModal } from "./suitable-professionals-modal"
+import ReviewDetailModal from "../reviews/review-detail-modal"
+import SendReviewDialog from "./send-review-dialog"
+import { getReviewByBookingId } from "@/actions/review-actions"
 
 type TFunction = (key: string, options?: any) => string
 
@@ -203,9 +206,17 @@ const AdminBookingActions = ({
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [sendingNotifications, setSendingNotifications] = useState(false)
   const [showResponsesModal, setShowResponsesModal] = useState(false)
-  const [sendingReminder, setSendingReminder] = useState(false)
+  const [showSendReviewModal, setShowSendReviewModal] = useState(false)
+  const [showReviewModal, setShowReviewModal] = useState(false)
   const [showSuitableProfessionalsModal, setShowSuitableProfessionalsModal] = useState(false)
   const queryClient = useQueryClient()
+
+  const { data: existingReview, isLoading: loadingReview, refetch: refetchReview } = useQuery({
+    queryKey: ["bookingReview", booking._id],
+    queryFn: () => getReviewByBookingId(booking._id.toString()),
+    enabled: booking.status === "completed",
+    staleTime: 30000,
+  })
 
   if (!booking) {
     return <div className="text-sm text-muted-foreground">-</div>
@@ -241,24 +252,8 @@ const AdminBookingActions = ({
     }
   }
 
-  const handleSendReviewReminder = async () => {
-    if (!booking._id) return
-    setSendingReminder(true)
-    try {
-      const { sendReviewReminder } = await import("@/actions/review-actions")
-      const result = await sendReviewReminder(booking._id)
-      if (result.success) {
-        toast.success("נשלחה בקשת חוות דעת")
-        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
-      } else {
-        toast.error(result.error || "שגיאה בשליחת הבקשה")
-      }
-    } catch (err) {
-      console.error("Error sending reminder:", err)
-      toast.error("שגיאה בשליחת הבקשה")
-    } finally {
-      setSendingReminder(false)
-    }
+  const handleSendReviewReminder = () => {
+    setShowSendReviewModal(true)
   }
 
   return (
@@ -347,19 +342,25 @@ const AdminBookingActions = ({
           )}
 
           <DropdownMenuItem
-            onClick={handleSendReviewReminder}
+            onClick={existingReview ? () => setShowReviewModal(true) : handleSendReviewReminder}
             className="cursor-pointer"
-            disabled={sendingReminder}
+            disabled={!existingReview && booking.status !== "completed"}
           >
-            {sendingReminder ? (
+            {loadingReview ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                <span>שולח בקשה...</span>
+                <span>{t("common.loading")}</span>
               </>
             ) : (
               <>
                 <Mail className="mr-2 h-4 w-4" />
-                <span>{t("adminBookings.sendReviewReminder")}</span>
+                <span>
+                  {existingReview
+                    ? t("adminBookings.viewReview")
+                    : booking.reviewReminderSentAt
+                      ? t("adminBookings.resendReviewRequest")
+                      : t("adminBookings.sendReviewRequest")}
+                </span>
               </>
             )}
           </DropdownMenuItem>
@@ -422,6 +423,25 @@ const AdminBookingActions = ({
         booking={booking}
         t={t}
       />
+
+      <SendReviewDialog
+        booking={booking}
+        open={showSendReviewModal}
+        onOpenChange={setShowSendReviewModal}
+        onSent={() => {
+          refetchReview()
+          queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+        }}
+      />
+
+      {existingReview && (
+        <ReviewDetailModal
+          review={existingReview}
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          onUpdate={refetchReview}
+        />
+      )}
     </>
   )
 }

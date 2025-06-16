@@ -24,7 +24,7 @@ export class SMSService {
       
       if (!process.env.TWILIO_ACCOUNT_SID.startsWith("AC")) {
         // Only warn in production or when not using placeholder values
-        if (!this.isDevelopment || process.env.TWILIO_ACCOUNT_SID !== "your-twilio-account-sid") {
+        if (!this.isDevelopment && process.env.TWILIO_ACCOUNT_SID !== "your-twilio-account-sid") {
           logger.warn("Invalid Twilio Account SID format - must start with 'AC'")
         }
         return

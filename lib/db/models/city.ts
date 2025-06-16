@@ -23,7 +23,7 @@ const CitySchema = new Schema<ICity>(
   { timestamps: true },
 )
 
-CitySchema.index({ name: 1 })
+// Note: unique: true already creates an index, so no need for additional index
 
 const City: Model<ICity> = mongoose.models.City || mongoose.model<ICity>("City", CitySchema)
 export default City

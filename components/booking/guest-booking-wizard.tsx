@@ -454,10 +454,7 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
       selectedDurationId: bookingOptions.selectedDurationId,
       bookingDateTime,
       couponCode: bookingOptions.appliedCouponCode,
-      giftVoucherCode:
-        bookingOptions.source === "gift_voucher_redemption" && bookingOptions.selectedGiftVoucherId
-          ? voucher?.code
-          : undefined,
+      giftVoucherCode: voucher?.code,
       userSubscriptionId:
         bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
     }

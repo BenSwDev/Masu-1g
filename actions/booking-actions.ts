@@ -396,7 +396,7 @@ export async function calculateBookingPrice(
         validUntil: { $gte: new Date() },
       }).lean()) as IGiftVoucher | null
 
-      if (voucher && voucher.isActive) {
+      if (voucher && (voucher.isActive || voucher.status === "sent")) {
         priceDetails.appliedGiftVoucherId = voucher._id.toString()
 
         if (voucher.voucherType === "treatment") {
@@ -1958,7 +1958,7 @@ export async function createGuestBooking(
       if (validatedPayload.priceDetails.appliedGiftVoucherId && validatedPayload.priceDetails.voucherAppliedAmount > 0) {
         console.log("🎁 Processing gift voucher redemption...")
         const voucher = await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(mongooseDbSession)
-        if (!voucher || !voucher.isActive) throw new Error("bookings.errors.voucherRedemptionFailed")
+        if (!voucher || (!voucher.isActive && voucher.status !== "sent")) throw new Error("bookings.errors.voucherRedemptionFailed")
         
         if (
           voucher.voucherType === "treatment" &&

@@ -474,21 +474,27 @@ export function GuestSummaryStep({
 
               <Separator />
 
-              {/* Final Amount */}
-              <div className="flex justify-between text-xl font-bold">
-                <span>סכום לתשלום:</span>
-                <span className={`${calculatedPrice.finalAmount === 0 ? 'text-green-600' : 'text-primary'}`}>
-                  {formatPrice(calculatedPrice.finalAmount)}
+              {/* Final amount with emphasis if fully covered */}
+              <div className={`flex justify-between font-bold text-lg ${
+                calculatedPrice.isFullyCoveredByVoucherOrSubscription ? "text-green-600" : ""
+              }`}>
+                <span>מחיר סופי:</span>
+                <span>
+                  {calculatedPrice.isFullyCoveredByVoucherOrSubscription ? (
+                    <span className="text-green-600 font-bold">מכוסה במלואה!</span>
+                  ) : (
+                    formatPrice(calculatedPrice.finalAmount)
+                  )}
                 </span>
               </div>
 
+              {/* Fully covered message */}
               {calculatedPrice.isFullyCoveredByVoucherOrSubscription && (
-                <Alert>
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    ההזמנה מכוסה במלואה על ידי מנוי או שובר
-                  </AlertDescription>
-                </Alert>
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-green-800 text-center font-medium">
+                    🎉 הטיפול מכוסה במלואה על ידי {voucher ? "השובר" : "המנוי"}!
+                  </p>
+                </div>
               )}
             </div>
           ) : (

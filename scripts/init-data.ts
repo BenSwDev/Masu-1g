@@ -54,10 +54,10 @@ export async function initializeData() {
     await dbConnect()
     
     // Import models dynamically to avoid issues
-    const City = (await import("@/lib/db/models/city")).default
-    const CityDistance = (await import("@/lib/db/models/city-distance")).CityDistance
+    const { City, CityDistance } = await import("@/lib/db/models/city-distance")
     const User = (await import("@/lib/db/models/user")).default
     const ProfessionalProfile = (await import("@/lib/db/models/professional-profile")).default
+    const Treatment = (await import("@/lib/db/models/treatment")).default
     
     console.log("🚀 Starting data initialization...")
     
@@ -140,12 +140,14 @@ export async function initializeData() {
     if (existingProfessionalsCount === 0) {
       console.log("👨‍⚕️ Creating sample professional...")
       
-      // Get available treatments
-      const Treatment = (await import("@/lib/db/models/treatment")).default
+      // Get available treatments (we know they exist from the production DB)
       const treatments = await Treatment.find({ isActive: true }).limit(3)
       
       // Get a sample city (Tel Aviv)
       const telAvivCity = await City.findOne({ name: "תל אביב" })
+      
+      console.log(`Found ${treatments.length} treatments and city: ${telAvivCity?.name || 'not found'}`)
+      console.log("Treatment details:", treatments.map(t => ({ name: t.name, id: t._id })))
       
       if (telAvivCity && treatments.length > 0) {
         // Create sample user for professional
@@ -160,10 +162,11 @@ export async function initializeData() {
           roles: ["professional"],
           activeRole: "professional",
           isEmailVerified: true,
-          birthDate: new Date("1985-05-15")
+          dateOfBirth: new Date("1985-05-15")
         })
         
         await sampleUser.save()
+        console.log("✅ Sample user created successfully")
         
         // Create professional profile
         const professionalProfile = new ProfessionalProfile({
@@ -185,7 +188,7 @@ export async function initializeData() {
           workAreas: [{
             cityId: telAvivCity._id,
             cityName: telAvivCity.name,
-            distanceRadius: "40km",
+            distanceRadius: "40km" as const,
             coveredCities: []
           }],
           totalEarnings: 0,
@@ -202,6 +205,11 @@ export async function initializeData() {
         console.log(`✅ Created sample professional: ${sampleUser.name}`)
       } else {
         console.log("⚠️ Could not create sample professional - missing cities or treatments")
+        console.log(`Cities found: ${await City.countDocuments()}`)
+        console.log(`Treatments found: ${treatments.length}`)
+        if (treatments.length > 0) {
+          console.log("Available treatments:", treatments.map(t => t.name))
+        }
       }
     } else {
       console.log("👨‍⚕️ Professionals already exist, skipping professional creation")

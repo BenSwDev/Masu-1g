@@ -31,14 +31,13 @@ const CitySchema = new Schema<ICity>({
     type: String, 
     required: true, 
     unique: true, 
-    trim: true,
-    index: true 
+    trim: true
   },
   coordinates: {
     lat: { type: Number, required: true },
     lng: { type: Number, required: true }
   },
-  isActive: { type: Boolean, default: true, index: true }
+  isActive: { type: Boolean, default: true }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -50,17 +49,15 @@ const CityDistanceSchema = new Schema<ICityDistance>({
   fromCityId: { 
     type: Schema.Types.ObjectId, 
     ref: "City", 
-    required: true,
-    index: true 
+    required: true
   },
   toCityId: { 
     type: Schema.Types.ObjectId, 
     ref: "City", 
-    required: true,
-    index: true 
+    required: true
   },
-  fromCityName: { type: String, required: true, index: true },
-  toCityName: { type: String, required: true, index: true },
+  fromCityName: { type: String, required: true },
+  toCityName: { type: String, required: true },
   distanceKm: { type: Number, required: true, min: 0 }
 }, {
   timestamps: true,
@@ -71,6 +68,10 @@ const CityDistanceSchema = new Schema<ICityDistance>({
 // Compound indexes for better performance
 CityDistanceSchema.index({ fromCityId: 1, toCityId: 1 }, { unique: true })
 CityDistanceSchema.index({ fromCityName: 1, distanceKm: 1 })
+CityDistanceSchema.index({ fromCityId: 1 })
+CityDistanceSchema.index({ toCityId: 1 })
+CityDistanceSchema.index({ fromCityName: 1 })
+CityDistanceSchema.index({ toCityName: 1 })
 
 // Static method to find cities within distance
 CityDistanceSchema.statics.findCitiesWithinDistance = function(

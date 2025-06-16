@@ -125,15 +125,13 @@ const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
     type: Schema.Types.ObjectId, 
     ref: "User", 
     required: true, 
-    unique: true,
-    index: true 
+    unique: true
   },
   status: {
     type: String,
     enum: ["active", "pending_admin_approval", "pending_user_action", "rejected", "suspended"],
     default: "pending_admin_approval",
-    required: true,
-    index: true
+    required: true
   },
   isActive: { type: Boolean, default: true },
   

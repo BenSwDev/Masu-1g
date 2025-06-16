@@ -50,6 +50,7 @@ interface GuestInfoStepProps {
   defaultBookingForSomeoneElse?: boolean
   hideRecipientBirthGender?: boolean
   showGiftOptions?: boolean
+  lockedFields?: (keyof GuestInfo)[]
 }
 
 export function GuestInfoStep({
@@ -59,6 +60,7 @@ export function GuestInfoStep({
   defaultBookingForSomeoneElse = false,
   hideRecipientBirthGender = false,
   showGiftOptions = false,
+  lockedFields = [],
 }: GuestInfoStepProps) {
   const { t, dir, language } = useTranslation()
   const [isBookingForSomeoneElse, setIsBookingForSomeoneElse] = useState(
@@ -239,7 +241,11 @@ export function GuestInfoStep({
                     <FormItem>
                       <FormLabel>{t("guestInfo.firstName")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder={t("guestInfo.firstNamePlaceholder")} {...field} />
+                        <Input
+                          placeholder={t("guestInfo.firstNamePlaceholder")}
+                          {...field}
+                          disabled={lockedFields.includes("firstName")}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -253,7 +259,11 @@ export function GuestInfoStep({
                     <FormItem>
                       <FormLabel>{t("guestInfo.lastName")} *</FormLabel>
                       <FormControl>
-                        <Input placeholder={t("guestInfo.lastNamePlaceholder")} {...field} />
+                        <Input
+                          placeholder={t("guestInfo.lastNamePlaceholder")}
+                          {...field}
+                          disabled={lockedFields.includes("lastName")}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -271,7 +281,12 @@ export function GuestInfoStep({
                       {t("guestInfo.email")} *
                     </FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder={t("guestInfo.emailPlaceholder")} {...field} />
+                      <Input
+                        type="email"
+                        placeholder={t("guestInfo.emailPlaceholder")}
+                        {...field}
+                        disabled={lockedFields.includes("email")}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -288,7 +303,11 @@ export function GuestInfoStep({
                       {t("guestInfo.phone")} *
                     </FormLabel>
                     <FormControl>
-                      <PhoneInput {...field} placeholder={t("guestInfo.phonePlaceholder")} />
+                      <PhoneInput
+                        {...field}
+                        placeholder={t("guestInfo.phonePlaceholder")}
+                        disabled={lockedFields.includes("phone")}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -406,7 +425,11 @@ export function GuestInfoStep({
                       <FormItem>
                         <FormLabel>{t("guestInfo.recipientFirstName")} *</FormLabel>
                         <FormControl>
-                          <Input placeholder={t("guestInfo.firstNamePlaceholder")} {...field} />
+                          <Input
+                            placeholder={t("guestInfo.firstNamePlaceholder")}
+                            {...field}
+                            disabled={lockedFields.includes("recipientFirstName")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -420,7 +443,11 @@ export function GuestInfoStep({
                       <FormItem>
                         <FormLabel>{t("guestInfo.recipientLastName")} *</FormLabel>
                         <FormControl>
-                          <Input placeholder={t("guestInfo.lastNamePlaceholder")} {...field} />
+                          <Input
+                            placeholder={t("guestInfo.lastNamePlaceholder")}
+                            {...field}
+                            disabled={lockedFields.includes("recipientLastName")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -438,7 +465,12 @@ export function GuestInfoStep({
                         {t("guestInfo.recipientEmail")} *
                       </FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder={t("guestInfo.emailPlaceholder")} {...field} />
+                      <Input
+                        type="email"
+                        placeholder={t("guestInfo.emailPlaceholder")}
+                        {...field}
+                        disabled={lockedFields.includes("recipientEmail")}
+                      />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -455,7 +487,11 @@ export function GuestInfoStep({
                         {t("guestInfo.recipientPhone")} *
                       </FormLabel>
                       <FormControl>
-                        <PhoneInput {...field} placeholder={t("guestInfo.phonePlaceholder")} />
+                        <PhoneInput
+                          {...field}
+                          placeholder={t("guestInfo.phonePlaceholder")}
+                          disabled={lockedFields.includes("recipientPhone")}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -482,6 +518,7 @@ export function GuestInfoStep({
                                     "w-full pl-3 text-left font-normal",
                                     !field.value && "text-muted-foreground"
                                   )}
+                                  disabled={lockedFields.includes("recipientBirthDate")}
                                 >
                                   {field.value ? (
                                     format(field.value, "PPP", { locale: language === "he" ? he : undefined })
@@ -497,7 +534,7 @@ export function GuestInfoStep({
                                 mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                disabled={isDateDisabled}
+                                disabled={isDateDisabled || lockedFields.includes("recipientBirthDate")}
                                 initialFocus
                                 captionLayout="dropdown-buttons"
                                 fromYear={1900}
@@ -516,7 +553,11 @@ export function GuestInfoStep({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t("guestInfo.recipientGender")} *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={lockedFields.includes("recipientGender")}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder={t("guestInfo.genderPlaceholder")} />

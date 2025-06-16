@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { format } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
@@ -72,8 +72,13 @@ interface GuestAddress {
   instructions?: string // for other
 }
 
+import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import type { IUserSubscription } from "@/lib/db/models/user-subscription"
+
 interface GuestBookingWizardProps {
   initialData: BookingInitialData
+  voucher?: GiftVoucherPlain
+  userSubscription?: IUserSubscription & { treatmentId?: any }
 }
 
 const TOTAL_STEPS_WITH_PAYMENT = 6
@@ -81,19 +86,63 @@ const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 
 const TIMEZONE = "Asia/Jerusalem"
 
-export default function GuestBookingWizard({ initialData }: GuestBookingWizardProps) {
+export default function GuestBookingWizard({ initialData, voucher, userSubscription }: GuestBookingWizardProps) {
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isPriceCalculating, setIsPriceCalculating] = useState(false)
-  
-  const [guestInfo, setGuestInfoState] = useState<Partial<GuestInfo>>({})
+
+  const prefilledGuestInfo = useMemo<Partial<GuestInfo>>(() => {
+    if (voucher?.isGift && voucher.recipientName) {
+      const [first, ...rest] = voucher.recipientName.split(" ")
+      return {
+        recipientFirstName: first,
+        recipientLastName: rest.join(" "),
+        recipientPhone: voucher.recipientPhone,
+        isBookingForSomeoneElse: true,
+      }
+    }
+    if (userSubscription?.guestInfo) {
+      const [first, ...rest] = userSubscription.guestInfo.name.split(" ")
+      return {
+        firstName: first,
+        lastName: rest.join(" "),
+        email: userSubscription.guestInfo.email,
+        phone: userSubscription.guestInfo.phone,
+      }
+    }
+    return {}
+  }, [voucher, userSubscription])
+
+  const lockedFields = useMemo<(keyof GuestInfo)[]>(() => {
+    if (voucher?.isGift) {
+      return ["recipientFirstName", "recipientLastName", "recipientPhone"]
+    }
+    if (userSubscription?.guestInfo) {
+      return ["firstName", "lastName", "email", "phone"]
+    }
+    return []
+  }, [voucher, userSubscription])
+
+  const [guestInfo, setGuestInfoState] = useState<Partial<GuestInfo>>(prefilledGuestInfo)
   const [guestAddress, setGuestAddress] = useState<Partial<GuestAddress>>({})
-  const [bookingOptions, setBookingOptions] = useState<Partial<SelectedBookingOptions>>({
+  const defaultBookingOptions: Partial<SelectedBookingOptions> = {
     therapistGenderPreference: initialData.userPreferences?.therapistGender || "any",
     isFlexibleTime: false,
-    source: "new_purchase",
-  })
+    source: voucher
+      ? "gift_voucher_redemption"
+      : userSubscription
+      ? "subscription_redemption"
+      : "new_purchase",
+    selectedGiftVoucherId: voucher ? voucher._id.toString() : undefined,
+    selectedUserSubscriptionId: userSubscription ? userSubscription._id.toString() : undefined,
+    selectedTreatmentId:
+      voucher?.treatmentId?.toString() || userSubscription?.treatmentId?.toString(),
+    selectedDurationId:
+      voucher?.selectedDurationId?.toString() || userSubscription?.selectedDurationId?.toString(),
+  }
+
+  const [bookingOptions, setBookingOptions] = useState<Partial<SelectedBookingOptions>>(defaultBookingOptions)
   
   const [calculatedPrice, setCalculatedPrice] = useState<CalculatedPriceDetails | null>(null)
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
@@ -376,6 +425,12 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       selectedDurationId: bookingOptions.selectedDurationId,
       bookingDateTime,
       couponCode: bookingOptions.appliedCouponCode,
+      giftVoucherCode:
+        bookingOptions.source === "gift_voucher_redemption" && bookingOptions.selectedGiftVoucherId
+          ? voucher?.code
+          : undefined,
+      userSubscriptionId:
+        bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
     }
     
     const result = await calculateBookingPrice(payload)
@@ -447,13 +502,9 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
     setAbandonedBooking(null)
     setShowRecoveryDialog(false)
     // Reset all form state
-    setGuestInfo({})
+    setGuestInfo(prefilledGuestInfo)
     setGuestAddress({})
-    setBookingOptions({
-      therapistGenderPreference: initialData.userPreferences?.therapistGender || "any",
-      isFlexibleTime: false,
-      source: "new_purchase",
-    })
+    setBookingOptions(defaultBookingOptions)
     setCalculatedPrice(null)
     setCurrentStep(1)
   }
@@ -557,7 +608,11 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
         selectedDurationId: bookingOptions.selectedDurationId,
         bookingDateTime,
         therapistGenderPreference: bookingOptions.therapistGenderPreference || "any",
-        source: "new_purchase",
+        source: bookingOptions.source || "new_purchase",
+        redeemedUserSubscriptionId:
+          bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
+        redeemedGiftVoucherId:
+          bookingOptions.source === "gift_voucher_redemption" ? bookingOptions.selectedGiftVoucherId : undefined,
         customAddressDetails: {
           fullAddress: `${guestAddress.street} ${guestAddress.houseNumber}, ${guestAddress.city}`,
           city: guestAddress.city || "",
@@ -681,6 +736,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             guestInfo={guestInfo}
             setGuestInfo={setGuestInfo}
             onNext={handleGuestInfoSubmit}
+            lockedFields={lockedFields}
           />
         )
       case 2:

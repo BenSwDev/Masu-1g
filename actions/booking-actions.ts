@@ -2549,10 +2549,25 @@ export async function updateBookingStatusAfterPayment(
       booking.paymentDetails.transactionId = transactionId
       booking.status = "in_process" // Now in process - paid but not assigned professional
       
-      await booking.save()
-      
-      // Find suitable professionals and send SMS notifications
+      // Find suitable professionals and save to booking
       const suitableProfessionals = await findSuitableProfessionals(bookingId)
+      
+      if (suitableProfessionals.success && suitableProfessionals.professionals) {
+        // Save suitable professionals list to booking
+        booking.suitableProfessionals = suitableProfessionals.professionals.map((prof: any) => ({
+          professionalId: prof.userId._id,
+          name: prof.userId.name,
+          email: prof.userId.email,
+          phone: prof.userId.phone,
+          gender: prof.userId.gender,
+          profileId: prof._id,
+          calculatedAt: new Date()
+        }))
+        
+        console.log(`💾 Saved ${booking.suitableProfessionals.length} suitable professionals to booking ${bookingId}`)
+      }
+      
+      await booking.save()
       
       if (suitableProfessionals.success && suitableProfessionals.professionals && suitableProfessionals.professionals.length > 0) {
         console.log(`Found ${suitableProfessionals.professionals.length} suitable professionals for booking ${bookingId}`)
@@ -2678,6 +2693,59 @@ export async function findSuitableProfessionals(
   } catch (error) {
     console.error("Error finding suitable professionals:", error)
     return { success: false, error: "Failed to find suitable professionals" }
+  }
+}
+
+// Get suitable professionals for a booking from the saved list
+export async function getSuitableProfessionalsForBooking(
+  bookingId: string
+): Promise<{ success: boolean; professionals?: any[]; error?: string }> {
+  try {
+    await dbConnect()
+    
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    if (!booking.suitableProfessionals || booking.suitableProfessionals.length === 0) {
+      // If no saved list, calculate fresh
+      return await findSuitableProfessionals(bookingId)
+    }
+
+    return { 
+      success: true, 
+      professionals: booking.suitableProfessionals.map(prof => ({
+        _id: prof.professionalId.toString(),
+        name: prof.name,
+        email: prof.email,
+        phone: prof.phone,
+        gender: prof.gender,
+        profileId: prof.profileId.toString(),
+        calculatedAt: prof.calculatedAt
+      }))
+    }
+  } catch (error) {
+    console.error("Error getting suitable professionals:", error)
+    return { success: false, error: "Failed to get suitable professionals" }
+  }
+}
+
+// Send notifications to all suitable professionals
+export async function sendNotificationToSuitableProfessionals(
+  bookingId: string
+): Promise<{ success: boolean; sentCount?: number; error?: string }> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles.includes("admin")) {
+    return { success: false, error: "common.unauthorized" }
+  }
+
+  try {
+    const { sendProfessionalNotifications } = await import("@/actions/professional-sms-actions")
+    return await sendProfessionalNotifications(bookingId)
+  } catch (error) {
+    console.error("Error sending notifications to suitable professionals:", error)
+    return { success: false, error: "Failed to send notifications" }
   }
 }
 

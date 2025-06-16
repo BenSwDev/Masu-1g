@@ -93,6 +93,15 @@ export interface PopulatedBooking
   professionalId?: Pick<IUser, "_id" | "name"> | null
   priceDetails: PopulatedPriceDetails
   paymentDetails: PopulatedPaymentDetails
+  suitableProfessionals?: Array<{
+    professionalId: Types.ObjectId
+    name: string
+    email: string
+    phone?: string
+    gender?: string
+    profileId: Types.ObjectId
+    calculatedAt: Date
+  }>
   // selectedDurationId is still present from IBooking for logic, but display components might use treatmentId.durations
 }
 

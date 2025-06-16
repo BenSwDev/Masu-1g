@@ -92,6 +92,15 @@ export interface IBooking extends Document {
   createdAt: Date
   updatedAt: Date
   reviewReminderSentAt?: Date
+  suitableProfessionals?: Array<{
+    professionalId: Types.ObjectId
+    name: string
+    email: string
+    phone?: string
+    gender?: string
+    profileId: Types.ObjectId
+    calculatedAt: Date
+  }>
 }
 
 const PriceDetailsSchema = new Schema<IPriceDetails>(
@@ -212,6 +221,17 @@ const BookingSchema: Schema<IBooking> = new Schema(
       calculatedPrice: { type: Schema.Types.Mixed },
       savedAt: { type: Date },
     },
+    suitableProfessionals: [
+      {
+        professionalId: { type: Schema.Types.ObjectId, ref: "User" },
+        name: { type: String },
+        email: { type: String },
+        phone: { type: String },
+        gender: { type: String },
+        profileId: { type: Schema.Types.ObjectId, ref: "UserProfile" },
+        calculatedAt: { type: Date },
+      },
+    ],
   },
   { timestamps: true },
 )

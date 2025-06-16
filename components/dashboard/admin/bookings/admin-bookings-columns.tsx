@@ -46,6 +46,7 @@ import { assignProfessionalToBooking, getAvailableProfessionals } from "@/action
 import { sendProfessionalNotifications } from "@/actions/professional-sms-actions"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ProfessionalResponsesDialog } from "./professional-responses-dialog"
+import { SuitableProfessionalsModal } from "./suitable-professionals-modal"
 
 type TFunction = (key: string, options?: any) => string
 
@@ -203,6 +204,7 @@ const AdminBookingActions = ({
   const [sendingNotifications, setSendingNotifications] = useState(false)
   const [showResponsesModal, setShowResponsesModal] = useState(false)
   const [sendingReminder, setSendingReminder] = useState(false)
+  const [showSuitableProfessionalsModal, setShowSuitableProfessionalsModal] = useState(false)
   const queryClient = useQueryClient()
 
   if (!booking) {
@@ -302,6 +304,14 @@ const AdminBookingActions = ({
               <span>{t("adminBookings.assignEditRemoveProfessional")}</span>
             </DropdownMenuItem>
           )}
+
+          <DropdownMenuItem
+            onClick={() => setShowSuitableProfessionalsModal(true)}
+            className="cursor-pointer"
+          >
+            <User className="mr-2 h-4 w-4" />
+            <span>מטפלים אפשריים לשיוך</span>
+          </DropdownMenuItem>
 
           {canSendToProfessionals ? (
             <DropdownMenuItem
@@ -403,6 +413,14 @@ const AdminBookingActions = ({
         onOpenChange={setShowResponsesModal}
         bookingId={booking._id}
         bookingStatus={booking.status}
+      />
+
+      {/* Suitable Professionals Modal */}
+      <SuitableProfessionalsModal
+        open={showSuitableProfessionalsModal}
+        onOpenChange={setShowSuitableProfessionalsModal}
+        booking={booking}
+        t={t}
       />
     </>
   )

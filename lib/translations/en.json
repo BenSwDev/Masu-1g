@@ -208,6 +208,7 @@
       "orders": "Orders",
       "coupons": "Coupons",
       "giftVouchers": "Gift Vouchers",
+      "transactions": "[dashboard.sidebar.transactions]",
       "support": "Support",
       "settings": "Settings",
       "userMenu": {

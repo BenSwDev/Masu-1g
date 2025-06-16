@@ -368,6 +368,48 @@ export async function addProfessionalFinancialTransaction(
   }
 }
 
+// Simple list of professionals for dropdowns
+export async function getProfessionalList() {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.activeRole !== "admin") {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const professionals = await ProfessionalProfile.find({})
+      .populate('userId', 'name')
+      .select('_id userId')
+      .lean()
+
+    const list = professionals.map((p: any) => ({
+      id: p._id.toString(),
+      name: p.userId?.name || 'Unnamed'
+    }))
+
+    return { success: true, professionals: list }
+  } catch (error) {
+    console.error("Error fetching professional list:", error)
+    return { success: false, error: "Failed to fetch professionals" }
+  }
+}
+
+// Admin adjustment (credit or penalty)
+export async function adminAdjustProfessionalBalance(
+  professionalId: string,
+  amount: number,
+  note?: string
+) {
+  const type = amount >= 0 ? 'bonus' : 'penalty'
+  return addProfessionalFinancialTransaction(professionalId, {
+    type,
+    amount: Math.abs(amount),
+    description: type === 'bonus' ? 'Admin credit' : 'Admin penalty',
+    adminNote: note,
+  })
+}
+
 // Get professional financial report
 export async function getProfessionalFinancialReport(
   professionalId: string,

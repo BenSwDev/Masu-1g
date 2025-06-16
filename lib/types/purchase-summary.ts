@@ -128,4 +128,15 @@ export interface PurchaseStats {
     vouchers: number
     total: number
   }>
-} 
+}
+
+export interface DailyTransactionStats {
+  date: string
+  bookings: number
+  subscriptionPurchases: number
+  subscriptionRedemptions: number
+  voucherUsages: number
+  penalties: number
+  credits: number
+  couponUsages: number
+}

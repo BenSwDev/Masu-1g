@@ -455,6 +455,7 @@
     "resendToClient": "שליחה חוזרת ללקוח",
     "assignEditRemoveProfessional": "הסר/ערוך/שייך מטפל",
     "sendToProfessionals": "שלח לתפוצת מטפלים",
+    "sendReviewReminder": "שלח בקשת חוות דעת",
     "cancelBooking": "ביטול הזמנה",
     "selectedTime": "זמן נבחר",
     "age": "גיל",

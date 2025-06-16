@@ -42,6 +42,12 @@ export interface PurchaseSuccessNotificationData extends BaseNotificationData {
   message: string
 }
 
+export interface ReviewReminderNotificationData extends BaseNotificationData {
+  type: "review-reminder"
+  recipientName: string
+  reviewLink: string
+}
+
 // Union type for all notification data
 export type NotificationData =
   | OTPNotificationData
@@ -49,6 +55,7 @@ export type NotificationData =
   | PasswordResetNotificationData
   | TreatmentBookingSuccessNotificationData
   | PurchaseSuccessNotificationData
+  | ReviewReminderNotificationData
 
 // Notification result interface
 export interface NotificationResult {

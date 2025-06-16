@@ -13,6 +13,7 @@ import { CheckCircle, Calendar, Clock, User, Mail, Phone, FileText, CreditCard, 
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
+import { Alert, AlertDescription } from "@/components/common/ui/alert"
 
 interface GuestInfo {
   firstName: string
@@ -403,24 +404,65 @@ export function GuestSummaryStep({
               <Skeleton className="h-6 w-1/2" />
             </div>
           ) : calculatedPrice ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex justify-between">
                 <span>מחיר בסיס:</span>
                 <span>{formatPrice(calculatedPrice.basePrice)}</span>
               </div>
-              
+
+              {/* Surcharges */}
               {calculatedPrice.surcharges && calculatedPrice.surcharges.length > 0 && (
                 <div className="space-y-2">
+                  <div className="text-sm font-medium text-orange-700">תוספות מחיר:</div>
                   {calculatedPrice.surcharges.map((surcharge, index) => (
-                    <div key={index} className="flex justify-between text-orange-600">
-                      <span>{surcharge.description || "תוספת מחיר"}:</span>
+                    <div key={index} className="flex justify-between text-orange-600 text-sm pr-4">
+                      <span>• {surcharge.description || "תוספת מחיר"}:</span>
                       <span>+{formatPrice(surcharge.amount)}</span>
                     </div>
                   ))}
+                  <div className="flex justify-between text-orange-600 font-medium border-t pt-2">
+                    <span>סה"כ תוספות:</span>
+                    <span>+{formatPrice(calculatedPrice.totalSurchargesAmount)}</span>
+                  </div>
                 </div>
               )}
 
-              {calculatedPrice.couponDiscount && calculatedPrice.couponDiscount > 0 && (
+              {/* After subscription/voucher coverage */}
+              {(calculatedPrice.isBaseTreatmentCoveredBySubscription ||
+                calculatedPrice.isBaseTreatmentCoveredByTreatmentVoucher) && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-green-600">
+                    <span>
+                      {calculatedPrice.isBaseTreatmentCoveredBySubscription
+                        ? "כוסה על ידי מנוי:"
+                        : "כוסה על ידי שובר טיפול:"}
+                    </span>
+                    <span>-{formatPrice(calculatedPrice.basePrice)}</span>
+                  </div>
+                  <div className="flex justify-between font-medium">
+                    <span>מחיר לאחר כיסוי מנוי/שובר:</span>
+                    <span>
+                      {formatPrice(
+                        calculatedPrice.treatmentPriceAfterSubscriptionOrTreatmentVoucher,
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Gift voucher application */}
+              {calculatedPrice.voucherAppliedAmount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span className="flex items-center gap-1">
+                    <Tag className="h-4 w-4" />
+                    שובר מתנה:
+                  </span>
+                  <span>-{formatPrice(calculatedPrice.voucherAppliedAmount)}</span>
+                </div>
+              )}
+
+              {/* Coupon discount */}
+              {!isRedeeming && calculatedPrice.couponDiscount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span className="flex items-center gap-1">
                     <Tag className="h-4 w-4" />
@@ -431,18 +473,22 @@ export function GuestSummaryStep({
               )}
 
               <Separator />
-              
-              <div className="flex justify-between text-lg font-semibold">
+
+              {/* Final Amount */}
+              <div className="flex justify-between text-xl font-bold">
                 <span>סכום לתשלום:</span>
-                <span className="text-primary">{formatPrice(calculatedPrice.finalAmount)}</span>
+                <span className={`${calculatedPrice.finalAmount === 0 ? 'text-green-600' : 'text-primary'}`}>
+                  {formatPrice(calculatedPrice.finalAmount)}
+                </span>
               </div>
 
-              {calculatedPrice.finalAmount === 0 && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-green-800 text-sm font-medium">
-                    ההזמנה חינמית - אין צורך בתשלום
-                  </p>
-                </div>
+              {calculatedPrice.isFullyCoveredByVoucherOrSubscription && (
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    ההזמנה מכוסה במלואה על ידי מנוי או שובר
+                  </AlertDescription>
+                </Alert>
               )}
             </div>
           ) : (

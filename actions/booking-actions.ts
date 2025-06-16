@@ -1997,6 +1997,24 @@ export async function createGuestBooking(
         console.log("✅ Coupon updated")
       }
 
+      // Handle subscription redemption for guest bookings
+      if (
+        validatedPayload.priceDetails.redeemedUserSubscriptionId &&
+        validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription
+      ) {
+        console.log("📋 Processing subscription redemption...")
+        const userSub = await UserSubscription.findById(
+          validatedPayload.priceDetails.redeemedUserSubscriptionId,
+        ).session(mongooseDbSession)
+        if (!userSub || userSub.remainingQuantity < 1 || userSub.status !== "active") {
+          throw new Error("bookings.errors.subscriptionRedemptionFailed")
+        }
+        userSub.remainingQuantity -= 1
+        if (userSub.remainingQuantity === 0) userSub.status = "depleted"
+        await userSub.save({ session: mongooseDbSession })
+        console.log("✅ Subscription updated")
+      }
+
       if (bookingResult) {
         if (bookingResult.priceDetails.finalAmount === 0) {
           bookingResult.paymentDetails.paymentStatus = "not_required"

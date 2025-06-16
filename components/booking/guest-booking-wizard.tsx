@@ -912,5 +912,3 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
     </div>
   )
 } 
-} 
-} 

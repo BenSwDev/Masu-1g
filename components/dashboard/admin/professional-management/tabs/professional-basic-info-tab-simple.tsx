@@ -6,6 +6,7 @@ import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Textarea } from "@/components/common/ui/textarea"
 import { Label } from "@/components/common/ui/label"
+import { Checkbox } from "@/components/common/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { useToast } from "@/components/common/ui/use-toast"
@@ -33,15 +34,17 @@ export default function ProfessionalBasicInfoTab({
     email: professional?.userId?.email || "",
     phone: professional?.userId?.phone || "",
     gender: professional?.userId?.gender || "male",
-    birthDate: professional?.userId?.birthDate || ""
+    birthDate: professional?.userId?.birthDate || "",
+    password: "",
+    isActive: true
   })
 
   const handleCreateProfessional = async () => {
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "נא למלא את השדות החובה: שם, אימייל וטלפון"
+        description: "נא למלא את כל השדות החובה"
       })
       return
     }
@@ -52,6 +55,8 @@ export default function ProfessionalBasicInfoTab({
       formDataToSend.append("email", formData.email)
       formDataToSend.append("phone", formData.phone)
       formDataToSend.append("gender", formData.gender)
+      formDataToSend.append("password", formData.password)
+      formDataToSend.append("isActive", String(formData.isActive))
       if (formData.birthDate) {
         formDataToSend.append("birthDate", formData.birthDate)
       }
@@ -128,6 +133,17 @@ export default function ProfessionalBasicInfoTab({
                   placeholder="הכנס מספר טלפון"
                 />
               </div>
+
+              <div>
+                <Label htmlFor="password">סיסמה *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="הכנס סיסמה"
+                />
+              </div>
               
               <div>
                 <Label htmlFor="gender">מגדר</Label>
@@ -151,12 +167,21 @@ export default function ProfessionalBasicInfoTab({
                   onChange={(e) => setFormData(prev => ({ ...prev, birthDate: e.target.value }))}
                 />
               </div>
+
+              <div className="flex items-center gap-2 md:col-span-2">
+                <Checkbox
+                  id="isActive"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: !!checked }))}
+                />
+                <Label htmlFor="isActive">פעיל</Label>
+              </div>
             </div>
             
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 onClick={handleCreateProfessional}
-                disabled={loading || !formData.name || !formData.email || !formData.phone}
+                disabled={loading || !formData.name || !formData.email || !formData.phone || !formData.password}
                 className="flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />

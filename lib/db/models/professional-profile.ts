@@ -41,6 +41,7 @@ export interface IProfessionalProfile extends Document {
   _id: mongoose.Types.ObjectId
   userId: mongoose.Types.ObjectId
   status: ProfessionalStatus
+  isActive: boolean
   
   // Professional details
   specialization?: string
@@ -115,13 +116,14 @@ const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
     unique: true,
     index: true 
   },
-  status: { 
-    type: String, 
+  status: {
+    type: String,
     enum: ["active", "pending_admin_approval", "pending_user_action", "rejected", "suspended"],
     default: "pending_admin_approval",
     required: true,
     index: true
   },
+  isActive: { type: Boolean, default: true },
   
   // Professional details
   specialization: { type: String, trim: true },

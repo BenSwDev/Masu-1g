@@ -6,6 +6,7 @@ import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Textarea } from "@/components/common/ui/textarea"
 import { Label } from "@/components/common/ui/label"
+import { Checkbox } from "@/components/common/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
@@ -77,6 +78,7 @@ export default function ProfessionalBasicInfoTab({
     phone: professional.userId.phone || "",
     gender: professional.userId.gender || "male",
     password: "",
+    isActive: true,
     specialization: professional.specialization || "",
     experience: professional.experience || "",
     bio: professional.bio || ""
@@ -154,6 +156,7 @@ export default function ProfessionalBasicInfoTab({
       formDataToSend.append("phone", formData.phone)
       formDataToSend.append("gender", formData.gender)
       formDataToSend.append("password", formData.password)
+      formDataToSend.append("isActive", String(formData.isActive))
       formDataToSend.append("specialization", formData.specialization)
       formDataToSend.append("experience", formData.experience)
       formDataToSend.append("bio", formData.bio)
@@ -263,6 +266,17 @@ export default function ProfessionalBasicInfoTab({
                     <SelectItem value="female">נקבה</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="flex items-center gap-2 md:col-span-2">
+                <Checkbox
+                  id="isActive"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) =>
+                    setFormData((prev) => ({ ...prev, isActive: !!checked }))
+                  }
+                />
+                <Label htmlFor="isActive">פעיל</Label>
               </div>
               
               <div>

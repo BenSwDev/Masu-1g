@@ -5,13 +5,14 @@ import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import mongoose from "mongoose"
 import { revalidatePath } from "next/cache"
-import ProfessionalProfile, { 
-  type IProfessionalProfile, 
+import ProfessionalProfile, {
+  type IProfessionalProfile,
   type ProfessionalStatus,
   type ITreatmentPricing,
   type IWorkArea,
   type IFinancialTransaction
 } from "@/lib/db/models/professional-profile"
+import bcrypt from "bcryptjs"
 import User from "@/lib/db/models/user"
 import Booking from "@/lib/db/models/booking"
 import Treatment from "@/lib/db/models/treatment"
@@ -32,9 +33,12 @@ export async function createProfessional(formData: FormData) {
     const phone = formData.get("phone") as string
     const gender = formData.get("gender") as string || "male"
     const birthDate = formData.get("birthDate") as string
+    const password = formData.get("password") as string | null
+    const isActiveStr = formData.get("isActive") as string | null
+    const isActive = isActiveStr ? isActiveStr === "true" || isActiveStr === "on" : true
 
-    if (!name || !email || !phone) {
-      return { success: false, error: "Name, email and phone are required" }
+    if (!name || !email || !phone || !password) {
+      return { success: false, error: "Name, email, phone and password are required" }
     }
 
     // Check if user already exists
@@ -43,15 +47,19 @@ export async function createProfessional(formData: FormData) {
       return { success: false, error: "User with this email already exists" }
     }
 
-    // Create user account without password (will need to set password later via email/reset)
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // Create user account
     const userData: any = {
       name,
       email,
       phone,
+      password: hashedPassword,
       gender,
       roles: ["professional"],
       activeRole: "professional",
-      isEmailVerified: false // Will need to verify email to set password
+      isEmailVerified: false
     }
 
     if (birthDate) {
@@ -67,6 +75,7 @@ export async function createProfessional(formData: FormData) {
       status: "pending_user_action", // User needs to complete setup
       treatments: [],
       workAreas: [],
+      isActive,
       adminNotes: "Created by admin - user needs to complete setup"
     })
 

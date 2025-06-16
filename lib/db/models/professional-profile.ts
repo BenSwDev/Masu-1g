@@ -256,27 +256,31 @@ ProfessionalProfileSchema.statics.findSuitableForBooking = function(
   genderPreference?: string,
   durationId?: string
 ) {
+  // Build comprehensive query with ALL required criteria
   const query: any = {
+    // Professional must be active in our system AND in their profile
     status: 'active',
     isActive: true,
+    // Professional must offer this specific treatment
     'treatments.treatmentId': new mongoose.Types.ObjectId(treatmentId)
   }
   
-  // Add city coverage check
+  // Add city coverage check - professional must cover this city
   query.$or = [
     { 'workAreas.cityName': cityName },
     { 'workAreas.coveredCities': cityName }
   ]
   
+  // Build query with proper population
   let professionalQuery = this.find(query)
-    .populate('userId', 'name email phone gender')
+    .populate({
+      path: 'userId',
+      select: 'name email phone gender roles',
+      // CRITICAL: Only users with professional role
+      match: { roles: 'professional' }
+    })
     .populate('treatments.treatmentId')
     .populate('workAreas.cityId')
-  
-  // Filter by gender preference if specified
-  if (genderPreference && genderPreference !== 'any') {
-    // We'll filter this after the query since it's in the populated user data
-  }
   
   return professionalQuery
 }

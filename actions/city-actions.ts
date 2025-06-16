@@ -108,3 +108,78 @@ export async function updateCity(cityId: string, formData: FormData) {
     const isActive = formData.get("isActive") === "true"
 
     if (!name || isNaN(lat) || isNaN(lng)) {
+      return { success: false, message: "missingFields" }
+    }
+
+    // Validate coordinates are within Israel bounds (approximately)
+    if (lat < 29.0 || lat > 33.5 || lng < 34.0 || lng > 36.0) {
+      return { success: false, message: "coordinatesOutOfBounds" }
+    }
+
+    const city = await City.findById(cityId)
+    if (!city) {
+      return { success: false, message: "cityNotFound" }
+    }
+
+    // Check if another city with the same name exists (excluding current)
+    const existing = await City.findOne({ 
+      name, 
+      _id: { $ne: cityId } 
+    }).lean()
+    if (existing) {
+      return { success: false, message: "cityExists" }
+    }
+
+    city.name = name
+    city.coordinates = { lat, lng }
+    city.isActive = isActive
+    await city.save()
+
+    // Recalculate distances if coordinates changed
+    const coordsChanged = city.coordinates.lat !== lat || city.coordinates.lng !== lng
+    if (coordsChanged) {
+      console.log("Recalculating distances for updated city:", name)
+      await (City as any).calculateDistancesForNewCity(cityId)
+    }
+
+    revalidatePath("/dashboard/admin/cities")
+
+    return { success: true }
+  } catch (err) {
+    console.error("Error in updateCity:", err)
+    return { success: false, message: "updateFailed" }
+  }
+}
+
+export async function deleteCity(cityId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || session.user.activeRole !== "admin") {
+      return { success: false, message: "notAuthorized" }
+    }
+
+    await dbConnect()
+
+    const city = await City.findById(cityId)
+    if (!city) {
+      return { success: false, message: "cityNotFound" }
+    }
+
+    await City.findByIdAndDelete(cityId)
+
+    // Clean up distance records
+    await (City as any).deleteMany({
+      $or: [
+        { fromCityId: cityId },
+        { toCityId: cityId }
+      ]
+    })
+
+    revalidatePath("/dashboard/admin/cities")
+
+    return { success: true }
+  } catch (err) {
+    console.error("Error in deleteCity:", err)
+    return { success: false, message: "deleteFailed" }
+  }
+}

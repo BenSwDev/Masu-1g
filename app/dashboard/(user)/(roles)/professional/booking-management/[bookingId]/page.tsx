@@ -188,7 +188,7 @@ export default function ProfessionalBookingManagementPage() {
   const clientEmail = booking.userId?.email || t("common.notAvailable")
 
   const renderActionButtons = () => {
-    if (booking.status === "pending_professional_assignment") {
+    if (booking.status === "in_process") {
       return (
         <Button onClick={handleAcceptBooking} disabled={actionLoading} className="w-full">
           <CheckCircle2 className="mr-2 h-4 w-4" /> {t("professionalBookingManagement.actions.acceptBooking")}
@@ -198,16 +198,14 @@ export default function ProfessionalBookingManagementPage() {
     if (isAssignedToCurrentPro) {
       if (booking.status === "confirmed") {
         return (
-          <Button onClick={handleMarkEnRoute} disabled={actionLoading} className="w-full">
-            <Send className="mr-2 h-4 w-4" /> {t("professionalBookingManagement.actions.markEnRoute")}
-          </Button>
-        )
-      }
-      if (booking.status === "professional_en_route") {
-        return (
-          <Button onClick={handleMarkCompleted} disabled={actionLoading} className="w-full">
-            <Check className="mr-2 h-4 w-4" /> {t("professionalBookingManagement.actions.markCompleted")}
-          </Button>
+          <div className="space-y-2 w-full">
+            <Button onClick={handleMarkEnRoute} disabled={actionLoading} className="w-full">
+              <Send className="mr-2 h-4 w-4" /> {t("professionalBookingManagement.actions.markEnRoute")}
+            </Button>
+            <Button onClick={handleMarkCompleted} disabled={actionLoading} className="w-full">
+              <Check className="mr-2 h-4 w-4" /> {t("professionalBookingManagement.actions.markCompleted")}
+            </Button>
+          </div>
         )
       }
     }
@@ -284,7 +282,7 @@ export default function ProfessionalBookingManagementPage() {
             </div>
           )}
 
-          {booking.status === "pending_professional_assignment" && !isAssignedToCurrentPro && (
+          {booking.status === "in_process" && !isAssignedToCurrentPro && (
             <Alert>
               <Hourglass className="h-4 w-4" />
               <AlertTitle>{t("professionalBookingManagement.status.pendingAssignment.title")}</AlertTitle>

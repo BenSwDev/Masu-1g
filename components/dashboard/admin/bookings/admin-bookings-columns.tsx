@@ -203,9 +203,9 @@ const AdminBookingActions = ({
     return <div className="text-sm text-muted-foreground">-</div>
   }
 
-  const canAssignProfessional = !booking.professionalId && !["completed", "cancelled_by_user", "cancelled_by_admin", "no_show"].includes(booking.status)
+  const canAssignProfessional = !booking.professionalId && !["completed", "cancelled", "refunded"].includes(booking.status)
   const hasNotes = booking.notes && booking.notes.trim().length > 0
-  const canCancel = !["completed", "cancelled_by_user", "cancelled_by_admin"].includes(booking.status)
+  const canCancel = !["completed", "cancelled", "refunded"].includes(booking.status)
 
   const handleDropdownClick = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent row click when clicking dropdown
@@ -313,23 +313,28 @@ const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }
   }
 
   const statusConfig: Record<string, { variant: "secondary" | "destructive"; color: string }> = {
-    pending: { variant: "secondary" as const, color: "bg-yellow-100 text-yellow-800" },
-    pending_professional_assignment: { variant: "secondary" as const, color: "bg-yellow-100 text-yellow-800" },
-    confirmed: { variant: "secondary" as const, color: "bg-blue-100 text-blue-800" },
-    in_progress: { variant: "secondary" as const, color: "bg-purple-100 text-purple-800" },
-    professional_en_route: { variant: "secondary" as const, color: "bg-blue-100 text-blue-800" },
+    pending_payment: { variant: "secondary" as const, color: "bg-yellow-100 text-yellow-800" },
+    in_process: { variant: "secondary" as const, color: "bg-blue-100 text-blue-800" },
+    confirmed: { variant: "secondary" as const, color: "bg-green-100 text-green-800" },
     completed: { variant: "secondary" as const, color: "bg-green-100 text-green-800" },
-    cancelled_by_user: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
-    cancelled_by_admin: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
-    no_show: { variant: "destructive" as const, color: "bg-orange-100 text-orange-800" },
-    abandoned_pending_payment: { variant: "secondary" as const, color: "bg-gray-100 text-gray-800" },
+    cancelled: { variant: "destructive" as const, color: "bg-red-100 text-red-800" },
+    refunded: { variant: "secondary" as const, color: "bg-purple-100 text-purple-800" },
   }
 
-  const config = statusConfig[status] || statusConfig.pending
+  const config = statusConfig[status] || statusConfig.pending_payment
+
+  const statusLabels: Record<string, string> = {
+    pending_payment: "ממתין לתשלום",
+    in_process: "בטיפול",
+    confirmed: "מאושר",
+    completed: "הושלם",
+    cancelled: "בוטל",
+    refunded: "הוחזר",
+  }
 
   return (
     <Badge variant={config.variant} className={config.color}>
-      {t(`bookings.status.${status}`)}
+      {statusLabels[status] || status}
     </Badge>
   )
 }

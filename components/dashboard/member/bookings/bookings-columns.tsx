@@ -165,7 +165,7 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
   const [showNotesModal, setShowNotesModal] = useState(false)
 
   const canCancel = useMemo(() => {
-    const cancelableStatuses = ["pending_professional_assignment", "confirmed", "professional_en_route"]
+    const cancelableStatuses = ["in_process", "confirmed"]
     const bookingDate = new Date(booking.bookingDateTime)
     const now = new Date()
     const hoursUntilBooking = (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60)
@@ -285,45 +285,43 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
   )
 }
 
-// Status component - clean and minimal
+// Status component - clean and minimal with customer display logic
 const BookingStatusBadge = ({ status, t }: { status: PopulatedBooking["status"]; t: TFunction }) => {
+  // Customer display logic: show "confirmed" for both "confirmed" and "in_process"
+  const getCustomerDisplayStatus = (actualStatus: string) => {
+    if (actualStatus === "in_process") {
+      return "confirmed" // Customer sees "confirmed" instead of "in_process"
+    }
+    return actualStatus
+  }
+
+  const displayStatus = getCustomerDisplayStatus(status)
+
   const statusConfig = {
-    pending_professional_assignment: {
-      label: t("memberBookings.status.pending_professional_assignment_short"),
-      className: "bg-amber-100 text-amber-800 border-amber-200"
+    pending_payment: {
+      label: "ממתין לתשלום",
+      className: "bg-yellow-100 text-yellow-800 border-yellow-200"
     },
     confirmed: {
-      label: t("memberBookings.status.confirmed_short"),
+      label: "מאושר",
       className: "bg-green-100 text-green-800 border-green-200"
     },
-    professional_en_route: {
-      label: t("memberBookings.status.professional_en_route_short"),
-      className: "bg-blue-100 text-blue-800 border-blue-200"
-    },
     completed: {
-      label: t("memberBookings.status.completed_short"),
+      label: "הושלם",
       className: "bg-gray-100 text-gray-800 border-gray-200"
     },
-    cancelled_by_user: {
-      label: t("memberBookings.status.cancelled_by_user_short"),
+    cancelled: {
+      label: "בוטל",
       className: "bg-red-100 text-red-800 border-red-200"
     },
-    cancelled_by_admin: {
-      label: t("memberBookings.status.cancelled_by_admin_short"),
-      className: "bg-red-100 text-red-800 border-red-200"
-    },
-    no_show: {
-      label: t("memberBookings.status.no_show_short"),
-      className: "bg-orange-100 text-orange-800 border-orange-200"
-    },
-    abandoned_pending_payment: {
-      label: t("memberBookings.status.abandoned_pending_payment_short") || "ננטש - ממתין לתשלום",
-      className: "bg-gray-100 text-gray-800 border-gray-200"
+    refunded: {
+      label: "הוחזר",
+      className: "bg-purple-100 text-purple-800 border-purple-200"
     }
   } as const
 
-  const config = statusConfig[status as keyof typeof statusConfig] || {
-    label: status || t("common.status.unknown"),
+  const config = statusConfig[displayStatus as keyof typeof statusConfig] || {
+    label: displayStatus || t("common.status.unknown"),
     className: "bg-gray-100 text-gray-800 border-gray-200"
   }
 

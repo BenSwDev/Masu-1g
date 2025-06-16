@@ -90,13 +90,12 @@ export default function ComprehensiveBookingEditModal({
 
   const getStatusBadgeColor = (status: string) => {
     const statusColors = {
+      pending_payment: "bg-yellow-100 text-yellow-800",
+      in_process: "bg-blue-100 text-blue-800",
       confirmed: "bg-green-100 text-green-800",
-      pending_professional_assignment: "bg-yellow-100 text-yellow-800",
-      professional_en_route: "bg-blue-100 text-blue-800",
       completed: "bg-gray-100 text-gray-800",
-      cancelled_by_user: "bg-red-100 text-red-800",
-      cancelled_by_admin: "bg-red-100 text-red-800",
-      no_show: "bg-orange-100 text-orange-800",
+      cancelled: "bg-red-100 text-red-800",
+      refunded: "bg-purple-100 text-purple-800",
     }
     return statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"
   }
@@ -254,13 +253,12 @@ export default function ComprehensiveBookingEditModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="confirmed">{t("adminBookings.status.confirmed")}</SelectItem>
-                        <SelectItem value="pending_professional_assignment">{t("adminBookings.status.pendingAssignment")}</SelectItem>
-                        <SelectItem value="professional_en_route">{t("adminBookings.status.enRoute")}</SelectItem>
-                        <SelectItem value="completed">{t("adminBookings.status.completed")}</SelectItem>
-                        <SelectItem value="cancelled_by_user">{t("adminBookings.status.cancelledByUser")}</SelectItem>
-                        <SelectItem value="cancelled_by_admin">{t("adminBookings.status.cancelledByAdmin")}</SelectItem>
-                        <SelectItem value="no_show">{t("adminBookings.status.noShow")}</SelectItem>
+                        <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
+                        <SelectItem value="in_process">בטיפול</SelectItem>
+                        <SelectItem value="confirmed">מאושר</SelectItem>
+                        <SelectItem value="completed">הושלם</SelectItem>
+                        <SelectItem value="cancelled">בוטל</SelectItem>
+                        <SelectItem value="refunded">הוחזר</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

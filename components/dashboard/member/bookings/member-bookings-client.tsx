@@ -197,27 +197,11 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">{t("memberBookings.allStatuses")}</SelectItem>
-                          <SelectItem value="pending_professional_assignment">
-                            {t("adminBookings.status.pendingAssignment")}
-                          </SelectItem>
-                          <SelectItem value="confirmed">
-                            {t("adminBookings.status.confirmed")}
-                          </SelectItem>
-                          <SelectItem value="en_route">
-                            {t("adminBookings.status.enRoute")}
-                          </SelectItem>
-                          <SelectItem value="completed">
-                            {t("adminBookings.status.completed")}
-                          </SelectItem>
-                          <SelectItem value="cancelled_by_user">
-                            {t("adminBookings.status.cancelledByUser")}
-                          </SelectItem>
-                          <SelectItem value="cancelled_by_admin">
-                            {t("adminBookings.status.cancelledByAdmin")}
-                          </SelectItem>
-                          <SelectItem value="no_show">
-                            {t("adminBookings.status.noShow")}
-                          </SelectItem>
+                          <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
+                          <SelectItem value="confirmed">מאושר</SelectItem>
+                          <SelectItem value="completed">הושלם</SelectItem>
+                          <SelectItem value="cancelled">בוטל</SelectItem>
+                          <SelectItem value="refunded">הוחזר</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

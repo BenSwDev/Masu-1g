@@ -561,6 +561,11 @@
         "pending": "[admin.professionals.statuses.pending]",
         "incomplete": "[admin.professionals.statuses.incomplete]",
         "rejected": "[admin.professionals.statuses.rejected]"
+      },
+      "dialog": {
+        "title": "[admin.professionals.dialog.title]",
+        "statusLabel": "[admin.professionals.dialog.statusLabel]",
+        "numberLabel": "[admin.professionals.dialog.numberLabel]"
       }
     },
     "cities": {
@@ -1185,6 +1190,8 @@
       "completed_short": "[memberBookings.status.completed_short]",
       "confirmed": "[memberBookings.status.confirmed]",
       "confirmed_short": "[memberBookings.status.confirmed_short]",
+      "confirmed_professional_assigned": "[memberBookings.status.confirmed_professional_assigned]",
+      "confirmed_professional_assigned_short": "[memberBookings.status.confirmed_professional_assigned_short]",
       "no_show": "[memberBookings.status.no_show]",
       "no_show_short": "[memberBookings.status.no_show_short]",
       "pending_professional_assignment": "[memberBookings.status.pending_professional_assignment]",

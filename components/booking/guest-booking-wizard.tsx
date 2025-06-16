@@ -105,6 +105,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
   const [abandonedBooking, setAbandonedBooking] = useState<any>(null)
+  const [pendingBookingId, setPendingBookingId] = useState<string | null>(null) // Track pending booking ID
 
   const { toast } = useToast()
 
@@ -577,8 +578,9 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
 
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1))
 
-  const handleFinalSubmit = async (skipPaymentUI = false) => {
-    console.log("🔄 Starting guest booking submission...")
+  // Create booking before payment
+  const createPendingBooking = async () => {
+    console.log("🔄 Creating pending booking...")
     
     if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.phone) {
       console.log("❌ Missing guest info:", { guestInfo })
@@ -587,7 +589,7 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
         title: t("bookings.errors.missingGuestInfo"),
         description: t("bookings.errors.completeGuestInfo"),
       })
-      return
+      return null
     }
 
     if (
@@ -601,10 +603,8 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
         title: t("bookings.errors.incompleteBookingDetails"),
         description: t("bookings.errors.completeAllFields"),
       })
-      return
+      return null
     }
-
-    setIsLoading(true)
 
     try {
       const bookingDateTime = new Date(bookingOptions.bookingDate)
@@ -662,7 +662,54 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
       console.log("📨 Server response:", result)
       
       if (result.success && result.booking) {
-        console.log("✅ Booking created successfully:", result.booking)
+        console.log("✅ Pending booking created successfully:", result.booking)
+        setPendingBookingId(result.booking._id.toString())
+        return result.booking._id.toString()
+      } else {
+        console.log("❌ Booking creation failed:", result)
+        toast({
+          variant: "destructive",
+          title: t(result.error || "bookings.errors.bookingFailedTitle") || result.error || "Booking failed",
+          description: result.issues
+            ? result.issues.map((issue) => issue.message).join(", ")
+            : t(result.error || "bookings.errors.bookingFailedTitle"),
+        })
+        return null
+      }
+    } catch (error) {
+      console.error("💥 Booking creation error:", error)
+      toast({
+        variant: "destructive",
+        title: t("bookings.errors.unexpectedError"),
+        description: t("bookings.errors.tryAgain"),
+      })
+      return null
+    }
+  }
+
+  // Handle final confirmation after successful payment
+  const handleFinalSubmit = async () => {
+    console.log("🔄 Finalizing booking after payment...")
+    
+    if (!pendingBookingId) {
+      console.log("❌ No pending booking ID found")
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      // Import the updateBookingStatusAfterPayment function
+      const { updateBookingStatusAfterPayment } = await import("@/actions/booking-actions")
+      
+      const result = await updateBookingStatusAfterPayment(
+        pendingBookingId,
+        "success",
+        `DEMO-${Date.now()}` // Demo transaction ID
+      )
+      
+      if (result.success && result.booking) {
+        console.log("✅ Booking status updated successfully:", result.booking)
         setBookingResult(result.booking)
         setCurrentStep(CONFIRMATION_STEP_NUMBER)
         
@@ -676,17 +723,15 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
           description: t("bookings.success.bookingCreatedDescription"),
         })
       } else {
-        console.log("❌ Booking failed:", result)
+        console.log("❌ Booking status update failed:", result)
         toast({
           variant: "destructive",
-          title: t(result.error || "bookings.errors.bookingFailedTitle") || result.error || "Booking failed",
-          description: result.issues
-            ? result.issues.map((issue) => issue.message).join(", ")
-            : t(result.error || "bookings.errors.bookingFailedTitle"),
+          title: "שגיאה בעדכון ההזמנה",
+          description: result.error || "לא ניתן לעדכן את סטטוס ההזמנה",
         })
       }
     } catch (error) {
-      console.error("💥 Booking submission error:", error)
+      console.error("💥 Booking finalization error:", error)
       toast({
         variant: "destructive",
         title: t("bookings.errors.unexpectedError"),
@@ -761,6 +806,8 @@ export default function GuestBookingWizard({ initialData }: GuestBookingWizardPr
             onConfirm={handleFinalSubmit}
             onPrev={prevStep}
             isLoading={isLoading}
+            createPendingBooking={createPendingBooking}
+            pendingBookingId={pendingBookingId}
           />
         )
       case 7:

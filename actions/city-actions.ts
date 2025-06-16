@@ -27,7 +27,15 @@ export async function getCities(page = 1, limit = 10, searchTerm = "") {
 
     return {
       success: true,
-      cities: cities.map((c) => ({ ...c, id: c._id.toString() })),
+      cities: cities.map((c) => ({
+        id: c._id.toString(),
+        name: c.name,
+        isActive: c.isActive,
+        coordinates: {
+          lat: c.coordinates.lat,
+          lng: c.coordinates.lng,
+        },
+      })),
       totalPages: Math.ceil(total / limit),
     }
   } catch (err) {

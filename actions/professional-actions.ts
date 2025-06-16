@@ -188,12 +188,14 @@ export async function getProfessionals(params?: {
 
     return {
       success: true,
-      professionals,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
+      data: {
+        professionals,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
       }
     }
   } catch (error) {
@@ -403,7 +405,7 @@ export async function getProfessionalList() {
       name: p.userId?.name || 'Unnamed'
     }))
 
-    return { success: true, professionals: list }
+    return { success: true, data: { professionals: list } }
   } catch (error) {
     console.error("Error fetching professional list:", error)
     return { success: false, error: "Failed to fetch professionals" }

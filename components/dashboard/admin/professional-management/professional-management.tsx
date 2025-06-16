@@ -98,8 +98,8 @@ export function ProfessionalManagement({
       })
 
       if (result.success) {
-        setProfessionals(result.professionals || [])
-        setPagination(result.pagination || pagination)
+        setProfessionals(result.data?.professionals || [])
+        setPagination(result.data?.pagination || pagination)
       } else {
         toast({
           variant: "destructive",

@@ -37,12 +37,12 @@ export default function AdminTransactionsClient() {
     load()
   }, [])
 
-  const openModal = async () => {
-    const res = await getProfessionalList()
-    if (res.success && res.professionals) {
-      setProfessionals(res.professionals)
-      setModalOpen(true)
-    } else {
+    const openModal = async () => {
+      const res = await getProfessionalList()
+      if (res.success && res.data?.professionals) {
+        setProfessionals(res.data.professionals)
+        setModalOpen(true)
+      } else {
       toast({ title: "שגיאה", description: res.error || "" , variant: "destructive" })
     }
   }

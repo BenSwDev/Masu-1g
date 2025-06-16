@@ -48,8 +48,8 @@ export default async function AdminDashboardPage() {
       : []
   const weekly = weeklyRes.success && weeklyRes.data ? weeklyRes.data : []
   const pendingProfessionals =
-    pendingProsRes.success && pendingProsRes.professionals
-      ? pendingProsRes.professionals
+    pendingProsRes.success && pendingProsRes.data?.professionals
+      ? pendingProsRes.data.professionals
       : []
 
   return (
@@ -80,7 +80,7 @@ export default async function AdminDashboardPage() {
             <CardContent>
               <PurchaseHistoryTable
                 transactions={transactions}
-                isLoading={!transactionsRes.success}
+                isLoading={false}
                 showCustomerInfo={true}
               />
             </CardContent>

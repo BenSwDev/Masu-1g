@@ -34,7 +34,6 @@ interface Professional {
   approvedAt?: string
   rejectedAt?: string
   lastActiveAt?: string
-  bookings?: any[]
 }
 
 interface PaginationInfo {
@@ -166,8 +165,7 @@ export function ProfessionalManagement({
       appliedAt: new Date().toISOString(),
       approvedAt: "",
       rejectedAt: "",
-      lastActiveAt: "",
-      bookings: []
+      lastActiveAt: ""
     }
     
     setSelectedProfessional(newProfessional)
@@ -395,14 +393,17 @@ export function ProfessionalManagement({
                   >
                     <TableCell>
                       <div>
-                        <div className="font-medium">{professional.userId.name}</div>
-                        <div className="text-sm text-muted-foreground">{professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}</div>
+                        <div className="font-medium">{professional.userId?.name || 'לא זמין'}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {professional.userId?.gender === 'male' ? 'זכר' : 
+                           professional.userId?.gender === 'female' ? 'נקבה' : 'לא צוין'}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="text-sm">{professional.userId.email}</div>
-                        <div className="text-sm text-muted-foreground">{professional.userId.phone}</div>
+                        <div className="text-sm">{professional.userId?.email || 'לא זמין'}</div>
+                        <div className="text-sm text-muted-foreground">{professional.userId?.phone || 'לא זמין'}</div>
                       </div>
                     </TableCell>
                     <TableCell>

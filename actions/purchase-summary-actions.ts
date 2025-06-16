@@ -839,20 +839,7 @@ export async function getWeeklyAdminTransactionStats() {
       if (days[key]) days[key].subscriptionPurchases += 1
     })
 
-    const professionals = await ProfessionalProfile.find({
-      'financialTransactions.date': { $gte: start, $lt: end }
-    }, { financialTransactions: 1 }).lean()
-    professionals.forEach(p => {
-      p.financialTransactions?.forEach((t: any) => {
-        const d = new Date(t.date)
-        if (d >= start && d < end) {
-          const key = d.toISOString().slice(0, 10)
-          if (!days[key]) return
-          if (t.type === 'penalty') days[key].penalties += 1
-          if (t.type === 'bonus' || t.type === 'adjustment') days[key].credits += 1
-        }
-      })
-    })
+    // Note: Professional financial transactions have been removed from the system
 
     const summary = Object.values(days)
     return { success: true, data: summary }

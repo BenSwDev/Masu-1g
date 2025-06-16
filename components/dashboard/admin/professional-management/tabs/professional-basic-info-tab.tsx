@@ -92,15 +92,22 @@ export default function ProfessionalBasicInfoTab({
       return
     }
 
+    if (!createFormData.birthDate) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "תאריך לידה נדרש"
+      })
+      return
+    }
+
     try {
       const formDataToSend = new FormData()
       formDataToSend.append("name", createFormData.name)
       formDataToSend.append("email", createFormData.email)
       formDataToSend.append("phone", createFormData.phone)
       formDataToSend.append("gender", createFormData.gender)
-      if (createFormData.birthDate) {
-        formDataToSend.append("birthDate", createFormData.birthDate)
-      }
+      formDataToSend.append("birthDate", createFormData.birthDate)
 
       const { createProfessional } = await import("@/actions/professional-actions")
       const result = await createProfessional(formDataToSend)
@@ -112,18 +119,19 @@ export default function ProfessionalBasicInfoTab({
         })
         onUpdate(result.professional as unknown as Professional)
       } else {
+        // חלון שגיאה מפורט כפי שביקש המשתמש
         toast({
           variant: "destructive",
-          title: "שגיאה",
-          description: result.error || "שגיאה ביצירת המטפל"
+          title: "יצירת המטפל נכשלה",
+          description: result.error || "אירעה שגיאה לא צפויה. אנא נסה שוב או פנה למנהל המערכת.",
         })
       }
     } catch (error) {
       console.error("Error creating professional:", error)
       toast({
         variant: "destructive",
-        title: "שגיאה",
-        description: "שגיאה ביצירת המטפל"
+        title: "יצירת המטפל נכשלה",
+        description: "אירעה שגיאה בחיבור לשרת. אנא בדוק את חיבור האינטרנט ונסה שוב.",
       })
     }
   }
@@ -319,12 +327,13 @@ export default function ProfessionalBasicInfoTab({
               </div>
 
               <div>
-                <Label htmlFor="birthDate">תאריך לידה</Label>
+                <Label htmlFor="birthDate">תאריך לידה *</Label>
                 <Input
                   id="birthDate"
                   type="date"
                   value={createFormData.birthDate}
                   onChange={(e) => setCreateFormData(prev => ({ ...prev, birthDate: e.target.value }))}
+                  required
                 />
               </div>
 
@@ -333,7 +342,7 @@ export default function ProfessionalBasicInfoTab({
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 onClick={handleCreateProfessional}
-                disabled={loading || !createFormData.name || !createFormData.email || !createFormData.phone}
+                disabled={loading || !createFormData.name || !createFormData.email || !createFormData.phone || !createFormData.birthDate}
                 className="flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />

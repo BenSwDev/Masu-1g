@@ -42,6 +42,9 @@ export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "
     case "purchase-success":
       return data.message + smsSignature
 
+    case "review-reminder":
+      return getReviewReminderSmsTemplate(data, language)
+
     case "professional-booking-notification":
       return getProfessionalBookingNotificationSmsTemplate(data, language)
 
@@ -248,4 +251,20 @@ function getTreatmentBookingSuccessSmsTemplate(data: any, language: SMSLanguage)
       return message + smsSignature
     }
   }
+}
+
+function getReviewReminderSmsTemplate(data: any, language: SMSLanguage): string {
+  const reviewLink = data.reviewLink
+  let message: string
+  switch (language) {
+    case "he":
+      message = `שלום ${data.recipientName}, נשמח אם תדרג/י את הטיפול שקיבלת. שלחו לנו חוות דעת בקישור: ${reviewLink}`
+      break
+    case "ru":
+      message = `Здравствуйте, ${data.recipientName}! Мы будем рады вашему отзыву о полученной услуге: ${reviewLink}`
+      break
+    default:
+      message = `Hi ${data.recipientName}, we'd love to hear your feedback about your treatment: ${reviewLink}`
+  }
+  return message + smsSignature
 }

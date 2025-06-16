@@ -11,6 +11,9 @@ import Booking, { type IBooking } from "@/lib/db/models/booking"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import User, { type IUser } from "@/lib/db/models/user"
 
+import { sendNotificationToMultiple } from "@/lib/notifications/notification-manager"
+import type { NotificationRecipient, NotificationData } from "@/lib/notifications/notification-types"
+
 import { logger } from "@/lib/logs/logger"
 import type { CreateReviewData, UpdateReviewData, ReviewFilters, PopulatedReview } from "@/types/review"
 
@@ -415,4 +418,79 @@ export async function getCompletedBookingsWithoutReviews(): Promise<{
     logger.error("Error getting completed bookings without reviews:", error)
     throw new Error("Failed to get completed bookings")
   }
-} 
+}
+
+export async function sendReviewReminder(
+  bookingId: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    const booking = await Booking.findById(bookingId).populate(
+      "userId",
+      "name email phone notificationPreferences",
+    )
+
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    if (booking.status !== "completed") {
+      return { success: false, error: "Booking not completed" }
+    }
+
+    const existingReview = await Review.findOne({ bookingId })
+    if (existingReview) {
+      return { success: false, error: "Review already exists" }
+    }
+
+    if (booking.reviewReminderSentAt) {
+      return { success: false, error: "Reminder already sent" }
+    }
+
+    const lang =
+      (booking.userId as any)?.notificationPreferences?.language || "he"
+    const recipientName = booking.recipientName || (booking.userId as any)?.name || ""
+    const reviewLink = `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${booking._id.toString()}`
+
+    const recipients: NotificationRecipient[] = []
+
+    if (booking.recipientEmail) {
+      recipients.push({ type: "email", value: booking.recipientEmail, name: recipientName, language: lang as any })
+    } else if ((booking.userId as any)?.email) {
+      recipients.push({ type: "email", value: (booking.userId as any).email, name: (booking.userId as any).name, language: lang as any })
+    }
+
+    if (booking.recipientPhone) {
+      recipients.push({ type: "phone", value: booking.recipientPhone, language: lang as any })
+    } else if ((booking.userId as any)?.phone) {
+      recipients.push({ type: "phone", value: (booking.userId as any).phone, language: lang as any })
+    }
+
+    if (recipients.length === 0) {
+      return { success: false, error: "No recipient contact" }
+    }
+
+    const data: NotificationData = {
+      type: "review-reminder",
+      recipientName,
+      reviewLink,
+    }
+
+    await sendNotificationToMultiple(recipients, data)
+
+    booking.reviewReminderSentAt = new Date()
+    await booking.save()
+    revalidatePath("/dashboard/admin/bookings")
+
+    return { success: true }
+  } catch (error) {
+    logger.error("Error sending review reminder:", error)
+    return { success: false, error: "Failed to send review reminder" }
+  }
+}

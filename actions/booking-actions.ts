@@ -1373,7 +1373,13 @@ export async function professionalMarkCompleted(
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
     revalidatePath("/dashboard/admin/bookings")
 
-    // Booking completed notifications removed as per requirements
+    try {
+      const { sendReviewReminder } = await import("@/actions/review-actions")
+      await sendReviewReminder(bookingId)
+    } catch (notifyError) {
+      logger.error("Failed to send review reminder:", notifyError)
+    }
+
 
     return { success: true, booking: booking.toObject() }
   } catch (error) {
@@ -1807,6 +1813,15 @@ export async function updateBookingByAdmin(
     }
 
     await booking.save()
+
+    if (updates.status === "completed") {
+      try {
+        const { sendReviewReminder } = await import("@/actions/review-actions")
+        await sendReviewReminder(bookingId)
+      } catch (err) {
+        logger.error("Failed to send review reminder:", err)
+      }
+    }
     
     // Revalidate relevant paths
     revalidatePath("/dashboard/admin/bookings")

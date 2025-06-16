@@ -1665,6 +1665,7 @@
     "selectProfessional": "[adminBookings.selectProfessional]",
     "selectedDuration": "[adminBookings.selectedDuration]",
     "sendToProfessionals": "[adminBookings.sendToProfessionals]",
+    "sendReviewReminder": "[adminBookings.sendReviewReminder]",
     "showingPage": "[adminBookings.showingPage]",
     "source": "[adminBookings.source]",
     "status": "[adminBookings.status]",

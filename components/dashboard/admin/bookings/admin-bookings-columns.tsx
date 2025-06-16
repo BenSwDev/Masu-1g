@@ -202,6 +202,7 @@ const AdminBookingActions = ({
   const [showAssignModal, setShowAssignModal] = useState(false)
   const [sendingNotifications, setSendingNotifications] = useState(false)
   const [showResponsesModal, setShowResponsesModal] = useState(false)
+  const [sendingReminder, setSendingReminder] = useState(false)
   const queryClient = useQueryClient()
 
   if (!booking) {
@@ -235,6 +236,26 @@ const AdminBookingActions = ({
       toast.error("שגיאה בשליחת הודעות למטפלים")
     } finally {
       setSendingNotifications(false)
+    }
+  }
+
+  const handleSendReviewReminder = async () => {
+    if (!booking._id) return
+    setSendingReminder(true)
+    try {
+      const { sendReviewReminder } = await import("@/actions/review-actions")
+      const result = await sendReviewReminder(booking._id)
+      if (result.success) {
+        toast.success("נשלחה בקשת חוות דעת")
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+      } else {
+        toast.error(result.error || "שגיאה בשליחת הבקשה")
+      }
+    } catch (err) {
+      console.error("Error sending reminder:", err)
+      toast.error("שגיאה בשליחת הבקשה")
+    } finally {
+      setSendingReminder(false)
     }
   }
 
@@ -314,6 +335,24 @@ const AdminBookingActions = ({
               <span>בדוק תגובות מטפלים</span>
             </DropdownMenuItem>
           )}
+
+          <DropdownMenuItem
+            onClick={handleSendReviewReminder}
+            className="cursor-pointer"
+            disabled={sendingReminder}
+          >
+            {sendingReminder ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <span>שולח בקשה...</span>
+              </>
+            ) : (
+              <>
+                <Mail className="mr-2 h-4 w-4" />
+                <span>{t("adminBookings.sendReviewReminder")}</span>
+              </>
+            )}
+          </DropdownMenuItem>
 
           {canCancel && (
             <DropdownMenuItem className="cursor-pointer text-red-600">

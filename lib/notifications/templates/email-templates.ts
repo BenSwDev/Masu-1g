@@ -534,6 +534,23 @@ body {
       html = wrapHtml(`<p>${data.message}</p>`, subject)
       break
 
+    case "review-reminder":
+      subject = language === "he" ? "נשמח לחוות דעתך" : language === "ru" ? "Мы будем рады вашему отзыву" : "We'd love your feedback"
+      const reviewTextContent =
+        (language === "he"
+          ? `שלום ${data.recipientName},\nנשמח אם תדרגו את הטיפול שקיבלתם בקישור הבא:\n${data.reviewLink}`
+          : language === "ru"
+            ? `Здравствуйте, ${data.recipientName}! Будем признательны за ваш отзыв о полученной услуге:\n${data.reviewLink}`
+            : `Hi ${data.recipientName}, we'd love your feedback about your treatment:\n${data.reviewLink}`) + emailTextSignature
+      const reviewHtmlContent = `
+        <p>${language === "he" ? `שלום ${data.recipientName},` : language === "ru" ? `Здравствуйте, ${data.recipientName}!` : `Hello ${data.recipientName},`}</p>
+        <p>${language === "he" ? "נשמח אם תדרג/י את הטיפול שקיבלת." : language === "ru" ? "Мы будем признательны за ваш отзыв о полученной услуге." : "We'd appreciate your feedback about the treatment you received."}</p>
+        <p style="text-align: center; margin: 20px 0;"><a href="${data.reviewLink}" class="button">${language === "he" ? "כתיבת חוות דעת" : language === "ru" ? "Оставить отзыв" : "Leave a Review"}</a></p>
+      `
+      text = reviewTextContent
+      html = wrapHtml(reviewHtmlContent, subject)
+      break
+
     default:
       subject = language === "he" ? "הודעה" : language === "ru" ? "Уведомление" : "Notification"
       const defaultTextContent =

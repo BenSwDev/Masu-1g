@@ -91,6 +91,7 @@ export interface IBooking extends Document {
   }
   createdAt: Date
   updatedAt: Date
+  reviewReminderSentAt?: Date
 }
 
 const PriceDetailsSchema = new Schema<IPriceDetails>(
@@ -202,6 +203,7 @@ const BookingSchema: Schema<IBooking> = new Schema(
     recipientBirthDate: { type: Date },
     recipientGender: { type: String, enum: ["male", "female", "other"] },
     isBookingForSomeoneElse: { type: Boolean, default: false },
+    reviewReminderSentAt: { type: Date },
     formState: {
       currentStep: { type: Number },
       guestInfo: { type: Schema.Types.Mixed },

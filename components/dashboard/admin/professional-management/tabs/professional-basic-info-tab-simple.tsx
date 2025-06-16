@@ -35,12 +35,10 @@ export default function ProfessionalBasicInfoTab({
     phone: professional?.userId?.phone || "",
     gender: professional?.userId?.gender || "male",
     birthDate: professional?.userId?.birthDate || "",
-    password: "",
-    isActive: true
   })
 
   const handleCreateProfessional = async () => {
-    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
+    if (!formData.name || !formData.email || !formData.phone) {
       toast({
         variant: "destructive",
         title: "שגיאה",
@@ -55,8 +53,6 @@ export default function ProfessionalBasicInfoTab({
       formDataToSend.append("email", formData.email)
       formDataToSend.append("phone", formData.phone)
       formDataToSend.append("gender", formData.gender)
-      formDataToSend.append("password", formData.password)
-      formDataToSend.append("isActive", String(formData.isActive))
       if (formData.birthDate) {
         formDataToSend.append("birthDate", formData.birthDate)
       }
@@ -134,16 +130,6 @@ export default function ProfessionalBasicInfoTab({
                 />
               </div>
 
-              <div>
-                <Label htmlFor="password">סיסמה *</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="הכנס סיסמה"
-                />
-              </div>
               
               <div>
                 <Label htmlFor="gender">מגדר</Label>
@@ -168,20 +154,12 @@ export default function ProfessionalBasicInfoTab({
                 />
               </div>
 
-              <div className="flex items-center gap-2 md:col-span-2">
-                <Checkbox
-                  id="isActive"
-                  checked={formData.isActive}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: !!checked }))}
-                />
-                <Label htmlFor="isActive">פעיל</Label>
-              </div>
             </div>
             
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 onClick={handleCreateProfessional}
-                disabled={loading || !formData.name || !formData.email || !formData.phone || !formData.password}
+                disabled={loading || !formData.name || !formData.email || !formData.phone}
                 className="flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />

@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { User, Stethoscope, MapPin } from "lucide-react"
-import ProfessionalBasicInfoTab from "./tabs/professional-basic-info-tab-simple"
+import ProfessionalBasicInfoTab from "./tabs/professional-basic-info-tab"
 import ProfessionalTreatmentsTab from "./tabs/professional-treatments-tab-simple"
 import ProfessionalWorkAreasTab from "./tabs/professional-work-areas-tab-simple"
 
@@ -20,15 +20,8 @@ interface Professional {
     birthDate?: string
   }
   status: string
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
   treatments: any[]
   workAreas: any[]
-  totalEarnings: number
-  pendingPayments: number
-  financialTransactions: any[]
   adminNotes?: string
   rejectionReason?: string
   appliedAt: string
@@ -57,6 +50,8 @@ export default function ProfessionalEditModal({
   const [loading, setLoading] = useState(false)
   const [professionalData, setProfessionalData] = useState<Professional>(professional)
 
+  const creationComplete = !!professionalData._id
+
   // Update professional data when prop changes
   useEffect(() => {
     setProfessionalData(professional)
@@ -83,11 +78,11 @@ export default function ProfessionalEditModal({
               <User className="w-4 h-4" />
               פרטים בסיסיים
             </TabsTrigger>
-            <TabsTrigger value="treatments" className="flex items-center gap-2">
+            <TabsTrigger value="treatments" className="flex items-center gap-2" disabled={!creationComplete}>
               <Stethoscope className="w-4 h-4" />
               טיפולים
             </TabsTrigger>
-            <TabsTrigger value="work-areas" className="flex items-center gap-2">
+            <TabsTrigger value="work-areas" className="flex items-center gap-2" disabled={!creationComplete}>
               <MapPin className="w-4 h-4" />
               איזורי פעילות
             </TabsTrigger>
@@ -104,17 +99,29 @@ export default function ProfessionalEditModal({
             </TabsContent>
 
             <TabsContent value="treatments" className="mt-0">
-              <ProfessionalTreatmentsTab
-                professional={professionalData}
-                onUpdate={handleUpdateProfessional}
-              />
+              {creationComplete ? (
+                <ProfessionalTreatmentsTab
+                  professional={professionalData}
+                  onUpdate={handleUpdateProfessional}
+                />
+              ) : (
+                <p className="p-4 text-sm text-muted-foreground">
+                  יש ליצור מטפל לפני הוספת טיפולים
+                </p>
+              )}
             </TabsContent>
 
             <TabsContent value="work-areas" className="mt-0">
-              <ProfessionalWorkAreasTab
-                professional={professionalData}
-                onUpdate={handleUpdateProfessional}
-              />
+              {creationComplete ? (
+                <ProfessionalWorkAreasTab
+                  professional={professionalData}
+                  onUpdate={handleUpdateProfessional}
+                />
+              ) : (
+                <p className="p-4 text-sm text-muted-foreground">
+                  יש ליצור מטפל לפני הגדרת איזורי פעילות
+                </p>
+              )}
             </TabsContent>
           </div>
         </Tabs>

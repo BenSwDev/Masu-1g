@@ -33,17 +33,12 @@ export async function createProfessional(formData: FormData) {
     const phone = formData.get("phone") as string
     const gender = formData.get("gender") as string || "male"
     const birthDate = formData.get("birthDate") as string
-    const password = formData.get("password") as string | null
-    const isActiveStr = formData.get("isActive") as string | null
-    const isActive = isActiveStr ? isActiveStr === "true" || isActiveStr === "on" : true
-    
-    // Professional-specific fields
-    const specialization = formData.get("specialization") as string || ""
-    const experience = formData.get("experience") as string || ""
-    const bio = formData.get("bio") as string || ""
+    const password = null
+    const status: ProfessionalStatus = "pending_admin_approval"
+    const isActive = status === "active"
 
-    if (!name || !email || !phone || !password) {
-      return { success: false, error: "שם, אימייל, טלפון וסיסמה נדרשים" }
+    if (!name || !email || !phone) {
+      return { success: false, error: "שם, אימייל וטלפון נדרשים" }
     }
 
     // Check if user already exists
@@ -52,8 +47,8 @@ export async function createProfessional(formData: FormData) {
       return { success: false, error: "משתמש עם אימייל זה כבר קיים" }
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const finalPassword = password || Math.random().toString(36).slice(-8)
+    const hashedPassword = await bcrypt.hash(finalPassword, 10)
 
     // Create user account
     const userData: any = {
@@ -77,10 +72,7 @@ export async function createProfessional(formData: FormData) {
     // Create professional profile with initial data
     const professionalProfile = new ProfessionalProfile({
       userId: user._id,
-      status: "pending_admin_approval",
-      specialization,
-      experience,
-      bio,
+      status,
       treatments: [],
       workAreas: [],
       isActive,
@@ -107,12 +99,7 @@ export async function createProfessional(formData: FormData) {
 export async function updateProfessionalProfile(
   professionalId: string,
   updates: {
-    specialization?: string
-    experience?: string
-    bio?: string
-    certifications?: string[]
     profileImage?: string
-    isActive?: boolean
   }
 ) {
   try {
@@ -129,12 +116,7 @@ export async function updateProfessionalProfile(
     }
 
     // Update only provided fields
-    if (updates.specialization !== undefined) professional.specialization = updates.specialization
-    if (updates.experience !== undefined) professional.experience = updates.experience
-    if (updates.bio !== undefined) professional.bio = updates.bio
-    if (updates.certifications !== undefined) professional.certifications = updates.certifications
     if (updates.profileImage !== undefined) professional.profileImage = updates.profileImage
-    if (updates.isActive !== undefined) professional.isActive = updates.isActive
 
     // Update last active time
     professional.lastActiveAt = new Date()
@@ -259,8 +241,7 @@ export async function getProfessionals(params?: {
           $or: [
             { "user.name": { $regex: search, $options: "i" } },
             { "user.email": { $regex: search, $options: "i" } },
-            { "user.phone": { $regex: search, $options: "i" } },
-            { specialization: { $regex: search, $options: "i" } }
+            { "user.phone": { $regex: search, $options: "i" } }
           ]
         }
       })
@@ -371,7 +352,8 @@ export async function updateProfessionalStatus(
     const updateData: any = {
       status,
       adminNotes: adminNote,
-      lastActiveAt: new Date()
+      lastActiveAt: new Date(),
+      isActive: status === "active"
     }
 
     if (status === "active" && professional.status !== "active") {

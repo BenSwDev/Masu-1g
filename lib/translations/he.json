@@ -182,6 +182,8 @@
       "noCitiesFound": "לא נמצאו ערים",
       "form": {"name": "שם העיר", "lat": "קו רוחב", "lng": "קו אורך", "active": "פעיל"},
       "table": {"name": "שם", "coordinates": "קואורדינטות", "status": "סטטוס"}
+ staging
+
     },
     "professionalSms": {
       "responsesTitle": "תגובות מטפלים להזמנה",
@@ -207,6 +209,7 @@
         "declined": "דחה",
         "expired": "פג תוקף"
       }
+ 
     }
   },
   "adminBookings": {
@@ -221,10 +224,7 @@
       "hotel": "מלון",
       "house": "בית",
       "office": "משרד",
-      "other": "אחר",
-      "${address": {
-        "addressType}": "adminBookings.addressType.${address.addressType}"
-      }
+      "other": "אחר"
     },
     "adminNotes": "הערות מנהל",
     "adminNotesPlaceholder": "הערות פנימיות למנהל...",

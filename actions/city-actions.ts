@@ -3,7 +3,7 @@
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import { City } from "@/lib/db/models/city-distance"
+import { City, CityDistance } from "@/lib/db/models/city-distance"
 import { revalidatePath } from "next/cache"
 
 export async function getCities(page = 1, limit = 10, searchTerm = "") {
@@ -130,13 +130,15 @@ export async function updateCity(cityId: string, formData: FormData) {
       return { success: false, message: "cityExists" }
     }
 
+    // Check if coordinates changed to decide if we need to recalculate distances
+    const coordsChanged = city.coordinates.lat !== lat || city.coordinates.lng !== lng
+
     city.name = name
     city.coordinates = { lat, lng }
     city.isActive = isActive
     await city.save()
 
     // Recalculate distances if coordinates changed
-    const coordsChanged = city.coordinates.lat !== lat || city.coordinates.lng !== lng
     if (coordsChanged) {
       console.log("Recalculating distances for updated city:", name)
       await (City as any).calculateDistancesForNewCity(cityId)
@@ -165,10 +167,11 @@ export async function deleteCity(cityId: string) {
       return { success: false, message: "cityNotFound" }
     }
 
+    // Delete the city
     await City.findByIdAndDelete(cityId)
 
     // Clean up distance records
-    await (City as any).deleteMany({
+    await CityDistance.deleteMany({
       $or: [
         { fromCityId: cityId },
         { toCityId: cityId }

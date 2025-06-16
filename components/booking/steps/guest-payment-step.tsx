@@ -1,49 +1,77 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Separator } from "@/components/common/ui/separator"
-import { Badge } from "@/components/common/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
-import { Alert, AlertDescription } from "@/components/common/ui/alert"
-import { Checkbox } from "@/components/common/ui/checkbox"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Loader2, CreditCard, CheckCircle, XCircle, Tag, AlertTriangle, Info, Bell, Mail, MessageSquare, Globe } from "lucide-react"
-import type { CalculatedPriceDetails } from "@/types/booking"
+import { useState, useEffect } from "react";
+import { useTranslation } from "@/lib/translations/i18n";
+import { Button } from "@/components/common/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/common/ui/card";
+import { Separator } from "@/components/common/ui/separator";
+import { Badge } from "@/components/common/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/common/ui/dialog";
+import { Alert, AlertDescription } from "@/components/common/ui/alert";
+import { Checkbox } from "@/components/common/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/common/ui/select";
+import {
+  Loader2,
+  CreditCard,
+  CheckCircle,
+  XCircle,
+  Tag,
+  AlertTriangle,
+  Info,
+  Bell,
+  Mail,
+  MessageSquare,
+  Globe,
+} from "lucide-react";
+import type { CalculatedPriceDetails } from "@/types/booking";
 
 interface GuestInfo {
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  birthDate?: Date
-  gender?: "male" | "female" | "other"
-  notes?: string
-  isBookingForSomeoneElse?: boolean
-  recipientFirstName?: string
-  recipientLastName?: string
-  recipientEmail?: string
-  recipientPhone?: string
-  recipientBirthDate?: Date
-  recipientGender?: "male" | "female" | "other"
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  birthDate?: Date;
+  gender?: "male" | "female" | "other";
+  notes?: string;
+  isBookingForSomeoneElse?: boolean;
+  recipientFirstName?: string;
+  recipientLastName?: string;
+  recipientEmail?: string;
+  recipientPhone?: string;
+  recipientBirthDate?: Date;
+  recipientGender?: "male" | "female" | "other";
   // Notification preferences
-  bookerNotificationMethod?: "email" | "sms" | "both"
-  bookerNotificationLanguage?: "he" | "en" | "ru"
-  recipientNotificationMethod?: "email" | "sms" | "both"
-  recipientNotificationLanguage?: "he" | "en" | "ru"
+  bookerNotificationMethod?: "email" | "sms" | "both";
+  bookerNotificationLanguage?: "he" | "en" | "ru";
+  recipientNotificationMethod?: "email" | "sms" | "both";
+  recipientNotificationLanguage?: "he" | "en" | "ru";
 }
 
 interface GuestPaymentStepProps {
-  calculatedPrice: CalculatedPriceDetails | null
-  guestInfo: Partial<GuestInfo>
-  setGuestInfo: (info: Partial<GuestInfo>) => void
-  onConfirm: () => void
-  onPrev: () => void
-  isLoading: boolean
-  createPendingBooking: () => Promise<string | null>
-  pendingBookingId: string | null
+  calculatedPrice: CalculatedPriceDetails | null;
+  guestInfo: Partial<GuestInfo>;
+  setGuestInfo: (info: Partial<GuestInfo>) => void;
+  onConfirm: () => void;
+  onPrev: () => void;
+  isLoading: boolean;
+  createPendingBooking?: () => Promise<string | null>;
+  pendingBookingId?: string | null;
 }
 
 export function GuestPaymentStep({
@@ -54,29 +82,33 @@ export function GuestPaymentStep({
   onPrev,
   isLoading,
   createPendingBooking,
-  pendingBookingId,
+  pendingBookingId = null,
 }: GuestPaymentStepProps) {
-  const { t, dir } = useTranslation()
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending')
-  const [countdown, setCountdown] = useState(0)
-  const [isCountingDown, setIsCountingDown] = useState(false)
-  const [marketingConsent, setMarketingConsent] = useState(true)
-  const [termsAccepted, setTermsAccepted] = useState(true)
-  
+  const { t, dir } = useTranslation();
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<
+    "pending" | "success" | "failed"
+  >("pending");
+  const [countdown, setCountdown] = useState(0);
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [marketingConsent, setMarketingConsent] = useState(true);
+  const [termsAccepted, setTermsAccepted] = useState(true);
+
   // Notification preferences state
-  const [bookerNotificationMethod, setBookerNotificationMethod] = useState<"email" | "sms" | "both">(
-    guestInfo.bookerNotificationMethod || "email"
-  )
-  const [bookerNotificationLanguage, setBookerNotificationLanguage] = useState<"he" | "en" | "ru">(
-    guestInfo.bookerNotificationLanguage || "he"
-  )
-  const [recipientNotificationMethod, setRecipientNotificationMethod] = useState<"email" | "sms" | "both">(
-    guestInfo.recipientNotificationMethod || "email"
-  )
-  const [recipientNotificationLanguage, setRecipientNotificationLanguage] = useState<"he" | "en" | "ru">(
-    guestInfo.recipientNotificationLanguage || "he"
-  )
+  const [bookerNotificationMethod, setBookerNotificationMethod] = useState<
+    "email" | "sms" | "both"
+  >(guestInfo.bookerNotificationMethod || "email");
+  const [bookerNotificationLanguage, setBookerNotificationLanguage] = useState<
+    "he" | "en" | "ru"
+  >(guestInfo.bookerNotificationLanguage || "he");
+  const [recipientNotificationMethod, setRecipientNotificationMethod] =
+    useState<"email" | "sms" | "both">(
+      guestInfo.recipientNotificationMethod || "email",
+    );
+  const [recipientNotificationLanguage, setRecipientNotificationLanguage] =
+    useState<"he" | "en" | "ru">(
+      guestInfo.recipientNotificationLanguage || "he",
+    );
 
   // Update guest info when notification preferences change
   useEffect(() => {
@@ -86,73 +118,78 @@ export function GuestPaymentStep({
       bookerNotificationLanguage,
       recipientNotificationMethod,
       recipientNotificationLanguage,
-    })
-  }, [bookerNotificationMethod, bookerNotificationLanguage, recipientNotificationMethod, recipientNotificationLanguage])
+    });
+  }, [
+    bookerNotificationMethod,
+    bookerNotificationLanguage,
+    recipientNotificationMethod,
+    recipientNotificationLanguage,
+  ]);
 
   // Countdown effect
   useEffect(() => {
-    let interval: NodeJS.Timeout
+    let interval: NodeJS.Timeout;
     if (isCountingDown && countdown > 0) {
       interval = setInterval(() => {
-        setCountdown(prev => prev - 1)
-      }, 1000)
+        setCountdown((prev) => prev - 1);
+      }, 1000);
     } else if (countdown === 0 && isCountingDown) {
-      setIsCountingDown(false)
+      setIsCountingDown(false);
     }
-    return () => clearInterval(interval)
-  }, [countdown, isCountingDown])
+    return () => clearInterval(interval);
+  }, [countdown, isCountingDown]);
 
   const formatPrice = (amount: number) => {
-    return `₪${amount.toFixed(2)}`
-  }
+    return `₪${amount.toFixed(2)}`;
+  };
 
   const handlePayNow = async () => {
-    if (isCountingDown || !termsAccepted) return
-    
+    if (isCountingDown || !termsAccepted) return;
+
     // Create pending booking if not already created
-    if (!pendingBookingId) {
-      const bookingId = await createPendingBooking()
+    if (createPendingBooking && !pendingBookingId) {
+      const bookingId = await createPendingBooking();
       if (!bookingId) {
         // Error creating booking - createPendingBooking already shows error toast
-        return
+        return;
       }
     }
-    
-    setShowPaymentModal(true)
-    setPaymentStatus('pending')
-  }
+
+    setShowPaymentModal(true);
+    setPaymentStatus("pending");
+  };
 
   const handlePaymentSuccess = () => {
-    setPaymentStatus('success')
+    setPaymentStatus("success");
     setTimeout(() => {
-      setShowPaymentModal(false)
-      onConfirm()
-    }, 1500)
-  }
+      setShowPaymentModal(false);
+      onConfirm();
+    }, 1500);
+  };
 
   const handlePaymentFailure = () => {
-    setPaymentStatus('failed')
-  }
+    setPaymentStatus("failed");
+  };
 
   const handleTryAgain = () => {
-    setShowPaymentModal(false)
-    setPaymentStatus('pending')
-    setCountdown(10)
-    setIsCountingDown(true)
-  }
+    setShowPaymentModal(false);
+    setPaymentStatus("pending");
+    setCountdown(10);
+    setIsCountingDown(true);
+  };
 
   const closeModal = () => {
-    setShowPaymentModal(false)
-    setPaymentStatus('pending')
-  }
+    setShowPaymentModal(false);
+    setPaymentStatus("pending");
+  };
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      closeModal()
+      closeModal();
     } else {
-      setShowPaymentModal(true)
+      setShowPaymentModal(true);
     }
-  }
+  };
 
   if (!calculatedPrice || calculatedPrice.finalAmount === 0) {
     return (
@@ -172,9 +209,18 @@ export function GuestPaymentStep({
               <AlertDescription className="text-sm leading-relaxed">
                 <div className="space-y-2">
                   <div className="font-medium">מדיניות ביטול:</div>
-                  <div>• ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום ההזמנה.</div>
-                  <div>• ביטול הזמנה פחות מ 24 שעות ממועד הטיפול יחוייב בדמי ביטול של 50% מסכום ההזמנה.</div>
-                  <div>• ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול מלאים של 100%.</div>
+                  <div>
+                    • ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום
+                    ההזמנה.
+                  </div>
+                  <div>
+                    • ביטול הזמנה פחות מ 24 שעות ממועד הטיפול יחוייב בדמי ביטול
+                    של 50% מסכום ההזמנה.
+                  </div>
+                  <div>
+                    • ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול
+                    מלאים של 100%.
+                  </div>
                 </div>
               </AlertDescription>
             </Alert>
@@ -185,13 +231,17 @@ export function GuestPaymentStep({
                 <Checkbox
                   id="marketing-consent"
                   checked={marketingConsent}
-                  onCheckedChange={(checked) => setMarketingConsent(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setMarketingConsent(checked as boolean)
+                  }
                 />
                 <label
                   htmlFor="marketing-consent"
                   className="text-sm leading-relaxed cursor-pointer"
                 >
-                  אני מאשר/ת קבלת דיוור של חומרים פרסומיים, הצעות ישווקיות ועדכונים באמצעי המדיה השונים, לרבות בדואר אלקטרוני SMS ו/או שיחה טלפונית
+                  אני מאשר/ת קבלת דיוור של חומרים פרסומיים, הצעות ישווקיות
+                  ועדכונים באמצעי המדיה השונים, לרבות בדואר אלקטרוני SMS ו/או
+                  שיחה טלפונית
                 </label>
               </div>
 
@@ -199,7 +249,9 @@ export function GuestPaymentStep({
                 <Checkbox
                   id="terms-accepted"
                   checked={termsAccepted}
-                  onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setTermsAccepted(checked as boolean)
+                  }
                 />
                 <label
                   htmlFor="terms-accepted"
@@ -217,22 +269,25 @@ export function GuestPaymentStep({
           <Button variant="outline" onClick={onPrev}>
             חזור
           </Button>
-          <Button onClick={async () => {
-            // Create pending booking if not already created
-            if (!pendingBookingId) {
-              const bookingId = await createPendingBooking()
-              if (!bookingId) {
-                return
+          <Button
+            onClick={async () => {
+              // Create pending booking if not already created
+              if (createPendingBooking && !pendingBookingId) {
+                const bookingId = await createPendingBooking();
+                if (!bookingId) {
+                  return;
+                }
               }
-            }
-            onConfirm()
-          }} disabled={isLoading || !termsAccepted}>
+              onConfirm();
+            }}
+            disabled={isLoading || !termsAccepted}
+          >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             אשר הזמנה
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -241,7 +296,9 @@ export function GuestPaymentStep({
         <div className="text-center">
           <CreditCard className="mx-auto h-12 w-12 text-primary mb-4" />
           <h2 className="text-2xl font-semibold tracking-tight">תשלום</h2>
-          <p className="text-muted-foreground mt-2">סיכום ההזמנה והמעבר לתשלום</p>
+          <p className="text-muted-foreground mt-2">
+            סיכום ההזמנה והמעבר לתשלום
+          </p>
         </div>
 
         {/* Order Summary */}
@@ -259,38 +316,51 @@ export function GuestPaymentStep({
                 <span>מחיר בסיס:</span>
                 <span>{formatPrice(calculatedPrice.basePrice)}</span>
               </div>
-              
+
               {/* Surcharges */}
-              {calculatedPrice.surcharges && calculatedPrice.surcharges.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-orange-700">תוספות מחיר:</div>
-                  {calculatedPrice.surcharges.map((surcharge, index) => (
-                    <div key={index} className="flex justify-between text-orange-600 text-sm pr-4">
-                      <span>• {surcharge.description || "תוספת מחיר"}:</span>
-                      <span>+{formatPrice(surcharge.amount)}</span>
+              {calculatedPrice.surcharges &&
+                calculatedPrice.surcharges.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium text-orange-700">
+                      תוספות מחיר:
                     </div>
-                  ))}
-                  <div className="flex justify-between text-orange-600 font-medium border-t pt-2">
-                    <span>סה"כ תוספות:</span>
-                    <span>+{formatPrice(calculatedPrice.totalSurchargesAmount)}</span>
+                    {calculatedPrice.surcharges.map((surcharge, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between text-orange-600 text-sm pr-4"
+                      >
+                        <span>• {surcharge.description || "תוספת מחיר"}:</span>
+                        <span>+{formatPrice(surcharge.amount)}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between text-orange-600 font-medium border-t pt-2">
+                      <span>סה"כ תוספות:</span>
+                      <span>
+                        +{formatPrice(calculatedPrice.totalSurchargesAmount)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* After subscription/voucher coverage */}
-              {(calculatedPrice.isBaseTreatmentCoveredBySubscription || calculatedPrice.isBaseTreatmentCoveredByTreatmentVoucher) && (
+              {(calculatedPrice.isBaseTreatmentCoveredBySubscription ||
+                calculatedPrice.isBaseTreatmentCoveredByTreatmentVoucher) && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-green-600">
                     <span>
-                      {calculatedPrice.isBaseTreatmentCoveredBySubscription 
-                        ? "כוסה על ידי מנוי:" 
+                      {calculatedPrice.isBaseTreatmentCoveredBySubscription
+                        ? "כוסה על ידי מנוי:"
                         : "כוסה על ידי שובר טיפול:"}
                     </span>
                     <span>-{formatPrice(calculatedPrice.basePrice)}</span>
                   </div>
                   <div className="flex justify-between font-medium">
                     <span>מחיר לאחר כיסוי מנוי/שובר:</span>
-                    <span>{formatPrice(calculatedPrice.treatmentPriceAfterSubscriptionOrTreatmentVoucher)}</span>
+                    <span>
+                      {formatPrice(
+                        calculatedPrice.treatmentPriceAfterSubscriptionOrTreatmentVoucher,
+                      )}
+                    </span>
                   </div>
                 </div>
               )}
@@ -302,7 +372,9 @@ export function GuestPaymentStep({
                     <Tag className="h-4 w-4" />
                     שובר מתנה:
                   </span>
-                  <span>-{formatPrice(calculatedPrice.voucherAppliedAmount)}</span>
+                  <span>
+                    -{formatPrice(calculatedPrice.voucherAppliedAmount)}
+                  </span>
                 </div>
               )}
 
@@ -318,11 +390,13 @@ export function GuestPaymentStep({
               )}
 
               <Separator />
-              
+
               {/* Final Amount */}
               <div className="flex justify-between text-xl font-bold">
                 <span>סכום לתשלום:</span>
-                <span className="text-primary">{formatPrice(calculatedPrice.finalAmount)}</span>
+                <span className="text-primary">
+                  {formatPrice(calculatedPrice.finalAmount)}
+                </span>
               </div>
 
               {calculatedPrice.isFullyCoveredByVoucherOrSubscription && (
@@ -352,11 +426,16 @@ export function GuestPaymentStep({
                 <Mail className="h-4 w-4" />
                 התראות עבור המזמין ({guestInfo.firstName} {guestInfo.lastName})
               </h4>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">אמצעי התראה:</label>
-                  <Select value={bookerNotificationMethod} onValueChange={(value: "email" | "sms" | "both") => setBookerNotificationMethod(value)}>
+                  <Select
+                    value={bookerNotificationMethod}
+                    onValueChange={(value: "email" | "sms" | "both") =>
+                      setBookerNotificationMethod(value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -385,7 +464,12 @@ export function GuestPaymentStep({
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">שפת ההתראה:</label>
-                  <Select value={bookerNotificationLanguage} onValueChange={(value: "he" | "en" | "ru") => setBookerNotificationLanguage(value)}>
+                  <Select
+                    value={bookerNotificationLanguage}
+                    onValueChange={(value: "he" | "en" | "ru") =>
+                      setBookerNotificationLanguage(value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -419,13 +503,19 @@ export function GuestPaymentStep({
               <div className="space-y-4 border-t pt-4">
                 <h4 className="font-medium flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  התראות עבור מקבל הטיפול ({guestInfo.recipientFirstName} {guestInfo.recipientLastName})
+                  התראות עבור מקבל הטיפול ({guestInfo.recipientFirstName}{" "}
+                  {guestInfo.recipientLastName})
                 </h4>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">אמצעי התראה:</label>
-                    <Select value={recipientNotificationMethod} onValueChange={(value: "email" | "sms" | "both") => setRecipientNotificationMethod(value)}>
+                    <Select
+                      value={recipientNotificationMethod}
+                      onValueChange={(value: "email" | "sms" | "both") =>
+                        setRecipientNotificationMethod(value)
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -454,7 +544,12 @@ export function GuestPaymentStep({
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">שפת ההתראה:</label>
-                    <Select value={recipientNotificationLanguage} onValueChange={(value: "he" | "en" | "ru") => setRecipientNotificationLanguage(value)}>
+                    <Select
+                      value={recipientNotificationLanguage}
+                      onValueChange={(value: "he" | "en" | "ru") =>
+                        setRecipientNotificationLanguage(value)
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -495,9 +590,18 @@ export function GuestPaymentStep({
               <AlertDescription className="text-sm leading-relaxed">
                 <div className="space-y-2">
                   <div className="font-medium">מדיניות ביטול:</div>
-                  <div>• ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום ההזמנה.</div>
-                  <div>• ביטול הזמנה פחות מ 24 שעות ממועד הטיפול יחוייב בדמי ביטול של 50% מסכום ההזמנה.</div>
-                  <div>• ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול מלאים של 100%.</div>
+                  <div>
+                    • ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום
+                    ההזמנה.
+                  </div>
+                  <div>
+                    • ביטול הזמנה פחות מ 24 שעות ממועד הטיפול יחוייב בדמי ביטול
+                    של 50% מסכום ההזמנה.
+                  </div>
+                  <div>
+                    • ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול
+                    מלאים של 100%.
+                  </div>
                 </div>
               </AlertDescription>
             </Alert>
@@ -508,13 +612,17 @@ export function GuestPaymentStep({
                 <Checkbox
                   id="marketing-consent"
                   checked={marketingConsent}
-                  onCheckedChange={(checked) => setMarketingConsent(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setMarketingConsent(checked as boolean)
+                  }
                 />
                 <label
                   htmlFor="marketing-consent"
                   className="text-sm leading-relaxed cursor-pointer"
                 >
-                  אני מאשר/ת קבלת דיוור של חומרים פרסומיים, הצעות ישווקיות ועדכונים באמצעי המדיה השונים, לרבות בדואר אלקטרוני SMS ו/או שיחה טלפונית
+                  אני מאשר/ת קבלת דיוור של חומרים פרסומיים, הצעות ישווקיות
+                  ועדכונים באמצעי המדיה השונים, לרבות בדואר אלקטרוני SMS ו/או
+                  שיחה טלפונית
                 </label>
               </div>
 
@@ -522,7 +630,9 @@ export function GuestPaymentStep({
                 <Checkbox
                   id="terms-accepted"
                   checked={termsAccepted}
-                  onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setTermsAccepted(checked as boolean)
+                  }
                 />
                 <label
                   htmlFor="terms-accepted"
@@ -547,18 +657,16 @@ export function GuestPaymentStep({
           <Button variant="outline" onClick={onPrev} disabled={isLoading}>
             חזור
           </Button>
-          <Button 
-            onClick={handlePayNow} 
+          <Button
+            onClick={handlePayNow}
             disabled={isLoading || isCountingDown || !termsAccepted}
             size="lg"
             className="px-8"
           >
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isCountingDown ? (
-              `נסה שוב בעוד ${countdown} שניות`
-            ) : (
-              `שלם כעת ${formatPrice(calculatedPrice.finalAmount)}`
-            )}
+            {isCountingDown
+              ? `נסה שוב בעוד ${countdown} שניות`
+              : `שלם כעת ${formatPrice(calculatedPrice.finalAmount)}`}
           </Button>
         </div>
       </div>
@@ -569,9 +677,9 @@ export function GuestPaymentStep({
           <DialogHeader>
             <DialogTitle className="text-center">תשלום מאובטח</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-6" dir={dir}>
-            {paymentStatus === 'pending' && (
+            {paymentStatus === "pending" && (
               <>
                 {/* CardComm iframe simulation */}
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
@@ -584,24 +692,24 @@ export function GuestPaymentStep({
                   </p>
                   <div className="mt-4 p-4 bg-white border rounded">
                     <p className="text-sm text-gray-600">
-                      סכום לתשלום: <span className="font-bold">{formatPrice(calculatedPrice.finalAmount)}</span>
+                      סכום לתשלום:{" "}
+                      <span className="font-bold">
+                        {formatPrice(calculatedPrice.finalAmount)}
+                      </span>
                     </p>
                   </div>
                 </div>
 
                 {/* Demo buttons */}
                 <div className="flex gap-4 justify-center">
-                  <Button 
+                  <Button
                     onClick={handlePaymentSuccess}
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
                     דימוי הצלחה
                   </Button>
-                  <Button 
-                    onClick={handlePaymentFailure}
-                    variant="destructive"
-                  >
+                  <Button onClick={handlePaymentFailure} variant="destructive">
                     <XCircle className="mr-2 h-4 w-4" />
                     דימוי כישלון
                   </Button>
@@ -609,7 +717,7 @@ export function GuestPaymentStep({
               </>
             )}
 
-            {paymentStatus === 'success' && (
+            {paymentStatus === "success" && (
               <div className="text-center py-8">
                 <CheckCircle className="mx-auto h-16 w-16 text-green-600 mb-4" />
                 <h3 className="text-xl font-semibold text-green-700 mb-2">
@@ -621,7 +729,7 @@ export function GuestPaymentStep({
               </div>
             )}
 
-            {paymentStatus === 'failed' && (
+            {paymentStatus === "failed" && (
               <div className="text-center py-8">
                 <XCircle className="mx-auto h-16 w-16 text-red-600 mb-4" />
                 <h3 className="text-xl font-semibold text-red-700 mb-2">
@@ -630,7 +738,7 @@ export function GuestPaymentStep({
                 <p className="text-gray-600 mb-6">
                   אירעה שגיאה בביצוע התשלום. אנא נסה שוב.
                 </p>
-                
+
                 <Alert className="mb-6">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
@@ -647,5 +755,5 @@ export function GuestPaymentStep({
         </DialogContent>
       </Dialog>
     </>
-  )
-} 
+  );
+}

@@ -28,7 +28,6 @@ const UserSubscriptionSchema = new Schema<IUserSubscription>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: false, // Made optional for guest purchases
-      index: true,
     },
     subscriptionId: {
       type: Schema.Types.ObjectId,

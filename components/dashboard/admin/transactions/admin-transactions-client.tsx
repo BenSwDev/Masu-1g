@@ -22,6 +22,8 @@ export default function AdminTransactionsClient() {
   const [professionals, setProfessionals] = useState<{id:string,name:string}[]>([])
   const [selectedProfessional, setSelectedProfessional] = useState<string>("")
   const [amount, setAmount] = useState(0)
+  const [adjustmentType, setAdjustmentType] = useState<"bonus" | "penalty">("bonus")
+  const [description, setDescription] = useState("")
 
   useEffect(() => {
     const load = async () => {
@@ -46,11 +48,27 @@ export default function AdminTransactionsClient() {
   }
 
   const handleSubmit = async () => {
-    if (!selectedProfessional) return
-    const result = await adminAdjustProfessionalBalance(selectedProfessional, amount)
+    if (!selectedProfessional || !description.trim()) {
+      toast({ title: "שגיאה", description: "יש למלא את כל השדות", variant: "destructive" })
+      return
+    }
+    
+    const adjustmentAmount = adjustmentType === "penalty" ? -Math.abs(amount) : Math.abs(amount)
+    const result = await adminAdjustProfessionalBalance(selectedProfessional, adjustmentAmount, description)
+    
     if (result.success) {
-      toast({ title: "עודכן" })
+      toast({ title: "עודכן בהצלחה", description: `${adjustmentType === "bonus" ? "זיכוי" : "קנס"} בסך ${formatCurrency(Math.abs(amount))} נוסף למטפל` })
       setModalOpen(false)
+      setSelectedProfessional("")
+      setAmount(0)
+      setDescription("")
+      setAdjustmentType("bonus")
+      
+      // Refresh the data
+      const wRes = await getWeeklyTransactionSummary()
+      if (wRes.success && wRes.data) {
+        setWeeklyData(wRes.data)
+      }
     } else {
       toast({ title: "שגיאה", description: result.error || "" , variant: "destructive" })
     }
@@ -112,8 +130,11 @@ export default function AdminTransactionsClient() {
                   <TableHead className="text-right">שוברי מתנה</TableHead>
                   <TableHead className="text-right">מנויים</TableHead>
                   <TableHead className="text-right">כמות טיפולים</TableHead>
+                  <TableHead className="text-right">הכנסה ברוטו</TableHead>
                   <TableHead className="text-right">תשלום למטפלים</TableHead>
-                  <TableHead className="text-right">הכנסה ישירה (נטו)</TableHead>
+                  <TableHead className="text-right">הכנסה נטו</TableHead>
+                  <TableHead className="text-right">זיכוי מטפלים</TableHead>
+                  <TableHead className="text-right">קנס מטפלים</TableHead>
                   <TableHead className="text-right">שוברים פרטיים - ניצול</TableHead>
                   <TableHead className="text-right">מנויים - ניצול</TableHead>
                   <TableHead className="text-right">שוברי ספקים</TableHead>
@@ -122,13 +143,13 @@ export default function AdminTransactionsClient() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-4">
+                  <TableCell colSpan={13} className="text-center py-4">
                     טוען נתונים...
                   </TableCell>
                 </TableRow>
               ) : weeklyData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center py-4">
+                  <TableCell colSpan={13} className="text-center py-4">
                     אין נתונים להצגה
                   </TableCell>
                 </TableRow>
@@ -146,9 +167,20 @@ export default function AdminTransactionsClient() {
                     <TableCell>{day.vouchersSalesCount}</TableCell>
                     <TableCell>{day.subscriptionsSalesCount}</TableCell>
                     <TableCell>{day.treatmentCount}</TableCell>
-                    <TableCell>{formatCurrency(day.professionalPayments)}</TableCell>
+                    <TableCell className="font-medium text-blue-600">
+                      {formatCurrency(day.grossRevenue)}
+                    </TableCell>
+                    <TableCell className="font-medium text-orange-600">
+                      {formatCurrency(day.professionalPayments)}
+                    </TableCell>
                     <TableCell className="font-medium text-green-600">
-                      {formatCurrency(day.directRevenue)}
+                      {formatCurrency(day.netRevenue)}
+                    </TableCell>
+                    <TableCell className="font-medium text-green-500">
+                      {formatCurrency(day.professionalBonuses)}
+                    </TableCell>
+                    <TableCell className="font-medium text-red-500">
+                      {formatCurrency(day.professionalPenalties)}
                     </TableCell>
                     <TableCell>{day.privateVoucherUsage}</TableCell>
                     <TableCell>{day.subscriptionUsage}</TableCell>
@@ -173,11 +205,20 @@ export default function AdminTransactionsClient() {
                   <TableCell>
                     {weeklyData.reduce((sum, day) => sum + day.treatmentCount, 0)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-blue-600">
+                    {formatCurrency(weeklyData.reduce((sum, day) => sum + day.grossRevenue, 0))}
+                  </TableCell>
+                  <TableCell className="text-orange-600">
                     {formatCurrency(weeklyData.reduce((sum, day) => sum + day.professionalPayments, 0))}
                   </TableCell>
                   <TableCell className="text-green-600">
-                    {formatCurrency(weeklyData.reduce((sum, day) => sum + day.directRevenue, 0))}
+                    {formatCurrency(weeklyData.reduce((sum, day) => sum + day.netRevenue, 0))}
+                  </TableCell>
+                  <TableCell className="text-green-500">
+                    {formatCurrency(weeklyData.reduce((sum, day) => sum + day.professionalBonuses, 0))}
+                  </TableCell>
+                  <TableCell className="text-red-500">
+                    {formatCurrency(weeklyData.reduce((sum, day) => sum + day.professionalPenalties, 0))}
                   </TableCell>
                   <TableCell>
                     {weeklyData.reduce((sum, day) => sum + day.privateVoucherUsage, 0)}
@@ -213,8 +254,39 @@ export default function AdminTransactionsClient() {
                 ))}
               </SelectContent>
             </Select>
-            <Input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} placeholder="סכום" />
-            <Button onClick={handleSubmit}>שמור</Button>
+            
+            <Select value={adjustmentType} onValueChange={(value: "bonus" | "penalty") => setAdjustmentType(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="סוג התאמה" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bonus">זיכוי</SelectItem>
+                <SelectItem value="penalty">קנס</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Input 
+              type="number" 
+              value={amount || ""} 
+              onChange={e => setAmount(Number(e.target.value) || 0)} 
+              placeholder="סכום (₪)" 
+              min="0"
+            />
+            
+            <Input 
+              value={description} 
+              onChange={e => setDescription(e.target.value)} 
+              placeholder="תיאור ההתאמה (חובה)" 
+            />
+            
+            <div className="flex gap-2">
+              <Button onClick={handleSubmit} className="flex-1">
+                {adjustmentType === "bonus" ? "הוסף זיכוי" : "הוסף קנס"}
+              </Button>
+              <Button variant="outline" onClick={() => setModalOpen(false)}>
+                בטל
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

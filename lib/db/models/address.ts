@@ -173,7 +173,6 @@ AddressSchema.pre<IAddress>("save", function (next: () => void) {
 })
 
 // Create indexes
-AddressSchema.index({ userId: 1 })
 AddressSchema.index({ userId: 1, isDefault: 1 })
 AddressSchema.index({ createdAt: -1 })
 AddressSchema.index({ fullAddress: "text" }) // Optional: for text search on fullAddress

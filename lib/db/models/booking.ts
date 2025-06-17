@@ -163,7 +163,7 @@ const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
 const BookingSchema: Schema<IBooking> = new Schema(
   {
     bookingNumber: { type: String, required: true, unique: true }, // unique: true already creates an index
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: false, index: true }, // Made optional for guest bookings
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: false }, // Made optional for guest bookings
     bookedByUserName: { type: String },
     bookedByUserEmail: { type: String },
     bookedByUserPhone: { type: String },

@@ -98,8 +98,8 @@ const GiftVoucherSchema: Schema<IGiftVoucher> = new Schema(
     monetaryValue: { type: Number, min: 0 }, // Value for monetary type, or price of treatment at purchase
     originalAmount: { type: Number, min: 0 }, // Initial value, especially for monetary type
     remainingAmount: { type: Number, min: 0 }, // Current balance for monetary type
-    purchaserUserId: { type: Schema.Types.ObjectId, ref: "User", required: false, index: true }, // Made optional for guest purchases
-    ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: false, index: true }, // Made optional for guest purchases
+    purchaserUserId: { type: Schema.Types.ObjectId, ref: "User", required: false }, // Made optional for guest purchases
+    ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: false }, // Made optional for guest purchases
     guestInfo: {
       // Guest information for non-user purchases
       type: {

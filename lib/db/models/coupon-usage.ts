@@ -9,8 +9,8 @@ export interface ICouponUsage extends Document {
 
 const CouponUsageSchema: Schema<ICouponUsage> = new Schema(
   {
-    couponId: { type: Schema.Types.ObjectId, ref: "Coupon", required: true, index: true },
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    couponId: { type: Schema.Types.ObjectId, ref: "Coupon", required: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     orderId: { type: Schema.Types.ObjectId, required: true, index: true }, // For now, this will be a placeholder
     usageDate: { type: Date, default: Date.now },
   },

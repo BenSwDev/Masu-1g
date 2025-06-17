@@ -21,9 +21,12 @@ export interface WeeklyTransactionSummary {
   bookingsSalesCount: number // הזמנות
   vouchersSalesCount: number // שוברי מתנה
   subscriptionsSalesCount: number // מנויים
-  treatmentCount: number // כמות טיפולים שבוצעו
+  treatmentCount: number // כמות טיפולים שבוצעו (מספר אנשים)
+  grossRevenue: number // הכנסה ברוטו (כל הכסף שנכנס)
   professionalPayments: number // תשלום למטפלים
-  directRevenue: number // הכנסה ישירה (נטו)
+  netRevenue: number // הכנסה נטו (ברוטו פחות מטפלים)
+  professionalBonuses: number // זיכויים למטפלים
+  professionalPenalties: number // קנסות למטפלים
   privateVoucherUsage: number // שוברים פרטיים - כמות ניצול
   subscriptionUsage: number // מנויים - כמות ניצול
   partnerVoucherUsage: {
@@ -297,21 +300,53 @@ export async function getWeeklyTransactionSummary(): Promise<{
         return sum + baseProfessionalFee + surchargeProfessionalShare
       }, 0)
 
-      // Calculate direct revenue (what customer paid minus professional payments)
-      const totalBookingRevenue = dayTransactions
-        .filter(t => t.type === 'booking' && t.status === 'completed')
+      // Calculate gross revenue (all money coming in from all purchases)
+      const grossRevenue = dayTransactions
+        .filter(t => t.status === 'completed')
         .reduce((sum, t) => sum + (t.finalAmount || t.amount), 0)
-      
-      const directRevenue = totalBookingRevenue - professionalPayments
+
+      // Calculate net revenue (gross minus professional payments)
+      const netRevenue = grossRevenue - professionalPayments
 
       // Count sales by type
       const bookingsSales = dayTransactions.filter(t => t.type === 'booking' && t.status === 'completed').length
       const vouchersSales = dayTransactions.filter(t => t.type === 'gift_voucher' && t.status === 'completed').length
       const subscriptionsSales = dayTransactions.filter(t => t.type === 'subscription' && t.status === 'completed').length
 
+      // Count treatment instances (number of people receiving treatments)
+      // For now, each booking = 1 person as there are no couple treatments yet
+      const treatmentCount = dayBookings.length
+
       // Count voucher and subscription usage
       const voucherUsage = dayBookings.filter(b => b.priceDetails.appliedGiftVoucherId).length
       const subscriptionUsage = dayBookings.filter(b => b.priceDetails.redeemedUserSubscriptionId).length
+
+      // Get professional bonuses and penalties for this day
+      const { ProfessionalProfile } = await import("@/lib/db/models/professional-profile")
+      
+      let professionalBonuses = 0
+      let professionalPenalties = 0
+
+      // Query all professional profiles for financial transactions on this day
+      const professionalProfiles = await ProfessionalProfile.find({
+        'financialTransactions.date': {
+          $gte: currentDate,
+          $lt: nextDate
+        }
+      }).lean()
+
+      for (const profile of professionalProfiles) {
+        for (const transaction of profile.financialTransactions || []) {
+          const transactionDate = new Date(transaction.date)
+          if (transactionDate >= currentDate && transactionDate < nextDate) {
+            if (transaction.type === 'bonus') {
+              professionalBonuses += transaction.amount
+            } else if (transaction.type === 'penalty') {
+              professionalPenalties += Math.abs(transaction.amount) // Ensure positive for display
+            }
+          }
+        }
+      }
 
       const dayData: WeeklyTransactionSummary = {
         date: currentDate.toISOString().split('T')[0],
@@ -319,9 +354,12 @@ export async function getWeeklyTransactionSummary(): Promise<{
         bookingsSalesCount: bookingsSales,
         vouchersSalesCount: vouchersSales,
         subscriptionsSalesCount: subscriptionsSales,
-        treatmentCount: dayBookings.length,
+        treatmentCount: treatmentCount,
+        grossRevenue: Math.round(grossRevenue),
         professionalPayments: Math.round(professionalPayments),
-        directRevenue: Math.round(directRevenue),
+        netRevenue: Math.round(netRevenue),
+        professionalBonuses: Math.round(professionalBonuses),
+        professionalPenalties: Math.round(professionalPenalties),
         privateVoucherUsage: voucherUsage,
         subscriptionUsage: subscriptionUsage,
         partnerVoucherUsage: {

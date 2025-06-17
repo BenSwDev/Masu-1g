@@ -193,7 +193,7 @@ const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
 })
 
 // Create compound indexes for better performance - no duplicate field indexes
-ProfessionalProfileSchema.index({ userId: 1 }, { unique: true })
+// Note: unique index on userId is already created via schema definition
 ProfessionalProfileSchema.index({ status: 1, isActive: 1 })
 ProfessionalProfileSchema.index({ "treatments.treatmentId": 1 })
 ProfessionalProfileSchema.index({ "workAreas.cityName": 1 })

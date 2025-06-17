@@ -18,7 +18,6 @@ const PaymentMethodSchema = new Schema<IPaymentMethod>(
     userId: {
       type: String,
       required: true,
-      index: true,
     },
     cardNumber: {
       type: String,

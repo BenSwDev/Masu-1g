@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/translations/i18n";
+import { usePaymentModal } from "@/hooks/use-payment-modal";
 import { Button } from "@/components/common/ui/button";
 import {
   Card,
@@ -87,12 +88,17 @@ export function GuestPaymentStep({
   isRedeeming = false,
 }: GuestPaymentStepProps) {
   const { t, dir } = useTranslation();
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<
-    "pending" | "success" | "failed"
-  >("pending");
-  const [countdown, setCountdown] = useState(0);
-  const [isCountingDown, setIsCountingDown] = useState(false);
+  const {
+    showPaymentModal,
+    paymentStatus,
+    countdown,
+    isCountingDown,
+    openModal,
+    handlePaymentSuccess,
+    handlePaymentFailure,
+    handleTryAgain,
+    handleOpenChange,
+  } = usePaymentModal({ onSuccess: onConfirm });
   const [marketingConsent, setMarketingConsent] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(true);
 
@@ -128,18 +134,6 @@ export function GuestPaymentStep({
     recipientNotificationLanguage,
   ]);
 
-  // Countdown effect
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isCountingDown && countdown > 0) {
-      interval = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    } else if (countdown === 0 && isCountingDown) {
-      setIsCountingDown(false);
-    }
-    return () => clearInterval(interval);
-  }, [countdown, isCountingDown]);
 
   const formatPrice = (amount: number) => {
     return `₪${amount.toFixed(2)}`;
@@ -157,40 +151,7 @@ export function GuestPaymentStep({
       }
     }
 
-    setShowPaymentModal(true);
-    setPaymentStatus("pending");
-  };
-
-  const handlePaymentSuccess = () => {
-    setPaymentStatus("success");
-    setTimeout(() => {
-      setShowPaymentModal(false);
-      onConfirm();
-    }, 1500);
-  };
-
-  const handlePaymentFailure = () => {
-    setPaymentStatus("failed");
-  };
-
-  const handleTryAgain = () => {
-    setShowPaymentModal(false);
-    setPaymentStatus("pending");
-    setCountdown(10);
-    setIsCountingDown(true);
-  };
-
-  const closeModal = () => {
-    setShowPaymentModal(false);
-    setPaymentStatus("pending");
-  };
-
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      closeModal();
-    } else {
-      setShowPaymentModal(true);
-    }
+    openModal();
   };
 
   if (!calculatedPrice || (calculatedPrice.finalAmount === 0 && calculatedPrice.isFullyCoveredByVoucherOrSubscription)) {

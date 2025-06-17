@@ -1,8 +1,9 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { getServerSession } from "next-auth"
 import mongoose, { type FilterQuery } from "mongoose"
+import { requireAdminSession, requireResourceAccess, createAuthErrorResponse } from "@/lib/utils/auth-utils"
+import { validateRequiredString, validateObjectId, validateDate, validateDateRange, isPositiveNumber } from "@/lib/utils/validation-utils"
 
 import { authOptions } from "@/lib/auth/auth"
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
@@ -173,59 +174,51 @@ export interface AdminGiftVoucherFormData {
 
 export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+    // Use new auth utility
+    const authResult = await requireAdminSession()
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult)
     }
+    
     await dbConnect()
 
-    // Basic validations (code, ownerUserId, dates)
-    // ... (keep existing validations)
-    if (!data.code || typeof data.code !== "string" || data.code.trim() === "") {
-      return { success: false, error: "Code is required." }
+    // Use new validation utilities
+    const codeValidation = validateRequiredString(data.code, "Code", 3)
+    if (!codeValidation.valid) {
+      return { success: false, error: codeValidation.error }
     }
+
     if (!data.voucherType || (data.voucherType !== "monetary" && data.voucherType !== "treatment")) {
       return { success: false, error: "Valid voucher type is required." }
     }
-    if (
-      !data.ownerUserId ||
-      typeof data.ownerUserId !== "string" ||
-      !mongoose.Types.ObjectId.isValid(data.ownerUserId)
-    ) {
-      return { success: false, error: "Valid Owner User ID is required." }
+
+    const ownerValidation = validateObjectId(data.ownerUserId, "Owner User ID")
+    if (!ownerValidation.valid) {
+      return { success: false, error: ownerValidation.error }
     }
-    if (!data.validFrom || typeof data.validFrom !== "string" || isNaN(new Date(data.validFrom).getTime())) {
-      return { success: false, error: "Valid 'valid from' date is required." }
-    }
-    if (!data.validUntil || typeof data.validUntil !== "string" || isNaN(new Date(data.validUntil).getTime())) {
-      return { success: false, error: "Valid 'valid until' date is required." }
-    }
-    if (new Date(data.validFrom) >= new Date(data.validUntil)) {
-      return { success: false, error: "'Valid from' date must be before 'valid until' date." }
+
+    const dateRangeValidation = validateDateRange(data.validFrom, data.validUntil, "Valid from date", "Valid until date")
+    if (!dateRangeValidation.valid) {
+      return { success: false, error: dateRangeValidation.error }
     }
 
     let effectiveAmount = 0
     const amountInput = data.amount ?? data.monetaryValue
-    if (
-      amountInput === undefined ||
-      String(amountInput).trim() === "" ||
-      isNaN(Number(amountInput)) ||
-      Number(amountInput) <= 0
-    ) {
+    if (!isPositiveNumber(amountInput)) {
       return { success: false, error: "Valid positive amount is required." }
     }
     effectiveAmount = Number(amountInput)
 
     // If treatment type, ensure treatmentId is valid and potentially selectedDurationId
-    // The 'amount' provided in the admin form for a treatment voucher should ideally match the treatment's price.
-    // Admin form could fetch treatment price to pre-fill or validate against.
-    // For now, we trust the admin-entered 'amount'.
     if (data.voucherType === "treatment") {
-      if (!data.treatmentId || !mongoose.Types.ObjectId.isValid(data.treatmentId)) {
-        return { success: false, error: "Valid Treatment ID is required for treatment voucher." }
+      const treatmentValidation = validateObjectId(data.treatmentId, "Treatment ID")
+      if (!treatmentValidation.valid) {
+        return { success: false, error: treatmentValidation.error }
       }
-      if (data.selectedDurationId && !mongoose.Types.ObjectId.isValid(data.selectedDurationId)) {
-        return { success: false, error: "Invalid Selected Duration ID." }
+      
+      const durationValidation = validateObjectId(data.selectedDurationId, "Selected Duration ID", false)
+      if (!durationValidation.valid) {
+        return { success: false, error: durationValidation.error }
       }
     }
 
@@ -239,7 +232,7 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
       monetaryValue: effectiveAmount, // For consistency or if schema differentiates
       originalAmount: effectiveAmount,
       remainingAmount: effectiveAmount,
-      purchaserUserId: new mongoose.Types.ObjectId(session.user.id),
+      purchaserUserId: new mongoose.Types.ObjectId(authResult.session!.user.id),
       ownerUserId: new mongoose.Types.ObjectId(data.ownerUserId),
       validFrom: new Date(data.validFrom),
       validUntil: new Date(data.validUntil),
@@ -305,15 +298,17 @@ export async function updateGiftVoucherByAdmin(
   id: string,
   data: Partial<AdminGiftVoucherFormData>, // Admin form should use 'amount'
 ) {
-  // ... (similar logic as create, ensuring 'amount' is primary,
-  // and if treatment details change, 'amount' might need re-evaluation or admin confirmation)
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+    // Use new auth utility
+    const authResult = await requireAdminSession()
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult)
     }
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return { success: false, error: "Invalid Gift Voucher ID format." }
+    
+    // Use new validation utility
+    const idValidation = validateObjectId(id, "Gift Voucher ID")
+    if (!idValidation.valid) {
+      return { success: false, error: idValidation.error }
     }
     await dbConnect()
     const existingVoucher = await GiftVoucher.findById(id)
@@ -486,12 +481,16 @@ export async function updateGiftVoucherByAdmin(
 // ... (deleteGiftVoucher, getGiftVouchers, getTreatmentsForSelection, getUsersForAdminSelection remain largely the same)
 export async function deleteGiftVoucher(id: string) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+    // Use new auth utility
+    const authResult = await requireAdminSession()
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult)
     }
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return { success: false, error: "Invalid Gift Voucher ID format." }
+    
+    // Use new validation utility
+    const idValidation = validateObjectId(id, "Gift Voucher ID")
+    if (!idValidation.valid) {
+      return { success: false, error: idValidation.error }
     }
 
     await dbConnect()

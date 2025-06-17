@@ -7,7 +7,7 @@ import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Label } from "@/components/common/ui/label"
 import { Switch } from "@/components/common/ui/switch"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Loader2, MapPin } from "lucide-react"
 import { createCity } from "@/actions/city-actions"
 

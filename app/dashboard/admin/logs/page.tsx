@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/common/ui/input"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { RefreshCw, Download, Search, Filter } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 interface LogEvent {
   timestamp: string

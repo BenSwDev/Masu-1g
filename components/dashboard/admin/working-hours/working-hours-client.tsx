@@ -38,7 +38,7 @@ import {
   FormDescription,
 } from "@/components/common/ui/form"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Badge } from "@/components/common/ui/badge"

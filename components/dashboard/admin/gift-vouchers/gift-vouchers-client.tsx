@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
 import { CustomPagination as Pagination } from "@/components/common/ui/pagination"
-import { useToast } from "@/components/common/ui/use-toast" // Corrected import path
+import { useToast } from "@/hooks/use-toast" // Corrected import path
 
 import { GiftVoucherForm } from "./gift-voucher-form"
 import { GiftVoucherRow } from "./gift-voucher-row"

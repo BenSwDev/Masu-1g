@@ -12,6 +12,7 @@ import Treatment from "@/lib/db/models/treatment"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
+import { eventBus, createGiftVoucherEvent } from "@/lib/events/booking-event-system"
 import type { GiftVoucherPlain as IGiftVoucherPlainFile } from "@/lib/db/models/gift-voucher"
 import type {
   EmailRecipient,
@@ -257,8 +258,30 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
 
     const newVoucher = new GiftVoucher(giftVoucherData)
     await newVoucher.save()
-    revalidatePath("/dashboard/admin/gift-vouchers")
-    revalidatePath("/dashboard/member/gift-vouchers")
+    
+    // REPLACED: revalidatePath calls moved to dashboard handler via event system
+    try {
+      const createdEvent = createGiftVoucherEvent(
+        'gift_voucher.created',
+        String(newVoucher._id),
+        String(newVoucher.ownerUserId),
+        { 
+          voucher: newVoucher.toObject(),
+          adminCreated: true 
+        }
+      )
+      
+      await eventBus.emit(createdEvent)
+      logger.info(`Gift voucher created event emitted: ${newVoucher._id}`)
+      
+    } catch (eventError) {
+      // Log but don't fail the function - same as current behavior
+      logger.error("Failed to emit gift voucher created event:", {
+        error: eventError instanceof Error ? eventError.message : String(eventError),
+        voucherId: newVoucher._id,
+      })
+    }
+    
     return { success: true, giftVoucher: await toGiftVoucherPlain(newVoucher) }
   } catch (error) {
     logger.error("Error creating gift voucher by admin:", {
@@ -417,8 +440,30 @@ export async function updateGiftVoucherByAdmin(
       { new: true, runValidators: true },
     )
     if (!updatedVoucher) return { success: false, error: "Gift voucher not found or update failed" }
-    revalidatePath("/dashboard/admin/gift-vouchers")
-    revalidatePath("/dashboard/member/gift-vouchers")
+    
+    // REPLACED: revalidatePath calls moved to dashboard handler via event system
+    try {
+      const updatedEvent = createGiftVoucherEvent(
+        'gift_voucher.updated',
+        String(updatedVoucher._id),
+        String(updatedVoucher.ownerUserId),
+        { 
+          voucher: updatedVoucher.toObject(),
+          adminUpdated: true 
+        }
+      )
+      
+      await eventBus.emit(updatedEvent)
+      logger.info(`Gift voucher updated event emitted: ${updatedVoucher._id}`)
+      
+    } catch (eventError) {
+      // Log but don't fail the function - same as current behavior
+      logger.error("Failed to emit gift voucher updated event:", {
+        error: eventError instanceof Error ? eventError.message : String(eventError),
+        voucherId: updatedVoucher._id,
+      })
+    }
+    
     return { success: true, giftVoucher: await toGiftVoucherPlain(updatedVoucher) }
   } catch (error) {
     logger.error("Error updating gift voucher by admin:", {
@@ -456,8 +501,28 @@ export async function deleteGiftVoucher(id: string) {
       return { success: false, error: "Gift voucher not found" }
     }
 
-    revalidatePath("/dashboard/admin/gift-vouchers")
-    revalidatePath("/dashboard/member/gift-vouchers")
+    // REPLACED: revalidatePath calls moved to dashboard handler via event system
+    try {
+      const deletedEvent = createGiftVoucherEvent(
+        'gift_voucher.deleted',
+        String(voucher._id),
+        String(voucher.ownerUserId),
+        { 
+          voucher: voucher.toObject(),
+          adminDeleted: true 
+        }
+      )
+      
+      await eventBus.emit(deletedEvent)
+      logger.info(`Gift voucher deleted event emitted: ${voucher._id}`)
+      
+    } catch (eventError) {
+      // Log but don't fail the function - same as current behavior
+      logger.error("Failed to emit gift voucher deleted event:", {
+        error: eventError instanceof Error ? eventError.message : String(eventError),
+        voucherId: voucher._id,
+      })
+    }
 
     return { success: true, message: "Gift voucher deleted successfully" }
   } catch (error) {
@@ -963,9 +1028,8 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
             recipients.push({ type: "phone" as const, value: purchaser.phone, language: lang as any })
           }
           
-          if (recipients.length > 0) {
-            await unifiedNotificationService.sendPurchaseSuccess(recipients, notificationData.message)
-          }
+          // REMOVED: Notification call moved to event system
+          // The gift_voucher.purchased event will handle this notification
         } else {
           logger.warn(
             `Purchaser not found for notification after gift voucher purchase confirmation: ${voucher.purchaserUserId.toString()}`,
@@ -980,10 +1044,30 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
       }
       // --- End notification sending to purchaser ---
 
-      revalidatePath("/dashboard/member/gift-vouchers")
-      if (voucher.purchaserUserId.toString() !== voucher.ownerUserId.toString()) {
-        revalidatePath(`/dashboard/user/${voucher.ownerUserId.toString()}/gift-vouchers`) // This path might not exist
+      // REPLACED: revalidatePath and notification calls moved to event system
+      try {
+        const purchasedEvent = createGiftVoucherEvent(
+          'gift_voucher.purchased',
+          String(voucher._id),
+          String(voucher.purchaserUserId),
+          { 
+            voucher: voucher.toObject(),
+            payment: { paymentId: data.paymentId, amount: data.amount },
+            memberPurchase: true
+          }
+        )
+        
+        await eventBus.emit(purchasedEvent)
+        logger.info(`Gift voucher purchased event emitted: ${voucher._id}`)
+        
+      } catch (eventError) {
+        // Log but don't fail the function - same as current behavior
+        logger.error("Failed to emit gift voucher purchased event:", {
+          error: eventError instanceof Error ? eventError.message : String(eventError),
+          voucherId: voucher._id,
+        })
       }
+      
       return {
         success: true,
         voucher: await toGiftVoucherPlain(voucher),
@@ -1093,8 +1177,30 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
     }
 
     await voucher.save()
-    revalidatePath("/dashboard/member/gift-vouchers") // For the purchaser
-    // If recipient has an account and can see vouchers gifted to them, revalidate their path too.
+    
+    // REPLACED: revalidatePath call moved to dashboard handler via event system  
+    // Since this is updating gift details, we use updated event
+    try {
+      const updatedEvent = createGiftVoucherEvent(
+        'gift_voucher.updated',
+        String(voucher._id),
+        String(voucher.purchaserUserId),
+        { 
+          voucher: voucher.toObject(),
+          giftDetailsSet: true
+        }
+      )
+      
+      await eventBus.emit(updatedEvent)
+      logger.info(`Gift voucher updated event emitted for gift details: ${voucher._id}`)
+      
+    } catch (eventError) {
+      // Log but don't fail the function - same as current behavior
+      logger.error("Failed to emit gift voucher updated event for gift details:", {
+        error: eventError instanceof Error ? eventError.message : String(eventError),
+        voucherId: voucher._id,
+      })
+    }
 
     return {
       success: true,
@@ -1285,8 +1391,33 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
 
     await voucher.save()
 
-    revalidatePath("/dashboard/member/gift-vouchers")
-    revalidatePath("/dashboard/admin/gift-vouchers") // Admin might want to see updated status
+    // REPLACED: revalidatePath calls moved to dashboard handler via event system
+    try {
+      const redeemedEvent = createGiftVoucherEvent(
+        'gift_voucher.redeemed',
+        String(voucher._id),
+        String(session.user.id),
+        { 
+          voucher: voucher.toObject(),
+          redemption: {
+            amountApplied,
+            orderId: orderDetails.orderId,
+            totalAmount: orderDetails.totalAmount,
+            items: orderDetails.items
+          }
+        }
+      )
+      
+      await eventBus.emit(redeemedEvent)
+      logger.info(`Gift voucher redeemed event emitted: ${voucher._id}`)
+      
+    } catch (eventError) {
+      // Log but don't fail the function - same as current behavior
+      logger.error("Failed to emit gift voucher redeemed event:", {
+        error: eventError instanceof Error ? eventError.message : String(eventError),
+        voucherId: voucher._id,
+      })
+    }
 
     return {
       success: true,
@@ -1547,9 +1678,8 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
           recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
         }
         
-        if (recipients.length > 0) {
-          await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
-        }
+        // REMOVED: Notification call moved to event system  
+        // The gift_voucher.purchased event will handle this notification
       } catch (notificationError) {
         logger.error("Failed to send purchase success notification for guest gift voucher:", {
           guestEmail: guestInfo.email,
@@ -1558,7 +1688,31 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
         })
       }
 
-      revalidatePath("/dashboard/admin/gift-vouchers")
+      // REPLACED: revalidatePath call moved to dashboard handler via event system
+      try {
+        const purchasedEvent = createGiftVoucherEvent(
+          'gift_voucher.purchased',
+          String(voucher._id),
+          'guest', // No user ID for guest purchases
+          { 
+            voucher: voucher.toObject(),
+            payment: { paymentId: data.paymentId, amount: data.amount },
+            guestInfo,
+            guestPurchase: true
+          }
+        )
+        
+        await eventBus.emit(purchasedEvent)
+        logger.info(`Gift voucher purchased event emitted for guest: ${voucher._id}`)
+        
+      } catch (eventError) {
+        // Log but don't fail the function - same as current behavior
+        logger.error("Failed to emit gift voucher purchased event for guest:", {
+          error: eventError instanceof Error ? eventError.message : String(eventError),
+          voucherId: voucher._id,
+        })
+      }
+      
       return {
         success: true,
         voucher: await toGiftVoucherPlain(voucher),

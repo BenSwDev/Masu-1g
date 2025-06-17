@@ -15,7 +15,7 @@ import { PhoneInput } from "@/components/common/phone-input"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { OTPForm } from "./otp-form"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useSession } from "next-auth/react"
 
 interface LoginMethodProps {

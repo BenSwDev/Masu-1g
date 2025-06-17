@@ -12,7 +12,7 @@ import {
   SelectValue
 } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { MapPin, Save, Loader2, Plus, X } from "lucide-react"
 import { updateProfessionalWorkAreas } from "@/actions/professional-actions"
 

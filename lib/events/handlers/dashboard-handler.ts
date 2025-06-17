@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache"
 import { logger } from "@/lib/logs/logger"
-import type { BookingEvent } from "../event-bus"
+import type { BookingEvent, GiftVoucherEvent } from "../event-bus"
 
 /**
  * Dashboard Handler - consolidates all revalidatePath calls from booking functions
@@ -180,6 +180,111 @@ export class DashboardHandler {
       logger.error("Failed to revalidate dashboard paths for review reminder sent:", {
         error: error instanceof Error ? error.message : String(error),
         bookingId: event.bookingId,
+      })
+    }
+  }
+
+  // =================================================================
+  // GIFT VOUCHER EVENT HANDLERS
+  // =================================================================
+
+  /**
+   * Handle gift_voucher.created event - replicates admin creation revalidations
+   */
+  async handleGiftVoucherCreated(event: GiftVoucherEvent): Promise<void> {
+    try {
+      // Same revalidations as createGiftVoucherByAdmin
+      revalidatePath("/dashboard/admin/gift-vouchers")
+      revalidatePath("/dashboard/member/gift-vouchers")
+      
+      logger.info(`Dashboard paths revalidated for created gift voucher: ${event.voucherId}`)
+      
+    } catch (error) {
+      logger.error("Failed to revalidate dashboard paths for gift voucher creation:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
+      })
+    }
+  }
+
+  /**
+   * Handle gift_voucher.updated event - replicates admin update revalidations
+   */
+  async handleGiftVoucherUpdated(event: GiftVoucherEvent): Promise<void> {
+    try {
+      // Same revalidations as updateGiftVoucherByAdmin
+      revalidatePath("/dashboard/admin/gift-vouchers")
+      revalidatePath("/dashboard/member/gift-vouchers")
+      
+      logger.info(`Dashboard paths revalidated for updated gift voucher: ${event.voucherId}`)
+      
+    } catch (error) {
+      logger.error("Failed to revalidate dashboard paths for gift voucher update:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
+      })
+    }
+  }
+
+  /**
+   * Handle gift_voucher.deleted event - replicates deletion revalidations
+   */
+  async handleGiftVoucherDeleted(event: GiftVoucherEvent): Promise<void> {
+    try {
+      // Same revalidations as deleteGiftVoucher
+      revalidatePath("/dashboard/admin/gift-vouchers")
+      revalidatePath("/dashboard/member/gift-vouchers")
+      
+      logger.info(`Dashboard paths revalidated for deleted gift voucher: ${event.voucherId}`)
+      
+    } catch (error) {
+      logger.error("Failed to revalidate dashboard paths for gift voucher deletion:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
+      })
+    }
+  }
+
+  /**
+   * Handle gift_voucher.purchased event - replicates purchase completion revalidations
+   */
+  async handleGiftVoucherPurchased(event: GiftVoucherEvent): Promise<void> {
+    try {
+      // Same revalidations as confirmGiftVoucherPurchase and confirmGuestGiftVoucherPurchase
+      revalidatePath("/dashboard/member/gift-vouchers")
+      revalidatePath("/dashboard/admin/gift-vouchers")
+      
+      // Owner-specific revalidation if owner is different from purchaser
+      const { voucher } = event.data
+      if (voucher?.ownerUserId && voucher.ownerUserId !== event.userId) {
+        revalidatePath(`/dashboard/user/${voucher.ownerUserId}/gift-vouchers`)
+      }
+      
+      logger.info(`Dashboard paths revalidated for purchased gift voucher: ${event.voucherId}`)
+      
+    } catch (error) {
+      logger.error("Failed to revalidate dashboard paths for gift voucher purchase:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
+      })
+    }
+  }
+
+  /**
+   * Handle gift_voucher.redeemed event - replicates redemption revalidations
+   */
+  async handleGiftVoucherRedeemed(event: GiftVoucherEvent): Promise<void> {
+    try {
+      // Same revalidations as redeemGiftVoucher
+      revalidatePath("/dashboard/member/gift-vouchers")
+      revalidatePath("/dashboard/admin/gift-vouchers")
+      
+      logger.info(`Dashboard paths revalidated for redeemed gift voucher: ${event.voucherId}`)
+      
+    } catch (error) {
+      logger.error("Failed to revalidate dashboard paths for gift voucher redemption:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
       })
     }
   }

@@ -15,7 +15,7 @@ import { PhoneInput } from "@/components/common/phone-input"
 import { useRouter } from "next/navigation"
 import { registerUser } from "@/actions/auth-actions"
 import { Checkbox } from "@/components/common/ui/checkbox"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 export function RegisterForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
   const { t, dir } = useTranslation()

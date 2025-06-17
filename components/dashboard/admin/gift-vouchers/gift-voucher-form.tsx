@@ -16,7 +16,7 @@ import {
   getUsersForAdminSelection,
 } from "@/actions/gift-voucher-actions"
 import { format, parseISO } from "date-fns"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
 import { Calendar } from "@/components/common/ui/calendar"

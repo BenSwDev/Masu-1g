@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
 import {
   getMemberOwnedVouchers,

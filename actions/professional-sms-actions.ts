@@ -204,8 +204,8 @@ export async function handleProfessionalResponse(
           }
         )
         
-        revalidatePath("/dashboard/admin/bookings")
-        revalidatePath("/dashboard/professional/booking-management")
+        // REPLACED: revalidatePath calls moved to dashboard handler via event system
+        // The assignProfessionalToBooking function already emits the professional_assigned event
         
         return { 
           success: true, 

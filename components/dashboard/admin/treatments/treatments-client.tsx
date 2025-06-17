@@ -12,7 +12,7 @@ import { TreatmentCard } from "./treatment-card"
 import { TreatmentForm } from "./treatment-form"
 import { PlusIcon, SearchIcon } from "lucide-react"
 import { Skeleton } from "@/components/common/ui/skeleton"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 export function TreatmentsClient() {
   const { t, dir } = useTranslation()

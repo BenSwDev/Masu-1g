@@ -9,7 +9,7 @@ import { Input } from "@/components/common/ui/input"
 import { Label } from "@/components/common/ui/label"
 import { requestEmailChange, confirmEmailChange } from "@/actions/account-actions"
 import { Mail } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 interface EmailChangeFormProps {
   currentEmail: string

@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { Checkbox } from "@/components/common/ui/checkbox"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { DataTable } from "@/components/common/ui/data-table"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
 import type { IPartnerCouponBatch } from "@/lib/db/models/partner-coupon-batch"

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/common/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Skeleton } from "@/components/common/ui/skeleton"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Search, Filter, Users, UserCheck, UserX, Clock, AlertTriangle, Plus } from "lucide-react"
 import { getProfessionals } from "@/actions/professional-actions"
 import ProfessionalEditModal from "./professional-edit-modal"

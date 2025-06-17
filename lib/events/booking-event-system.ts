@@ -4,10 +4,11 @@ import { dashboardHandler } from "./handlers/dashboard-handler"
 import { logger } from "@/lib/logs/logger"
 
 /**
- * Booking Event System - registers all handlers and provides centralized event management
+ * Event System - registers all handlers and provides centralized event management
  * This maintains the exact same behavior as the current scattered logic
+ * Supports both booking and gift voucher events
  */
-class BookingEventSystem {
+class EventSystem {
   private isInitialized = false
 
   /**
@@ -16,17 +17,19 @@ class BookingEventSystem {
    */
   initialize(): void {
     if (this.isInitialized) {
-      logger.info("Booking event system already initialized")
+      logger.info("Event system already initialized")
       return
     }
 
-    logger.info("Initializing booking event system...")
+    logger.info("Initializing event system...")
 
+    // ===== BOOKING EVENT HANDLERS =====
     // Register notification handlers (replaces scattered notification logic)
     eventBus.on('booking.created', notificationHandler.handleBookingCreated.bind(notificationHandler))
     eventBus.on('booking.confirmed', notificationHandler.handleBookingConfirmed.bind(notificationHandler))
     eventBus.on('booking.professional_assigned', notificationHandler.handleProfessionalAssigned.bind(notificationHandler))
     eventBus.on('booking.completed', notificationHandler.handleBookingCompleted.bind(notificationHandler))
+    eventBus.on('booking.cancelled', notificationHandler.handleBookingCancelled.bind(notificationHandler))
 
     // Register dashboard handlers (replaces scattered revalidatePath calls)
     eventBus.on('booking.created', dashboardHandler.handleBookingCreated.bind(dashboardHandler))
@@ -36,8 +39,23 @@ class BookingEventSystem {
     eventBus.on('booking.completed', dashboardHandler.handleBookingCompleted.bind(dashboardHandler))
     eventBus.on('booking.payment_updated', dashboardHandler.handlePaymentUpdated.bind(dashboardHandler))
 
+    // ===== GIFT VOUCHER EVENT HANDLERS =====
+    // Register gift voucher notification handlers
+    eventBus.on('gift_voucher.created', notificationHandler.handleGiftVoucherCreated.bind(notificationHandler))
+    eventBus.on('gift_voucher.updated', notificationHandler.handleGiftVoucherUpdated.bind(notificationHandler))
+    eventBus.on('gift_voucher.deleted', notificationHandler.handleGiftVoucherDeleted.bind(notificationHandler))
+    eventBus.on('gift_voucher.purchased', notificationHandler.handleGiftVoucherPurchased.bind(notificationHandler))
+    eventBus.on('gift_voucher.redeemed', notificationHandler.handleGiftVoucherRedeemed.bind(notificationHandler))
+
+    // Register gift voucher dashboard handlers
+    eventBus.on('gift_voucher.created', dashboardHandler.handleGiftVoucherCreated.bind(dashboardHandler))
+    eventBus.on('gift_voucher.updated', dashboardHandler.handleGiftVoucherUpdated.bind(dashboardHandler))
+    eventBus.on('gift_voucher.deleted', dashboardHandler.handleGiftVoucherDeleted.bind(dashboardHandler))
+    eventBus.on('gift_voucher.purchased', dashboardHandler.handleGiftVoucherPurchased.bind(dashboardHandler))
+    eventBus.on('gift_voucher.redeemed', dashboardHandler.handleGiftVoucherRedeemed.bind(dashboardHandler))
+
     this.isInitialized = true
-    logger.info("Booking event system initialized successfully")
+    logger.info("Event system initialized successfully - booking and gift voucher events registered")
   }
 
   /**
@@ -60,11 +78,14 @@ class BookingEventSystem {
 }
 
 // Export singleton instance
-export const bookingEventSystem = new BookingEventSystem()
+export const eventSystem = new EventSystem()
 
 // Auto-initialize the system
-bookingEventSystem.initialize()
+eventSystem.initialize()
 
 // Export the event bus for easy access
-export { eventBus, createBookingEvent } from "./event-bus"
-export type { BookingEvent, BookingEventType } from "./event-bus" 
+export { eventBus, createBookingEvent, createGiftVoucherEvent } from "./event-bus"
+export type { BookingEvent, BookingEventType, GiftVoucherEvent, GiftVoucherEventType } from "./event-bus"
+
+// Legacy export for backward compatibility
+export const bookingEventSystem = eventSystem 

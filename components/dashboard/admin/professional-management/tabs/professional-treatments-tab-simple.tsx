@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { Button } from "@/components/common/ui/button"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Stethoscope, Save, Loader2 } from "lucide-react"
 
 interface Treatment {

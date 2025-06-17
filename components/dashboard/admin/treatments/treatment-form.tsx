@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/common/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { PlusIcon, MinusIcon } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 interface TreatmentFormProps {
   treatment?: any

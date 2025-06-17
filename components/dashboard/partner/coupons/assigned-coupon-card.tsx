@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/common/ui/badge"
 import { formatDate, formatCurrency } from "@/lib/utils/utils"
 import { CheckCircle, Info, Copy, Clock, AlertTriangle, PowerOff } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/common/ui/button"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"

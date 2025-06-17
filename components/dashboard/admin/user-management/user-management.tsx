@@ -31,7 +31,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/common/ui/pagination"
-import { toast } from "@/components/common/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { deleteUserByAdmin, initiatePasswordResetByAdmin } from "@/actions/admin-actions"
 import {
   UserPlus,

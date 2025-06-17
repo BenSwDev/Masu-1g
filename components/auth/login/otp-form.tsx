@@ -10,7 +10,7 @@ import { MessageSquareCode, Loader2 } from "lucide-react"
 import { generateAndSendOTP, verifyOTP } from "@/actions/notification-actions"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useSession } from "next-auth/react"
 
 interface OTPFormProps {

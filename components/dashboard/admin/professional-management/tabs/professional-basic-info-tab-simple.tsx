@@ -9,7 +9,7 @@ import { Label } from "@/components/common/ui/label"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { User, Save } from "lucide-react"
 
 interface ProfessionalBasicInfoTabProps {

@@ -10,7 +10,7 @@ import { Label } from "@/components/common/ui/label"
 import { PhoneInput } from "@/components/common/phone-input"
 import { requestPhoneChange, confirmPhoneChange } from "@/actions/account-actions"
 import { Phone } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 interface PhoneChangeFormProps {
   currentPhone?: string

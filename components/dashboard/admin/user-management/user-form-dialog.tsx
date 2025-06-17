@@ -11,7 +11,7 @@ import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { PhoneInput } from "@/components/common/phone-input"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { createUserByAdmin, updateUserByAdmin } from "@/actions/admin-actions"
 import { useTranslation } from "@/lib/translations/i18n"
 

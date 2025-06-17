@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/common/ui/textarea"
 import { Calendar } from "@/components/common/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
 import { useSession } from "next-auth/react"
 import {

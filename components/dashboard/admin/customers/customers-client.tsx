@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"

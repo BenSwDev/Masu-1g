@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
 import { deleteTreatment, toggleTreatmentStatus, duplicateTreatment } from "@/actions/treatment-actions"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import { MoreVertical, Edit, Copy, Trash, Power } from "lucide-react"
 
 interface TreatmentCardProps {

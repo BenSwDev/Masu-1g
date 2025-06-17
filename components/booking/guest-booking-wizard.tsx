@@ -6,7 +6,7 @@ import { format } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
 
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails, TimeSlot } from "@/types/booking"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 import { GuestInfoStep } from "./steps/guest-info-step"
 import { GuestAddressStep } from "./steps/guest-address-step"

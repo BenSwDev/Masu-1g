@@ -43,7 +43,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
-import { toast } from "@/components/common/ui/use-toast"
+import { toast } from "@/hooks/use-toast"
 import { setActiveRole } from "@/actions/role-actions"
 import { TreatmentPreferencesModal } from "@/components/dashboard/preferences/treatment-preferences-modal" // Import modal
 import { NotificationsModal } from "@/components/dashboard/preferences/notifications-modal" // Import modal

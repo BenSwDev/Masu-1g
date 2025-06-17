@@ -1,6 +1,6 @@
 import { logger } from "@/lib/logs/logger"
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
-import type { BookingEvent } from "../event-bus"
+import type { BookingEvent, GiftVoucherEvent } from "../event-bus"
 import type { NotificationLanguage } from "@/lib/notifications/notification-types"
 
 // Import models for data access
@@ -267,6 +267,175 @@ export class NotificationHandler {
       logger.error("Failed to send review reminder:", {
         error: error instanceof Error ? error.message : String(error),
         bookingId: event.bookingId,
+      })
+    }
+  }
+
+  /**
+   * Handle booking.cancelled event - currently no notifications implemented
+   * Added for future notification expansion
+   */
+  async handleBookingCancelled(event: BookingEvent): Promise<void> {
+    try {
+      logger.info(`Booking cancelled, no notifications to send for: ${event.bookingId}`)
+      
+      // Currently cancelBooking function doesn't send any notifications
+      // This handler is ready for future notification expansion
+      
+    } catch (error) {
+      logger.error("Failed to handle booking cancelled notifications:", {
+        error: error instanceof Error ? error.message : String(error),
+        bookingId: event.bookingId,
+      })
+    }
+  }
+
+  // =================================================================
+  // GIFT VOUCHER EVENT HANDLERS
+  // =================================================================
+
+  /**
+   * Handle gift_voucher.purchased event - replicates purchase success notifications
+   */
+  async handleGiftVoucherPurchased(event: GiftVoucherEvent): Promise<void> {
+    try {
+      await dbConnect()
+      
+      const { voucher, guestInfo } = event.data
+      if (!voucher) {
+        logger.warn(`No voucher data in event: ${event.voucherId}`)
+        return
+      }
+
+      // Exact same logic as in confirmGiftVoucherPurchase and confirmGuestGiftVoucherPurchase
+      let recipients: any[] = []
+      let message = ""
+
+      if (guestInfo) {
+        // Guest purchase notification - exact same logic
+        recipients = [
+          { type: "email", value: guestInfo.email, name: guestInfo.name, language: "he" },
+          { type: "phone", value: guestInfo.phone, language: "he" }
+        ]
+        message = `שובר המתנה שלך בסך ${voucher.amount} ש״ח נרכש בהצלחה! קוד השובר: ${voucher.code}`
+      } else {
+        // Regular user purchase notification - exact same logic
+        const purchaserUser = await User.findById(event.userId)
+          .select("name email phone notificationPreferences")
+          .lean()
+
+        if (purchaserUser) {
+          const lang = purchaserUser.notificationPreferences?.language || "he"
+          const methods = purchaserUser.notificationPreferences?.methods || ["email"]
+
+          if (methods.includes("email") && purchaserUser.email) {
+            recipients.push({ 
+              type: "email", 
+              value: purchaserUser.email, 
+              name: purchaserUser.name, 
+              language: lang 
+            })
+          }
+          
+          if (methods.includes("sms") && purchaserUser.phone) {
+            recipients.push({ 
+              type: "phone", 
+              value: purchaserUser.phone, 
+              language: lang 
+            })
+          }
+
+          message = `שובר המתנה שלך בסך ${voucher.amount} ש״ח נרכש בהצלחה! קוד השובר: ${voucher.code}`
+        }
+      }
+
+      if (recipients.length > 0) {
+        await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
+      }
+
+      logger.info(`Gift voucher purchase notifications sent for: ${event.voucherId}`)
+      
+    } catch (error) {
+      // Same error handling as current code - log but don't throw
+      logger.error("Failed to send gift voucher purchase notifications:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
+      })
+    }
+  }
+
+  /**
+   * Handle gift_voucher.created event - currently no notifications implemented
+   * Added for future notification expansion
+   */
+  async handleGiftVoucherCreated(event: GiftVoucherEvent): Promise<void> {
+    try {
+      logger.info(`Gift voucher created, no notifications to send for: ${event.voucherId}`)
+      
+      // Currently createGiftVoucherByAdmin function doesn't send any notifications
+      // This handler is ready for future notification expansion
+      
+    } catch (error) {
+      logger.error("Failed to handle gift voucher created notifications:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
+      })
+    }
+  }
+
+  /**
+   * Handle gift_voucher.updated event - currently no notifications implemented
+   * Added for future notification expansion
+   */
+  async handleGiftVoucherUpdated(event: GiftVoucherEvent): Promise<void> {
+    try {
+      logger.info(`Gift voucher updated, no notifications to send for: ${event.voucherId}`)
+      
+      // Currently updateGiftVoucherByAdmin function doesn't send any notifications
+      // This handler is ready for future notification expansion
+      
+    } catch (error) {
+      logger.error("Failed to handle gift voucher updated notifications:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
+      })
+    }
+  }
+
+  /**
+   * Handle gift_voucher.deleted event - currently no notifications implemented
+   * Added for future notification expansion
+   */
+  async handleGiftVoucherDeleted(event: GiftVoucherEvent): Promise<void> {
+    try {
+      logger.info(`Gift voucher deleted, no notifications to send for: ${event.voucherId}`)
+      
+      // Currently deleteGiftVoucher function doesn't send any notifications
+      // This handler is ready for future notification expansion
+      
+    } catch (error) {
+      logger.error("Failed to handle gift voucher deleted notifications:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
+      })
+    }
+  }
+
+  /**
+   * Handle gift_voucher.redeemed event - currently no notifications implemented
+   * Added for future notification expansion
+   */
+  async handleGiftVoucherRedeemed(event: GiftVoucherEvent): Promise<void> {
+    try {
+      logger.info(`Gift voucher redeemed, no notifications to send for: ${event.voucherId}`)
+      
+      // Currently redeemGiftVoucher function doesn't send any notifications
+      // This handler is ready for future notification expansion
+      
+    } catch (error) {
+      logger.error("Failed to handle gift voucher redeemed notifications:", {
+        error: error instanceof Error ? error.message : String(error),
+        voucherId: event.voucherId,
       })
     }
   }

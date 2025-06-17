@@ -11,7 +11,7 @@ import Booking, { type IBooking } from "@/lib/db/models/booking"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import User, { type IUser } from "@/lib/db/models/user"
 
-import { sendNotificationToMultiple } from "@/lib/notifications/notification-manager"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import type { NotificationRecipient, NotificationData } from "@/lib/notifications/notification-types"
 
 import { logger } from "@/lib/logs/logger"
@@ -488,7 +488,7 @@ export async function sendReviewReminder(
       reviewLink,
     }
 
-    await sendNotificationToMultiple(recipients, data)
+    await unifiedNotificationService.sendNotificationToMultiple(recipients, data)
 
     booking.reviewReminderSentAt = new Date()
     await booking.save()

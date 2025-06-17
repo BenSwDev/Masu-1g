@@ -35,7 +35,7 @@ import { CalculatePricePayloadSchema, CreateBookingPayloadSchema, CreateGuestBoo
 import type { z } from "zod"
 import type { CreateBookingPayloadType as CreateBookingPayloadSchemaType, CreateGuestBookingPayloadType } from "@/lib/validation/booking-schemas"
 
-import { notificationManager } from "@/lib/notifications/notification-manager"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import type {
   EmailRecipient,
   PhoneRecipient,
@@ -723,7 +723,7 @@ export async function createBooking(
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
         if (userForNotification && treatment) {
-          const { sendTreatmentBookingSuccess } = await import("@/lib/notifications/notification-manager")
+          const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
 
           const lang = userForNotification.notificationPreferences?.language || "he"
           const methods = userForNotification.notificationPreferences?.methods || ["email"]
@@ -763,7 +763,7 @@ export async function createBooking(
           }
 
           if (recipients.length > 0) {
-            await sendTreatmentBookingSuccess(recipients, {
+            await unifiedNotificationService.sendTreatmentBookingSuccess(recipients, {
               recipientName: finalBookingObject.recipientName || userForNotification.name,
               bookerName: userForNotification.name,
               treatmentName: treatment.name,
@@ -1282,17 +1282,16 @@ export async function professionalAcceptBooking(
             bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${acceptedBooking._id.toString()}`,
           }
 
+          const recipients = []
           if (clientNotificationMethods.includes("email") && clientUser.email) {
-            await notificationManager.sendNotification(
-              { type: "email", value: clientUser.email, name: clientUser.name, language: clientLang },
-              notificationData,
-            )
+            recipients.push({ type: "email" as const, value: clientUser.email, name: clientUser.name, language: clientLang })
           }
           if (clientNotificationMethods.includes("sms") && clientUser.phone) {
-            await notificationManager.sendNotification(
-              { type: "phone", value: clientUser.phone, language: clientLang },
-              notificationData,
-            )
+            recipients.push({ type: "phone" as const, value: clientUser.phone, language: clientLang })
+          }
+          
+          if (recipients.length > 0) {
+            await unifiedNotificationService.sendNotificationToMultiple(recipients, notificationData)
           }
         }
       } catch (notificationError) {
@@ -1640,17 +1639,16 @@ export async function assignProfessionalToBooking(
             bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${assignedBooking._id.toString()}`,
           }
 
+          const clientRecipients = []
           if (clientNotificationMethods.includes("email") && clientUser.email) {
-            await notificationManager.sendNotification(
-              { type: "email", value: clientUser.email, name: clientUser.name, language: clientLang },
-              clientNotificationData,
-            )
+            clientRecipients.push({ type: "email" as const, value: clientUser.email, name: clientUser.name, language: clientLang })
           }
           if (clientNotificationMethods.includes("sms") && clientUser.phone) {
-            await notificationManager.sendNotification(
-              { type: "phone", value: clientUser.phone, language: clientLang },
-              clientNotificationData,
-            )
+            clientRecipients.push({ type: "phone" as const, value: clientUser.phone, language: clientLang })
+          }
+          
+          if (clientRecipients.length > 0) {
+            await unifiedNotificationService.sendNotificationToMultiple(clientRecipients, clientNotificationData)
           }
 
           // Professional notification
@@ -1666,17 +1664,16 @@ export async function assignProfessionalToBooking(
             bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/professional/booking-management/${assignedBooking._id.toString()}`,
           }
 
+          const professionalRecipients = []
           if (professionalNotificationMethods.includes("email") && professional.email) {
-            await notificationManager.sendNotification(
-              { type: "email", value: professional.email, name: professional.name, language: professionalLang },
-              professionalNotificationData,
-            )
+            professionalRecipients.push({ type: "email" as const, value: professional.email, name: professional.name, language: professionalLang })
           }
           if (professionalNotificationMethods.includes("sms") && professional.phone) {
-            await notificationManager.sendNotification(
-              { type: "phone", value: professional.phone, language: professionalLang },
-              professionalNotificationData,
-            )
+            professionalRecipients.push({ type: "phone" as const, value: professional.phone, language: professionalLang })
+          }
+          
+          if (professionalRecipients.length > 0) {
+            await unifiedNotificationService.sendNotificationToMultiple(professionalRecipients, professionalNotificationData)
           }
         }
       } catch (notificationError) {
@@ -2047,7 +2044,7 @@ export async function createGuestBooking(
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
         if (treatment) {
-          const { sendTreatmentBookingSuccess } = await import("@/lib/notifications/notification-manager")
+          const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
           
           const isBookingForSomeoneElse = Boolean(validatedPayload.guestInfo.isBookingForSomeoneElse)
           const bookerName = `${guestInfo.name}`
@@ -2117,7 +2114,7 @@ export async function createGuestBooking(
               
               // Send notification to booker (special message for booking for someone else)
               if (bookerRecipients.length > 0) {
-                const bookerNotificationResults = await sendTreatmentBookingSuccess(bookerRecipients, {
+                const bookerNotificationResults = await unifiedNotificationService.sendTreatmentBookingSuccess(bookerRecipients, {
                   recipientName: bookerName, // For booker message
                   bookerName: bookerName,
                   treatmentName: treatment.name,
@@ -2133,7 +2130,7 @@ export async function createGuestBooking(
               
               // Send notification to recipient
               if (recipientRecipients.length > 0) {
-                const recipientNotificationResults = await sendTreatmentBookingSuccess(recipientRecipients, {
+                const recipientNotificationResults = await unifiedNotificationService.sendTreatmentBookingSuccess(recipientRecipients, {
                   recipientName: recipientName,
                   bookerName: bookerName,
                   treatmentName: treatment.name,
@@ -2146,7 +2143,7 @@ export async function createGuestBooking(
               }
             } else {
               // Single notification for self-booking
-              const notificationResults = await sendTreatmentBookingSuccess(recipients, {
+              const notificationResults = await unifiedNotificationService.sendTreatmentBookingSuccess(recipients, {
                 recipientName: recipientName,
                 bookerName: undefined,
                 treatmentName: treatment.name,

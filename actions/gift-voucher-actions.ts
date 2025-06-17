@@ -11,7 +11,7 @@ import User from "@/lib/db/models/user"
 import Treatment from "@/lib/db/models/treatment"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
-import { notificationManager } from "@/lib/notifications/notification-manager"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import type { GiftVoucherPlain as IGiftVoucherPlainFile } from "@/lib/db/models/gift-voucher"
 import type {
   EmailRecipient,
@@ -955,17 +955,16 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
             message: lang === "he" ? messageHe : messageEn,
           }
 
+          const recipients = []
           if (methods.includes("email") && purchaser.email) {
-            await notificationManager.sendNotification(
-              { type: "email", value: purchaser.email, name: purchaser.name, language: lang as any },
-              notificationData as any,
-            )
+            recipients.push({ type: "email" as const, value: purchaser.email, name: purchaser.name, language: lang as any })
           }
           if (methods.includes("sms") && purchaser.phone) {
-            await notificationManager.sendNotification(
-              { type: "phone", value: purchaser.phone, language: lang as any },
-              notificationData as any,
-            )
+            recipients.push({ type: "phone" as const, value: purchaser.phone, language: lang as any })
+          }
+          
+          if (recipients.length > 0) {
+            await unifiedNotificationService.sendPurchaseSuccess(recipients, notificationData.message)
           }
         } else {
           logger.warn(
@@ -1540,17 +1539,16 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
         const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
         const message = `תודה על רכישתך. למימוש השובר לחץ כאן: ${redeemLink}`
 
+        const recipients = []
         if (guestInfo.email) {
-          await notificationManager.sendNotification(
-            { type: "email", value: guestInfo.email, name: guestInfo.name, language: lang as any },
-            { type: "purchase-success", message } as any,
-          )
+          recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
         }
         if (guestInfo.phone) {
-          await notificationManager.sendNotification(
-            { type: "phone", value: guestInfo.phone, language: lang as any },
-            { type: "purchase-success", message } as any,
-          )
+          recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
+        }
+        
+        if (recipients.length > 0) {
+          await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
         }
       } catch (notificationError) {
         logger.error("Failed to send purchase success notification for guest gift voucher:", {

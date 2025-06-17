@@ -1,7 +1,7 @@
 "use server"
 
 import { validateEmail } from "@/lib/auth/auth"
-import { notificationManager } from "@/lib/notifications/notification-manager"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import type { EmailRecipient, NotificationLanguage } from "@/lib/notifications/notification-types"
 import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
@@ -79,7 +79,7 @@ export async function sendPasswordResetEmail(
 
     // Send password reset email
     console.log("Sending password reset email to recipient:", recipient)
-    const result = await notificationManager.sendPasswordReset(recipient, resetUrl, 60)
+    const result = await unifiedNotificationService.sendPasswordReset(recipient, resetUrl, 60)
     console.log("Password reset email send result:", result)
 
     if (!result.success) {

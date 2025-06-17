@@ -12,7 +12,7 @@ import SubscriptionPurchase from "@/lib/db/models/subscription-purchase"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
-import { notificationManager } from "@/lib/notifications/notification-manager"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import type {
   EmailRecipient,
   PhoneRecipient,
@@ -189,17 +189,16 @@ export async function purchaseSubscription({
         const messageHe = `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`
         const messageEn = `Thank you for your purchase. View your receipt here: ${summaryLink}`
         const data = { type: "purchase-success" as const, message: lang === "he" ? messageHe : messageEn }
+        const recipients = []
         if (methods.includes("email") && purchaser.email) {
-          await notificationManager.sendNotification(
-            { type: "email", value: purchaser.email, name: purchaser.name, language: lang as any },
-            data as any,
-          )
+          recipients.push({ type: "email" as const, value: purchaser.email, name: purchaser.name, language: lang as any })
         }
         if (methods.includes("sms") && purchaser.phone) {
-          await notificationManager.sendNotification(
-            { type: "phone", value: purchaser.phone, language: lang as any },
-            data as any,
-          )
+          recipients.push({ type: "phone" as const, value: purchaser.phone, language: lang as any })
+        }
+        
+        if (recipients.length > 0) {
+          await unifiedNotificationService.sendPurchaseSuccess(recipients, data.message)
         }
       }
     } catch (notificationError) {
@@ -644,17 +643,16 @@ export async function purchaseGuestSubscription({
       const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
       const redeemLink = `${appBaseUrl}/redeem-subscription/${newUserSubscription._id}`
       const message = `תודה על רכישתך. למימוש המנוי לחץ כאן: ${redeemLink}`
+      const recipients = []
       if (guestInfo.email) {
-        await notificationManager.sendNotification(
-          { type: "email", value: guestInfo.email, name: guestInfo.name, language: lang as any },
-          { type: "purchase-success", message } as any,
-        )
+        recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
       }
       if (guestInfo.phone) {
-        await notificationManager.sendNotification(
-          { type: "phone", value: guestInfo.phone, language: lang as any },
-          { type: "purchase-success", message } as any,
-        )
+        recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
+      }
+      
+      if (recipients.length > 0) {
+        await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
       }
     } catch (notificationError) {
       logger.error("Failed to send guest subscription purchase notification", { error: notificationError })

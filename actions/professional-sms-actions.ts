@@ -6,7 +6,7 @@ import dbConnect from "@/lib/db/mongoose"
 import mongoose from "mongoose"
 import { smsService } from "@/lib/notifications/sms-service"
 import { getSMSTemplate } from "@/lib/notifications/templates/sms-templates"
-import { notificationManager } from "@/lib/notifications/notification-manager"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import { revalidatePath } from "next/cache"
 
 // Send SMS notifications to suitable professionals
@@ -116,7 +116,7 @@ export async function sendProfessionalNotifications(
 
         // Send email if available
         if (professional.userId.email) {
-          await notificationManager.sendNotification(
+          await unifiedNotificationService.sendNotification(
             {
               type: "email",
               value: professional.userId.email,

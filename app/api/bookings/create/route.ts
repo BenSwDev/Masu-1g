@@ -15,7 +15,7 @@ import { getNextSequenceValue } from "@/lib/db/models/counter"
 
 import { logger } from "@/lib/logs/logger"
 import { CreateBookingPayloadSchema } from "@/lib/validation/booking-schemas"
-import { notificationManager } from "@/lib/notifications/notification-manager"
+// Notifications handled inline
 
 export async function POST(request: NextRequest) {
   try {
@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
             .lean()
 
           if (userForNotification && treatment) {
-            const { sendTreatmentBookingSuccess } = notificationManager
+            const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
             const lang = userForNotification.notificationPreferences?.language || "he"
             const methods = userForNotification.notificationPreferences?.methods || ["email"]
             const recipients: any[] = []
@@ -262,7 +262,7 @@ export async function POST(request: NextRequest) {
             }
 
             if (recipients.length > 0) {
-              await sendTreatmentBookingSuccess(recipients, {
+              await unifiedNotificationService.sendTreatmentBookingSuccess(recipients, {
                 recipientName: finalBookingObject.recipientName || userForNotification.name,
                 bookerName: userForNotification.name,
                 treatmentName: treatment.name,

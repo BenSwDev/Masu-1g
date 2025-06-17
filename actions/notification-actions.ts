@@ -1,7 +1,7 @@
 "use server"
 
 import { validateEmail, validatePhone } from "@/lib/auth/auth"
-import { notificationManager } from "@/lib/notifications/notification-manager"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import type { EmailRecipient, PhoneRecipient, NotificationLanguage } from "@/lib/notifications/notification-types"
 import { obscureEmail, obscurePhone } from "@/lib/notifications/notification-utils"
 import dbConnect from "@/lib/db/mongoose"
@@ -76,7 +76,7 @@ export async function generateAndSendOTP(
             }
 
       logger.info(`[${otpId}] Sending OTP to recipient type: ${identifierType} (development mode)`)
-      const { code, expiryDate, result } = await notificationManager.sendOTP(recipient, 6, 10)
+      const { code, expiryDate, result } = await unifiedNotificationService.sendOTP(recipient, 6, 10)
       logger.info(`[${otpId}] OTP send result: ${result.success ? "Success" : "Failed"}`)
 
       if (!result.success) {
@@ -196,7 +196,7 @@ export async function generateAndSendOTP(
           }
 
     logger.info(`[${otpId}] Sending OTP to recipient type: ${identifierType}`)
-    const { code, expiryDate, result } = await notificationManager.sendOTP(recipient, 6, 10)
+    const { code, expiryDate, result } = await unifiedNotificationService.sendOTP(recipient, 6, 10)
     logger.info(`[${otpId}] OTP send result: ${result.success ? "Success" : "Failed"}`)
 
     if (!result.success) {
@@ -403,7 +403,7 @@ export async function sendWelcomeEmail(
       name,
     }
 
-    const result = await notificationManager.sendWelcome(recipient, name)
+    const result = await unifiedNotificationService.sendWelcome(recipient, name)
     logger.info(`[${welcomeId}] Welcome email result: ${result.success ? "Success" : "Failed"}`)
 
     return {
@@ -472,7 +472,7 @@ export async function sendTestNotification(
     switch (notificationType) {
       case "otp":
         logger.info(`[${testId}] Sending test OTP`)
-        const otpResult = await notificationManager.sendOTP(recipientObj, 6, 10)
+        const otpResult = await unifiedNotificationService.sendOTP(recipientObj, 6, 10)
         result = otpResult.result
         details = { code: otpResult.code, expiryDate: otpResult.expiryDate }
         break
@@ -480,7 +480,7 @@ export async function sendTestNotification(
       case "welcome":
         logger.info(`[${testId}] Sending test welcome message`)
         if (type === "email") {
-          result = await notificationManager.sendWelcome(recipientObj as EmailRecipient, "Test User")
+          result = await unifiedNotificationService.sendWelcome(recipientObj, "Test User")
         } else {
           result = { success: false, error: "Cannot send welcome to phone" }
         }
@@ -489,8 +489,8 @@ export async function sendTestNotification(
       case "password-reset":
         logger.info(`[${testId}] Sending test password reset`)
         if (type === "email") {
-          result = await notificationManager.sendPasswordReset(
-            recipientObj as EmailRecipient,
+          result = await unifiedNotificationService.sendPasswordReset(
+            recipientObj,
             `${process.env.NEXTAUTH_URL}/reset-password?token=test-token`,
             60,
           )
@@ -546,7 +546,7 @@ export async function sendOTP(
     }
 
     // Generate and send OTP
-    const { code, expiryDate, result } = await notificationManager.sendOTP(recipient)
+    const { code, expiryDate, result } = await unifiedNotificationService.sendOTP(recipient)
 
     if (!result.success) {
       logger.error(`[${otpId}] Failed to send OTP:`, result.error)

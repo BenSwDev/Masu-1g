@@ -322,30 +322,33 @@ export async function getWeeklyTransactionSummary(): Promise<{
       const subscriptionUsage = dayBookings.filter(b => b.priceDetails.redeemedUserSubscriptionId).length
 
       // Get professional bonuses and penalties for this day
-      const { ProfessionalProfile } = await import("@/lib/db/models/professional-profile")
-      
       let professionalBonuses = 0
       let professionalPenalties = 0
 
       // Query all professional profiles for financial transactions on this day
-      const professionalProfiles = await ProfessionalProfile.find({
-        'financialTransactions.date': {
-          $gte: currentDate,
-          $lt: nextDate
-        }
-      }).lean()
+      try {
+        const professionalProfiles = await ProfessionalProfile.find({
+          'financialTransactions.date': {
+            $gte: currentDate,
+            $lt: nextDate
+          }
+        }).lean()
 
-      for (const profile of professionalProfiles) {
-        for (const transaction of profile.financialTransactions || []) {
-          const transactionDate = new Date(transaction.date)
-          if (transactionDate >= currentDate && transactionDate < nextDate) {
-            if (transaction.type === 'bonus') {
-              professionalBonuses += transaction.amount
-            } else if (transaction.type === 'penalty') {
-              professionalPenalties += Math.abs(transaction.amount) // Ensure positive for display
+        for (const profile of professionalProfiles || []) {
+          for (const transaction of profile.financialTransactions || []) {
+            const transactionDate = new Date(transaction.date)
+            if (transactionDate >= currentDate && transactionDate < nextDate) {
+              if (transaction.type === 'bonus') {
+                professionalBonuses += transaction.amount || 0
+              } else if (transaction.type === 'penalty') {
+                professionalPenalties += Math.abs(transaction.amount || 0) // Ensure positive for display
+              }
             }
           }
         }
+      } catch (profileError) {
+        console.warn("Error fetching professional profiles for bonuses/penalties:", profileError)
+        // Continue with zeros if there's an error
       }
 
       const dayData: WeeklyTransactionSummary = {

@@ -6,7 +6,7 @@ import mongoose from "mongoose"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 
-import Booking, { type IBooking, type IPriceDetails, type IBookingAddressSnapshot } from "@/lib/db/models/booking"
+import Booking, { type IBooking, type IPriceDetails, type IBookingAddressSnapshot, type BookingStatus } from "@/lib/db/models/booking"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
 import Subscription from "@/lib/db/models/subscription"
@@ -373,18 +373,18 @@ export async function calculateBookingPrice(
         )
       ) {
         const subTreatment = userSub.treatmentId as ITreatment
-        const isTreatmentMatch = subTreatment && subTreatment._id.toString() === treatmentId
+        const isTreatmentMatch = subTreatment && (subTreatment._id as any).toString() === treatmentId
         let isDurationMatch = true
         if (isTreatmentMatch && subTreatment.pricingType === "duration_based") {
           isDurationMatch = userSub.selectedDurationId
             ? userSub.selectedDurationId.toString() === selectedDurationId
-            : subTreatment.durations?.some((d) => d._id.toString() === selectedDurationId && d.isActive) || false
+            : subTreatment.durations?.some((d: any) => d._id.toString() === selectedDurationId && d.isActive) || false
         }
 
         if (isTreatmentMatch && isDurationMatch) {
           priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = 0
           priceDetails.isBaseTreatmentCoveredBySubscription = true
-          priceDetails.redeemedUserSubscriptionId = userSub._id.toString()
+          priceDetails.redeemedUserSubscriptionId = (userSub._id as any).toString()
         }
       }
     }
@@ -681,7 +681,7 @@ export async function createBooking(
         voucher.usageHistory.push({
           date: new Date(),
           amount: validatedPayload.priceDetails.voucherAppliedAmount,
-          orderId: newBooking._id,
+          orderId: newBooking._id as any,
           description: `Booking ${bookingNumber}`,
         })
         await voucher.save({ session: mongooseDbSession })
@@ -711,7 +711,7 @@ export async function createBooking(
       revalidatePath("/dashboard/member/bookings")
       revalidatePath("/dashboard/admin/bookings")
 
-      const finalBookingObject = bookingResult.toObject() as IBooking
+      const finalBookingObject = (bookingResult as any).toObject() as IBooking
       if (updatedVoucherDetails) {
         ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
       }

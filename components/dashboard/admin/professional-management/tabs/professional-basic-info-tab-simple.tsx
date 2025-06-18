@@ -57,7 +57,7 @@ export default function ProfessionalBasicInfoTab({
         formDataToSend.append("birthDate", formData.birthDate)
       }
 
-      const { createProfessional } = await import("@/actions/professional-actions")
+      const { createProfessional } = await import("@/app/dashboard/(user)/(roles)/admin/professional-management/actions")
       const result = await createProfessional(formDataToSend)
       
       if (result.success && result.professional) {

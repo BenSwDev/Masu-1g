@@ -43,14 +43,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Badge } from "@/components/common/ui/badge"
 
-import {
-  getWorkingHoursSettings,
-  updateFixedHours,
-  updateSpecialDates,
-  updateSpecialDateEvents,
-  deleteSpecialDate,
-  deleteSpecialDateEvent,
-} from "@/actions/working-hours-actions"
+import { getWorkingHours, updateWorkingHours } from "@/app/dashboard/(user)/(roles)/admin/working-hours/actions"
 import type { IWorkingHoursSettings, IFixedHours, ISpecialDateEvent } from "@/lib/db/models/working-hours"
 import { ISpecialDate } from "@/lib/db/models/working-hours"
 
@@ -159,7 +152,7 @@ export default function WorkingHoursClient() {
   const { data: workingHoursData, isLoading } = useQuery({
     queryKey: ["workingHours"],
     queryFn: async () => {
-      const result = await getWorkingHoursSettings()
+      const result = await getWorkingHours()
       if (!result.success) {
         throw new Error(result.error)
       }
@@ -218,7 +211,7 @@ export default function WorkingHoursClient() {
   }, [workingHoursData, fixedHoursForm])
 
   const updateFixedHoursMutation = useMutation({
-    mutationFn: updateFixedHours,
+    mutationFn: updateWorkingHours,
     onSuccess: () => {
         toast({
         title: t("workingHours.fixedHoursUpdated"),
@@ -235,7 +228,7 @@ export default function WorkingHoursClient() {
   })
 
   const addSpecialDateMutation = useMutation({
-    mutationFn: updateSpecialDates,
+    mutationFn: updateWorkingHours,
     onSuccess: () => {
         toast({
         title: t("workingHours.specialDateAdded"),
@@ -254,7 +247,7 @@ export default function WorkingHoursClient() {
   })
 
   const updateSpecialDateMutation = useMutation({
-    mutationFn: updateSpecialDates,
+    mutationFn: updateWorkingHours,
     onSuccess: () => {
         toast({
         title: t("workingHours.specialDateUpdated"),
@@ -274,7 +267,7 @@ export default function WorkingHoursClient() {
   })
 
   const deleteSpecialDateMutation = useMutation({
-    mutationFn: deleteSpecialDate,
+    mutationFn: updateWorkingHours,
     onSuccess: () => {
       toast({
         title: t("workingHours.specialDateDeleted"),
@@ -291,7 +284,7 @@ export default function WorkingHoursClient() {
   })
 
   const updateSpecialDateEventsMutation = useMutation({
-    mutationFn: updateSpecialDateEvents,
+    mutationFn: updateWorkingHours,
     onSuccess: () => {
         toast({
         title: t("workingHours.specialEventUpdated"),
@@ -311,7 +304,7 @@ export default function WorkingHoursClient() {
   })
 
   const deleteSpecialDateEventMutation = useMutation({
-    mutationFn: deleteSpecialDateEvent,
+    mutationFn: updateWorkingHours,
     onSuccess: () => {
       toast({
         title: t("workingHours.specialEventDeleted"),

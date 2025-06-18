@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CustomPagination } from "@/components/common/ui/pagination"
 import { CityFormDialog } from "./city-form-dialog"
 import { useTranslation } from "@/lib/translations/i18n"
+import { getAllCities, createCity, updateCity, deleteCity } from "@/app/dashboard/(user)/(roles)/admin/cities/actions"
 
 export interface CityData {
   id: string

@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
-import { deleteTreatment, toggleTreatmentStatus, duplicateTreatment } from "@/actions/treatment-actions"
+import { updateTreatment, deleteTreatment } from "@/app/dashboard/(user)/(roles)/admin/treatments/actions"
 import { useToast } from "@/components/common/ui/use-toast"
 import { MoreVertical, Edit, Copy, Trash, Power } from "lucide-react"
 

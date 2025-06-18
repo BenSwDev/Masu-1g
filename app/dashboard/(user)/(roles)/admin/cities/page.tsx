@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
-import { getCities } from "@/actions/city-actions"
+import { getCities } from "./actions"
 import { CityManagement } from "@/components/dashboard/admin/city-management/city-management"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { Separator } from "@/components/common/ui/separator"

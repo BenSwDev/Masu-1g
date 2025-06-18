@@ -32,7 +32,7 @@ import {
   PaginationPrevious,
 } from "@/components/common/ui/pagination"
 import { toast } from "@/components/common/ui/use-toast"
-import { deleteUserByAdmin, initiatePasswordResetByAdmin } from "@/actions/admin-actions"
+import { deleteUserByAdmin, initiatePasswordResetByAdmin } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
 import {
   UserPlus,
   Users,

@@ -1,7 +1,6 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { getPartnerCouponBatches } from "@/actions/partner-coupon-batch-actions"
-import { getPartnersForSelection } from "@/actions/coupon-actions"
+import { getPartnerCouponBatches, getPartnersForSelection, type GetPartnersForSelectionResult } from "./actions"
 import PartnerCouponBatchesClient from "@/components/dashboard/admin/partner-coupon-batches/partner-coupon-batches-client"
 import { Heading } from "@/components/common/ui/heading"
 import { ClientAwarePartnerCouponBatchesLoadingSkeleton } from "@/components/dashboard/admin/partner-coupon-batches/client-aware-partner-coupon-batches-loading-skeleton"
@@ -56,8 +55,11 @@ async function PartnerCouponBatchesDataWrapper({
   partnersPromise,
 }: {
   batchesDataPromise: ReturnType<typeof getPartnerCouponBatches>
-  partnersPromise: ReturnType<typeof getPartnersForSelection>
+  partnersPromise: Promise<GetPartnersForSelectionResult>
 }) {
-  const [batchesData, partnersForSelect] = await Promise.all([batchesDataPromise, partnersPromise])
-  return <PartnerCouponBatchesClient initialData={batchesData} partnersForSelect={partnersForSelect} />
+  const [batchesData, partnersResult] = await Promise.all([batchesDataPromise, partnersPromise])
+  if (!partnersResult.success) {
+    throw new Error(partnersResult.error || "Failed to fetch partners")
+  }
+  return <PartnerCouponBatchesClient initialData={batchesData} partnersForSelect={partnersResult.partners || []} />
 } 

@@ -1,9 +1,16 @@
+"use client"
+
 import type React from "react"
 import { Edit, Trash, Package, Calendar, Tag } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/common/ui/card"
 import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
+import { Switch } from "@/components/common/ui/switch"
+import { AlertModal } from "@/components/common/modals/alert-modal"
+import { useState } from "react"
+import { toast } from "sonner"
+import { deleteSubscription, toggleSubscriptionStatus } from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
 
 interface Subscription {
   id: string

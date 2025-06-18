@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Search, Filter, Users, UserCheck, UserX, Clock, AlertTriangle, Plus } from "lucide-react"
-import { getProfessionals } from "@/actions/professional-actions"
+import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import ProfessionalEditModal from "./professional-edit-modal"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 

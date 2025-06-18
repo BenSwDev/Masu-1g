@@ -1,22 +1,19 @@
-import { getGiftVouchers, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import { getGiftVouchers, type GiftVoucherPlain } from "./actions"
 import { GiftVouchersClient } from "@/components/dashboard/admin/gift-vouchers/gift-vouchers-client"
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { Skeleton } from "@/components/common/ui/skeleton" // Corrected import path
+import { Skeleton } from "@/components/common/ui/skeleton"
 import { requireUserSession } from "@/lib/auth/require-session"
 
-export const dynamic = "force-dynamic" // Ensures fresh data on each request
-export const revalidate = 0 // Disables caching for this page
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 async function GiftVouchersData() {
   // Initial load with default parameters
   const result = await getGiftVouchers(1, 10, "", {}) // page, limit, search, filters
 
   if (!result.success || !result.giftVouchers || !result.pagination) {
-    // Handle error state appropriately, maybe show an error message component
-    // For now, throwing an error which will be caught by Next.js error boundary
     console.error("Failed to load gift vouchers:", result.error)
-    // Fallback to empty arrays/default pagination to prevent client component crash
     return (
       <GiftVouchersClient initialVouchers={[]} initialPagination={{ total: 0, page: 1, limit: 10, totalPages: 0 }} />
     )
@@ -24,7 +21,7 @@ async function GiftVouchersData() {
 
   return (
     <GiftVouchersClient
-      initialVouchers={result.giftVouchers as GiftVoucherPlain[]} // Cast if necessary, ensure type alignment
+      initialVouchers={result.giftVouchers}
       initialPagination={result.pagination}
     />
   )

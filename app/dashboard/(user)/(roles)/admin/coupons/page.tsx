@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { getAdminCoupons, getPartnersForSelection } from "@/actions/coupon-actions"
+import { getAdminCoupons, getPartnersForSelection } from "./actions"
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
 import { Heading } from "@/components/common/ui/heading"
 import { ClientAwareCouponsLoadingSkeleton } from "@/components/dashboard/admin/coupons/client-aware-coupons-loading-skeleton"
@@ -67,6 +67,6 @@ async function CouponsDataWrapper({
   couponsDataPromise: ReturnType<typeof getAdminCoupons>
   partnersPromise: ReturnType<typeof getPartnersForSelection>
 }) {
-  const [couponsData, partnersForSelect] = await Promise.all([couponsDataPromise, partnersPromise])
-  return <CouponsClient initialData={couponsData} partnersForSelect={partnersForSelect} />
+  const [couponsData, partnersData] = await Promise.all([couponsDataPromise, partnersPromise])
+  return <CouponsClient initialData={couponsData} partnersForSelect={partnersData.partners || []} />
 }

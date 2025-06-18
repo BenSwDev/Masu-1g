@@ -8,7 +8,7 @@ import { DataTable } from "@/components/common/ui/data-table"
 import { useToast } from "@/components/common/ui/use-toast"
 import type { IPartnerCouponBatch } from "@/lib/db/models/partner-coupon-batch"
 import { PartnerCouponBatchForm, type PartnerCouponBatchFormValues } from "./partner-coupon-batch-form"
-import { type getPartnerCouponBatches, createPartnerCouponBatch, updatePartnerCouponBatch, deletePartnerCouponBatch, getBatchCoupons } from "@/actions/partner-coupon-batch-actions"
+import { type getPartnerCouponBatches, createPartnerCouponBatch, updatePartnerCouponBatch, deletePartnerCouponBatch, getBatchCoupons } from "@/app/dashboard/(user)/(roles)/admin/partner-coupon-batches/actions"
 import { columns as batchColumnsDefinition } from "./partner-coupon-batches-columns"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import {

@@ -17,7 +17,7 @@ import { Star, User, Phone, Mail, Calendar, Clock, MessageCircle, AlertTriangle,
 import type { PopulatedReview } from "@/types/review"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
-import { updateReviewResponse } from "@/actions/review-actions"
+import { updateReviewResponse } from "@/app/dashboard/(user)/(roles)/admin/reviews/actions"
 import { toast } from "sonner"
 
 interface ReviewDetailModalProps {

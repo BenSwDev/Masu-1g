@@ -5,7 +5,7 @@ import {
   getAllPurchaseTransactions,
   getWeeklyAdminTransactionStats,
 } from "@/actions/purchase-summary-actions"
-import { getProfessionals } from "@/actions/professional-actions"
+import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { Heading } from "@/components/common/ui/heading"
 import { Separator } from "@/components/common/ui/separator"

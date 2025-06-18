@@ -14,7 +14,7 @@ import {
   updateSubscription,
   deleteSubscription,
   getSubscriptions,
-} from "@/actions/subscription-actions"
+} from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
 import { toast } from "sonner"
 import SubscriptionForm from "./subscription-form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"

@@ -8,7 +8,7 @@ import { DataTable } from "@/components/common/ui/data-table" // Corrected path
 import { useToast } from "@/components/common/ui/use-toast"
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { CouponForm, type CouponFormValues } from "./coupon-form"
-import { type getAdminCoupons, createCoupon, updateCoupon, deleteCoupon } from "@/actions/coupon-actions"
+import { getAllCoupons, createCoupon, updateCoupon, deleteCoupon } from "@/app/dashboard/(user)/(roles)/admin/coupons/actions"
 import { columns as couponColumnsDefinition } from "./coupons-columns" // Corrected import and aliased
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import {
@@ -26,7 +26,7 @@ import { useIsMobile } from "@/components/common/ui/use-mobile" // Corrected imp
 import { CouponCard } from "./coupon-card"
 
 interface CouponsClientProps {
-  initialData: Awaited<ReturnType<typeof getAdminCoupons>>
+  initialData: Awaited<ReturnType<typeof getAllCoupons>>
   partnersForSelect: { value: string; label: string }[]
 }
 

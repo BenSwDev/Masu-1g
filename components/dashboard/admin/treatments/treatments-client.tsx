@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "@/lib/translations/i18n"
-import { getTreatments } from "@/actions/treatment-actions"
+import { getAllTreatments } from "@/app/dashboard/(user)/(roles)/admin/treatments/actions"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Card, CardContent } from "@/components/common/ui/card"
@@ -25,7 +25,7 @@ export function TreatmentsClient() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["treatments"],
     queryFn: async () => {
-      const result = await getTreatments()
+      const result = await getAllTreatments()
       if (!result.success) {
         throw new Error(result.error || "Failed to fetch treatments")
       }

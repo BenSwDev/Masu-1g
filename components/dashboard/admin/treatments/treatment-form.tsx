@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { createTreatment, updateTreatment } from "@/actions/treatment-actions"
+import { createTreatment, updateTreatment } from "@/app/dashboard/(user)/(roles)/admin/treatments/actions"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent } from "@/components/common/ui/card"
 import {

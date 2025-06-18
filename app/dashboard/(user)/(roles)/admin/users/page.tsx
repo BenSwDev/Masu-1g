@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
-import { getAllUsers, getUserStatistics } from "@/actions/admin-actions"
+import { getAllUsers, getUserStatistics } from "./actions"
 import { UserManagement } from "@/components/dashboard/admin/user-management/user-management"
 
 export const dynamic = "force-dynamic"
@@ -19,7 +19,12 @@ export interface PageUserData {
   dateOfBirth?: string | null // ISO string
   gender?: string | null
   createdAt: string // ISO string
-  // Add other fields if UserManagement needs them
+}
+
+export interface RoleCounts {
+  members: number
+  professionals: number
+  partners: number
 }
 
 interface AdminUsersPageProps {
@@ -71,7 +76,9 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
 
   // Fetch user statistics
   const statsResult = await getUserStatistics()
-  const roleCounts = statsResult.success ? statsResult.roleCounts : { members: 0, professionals: 0, partners: 0 }
+  const roleCounts: RoleCounts = statsResult.success && statsResult.roleCounts
+    ? statsResult.roleCounts
+    : { members: 0, professionals: 0, partners: 0 }
 
   return (
     <div className="space-y-6">

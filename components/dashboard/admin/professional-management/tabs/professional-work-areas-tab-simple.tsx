@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/common/ui/badge"
 import { useToast } from "@/components/common/ui/use-toast"
 import { MapPin, Save, Loader2, Plus, X } from "lucide-react"
-import { updateProfessionalWorkAreas } from "@/actions/professional-actions"
+import { updateProfessionalWorkAreas } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 
 interface City {
   _id: string

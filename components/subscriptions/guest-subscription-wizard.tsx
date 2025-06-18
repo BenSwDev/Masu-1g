@@ -9,13 +9,71 @@ import GuestSubscriptionSummaryStep from "./guest-subscription-summary-step"
 import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
 import { createGuestUser } from "@/actions/booking-actions"
 import { purchaseGuestSubscription, saveAbandonedSubscriptionPurchase } from "@/actions/user-subscription-actions"
+import type { CalculatedPriceDetails, SelectedBookingOptions } from "@/types/booking"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
-import type { CalculatedPriceDetails } from "@/types/booking"
+import type { BookingInitialData } from "@/types/booking"
+
+// Define serialized types that match the data we receive from the server
+interface SerializedSubscription {
+  _id: string
+  name: string
+  description: string
+  quantity: number
+  bonusQuantity: number
+  validityMonths: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+interface SerializedTreatmentDuration {
+  _id: string
+  minutes: number
+  price: number
+  professionalPrice: number
+  isActive: boolean
+}
+
+interface SerializedTreatment {
+  _id: string
+  name: string
+  description: string
+  category: string
+  pricingType: "fixed" | "duration_based"
+  fixedPrice?: number
+  durations?: SerializedTreatmentDuration[]
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
 
 interface Props {
-  subscriptions: ISubscription[]
-  treatments: ITreatment[]
+  subscriptions: SerializedSubscription[]
+  treatments: SerializedTreatment[]
+}
+
+// Convert serialized data to model types
+function convertToSubscription(sub: SerializedSubscription): ISubscription {
+  return {
+    ...sub,
+    _id: sub._id as any,
+    createdAt: new Date(sub.createdAt),
+    updatedAt: new Date(sub.updatedAt),
+  } as ISubscription
+}
+
+function convertToTreatment(treatment: SerializedTreatment): ITreatment {
+  return {
+    ...treatment,
+    _id: treatment._id as any,
+    durations: treatment.durations?.map(d => ({
+      ...d,
+      _id: d._id as any,
+    })),
+    createdAt: new Date(treatment.createdAt),
+    updatedAt: new Date(treatment.updatedAt),
+  } as ITreatment
 }
 
 export default function GuestSubscriptionWizard({ subscriptions, treatments }: Props) {
@@ -28,20 +86,20 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
   const [selectedDurationId, setSelectedDurationId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
 
-  const selectedTreatment = treatments.find(t => t._id.toString() === selectedTreatmentId)
+  const selectedTreatment = treatments.find(t => t._id === selectedTreatmentId)
   const selectedDuration = selectedTreatment?.pricingType === "duration_based" ?
-    selectedTreatment.durations?.find(d => d._id.toString() === selectedDurationId) : undefined
+    selectedTreatment.durations?.find(d => d._id === selectedDurationId) : undefined
 
   const pricePerSession = selectedTreatment?.pricingType === "fixed" ? selectedTreatment.fixedPrice || 0 : selectedDuration?.price || 0
 
   const calculatedPrice: CalculatedPriceDetails = {
-    basePrice: (subscriptions.find(s=>s._id.toString()===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
+    basePrice: (subscriptions.find(s=>s._id===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
     surcharges: [],
     totalSurchargesAmount: 0,
-    treatmentPriceAfterSubscriptionOrTreatmentVoucher: (subscriptions.find(s=>s._id.toString()===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
+    treatmentPriceAfterSubscriptionOrTreatmentVoucher: (subscriptions.find(s=>s._id===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
     couponDiscount: 0,
     voucherAppliedAmount: 0,
-    finalAmount: (subscriptions.find(s=>s._id.toString()===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
+    finalAmount: (subscriptions.find(s=>s._id===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
     isBaseTreatmentCoveredBySubscription: false,
     isBaseTreatmentCoveredByTreatmentVoucher: false,
     isFullyCoveredByVoucherOrSubscription: false,
@@ -111,7 +169,7 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
       case 2:
         return (
           <GuestSubscriptionSelectionStep
-            subscriptions={subscriptions}
+            subscriptions={subscriptions.map(convertToSubscription)}
             selectedId={selectedSubscriptionId}
             onSelect={setSelectedSubscriptionId}
             onNext={nextStep}
@@ -119,13 +177,34 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
           />
         )
       case 3:
+        const bookingOptions: SelectedBookingOptions = {
+          selectedTreatmentId: (selectedTreatmentId ?? ""),
+          selectedDurationId: (selectedDurationId ?? ""),
+          therapistGenderPreference: "any",
+          isFlexibleTime: false,
+          source: "new_purchase",
+        }
         return (
           <GuestTreatmentSelectionStep
-            initialData={{ activeTreatments: treatments }}
-            bookingOptions={{
-              selectedTreatmentId,
-              selectedDurationId,
+            initialData={{
+              activeTreatments: treatments.map(convertToTreatment),
+              activeUserSubscriptions: [],
+              usableGiftVouchers: [],
+              userPreferences: {
+                therapistGender: "any",
+                notificationMethods: [],
+                notificationLanguage: "he",
+              },
+              userAddresses: [],
+              userPaymentMethods: [],
+              workingHoursSettings: {},
+              currentUser: {
+                id: "",
+                name: "",
+                email: "",
+              },
             }}
+            bookingOptions={bookingOptions}
             setBookingOptions={(update: any) => {
               const prev = {
                 selectedTreatmentId,
@@ -133,11 +212,15 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
               }
               const nextState =
                 typeof update === "function" ? update(prev) : update
-              if (nextState.selectedTreatmentId !== undefined) {
-                setSelectedTreatmentId(nextState.selectedTreatmentId || "")
+              if (typeof nextState.selectedTreatmentId === 'string') {
+                setSelectedTreatmentId(nextState.selectedTreatmentId)
+              } else {
+                setSelectedTreatmentId("")
               }
-              if (nextState.selectedDurationId !== undefined) {
-                setSelectedDurationId(nextState.selectedDurationId || "")
+              if (typeof nextState.selectedDurationId === 'string') {
+                setSelectedDurationId(nextState.selectedDurationId)
+              } else {
+                setSelectedDurationId("")
               }
             }}
             onNext={nextStep}
@@ -147,11 +230,12 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
           />
         )
       case 4:
+        const selectedSub = subscriptions.find(s=>s._id===selectedSubscriptionId)
         return (
           <GuestSubscriptionSummaryStep
             guestInfo={guestInfo}
-            subscription={subscriptions.find(s=>s._id.toString()===selectedSubscriptionId)}
-            treatment={selectedTreatment}
+            subscription={selectedSub ? convertToSubscription(selectedSub) : undefined}
+            treatment={selectedTreatment ? convertToTreatment(selectedTreatment) : undefined}
             durationPrice={pricePerSession}
             onNext={nextStep}
             onPrev={prevStep}

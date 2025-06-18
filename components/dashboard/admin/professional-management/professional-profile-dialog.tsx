@@ -6,7 +6,7 @@ import { Button } from "@/components/common/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Separator } from "@/components/common/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
-import { getProfessionalById, updateProfessionalStatus } from "@/actions/professional-actions"
+import { getProfessionalById, updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 
 interface ProfessionalProfileDialogProps {

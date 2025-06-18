@@ -84,7 +84,7 @@ export default function ProfessionalTreatmentsTab({
       })
 
       if (professional?._id) {
-        const { updateProfessionalTreatments } = await import("@/actions/professional-actions")
+        const { updateProfessionalTreatments } = await import("@/app/dashboard/(user)/(roles)/admin/professional-management/actions")
         const result = await updateProfessionalTreatments(professional._id, updatedTreatments)
         if (!result.success) {
           throw new Error(result.error || "Failed to update treatments")

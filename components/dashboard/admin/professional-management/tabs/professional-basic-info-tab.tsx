@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-// import { useTranslation } from "@/hooks/use-translation"
+import { useTranslation } from "@/lib/translations/i18n"
 import { User, Mail, Phone, Edit, Save, X, Clock, UserCheck, UserX, AlertTriangle } from "lucide-react"
 
 type ProfessionalStatus = 
@@ -102,7 +102,7 @@ export default function ProfessionalBasicInfoTab({
         formDataToSend.append("birthDate", createFormData.birthDate)
       }
 
-      const { createProfessional } = await import("@/actions/professional-actions")
+      const { createProfessional } = await import("@/app/dashboard/(user)/(roles)/admin/professional-management/actions")
       const result = await createProfessional(formDataToSend)
       
       if (result.success && result.professional) {
@@ -168,12 +168,12 @@ export default function ProfessionalBasicInfoTab({
 
   const handleStatusUpdate = async () => {
     try {
-      const { updateProfessionalStatus } = await import("@/actions/professional-actions")
+      const { updateProfessionalStatus } = await import("@/app/dashboard/(user)/(roles)/admin/professional-management/actions")
       const result = await updateProfessionalStatus(
         professional._id,
         newStatus,
         adminNote,
-        newStatus === "rejected" ? rejectionReason : undefined
+        rejectionReason
       )
       
       if (result.success) {
@@ -186,7 +186,7 @@ export default function ProfessionalBasicInfoTab({
           ...professional,
           status: newStatus,
           adminNotes: adminNote,
-          rejectionReason: newStatus === "rejected" ? rejectionReason : professional.rejectionReason
+          rejectionReason: rejectionReason
         }
         onUpdate(updatedProfessional)
         setShowStatusDialog(false)

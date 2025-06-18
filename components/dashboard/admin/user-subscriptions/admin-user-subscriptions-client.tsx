@@ -13,7 +13,7 @@ import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { User } from "next-auth"
-import { getAllUserSubscriptions } from "@/actions/user-subscription-actions"
+import { getAllUserSubscriptions } from "@/app/dashboard/(user)/(roles)/admin/user-subscriptions/actions"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { useIsMobile } from "@/components/common/ui/use-mobile" // Corrected import

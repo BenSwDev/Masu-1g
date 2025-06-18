@@ -40,7 +40,7 @@ import {
 } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
-import { getAllCustomers, getUserPurchaseHistory } from "@/actions/purchase-summary-actions"
+import { getAllCustomers, getAllPurchaseTransactions } from "@/app/dashboard/(user)/(roles)/admin/customers/actions"
 import PurchaseHistoryTable from "@/components/common/purchase/purchase-history-table"
 import type { CustomerSummary, PurchaseTransaction } from "@/lib/types/purchase-summary"
 import {
@@ -60,10 +60,13 @@ import {
   UserCheck,
   UserX,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function CustomersClient() {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [customers, setCustomers] = useState<CustomerSummary[]>([])
   const [currentPage, setCurrentPage] = useState(1)
@@ -74,6 +77,9 @@ export default function CustomersClient() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerSummary | null>(null)
   const [customerTransactions, setCustomerTransactions] = useState<PurchaseTransaction[]>([])
   const [loadingTransactions, setLoadingTransactions] = useState(false)
+  const [transactionsError, setTransactionsError] = useState<string | null>(null)
+  const [transactionsPage, setTransactionsPage] = useState(1)
+  const [transactionsTotalPages, setTransactionsTotalPages] = useState(1)
   const limit = 20
 
   const loadCustomers = async (page = 1, search = searchQuery, userType = userTypeFilter) => {
@@ -108,10 +114,11 @@ export default function CustomersClient() {
   const loadCustomerTransactions = async (customerId: string) => {
     try {
       setLoadingTransactions(true)
-      const result = await getUserPurchaseHistory(1, 50, { userId: customerId })
+      const result = await getAllPurchaseTransactions(transactionsPage, 20)
       
       if (result.success && result.data) {
         setCustomerTransactions(result.data.transactions)
+        setTransactionsTotalPages(result.data.totalPages)
       } else {
         toast({
           title: t('customers.error.transactionsFailed') || 'שגיאה בטעינת עסקאות הלקוח',
@@ -151,6 +158,11 @@ export default function CustomersClient() {
   const handleCustomerView = async (customer: CustomerSummary) => {
     setSelectedCustomer(customer)
     await loadCustomerTransactions(customer.userId)
+  }
+
+  const handleTransactionsPageChange = (newPage: number) => {
+    setTransactionsPage(newPage)
+    loadCustomerTransactions(selectedCustomer?.userId || "")
   }
 
   const formatCurrency = (amount: number | undefined | null) => {
@@ -249,166 +261,123 @@ export default function CustomersClient() {
             <CardTitle className="text-sm font-medium">
               {t('customers.summary.activeCustomers') || 'לקוחות פעילים'}
             </CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summaryStats.activeCustomers}</div>
             <p className="text-xs text-muted-foreground">
-              {t('customers.summary.last30Days') || 'ב-30 יום האחרונים'}
+              {t('customers.summary.last30Days') || 'ב-30 הימים האחרונים'}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search and Actions */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t('customers.searchPlaceholder') || 'חפש לקוח לפי שם, אימייל או טלפון...'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Select value={userTypeFilter} onValueChange={(value: 'all' | 'guests' | 'members') => setUserTypeFilter(value)}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">כל הלקוחות</SelectItem>
-              <SelectItem value="members">רשומים</SelectItem>
-              <SelectItem value="guests">אורחים</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            {t('common.refresh') || 'רענן'}
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={customers.length === 0}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            {t('customers.export') || 'ייצא נתונים'}
-          </Button>
-        </div>
-      </div>
-
-      {/* Results Summary */}
-      <div className="text-sm text-muted-foreground">
-        {loading ? (
-          t('common.loading') || 'טוען...'
-        ) : (
-          `${t('customers.showing') || 'מציג'} ${Math.min((currentPage - 1) * limit + 1, totalCount)}-${Math.min(currentPage * limit, totalCount)} ${t('customers.of') || 'מתוך'} ${totalCount} ${t('customers.results') || 'לקוחות'}`
-        )}
-      </div>
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <div className="relative flex-1 md:flex-none">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('customers.searchPlaceholder') || 'חיפוש לקוחות...'}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 w-full md:w-[300px]"
+                />
+              </div>
+              <Select value={userTypeFilter} onValueChange={(value: 'all' | 'guests' | 'members') => setUserTypeFilter(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={t('customers.filterByType') || 'סינון לפי סוג'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('customers.allUsers') || 'כל המשתמשים'}</SelectItem>
+                  <SelectItem value="guests">{t('customers.guests') || 'אורחים'}</SelectItem>
+                  <SelectItem value="members">{t('customers.members') || 'משתמשים רשומים'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {t('common.refresh') || 'רענן'}
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                {t('common.export') || 'ייצא'}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Customers Table */}
       <Card>
-        <CardContent className="p-0">
+        <CardHeader>
+          <CardTitle>{t('customers.title') || 'לקוחות'}</CardTitle>
+        </CardHeader>
+        <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('customers.table.customer') || 'לקוח'}</TableHead>
-                <TableHead>{t('customers.table.contact') || 'פרטי קשר'}</TableHead>
-                <TableHead>{t('customers.table.joinDate') || 'תאריך הצטרפות'}</TableHead>
-                <TableHead>{t('customers.table.lastActivity') || 'פעילות אחרונה'}</TableHead>
-                <TableHead>{t('customers.table.totalSpent') || 'סה״כ הוצאה'}</TableHead>
-                <TableHead>{t('customers.table.activeItems') || 'פריטים פעילים'}</TableHead>
-                <TableHead>{t('customers.table.actions') || 'פעולות'}</TableHead>
+                <TableHead>{t('customers.name') || 'שם'}</TableHead>
+                <TableHead>{t('customers.email') || 'אימייל'}</TableHead>
+                <TableHead>{t('customers.phone') || 'טלפון'}</TableHead>
+                <TableHead>{t('customers.totalSpent') || 'סה״כ הוצאה'}</TableHead>
+                <TableHead>{t('customers.lastActivity') || 'פעילות אחרונה'}</TableHead>
+                <TableHead>{t('customers.status') || 'סטטוס'}</TableHead>
+                <TableHead>{t('customers.actions') || 'פעולות'}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                Array.from({ length: 5 }).map((_, index) => (
-                  <TableRow key={index}>
-                    {Array.from({ length: 7 }).map((_, cellIndex) => (
-                      <TableCell key={cellIndex}>
-                        <div className="h-4 bg-muted animate-pulse rounded"></div>
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
+                    {t('common.loading') || 'טוען...'}
+                  </TableCell>
+                </TableRow>
               ) : customers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8">
-                    <div className="flex flex-col items-center gap-2">
-                      <Users className="h-8 w-8 text-muted-foreground" />
-                      <p className="text-muted-foreground">
-                        {searchQuery 
-                          ? (t('customers.noSearchResults') || 'לא נמצאו לקוחות התואמים לחיפוש')
-                          : (t('customers.noCustomers') || 'אין לקוחות רשומים במערכת')
-                        }
-                      </p>
-                    </div>
+                  <TableCell colSpan={7} className="text-center">
+                    {t('customers.noCustomers') || 'לא נמצאו לקוחות'}
                   </TableCell>
                 </TableRow>
               ) : (
                 customers.map((customer) => (
                   <TableRow key={customer.userId}>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                          <User className="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium">{customer.customerName}</p>
-                            {getUserTypeBadge(customer.userType)}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            ID: {customer.userId.slice(-8)}
-                          </p>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span>{customer.customerName}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="h-3 w-3 text-muted-foreground" />
-                          <span>{customer.customerEmail}</span>
-                        </div>
-                        {customer.customerPhone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-3 w-3 text-muted-foreground" />
-                            <span>{customer.customerPhone}</span>
-                          </div>
-                        )}
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span>{customer.customerEmail}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        <p>{formatDate(customer.joinDate)}</p>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{customer.customerPhone || '-'}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        <p>{formatDate(customer.lastActivity)}</p>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span>{formatCurrency(customer.totalSpent)}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium">
-                        {formatCurrency(customer.totalSpent)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {customer.totalBookings} {t('customers.bookings') || 'הזמנות'}
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span>{formatDate(customer.lastActivity)}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex items-center gap-2">
+                        {getUserTypeBadge(customer.userType)}
                         {customer.activeSubscriptions > 0 && (
                           <Badge variant="outline" className="text-xs">
                             {customer.activeSubscriptions} {t('customers.subscriptions') || 'מנויים'}
@@ -602,7 +571,7 @@ export default function CustomersClient() {
                 <PurchaseHistoryTable
                   transactions={customerTransactions}
                   isLoading={loadingTransactions}
-                  showCustomerInfo={false}
+                  showCustomerInfo={true}
                 />
               </div>
             </div>

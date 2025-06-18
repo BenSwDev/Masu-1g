@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { getAllUserSubscriptions } from "@/actions/user-subscription-actions"
+import { getAllUserSubscriptions } from "./actions"
 import AdminUserSubscriptionsClient from "@/components/dashboard/admin/user-subscriptions/admin-user-subscriptions-client"
 import { Card, CardContent } from "@/components/common/ui/card"
 import ClientAwareUserSubscriptionsLoading from "./client-aware-user-subscriptions-loading" // New component

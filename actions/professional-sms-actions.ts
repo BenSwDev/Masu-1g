@@ -51,7 +51,7 @@ export async function sendProfessionalNotifications(
     // Prepare notification data
     const treatmentName = booking.treatmentId?.name || "טיפול"
     const bookingDateTime = booking.bookingDateTime
-    const address = `${booking.bookingAddressSnapshot?.street || ""} ${booking.bookingAddressSnapshot?.houseNumber || ""}, ${booking.bookingAddressSnapshot?.city || ""}`
+    const address = `${booking.bookingAddressSnapshot?.street || ""} ${booking.bookingAddressSnapshot?.streetNumber || ""}, ${booking.bookingAddressSnapshot?.city || ""}`
     const price = booking.priceDetails?.finalAmount || 0
     
     // Send SMS to each suitable professional

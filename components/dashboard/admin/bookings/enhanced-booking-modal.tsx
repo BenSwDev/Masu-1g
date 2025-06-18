@@ -109,6 +109,29 @@ export default function EnhancedBookingModal({
     return <Icon className="h-4 w-4" />
   }
 
+  const calculateProfessionalPayment = (b: PopulatedBooking) => {
+    const pd = b.priceDetails
+    const tmt = b.treatmentId as any
+    let baseFee = 0
+    if (tmt) {
+      if (tmt.pricingType === "fixed") {
+        baseFee = tmt.fixedProfessionalPrice || 0
+      } else if (tmt.pricingType === "duration_based" && b.selectedDurationId && tmt.durations) {
+        const dur = tmt.durations.find((d: any) => d._id?.toString() === b.selectedDurationId?.toString())
+        if (dur) baseFee = dur.professionalPrice || 0
+      }
+    }
+    let surchargeShare = 0
+    if (pd.surcharges) {
+      for (const s of pd.surcharges as any[]) {
+        if (s.professionalShare) {
+          surchargeShare += s.professionalShare.type === "percentage" ? s.amount * (s.professionalShare.amount / 100) : s.professionalShare.amount
+        }
+      }
+    }
+    return baseFee + surchargeShare
+  }
+
   // Data preparation
   const dateTime = formatDateTime(booking.bookingDateTime)
   const client = booking.userId as any || {}
@@ -554,15 +577,13 @@ export default function EnhancedBookingModal({
                       </div>
                       
                       <div className="bg-blue-50 p-3 rounded-lg">
-                        <div className="text-sm font-medium text-blue-800">תשלום למטפל (אומדן)</div>
-                        <div className="text-lg font-bold text-blue-600">₪{(finalAmount * 0.7).toFixed(2)}</div>
-                        <div className="text-xs text-blue-600">70% מהסכום הסופי</div>
+                        <div className="text-sm font-medium text-blue-800">תשלום למטפל</div>
+                        <div className="text-lg font-bold text-blue-600">₪{calculateProfessionalPayment(booking).toFixed(2)}</div>
                       </div>
-                      
+
                       <div className="bg-purple-50 p-3 rounded-lg">
-                        <div className="text-sm font-medium text-purple-800">עמלת משרד (אומדן)</div>
-                        <div className="text-lg font-bold text-purple-600">₪{(finalAmount * 0.3).toFixed(2)}</div>
-                        <div className="text-xs text-purple-600">30% מהסכום הסופי</div>
+                        <div className="text-sm font-medium text-purple-800">עמלת משרד</div>
+                        <div className="text-lg font-bold text-purple-600">₪{(finalAmount - calculateProfessionalPayment(booking)).toFixed(2)}</div>
                       </div>
                     </div>
                   </div>

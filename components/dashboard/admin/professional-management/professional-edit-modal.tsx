@@ -7,6 +7,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import ProfessionalBasicInfoTabSimple from "./tabs/professional-basic-info-tab-simple"
 import ProfessionalTreatmentsTabSimple from "./tabs/professional-treatments-tab-simple"
 import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
+import ProfessionalEarningsTab from "./tabs/professional-earnings-tab"
 
 interface Professional {
   _id: string
@@ -64,10 +65,11 @@ export default function ProfessionalEditModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="basic">פרטים בסיסיים</TabsTrigger>
             <TabsTrigger value="treatments">טיפולים</TabsTrigger>
             <TabsTrigger value="workAreas">איזורי פעילות</TabsTrigger>
+            <TabsTrigger value="earnings">הזמנות</TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic">
@@ -91,6 +93,10 @@ export default function ProfessionalEditModal({
               professional={updatedProfessional}
               onUpdate={handleUpdate}
             />
+          </TabsContent>
+
+          <TabsContent value="earnings">
+            <ProfessionalEarningsTab professional={updatedProfessional} />
           </TabsContent>
         </Tabs>
       </DialogContent>

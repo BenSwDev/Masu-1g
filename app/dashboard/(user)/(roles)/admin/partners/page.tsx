@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
+
 export default async function AdminPartnersPage() {
   const session = await requireUserSession()
   if (!session.user.roles?.includes("admin")) {

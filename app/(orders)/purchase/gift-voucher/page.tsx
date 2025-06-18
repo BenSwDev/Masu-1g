@@ -5,6 +5,9 @@ import GuestGiftVoucherWizard from "@/components/gift-vouchers/guest-gift-vouche
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
 
+// Force dynamic rendering for database access
+export const dynamic = 'force-dynamic'
+
 // Convert serialized treatment to ITreatment
 function convertToTreatment(treatment: SerializedTreatment): ITreatment {
   return {

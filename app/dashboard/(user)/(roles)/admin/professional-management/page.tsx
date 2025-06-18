@@ -1,8 +1,7 @@
 import { Suspense } from "react"
 import { Metadata } from "next"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+import { requireUserSession } from "@/lib/auth/require-session"
 import { ProfessionalManagement } from "@/components/dashboard/admin/professional-management/professional-management"
 import { Skeleton } from "@/components/common/ui/skeleton"
 
@@ -59,10 +58,10 @@ function ProfessionalsLoadingSkeleton() {
 }
 
 export default async function ProfessionalsPage() {
-  const session = await getServerSession(authOptions)
+  const session = await requireUserSession()
   
-  if (!session?.user || session.user.activeRole !== "admin") {
-    redirect("/auth/login")
+  if (!session.user.roles?.includes("admin")) {
+    redirect("/dashboard")
   }
 
   return (

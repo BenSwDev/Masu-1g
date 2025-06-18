@@ -1,6 +1,9 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { getPartnerCouponBatches, getPartnersForSelection, type GetPartnersForSelectionResult } from "./actions"
+
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
 import PartnerCouponBatchesClient from "@/components/dashboard/admin/partner-coupon-batches/partner-coupon-batches-client"
 import { Heading } from "@/components/common/ui/heading"
 import { ClientAwarePartnerCouponBatchesLoadingSkeleton } from "@/components/dashboard/admin/partner-coupon-batches/client-aware-partner-coupon-batches-loading-skeleton"

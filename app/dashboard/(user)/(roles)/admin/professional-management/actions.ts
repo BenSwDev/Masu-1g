@@ -55,7 +55,7 @@ type ProfessionalWithUser = IProfessionalProfile & { userId: IUser }
 export async function getProfessionals(options: GetProfessionalsOptions = {}): Promise<GetProfessionalsResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -111,7 +111,7 @@ export async function getProfessionals(options: GetProfessionalsOptions = {}): P
 export async function getProfessionalById(id: string): Promise<CreateProfessionalResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -136,7 +136,7 @@ export async function getProfessionalById(id: string): Promise<CreateProfessiona
 export async function createProfessional(formData: FormData): Promise<CreateProfessionalResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -163,7 +163,8 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
       gender,
       birthDate,
       password: hashedPassword,
-      role: "professional"
+      roles: ["professional"],
+      activeRole: "professional"
     })
 
     // Create professional profile
@@ -195,7 +196,7 @@ export async function updateProfessionalStatus(
 ): Promise<UpdateProfessionalResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -248,7 +249,7 @@ export async function updateProfessionalTreatments(
 ): Promise<UpdateProfessionalResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -283,7 +284,7 @@ export async function updateProfessionalWorkAreas(
 ): Promise<UpdateProfessionalResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -315,7 +316,7 @@ export async function updateProfessionalWorkAreas(
 export async function deleteProfessional(id: string): Promise<DeleteProfessionalResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 

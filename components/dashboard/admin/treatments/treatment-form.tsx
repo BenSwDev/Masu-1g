@@ -115,6 +115,9 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
 
   const onSubmit = async (values: TreatmentFormValues) => {
     try {
+      console.log("Treatment form submission started")
+      console.log("Form values:", values)
+      
       setIsSubmitting(true)
 
       // Prepare data based on pricing type
@@ -123,17 +126,36 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
         durations: pricingType === "duration_based" ? durations : undefined,
       }
 
+      console.log("Treatment data prepared:", treatmentData)
+
+      let result
       if (treatment) {
-        await updateTreatment(treatment._id, treatmentData)
+        console.log("Updating existing treatment:", treatment._id)
+        result = await updateTreatment(treatment._id, treatmentData)
       } else {
-        await createTreatment(treatmentData)
+        console.log("Creating new treatment")
+        result = await createTreatment(treatmentData)
       }
 
-      onSuccess()
+      console.log("Treatment operation result:", result)
+
+      if (result.success) {
+        toast({
+          title: t("common.success"),
+          description: treatment ? t("treatments.updateSuccess") : t("treatments.createSuccess"),
+          variant: "default",
+        })
+        onSuccess()
+      } else {
+        console.error("Treatment operation failed:", result.error)
+        throw new Error(result.error || (treatment ? t("treatments.updateError") : t("treatments.createError")))
+      }
     } catch (error) {
+      console.error("Treatment form error:", error)
       toast({
         title: t("common.error"),
-        description: treatment ? t("treatments.updateError") : t("treatments.createError"),
+        description: error instanceof Error ? error.message : 
+          (treatment ? t("treatments.updateError") : t("treatments.createError")),
         variant: "destructive",
       })
     } finally {

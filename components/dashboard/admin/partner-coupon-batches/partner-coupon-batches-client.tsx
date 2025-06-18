@@ -109,8 +109,18 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
       const result = await deletePartnerCouponBatch(batchToDelete)
       if (result.success) {
         toast({ title: t("common.success"), description: t("adminPartnerCouponBatches.toast.deleteSuccess") })
+        
+        // Update batches list and pagination
         setBatches((prev) => prev.filter((b) => b._id.toString() !== batchToDelete))
-        setPagination((prev) => ({ ...prev, totalBatches: prev.totalBatches - 1 }))
+        setPagination((prev) => ({ 
+          ...prev, 
+          totalBatches: Math.max(0, prev.totalBatches - 1),
+          // If we deleted the last item on a page and it's not the first page, go to previous page
+          currentPage: prev.totalBatches <= 1 && prev.currentPage > 1 ? prev.currentPage - 1 : prev.currentPage
+        }))
+        
+        // Force a refresh from server
+        window.location.reload()
       } else {
         toast({
           variant: "destructive",

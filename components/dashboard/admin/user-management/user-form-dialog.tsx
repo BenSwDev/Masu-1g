@@ -94,12 +94,28 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       if (values.dateOfBirth) data.append("dateOfBirth", values.dateOfBirth)
       if (!initialData && values.password) data.append("password", values.password)
 
-      const result = initialData
-        ? await updateUserByAdmin(initialData.id, data)
-        : await createUserByAdmin(data)
+      let result
+      try {
+        result = initialData
+          ? await updateUserByAdmin(initialData.id, data)
+          : await createUserByAdmin(data)
+      } catch (apiError) {
+        console.error("API Error:", apiError)
+        toast({ 
+          title: t("common.error"), 
+          description: "Failed to communicate with server. Please try again.", 
+          variant: "destructive" 
+        })
+        return
+      }
 
-      if (!result.success) {
-        toast({ title: t("common.error"), description: result.message || t("common.unknownError"), variant: "destructive" })
+      if (!result || !result.success) {
+        console.error("Operation failed:", result)
+        toast({ 
+          title: t("common.error"), 
+          description: result?.message || t("common.unknownError"), 
+          variant: "destructive" 
+        })
         return
       }
 
@@ -107,7 +123,12 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       onSuccess()
       onOpenChange(false)
     } catch (error) {
-      toast({ title: t("common.error"), description: t("common.unknownError"), variant: "destructive" })
+      console.error("Form submission error:", error)
+      toast({ 
+        title: t("common.error"), 
+        description: "An unexpected error occurred. Please try again.", 
+        variant: "destructive" 
+      })
     } finally {
       setLoading(false)
     }

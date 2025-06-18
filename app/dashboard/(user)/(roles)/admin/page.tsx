@@ -1,5 +1,14 @@
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
+
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
+
+export const metadata = {
+  title: "לוח בקרה למנהל",
+  description: "סקירה מהירה של עסקאות ומשימות הדורשות טיפול מיידי"
+}
+
 import {
   getPurchaseStats,
   getAllPurchaseTransactions,

@@ -1,6 +1,9 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { getAdminCoupons, getPartnersForSelection } from "./actions"
+
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
 import { Heading } from "@/components/common/ui/heading"
 import { ClientAwareCouponsLoadingSkeleton } from "@/components/dashboard/admin/coupons/client-aware-coupons-loading-skeleton"

@@ -52,7 +52,7 @@ interface CityActionResponse {
 export async function getCities(page = 1, limit = 10, searchTerm = ""): Promise<GetCitiesResponse> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || session.user.activeRole !== "admin") {
+    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
       return { success: false, cities: [], totalPages: 0 }
     }
 
@@ -96,7 +96,7 @@ export async function getCities(page = 1, limit = 10, searchTerm = ""): Promise<
 export async function createCity(formData: FormData): Promise<CityActionResponse> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || session.user.activeRole !== "admin") {
+    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
       return { success: false, message: "notAuthorized" }
     }
 
@@ -150,7 +150,7 @@ export async function createCity(formData: FormData): Promise<CityActionResponse
 export async function updateCity(cityId: string, formData: FormData): Promise<CityActionResponse> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || session.user.activeRole !== "admin") {
+    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
       return { success: false, message: "notAuthorized" }
     }
 
@@ -215,7 +215,7 @@ export async function updateCity(cityId: string, formData: FormData): Promise<Ci
 export async function deleteCity(cityId: string): Promise<CityActionResponse> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || session.user.activeRole !== "admin") {
+    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
       return { success: false, message: "notAuthorized" }
     }
 

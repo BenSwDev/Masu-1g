@@ -85,18 +85,9 @@ export async function getAllCoupons(
 /**
  * Create new coupon
  */
-export async function createCoupon(data: {
-  code: string
-  description?: string
-  discountType: "percentage" | "fixed"
-  discountValue: number
-  validFrom: Date
-  validUntil: Date
-  usageLimit: number
-  isActive: boolean
-}): Promise<{
+export async function createCoupon(data: any): Promise<{
   success: boolean
-  coupon?: any
+  data?: any
   error?: string
 }> {
   try {
@@ -113,20 +104,36 @@ export async function createCoupon(data: {
       return { success: false, error: "Coupon code already exists" }
     }
 
-    const coupon = new Coupon({
-      ...data,
+    const couponData = {
+      code: data.code,
+      description: data.description || "",
+      discountType: data.discountType,
+      discountValue: Number(data.discountValue),
+      validFrom: new Date(data.validFrom),
+      validUntil: new Date(data.validUntil),
+      usageLimit: Number(data.usageLimit || 0),
+      isActive: Boolean(data.isActive),
       timesUsed: 0,
-    })
+    }
 
+    const coupon = new Coupon(couponData)
     await coupon.save()
 
     revalidatePath("/dashboard/admin/coupons")
 
+    const now = new Date()
+    const effectiveStatus = !coupon.isActive ? "inactive" :
+      new Date(coupon.validUntil) < now ? "expired" :
+      new Date(coupon.validFrom) > now ? "pending" :
+      coupon.usageLimit > 0 && coupon.timesUsed >= coupon.usageLimit ? "exhausted" :
+      "active"
+
     return {
       success: true,
-      coupon: {
+      data: {
         ...coupon.toObject(),
         _id: (coupon._id as any).toString(),
+        effectiveStatus,
       },
     }
   } catch (error) {
@@ -138,21 +145,9 @@ export async function createCoupon(data: {
 /**
  * Update coupon
  */
-export async function updateCoupon(
-  id: string,
-  data: Partial<{
-    code: string
-    description?: string
-    discountType: "percentage" | "fixed"
-    discountValue: number
-    validFrom: Date
-    validUntil: Date
-    usageLimit: number
-    isActive: boolean
-  }>
-): Promise<{
+export async function updateCoupon(updateData: any): Promise<{
   success: boolean
-  coupon?: any
+  data?: any
   error?: string
 }> {
   try {
@@ -162,6 +157,8 @@ export async function updateCoupon(
     }
 
     await dbConnect()
+
+    const { id, ...data } = updateData
 
     // If updating code, check if it already exists
     if (data.code) {
@@ -174,9 +171,19 @@ export async function updateCoupon(
       }
     }
 
+    const updateFields: any = {}
+    if (data.code) updateFields.code = data.code
+    if (data.description !== undefined) updateFields.description = data.description
+    if (data.discountType) updateFields.discountType = data.discountType
+    if (data.discountValue !== undefined) updateFields.discountValue = Number(data.discountValue)
+    if (data.validFrom) updateFields.validFrom = new Date(data.validFrom)
+    if (data.validUntil) updateFields.validUntil = new Date(data.validUntil)
+    if (data.usageLimit !== undefined) updateFields.usageLimit = Number(data.usageLimit)
+    if (data.isActive !== undefined) updateFields.isActive = Boolean(data.isActive)
+
     const coupon = await Coupon.findByIdAndUpdate(
       id,
-      data,
+      updateFields,
       { new: true, runValidators: true }
     )
 
@@ -186,11 +193,19 @@ export async function updateCoupon(
 
     revalidatePath("/dashboard/admin/coupons")
 
+    const now = new Date()
+    const effectiveStatus = !coupon.isActive ? "inactive" :
+      new Date(coupon.validUntil) < now ? "expired" :
+      new Date(coupon.validFrom) > now ? "pending" :
+      coupon.usageLimit > 0 && coupon.timesUsed >= coupon.usageLimit ? "exhausted" :
+      "active"
+
     return {
       success: true,
-      coupon: {
+      data: {
         ...coupon.toObject(),
         _id: (coupon._id as any).toString(),
+        effectiveStatus,
       },
     }
   } catch (error) {

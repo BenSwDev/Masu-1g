@@ -75,7 +75,22 @@ export default function AdminReviewsClient() {
     Error
   >({
     queryKey: ["adminReviews", language, debouncedSearchTerm, ratingFilter, responseFilter, activeTab, currentPage],
-    queryFn: () => getAllReviews(getFiltersForTab()),
+    queryFn: async () => {
+      try {
+        const result = await getAllReviews(getFiltersForTab())
+        if (!result.success) {
+          throw new Error(result.error || "Failed to fetch reviews")
+        }
+        return {
+          reviews: result.reviews || [],
+          totalPages: result.totalPages || 1,
+          totalReviews: result.totalReviews || 0
+        }
+      } catch (error) {
+        console.error("Error in getAllReviews query:", error)
+        throw error
+      }
+    },
     refetchOnWindowFocus: false,
     staleTime: 30000, // 30 seconds
     enabled: activeTab === "with-reviews", // Only fetch when on reviews tab

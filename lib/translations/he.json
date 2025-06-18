@@ -2684,6 +2684,33 @@
       "usedQuantity": "כמות מנוצלת",
       "user": "משתמש"
     },
+    "purchaseReports": {
+      "title": "דוחות רכישות",
+      "description": "צפייה בדוחות רכישות ונתונים סטטיסטיים",
+      "totalSales": "סה\"כ מכירות",
+      "totalBookings": "סה\"כ הזמנות",
+      "activeUsers": "משתמשים פעילים",
+      "averageOrderValue": "ערך הזמנה ממוצע",
+      "recentBookings": "הזמנות אחרונות",
+      "comingSoon": "בקרוב: דוחות מפורטים ונתונים סטטיסטיים נוספים"
+    },
+    "transactions": {
+      "title": "עסקאות",
+      "description": "צפייה בכל העסקאות במערכת",
+      "transactionId": "מזהה עסקה",
+      "date": "תאריך",
+      "type": "סוג עסקה",
+      "amount": "סכום",
+      "status": "סטטוס",
+      "customer": "לקוח",
+      "completed": "הושלם",
+      "pending": "ממתין",
+      "failed": "נכשל",
+      "booking": "הזמנה",
+      "subscription": "מנוי",
+      "giftVoucher": "שובר מתנה",
+      "comingSoon": "בקרוב: רשימה מלאה של כל העסקאות והמימושים"
+    },
     "users": {
       "addUser": "הוסף משתמש",
       "addUserDescription": "צור משתמש חדש במערכת",

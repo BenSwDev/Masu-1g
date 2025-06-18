@@ -4,6 +4,9 @@ import GuestSubscriptionWizard from "@/components/subscriptions/guest-subscripti
 import { GuestLayout } from "@/components/layout/guest-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 
+// Force dynamic rendering for database access
+export const dynamic = 'force-dynamic'
+
 export default async function GuestBookSubscriptionPage() {
   const [subsData, treatmentsData] = await Promise.all([
     getActiveSubscriptionsForPurchase(),

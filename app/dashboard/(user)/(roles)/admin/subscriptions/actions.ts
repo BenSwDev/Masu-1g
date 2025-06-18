@@ -92,7 +92,7 @@ const subscriptionSchema = z.object({
 export async function createSubscription(formData: FormData): Promise<CreateSubscriptionResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (session?.user?.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -141,7 +141,7 @@ export async function createSubscription(formData: FormData): Promise<CreateSubs
 export async function updateSubscription(id: string, formData: FormData): Promise<UpdateSubscriptionResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (session?.user?.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -203,7 +203,7 @@ export async function updateSubscription(id: string, formData: FormData): Promis
 export async function deleteSubscription(id: string): Promise<DeleteSubscriptionResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (session?.user?.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -325,7 +325,7 @@ export async function getSubscriptionById(id: string): Promise<GetSubscriptionsR
 export async function toggleSubscriptionStatus(id: string): Promise<UpdateSubscriptionResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (session?.user?.activeRole !== "admin") {
+    if (!session?.user?.roles?.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
 

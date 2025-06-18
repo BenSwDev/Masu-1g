@@ -59,20 +59,26 @@ export default function AdminBookingsClient() {
     Error
   >({
     queryKey: ["adminBookings", language, debouncedSearchTerm, statusFilter, professionalFilter, treatmentFilter, dateRangeFilter, priceRangeFilter, addressFilter, currentPage],
-    queryFn: () =>
-      getAllBookings({
-        search: debouncedSearchTerm || undefined,
-        status: statusFilter === "all" ? undefined : statusFilter,
-        professional: professionalFilter === "all" ? undefined : professionalFilter,
-        treatment: treatmentFilter === "all" ? undefined : treatmentFilter,
-        dateRange: dateRangeFilter === "all" ? undefined : dateRangeFilter,
-        priceRange: priceRangeFilter === "all" ? undefined : priceRangeFilter,
-        address: addressFilter === "all" ? undefined : addressFilter,
-        page: currentPage,
-        limit: 20,
-        sortBy: "createdAt",
-        sortDirection: "desc",
-      }),
+    queryFn: async () => {
+      try {
+        return await getAllBookings({
+          search: debouncedSearchTerm || undefined,
+          status: statusFilter === "all" ? undefined : statusFilter,
+          professional: professionalFilter === "all" ? undefined : professionalFilter,
+          treatment: treatmentFilter === "all" ? undefined : treatmentFilter,
+          dateRange: dateRangeFilter === "all" ? undefined : dateRangeFilter,
+          priceRange: priceRangeFilter === "all" ? undefined : priceRangeFilter,
+          address: addressFilter === "all" ? undefined : addressFilter,
+          page: currentPage,
+          limit: 20,
+          sortBy: "createdAt",
+          sortDirection: "desc",
+        })
+      } catch (error) {
+        console.error("Error in getAllBookings query:", error)
+        throw error
+      }
+    },
     refetchOnWindowFocus: false,
     staleTime: 30000, // 30 seconds
   })

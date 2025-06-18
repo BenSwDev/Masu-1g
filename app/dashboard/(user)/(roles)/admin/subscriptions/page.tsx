@@ -1,6 +1,9 @@
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { getSubscriptions, getAllTreatments } from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
+
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
 import SubscriptionsClient from "@/components/dashboard/admin/subscriptions/subscriptions-client"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"

@@ -5,6 +5,9 @@ import GuestBookingWizard from "@/components/booking/guest-booking-wizard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
 
+// Force dynamic rendering to handle searchParams
+export const dynamic = 'force-dynamic'
+
 export default async function GuestBookTreatmentPage({
   searchParams,
 }: {
@@ -36,8 +39,8 @@ export default async function GuestBookTreatmentPage({
       )
     }
 
-    const voucher = voucherResult.success ? voucherResult.voucher : undefined
-    const subscription = subscriptionResult.success ? subscriptionResult.subscription : undefined
+    const voucher = voucherResult.success && 'voucher' in voucherResult ? (voucherResult as any).voucher : undefined
+    const subscription = subscriptionResult.success && 'subscription' in subscriptionResult ? (subscriptionResult as any).subscription : undefined
 
     return (
       <GuestLayout>

@@ -8,13 +8,18 @@ import { CitiesHeading } from "@/components/dashboard/admin/city-management/citi
 
 export const dynamic = "force-dynamic"
 
+export const metadata = {
+  title: "ניהול ערים",
+  description: "ניהול רשימת הערים הזמינות לשירות"
+}
+
 interface AdminCitiesPageProps {
   searchParams: { page?: string; search?: string }
 }
 
 export default async function AdminCitiesPage({ searchParams }: AdminCitiesPageProps) {
   const session = await requireUserSession()
-  if (session.user.activeRole !== "admin") {
+  if (!session.user.roles?.includes("admin")) {
     redirect("/dashboard")
   }
 

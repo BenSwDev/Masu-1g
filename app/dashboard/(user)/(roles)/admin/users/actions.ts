@@ -7,6 +7,8 @@ import User, { type IUser } from "@/lib/db/models/user"
 import PasswordResetToken from "@/lib/db/models/password-reset-token"
 import { emailService } from "@/lib/notifications/email-service"
 import { revalidatePath } from "next/cache"
+import crypto from "crypto"
+import bcrypt from "bcryptjs"
 
 // Types
 export interface UserData {
@@ -243,5 +245,127 @@ export async function initiatePasswordResetByAdmin(userId: string): Promise<Init
   } catch (error) {
     console.error("Error in initiatePasswordResetByAdmin:", error)
     return { success: false, message: "passwordResetFailed" }
+  }
+}
+
+/**
+ * Creates a new user
+ * @param formData - Form data containing user information
+ * @returns Promise<{ success: boolean; message: string; user?: any }>
+ */
+export async function createUserByAdmin(formData: FormData): Promise<{ success: boolean; message: string; user?: any }> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "Not authorized" }
+    }
+
+    await dbConnect()
+
+    const name = formData.get("name") as string
+    const email = formData.get("email") as string
+    const phone = formData.get("phone") as string
+    const password = formData.get("password") as string
+    const gender = formData.get("gender") as string
+    const dateOfBirth = formData.get("dateOfBirth") as string
+    const roles = formData.getAll("roles[]") as string[]
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email })
+    if (existingUser) {
+      return { success: false, message: "User with this email already exists" }
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12)
+
+    // Create user
+    const newUser = new User({
+      name,
+      email,
+      phone,
+      password: hashedPassword,
+      gender,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+      roles,
+      activeRole: roles[0],
+      emailVerified: new Date(), // Auto-verify admin created users
+    })
+
+    await newUser.save()
+
+    revalidatePath("/dashboard/admin/users")
+
+    return { 
+      success: true, 
+      message: "User created successfully",
+      user: sanitizeUser(newUser)
+    }
+  } catch (error) {
+    console.error("Error creating user:", error)
+    return { success: false, message: "Failed to create user" }
+  }
+}
+
+/**
+ * Updates an existing user
+ * @param userId - ID of the user to update
+ * @param formData - Form data containing updated user information
+ * @returns Promise<{ success: boolean; message: string; user?: any }>
+ */
+export async function updateUserByAdmin(userId: string, formData: FormData): Promise<{ success: boolean; message: string; user?: any }> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "Not authorized" }
+    }
+
+    await dbConnect()
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return { success: false, message: "User not found" }
+    }
+
+    const name = formData.get("name") as string
+    const email = formData.get("email") as string
+    const phone = formData.get("phone") as string
+    const gender = formData.get("gender") as string
+    const dateOfBirth = formData.get("dateOfBirth") as string
+    const roles = formData.getAll("roles[]") as string[]
+
+    // Check if email is taken by another user
+    if (email !== user.email) {
+      const existingUser = await User.findOne({ email, _id: { $ne: userId } })
+      if (existingUser) {
+        return { success: false, message: "Email is already taken by another user" }
+      }
+    }
+
+    // Update user
+    user.name = name
+    user.email = email
+    user.phone = phone || undefined
+    user.gender = gender
+    user.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : undefined
+    user.roles = roles
+    
+    // Update active role if current one is not in new roles
+    if (!roles.includes(user.activeRole || "")) {
+      user.activeRole = roles[0]
+    }
+
+    await user.save()
+
+    revalidatePath("/dashboard/admin/users")
+
+    return { 
+      success: true, 
+      message: "User updated successfully",
+      user: sanitizeUser(user)
+    }
+  } catch (error) {
+    console.error("Error updating user:", error)
+    return { success: false, message: "Failed to update user" }
   }
 } 

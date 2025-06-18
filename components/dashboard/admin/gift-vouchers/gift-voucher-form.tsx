@@ -184,27 +184,37 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
     try {
       setIsLoading(true)
       const formData: AdminGiftVoucherFormData = {
-        ...values, // Spread validated form values
-        monetaryValue: values.monetaryValue, // Keep as string for action
+        code: values.code,
+        voucherType: values.voucherType,
+        treatmentId: values.treatmentId,
+        selectedDurationId: values.selectedDurationId,
+        amount: values.monetaryValue, // Use amount for API
+        monetaryValue: values.monetaryValue, // Keep both for compatibility
+        ownerUserId: values.ownerUserId,
         validFrom: format(values.validFrom, "yyyy-MM-dd"),
         validUntil: format(values.validUntil, "yyyy-MM-dd"),
-        // 'status' is already part of 'values' from the form
+        status: values.status,
       }
+
+      console.log("Submitting gift voucher data:", formData)
 
       const result = initialData
         ? await updateGiftVoucherByAdmin(initialData._id, formData)
         : await createGiftVoucherByAdmin(formData)
 
-      if (!result.success || !result.giftVoucher) {
+      console.log("Gift voucher operation result:", result)
+
+      if (!result.success) {
         throw new Error(result.error || t("common.unknownError"))
       }
 
       toast({
         title: initialData ? t("giftVouchers.updateSuccess") : t("giftVouchers.createSuccess"),
-        description: t(`giftVouchers.operationSuccessMessage.${result.giftVoucher.code}.${initialData ? 'updated' : 'created'}`),
+        description: `Gift voucher ${result.giftVoucher?.code} ${initialData ? 'updated' : 'created'} successfully.`,
       })
       onSuccess?.()
     } catch (error) {
+      console.error("Gift voucher form error:", error)
       toast({
         title: t("common.error"),
         description: error instanceof Error ? error.message : t("common.unknownError"),

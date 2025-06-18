@@ -8,9 +8,14 @@ export type BookingStatus =
   | "cancelled" // בוטל - בוטל ללא החזר
   | "refunded" // הוחזר - בוטל עם החזר
 
+export interface IProfessionalShare {
+  amount: number
+  type: "fixed" | "percentage"
+}
+
 export interface IPriceDetails {
   basePrice: number
-  surcharges: { description: string; amount: number }[]
+  surcharges: { description: string; amount: number; professionalShare?: IProfessionalShare }[]
   totalSurchargesAmount: number
   treatmentPriceAfterSubscriptionOrTreatmentVoucher: number
   discountAmount: number // From coupon
@@ -103,6 +108,11 @@ export interface IBooking extends Document {
   }>
 }
 
+const ProfessionalShareSchema = new Schema<IProfessionalShare>({
+  amount: { type: Number, default: 0 },
+  type: { type: String, enum: ["fixed", "percentage"], default: "percentage" },
+}, { _id: false })
+
 const PriceDetailsSchema = new Schema<IPriceDetails>(
   {
     basePrice: { type: Number, required: true, min: 0 },
@@ -110,6 +120,7 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
       {
         description: { type: String, required: true },
         amount: { type: Number, required: true, min: 0 },
+        professionalShare: { type: ProfessionalShareSchema, default: undefined },
       },
     ],
     totalSurchargesAmount: { type: Number, default: 0, min: 0 },

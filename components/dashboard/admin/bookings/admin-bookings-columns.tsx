@@ -786,8 +786,8 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
   // Calculate professional share from surcharges based on stored professionalShare data
   let surchargeProfessionalShare = 0
   
-  if (priceDetails.surcharges) {
-    for (const [key, surcharge] of Object.entries(priceDetails.surcharges as Record<string, any>)) {
+  if (priceDetails.surcharges && Array.isArray(priceDetails.surcharges)) {
+    for (const surcharge of priceDetails.surcharges as any[]) {
       if (surcharge && typeof surcharge.amount === 'number' && surcharge.amount > 0) {
         // Check if this surcharge has professional share information stored from working hours
         if (surcharge.professionalShare) {
@@ -813,8 +813,8 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
 
   // Calculate total surcharges amount
   let totalSurcharges = 0
-  if (priceDetails.surcharges) {
-    for (const [key, surcharge] of Object.entries(priceDetails.surcharges as Record<string, any>)) {
+  if (priceDetails.surcharges && Array.isArray(priceDetails.surcharges)) {
+    for (const surcharge of priceDetails.surcharges as any[]) {
       if (surcharge && typeof surcharge.amount === 'number' && surcharge.amount > 0) {
         totalSurcharges += surcharge.amount
       }

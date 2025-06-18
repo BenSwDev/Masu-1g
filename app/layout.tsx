@@ -19,8 +19,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Default language is Hebrew so set dir="rtl" from the server to prevent an initial LTR flash
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="he" dir="rtl" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <AuthProvider>

@@ -141,7 +141,10 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
     if (status) query.status = status
     if (professional) query.professionalId = new Types.ObjectId(professional)
     if (treatment) query.treatmentId = new Types.ObjectId(treatment)
-    if (address) query["addressSnapshot.fullAddress"] = { $regex: address, $options: "i" }
+    if (address) query["bookingAddressSnapshot.fullAddress"] = {
+      $regex: address,
+      $options: "i",
+    }
 
     // Handle date range filter
     if (dateRange) {
@@ -171,7 +174,7 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
         { "recipientName": { $regex: search, $options: "i" } },
         { "recipientPhone": { $regex: search, $options: "i" } },
         { "recipientEmail": { $regex: search, $options: "i" } },
-        { "addressSnapshot.fullAddress": { $regex: search, $options: "i" } },
+        { "bookingAddressSnapshot.fullAddress": { $regex: search, $options: "i" } },
         { "bookingNumber": { $regex: search, $options: "i" } },
       ]
     }

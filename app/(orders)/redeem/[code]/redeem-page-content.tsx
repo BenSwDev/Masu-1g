@@ -1,40 +1,34 @@
 "use client"
 
-import { CheckCircle } from "lucide-react"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
 import Link from "next/link"
-import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { useTranslation } from "@/lib/translations/i18n"
+import type { getGiftVoucherByCode } from "@/actions/gift-voucher-actions"
 
-interface Props {
-  voucher: GiftVoucherPlain | null
+interface RedeemPageContentProps {
+  voucher: Awaited<ReturnType<typeof getGiftVoucherByCode>>["voucher"] | null
+  code: string
 }
 
-export default function GuestGiftVoucherConfirmation({ voucher }: Props) {
+export default function RedeemPageContent({ voucher, code }: RedeemPageContentProps) {
   const { t, language, dir } = useTranslation()
+
   if (!voucher) {
     return (
-      <div className="text-center py-8" dir={dir} lang={language}>
-        <p className="text-destructive">{t("giftVouchers.processingError")}</p>
+      <div className="max-w-xl mx-auto py-10 text-center px-4" dir={dir} lang={language}>
+        <p className="text-destructive">{t("giftVouchers.redeem.voucherInvalid")}</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 px-4 sm:px-6" dir={dir} lang={language}>
-      <div className="text-center">
-        <div className="mx-auto h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-        </div>
-        <h1 className="text-3xl font-bold text-green-600 mb-2">{t("giftVouchers.purchaseComplete")}</h1>
-        <p className="text-lg text-muted-foreground">{t("giftVouchers.voucherDetailsDescription")}</p>
-      </div>
-      <Card>
+    <div className="max-w-xl mx-auto space-y-6 py-10 px-4" dir={dir} lang={language}>
+      <Card className="shadow-md">
         <CardHeader>
           <CardTitle>{t("giftVouchers.voucherDetailsTitle")}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 text-sm md:text-base">
           <div className="flex justify-between">
             <span>{t("giftVouchers.voucherCode")}</span>
             <span>{voucher.code}</span>
@@ -45,8 +39,8 @@ export default function GuestGiftVoucherConfirmation({ voucher }: Props) {
           </div>
           {voucher.voucherType === "monetary" ? (
             <div className="flex justify-between">
-              <span>{t("giftVouchers.value")}</span>
-              <span>{voucher.amount} ₪</span>
+              <span>{t("giftVouchers.remaining")}</span>
+              <span>{voucher.remainingAmount?.toFixed(2)} ₪</span>
             </div>
           ) : (
             <>
@@ -60,19 +54,16 @@ export default function GuestGiftVoucherConfirmation({ voucher }: Props) {
                   <span>{voucher.selectedDurationName}</span>
                 </div>
               )}
-              <div className="flex justify-between">
-                <span>{t("giftVouchers.price")}</span>
-                <span>{voucher.amount} ₪</span>
-              </div>
             </>
           )}
         </CardContent>
       </Card>
       <div className="text-center">
         <Button asChild>
-          <Link href="/">{t("common.backToHome")}</Link>
+          <Link href={`/bookings/treatment?voucherCode=${code}`}>{t("giftVouchers.redeemVoucher")}</Link>
         </Button>
       </div>
     </div>
   )
 }
+

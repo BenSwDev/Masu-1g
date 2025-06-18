@@ -72,19 +72,20 @@ interface PurchaseGiftVoucherClientProps {
 
 type GiftDetailsFormData = z.infer<typeof giftDetailsSchema>
 
-const formatMinutesToDurationString = (minutes: number, t: Function): string => {
-  if (!minutes) return ""
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  let durationString = ""
-  if (hours > 0) {
-    durationString += `${hours} ${t(hours === 1 ? "common.hour" : "common.hours")}`
+const formatMinutesToDurationString = (
+  minutes?: number | null,
+  t?: Function,
+): string => {
+  if (minutes === undefined || minutes === null || Number.isNaN(minutes)) {
+    return ""
   }
-  if (mins > 0) {
-    if (hours > 0) durationString += ` ${t("common.and")} `
-    durationString += `${mins} ${t(mins === 1 ? "common.minute" : "common.minutes")}`
-  }
-  return durationString.trim() || `${minutes} ${t("common.minutes")}`
+
+  // Fallback if translation function isn't provided
+  const translate = t ?? ((key: string) => key)
+
+  return `${minutes} ${translate(
+    minutes === 1 ? "common.minute" : "common.minutes",
+  )}`
 }
 
 const giftDetailsSchema = z.object({

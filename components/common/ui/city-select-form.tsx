@@ -1,7 +1,14 @@
 "use client"
 
 import React, { useState, useEffect, forwardRef } from "react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/common/ui/select"
+import { Input } from "@/components/common/ui/input"
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface CitySelectFormProps {
@@ -22,6 +29,7 @@ export const CitySelectForm = forwardRef<HTMLButtonElement, CitySelectFormProps>
     const { t } = useTranslation()
     const [cities, setCities] = useState<City[]>([])
     const [loading, setLoading] = useState(true)
+    const [search, setSearch] = useState("")
 
     useEffect(() => {
       const fetchCities = async () => {
@@ -29,7 +37,10 @@ export const CitySelectForm = forwardRef<HTMLButtonElement, CitySelectFormProps>
           const response = await fetch('/api/cities')
           if (response.ok) {
             const data = await response.json()
-            setCities(data.cities || [])
+            const sorted = (data.cities || []).sort((a: City, b: City) =>
+              a.name.localeCompare(b.name)
+            )
+            setCities(sorted)
           }
         } catch (error) {
           console.error("Error fetching cities:", error)
@@ -51,20 +62,34 @@ export const CitySelectForm = forwardRef<HTMLButtonElement, CitySelectFormProps>
       )
     }
 
+    const filteredCities = cities.filter((city) =>
+      city.isActive && city.name.toLowerCase().includes(search.toLowerCase())
+    )
+
     return (
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger ref={ref} className={className}>
           <SelectValue placeholder={placeholder || "בחר עיר"} />
         </SelectTrigger>
         <SelectContent>
-          {cities
-            .filter(city => city.isActive)
-            .map((city) => (
-              <SelectItem key={city._id} value={city.name}>
-                {city.name}
-              </SelectItem>
-            ))
-          }
+          <div className="p-2">
+            <Input
+              autoFocus
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("admin.cities.searchPlaceholder")}
+            />
+          </div>
+          {filteredCities.map((city) => (
+            <SelectItem key={city._id} value={city.name}>
+              {city.name}
+            </SelectItem>
+          ))}
+          {filteredCities.length === 0 && (
+            <div className="p-2 text-sm text-muted-foreground">
+              {t("admin.cities.noCitiesFound")}
+            </div>
+          )}
         </SelectContent>
       </Select>
     )

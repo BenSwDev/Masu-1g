@@ -3692,7 +3692,26 @@
       "monetary": "כספי",
       "treatment": "טיפול"
     },
-    "updateSuccess": "השובר עודכן בהצלחה"
+    "updateSuccess": "השובר עודכן בהצלחה",
+    "wizard": {
+      "chooseTypeDesc": "בחר בין שובר כספי לשובר טיפול",
+      "amountTitle": "סכום השובר",
+      "amountDesc": "הכנס סכום למימוש החל מ150 ₪",
+      "summaryTitle": "סיכום השובר",
+      "summaryDesc": "בדוק את הפרטים לפני התשלום",
+      "continueToPay": "המשך לתשלום"
+    },
+    "monetaryVoucher": "שובר כספי",
+    "monetaryDesc": "שובר בסכום כספי לבחירתך",
+    "treatmentVoucher": "שובר טיפול",
+    "treatmentDesc": "שובר לטיפול מסוים",
+    "recipient": "למי נשלח",
+    "sendTime": "זמן שליחה",
+    "remaining": "יתרה",
+    "treatmentsLabel": "טיפולים",
+    "purchaserDetails": "פרטי מזמין",
+    "processingError": "אירעה שגיאה בעיבוד השובר",
+    "purchaseComplete": "הרכישה הושלמה!"
   },
   "purchaseReports": {
     "error": {
@@ -3794,7 +3813,14 @@
     "use": "נצל",
     "cancel": "בטל",
     "cancelConfirm": "האם לבטל את המנוי?",
-    "cancelConfirmDescription": "לא ניתן לשחזר מנוי שבוטל"
+    "cancelConfirmDescription": "לא ניתן לשחזר מנוי שבוטל",
+    "redeem": {
+      "notFound": "מנוי לא נמצא או שאינו תקף",
+      "redeemSubscription": "ממש מנוי"
+    },
+    "detailsTitle": "פרטי המנוי",
+    "treatment": "טיפול",
+    "remaining": "יתרה"
   },
   "treatments": {
     "selectCategory": "בחר קטגוריה",

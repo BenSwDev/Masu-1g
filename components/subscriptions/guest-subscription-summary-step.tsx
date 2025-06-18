@@ -31,18 +31,18 @@ export default function GuestSubscriptionSummaryStep({
   onNext,
   onPrev,
 }: Props) {
-  const { dir } = useTranslation()
+  const { t, language, dir } = useTranslation()
   const totalPrice = subscription ? (subscription.quantity * durationPrice) : 0
 
   return (
-    <div className="space-y-6" dir={dir}>
+    <div className="space-y-6 px-4 sm:px-6" dir={dir} lang={language}>
       <div className="text-center">
-        <h2 className="text-2xl font-semibold">סיכום הזמנה</h2>
-        <p className="text-muted-foreground mt-2">בדוק את הפרטים לפני התשלום</p>
+        <h2 className="text-2xl font-semibold">{t("subscriptions.purchase.summary")}</h2>
+        <p className="text-muted-foreground mt-2">{t("subscriptions.purchase.reviewBeforePurchase")}</p>
       </div>
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <h3 className="text-lg font-medium mb-3">פרטי המנוי</h3>
+          <h3 className="text-lg font-medium mb-3">{t("subscriptions.detailsTitle")}</h3>
           <Card className="mb-4">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -53,11 +53,11 @@ export default function GuestSubscriptionSummaryStep({
             <CardContent>
               <p className="text-gray-600 mb-2">{subscription?.description}</p>
               <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
-                {subscription ? subscription.quantity + subscription.bonusQuantity : 0} טיפולים
+                {subscription ? subscription.quantity + subscription.bonusQuantity : 0} {t("subscriptions.treatmentsLabel")}
               </span>
             </CardContent>
           </Card>
-          <h3 className="text-lg font-medium mb-3">פרטי הטיפול</h3>
+          <h3 className="text-lg font-medium mb-3">{t("treatments.treatmentDetails")}</h3>
           <Card>
             <CardHeader>
               <CardTitle>{treatment?.name}</CardTitle>
@@ -68,24 +68,24 @@ export default function GuestSubscriptionSummaryStep({
           </Card>
         </div>
         <div>
-          <h3 className="text-lg font-medium mb-3">פרטי מזמין</h3>
+          <h3 className="text-lg font-medium mb-3">{t("giftVouchers.purchaserDetails")}</h3>
           <Card>
             <CardContent className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <User className="h-4 w-4" /> שם:
+                  <User className="h-4 w-4" /> {t("common.name")}:
                 </span>
                 <span className="font-medium">{guestInfo.firstName} {guestInfo.lastName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <Mail className="h-4 w-4" /> אימייל:
+                  <Mail className="h-4 w-4" /> {t("common.email")}:
                 </span>
                 <span className="font-medium">{guestInfo.email}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1">
-                  <Phone className="h-4 w-4" /> טלפון:
+                  <Phone className="h-4 w-4" /> {t("common.phone")}:
                 </span>
                 <span className="font-medium">{guestInfo.phone}</span>
               </div>
@@ -93,24 +93,24 @@ export default function GuestSubscriptionSummaryStep({
           </Card>
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>סיכום מחיר</CardTitle>
+              <CardTitle>{t("common.priceSummary")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex justify-between mb-2">
-                <span>מחיר לטיפול:</span>
+                <span>{t("subscriptions.pricePerSession")}:</span>
                 <span>{durationPrice.toFixed(2)} ₪</span>
               </div>
               <div className="flex justify-between mb-2">
-                <span>כמות טיפולים במנוי:</span>
+                <span>{t("subscriptions.quantity")}</span>
                 <span>{subscription?.quantity || 0}</span>
               </div>
               <div className="flex justify-between mb-2">
-                <span>טיפולי בונוס:</span>
+                <span>{t("subscriptions.bonusQuantity")}</span>
                 <span>{subscription?.bonusQuantity || 0}</span>
               </div>
               <hr className="my-2" />
               <div className="flex justify-between font-bold text-lg">
-                <span>סה"כ:</span>
+                <span>{t("common.total")}</span>
                 <span>{totalPrice.toFixed(2)} ₪</span>
               </div>
             </CardContent>
@@ -118,8 +118,8 @@ export default function GuestSubscriptionSummaryStep({
         </div>
       </div>
       <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={onPrev}>חזור</Button>
-        <Button onClick={onNext}>המשך לתשלום</Button>
+        <Button variant="outline" onClick={onPrev}>{t("common.back")}</Button>
+        <Button onClick={onNext}>{t("subscriptions.purchase.confirmAndPay")}</Button>
       </div>
     </div>
   )

@@ -1366,13 +1366,27 @@ export async function getAllBookings(
     search?: string
   } = {},
 ): Promise<{ bookings: PopulatedBooking[]; totalPages: number; totalBookings: number }> {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id || !session.user.roles.includes("admin")) {
-    throw new Error("common.unauthorized")
-  }
-
   try {
+    logger.info("getAllBookings called with filters:", filters)
+    
+    const session = await getServerSession(authOptions)
+    logger.info("Session info:", {
+      userId: session?.user?.id,
+      roles: session?.user?.roles,
+      activeRole: session?.user?.activeRole
+    })
+    
+    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
+      logger.warn("Unauthorized access attempt to getAllBookings", {
+        userId: session?.user?.id,
+        roles: session?.user?.roles,
+      })
+      return { bookings: [], totalPages: 0, totalBookings: 0 }
+    }
+
+    logger.info("Connecting to database...")
     await dbConnect()
+    logger.info("Database connected successfully")
 
     const {
       status,

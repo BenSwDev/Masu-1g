@@ -87,7 +87,7 @@ const UserSubscriptionsClient = ({ userSubscriptions = [], pagination }: UserSub
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("subscriptions.my.title")}</h1>
           <p className="text-gray-600">{t("subscriptions.my.description")}</p>
         </div>
-        <Button onClick={() => router.push("/dashboard/member/subscriptions/purchase")}>
+        <Button onClick={() => router.push("/purchase/subscription")}>
           {t("subscriptions.purchase.new")}
         </Button>
       </div>
@@ -96,7 +96,7 @@ const UserSubscriptionsClient = ({ userSubscriptions = [], pagination }: UserSub
         <Card>
           <CardContent className="flex flex-col items-center justify-center h-40 p-6">
             <p className="text-gray-500 mb-4">{t("subscriptions.my.noSubscriptions")}</p>
-            <Button onClick={() => router.push("/dashboard/member/subscriptions/purchase")}>
+            <Button onClick={() => router.push("/purchase/subscription")}>
               {t("subscriptions.purchase.new")}
             </Button>
           </CardContent>

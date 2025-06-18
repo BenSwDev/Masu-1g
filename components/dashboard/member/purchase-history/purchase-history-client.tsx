@@ -292,12 +292,12 @@ export default function PurchaseHistoryClient() {
             ) : (
               <div className="flex gap-2 justify-center">
                 <Button asChild>
-                  <a href="/dashboard/member/book-treatment">
+                  <a href="/bookings/treatment">
                     {t('purchaseHistory.emptyState.bookTreatment') || 'הזמן טיפול'}
                   </a>
                 </Button>
                 <Button variant="outline" asChild>
-                  <a href="/dashboard/member/subscriptions/purchase">
+                  <a href="/purchase/subscription">
                     {t('purchaseHistory.emptyState.buySubscription') || 'רכוש מנוי'}
                   </a>
                 </Button>

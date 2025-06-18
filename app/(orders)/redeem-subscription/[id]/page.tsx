@@ -39,7 +39,7 @@ export default async function RedeemSubscriptionPage({ params }: { params: Param
       </Card>
       <div className="text-center">
         <Button asChild>
-          <Link href={`/book-treatment?subscriptionId=${params.id}`}>ממש מנוי</Link>
+          <Link href={`/bookings/treatment?subscriptionId=${params.id}`}>ממש מנוי</Link>
         </Button>
       </div>
     </div>

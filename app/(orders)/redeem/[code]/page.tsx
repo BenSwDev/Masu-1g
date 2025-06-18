@@ -53,7 +53,7 @@ export default async function RedeemPage({ params }: { params: Params }) {
       </Card>
       <div className="text-center">
         <Button asChild>
-          <Link href={`/book-treatment?voucherCode=${params.code}`}>ממש שובר</Link>
+          <Link href={`/bookings/treatment?voucherCode=${params.code}`}>ממש שובר</Link>
         </Button>
       </div>
     </div>

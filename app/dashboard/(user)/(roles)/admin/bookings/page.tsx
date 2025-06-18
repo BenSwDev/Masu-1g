@@ -13,7 +13,9 @@ export const metadata = {
 }
 
 import AdminBookingsClient from "@/components/dashboard/admin/bookings/admin-bookings-client";
+import RobustAdminBookingsClient from "@/components/dashboard/admin/bookings/robust-bookings-client";
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton";
+import { BookingsErrorBoundary } from "@/components/dashboard/admin/bookings/bookings-error-boundary";
 
 function BookingsErrorFallback() {
   return (
@@ -29,25 +31,24 @@ function BookingsErrorFallback() {
           אירעה שגיאה בטעינת נתוני ההזמנות. אנא רענן את הדף או נסה שוב מאוחר יותר.
         </p>
         <div className="mt-4">
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+          <a 
+            href="/dashboard/admin/bookings"
+            className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
           >
             רענון הדף
-          </button>
+          </a>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-async function BookingsContent() {
-  try {
-    return <AdminBookingsClient />;
-  } catch (error) {
-    console.error("Error in BookingsContent:", error);
-    return <BookingsErrorFallback />;
-  }
+function BookingsContent() {
+  return (
+    <BookingsErrorBoundary>
+      <AdminBookingsClient />
+    </BookingsErrorBoundary>
+  );
 }
 
 export default async function AdminBookingsPage() {

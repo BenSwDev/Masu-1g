@@ -15,13 +15,13 @@ export function LandingHero() {
       // עבור אורח - הפניה לעמודי רכישה לאורחים
       switch (action) {
         case "book-treatment":
-          router.push("/book-treatment")
+          router.push("/bookings/treatment")
           break
         case "book-subscription":
-          router.push("/book-subscription")
+          router.push("/purchase/subscription")
           break
         case "book-gift-voucher":
-          router.push("/book-gift-voucher")
+          router.push("/purchase/gift-voucher")
           break
         case "use-voucher":
           console.log(`Clicked: ${action}`)
@@ -38,17 +38,17 @@ export function LandingHero() {
     switch (action) {
       case "book-treatment":
         if (isMember) {
-          router.push("/dashboard/member/book-treatment")
+          router.push("/bookings/treatment")
         }
         break
       case "book-subscription":
         if (isMember) {
-          router.push("/dashboard/member/subscriptions/purchase")
+          router.push("/purchase/subscription")
         }
         break
       case "book-gift-voucher":
         if (isMember) {
-          router.push("/dashboard/member/gift-vouchers/purchase")
+          router.push("/purchase/gift-voucher")
         }
         break
       case "use-voucher":

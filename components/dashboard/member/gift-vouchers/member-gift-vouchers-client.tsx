@@ -172,7 +172,7 @@ export default function MemberGiftVouchersClient({
             <RefreshCw className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2", loading && "animate-spin")} />
             {t("common.refresh")}
           </Button>
-          <Button onClick={() => router.push("/dashboard/member/gift-vouchers/purchase")} className="px-6">
+          <Button onClick={() => router.push("/purchase/gift-voucher")} className="px-6">
             <Plus className={cn("w-4 h-4", dir === "rtl" ? "ml-2" : "mr-2")} />
             {t("memberGiftVouchers.purchaseVoucher")}
           </Button>
@@ -227,7 +227,7 @@ export default function MemberGiftVouchersClient({
               title={t("memberGiftVouchers.noGiftVouchers")}
               description={t("memberGiftVouchers.noGiftVouchersDescription")}
               actionLabel={t("memberGiftVouchers.purchaseVoucher")}
-              onAction={() => router.push("/dashboard/member/gift-vouchers/purchase")}
+              onAction={() => router.push("/purchase/gift-voucher")}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -280,7 +280,7 @@ export default function MemberGiftVouchersClient({
               title={t("memberGiftVouchers.noPurchasedVouchers")}
               description={t("memberGiftVouchers.noPurchasedVouchersDescription")}
               actionLabel={t("memberGiftVouchers.purchaseVoucher")}
-              onAction={() => router.push("/dashboard/member/gift-vouchers/purchase")}
+              onAction={() => router.push("/purchase/gift-voucher")}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

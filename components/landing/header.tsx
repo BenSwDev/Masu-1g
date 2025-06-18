@@ -17,9 +17,9 @@ export function LandingHeader() {
 
   const navigation = [
     { name: t("navigation.home"), href: "/", icon: Home },
-    { name: t("navigation.bookTreatment"), href: "/book-treatment", icon: Calendar },
-    { name: t("navigation.bookSubscription"), href: "/book-subscription", icon: CreditCard },
-    { name: t("navigation.bookGiftVoucher"), href: "/book-gift-voucher", icon: Gift },
+    { name: t("navigation.bookTreatment"), href: "/bookings/treatment", icon: Calendar },
+    { name: t("navigation.bookSubscription"), href: "/purchase/subscription", icon: CreditCard },
+    { name: t("navigation.bookGiftVoucher"), href: "/purchase/gift-voucher", icon: Gift },
   ]
 
   const handleSignOut = async () => {

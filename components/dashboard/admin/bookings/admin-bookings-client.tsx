@@ -6,7 +6,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { getAdminBookingColumns } from "./admin-bookings-columns"
 import { DataTable } from "@/components/common/ui/data-table"
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
-import ComprehensiveBookingEditModal from "./comprehensive-booking-edit-modal"
+import EnhancedBookingModal from "./enhanced-booking-modal"
 import type { PopulatedBooking } from "@/types/booking"
 import { Heading } from "@/components/common/ui/heading"
 import { getAllBookings } from "@/actions/booking-actions"
@@ -61,7 +61,19 @@ export default function AdminBookingsClient() {
     queryKey: ["adminBookings", language, debouncedSearchTerm, statusFilter, professionalFilter, treatmentFilter, dateRangeFilter, priceRangeFilter, addressFilter, currentPage],
     queryFn: async () => {
       try {
-        return await getAllBookings({
+        console.log("Fetching bookings with filters:", {
+          search: debouncedSearchTerm || undefined,
+          status: statusFilter === "all" ? undefined : statusFilter,
+          professional: professionalFilter === "all" ? undefined : professionalFilter,
+          treatment: treatmentFilter === "all" ? undefined : treatmentFilter,
+          dateRange: dateRangeFilter === "all" ? undefined : dateRangeFilter,
+          priceRange: priceRangeFilter === "all" ? undefined : priceRangeFilter,
+          address: addressFilter === "all" ? undefined : addressFilter,
+          page: currentPage,
+          limit: 20,
+        })
+
+        const result = await getAllBookings({
           search: debouncedSearchTerm || undefined,
           status: statusFilter === "all" ? undefined : statusFilter,
           professional: professionalFilter === "all" ? undefined : professionalFilter,
@@ -74,6 +86,9 @@ export default function AdminBookingsClient() {
           sortBy: "createdAt",
           sortDirection: "desc",
         })
+
+        console.log("Bookings fetched successfully:", result)
+        return result
       } catch (error) {
         console.error("Error in getAllBookings query:", error)
         throw error
@@ -81,6 +96,8 @@ export default function AdminBookingsClient() {
     },
     refetchOnWindowFocus: false,
     staleTime: 30000, // 30 seconds
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
 
   const handleRowClick = (booking: PopulatedBooking) => {
@@ -450,7 +467,7 @@ export default function AdminBookingsClient() {
       )}
 
       {/* Comprehensive Booking Edit Modal */}
-      <ComprehensiveBookingEditModal
+              <EnhancedBookingModal
         booking={selectedBooking}
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}

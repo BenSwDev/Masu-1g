@@ -25,6 +25,20 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { useIsMobile } from "@/components/common/ui/use-mobile"
 import { PartnerCouponBatchCard } from "./partner-coupon-batch-card"
 import { BatchCouponsModal } from "./batch-coupons-modal"
+import type { TFunction } from "i18next"
+
+type BatchWithStatus = IPartnerCouponBatch & { 
+  effectiveStatus: string; 
+  activeCouponsCount: number 
+}
+
+interface ServerBatch extends Omit<BatchWithStatus, '_id'> {
+  _id: string
+}
+
+interface PartnerCouponBatch extends Omit<BatchWithStatus, '_id'> {
+  _id: string // Changed from ObjectId to string for client-side
+}
 
 interface PartnerCouponBatchesClientProps {
   initialData: Awaited<ReturnType<typeof getPartnerCouponBatches>>
@@ -35,8 +49,13 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
   const router = useRouter()
   const { toast } = useToast()
 
-  const [batches, setBatches] = React.useState<Array<IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }>>(
-    (initialData?.batches as Array<IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }>) || [],
+  const [batches, setBatches] = React.useState<PartnerCouponBatch[]>(
+    (initialData?.batches?.map(batch => ({
+      ...batch,
+      _id: typeof batch._id === "string" ? batch._id : String(batch._id),
+      effectiveStatus: batch.effectiveStatus || "active",
+      activeCouponsCount: batch.activeCouponsCount || 0
+    })) as PartnerCouponBatch[]) || []
   )
   const [pagination, setPagination] = React.useState({
     totalPages: initialData?.totalPages || 1,
@@ -45,11 +64,11 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
   })
   const [loading, setLoading] = React.useState(false)
   const [isFormOpen, setIsFormOpen] = React.useState(false)
-  const [editingBatch, setEditingBatch] = React.useState<(IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }) | null>(null)
+  const [editingBatch, setEditingBatch] = React.useState<PartnerCouponBatch | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [batchToDelete, setBatchToDelete] = React.useState<string | null>(null)
   const [isCouponsModalOpen, setIsCouponsModalOpen] = React.useState(false)
-  const [selectedBatchForCoupons, setSelectedBatchForCoupons] = React.useState<(IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }) | null>(null)
+  const [selectedBatch, setSelectedBatch] = React.useState<PartnerCouponBatch | null>(null)
 
   const { t, dir } = useTranslation()
 
@@ -58,13 +77,23 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
     setIsFormOpen(true)
   }
 
-  const handleEdit = (batch: IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }) => {
-    setEditingBatch(batch)
+  const handleEdit = (batch: BatchWithStatus) => {
+    setEditingBatch({
+      ...batch,
+      _id: typeof batch._id === "string" ? batch._id : String(batch._id),
+      effectiveStatus: batch.effectiveStatus || "active",
+      activeCouponsCount: batch.activeCouponsCount || 0
+    } as PartnerCouponBatch)
     setIsFormOpen(true)
   }
 
-  const handleViewCoupons = (batch: IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }) => {
-    setSelectedBatchForCoupons(batch)
+  const handleViewCoupons = (batch: BatchWithStatus) => {
+    setSelectedBatch({
+      ...batch,
+      _id: typeof batch._id === "string" ? batch._id : String(batch._id),
+      effectiveStatus: batch.effectiveStatus || "active",
+      activeCouponsCount: batch.activeCouponsCount || 0
+    } as PartnerCouponBatch)
     setIsCouponsModalOpen(true)
   }
 
@@ -75,7 +104,7 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
 
   const confirmDelete = async () => {
     if (!batchToDelete) return
-    setLoading(true)
+
     try {
       const result = await deletePartnerCouponBatch(batchToDelete)
       if (result.success) {
@@ -84,22 +113,25 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
         setPagination((prev) => ({ ...prev, totalBatches: prev.totalBatches - 1 }))
       } else {
         toast({
-          title: t("common.error"),
-          description: result.error || t("adminPartnerCouponBatches.toast.deleteError"),
           variant: "destructive",
+          title: t("common.error"),
+          description: result.error || t("adminPartnerCouponBatches.toast.deleteError")
         })
       }
     } catch (error) {
-      toast({ title: t("common.error"), description: t("adminPartnerCouponBatches.toast.deleteError"), variant: "destructive" })
+      console.error("Error deleting batch:", error)
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("adminPartnerCouponBatches.toast.deleteError")
+      })
     } finally {
-      setLoading(false)
       setIsDeleteDialogOpen(false)
       setBatchToDelete(null)
     }
   }
 
   const handleFormSubmit = async (values: PartnerCouponBatchFormValues) => {
-    setLoading(true)
     try {
       let result
       if (editingBatch) {
@@ -108,39 +140,40 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
         result = await createPartnerCouponBatch(values)
       }
 
-      if (result.success && result.batch) {
+      if (result.success) {
         toast({
           title: t("common.success"),
           description: editingBatch 
             ? t("adminPartnerCouponBatches.toast.updateSuccess") 
-            : t("adminPartnerCouponBatches.toast.createSuccess", { count: result.couponsCreated || 0 }),
+            : t("adminPartnerCouponBatches.toast.createSuccess")
         })
         setIsFormOpen(false)
         setEditingBatch(null)
-        
-        if (editingBatch) {
+
+        // Update the batches list
+        if (result.batch) {
           setBatches((prev) =>
             prev.map((b) =>
               b._id.toString() === result.batch?._id.toString()
-                ? { ...result.batch, effectiveStatus: "active", activeCouponsCount: 0 } as IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }
-                : b,
-            ),
+                ? { ...result.batch, effectiveStatus: "active", activeCouponsCount: 0 } as PartnerCouponBatch
+                : b
+            )
           )
-        } else {
-          setBatches((prev) => [{ ...result.batch, effectiveStatus: "active", activeCouponsCount: values.couponCount } as IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }, ...prev])
-          setPagination((prev) => ({ ...prev, totalBatches: prev.totalBatches + 1 }))
         }
       } else {
         toast({
-          title: t("common.error"),
-          description: result.error || t("adminPartnerCouponBatches.toast.formError"),
           variant: "destructive",
+          title: t("common.error"),
+          description: result.error || t("adminPartnerCouponBatches.toast.error")
         })
       }
     } catch (error) {
-      toast({ title: t("common.error"), description: t("adminPartnerCouponBatches.toast.formError"), variant: "destructive" })
-    } finally {
-      setLoading(false)
+      console.error("Error saving batch:", error)
+      toast({
+        variant: "destructive",
+        title: t("common.error"),
+        description: t("adminPartnerCouponBatches.toast.error")
+      })
     }
   }
 
@@ -152,15 +185,15 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
     onEditRef.current = handleEdit
     onDeleteRef.current = handleDeleteRequest
     onViewCouponsRef.current = handleViewCoupons
-  })
+  }, [])
 
   const memoizedColumns = React.useMemo(
     () =>
       batchColumnsDefinition({
-        onEdit: (batch) => onEditRef.current(batch),
+        onEdit: (batch) => onEditRef.current(batch as BatchWithStatus),
         onDelete: (batchId) => onDeleteRef.current(batchId),
-        onViewCoupons: (batch) => onViewCouponsRef.current(batch),
-        t,
+        onViewCoupons: (batch) => onViewCouponsRef.current(batch as BatchWithStatus),
+        t: t as TFunction,
         dir,
       }),
     [t, dir],
@@ -169,11 +202,18 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
   const isMobile = useIsMobile()
 
   React.useEffect(() => {
-    setBatches((initialData?.batches as Array<IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }>) || [])
+    setBatches(
+      (initialData?.batches?.map(batch => ({
+        ...batch,
+        _id: typeof batch._id === "string" ? batch._id : String(batch._id),
+        effectiveStatus: batch.effectiveStatus || "active",
+        activeCouponsCount: batch.activeCouponsCount || 0
+      })) as PartnerCouponBatch[]) || []
+    )
     setPagination({
       totalPages: initialData?.totalPages || 1,
-      currentPage: initialData?.currentPage || 1,
       totalBatches: initialData?.totalBatches || 0,
+      currentPage: initialData?.currentPage || 1,
     })
   }, [initialData])
 
@@ -190,17 +230,17 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
           {batches.map((batch) => (
             <PartnerCouponBatchCard
               key={batch._id.toString()}
-              batch={batch}
+              batch={batch as unknown as IPartnerCouponBatch & { _id: string; effectiveStatus: string; activeCouponsCount: number }}
               onEdit={onEditRef.current}
               onDelete={onDeleteRef.current}
               onViewCoupons={onViewCouponsRef.current}
-              t={t}
+              t={t as TFunction}
               dir={dir}
             />
           ))}
           {batches.length === 0 && !loading && (
             <p className="text-center text-muted-foreground py-4">
-              {t("adminPartnerCouponBatches.noBatchesFound", "No partner coupon batches found.")}
+              {t("adminPartnerCouponBatches.noBatchesFound")}
             </p>
           )}
         </div>
@@ -211,7 +251,7 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
             data={batches}
           />
           <p className="text-sm text-muted-foreground mt-2">
-            {t("adminPartnerCouponBatches.totalBatches", { count: pagination.totalBatches })}
+            {t("adminPartnerCouponBatches.totalBatches")}
           </p>
         </>
       )}
@@ -263,14 +303,14 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
         </AlertDialogContent>
       </AlertDialog>
 
-      {selectedBatchForCoupons && (
+      {selectedBatch && (
         <BatchCouponsModal
           open={isCouponsModalOpen}
           onOpenChange={setIsCouponsModalOpen}
-          batch={selectedBatchForCoupons}
+          batch={selectedBatch}
           onClose={() => {
             setIsCouponsModalOpen(false)
-            setSelectedBatchForCoupons(null)
+            setSelectedBatch(null)
           }}
         />
       )}

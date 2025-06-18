@@ -1,3 +1,5 @@
+"use server"
+
 import { getServerSession } from "next-auth/next"
 import { revalidatePath } from "next/cache"
 import { Types } from "mongoose"

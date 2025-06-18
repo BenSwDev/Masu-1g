@@ -15,6 +15,7 @@ import { Badge } from "@/components/common/ui/badge"
 import { useToast } from "@/components/common/ui/use-toast"
 import { MapPin, Save, Loader2, Plus, X } from "lucide-react"
 import { updateProfessionalWorkAreas } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+import type { DistanceRadius, IWorkArea } from "@/lib/db/models/professional-profile"
 
 interface City {
   _id: string
@@ -28,8 +29,8 @@ interface City {
 
 interface WorkArea {
   cityId: string
-  cityName: string
-  distanceRadius: string
+  cityName?: string
+  distanceRadius: DistanceRadius
   coveredCities: string[]
 }
 
@@ -48,9 +49,9 @@ export default function ProfessionalWorkAreasTab({
   const [allCities, setAllCities] = useState<City[]>([])
   const [workAreas, setWorkAreas] = useState<WorkArea[]>(
     professional?.workAreas?.map((area: any) => ({
-      cityId: area.cityId || "",
-      cityName: area.cityName || "",
-      distanceRadius: area.distanceRadius || "20km",
+      cityId: area.cityId?.toString() || "",
+      cityName: area.cityName,
+      distanceRadius: (area.distanceRadius || "km20") as DistanceRadius,
       coveredCities: area.coveredCities || []
     })) || []
   )
@@ -117,7 +118,7 @@ export default function ProfessionalWorkAreasTab({
     setWorkAreas([...workAreas, {
       cityId: "",
       cityName: "",
-      distanceRadius: "20km",
+      distanceRadius: "km20" as DistanceRadius,
       coveredCities: []
     }])
   }
@@ -145,7 +146,7 @@ export default function ProfessionalWorkAreasTab({
   // Update work area distance radius
   const updateWorkAreaRadius = (index: number, radius: string) => {
     const updated = [...workAreas]
-    updated[index].distanceRadius = radius
+    updated[index].distanceRadius = radius as DistanceRadius
     setWorkAreas(updated)
 
     // Update covered cities
@@ -160,7 +161,12 @@ export default function ProfessionalWorkAreasTab({
       // Validate work areas
       const validWorkAreas = workAreas.filter(area => 
         area.cityId && area.cityName && area.distanceRadius
-      )
+      ).map(area => ({
+        cityId: area.cityId,
+        cityName: area.cityName,
+        distanceRadius: area.distanceRadius,
+        coveredCities: area.coveredCities
+      }))
 
       if (validWorkAreas.length === 0) {
         toast({
@@ -173,7 +179,7 @@ export default function ProfessionalWorkAreasTab({
 
       const result = await updateProfessionalWorkAreas(
         professional._id,
-        validWorkAreas
+        validWorkAreas as any
       )
 
       if (result.success) {
@@ -283,10 +289,10 @@ export default function ProfessionalWorkAreasTab({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="20km">עד 20 ק״מ</SelectItem>
-                      <SelectItem value="40km">עד 40 ק״מ</SelectItem>
-                      <SelectItem value="60km">עד 60 ק״מ</SelectItem>
-                      <SelectItem value="80km">עד 80 ק״מ</SelectItem>
+                      <SelectItem value="km20">עד 20 ק״מ</SelectItem>
+                      <SelectItem value="km40">עד 40 ק״מ</SelectItem>
+                      <SelectItem value="km60">עד 60 ק״מ</SelectItem>
+                      <SelectItem value="km80">עד 80 ק"מ</SelectItem>
                       <SelectItem value="unlimited">ללא הגבלה</SelectItem>
                     </SelectContent>
                   </Select>

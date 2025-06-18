@@ -1,70 +1,59 @@
-import { eventBus } from "./event-bus"
-import { notificationHandler } from "./handlers/notification-handler"
-import { dashboardHandler } from "./handlers/dashboard-handler"
-import { logger } from "@/lib/logs/logger"
-
 /**
- * Booking Event System - registers all handlers and provides centralized event management
- * This maintains the exact same behavior as the current scattered logic
+ * Booking Event System
+ * Provides a simple event bus for booking-related events
  */
-class BookingEventSystem {
-  private isInitialized = false
 
-  /**
-   * Initialize the event system by registering all handlers
-   * This is called once when the application starts
-   */
-  initialize(): void {
-    if (this.isInitialized) {
-      logger.info("Booking event system already initialized")
-      return
-    }
+export interface BookingEvent {
+  type: string
+  bookingId: string
+  userId: string
+  data?: any
+  timestamp: Date
+}
 
-    logger.info("Initializing booking event system...")
+class BookingEventBus {
+  private listeners: Map<string, Array<(event: BookingEvent) => Promise<void>>> = new Map()
 
-    // Register notification handlers (replaces scattered notification logic)
-    eventBus.on('booking.created', notificationHandler.handleBookingCreated.bind(notificationHandler))
-    eventBus.on('booking.confirmed', notificationHandler.handleBookingConfirmed.bind(notificationHandler))
-    eventBus.on('booking.professional_assigned', notificationHandler.handleProfessionalAssigned.bind(notificationHandler))
-    eventBus.on('booking.completed', notificationHandler.handleBookingCompleted.bind(notificationHandler))
-
-    // Register dashboard handlers (replaces scattered revalidatePath calls)
-    eventBus.on('booking.created', dashboardHandler.handleBookingCreated.bind(dashboardHandler))
-    eventBus.on('booking.cancelled', dashboardHandler.handleBookingCancelled.bind(dashboardHandler))
-    eventBus.on('booking.confirmed', dashboardHandler.handleBookingConfirmed.bind(dashboardHandler))
-    eventBus.on('booking.professional_assigned', dashboardHandler.handleProfessionalAssigned.bind(dashboardHandler))
-    eventBus.on('booking.completed', dashboardHandler.handleBookingCompleted.bind(dashboardHandler))
-    eventBus.on('booking.payment_updated', dashboardHandler.handlePaymentUpdated.bind(dashboardHandler))
-
-    this.isInitialized = true
-    logger.info("Booking event system initialized successfully")
+  async emit(event: BookingEvent): Promise<void> {
+    const eventListeners = this.listeners.get(event.type) || []
+    
+    // Execute all listeners for this event type
+    await Promise.allSettled(
+      eventListeners.map(listener => listener(event))
+    )
   }
 
-  /**
-   * Check if the system is initialized
-   */
-  isReady(): boolean {
-    return this.isInitialized
+  on(eventType: string, listener: (event: BookingEvent) => Promise<void>): void {
+    if (!this.listeners.has(eventType)) {
+      this.listeners.set(eventType, [])
+    }
+    this.listeners.get(eventType)!.push(listener)
   }
 
-  /**
-   * Get the event bus instance for emitting events
-   */
-  getEventBus() {
-    if (!this.isInitialized) {
-      logger.warn("Event system not initialized, initializing now...")
-      this.initialize()
+  off(eventType: string, listener: (event: BookingEvent) => Promise<void>): void {
+    const listeners = this.listeners.get(eventType)
+    if (listeners) {
+      const index = listeners.indexOf(listener)
+      if (index !== -1) {
+        listeners.splice(index, 1)
+      }
     }
-    return eventBus
   }
 }
 
-// Export singleton instance
-export const bookingEventSystem = new BookingEventSystem()
+export const eventBus = new BookingEventBus()
 
-// Auto-initialize the system
-bookingEventSystem.initialize()
-
-// Export the event bus for easy access
-export { eventBus, createBookingEvent } from "./event-bus"
-export type { BookingEvent, BookingEventType } from "./event-bus" 
+export function createBookingEvent(
+  type: string,
+  bookingId: string,
+  userId: string,
+  data?: any
+): BookingEvent {
+  return {
+    type,
+    bookingId,
+    userId,
+    data,
+    timestamp: new Date()
+  }
+} 

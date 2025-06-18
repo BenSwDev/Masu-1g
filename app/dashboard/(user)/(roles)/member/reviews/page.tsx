@@ -6,6 +6,10 @@ import { Metadata } from "next"
 import MemberReviewsClient from "@/components/dashboard/member/reviews/member-reviews-client"
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
 
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
+
+
 export const metadata: Metadata = {
   title: "My Reviews",
   description: "View and manage your treatment reviews",

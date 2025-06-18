@@ -4,6 +4,10 @@ import { getBookingInitialData } from "@/actions/booking-actions"
 import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
 import type { UserSessionData } from "@/types/next-auth"
 
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
+
+
 export default async function BookTreatmentPage({ params }: { params?: { lang?: string } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {

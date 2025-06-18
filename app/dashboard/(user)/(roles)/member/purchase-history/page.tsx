@@ -6,6 +6,9 @@ import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { Heading } from "@/components/common/ui/heading"
 import { Separator } from "@/components/common/ui/separator"
 
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
+
 export default async function PurchaseHistoryPage() {
   const session = await getServerSession(authOptions)
   

@@ -77,7 +77,7 @@ export default function ProfessionalTreatmentsTab({
       const updatedTreatments = selectedTreatments.map(treatmentId => {
         const treatment = allTreatments.find(t => t._id === treatmentId)
         return {
-          treatmentId,
+          treatmentId: treatmentId, // Use string instead of ObjectId
           treatmentName: treatment?.name,
           professionalPrice: 0 // Default price, can be edited later
         }
@@ -85,7 +85,7 @@ export default function ProfessionalTreatmentsTab({
 
       if (professional?._id) {
         const { updateProfessionalTreatments } = await import("@/app/dashboard/(user)/(roles)/admin/professional-management/actions")
-        const result = await updateProfessionalTreatments(professional._id, updatedTreatments)
+        const result = await updateProfessionalTreatments(professional._id, updatedTreatments as any)
         if (!result.success) {
           throw new Error(result.error || "Failed to update treatments")
         }

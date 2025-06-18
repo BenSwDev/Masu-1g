@@ -264,3 +264,4 @@ const GiftVoucher: Model<IGiftVoucher> =
   mongoose.models.GiftVoucher || mongoose.model<IGiftVoucher>("GiftVoucher", GiftVoucherSchema)
 
 export default GiftVoucher
+export { GiftVoucher }

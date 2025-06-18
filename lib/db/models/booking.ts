@@ -243,3 +243,4 @@ BookingSchema.index({ professionalId: 1, bookingDateTime: 1, status: 1 })
 const Booking: Model<IBooking> = mongoose.models.Booking || mongoose.model<IBooking>("Booking", BookingSchema)
 
 export default Booking
+export { Booking }

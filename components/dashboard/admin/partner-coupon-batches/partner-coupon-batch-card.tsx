@@ -19,12 +19,12 @@ import {
 import { StatusBadge, getPartnerName } from "./partner-coupon-batches-columns"
 
 interface PartnerCouponBatchCardProps {
-  batch: IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }
-  onEdit: (batch: IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }) => void
+  batch: IPartnerCouponBatch & { _id: string; effectiveStatus: string; activeCouponsCount: number }
+  onEdit: (batch: IPartnerCouponBatch & { _id: string; effectiveStatus: string; activeCouponsCount: number }) => void
   onDelete: (batchId: string) => void
-  onViewCoupons: (batch: IPartnerCouponBatch & { effectiveStatus: string; activeCouponsCount: number }) => void
+  onViewCoupons: (batch: IPartnerCouponBatch & { _id: string; effectiveStatus: string; activeCouponsCount: number }) => void
   t: TFunction
-  dir: "ltr" | "rtl"
+  dir: string
 }
 
 export function PartnerCouponBatchCard({ batch, onEdit, onDelete, onViewCoupons, t, dir }: PartnerCouponBatchCardProps) {
@@ -64,7 +64,7 @@ export function PartnerCouponBatchCard({ batch, onEdit, onDelete, onViewCoupons,
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => onDelete(batch._id.toString())}
+              onClick={() => onDelete(batch._id)}
               className="text-red-600 focus:text-red-600 focus:bg-red-50"
             >
               <Trash2 className={`${iconMargin} h-4 w-4`} />

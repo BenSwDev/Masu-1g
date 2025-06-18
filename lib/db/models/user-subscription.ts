@@ -123,3 +123,4 @@ const UserSubscription: Model<IUserSubscription> =
   mongoose.models.UserSubscription || mongoose.model<IUserSubscription>("UserSubscription", UserSubscriptionSchema)
 
 export default UserSubscription
+export { UserSubscription }

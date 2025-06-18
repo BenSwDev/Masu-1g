@@ -1,6 +1,9 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
+
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
 import { getPaymentMethods } from "@/actions/payment-method-actions"
 import { PaymentMethodsClient } from "@/components/dashboard/member/payment-methods/payment-methods-client"
 

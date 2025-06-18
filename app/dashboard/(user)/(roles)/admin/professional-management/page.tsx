@@ -6,6 +6,10 @@ import { redirect } from "next/navigation"
 import { ProfessionalManagement } from "@/components/dashboard/admin/professional-management/professional-management"
 import { Skeleton } from "@/components/common/ui/skeleton"
 
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
+
+
 export const metadata: Metadata = {
   title: "ניהול מטפלים | מנהל",
   description: "ניהול מטפלים במערכת",

@@ -8,6 +8,9 @@ export const metadata = {
   title: "My Assigned Coupons", // Placeholder for translation
 }
 
+// Force dynamic rendering to prevent build-time static generation
+export const dynamic = 'force-dynamic'
+
 interface PartnerAssignedCouponsPageProps {
   searchParams: {
     page?: string

@@ -1,5 +1,7 @@
 "use server"
 
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth/auth"
 import { revalidatePath } from "next/cache"
 import dbConnect from "@/lib/db/mongoose"
 import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
@@ -237,5 +239,65 @@ export async function deleteSpecialDateEvent(index: number) {
   } catch (error) {
     logger.error(`[${requestId}] Error deleting special date event:`, error)
     return { success: false, error: "Failed to delete special date event" }
+  }
+}
+
+/**
+ * Get working hours settings
+ */
+export async function getWorkingHours(): Promise<{
+  success: boolean
+  workingHours?: any
+  error?: string
+}> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    // Return default working hours for now
+    const defaultWorkingHours = {
+      sunday: { enabled: true, start: "09:00", end: "17:00" },
+      monday: { enabled: true, start: "09:00", end: "17:00" },
+      tuesday: { enabled: true, start: "09:00", end: "17:00" },
+      wednesday: { enabled: true, start: "09:00", end: "17:00" },
+      thursday: { enabled: true, start: "09:00", end: "17:00" },
+      friday: { enabled: true, start: "09:00", end: "15:00" },
+      saturday: { enabled: false, start: "09:00", end: "17:00" },
+    }
+
+    return { success: true, workingHours: defaultWorkingHours }
+  } catch (error) {
+    logger.error("Error fetching working hours:", error)
+    return { success: false, error: "Failed to fetch working hours" }
+  }
+}
+
+/**
+ * Update working hours settings
+ */
+export async function updateWorkingHours(workingHours: any): Promise<{
+  success: boolean
+  workingHours?: any
+  error?: string
+}> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    // For now, just return the same working hours (no actual DB update)
+    // TODO: Implement actual working hours storage
+    
+    revalidatePath("/dashboard/admin/working-hours")
+
+    return { success: true, workingHours }
+  } catch (error) {
+    logger.error("Error updating working hours:", error)
+    return { success: false, error: "Failed to update working hours" }
   }
 } 

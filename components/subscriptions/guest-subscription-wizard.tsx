@@ -147,7 +147,7 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
       subscriptionId: selectedSubscriptionId,
       treatmentId: selectedTreatmentId,
       selectedDurationId: selectedDurationId || undefined,
-      paymentMethodId: undefined,
+      paymentMethodId: "guest",
       guestInfo: {
         name: guestInfo.firstName + " " + guestInfo.lastName,
         email: guestInfo.email,

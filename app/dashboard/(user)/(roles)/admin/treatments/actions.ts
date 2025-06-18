@@ -6,6 +6,7 @@ import Treatment, { type ITreatment, type ITreatmentDuration } from "@/lib/db/mo
 import { logger } from "@/lib/logs/logger"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
+import { getTreatments as getAllTreatments } from "@/actions/treatment-actions"
 
 /**
  * Fetches treatments with optional filtering and pagination
@@ -237,4 +238,6 @@ export async function toggleTreatmentStatus(id: string) {
     logger.error(`[${requestId}] Error toggling treatment status:`, error)
     return { success: false, error: "Failed to toggle treatment status" }
   }
-} 
+}
+
+export { getAllTreatments } 

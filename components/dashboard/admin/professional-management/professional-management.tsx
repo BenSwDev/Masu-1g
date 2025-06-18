@@ -14,26 +14,21 @@ import { Search, Filter, Users, UserCheck, UserX, Clock, AlertTriangle, Plus } f
 import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import ProfessionalEditModal from "./professional-edit-modal"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import type { IProfessionalProfile } from "@/lib/db/models/professional-profile"
+import type { IUser } from "@/lib/db/models/user"
 
 interface Professional {
   _id: string
-  userId: {
-    _id: string
-    name: string
-    email: string
-    phone: string
-    gender: string
-    birthDate?: string
-  }
-  status: ProfessionalStatus
-  treatments: any[]
-  workAreas: any[]
+  userId: IUser
+  status?: ProfessionalStatus
+  treatments?: any[]
+  workAreas?: any[]
   adminNotes?: string
   rejectionReason?: string
-  appliedAt: string
-  approvedAt?: string
-  rejectedAt?: string
-  lastActiveAt?: string
+  appliedAt?: Date
+  approvedAt?: Date
+  rejectedAt?: Date
+  lastActiveAt?: Date
   bookings?: any[]
 }
 
@@ -91,7 +86,10 @@ export function ProfessionalManagement({
       })
 
       if (result.success) {
-        setProfessionals(result.data?.professionals || [])
+        setProfessionals((result.data?.professionals || []).map(p => ({
+          ...p,
+          _id: p._id.toString()
+        })) as Professional[])
         setPagination(result.data?.pagination || pagination)
       } else {
         toast({
@@ -149,24 +147,26 @@ export function ProfessionalManagement({
   const handleCreateNew = () => {
     // Create empty professional object for new professional
     const newProfessional: Professional = {
-      _id: "",
+      _id: "new",
       userId: {
-        _id: "",
+        _id: "new",
         name: "",
         email: "",
         phone: "",
         gender: "male",
-        birthDate: ""
-      },
+        roles: [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as unknown as IUser,
       status: "pending_admin_approval",
       treatments: [],
       workAreas: [],
       adminNotes: "",
       rejectionReason: "",
-      appliedAt: new Date().toISOString(),
-      approvedAt: "",
-      rejectedAt: "",
-      lastActiveAt: "",
+      appliedAt: new Date(),
+      approvedAt: undefined,
+      rejectedAt: undefined,
+      lastActiveAt: undefined,
       bookings: []
     }
     
@@ -174,8 +174,6 @@ export function ProfessionalManagement({
     setIsCreatingNew(true)
     setShowEditModal(true)
   }
-
-
 
   const getStatusBadge = (status: ProfessionalStatus) => {
     const statusConfig = {
@@ -201,7 +199,6 @@ export function ProfessionalManagement({
     if (!dateString) return "-"
     return new Date(dateString).toLocaleDateString("he-IL")
   }
-
 
   // Statistics
   const stats = {
@@ -389,7 +386,7 @@ export function ProfessionalManagement({
               ) : (
                 professionals.map((professional) => (
                   <TableRow 
-                    key={professional._id} 
+                    key={professional._id.toString()} 
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleRowClick(professional)}
                   >
@@ -406,7 +403,7 @@ export function ProfessionalManagement({
                       </div>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(professional.status)}
+                      {getStatusBadge(professional.status ?? "pending_admin_approval")}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
@@ -415,12 +412,12 @@ export function ProfessionalManagement({
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {professional.workAreas.length} איזורים
+                        {professional.workAreas?.length || 0} איזורים
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {formatDate(professional.appliedAt)}
+                        {formatDate(professional.appliedAt?.toISOString())}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -471,7 +468,7 @@ export function ProfessionalManagement({
       {/* Edit/Create Modal */}
       {selectedProfessional && (
         <ProfessionalEditModal
-          professional={selectedProfessional}
+          professional={selectedProfessional as any}
           open={showEditModal}
           onClose={() => {
             setShowEditModal(false)

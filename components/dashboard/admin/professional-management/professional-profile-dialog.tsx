@@ -8,6 +8,7 @@ import { Separator } from "@/components/common/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
 import { getProfessionalById, updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import type { IUser } from "@/lib/db/models/user"
 
 interface ProfessionalProfileDialogProps {
   professionalId: string | null
@@ -27,14 +28,22 @@ interface ProfessionalDetails {
 export function ProfessionalProfileDialog({ professionalId, open, onOpenChange }: ProfessionalProfileDialogProps) {
   const { t } = useTranslation()
   const [profile, setProfile] = useState<ProfessionalDetails | null>(null)
-  const [status, setStatus] = useState<ProfessionalStatus>("pending")
+  const [status, setStatus] = useState<ProfessionalStatus>("pending_admin_approval")
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (open && professionalId) {
       getProfessionalById(professionalId).then((res) => {
-        if (res.success) {
-          setProfile(res.professional)
+        if (res.success && res.professional) {
+          const user = res.professional.userId as IUser
+          setProfile({
+            id: res.professional._id.toString(),
+            name: user.name,
+            email: user.email,
+            phone: user.phone || undefined,
+            professionalNumber: res.professional._id.toString(),
+            status: res.professional.status
+          })
           setStatus(res.professional.status)
         }
       })
@@ -87,10 +96,10 @@ export function ProfessionalProfileDialog({ professionalId, open, onOpenChange }
                     <SelectItem value="inactive">
                       {t("admin.professionals.statuses.inactive")}
                     </SelectItem>
-                    <SelectItem value="pending">
+                    <SelectItem value="pending_admin_approval">
                       {t("admin.professionals.statuses.pending")}
                     </SelectItem>
-                    <SelectItem value="incomplete">
+                    <SelectItem value="pending_user_action">
                       {t("admin.professionals.statuses.incomplete")}
                     </SelectItem>
                     <SelectItem value="rejected">

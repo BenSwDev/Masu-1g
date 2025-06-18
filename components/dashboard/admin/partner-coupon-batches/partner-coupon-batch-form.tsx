@@ -31,8 +31,8 @@ const formSchema = z
     discountValue: z.coerce.number().min(0, "Discount value must be non-negative"),
     validFrom: z.date({ required_error: "Start date is required." }),
     validUntil: z.date({ required_error: "Expiration date is required." }),
-    usageLimit: z.coerce.number().min(0, "Usage limit must be non-negative").default(1),
-    usageLimitPerUser: z.coerce.number().min(0, "Usage limit per user must be non-negative").default(1),
+    usageLimit: z.coerce.number().min(0, "Usage limit must be non-negative"),
+    usageLimitPerUser: z.coerce.number().min(0, "Usage limit per user must be non-negative"),
     isActive: z.boolean().default(true),
     codePrefix: z.string().min(2, "Code prefix must be at least 2 characters").max(10, "Code prefix cannot exceed 10 characters").trim(),
     notesForPartner: z.string().optional(),
@@ -67,8 +67,8 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
       validUntil: initialData?.validUntil
         ? new Date(initialData.validUntil)
         : new Date(new Date().setDate(new Date().getDate() + 30)),
-      usageLimit: initialData?.usageLimit || 1,
-      usageLimitPerUser: initialData?.usageLimitPerUser || 1,
+      usageLimit: initialData?.usageLimit ?? 1,
+      usageLimitPerUser: initialData?.usageLimitPerUser ?? 1,
       isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
       codePrefix: initialData?.codePrefix || "",
       notesForPartner: initialData?.notesForPartner || "",
@@ -77,7 +77,7 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
   )
 
   const form = useForm<PartnerCouponBatchFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(formSchema) as any,
     defaultValues,
   })
 
@@ -85,7 +85,7 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
     form.reset(defaultValues)
   }, [defaultValues, form])
 
-  const handleSubmit = form.handleSubmit(async (data) => {
+  const handleSubmit = form.handleSubmit(async (data: PartnerCouponBatchFormValues) => {
     await onSubmit(data)
   })
 

@@ -8,6 +8,14 @@ import User from "@/lib/db/models/user"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import { Types } from "mongoose"
+import { 
+  getAllCoupons, 
+  createCoupon, 
+  updateCoupon, 
+  deleteCoupon,
+  getCouponById,
+  getAssignedPartnerCoupons
+} from "@/actions/coupon-actions"
 
 // Types
 export interface GetCouponsOptions {
@@ -140,4 +148,13 @@ function calculateCouponEffectiveStatus(coupon: ICoupon): string {
   if (coupon.validFrom && new Date(coupon.validFrom) > now) return "pending"
   if (coupon.usageLimit > 0 && coupon.timesUsed >= coupon.usageLimit) return "exhausted"
   return "active"
+}
+
+export {
+  getAllCoupons,
+  createCoupon, 
+  updateCoupon,
+  deleteCoupon,
+  getCouponById,
+  getAssignedPartnerCoupons
 } 

@@ -2,6 +2,9 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
 
+// Force dynamic rendering to prevent build-time database connections
+export const dynamic = 'force-dynamic'
+
 export default async function ProfessionalProfilePage() {
   const session = await getServerSession(authOptions)
 

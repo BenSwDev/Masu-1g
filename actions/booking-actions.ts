@@ -352,6 +352,10 @@ export async function calculateBookingPrice(
               daySettings.notes ||
               `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
             amount: surchargeAmount,
+            professionalShare:
+              "professionalShare" in daySettings && daySettings.professionalShare
+                ? daySettings.professionalShare
+                : undefined,
           })
           priceDetails.totalSurchargesAmount += surchargeAmount
         }
@@ -1415,6 +1419,9 @@ export async function getAllBookings(
         filterQuery.professionalId = { $ne: null }
       } else if (professional === "unassigned") {
         filterQuery.professionalId = null
+      } else {
+        // Treat as specific professional ID
+        filterQuery.professionalId = new Types.ObjectId(professional)
       }
     }
 

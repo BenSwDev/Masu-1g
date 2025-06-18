@@ -31,7 +31,7 @@ export interface IGiftVoucherUsageHistory {
 
 export interface CalculatedPriceDetails {
   basePrice: number
-  surcharges: { description: string; amount: number }[]
+  surcharges: { description: string; amount: number; professionalShare?: { amount: number; type: "fixed" | "percentage" } }[]
   totalSurchargesAmount: number
   treatmentPriceAfterSubscriptionOrTreatmentVoucher: number
   couponDiscount: number

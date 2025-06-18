@@ -13,6 +13,7 @@ import type { CalculatedPriceDetails, SelectedBookingOptions } from "@/types/boo
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { BookingInitialData } from "@/types/booking"
+import { useTranslation } from "@/lib/translations/i18n"
 
 // Define serialized types that match the data we receive from the server
 interface SerializedSubscription {
@@ -78,6 +79,7 @@ function convertToTreatment(treatment: SerializedTreatment): ITreatment {
 
 export default function GuestSubscriptionWizard({ subscriptions, treatments }: Props) {
   const router = useRouter()
+  const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [guestInfo, setGuestInfo] = useState<any>({})
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
@@ -257,5 +259,9 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
     }
   }
 
-  return <div className="max-w-4xl mx-auto">{renderStep()}</div>
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6" dir={dir} lang={language}>
+      {renderStep()}
+    </div>
+  )
 }

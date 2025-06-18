@@ -295,6 +295,14 @@
     "cancelConfirm": "Вы уверены, что хотите отменить эту подписку?",
     "cancelConfirmDescription": "Это действие нельзя отменить. Оставшиеся сеансы будут аннулированы.",
     "cancelConfirmDescriptionAdmin": "Вы уверены, что хотите отменить эту подписку для {{userName}}? Это действие нельзя отменить.",
+    "redeem": {
+      "notFound": "[subscriptions.redeem.notFound]",
+      "redeemSubscription": "[subscriptions.redeemSubscription]"
+    },
+    "detailsTitle": "[subscriptions.detailsTitle]",
+    "treatment": "[subscriptions.treatment]",
+    "remaining": "[subscriptions.remaining]",
+    "treatmentsLabel": "[subscriptions.treatmentsLabel]",
     "users": {
       "fields": {
         "namePlaceholder": "Введите полное имя",
@@ -378,6 +386,23 @@
     "createError": "Ошибка создания подарочного сертификата",
     "updateSuccess": "Подарочный сертификат успешно обновлен",
     "updateError": "Ошибка обновления подарочного сертификата",
+    "wizard": {
+      "chooseTypeDesc": "[giftVouchers.wizard.chooseTypeDesc]",
+      "amountTitle": "[giftVouchers.wizard.amountTitle]",
+      "amountDesc": "[giftVouchers.wizard.amountDesc]",
+      "summaryTitle": "[giftVouchers.wizard.summaryTitle]",
+      "summaryDesc": "[giftVouchers.wizard.summaryDesc]",
+      "continueToPay": "[giftVouchers.wizard.continueToPay]"
+    },
+    "monetaryVoucher": "[giftVouchers.monetaryVoucher]",
+    "monetaryDesc": "[giftVouchers.monetaryDesc]",
+    "treatmentVoucher": "[giftVouchers.treatmentVoucher]",
+    "treatmentDesc": "[giftVouchers.treatmentDesc]",
+    "recipient": "[giftVouchers.recipient]",
+    "sendTime": "[giftVouchers.sendTime]",
+    "purchaserDetails": "[giftVouchers.purchaserDetails]",
+    "processingError": "[giftVouchers.processingError]",
+    "purchaseComplete": "[giftVouchers.purchaseComplete]",
     "fetchError": "Ошибка загрузки подарочных сертификатов",
     "edit": "Редактировать подарочный сертификат",
     "filterByStatus": "Фильтр по статусу",

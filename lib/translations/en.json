@@ -304,6 +304,14 @@
     "cancelSuccess": "Subscription cancelled successfully",
     "cancelConfirm": "Are you sure you want to cancel this subscription?",
     "cancelConfirmDescription": "This action cannot be undone. Remaining treatments will be lost.",
+    "redeem": {
+      "notFound": "[subscriptions.redeem.notFound]",
+      "redeemSubscription": "[subscriptions.redeemSubscription]"
+    },
+    "detailsTitle": "[subscriptions.detailsTitle]",
+    "treatment": "[subscriptions.treatment]",
+    "remaining": "[subscriptions.remaining]",
+    "treatmentsLabel": "[subscriptions.treatmentsLabel]",
     "cancelConfirmDescriptionAdmin": "Are you sure you want to cancel this subscription for {{userName}}? This action cannot be undone.",
     "users": {
       "title": "Users",
@@ -407,7 +415,24 @@
       "monetary": "[giftVouchers.types.monetary]",
       "treatment": "[giftVouchers.types.treatment]"
     },
-    "updateSuccess": "[giftVouchers.updateSuccess]"
+    "updateSuccess": "[giftVouchers.updateSuccess]",
+    "wizard": {
+      "chooseTypeDesc": "[giftVouchers.wizard.chooseTypeDesc]",
+      "amountTitle": "[giftVouchers.wizard.amountTitle]",
+      "amountDesc": "[giftVouchers.wizard.amountDesc]",
+      "summaryTitle": "[giftVouchers.wizard.summaryTitle]",
+      "summaryDesc": "[giftVouchers.wizard.summaryDesc]",
+      "continueToPay": "[giftVouchers.wizard.continueToPay]"
+    },
+    "monetaryVoucher": "[giftVouchers.monetaryVoucher]",
+    "monetaryDesc": "[giftVouchers.monetaryDesc]",
+    "treatmentVoucher": "[giftVouchers.treatmentVoucher]",
+    "treatmentDesc": "[giftVouchers.treatmentDesc]",
+    "recipient": "[giftVouchers.recipient]",
+    "sendTime": "[giftVouchers.sendTime]",
+    "purchaserDetails": "[giftVouchers.purchaserDetails]",
+    "processingError": "[giftVouchers.processingError]",
+    "purchaseComplete": "[giftVouchers.purchaseComplete]"
   },
   "partnerCoupons": {
     "title": "Partner Coupons",

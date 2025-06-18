@@ -21,12 +21,16 @@ export default function GuestSubscriptionSelectionStep({
   onNext,
   onPrev,
 }: Props) {
-  const { dir } = useTranslation()
+  const { t, language, dir } = useTranslation()
   return (
-    <div className="space-y-6" dir={dir}>
+    <div className="space-y-6 px-4 sm:px-6" dir={dir} lang={language}>
       <div className="text-center">
-        <h2 className="text-2xl font-semibold">בחר מנוי</h2>
-        <p className="text-muted-foreground mt-2">בחר את המנוי המתאים עבורך</p>
+        <h2 className="text-2xl font-semibold">
+          {t("subscriptions.purchase.selectSubscription")}
+        </h2>
+        <p className="text-muted-foreground mt-2">
+          {t("subscriptions.purchase.selectSubscriptionDesc")}
+        </p>
       </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {subscriptions.map((sub) => (
@@ -44,15 +48,15 @@ export default function GuestSubscriptionSelectionStep({
             <CardContent>
               <p className="text-gray-600 mb-2">{sub.description}</p>
               <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
-                {sub.quantity + sub.bonusQuantity} טיפולים
+                {sub.quantity + sub.bonusQuantity} {t("subscriptions.treatmentsLabel")}
               </span>
             </CardContent>
           </Card>
         ))}
       </div>
       <div className="flex justify-between mt-4">
-        <Button variant="outline" onClick={onPrev}>חזור</Button>
-        <Button onClick={onNext} disabled={!selectedId}>המשך</Button>
+        <Button variant="outline" onClick={onPrev}>{t("common.back")}</Button>
+        <Button onClick={onNext} disabled={!selectedId}>{t("common.next")}</Button>
       </div>
     </div>
   )

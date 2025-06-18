@@ -74,17 +74,7 @@ type GiftDetailsFormData = z.infer<typeof giftDetailsSchema>
 
 const formatMinutesToDurationString = (minutes: number, t: Function): string => {
   if (!minutes) return ""
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  let durationString = ""
-  if (hours > 0) {
-    durationString += `${hours} ${t(hours === 1 ? "common.hour" : "common.hours")}`
-  }
-  if (mins > 0) {
-    if (hours > 0) durationString += ` ${t("common.and")} `
-    durationString += `${mins} ${t(mins === 1 ? "common.minute" : "common.minutes")}`
-  }
-  return durationString.trim() || `${minutes} ${t("common.minutes")}`
+  return `${minutes} ${t("common.minutes")}`
 }
 
 const giftDetailsSchema = z.object({

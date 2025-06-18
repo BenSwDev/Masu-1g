@@ -65,17 +65,7 @@ export function GuestBookingConfirmation({
         (d: any) => d._id.toString() === bookingResult.selectedDurationId?.toString()
       )
       if (duration) {
-        const hours = Math.floor((duration.minutes || 0) / 60)
-        const mins = (duration.minutes || 0) % 60
-        let durationString = ""
-        if (hours > 0) {
-          durationString += `${hours} ${t(hours === 1 ? "common.hour" : "common.hours")}`
-        }
-        if (mins > 0) {
-          if (hours > 0) durationString += ` ${t("common.and")} `
-          durationString += `${mins} ${t(mins === 1 ? "common.minute" : "common.minutes")}`
-        }
-        return durationString || `${duration.minutes} ${t("common.minutes")}`
+        return `${duration.minutes || 0} ${t("common.minutes")}`
       }
     }
     return ""

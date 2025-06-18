@@ -1,10 +1,8 @@
 import { getGuestBookingInitialData } from "@/actions/booking-actions"
 import { getGiftVoucherByCode } from "@/actions/gift-voucher-actions"
 import { getUserSubscriptionById } from "@/actions/user-subscription-actions"
-import GuestBookingWizard from "@/components/booking/guest-booking-wizard"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { GuestLayout } from "@/components/layout/guest-layout"
-import { useTranslation } from "@/lib/translations/i18n"
+
+import GuestBookTreatmentContent from "./guest-book-treatment-content"
 
 // Force dynamic rendering to handle searchParams
 export const dynamic = 'force-dynamic'
@@ -41,39 +39,3 @@ export default async function GuestBookTreatmentPage({
   }
 }
 
-interface GuestBookTreatmentContentProps {
-  success: boolean
-  initialData?: Awaited<ReturnType<typeof getGuestBookingInitialData>>["data"]
-  voucher?: any
-  subscription?: any
-}
-
-function GuestBookTreatmentContent({ success, initialData, voucher, subscription }: GuestBookTreatmentContentProps) {
-  "use client"
-  const { t, language, dir } = useTranslation()
-
-  if (!success || !initialData) {
-    return (
-      <GuestLayout>
-        <Card className="max-w-xl mx-auto mt-10 p-4" dir={dir} lang={language}>
-          <CardHeader>
-            <CardTitle>{t("common.dataLoadError")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{t("common.tryAgain")}</p>
-          </CardContent>
-        </Card>
-      </GuestLayout>
-    )
-  }
-
-  return (
-    <GuestLayout>
-      <GuestBookingWizard
-        initialData={initialData}
-        voucher={voucher}
-        userSubscription={subscription}
-      />
-    </GuestLayout>
-  )
-}

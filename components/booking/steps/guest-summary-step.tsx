@@ -105,17 +105,7 @@ export function GuestSummaryStep({
         : "משך סטנדרטי"
     }
     if (selectedDuration) {
-      const hours = Math.floor((selectedDuration.minutes || 0) / 60)
-      const mins = (selectedDuration.minutes || 0) % 60
-      let durationString = ""
-      if (hours > 0) {
-        durationString += `${hours} ${hours === 1 ? "שעה" : "שעות"}`
-      }
-      if (mins > 0) {
-        if (hours > 0) durationString += ` ו`
-        durationString += `${mins} דקות`
-      }
-      return durationString || `${selectedDuration.minutes} דקות`
+      return `${selectedDuration.minutes || 0} דקות`
     }
     return ""
   }

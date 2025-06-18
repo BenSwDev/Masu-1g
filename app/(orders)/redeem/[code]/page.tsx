@@ -2,48 +2,62 @@ import { getGiftVoucherByCode } from "@/actions/gift-voucher-actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
 import Link from "next/link"
+import { useTranslation } from "@/lib/translations/i18n"
 
 interface Params { code: string }
 
 export default async function RedeemPage({ params }: { params: Params }) {
   const result = await getGiftVoucherByCode(params.code)
-  if (!result.success || !result.voucher) {
+  const voucher = result.success && result.voucher ? result.voucher : null
+  return <RedeemPageContent voucher={voucher} code={params.code} />
+}
+
+interface RedeemPageContentProps {
+  voucher: Awaited<ReturnType<typeof getGiftVoucherByCode>>["voucher"] | null
+  code: string
+}
+
+function RedeemPageContent({ voucher, code }: RedeemPageContentProps) {
+  "use client"
+  const { t, language, dir } = useTranslation()
+
+  if (!voucher) {
     return (
-      <div className="max-w-xl mx-auto py-10 text-center">
-        <p className="text-destructive">שובר לא נמצא או שאינו תקף</p>
+      <div className="max-w-xl mx-auto py-10 text-center px-4" dir={dir} lang={language}>
+        <p className="text-destructive">{t("giftVouchers.redeem.voucherInvalid")}</p>
       </div>
     )
   }
-  const voucher = result.voucher
+
   return (
-    <div className="max-w-xl mx-auto space-y-6 py-10">
-      <Card>
+    <div className="max-w-xl mx-auto space-y-6 py-10 px-4" dir={dir} lang={language}>
+      <Card className="shadow-md">
         <CardHeader>
-          <CardTitle>פרטי השובר</CardTitle>
+          <CardTitle>{t("giftVouchers.voucherDetailsTitle")}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 text-sm md:text-base">
           <div className="flex justify-between">
-            <span>קוד שובר:</span>
+            <span>{t("giftVouchers.voucherCode")}</span>
             <span>{voucher.code}</span>
           </div>
           <div className="flex justify-between">
-            <span>סוג:</span>
-            <span>{voucher.voucherType === "monetary" ? "כספי" : "טיפול"}</span>
+            <span>{t("giftVouchers.type")}</span>
+            <span>{voucher.voucherType === "monetary" ? t("giftVouchers.types.monetary") : t("giftVouchers.types.treatment")}</span>
           </div>
           {voucher.voucherType === "monetary" ? (
             <div className="flex justify-between">
-              <span>יתרה:</span>
+              <span>{t("giftVouchers.remaining")}</span>
               <span>{voucher.remainingAmount?.toFixed(2)} ₪</span>
             </div>
           ) : (
             <>
               <div className="flex justify-between">
-                <span>טיפול:</span>
+                <span>{t("giftVouchers.treatment")}</span>
                 <span>{voucher.treatmentName}</span>
               </div>
               {voucher.selectedDurationName && (
                 <div className="flex justify-between">
-                  <span>משך:</span>
+                  <span>{t("giftVouchers.duration")}</span>
                   <span>{voucher.selectedDurationName}</span>
                 </div>
               )}
@@ -53,7 +67,7 @@ export default async function RedeemPage({ params }: { params: Params }) {
       </Card>
       <div className="text-center">
         <Button asChild>
-          <Link href={`/bookings/treatment?voucherCode=${params.code}`}>ממש שובר</Link>
+          <Link href={`/bookings/treatment?voucherCode=${code}`}>{t("giftVouchers.redeemVoucher")}</Link>
         </Button>
       </div>
     </div>

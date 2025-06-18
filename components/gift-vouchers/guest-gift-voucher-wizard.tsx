@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Input } from "@/components/common/ui/input"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Progress } from "@/components/common/ui/progress"
+import { useTranslation } from "@/lib/translations/i18n"
 import { initiateGuestPurchaseGiftVoucher, confirmGuestGiftVoucherPurchase, saveAbandonedGiftVoucherPurchase, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import GuestGiftVoucherConfirmation from "./guest-gift-voucher-confirmation"
 import { createGuestUser } from "@/actions/booking-actions"
@@ -23,6 +24,7 @@ interface Props {
 export default function GuestGiftVoucherWizard({ treatments }: Props) {
   const router = useRouter()
   const { toast } = useToast()
+  const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [guestInfo, setGuestInfo] = useState<any>({})
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
@@ -151,43 +153,43 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
   }
 
   const renderVoucherTypeStep = () => (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir} lang={language}>
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900">בחר סוג שובר</h2>
-        <p className="text-gray-600 mt-2">בחר בין שובר כספי לשובר טיפול</p>
+        <h2 className="text-2xl font-semibold text-gray-900">{t("giftVouchers.fields.selectVoucherType")}</h2>
+        <p className="text-gray-600 mt-2">{t("giftVouchers.wizard.chooseTypeDesc")}</p>
       </div>
       <div className="grid md:grid-cols-2 gap-6">
         <Card className={`cursor-pointer border-2 ${voucherType === "monetary" ? "border-blue-500" : "border-gray-200"}`}
           onClick={() => { setVoucherType("monetary"); setSelectedTreatmentId(""); setSelectedDurationId("") }}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">שובר כספי</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>שובר בסכום כספי לבחירתך</p>
-          </CardContent>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">{t("giftVouchers.monetaryVoucher")}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{t("giftVouchers.monetaryDesc")}</p>
+        </CardContent>
         </Card>
         <Card className={`cursor-pointer border-2 ${voucherType === "treatment" ? "border-blue-500" : "border-gray-200"}`}
           onClick={() => { setVoucherType("treatment"); setMonetaryValue(150) }}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">שובר טיפול</CardTitle>
+            <CardTitle className="flex items-center gap-2">{t("giftVouchers.treatmentVoucher")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>שובר לטיפול מסוים</p>
+            <p>{t("giftVouchers.treatmentDesc")}</p>
           </CardContent>
         </Card>
       </div>
       <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={prevStep}>חזור</Button>
-        <Button onClick={nextStep}>המשך</Button>
+        <Button variant="outline" onClick={prevStep}>{t("common.back")}</Button>
+        <Button onClick={nextStep}>{t("common.next")}</Button>
       </div>
     </div>
   )
 
   const renderMonetaryStep = () => (
     <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900">סכום השובר</h2>
-        <p className="text-gray-600 mt-2">הכנס סכום למימוש החל מ150 ₪</p>
+      <div className="text-center mb-6" dir={dir} lang={language}>
+        <h2 className="text-2xl font-semibold text-gray-900">{t("giftVouchers.wizard.amountTitle")}</h2>
+        <p className="text-gray-600 mt-2">{t("giftVouchers.wizard.amountDesc")}</p>
       </div>
       <Card>
         <CardHeader>
@@ -198,8 +200,8 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
         </CardContent>
       </Card>
       <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={prevStep}>חזור</Button>
-        <Button onClick={nextStep} disabled={monetaryValue < 150}>המשך</Button>
+        <Button variant="outline" onClick={prevStep}>{t("common.back")}</Button>
+        <Button onClick={nextStep} disabled={monetaryValue < 150}>{t("common.next")}</Button>
       </div>
     </div>
   )
@@ -222,35 +224,35 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
   )
 
   const renderSummaryStep = () => (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={dir} lang={language}>
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold">סיכום השובר</h2>
-        <p className="text-gray-600 mt-2">בדוק את הפרטים לפני התשלום</p>
+        <h2 className="text-2xl font-semibold">{t("giftVouchers.wizard.summaryTitle")}</h2>
+        <p className="text-gray-600 mt-2">{t("giftVouchers.wizard.summaryDesc")}</p>
       </div>
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>פרטי שובר</CardTitle>
+              <CardTitle>{t("giftVouchers.voucherDetailsTitle")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex justify-between"><span>סוג:</span><span>{voucherType === "monetary" ? "כספי" : "טיפול"}</span></div>
+              <div className="flex justify-between"><span>{t("giftVouchers.type")}</span><span>{voucherType === "monetary" ? t("giftVouchers.types.monetary") : t("giftVouchers.types.treatment")}</span></div>
               {voucherType === "monetary" ? (
-                <div className="flex justify-between"><span>ערך:</span><span>{price} ₪</span></div>
+                <div className="flex justify-between"><span>{t("giftVouchers.value")}</span><span>{price} ₪</span></div>
               ) : (
                 <>
-                  <div className="flex justify-between"><span>טיפול:</span><span>{selectedTreatment?.name}</span></div>
+                  <div className="flex justify-between"><span>{t("giftVouchers.treatment")}</span><span>{selectedTreatment?.name}</span></div>
                   {selectedDuration && (
-                    <div className="flex justify-between"><span>משך:</span><span>{selectedDuration.minutes} דקות</span></div>
+                    <div className="flex justify-between"><span>{t("giftVouchers.duration")}</span><span>{selectedDuration.minutes} {t("common.minutes")}</span></div>
                   )}
-                  <div className="flex justify-between"><span>מחיר:</span><span>{price} ₪</span></div>
+                  <div className="flex justify-between"><span>{t("giftVouchers.price")}</span><span>{price} ₪</span></div>
                 </>
               )}
               {guestInfo.isGift && (
                 <>
-                  <div className="flex justify-between"><span>למי נשלח:</span><span>{guestInfo.recipientFirstName} {guestInfo.recipientLastName}</span></div>
+                  <div className="flex justify-between"><span>{t("giftVouchers.recipient")}</span><span>{guestInfo.recipientFirstName} {guestInfo.recipientLastName}</span></div>
                   {guestInfo.sendOption === "scheduled" && guestInfo.sendDate && guestInfo.sendTime && (
-                    <div className="flex justify-between"><span>זמן שליחה:</span><span>{guestInfo.sendDate.toLocaleDateString()} {guestInfo.sendTime}</span></div>
+                    <div className="flex justify-between"><span>{t("giftVouchers.sendTime")}</span><span>{guestInfo.sendDate.toLocaleDateString()} {guestInfo.sendTime}</span></div>
                   )}
                 </>
               )}
@@ -260,19 +262,19 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>פרטי מזמין</CardTitle>
+              <CardTitle>{t("giftVouchers.purchaserDetails")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <div className="flex justify-between"><span>שם:</span><span>{guestInfo.firstName} {guestInfo.lastName}</span></div>
-              <div className="flex justify-between"><span>אימייל:</span><span>{guestInfo.email}</span></div>
-              <div className="flex justify-between"><span>טלפון:</span><span>{guestInfo.phone}</span></div>
+              <div className="flex justify-between"><span>{t("common.name")}</span><span>{guestInfo.firstName} {guestInfo.lastName}</span></div>
+              <div className="flex justify-between"><span>{t("common.email")}</span><span>{guestInfo.email}</span></div>
+              <div className="flex justify-between"><span>{t("common.phone")}</span><span>{guestInfo.phone}</span></div>
             </CardContent>
           </Card>
         </div>
       </div>
       <div className="flex justify-between mt-6">
-        <Button variant="outline" onClick={prevStep}>חזור</Button>
-        <Button onClick={nextStep}>המשך לתשלום</Button>
+        <Button variant="outline" onClick={prevStep}>{t("common.back")}</Button>
+        <Button onClick={nextStep}>{t("giftVouchers.wizard.continueToPay")}</Button>
       </div>
     </div>
   )
@@ -310,7 +312,7 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
   const progress = (currentStep / TOTAL_STEPS) * 100
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6" dir={dir} lang={language}>
       <Progress value={progress} className="mb-8" />
       {renderStep()}
     </div>

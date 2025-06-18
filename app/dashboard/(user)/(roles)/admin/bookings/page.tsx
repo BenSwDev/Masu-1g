@@ -49,6 +49,7 @@ function BookingsContent() {
       <AdminBookingsClient />
     </BookingsErrorBoundary>
   );
+  
 }
 
 export default async function AdminBookingsPage() {

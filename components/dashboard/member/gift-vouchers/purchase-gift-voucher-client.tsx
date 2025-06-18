@@ -73,8 +73,7 @@ interface PurchaseGiftVoucherClientProps {
 type GiftDetailsFormData = z.infer<typeof giftDetailsSchema>
 
 const formatMinutesToDurationString = (minutes: number, t: Function): string => {
-  if (!minutes) return ""
-  return `${minutes} ${t("common.minutes")}`
+  return `${minutes} ${t(minutes === 1 ? "common.minute" : "common.minutes")}`
 }
 
 const giftDetailsSchema = z.object({

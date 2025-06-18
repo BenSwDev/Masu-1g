@@ -244,4 +244,34 @@ export async function deleteCity(cityId: string): Promise<CityActionResponse> {
     console.error("Error in deleteCity:", err)
     return { success: false, message: "deleteFailed" }
   }
-} 
+}
+
+/**
+ * Toggles a city's active status
+ */
+export async function toggleCityStatus(cityId: string): Promise<CityActionResponse> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
+      return { success: false, message: "notAuthorized" }
+    }
+
+    await dbConnect()
+
+    const city = await City.findById(cityId)
+    if (!city) {
+      return { success: false, message: "cityNotFound" }
+    }
+
+    city.isActive = !city.isActive
+    await city.save()
+
+    revalidatePath("/dashboard/admin/cities")
+    revalidatePath("/api/cities")
+
+    return { success: true }
+  } catch (err) {
+    console.error("Error in toggleCityStatus:", err)
+    return { success: false, message: "updateFailed" }
+  }
+}

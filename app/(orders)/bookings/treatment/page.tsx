@@ -58,6 +58,8 @@ export default async function GuestBookTreatmentPage({
           <BookingWizard
             initialData={initialDataResult.data}
             currentUser={session.user as UserSessionData}
+            voucher={voucher}
+            userSubscription={subscription}
           />
         </GuestLayout>
       )

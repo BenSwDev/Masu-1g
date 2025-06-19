@@ -14,12 +14,13 @@ export const dynamic = 'force-dynamic'
 export default async function UniversalBookTreatmentPage({
   searchParams,
 }: {
-  searchParams?: { voucherCode?: string; subscriptionId?: string }
+  searchParams?: Promise<{ voucherCode?: string; subscriptionId?: string }>
 }) {
   try {
     const session = await getServerSession(authOptions)
-    const voucherCode = searchParams?.voucherCode
-    const subscriptionId = searchParams?.subscriptionId
+    const resolvedSearchParams = await searchParams
+    const voucherCode = resolvedSearchParams?.voucherCode
+    const subscriptionId = resolvedSearchParams?.subscriptionId
 
     // Always use getBookingInitialData to get full data regardless of user status
     const initialDataResult = session?.user?.id 
@@ -50,8 +51,8 @@ export default async function UniversalBookTreatmentPage({
     const voucher = voucherResult.success && 'voucher' in voucherResult ? (voucherResult as any).voucher : undefined
     const subscription = subscriptionResult.success && 'subscription' in subscriptionResult ? (subscriptionResult as any).subscription : undefined
 
-    return (
-      <GuestLayout>
+      return (
+        <GuestLayout>
         {/* Show redemption modal only for logged-in users */}
         {session?.user?.id && (
           <MemberRedemptionModal

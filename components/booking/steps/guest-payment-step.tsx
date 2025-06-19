@@ -98,7 +98,20 @@ export function GuestPaymentStep({
     handlePaymentFailure,
     handleTryAgain,
     handleOpenChange,
-  } = usePaymentModal({ onSuccess: onConfirm });
+  } = usePaymentModal({ 
+    onSuccess: async () => {
+      // Create pending booking if not already created
+      if (createPendingBooking && !pendingBookingId) {
+        const bookingId = await createPendingBooking();
+        if (!bookingId) {
+          // Error creating booking - createPendingBooking already shows error toast
+          return;
+        }
+      }
+      // Execute the actual booking confirmation
+      onConfirm();
+    }
+  });
   const [marketingConsent, setMarketingConsent] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(true);
 
@@ -142,15 +155,7 @@ export function GuestPaymentStep({
   const handlePayNow = async () => {
     if (isCountingDown || !termsAccepted) return;
 
-    // Create pending booking if not already created
-    if (createPendingBooking && !pendingBookingId) {
-      const bookingId = await createPendingBooking();
-      if (!bookingId) {
-        // Error creating booking - createPendingBooking already shows error toast
-        return;
-      }
-    }
-
+    // Only open the payment modal - don't create booking or execute any other actions
     openModal();
   };
 

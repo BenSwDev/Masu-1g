@@ -47,6 +47,7 @@ interface GuestInfoStepProps {
   guestInfo: Partial<GuestInfo>
   setGuestInfo: (info: Partial<GuestInfo>) => void
   onNext: (info: Partial<GuestInfo>) => void
+  onPrev?: () => void
   defaultBookingForSomeoneElse?: boolean
   hideRecipientBirthGender?: boolean
   showGiftOptions?: boolean
@@ -58,6 +59,7 @@ export function GuestInfoStep({
   guestInfo,
   setGuestInfo,
   onNext,
+  onPrev,
   defaultBookingForSomeoneElse = false,
   hideRecipientBirthGender = false,
   showGiftOptions = false,
@@ -682,6 +684,11 @@ export function GuestInfoStep({
           )}
 
           <div className={`flex gap-4 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+            {onPrev && (
+              <Button type="button" variant="outline" onClick={onPrev} className="flex-1">
+                {t("common.back")}
+              </Button>
+            )}
             <Button type="submit" className="flex-1">
               {t("common.continue")}
             </Button>

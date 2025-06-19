@@ -869,6 +869,7 @@ export default function UniversalBookingWizard({
             guestInfo={guestInfo}
             setGuestInfo={setGuestInfo}
             onNext={handleGuestInfoSubmit}
+            onPrev={prevStep}
             lockedFields={lockedFields as any}
             hideBookingForSomeoneElse={hideBookingForSomeoneElse}
           />

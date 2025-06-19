@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 export type PaymentStatus = "pending" | "success" | "failed";
 
 export interface UsePaymentModalProps {
-  onSuccess: () => void;
+  onSuccess: () => void | Promise<void>;
 }
 
 export function usePaymentModal({ onSuccess }: UsePaymentModalProps) {
@@ -32,11 +32,11 @@ export function usePaymentModal({ onSuccess }: UsePaymentModalProps) {
     setPaymentStatus("pending");
   };
 
-  const handlePaymentSuccess = () => {
+  const handlePaymentSuccess = async () => {
     setPaymentStatus("success");
-    setTimeout(() => {
+    setTimeout(async () => {
       setShowPaymentModal(false);
-      onSuccess();
+      await onSuccess();
     }, 1500);
   };
 

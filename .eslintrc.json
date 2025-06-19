@@ -1,6 +1,31 @@
 {
   "extends": [
-    "next/core-web-vitals",
-    "next/typescript"
+    "next/core-web-vitals"
+  ],
+  "rules": {
+    // Catch potential bugs
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-debugger": "error",
+    "no-unused-vars": ["error", { 
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_" 
+    }],
+    
+    // Prevent common mistakes
+    "no-duplicate-imports": "error",
+    "no-unreachable": "error",
+    "no-constant-condition": "error",
+    "no-empty": "error",
+    
+    // React specific
+    "react-hooks/exhaustive-deps": "error",
+    "react/jsx-key": "error",
+    "react/no-unescaped-entities": "warn"
+  },
+  "ignorePatterns": [
+    "node_modules/",
+    ".next/",
+    "out/",
+    "build/"
   ]
 }

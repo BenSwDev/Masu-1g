@@ -1,20 +1,23 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import GuestSubscriptionSelectionStep from "./guest-subscription-selection-step"
 import { GuestTreatmentSelectionStep } from "@/components/booking/steps/guest-treatment-selection-step"
 import GuestSubscriptionSummaryStep from "./guest-subscription-summary-step"
 import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
-import { createGuestUser } from "@/actions/booking-actions"
-import { purchaseGuestSubscription, saveAbandonedSubscriptionPurchase } from "@/actions/user-subscription-actions"
+import { saveAbandonedSubscriptionPurchase, purchaseGuestSubscription } from "@/actions/user-subscription-actions"
 import type { CalculatedPriceDetails, SelectedBookingOptions } from "@/types/booking"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { BookingInitialData } from "@/types/booking"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Progress } from "@/components/ui/progress"
+import { Progress } from "@/components/common/ui/progress"
+import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
+import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
+import GuestSubscriptionConfirmation from "./guest-subscription-confirmation"
+import { createGuestUser } from "@/actions/booking-actions"
 
 // Define serialized types that match the data we receive from the server
 interface SerializedSubscription {
@@ -51,8 +54,8 @@ interface SerializedTreatment {
 }
 
 interface Props {
-  subscriptions: SerializedSubscription[]
-  treatments: SerializedTreatment[]
+  subscriptions?: SerializedSubscription[]
+  treatments?: SerializedTreatment[]
 }
 
 // Convert serialized data to model types
@@ -78,7 +81,7 @@ function convertToTreatment(treatment: SerializedTreatment): ITreatment {
   } as ITreatment
 }
 
-export default function GuestSubscriptionWizard({ subscriptions, treatments }: Props) {
+export default function GuestSubscriptionWizard({ subscriptions: propSubscriptions, treatments: propTreatments }: Props = {}) {
   const router = useRouter()
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
@@ -87,25 +90,46 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
   const [selectedDurationId, setSelectedDurationId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
+  const [purchaseComplete, setPurchaseComplete] = useState(false)
+  const [purchasedSubscription, setPurchasedSubscription] = useState<any>(null)
+  const [dataLoading, setDataLoading] = useState(true)
+  const [subscriptions, setSubscriptions] = useState<SerializedSubscription[]>([])
+  const [treatments, setTreatments] = useState<SerializedTreatment[]>([])
 
-  // Add user detection (you might need to import useAuth or similar)
-  const currentUser: { name?: string; email?: string; phone?: string } | null = null // TODO: Add actual user detection
+  const [guestInfo, setGuestInfo] = useState<any>({})
 
-  // Pre-fill guest info for logged-in users
-  const prefilledGuestInfo = useMemo(() => {
-    if (currentUser) {
-      const [first, ...rest] = (currentUser.name || "").split(" ")
-      return {
-        firstName: first || "",
-        lastName: rest.join(" ") || "",
-        email: currentUser.email || "",
-        phone: currentUser.phone || "",
+  // Load data on mount if not provided via props
+  useEffect(() => {
+    const loadData = async () => {
+      if (propSubscriptions && propTreatments) {
+        setSubscriptions(propSubscriptions)
+        setTreatments(propTreatments)
+        setDataLoading(false)
+        return
+      }
+
+      try {
+        const [subscriptionsResult, treatmentsResult] = await Promise.all([
+          getActiveSubscriptionsForPurchase(),
+          getActiveTreatmentsForPurchase()
+        ])
+
+        if (subscriptionsResult.success) {
+          setSubscriptions(subscriptionsResult.subscriptions || [])
+        }
+        
+        if (treatmentsResult.success) {
+          setTreatments(treatmentsResult.treatments || [])
+        }
+      } catch (error) {
+        console.error("Error loading data:", error)
+      } finally {
+        setDataLoading(false)
       }
     }
-    return {}
-  }, [currentUser])
 
-  const [guestInfo, setGuestInfo] = useState<any>(prefilledGuestInfo)
+    loadData()
+  }, [propSubscriptions, propTreatments])
 
   const selectedTreatment = treatments.find(t => t._id === selectedTreatmentId)
   const selectedDuration = selectedTreatment?.pricingType === "duration_based" ?
@@ -164,20 +188,44 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
   const handlePurchase = async () => {
     if (!selectedSubscriptionId || !selectedTreatmentId) return
     setIsLoading(true)
-    const result = await purchaseGuestSubscription({
-      subscriptionId: selectedSubscriptionId,
-      treatmentId: selectedTreatmentId,
-      selectedDurationId: selectedDurationId || undefined,
-      paymentMethodId: "guest",
-      guestInfo: {
-        name: guestInfo.firstName + " " + guestInfo.lastName,
-        email: guestInfo.email,
-        phone: guestInfo.phone,
-      },
-    })
-    setIsLoading(false)
-    if (result.success) {
-      router.push("/")
+    
+    try {
+      const result = await purchaseGuestSubscription({
+        subscriptionId: selectedSubscriptionId,
+        treatmentId: selectedTreatmentId,
+        selectedDurationId: selectedDurationId || undefined,
+        paymentMethodId: "guest",
+        guestInfo: {
+          name: guestInfo.firstName + " " + guestInfo.lastName,
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+        },
+      })
+      
+      setIsLoading(false)
+      
+      if (result.success) {
+        setPurchasedSubscription(result.userSubscription)
+        setPurchaseComplete(true)
+        setCurrentStep(5) // Move to confirmation step
+        // Redirect to confirmation page
+        const subscriptionId = result.userSubscription?._id || result.userSubscription?.id
+        if (subscriptionId) {
+          router.push(`/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`)
+        } else {
+          console.error("No subscription ID returned from purchase")
+          alert("שגיאה: לא ניתן למצוא מזהה המנוי. אנא פנה לתמיכה.")
+        }
+      } else {
+        // Show error message to user
+        console.error("Subscription purchase failed:", result.error)
+        // TODO: Add toast notification or error display
+        alert("שגיאה ברכישת המנוי: " + (result.error || "נסה שוב מאוחר יותר"))
+      }
+    } catch (error) {
+      setIsLoading(false)
+      console.error("Unexpected error during subscription purchase:", error)
+      alert("אירעה שגיאה בלתי צפויה. נסה שוב מאוחר יותר.")
     }
   }
 
@@ -247,6 +295,15 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
           />
         )
       case 3:
+        return (
+          <GuestInfoStep 
+            guestInfo={guestInfo} 
+            setGuestInfo={setGuestInfo} 
+            onNext={handleGuestInfoSubmit} 
+            onPrev={prevStep}
+          />
+        )
+      case 4:
         const selectedSub = subscriptions.find(s=>s._id===selectedSubscriptionId)
         return (
           <GuestSubscriptionSummaryStep
@@ -257,10 +314,6 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
             onNext={nextStep}
             onPrev={prevStep}
           />
-        )
-      case 4:
-        return (
-          <GuestInfoStep guestInfo={guestInfo} setGuestInfo={setGuestInfo} onNext={handleGuestInfoSubmit} />
         )
       case 5:
         return (
@@ -278,9 +331,17 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
     }
   }
 
+  if (dataLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center py-8" dir={dir} lang={language}>
+        <div>טוען נתונים...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6" dir={dir} lang={language}>
-      <Progress value={(currentStep / 5) * 100} className="mb-8" />
+      {!purchaseComplete && <Progress value={(currentStep / 5) * 100} className="mb-8" />}
       {renderStep()}
     </div>
   )

@@ -326,6 +326,7 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
           guestInfo={guestInfo}
           setGuestInfo={setGuestInfo}
           onNext={handleGuestInfoSubmit}
+          onPrev={prevStep}
           defaultBookingForSomeoneElse
           hideRecipientBirthGender
           showGiftOptions

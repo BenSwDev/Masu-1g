@@ -42,8 +42,7 @@ const UserSubscriptionSchema = new Schema<IUserSubscription>(
     selectedDurationId: {
       // Store the _id of the duration object from Treatment.durations
       type: Schema.Types.ObjectId,
-      ref: "Treatment.durations", // This ref might not work directly like this in Mongoose for subdocuments.
-      // It's more for documentation here. We'll populate manually or ensure IDs are unique.
+      // Note: Cannot ref subdocuments directly in Mongoose
       required: false,
     },
     purchaseDate: {

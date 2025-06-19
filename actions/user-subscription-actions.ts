@@ -17,6 +17,93 @@ import type {
   EmailRecipient,
   PhoneRecipient,
 } from "@/lib/notifications/notification-types"
+
+// Rate limiting store (in production, use Redis)
+const rateLimitStore = new Map<string, { count: number; firstRequest: number }>()
+
+// Rate limiting function
+function checkRateLimit(identifier: string, maxRequests = 5, windowMs = 60000): { allowed: boolean; remainingTime?: number } {
+  const now = Date.now()
+  const key = identifier
+  const record = rateLimitStore.get(key)
+  
+  if (!record) {
+    rateLimitStore.set(key, { count: 1, firstRequest: now })
+    return { allowed: true }
+  }
+  
+  const timeElapsed = now - record.firstRequest
+  
+  if (timeElapsed > windowMs) {
+    // Reset window
+    rateLimitStore.set(key, { count: 1, firstRequest: now })
+    return { allowed: true }
+  }
+  
+  if (record.count >= maxRequests) {
+    const remainingTime = windowMs - timeElapsed
+    return { allowed: false, remainingTime }
+  }
+  
+  record.count++
+  return { allowed: true }
+}
+
+// Enhanced input validation
+function validateGuestInfo(guestInfo: any): { valid: boolean; errors: string[] } {
+  const errors: string[] = []
+  
+  if (!guestInfo || typeof guestInfo !== 'object') {
+    errors.push('Guest info is required')
+    return { valid: false, errors }
+  }
+  
+  // Name validation
+  if (!guestInfo.name || typeof guestInfo.name !== 'string') {
+    errors.push('Name is required')
+  } else if (guestInfo.name.trim().length < 2) {
+    errors.push('Name must be at least 2 characters')
+  } else if (guestInfo.name.length > 100) {
+    errors.push('Name must be less than 100 characters')
+  } else if (!/^[a-zA-Z\u0590-\u05FF\s'-]+$/.test(guestInfo.name)) {
+    errors.push('Name contains invalid characters')
+  }
+  
+  // Email validation
+  if (!guestInfo.email || typeof guestInfo.email !== 'string') {
+    errors.push('Email is required')
+  } else {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(guestInfo.email)) {
+      errors.push('Invalid email format')
+    } else if (guestInfo.email.length > 254) {
+      errors.push('Email is too long')
+    }
+  }
+  
+  // Phone validation
+  if (!guestInfo.phone || typeof guestInfo.phone !== 'string') {
+    errors.push('Phone is required')
+  } else {
+    const phoneRegex = /^(\+972|0)?[5-9]\d{8}$/
+    const cleanPhone = guestInfo.phone.replace(/[-\s]/g, "")
+    if (!phoneRegex.test(cleanPhone)) {
+      errors.push('Invalid Israeli phone number format')
+    }
+  }
+  
+  return { valid: errors.length === 0, errors }
+}
+
+// Sanitize input to prevent injection
+function sanitizeInput(input: string): string {
+  if (typeof input !== 'string') return ''
+  return input
+    .trim()
+    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .substring(0, 1000) // Limit length
+}
+
 interface PurchaseSubscriptionArgs {
   subscriptionId: string
   treatmentId: string
@@ -505,11 +592,54 @@ export async function purchaseGuestSubscription({
   const startTime = Date.now()
   
   try {
+    // Rate limiting check
+    const rateLimitKey = guestInfo.email + ':subscription_purchase'
+    const rateLimit = checkRateLimit(rateLimitKey, 3, 300000) // 3 attempts per 5 minutes
+    
+    if (!rateLimit.allowed) {
+      logger.warn(`Rate limit exceeded for guest subscription purchase`, {
+        email: guestInfo.email,
+        remainingTime: rateLimit.remainingTime
+      })
+      return { 
+        success: false, 
+        error: `Too many purchase attempts. Please try again in ${Math.ceil((rateLimit.remainingTime || 0) / 60000)} minutes.` 
+      }
+    }
+
+    // Enhanced input validation
+    const guestValidation = validateGuestInfo(guestInfo)
+    if (!guestValidation.valid) {
+      logger.warn(`Invalid guest info for subscription purchase`, {
+        errors: guestValidation.errors,
+        email: guestInfo.email
+      })
+      return { success: false, error: `Invalid input: ${guestValidation.errors.join(', ')}` }
+    }
+
+    // Sanitize inputs
+    const sanitizedGuestInfo = {
+      name: sanitizeInput(guestInfo.name),
+      email: sanitizeInput(guestInfo.email).toLowerCase(),
+      phone: sanitizeInput(guestInfo.phone),
+    }
+
+    // Validate IDs format
+    if (!mongoose.Types.ObjectId.isValid(subscriptionId)) {
+      return { success: false, error: "Invalid subscription ID format" }
+    }
+    if (!mongoose.Types.ObjectId.isValid(treatmentId)) {
+      return { success: false, error: "Invalid treatment ID format" }
+    }
+    if (selectedDurationId && !mongoose.Types.ObjectId.isValid(selectedDurationId)) {
+      return { success: false, error: "Invalid duration ID format" }
+    }
+
     logger.info(`[${requestId}] Starting guest subscription purchase`, {
       subscriptionId,
       treatmentId,
       hasSelectedDuration: !!selectedDurationId,
-      guestEmail: guestInfo.email
+      guestEmail: sanitizedGuestInfo.email
     })
 
     const dbConnectStart = Date.now()
@@ -713,7 +843,7 @@ export async function saveAbandonedSubscriptionPurchase(
         savedAt: new Date(),
       }
       await existing.save()
-      return { success: true, purchaseId: existing._id.toString() }
+      return { success: true, purchaseId: (existing._id as mongoose.Types.ObjectId).toString() }
     }
 
     const purchase = new SubscriptionPurchase({
@@ -727,7 +857,7 @@ export async function saveAbandonedSubscriptionPurchase(
       },
     })
     await purchase.save()
-    return { success: true, purchaseId: purchase._id.toString() }
+    return { success: true, purchaseId: (purchase._id as mongoose.Types.ObjectId).toString() }
   } catch (error) {
     return { success: false, error: "Failed to save abandoned subscription" }
   }

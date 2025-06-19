@@ -1840,7 +1840,10 @@ export async function updateBookingByAdmin(
     
     return { success: true, booking: booking.toObject() }
   } catch (error) {
-    console.error("Error updating booking:", error)
+    logger.error("Error updating booking:", { 
+      error: error instanceof Error ? error.message : String(error),
+      bookingId: bookingId 
+    })
     return { success: false, error: "common.unknown" }
   }
 }
@@ -2830,7 +2833,10 @@ export async function getSuitableProfessionalsForBooking(
       }))
     }
   } catch (error) {
-    console.error("Error getting suitable professionals:", error)
+    logger.error("Error getting suitable professionals:", {
+      bookingId,
+      error: error instanceof Error ? error.message : String(error)
+    })
     return { success: false, error: "Failed to get suitable professionals" }
   }
 }
@@ -2848,7 +2854,10 @@ export async function sendNotificationToSuitableProfessionals(
     const { sendProfessionalNotifications } = await import("@/actions/professional-sms-actions")
     return await sendProfessionalNotifications(bookingId)
   } catch (error) {
-    console.error("Error sending notifications to suitable professionals:", error)
+    logger.error("Error sending notifications to suitable professionals:", {
+      bookingId,
+      error: error instanceof Error ? error.message : String(error)
+    })
     return { success: false, error: "Failed to send notifications" }
   }
 }

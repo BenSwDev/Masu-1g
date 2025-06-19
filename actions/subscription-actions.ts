@@ -216,7 +216,7 @@ export async function getActiveSubscriptionsForPurchase(): Promise<{
       })
       .lean()
 
-    const serializedSubscriptions = subscriptions.map((sub) => ({
+    const serializedSubscriptions = subscriptions.map((sub: any) => ({
       ...sub,
       _id: sub._id.toString(),
       treatmentId: sub.treatmentId ? {
@@ -231,7 +231,10 @@ export async function getActiveSubscriptionsForPurchase(): Promise<{
 
     return { success: true, subscriptions: serializedSubscriptions }
   } catch (error) {
-    logger.error("Error fetching active subscriptions:", error)
+    logger.error("Error fetching active subscriptions:", { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return { success: false, error: "Failed to fetch subscriptions" }
   }
 } 

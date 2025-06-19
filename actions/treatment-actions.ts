@@ -276,7 +276,10 @@ export async function getActiveTreatmentsForPurchase(): Promise<{
 
     return { success: true, treatments: serializedTreatments }
   } catch (error) {
-    logger.error("Error fetching active treatments for purchase:", error)
+    logger.error("Error fetching active treatments for purchase:", { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    })
     return { success: false, error: "Failed to fetch treatments" }
   }
 } 

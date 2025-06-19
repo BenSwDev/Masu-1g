@@ -277,8 +277,8 @@ export default function UniversalBookingWizard({
       // Now proceed to next step with the updated data
       setTimeout(async () => {
         
-        // Create guest user after step 1 AND create pending booking
-        if (currentStep === 1 && !guestUserId) {
+        // Create guest user after step 3 (Personal Info step) for guests only 
+        if (currentStep === 3 && !currentUser && !guestUserId) {
           
           if (updatedState.firstName && updatedState.lastName && updatedState.email && updatedState.phone) {
             const guestUserData = {
@@ -323,7 +323,7 @@ export default function UniversalBookingWizard({
       
       return updatedState
     })
-  }, [currentStep, guestUserId, toast])
+  }, [currentStep, guestUserId, currentUser, toast])
 
   // Function to create initial pending booking
   const createInitialPendingBooking = async (userId: string, guestInfoData: Partial<GuestInfo>) => {
@@ -609,9 +609,8 @@ export default function UniversalBookingWizard({
 
   const nextStep = async () => {
     
-    // Create guest user after step 1 AND create pending booking
-    if (currentStep === 1 && !guestUserId) {
-      
+    // Create guest user after step 3 (Personal Info step) for guests only
+    if (currentStep === 3 && !currentUser && !guestUserId) {
       if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.phone) {
         try {
           const result = await createGuestUser({
@@ -658,7 +657,7 @@ export default function UniversalBookingWizard({
     }
 
     if (
-      currentStep === TOTAL_STEPS_WITH_PAYMENT - 1 && // Summary step
+      currentStep === TOTAL_STEPS_WITH_PAYMENT - 1 && // Summary step (now step 5)
       calculatedPrice?.finalAmount === 0 &&
       calculatedPrice?.isFullyCoveredByVoucherOrSubscription
     ) {

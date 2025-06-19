@@ -3,7 +3,7 @@
 import { Button } from "@/components/common/ui/button"
 import { useTranslation } from "@/lib/translations/i18n"
 import Link from "next/link"
-import { ArrowLeft, Play, Sparkles } from "lucide-react"
+import { ArrowLeft, Sparkles } from "lucide-react"
 
 export function LandingHero() {
   const { t, dir } = useTranslation()
@@ -20,9 +20,9 @@ export function LandingHero() {
       <div className="relative container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-blue-200 rounded-full px-4 py-2 mb-8">
-            <Sparkles className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-turquoise-200 rounded-full px-4 py-2 mb-8">
+            <Sparkles className="w-4 h-4 text-turquoise-600" />
+            <span className="text-sm font-medium text-turquoise-800">
               {dir === "rtl" ? "הפלטפורמה המובילה לטיפולי יופי" : "Leading Beauty Treatment Platform"}
             </span>
           </div>
@@ -31,7 +31,7 @@ export function LandingHero() {
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
             {dir === "rtl" ? (
               <>
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">MASU</span>
+                <span className="bg-gradient-to-r from-turquoise-600 to-blue-600 bg-clip-text text-transparent">MASU</span>
                 <br />
                 <span>טיפולי יופי</span>
                 <br />
@@ -39,7 +39,7 @@ export function LandingHero() {
               </>
             ) : (
               <>
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">MASU</span>
+                <span className="bg-gradient-to-r from-turquoise-600 to-blue-600 bg-clip-text text-transparent">MASU</span>
                 <br />
                 <span>Beauty at</span>
                 <br />
@@ -58,31 +58,40 @@ export function LandingHero() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
+            <Button asChild size="lg" className="bg-gradient-to-r from-turquoise-600 to-blue-600 hover:from-turquoise-700 hover:to-blue-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
               <Link href="/bookings/treatment" className="flex items-center gap-2">
                 {dir === "rtl" ? "הזמן טיפול עכשיו" : "Book Treatment Now"}
                 <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
               </Link>
             </Button>
             
-            <Button variant="outline" size="lg" className="border-2 border-gray-300 hover:border-blue-600 px-8 py-4 text-lg rounded-full transition-all duration-300">
-              <Play className="w-5 h-5 mr-2" />
-              {dir === "rtl" ? "צפה בסרטון" : "Watch Video"}
+            <Button asChild size="lg" variant="outline" className="border-2 border-turquoise-600 text-turquoise-600 hover:bg-turquoise-600 hover:text-white px-8 py-4 text-lg rounded-full transition-all duration-300">
+              <Link href="/purchase/subscription" className="flex items-center gap-2">
+                {dir === "rtl" ? "רכישת מנוי" : "Buy Subscription"}
+                <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
+              </Link>
+            </Button>
+
+            <Button asChild size="lg" variant="outline" className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white px-8 py-4 text-lg rounded-full transition-all duration-300">
+              <Link href="/purchase/gift-voucher" className="flex items-center gap-2">
+                {dir === "rtl" ? "רכישת שובר מתנה" : "Buy Gift Voucher"}
+                <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
+              </Link>
             </Button>
           </div>
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-2">10,000+</div>
+              <div className="text-3xl font-bold text-turquoise-600 mb-2">10,000+</div>
               <div className="text-gray-600">{dir === "rtl" ? "טיפולים מוצלחים" : "Successful Treatments"}</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600 mb-2">500+</div>
+              <div className="text-3xl font-bold text-blue-600 mb-2">500+</div>
               <div className="text-gray-600">{dir === "rtl" ? "מטפלים מקצועיים" : "Professional Therapists"}</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-pink-600 mb-2">98%</div>
+              <div className="text-3xl font-bold text-purple-600 mb-2">98%</div>
               <div className="text-gray-600">{dir === "rtl" ? "שביעות רצון" : "Customer Satisfaction"}</div>
             </div>
           </div>

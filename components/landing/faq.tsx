@@ -64,11 +64,11 @@ export function LandingFAQ() {
   }
 
   return (
-    <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+    <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
       <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full mb-6">
+          <div className="inline-flex items-center gap-2 bg-turquoise-100 text-turquoise-800 px-4 py-2 rounded-full mb-6">
             <HelpCircle className="w-5 h-5" />
             <span className="font-semibold">{dir === "rtl" ? "שאלות נפוצות" : "FAQ"}</span>
           </div>
@@ -94,7 +94,7 @@ export function LandingFAQ() {
                 <button
                   onClick={() => toggleItem(index)}
                   className={`w-full px-6 py-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
-                    openItem === index ? 'bg-blue-50' : ''
+                    openItem === index ? 'bg-turquoise-50' : ''
                   }`}
                 >
                   <h3 className="text-lg font-semibold text-gray-900 pr-4">
@@ -102,7 +102,7 @@ export function LandingFAQ() {
                   </h3>
                   <div className="flex-shrink-0">
                     {openItem === index ? (
-                      <ChevronUp className="w-6 h-6 text-blue-600" />
+                      <ChevronUp className="w-6 h-6 text-turquoise-600" />
                     ) : (
                       <ChevronDown className="w-6 h-6 text-gray-400" />
                     )}
@@ -120,49 +120,6 @@ export function LandingFAQ() {
                 )}
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="text-center mt-16">
-          <div className="bg-white rounded-3xl p-8 shadow-xl max-w-3xl mx-auto">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              {dir === "rtl" ? "עדיין יש לך שאלות?" : "Still have questions?"}
-            </h3>
-            <p className="text-lg text-gray-600 mb-6">
-              {dir === "rtl"
-                ? "צוות שירות הלקוחות שלנו כאן בשבילך 24/7 לכל שאלה או עזרה"
-                : "Our customer service team is here for you 24/7 for any question or help"
-              }
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <div className="flex items-center gap-6 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span>{dir === "rtl" ? "זמין כעת" : "Available now"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span>{dir === "rtl" ? "מענה תוך דקות" : "Response within minutes"}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a 
-                href="tel:*6999" 
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors"
-              >
-                <span>{dir === "rtl" ? "חייג *6999" : "Call *6999"}</span>
-              </a>
-              <a 
-                href="mailto:support@masu.co.il" 
-                className="inline-flex items-center gap-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 py-3 rounded-full font-semibold transition-colors"
-              >
-                <span>{dir === "rtl" ? "שלח אימייל" : "Send Email"}</span>
-              </a>
-            </div>
           </div>
         </div>
       </div>

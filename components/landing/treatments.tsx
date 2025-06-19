@@ -123,7 +123,7 @@ export function LandingTreatments() {
               {/* Content */}
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-turquoise-600 transition-colors">
                     {treatment.name}
                   </h3>
                   <div className="flex items-center gap-1">
@@ -144,14 +144,14 @@ export function LandingTreatments() {
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-2xl font-bold text-blue-600">₪{treatment.price}</span>
+                    <span className="text-2xl font-bold text-turquoise-600">₪{treatment.price}</span>
                   </div>
                 </div>
 
                 <Button 
                   asChild 
                   size="sm" 
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="w-full bg-turquoise-600 hover:bg-turquoise-700 text-white"
                 >
                   <Link href="/bookings/treatment" className="flex items-center justify-center gap-2">
                     {dir === "rtl" ? "הזמן טיפול" : "Book Treatment"}
@@ -161,33 +161,6 @@ export function LandingTreatments() {
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="text-center mt-16">
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-3xl p-8 max-w-4xl mx-auto">
-            <h3 className="text-3xl font-bold text-gray-900 mb-4">
-              {dir === "rtl" ? "לא מצאת את הטיפול שאתה מחפש?" : "Can't find the treatment you're looking for?"}
-            </h3>
-            <p className="text-lg text-gray-600 mb-6">
-              {dir === "rtl"
-                ? "צור איתנו קשר ונעזור לך למצוא את הטיפול המושלם עבורך"
-                : "Contact us and we'll help you find the perfect treatment for you"
-              }
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button asChild size="lg" variant="outline" className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
-                <Link href="/contact">
-                  {dir === "rtl" ? "צור קשר" : "Contact Us"}
-                </Link>
-              </Button>
-              <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                <Link href="/bookings/treatment">
-                  {dir === "rtl" ? "צפה בכל הטיפולים" : "View All Treatments"}
-                </Link>
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </section>

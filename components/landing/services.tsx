@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
-import { Home, Clock, Shield, Star, Headphones, CreditCard } from "lucide-react"
+import { Home, Clock, Shield, Star } from "lucide-react"
 
 export function LandingServices() {
   const { dir } = useTranslation()
@@ -13,15 +13,15 @@ export function LandingServices() {
       description: dir === "rtl" 
         ? "נהנה מטיפולי יופי מקצועיים בנוחות הבית שלך, ללא צורך לנסוע או להמתין בתורים"
         : "Enjoy professional beauty treatments in the comfort of your home, no need to travel or wait in queues",
-      color: "from-blue-500 to-blue-600"
+      color: "from-turquoise-500 to-turquoise-600"
     },
     {
       icon: Clock,
-      title: dir === "rtl" ? "זמינות 24/7" : "24/7 Availability",
+      title: dir === "rtl" ? "זמינות 7 ימים בשבוע ואיכות מובטחת" : "7 Days Availability & Guaranteed Quality",
       description: dir === "rtl"
-        ? "הזמן טיפולים בכל שעה שנוחה לך, כולל סופי שבוע וחגים, עם גמישות מלאה בתאריכים"
-        : "Book treatments at any time convenient for you, including weekends and holidays, with full flexibility",
-      color: "from-purple-500 to-purple-600"
+        ? "הזמן טיפולים 7 ימים בשבוע עם גמישות מלאה בתאריכים, ואיכות גבוהה מובטחת בכל טיפול"
+        : "Book treatments 7 days a week with full flexibility in dates, and guaranteed high quality in every treatment",
+      color: "from-blue-500 to-blue-600"
     },
     {
       icon: Shield,
@@ -33,27 +33,11 @@ export function LandingServices() {
     },
     {
       icon: Star,
-      title: dir === "rtl" ? "איכות מובטחת" : "Guaranteed Quality",
+      title: dir === "rtl" ? "חוויה מושלמת" : "Perfect Experience",
       description: dir === "rtl"
-        ? "אנו מבטיחים איכות גבוהה בכל טיפול עם אחריות מלאה ומדיניות החזר כספי נוחה"
-        : "We guarantee high quality in every treatment with full warranty and comfortable money-back policy",
-      color: "from-yellow-500 to-orange-500"
-    },
-    {
-      icon: Headphones,
-      title: dir === "rtl" ? "שירות לקוחות מעולה" : "Excellent Support",
-      description: dir === "rtl"
-        ? "צוות שירות הלקוחות שלנו זמין עבורך בכל שאלה או בעיה, עם מענה מהיר ומקצועי"
-        : "Our customer service team is available for any question or issue, with fast and professional response",
-      color: "from-pink-500 to-red-500"
-    },
-    {
-      icon: CreditCard,
-      title: dir === "rtl" ? "תשלום גמיש" : "Flexible Payment",
-      description: dir === "rtl"
-        ? "מגוון אפשרויות תשלום נוחות כולל תשלומים, מנויים, ושוברי מתנה עם אבטחה מלאה"
-        : "Various convenient payment options including installments, subscriptions, and gift vouchers with full security",
-      color: "from-indigo-500 to-purple-500"
+        ? "אנו מתמחים ביצירת חוויה מושלמת ומותאמת אישית לכל לקוח, עם תשומת לב לכל פרט"
+        : "We specialize in creating a perfect and personalized experience for every customer, with attention to every detail",
+      color: "from-purple-500 to-purple-600"
     }
   ]
 
@@ -74,7 +58,7 @@ export function LandingServices() {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
           {services.map((service, index) => {
             const Icon = service.icon
             return (
@@ -88,7 +72,7 @@ export function LandingServices() {
                 </div>
 
                 {/* Content */}
-                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">
+                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-turquoise-600 transition-colors">
                   {service.title}
                 </h3>
                 
@@ -97,7 +81,7 @@ export function LandingServices() {
                 </p>
 
                 {/* Hover effect background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl -z-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-turquoise-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl -z-10"></div>
               </div>
             )
           })}
@@ -105,7 +89,7 @@ export function LandingServices() {
 
         {/* Bottom CTA */}
         <div className="text-center mt-16">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-full">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-turquoise-600 to-blue-600 text-white px-6 py-3 rounded-full">
             <Star className="w-5 h-5" />
             <span className="font-semibold">
               {dir === "rtl" ? "מעל 10,000 לקוחות מרוצים!" : "Over 10,000 satisfied customers!"}

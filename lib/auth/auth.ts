@@ -17,6 +17,7 @@ interface CustomUser {
   roles?: string[]
   password?: string
   activeRole?: string
+  phone?: string
   treatmentPreferences?: ITreatmentPreferences // Add here
   notificationPreferences?: INotificationPreferences // Add here
 }
@@ -134,8 +135,8 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or phone format")
         }
         const user = (await User.findOne(query).select(
-          "+password email name image roles activeRole treatmentPreferences notificationPreferences",
-        )) as CustomUser // Include preferences and activeRole
+          "+password email name image phone roles activeRole treatmentPreferences notificationPreferences",
+        )) as CustomUser // Include preferences and activeRole and phone
         if (!user) {
           throw new Error("No user found with this identifier")
         }
@@ -153,6 +154,7 @@ export const authOptions: NextAuthOptions = {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
+          phone: user.phone,
           image: user.image,
           roles: userRoles,
           activeRole: activeRole,
@@ -185,6 +187,7 @@ export const authOptions: NextAuthOptions = {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
+          phone: user.phone,
           image: user.image,
           roles: userRoles,
           activeRole: activeRole,
@@ -210,7 +213,7 @@ export const authOptions: NextAuthOptions = {
 
         // Fetch from DB to ensure latest activeRole and preferences
         const dbUser = await User.findById(token.id).select(
-          "roles activeRole treatmentPreferences notificationPreferences",
+          "phone roles activeRole treatmentPreferences notificationPreferences",
         )
 
         let activeRole = dbUser?.activeRole
@@ -222,13 +225,14 @@ export const authOptions: NextAuthOptions = {
           }
         }
         token.activeRole = activeRole
+        token.phone = dbUser?.phone
         token.treatmentPreferences = dbUser?.treatmentPreferences || defaultTreatmentPreferences
         token.notificationPreferences = dbUser?.notificationPreferences || defaultNotificationPreferences
       }
       // On session update (e.g., role switch or preference update)
       else if (trigger === "update" && session) {
         const dbUser = await User.findById(token.id).select(
-          "roles activeRole treatmentPreferences notificationPreferences",
+          "phone roles activeRole treatmentPreferences notificationPreferences",
         )
         if (dbUser) {
           token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
@@ -244,13 +248,14 @@ export const authOptions: NextAuthOptions = {
           // However, it's safer to re-fetch from DB to ensure consistency
           token.treatmentPreferences = dbUser.treatmentPreferences || defaultTreatmentPreferences
           token.notificationPreferences = dbUser.notificationPreferences || defaultNotificationPreferences
+          token.phone = dbUser.phone
         }
       }
       // On every other call, sync from DB if needed (e.g., if token is old)
       // For simplicity and to ensure freshness, we can always fetch if not first login or update
       else if (token.id) {
         const dbUser = await User.findById(token.id).select(
-          "roles activeRole treatmentPreferences notificationPreferences",
+          "phone roles activeRole treatmentPreferences notificationPreferences",
         )
         if (dbUser) {
           token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
@@ -263,6 +268,7 @@ export const authOptions: NextAuthOptions = {
           token.activeRole = activeRole
           token.treatmentPreferences = dbUser.treatmentPreferences || defaultTreatmentPreferences
           token.notificationPreferences = dbUser.notificationPreferences || defaultNotificationPreferences
+          token.phone = dbUser.phone
         }
       }
 
@@ -278,6 +284,7 @@ export const authOptions: NextAuthOptions = {
         session.user.activeRole = token.activeRole as string
         session.user.treatmentPreferences = token.treatmentPreferences as ITreatmentPreferences // Add to session
         session.user.notificationPreferences = token.notificationPreferences as INotificationPreferences // Add to session
+        session.user.phone = token.phone as string | undefined
       }
       return session
     },

@@ -1,184 +1,126 @@
 "use client"
 
-import { Card, CardContent } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
-import { Button } from "@/components/common/ui/button"
 import { useTranslation } from "@/lib/translations/i18n"
-import { 
-  Search, 
-  Calendar, 
-  MapPin, 
-  Clock,
-  CreditCard,
-  UserCheck,
-  ArrowLeft,
-  Sparkles,
-  CheckCircle
-} from "lucide-react"
+import { Search, Calendar, Sparkles, ArrowLeft } from "lucide-react"
+import { Button } from "@/components/common/ui/button"
+import Link from "next/link"
 
-export function HowItWorks() {
-  const { t } = useTranslation()
+export function LandingHowItWorks() {
+  const { dir } = useTranslation()
 
   const steps = [
     {
-      step: 1,
-      icon: <Search className="w-8 h-8" />,
-      title: "בחרו טיפול",
-      description: "בחרו מתוך מגוון רחב של טיפולים מקצועיים",
-      details: [
-        "עיסויים טיפוליים",
-        "טיפוח פנים וגוף", 
-        "פיזיותרפיה",
-        "מניקור ופדיקור",
-        "ועוד הרבה..."
-      ],
-      color: "from-blue-500 to-cyan-500",
-      bgColor: "bg-blue-50 border-blue-200",
-      buttonText: "צפו בכל הטיפולים"
+      icon: Search,
+      number: "01",
+      title: dir === "rtl" ? "בחר את הטיפול" : "Choose Treatment",
+      description: dir === "rtl"
+        ? "עיין במגוון הטיפולים שלנו ובחר את הטיפול המתאים לך בדיוק. כל טיפול כולל תיאור מפורט, מחיר ומשך זמן."
+        : "Browse our variety of treatments and choose the one that suits you perfectly. Each treatment includes detailed description, price and duration.",
+      color: "from-blue-500 to-cyan-500"
     },
     {
-      step: 2,
-      icon: <Calendar className="w-8 h-8" />,
-      title: "קבעו מועד",
-      description: "בחרו תאריך, שעה ומיקום נוח עבורכם",
-      details: [
-        "זמינות 24/7",
-        "הזמנה עד 30 דקות מראש",
-        "בחירת מטפל לפי מין",
-        "אפשרות לביטול חינם",
-        "התראות SMS"
-      ],
-      color: "from-teal-500 to-turquoise-500",
-      bgColor: "bg-teal-50 border-teal-200",
-      buttonText: "הזמינו עכשיו"
+      icon: Calendar,
+      number: "02", 
+      title: dir === "rtl" ? "קבע זמן נוח" : "Schedule Time",
+      description: dir === "rtl"
+        ? "בחר תאריך ושעה שנוחים לך, הזן את כתובתך ופרטי ההזמנה. המערכת תמצא את המטפל הזמין הקרוב אליך."
+        : "Choose a convenient date and time, enter your address and booking details. The system will find the available therapist closest to you.",
+      color: "from-purple-500 to-pink-500"
     },
     {
-      step: 3,
-      icon: <UserCheck className="w-8 h-8" />,
-      title: "קבלו טיפול",
-      description: "המטפל מגיע אליכם עם כל הציוד הנדרש",
-      details: [
-        "מטפלים מוסמכים",
-        "הגעה בזמן",
-        "ציוד מקצועי",
-        "תשלום דיגיטלי",
-        "מעקב ודירוג"
-      ],
-      color: "from-green-500 to-emerald-500",
-      bgColor: "bg-green-50 border-green-200",
-      buttonText: "התחילו עכשיו"
+      icon: Sparkles,
+      number: "03",
+      title: dir === "rtl" ? "תהנה מהטיפול" : "Enjoy Treatment",
+      description: dir === "rtl"
+        ? "המטפל המקצועי יגיע אליך הביתה עם כל הציוד הנדרש. תרגיש איך הבית שלך הופך לספא פרטי ויוקרתי."
+        : "The professional therapist will come to your home with all required equipment. Feel how your home becomes a private and luxurious spa.",
+      color: "from-green-500 to-emerald-500"
     }
   ]
 
-  const benefits = [
-    { icon: <Clock className="w-5 h-5" />, text: "חסכון בזמן נסיעה" },
-    { icon: <MapPin className="w-5 h-5" />, text: "נוחות הבית שלכם" },
-    { icon: <CreditCard className="w-5 h-5" />, text: "מחירים שקופים" },
-    { icon: <CheckCircle className="w-5 h-5" />, text: "ביטוח מלא" }
-  ]
-
   return (
-    <section className="py-24 bg-gradient-to-b from-white to-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
+      <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <Badge className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white mb-4">
-            <Sparkles className="w-4 h-4 mr-2" />
-            איך זה עובד?
-          </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-            3 שלבים פשוטים לטיפול מושלם
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            {dir === "rtl" ? "איך זה עובד?" : "How It Works?"}
           </h2>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-            תהליך פשוט ומהיר שמביא את המטפלים הכי טובים עד אליכם הביתה
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            {dir === "rtl"
+              ? "3 שלבים פשוטים להזמנת טיפול יופי מקצועי בבית שלך"
+              : "3 simple steps to book a professional beauty treatment at your home"
+            }
           </p>
         </div>
 
         {/* Steps */}
         <div className="relative">
-          
-          {/* Connection Lines */}
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-200 via-teal-200 to-green-200 transform -translate-y-1/2 z-0"></div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
-            {steps.map((step, index) => (
-              <div key={step.step} className="relative">
-                
-                {/* Step Number Circle */}
-                <div className="absolute -top-4 right-1/2 transform translate-x-1/2 lg:right-auto lg:left-1/2 lg:-translate-x-1/2">
-                  <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${step.color} text-white flex items-center justify-center font-bold text-lg shadow-lg border-4 border-white`}>
-                    {step.step}
+          {/* Connection line */}
+          <div className="hidden lg:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2/3 h-0.5 bg-gradient-to-r from-blue-300 via-purple-300 to-green-300"></div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            {steps.map((step, index) => {
+              const Icon = step.icon
+              return (
+                <div key={index} className="relative group text-center">
+                  {/* Step number background */}
+                  <div className="absolute -top-6 -right-6 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center z-10 group-hover:scale-110 transition-transform duration-300">
+                    <span className="text-sm font-bold text-gray-400">{step.number}</span>
                   </div>
-                </div>
 
-                <Card className={`${step.bgColor} border-2 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group pt-8`}>
-                  <CardContent className="p-8 text-center">
-                    
+                  {/* Main card */}
+                  <div className="bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
                     {/* Icon */}
-                    <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r ${step.color} text-white mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                      {step.icon}
+                    <div className={`inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-r ${step.color} mb-6 text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="w-10 h-10" />
                     </div>
 
-                    {/* Title */}
-                    <h3 className="text-2xl font-bold text-slate-900 mb-4">{step.title}</h3>
+                    {/* Content */}
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-blue-600 transition-colors">
+                      {step.title}
+                    </h3>
                     
-                    {/* Description */}
-                    <p className="text-slate-600 mb-6 leading-relaxed">{step.description}</p>
+                    <p className="text-gray-600 leading-relaxed text-lg">
+                      {step.description}
+                    </p>
 
-                    {/* Details List */}
-                    <div className="space-y-3 mb-8">
-                      {step.details.map((detail, detailIndex) => (
-                        <div key={detailIndex} className="flex items-center justify-start space-x-3 space-x-reverse text-sm">
-                          <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                          <span className="text-slate-700">{detail}</span>
-                        </div>
-                      ))}
+                    {/* Decorative background gradient */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-3xl`}></div>
+                  </div>
+
+                  {/* Arrow for desktop */}
+                  {index < steps.length - 1 && (
+                    <div className="hidden lg:block absolute top-1/2 -right-6 transform -translate-y-1/2 text-gray-400 z-20">
+                      <ArrowLeft className={`w-8 h-8 ${dir === "rtl" ? "rotate-180" : ""}`} />
                     </div>
-
-                    {/* CTA Button */}
-                    <Button 
-                      className={`w-full bg-gradient-to-r ${step.color} hover:scale-105 transition-transform duration-200 shadow-lg`}
-                      size="lg"
-                    >
-                      {step.buttonText}
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                    </Button>
-
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Benefits Strip */}
-        <div className="mt-20 bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-200">
-          <div className="text-center mb-8">
-            <h3 className="text-3xl font-bold text-slate-900 mb-4">למה ללכת למרפאה?</h3>
-            <p className="text-xl text-slate-600">קבלו טיפול מקצועי בנוחות הבית שלכם</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {benefits.map((benefit, index) => (
-              <div key={index} className="flex items-center justify-center space-x-3 space-x-reverse p-4 bg-slate-50 rounded-xl">
-                <div className="text-teal-600">
-                  {benefit.icon}
+                  )}
                 </div>
-                <span className="text-slate-700 font-medium text-sm">{benefit.text}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
-        {/* Final CTA */}
+        {/* CTA Section */}
         <div className="text-center mt-16">
-          <div className="inline-flex items-center space-x-2 space-x-reverse bg-gradient-to-r from-teal-600 to-turquoise-600 text-white px-8 py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 cursor-pointer">
-            <span>מוכנים להתחיל?</span>
-            <ArrowLeft className="w-5 h-5" />
+          <div className="bg-white rounded-3xl p-8 shadow-xl max-w-2xl mx-auto">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+              {dir === "rtl" ? "מוכן להתחיל?" : "Ready to Start?"}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {dir === "rtl"
+                ? "הזמן את הטיפול הראשון שלך עכשיו ותגלה חוויה חדשה של טיפולי יופי"
+                : "Book your first treatment now and discover a new experience of beauty treatments"
+              }
+            </p>
+            <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 text-lg rounded-full">
+              <Link href="/bookings/treatment" className="flex items-center gap-2">
+                {dir === "rtl" ? "הזמן עכשיו" : "Book Now"}
+                <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
+              </Link>
+            </Button>
           </div>
         </div>
-
       </div>
     </section>
   )

@@ -112,8 +112,12 @@ export async function createCoupon(data: any): Promise<{
       validFrom: new Date(data.validFrom),
       validUntil: new Date(data.validUntil),
       usageLimit: Number(data.usageLimit || 0),
+      usageLimitPerUser: Number(data.usageLimitPerUser || 1),
       isActive: Boolean(data.isActive),
       timesUsed: 0,
+      createdBy: session.user.id,
+      assignedPartnerId: data.assignedPartnerId || null,
+      notesForPartner: data.notesForPartner || "",
     }
 
     const coupon = new Coupon(couponData)

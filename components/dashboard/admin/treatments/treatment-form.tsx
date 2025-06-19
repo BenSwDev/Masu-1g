@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -52,7 +52,6 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [pricingType, setPricingType] = useState(treatment?.pricingType || "fixed")
 
   // Create form schema based on pricing type
   const formSchema = z.object({
@@ -94,8 +93,18 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
     },
   })
 
+  // Watch pricing type for UI changes
+  const pricingType = form.watch("pricingType")
+
   // Initialize durations state for duration-based pricing
   const [durations, setDurations] = useState(treatment?.durations || [{ minutes: 60, price: 0, professionalPrice: 0, isActive: true }])
+
+  // Sync durations with form whenever they change
+  useEffect(() => {
+    if (pricingType === "duration_based") {
+      form.setValue("durations", durations)
+    }
+  }, [durations, pricingType, form])
 
   const addDuration = () => {
     setDurations([...durations, { minutes: 60, price: 0, professionalPrice: 0, isActive: true }])
@@ -145,7 +154,7 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
           description: treatment ? t("treatments.updateSuccess") : t("treatments.createSuccess"),
           variant: "default",
         })
-        onSuccess()
+      onSuccess()
       } else {
         console.error("Treatment operation failed:", result.error)
         throw new Error(result.error || (treatment ? t("treatments.updateError") : t("treatments.createError")))
@@ -273,7 +282,6 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
                           <RadioGroup
                             onValueChange={(value) => {
                               field.onChange(value)
-                              setPricingType(value)
                             }}
                             defaultValue={field.value}
                             className="flex flex-col space-y-3"

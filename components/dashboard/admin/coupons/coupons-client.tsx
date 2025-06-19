@@ -121,7 +121,7 @@ export default function CouponsClient({ initialData, partnersForSelect }: Coupon
           setCoupons((prev) => [...prev, result.data as ICoupon & { effectiveStatus: string }])
           setPagination((prev) => ({ ...prev, totalCoupons: prev.totalCoupons + 1 }))
         }
-        // router.refresh() // Can be used if server-side data consistency is critical after mutations
+        // Force a state refresh by reloading the page after successful operations
       } else {
         toast({
           title: t("common.error"),

@@ -121,7 +121,7 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
               </Badge>
               {treatment.allowTherapistGenderSelection && (
                 <Badge variant="secondary" className="text-xs">
-                  {t("treatments.genderSelectionAllowed")}
+                  {t("treatments.fields.allowTherapistGenderSelection")}
                 </Badge>
               )}
               <DropdownMenu>

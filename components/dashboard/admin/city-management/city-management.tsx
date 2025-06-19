@@ -8,9 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CustomPagination } from "@/components/common/ui/pagination"
 import { CityFormDialog } from "./city-form-dialog"
 import { useTranslation } from "@/lib/translations/i18n"
-import { getCities, toggleCityStatus } from "@/app/dashboard/(user)/(roles)/admin/cities/actions"
-import { Checkbox } from "@/components/common/ui/checkbox"
-import { useToast } from "@/components/common/ui/use-toast"
+import { getCities } from "@/app/dashboard/(user)/(roles)/admin/cities/actions"
 
 export interface CityData {
   id: string
@@ -28,14 +26,12 @@ interface CityManagementProps {
 
 export function CityManagement({ initialCities, totalPages: initialTotalPages, currentPage: initialPage, initialSearch = "" }: CityManagementProps) {
   const { t, dir } = useTranslation()
-  const { toast } = useToast()
   const [cities, setCities] = useState(initialCities)
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState(initialSearch)
   const [page, setPage] = useState(initialPage)
   const [pages, setPages] = useState(initialTotalPages)
   const [loading, setLoading] = useState(false)
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const loadCities = async (newPage = 1, term = search) => {
     setLoading(true)
@@ -50,34 +46,6 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
       console.error("Error loading cities:", error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleToggleStatus = async (id: string) => {
-    try {
-      setUpdatingId(id)
-      const result = await toggleCityStatus(id)
-      if (result.success) {
-        setCities(prev =>
-          prev.map(c => (c.id === id ? { ...c, isActive: !c.isActive } : c))
-        )
-        toast({ title: "הצלחה", description: "סטטוס העיר עודכן" })
-      } else {
-        toast({
-          variant: "destructive",
-          title: "שגיאה",
-          description: "שגיאה בעדכון סטטוס העיר"
-        })
-      }
-    } catch (error) {
-      console.error("Error toggling city status:", error)
-      toast({
-        variant: "destructive",
-        title: "שגיאה",
-        description: "שגיאה בעדכון סטטוס העיר"
-      })
-    } finally {
-      setUpdatingId(null)
     }
   }
 
@@ -108,7 +76,7 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
               <TableRow>
                 <TableHead>{t("admin.cities.table.name")}</TableHead>
                 <TableHead>{t("admin.cities.table.coordinates")}</TableHead>
-                <TableHead className="text-center">{t("admin.cities.table.status")}</TableHead>
+                <TableHead>{t("admin.cities.table.status")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -125,14 +93,7 @@ export function CityManagement({ initialCities, totalPages: initialTotalPages, c
                     <TableCell>
                       {c.coordinates.lat}, {c.coordinates.lng}
                     </TableCell>
-                    <TableCell className="text-center">
-                      <Checkbox
-                        checked={c.isActive}
-                        disabled={updatingId === c.id}
-                        onCheckedChange={() => handleToggleStatus(c.id)}
-                        className="mx-auto"
-                      />
-                    </TableCell>
+                    <TableCell>{c.isActive ? t("common.active") : t("common.inactive")}</TableCell>
                   </TableRow>
                 ))
               )}

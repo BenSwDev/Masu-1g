@@ -346,17 +346,13 @@ export async function calculateBookingPrice(
             : surchargeBase * (daySettings.priceAddition.amount / 100)
 
         if (surchargeAmount > 0) {
-          const surcharge: any = {
+          priceDetails.surcharges.push({
             description:
               daySettings.priceAddition.description ||
               daySettings.notes ||
               `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
             amount: surchargeAmount,
-          }
-          if ("professionalShare" in daySettings) {
-            surcharge.professionalShare = daySettings.professionalShare
-          }
-          priceDetails.surcharges.push(surcharge)
+          })
           priceDetails.totalSurchargesAmount += surchargeAmount
         }
       }
@@ -1419,11 +1415,6 @@ export async function getAllBookings(
         filterQuery.professionalId = { $ne: null }
       } else if (professional === "unassigned") {
         filterQuery.professionalId = null
-      } else if (mongoose.Types.ObjectId.isValid(professional)) {
-        filterQuery.professionalId = new mongoose.Types.ObjectId(professional)
-      } else {
-        logger.warn("Invalid professional filter", { professional })
-        return { bookings: [], totalPages: 0, totalBookings: 0 }
       }
     }
 

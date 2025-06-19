@@ -8,7 +8,7 @@ import { DataTable } from "@/components/common/ui/data-table"
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton"
 import type { PopulatedReview } from "@/types/review"
 import { Heading } from "@/components/common/ui/heading"
-import { getAllReviews } from "@/app/dashboard/(user)/(roles)/admin/reviews/actions"
+import { getAllReviews } from "@/actions/review-actions"
 import { Input } from "@/components/common/ui/input"
 import { Button } from "@/components/common/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
@@ -78,9 +78,7 @@ export default function AdminReviewsClient() {
     queryFn: async () => {
       try {
         const result = await getAllReviews(getFiltersForTab())
-        if (!result.success) {
-          throw new Error(result.error || "Failed to fetch reviews")
-        }
+        // The function from actions/review-actions returns a different structure
         return {
           reviews: result.reviews || [],
           totalPages: result.totalPages || 1,

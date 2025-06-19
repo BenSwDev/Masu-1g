@@ -1,303 +1,170 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
-import { Button } from "@/components/common/ui/button"
 import { useTranslation } from "@/lib/translations/i18n"
-import { 
-  HelpCircle, 
-  ChevronDown, 
-  ChevronUp,
-  MessageCircle,
-  Phone,
-  Mail,
-  Clock,
-  Shield,
-  CreditCard,
-  MapPin,
-  Users,
-  Star
-} from "lucide-react"
+import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react"
 
-export function FAQ() {
-  const { t } = useTranslation()
-  const [openQuestion, setOpenQuestion] = useState<number | null>(null)
+export function LandingFAQ() {
+  const { dir } = useTranslation()
+  const [openItem, setOpenItem] = useState<number | null>(0)
 
-  const faqCategories = [
+  const faqs = [
     {
-      title: "הזמנות וביטולים",
-      icon: <Clock className="w-5 h-5" />,
-      color: "from-blue-500 to-cyan-500",
-      questions: [
-        {
-          q: "איך מזמינים טיפול?",
-          a: "פשוט מאוד! בחרו טיפול, תאריך ושעה, הכניסו פרטי יצירת קשר ותשלום - וזה הכל! תקבלו אישור מיידי ב-SMS ובאימייל."
-        },
-        {
-          q: "כמה זמן מראש צריך להזמין?",
-          a: "אפשר להזמין עד 30 דקות מראש, אבל מומלץ להזמין מראש לזמינות טובה יותר. לטיפולים פופולריים או בסופי שבוע מומלץ להזמין יום מראש."
-        },
-        {
-          q: "אפשר לבטל או לשנות הזמנה?",
-          a: "כן! ביטול חינם עד 2 שעות לפני הטיפול. שינוי מועד אפשרי עד שעה לפני הטיפול ללא תוספת מחיר."
-        },
-        {
-          q: "מה קורה אם המטפל מאחר?",
-          a: "אם המטפל מאחר יותר מ-15 דקות, תקבלו פיצוי של 20% הנחה. אם המטפל לא מגיע, התשלום יוחזר במלואו."
-        }
-      ]
+      question: dir === "rtl" ? "איך עובד השירות של MASU?" : "How does MASU's service work?",
+      answer: dir === "rtl" 
+        ? "השירות שלנו פשוט מאוד: אתה בוחר טיפול באפליקציה או באתר, קובע תאריך ושעה נוחים, ומטפל מקצועי מגיע אליך הביתה עם כל הציוד הנדרש. התשלום מתבצע בתום הטיפול."
+        : "Our service is very simple: you choose a treatment in the app or website, set a convenient date and time, and a professional therapist comes to your home with all required equipment. Payment is made after the treatment."
     },
     {
-      title: "מטפלים ובטיחות",
-      icon: <Shield className="w-5 h-5" />,
-      color: "from-green-500 to-emerald-500",
-      questions: [
-        {
-          q: "איך אתם בוחרים את המטפלים?",
-          a: "כל המטפלים שלנו מוסמכים ובעלי ניסיון של לפחות 3 שנים. הם עוברים בדיקות רקע, ראיון אישי, וטסט מעשי לפני ההצטרפות."
-        },
-        {
-          q: "אפשר לבחור מטפל לפי מין?",
-          a: "כן! לרוב הטיפולים אפשר לבחור מטפל או מטפלת. זמינות המטפלים משתנה לפי אזור ושעה."
-        },
-        {
-          q: "מה אם לא מרוצה מהטיפול?",
-          a: "אם לא מרוצים מהטיפול, צרו קשר תוך 24 שעות ונפתור את הבעיה. במקרים מוצדקים נחזיר את הכסף או נשלח מטפל אחר בחינם."
-        },
-        {
-          q: "המטפלים מבוטחים?",
-          a: "כן! כל המטפלים מבוטחים בביטוח אחריות מקצועית ואישית. גם אתם מכוסים בביטוח נזקים במהלך הטיפול."
-        }
-      ]
+      question: dir === "rtl" ? "האם המטפלים מקצועיים ומוסמכים?" : "Are the therapists professional and certified?",
+      answer: dir === "rtl"
+        ? "כמובן! כל המטפלים שלנו עברו הכשרה מקצועית מקיפה, מוסמכים על ידי הרשויות המוסמכות, ועוברים בדיקות רקע יסודיות. בנוסף, יש לנו ביטוח מלא לכל הטיפולים."
+        : "Of course! All our therapists have undergone comprehensive professional training, are certified by authorized authorities, and undergo thorough background checks. In addition, we have full insurance for all treatments."
     },
     {
-      title: "תשלומים ומחירים",
-      icon: <CreditCard className="w-5 h-5" />,
-      color: "from-purple-500 to-pink-500",
-      questions: [
-        {
-          q: "איך משלמים על הטיפול?",
-          a: "התשלום מתבצע מראש דרך האפליקציה או האתר. אנחנו מקבלים כרטיסי אשראי, אפל פיי, גוגל פיי ופיפאל."
-        },
-        {
-          q: "יש עלויות נסתרות?",
-          a: "לא! המחיר שאתם רואים כולל הכל: הטיפול, הגעה, ציוד וביטוח. אין תוספות מחיר או הפתעות."
-        },
-        {
-          q: "איך עובד המנוי החודשי?",
-          a: "המנוי החודשי כולל 4 טיפולים בהנחה של 25%. הטיפולים תקפים למשך החודש, ואפשר לחדש את המנוי בכל עת."
-        },
-        {
-          q: "אפשר לקבל חשבונית?",
-          a: "כן! אפשר לקבל חשבונית רגילה או חשבונית עסקית. החשבונית נשלחת אוטומטית לאימייל לאחר התשלום."
-        }
-      ]
+      question: dir === "rtl" ? "כמה זמן לפני הטיפול צריך להזמין?" : "How far in advance should I book before the treatment?",
+      answer: dir === "rtl"
+        ? "אנחנו ממליצים להזמין לפחות 24 שעות מראש כדי להבטיח זמינות. עם זאת, במקרים רבים נוכל לספק טיפולים גם באותו היום, בהתאם לזמינות המטפלים באזור שלך."
+        : "We recommend booking at least 24 hours in advance to ensure availability. However, in many cases we can provide same-day treatments, subject to therapist availability in your area."
     },
     {
-      title: "הטיפולים עצמם",
-      icon: <Users className="w-5 h-5" />,
-      color: "from-teal-500 to-turquoise-500",
-      questions: [
-        {
-          q: "איזה ציוד המטפל מביא?",
-          a: "המטפל מגיע עם כל הציוד הנדרש: מיטת טיפולים מקצועית, שמנים, מגבות נקיות, ומוזיקה רגועה. אתם לא צריכים להכין כלום."
-        },
-        {
-          q: "איפה מתבצע הטיפול?",
-          a: "הטיפול מתבצע בבית שלכם, בחדר שתבחרו. המטפל יעזור לכם להכין את החלל ולארגן אותו בחזרה לאחר הטיפול."
-        },
-        {
-          q: "כמה זמן לוקח הטיפול?",
-          a: "משך הטיפול משתנה בין 45-120 דקות תלוי בסוג הטיפול שבחרתם. הזמן כולל הכנה וסיום."
-        },
-        {
-          q: "אפשר לקבל טיפול בזוג?",
-          a: "כן! יש לנו טיפולי זוגות מיוחדים עם שני מטפלים שמגיעים יחד. זו חוויה רומנטית ומיוחדת."
-        }
-      ]
+      question: dir === "rtl" ? "מה קורה אם אני צריך לבטל או לדחות?" : "What happens if I need to cancel or reschedule?",
+      answer: dir === "rtl"
+        ? "ביטול עד 24 שעות לפני הטיפול הוא ללא תשלום. שינוי מועד ניתן עד 4 שעות לפני הטיפול ללא תשלום נוסף. ביטול מתחת ל-24 שעות יגרור תשלום של 50% מעלות הטיפול."
+        : "Cancellation up to 24 hours before treatment is free. Rescheduling is possible up to 4 hours before treatment without additional payment. Cancellation under 24 hours will incur a payment of 50% of treatment cost."
+    },
+    {
+      question: dir === "rtl" ? "איך מתבצע התשלום?" : "How is payment made?",
+      answer: dir === "rtl"
+        ? "התשלום מתבצע בתום הטיפול דרך האפליקציה, בכרטיס אשראי או PayPal. לחברי מנוי, החיוב הוא חודשי אוטומטי. אנחנו לא מקבלים מזומן."
+        : "Payment is made after treatment through the app, by credit card or PayPal. For subscription members, billing is automatic monthly. We do not accept cash."
+    },
+    {
+      question: dir === "rtl" ? "באילו אזורים אתם משרתים?" : "Which areas do you serve?",
+      answer: dir === "rtl"
+        ? "אנחנו משרתים כרגע את גוש דן, ירושלים, חיפה והקריות, באר שבע ואילת. אנחנו מתרחבים כל הזמן ומוסיפים אזורים חדשים. בדוק באתר או באפליקציה את הזמינות באזור שלך."
+        : "We currently serve Greater Tel Aviv, Jerusalem, Haifa and the Krayot, Beer Sheva and Eilat. We are constantly expanding and adding new areas. Check the website or app for availability in your area."
+    },
+    {
+      question: dir === "rtl" ? "מה כלול במחיר הטיפול?" : "What is included in the treatment price?",
+      answer: dir === "rtl"
+        ? "המחיר כולל את כל הציוד הנדרש, חומרי הטיפול, הגעת המטפל לביתך ואת הטיפול עצמו. אין עלויות נוספות למטפל או ציוד. היחיד שעלול להיות חיוב נוסף הוא זמן המתנה מעל 15 דקות."
+        : "The price includes all required equipment, treatment materials, therapist arrival to your home and the treatment itself. There are no additional costs for therapist or equipment. The only possible additional charge is waiting time over 15 minutes."
+    },
+    {
+      question: dir === "rtl" ? "איך אני יודע שהמטפל בדרך?" : "How do I know the therapist is on the way?",
+      answer: dir === "rtl"
+        ? "תקבל התראות SMS ודחיפה באפליקציה כשהמטפל יוצא לדרך, כולל זמן הגעה משוער. תוכל גם לעקוב אחר המיקום שלו בזמן אמת דרך האפליקציה, בדיוק כמו ברכב שירות."
+        : "You'll receive SMS and push notifications in the app when the therapist is on the way, including estimated arrival time. You can also track their location in real-time through the app, just like with a ride service."
     }
   ]
 
-  const contactOptions = [
-    {
-      icon: <MessageCircle className="w-6 h-6" />,
-      title: "צ'אט בזמן אמת",
-      description: "תמיכה מיידית 24/7",
-      action: "פתחו צ'אט",
-      color: "from-blue-500 to-cyan-500"
-    },
-    {
-      icon: <Phone className="w-6 h-6" />,
-      title: "טלפון",
-      description: "*1234 או 03-1234567",
-      action: "התקשרו עכשיו",
-      color: "from-green-500 to-emerald-500"
-    },
-    {
-      icon: <Mail className="w-6 h-6" />,
-      title: "אימייל",
-      description: "support@masu.co.il",
-      action: "שלחו הודעה",
-      color: "from-purple-500 to-pink-500"
-    }
-  ]
-
-  const toggleQuestion = (categoryIndex: number, questionIndex: number) => {
-    const questionId = categoryIndex * 100 + questionIndex
-    setOpenQuestion(openQuestion === questionId ? null : questionId)
+  const toggleItem = (index: number) => {
+    setOpenItem(openItem === index ? null : index)
   }
 
   return (
-    <section className="py-24 bg-gradient-to-b from-slate-50 to-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <section className="py-20 bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="container mx-auto px-4">
         {/* Section Header */}
         <div className="text-center mb-16">
-          <Badge className="bg-gradient-to-r from-orange-600 to-red-600 text-white mb-4">
-            <HelpCircle className="w-4 h-4 mr-2" />
-            שאלות נפוצות
-          </Badge>
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
-            יש לכם שאלות? יש לנו תשובות!
+          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full mb-6">
+            <HelpCircle className="w-5 h-5" />
+            <span className="font-semibold">{dir === "rtl" ? "שאלות נפוצות" : "FAQ"}</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            {dir === "rtl" ? "שאלות שאנחנו מקבלים הכי הרבה" : "Questions We Get Asked Most"}
           </h2>
-          <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-            מצאו תשובות מהירות לשאלות הנפוצות ביותר, או צרו קשר לתמיכה אישית
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            {dir === "rtl"
+              ? "כל מה שרצית לדעת על השירות שלנו, במקום אחד נוח"
+              : "Everything you wanted to know about our service, in one convenient place"
+            }
           </p>
         </div>
 
-        {/* FAQ Categories */}
-        <div className="space-y-12 mb-20">
-          {faqCategories.map((category, categoryIndex) => (
-            <div key={categoryIndex}>
-              
-              {/* Category Header */}
-              <div className="flex items-center space-x-3 space-x-reverse mb-8">
-                <div className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white`}>
-                  {category.icon}
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900">{category.title}</h3>
-              </div>
-
-              {/* Questions */}
-              <div className="space-y-4">
-                {category.questions.map((qa, questionIndex) => {
-                  const questionId = categoryIndex * 100 + questionIndex
-                  const isOpen = openQuestion === questionId
-
-                  return (
-                    <Card key={questionIndex} className="bg-white border border-slate-200 hover:shadow-lg transition-all duration-300">
-                      <CardContent className="p-0">
-                        
-                        {/* Question Button */}
-                        <button
-                          onClick={() => toggleQuestion(categoryIndex, questionIndex)}
-                          className="w-full p-6 text-right flex items-center justify-between hover:bg-slate-50 transition-colors"
-                        >
-                          <div className="flex items-center space-x-3 space-x-reverse">
-                            <span className="text-lg font-semibold text-slate-900">{qa.q}</span>
-                          </div>
-                          <div className="flex-shrink-0">
-                            {isOpen ? (
-                              <ChevronUp className="w-5 h-5 text-slate-600" />
-                            ) : (
-                              <ChevronDown className="w-5 h-5 text-slate-600" />
-                            )}
-                          </div>
-                        </button>
-
-                        {/* Answer */}
-                        {isOpen && (
-                          <div className="px-6 pb-6 pt-0">
-                            <div className="border-t border-slate-100 pt-4">
-                              <p className="text-slate-700 leading-relaxed">{qa.a}</p>
-                            </div>
-                          </div>
-                        )}
-
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Contact Options */}
-        <div className="mb-16">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-slate-900 mb-4">לא מצאתם את התשובה?</h3>
-            <p className="text-lg text-slate-600">צוות התמיכה שלנו כאן לעזור לכם 24/7</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {contactOptions.map((option, index) => (
-              <Card key={index} className="bg-white border border-slate-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group">
-                <CardContent className="p-8 text-center">
-                  
-                  <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r ${option.color} text-white mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                    {option.icon}
+        {/* FAQ Items */}
+        <div className="max-w-4xl mx-auto">
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div 
+                key={index}
+                className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 transition-all duration-300 hover:shadow-xl"
+              >
+                <button
+                  onClick={() => toggleItem(index)}
+                  className={`w-full px-6 py-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors ${
+                    openItem === index ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <h3 className="text-lg font-semibold text-gray-900 pr-4">
+                    {faq.question}
+                  </h3>
+                  <div className="flex-shrink-0">
+                    {openItem === index ? (
+                      <ChevronUp className="w-6 h-6 text-blue-600" />
+                    ) : (
+                      <ChevronDown className="w-6 h-6 text-gray-400" />
+                    )}
                   </div>
-                  
-                  <h4 className="text-xl font-bold text-slate-900 mb-2">{option.title}</h4>
-                  <p className="text-slate-600 mb-6">{option.description}</p>
-                  
-                  <Button 
-                    className={`w-full bg-gradient-to-r ${option.color} hover:scale-105 transition-transform duration-200 shadow-lg text-white`}
-                    size="lg"
-                  >
-                    {option.action}
-                  </Button>
-
-                </CardContent>
-              </Card>
+                </button>
+                
+                {openItem === index && (
+                  <div className="px-6 pb-6">
+                    <div className="pt-4 border-t border-gray-100">
+                      <p className="text-gray-700 leading-relaxed text-lg">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>
 
-        {/* Quick Tips */}
-        <div className="bg-gradient-to-r from-teal-600 to-turquoise-600 rounded-3xl p-8 md:p-12">
-          <div className="text-center text-white mb-8">
-            <Star className="w-12 h-12 mx-auto mb-4" />
-            <h3 className="text-3xl font-bold mb-4">עצות מהירות להזמנה מוצלחת</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center text-white">
-              <div className="bg-white/20 rounded-xl p-4 mb-3">
-                <Clock className="w-8 h-8 mx-auto" />
-              </div>
-              <div className="font-semibold mb-1">הזמינו מראש</div>
-              <div className="text-sm opacity-90">לזמינות טובה יותר</div>
-            </div>
+        {/* Bottom CTA */}
+        <div className="text-center mt-16">
+          <div className="bg-white rounded-3xl p-8 shadow-xl max-w-3xl mx-auto">
+            <h3 className="text-3xl font-bold text-gray-900 mb-4">
+              {dir === "rtl" ? "עדיין יש לך שאלות?" : "Still have questions?"}
+            </h3>
+            <p className="text-lg text-gray-600 mb-6">
+              {dir === "rtl"
+                ? "צוות שירות הלקוחות שלנו כאן בשבילך 24/7 לכל שאלה או עזרה"
+                : "Our customer service team is here for you 24/7 for any question or help"
+              }
+            </p>
             
-            <div className="text-center text-white">
-              <div className="bg-white/20 rounded-xl p-4 mb-3">
-                <MapPin className="w-8 h-8 mx-auto" />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="flex items-center gap-6 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span>{dir === "rtl" ? "זמין כעת" : "Available now"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span>{dir === "rtl" ? "מענה תוך דקות" : "Response within minutes"}</span>
+                </div>
               </div>
-              <div className="font-semibold mb-1">הכינו מקום</div>
-              <div className="text-sm opacity-90">חדר נוח ושקט</div>
             </div>
-            
-            <div className="text-center text-white">
-              <div className="bg-white/20 rounded-xl p-4 mb-3">
-                <Phone className="w-8 h-8 mx-auto" />
-              </div>
-              <div className="font-semibold mb-1">היו זמינים</div>
-              <div className="text-sm opacity-90">לקריאה מהמטפל</div>
-            </div>
-            
-            <div className="text-center text-white">
-              <div className="bg-white/20 rounded-xl p-4 mb-3">
-                <Star className="w-8 h-8 mx-auto" />
-              </div>
-              <div className="font-semibold mb-1">דרגו ועזרו</div>
-              <div className="text-sm opacity-90">לשיפור השירות</div>
+
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a 
+                href="tel:*6999" 
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors"
+              >
+                <span>{dir === "rtl" ? "חייג *6999" : "Call *6999"}</span>
+              </a>
+              <a 
+                href="mailto:support@masu.co.il" 
+                className="inline-flex items-center gap-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-6 py-3 rounded-full font-semibold transition-colors"
+              >
+                <span>{dir === "rtl" ? "שלח אימייל" : "Send Email"}</span>
+              </a>
             </div>
           </div>
         </div>
-
       </div>
     </section>
   )

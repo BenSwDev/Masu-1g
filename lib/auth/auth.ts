@@ -175,8 +175,8 @@ export const authOptions: NextAuthOptions = {
         }
         await dbConnect()
         const user = (await User.findById(credentials.userId).select(
-          "email name image roles activeRole treatmentPreferences notificationPreferences",
-        )) as CustomUser // Include preferences and activeRole
+          "email name image phone roles activeRole treatmentPreferences notificationPreferences",
+        )) as CustomUser // Include preferences, phone, and activeRole
         if (!user) {
           throw new Error("User not found")
         }

@@ -4,7 +4,14 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { format } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
 
-import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails, TimeSlot } from "@/types/booking"
+import type {
+  BookingInitialData,
+  SelectedBookingOptions,
+  CalculatedPriceDetails,
+  TimeSlot,
+} from "@/types/booking"
+import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import { useToast } from "@/components/common/ui/use-toast"
 
 import BookingSourceStep from "./steps/booking-source-step"
@@ -25,6 +32,8 @@ import type { IBooking } from "@/lib/db/models/booking" // Add this import
 interface BookingWizardProps {
   initialData: BookingInitialData
   currentUser: UserSessionData
+  voucher?: GiftVoucherPlain
+  userSubscription?: IUserSubscription & { treatmentId?: any }
 }
 
 const TOTAL_STEPS_WITH_PAYMENT = 5
@@ -33,19 +42,34 @@ const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 // Add a constant for the timezone
 const TIMEZONE = "Asia/Jerusalem" // Israel timezone
 
-export default function BookingWizard({ initialData, currentUser }: BookingWizardProps) {
+export default function BookingWizard({
+  initialData,
+  currentUser,
+  voucher,
+  userSubscription,
+}: BookingWizardProps) {
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isPriceCalculating, setIsPriceCalculating] = useState(false)
-  const [bookingOptions, setBookingOptions] = useState<Partial<SelectedBookingOptions>>({
+  const defaultBookingOptions: Partial<SelectedBookingOptions> = {
     therapistGenderPreference: initialData.userPreferences?.therapistGender || "any",
     isFlexibleTime: false,
-    source:
-      initialData.activeUserSubscriptions?.length > 0 || initialData.usableGiftVouchers?.length > 0
-        ? undefined
-        : "new_purchase",
-  })
+    source: voucher
+      ? "gift_voucher_redemption"
+      : userSubscription
+      ? "subscription_redemption"
+      : initialData.activeUserSubscriptions?.length > 0 || initialData.usableGiftVouchers?.length > 0
+      ? undefined
+      : "new_purchase",
+    selectedGiftVoucherId: voucher ? voucher._id.toString() : undefined,
+    selectedUserSubscriptionId: userSubscription ? userSubscription._id.toString() : undefined,
+    selectedTreatmentId: voucher?.treatmentId?.toString() || userSubscription?.treatmentId?.toString(),
+    selectedDurationId:
+      voucher?.selectedDurationId?.toString() || userSubscription?.selectedDurationId?.toString(),
+  }
+
+  const [bookingOptions, setBookingOptions] = useState<Partial<SelectedBookingOptions>>(defaultBookingOptions)
   const [calculatedPrice, setCalculatedPrice] = useState<CalculatedPriceDetails | null>(null)
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false)

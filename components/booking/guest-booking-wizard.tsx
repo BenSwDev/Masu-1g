@@ -295,7 +295,7 @@ export default function UniversalBookingWizard({
               if (result.success && result.userId) {
                 setGuestUserId(result.userId)
                 localStorage.setItem('guestUserId', result.userId)
-                
+
                 // Create initial pending booking immediately
                 await createInitialPendingBooking(result.userId, updatedState)
               } else {
@@ -304,7 +304,7 @@ export default function UniversalBookingWizard({
                   title: "שגיאה ביצירת משתמש אורח",
                   description: result.error || "נסה שוב",
                 })
-                return
+                // Don't block progression if guest creation fails
               }
             } catch (error) {
               toast({
@@ -312,7 +312,7 @@ export default function UniversalBookingWizard({
                 title: "שגיאה ביצירת משתמש אורח",
                 description: "אירעה שגיאה בלתי צפויה. נסה שוב.",
               })
-              return
+              // Continue to next step even if user creation fails
             }
           }
         }

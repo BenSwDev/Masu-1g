@@ -1,25 +1,21 @@
 import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
-import { getActivePaymentMethods } from "@/actions/payment-method-actions"
-import PurchaseSubscriptionClient from "@/components/dashboard/member/subscriptions/purchase-subscription-client"
+import GuestSubscriptionWizard from "@/components/subscriptions/guest-subscription-wizard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 
 // Force this page to be dynamic since it requires user authentication
 export const dynamic = 'force-dynamic'
 
 export default async function PurchaseSubscriptionPage() {
-  const [subscriptionsData, treatmentsData, paymentMethodsData] = await Promise.all([
+  const [subscriptionsData, treatmentsData] = await Promise.all([
     getActiveSubscriptionsForPurchase(),
     getActiveTreatmentsForPurchase(),
-    getActivePaymentMethods(),
   ])
 
-  if (!subscriptionsData.success || !treatmentsData.success || !paymentMethodsData.success) {
-    // Handle error state more gracefully
+  if (!subscriptionsData.success || !treatmentsData.success) {
     console.error("Failed to load data for purchase page:", {
       subscriptionsError: subscriptionsData.error,
       treatmentsError: treatmentsData.error,
-      paymentMethodsError: paymentMethodsData.error,
     })
 
     return (
@@ -34,14 +30,42 @@ export default async function PurchaseSubscriptionPage() {
     )
   }
 
-  // Debug log to verify treatments are being fetched
-  console.log("Treatments fetched:", treatmentsData.treatments?.length || 0)
+  // Convert data to the format expected by GuestSubscriptionWizard
+  const serializedSubscriptions = subscriptionsData.subscriptions?.map(sub => ({
+    _id: sub._id.toString(),
+    name: sub.name,
+    description: sub.description,
+    quantity: sub.quantity,
+    bonusQuantity: sub.bonusQuantity,
+    validityMonths: sub.validityMonths,
+    isActive: sub.isActive,
+    createdAt: sub.createdAt.toISOString(),
+    updatedAt: sub.updatedAt.toISOString(),
+  })) || []
+
+  const serializedTreatments = treatmentsData.treatments?.map(treatment => ({
+    _id: treatment._id.toString(),
+    name: treatment.name,
+    description: treatment.description,
+    category: treatment.category,
+    pricingType: treatment.pricingType,
+    fixedPrice: treatment.fixedPrice,
+    durations: treatment.durations?.map((d: any) => ({
+      _id: d._id.toString(),
+      minutes: d.minutes,
+      price: d.price,
+      professionalPrice: d.professionalPrice,
+      isActive: d.isActive,
+    })),
+    isActive: treatment.isActive,
+    createdAt: treatment.createdAt.toISOString(),
+    updatedAt: treatment.updatedAt.toISOString(),
+  })) || []
 
   return (
-    <PurchaseSubscriptionClient
-      subscriptions={subscriptionsData.subscriptions || []}
-      treatments={treatmentsData.treatments || []}
-      paymentMethods={paymentMethodsData.paymentMethods || []}
+    <GuestSubscriptionWizard
+      subscriptions={serializedSubscriptions}
+      treatments={serializedTreatments}
     />
   )
 }

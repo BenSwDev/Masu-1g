@@ -328,19 +328,19 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       {
         title: t("dashboard.sidebar.bookTreatment"),
         icon: Calendar,
-        href: "/bookings/treatment",
+        href: "/dashboard/member/book-treatment",
         variant: "default" as const,
       },
       {
         title: t("dashboard.sidebar.purchaseSubscription"),
         icon: CreditCard,
-        href: "/purchase/subscription",
+        href: "/dashboard/member/subscriptions/purchase",
         variant: "outline" as const,
       },
       {
         title: t("dashboard.sidebar.purchaseGiftVoucher"),
         icon: Gift,
-        href: "/purchase/gift-voucher",
+        href: "/dashboard/member/gift-vouchers/purchase",
         variant: "outline" as const,
       },
     ]

@@ -76,10 +76,11 @@ interface GuestAddress {
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 
-interface GuestBookingWizardProps {
+interface UniversalBookingWizardProps {
   initialData: BookingInitialData
   voucher?: GiftVoucherPlain
   userSubscription?: IUserSubscription & { treatmentId?: any }
+  currentUser?: any // User session data if logged in
 }
 
 const TOTAL_STEPS_WITH_PAYMENT = 6
@@ -87,13 +88,33 @@ const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 
 const TIMEZONE = "Asia/Jerusalem"
 
-export default function GuestBookingWizard({ initialData, voucher, userSubscription }: GuestBookingWizardProps) {
+export default function UniversalBookingWizard({ 
+  initialData, 
+  voucher, 
+  userSubscription, 
+  currentUser 
+}: UniversalBookingWizardProps) {
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isPriceCalculating, setIsPriceCalculating] = useState(false)
 
   const prefilledGuestInfo = useMemo<Partial<GuestInfo>>(() => {
+    // Priority 1: Logged in user data
+    if (currentUser) {
+      const [first, ...rest] = (currentUser.name || "").split(" ")
+      return {
+        firstName: first || "",
+        lastName: rest.join(" ") || "",
+        email: currentUser.email || "",
+        phone: currentUser.phone || "",
+        isBookingForSomeoneElse: false,
+        bookerNotificationMethod: "email", // Default for logged in users
+        bookerNotificationLanguage: "he"
+      }
+    }
+    
+    // Priority 2: Gift voucher data
     if (voucher?.isGift && voucher.recipientName) {
       const [first, ...rest] = voucher.recipientName.split(" ")
       return {
@@ -102,10 +123,13 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
         phone: voucher.recipientPhone,
         email: "", // Gift vouchers usually don't have recipient email
         isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
+        bookerNotificationMethod: "email",
+        bookerNotificationLanguage: "he"
       }
     }
+    
+    // Priority 3: Voucher guest info
     if ((voucher as any)?.guestInfo) {
-      // For non-gift vouchers purchased by guests
       const guestInfo = (voucher as any).guestInfo
       const [first, ...rest] = guestInfo.name.split(" ")
       return {
@@ -114,8 +138,12 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
         email: guestInfo.email,
         phone: guestInfo.phone,
         isBookingForSomeoneElse: false,
+        bookerNotificationMethod: "email",
+        bookerNotificationLanguage: "he"
       }
     }
+    
+    // Priority 4: Subscription guest info
     if ((userSubscription as any)?.guestInfo) {
       const guestInfo = (userSubscription as any).guestInfo
       const [first, ...rest] = guestInfo.name.split(" ")
@@ -124,15 +152,26 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
         lastName: rest.join(" "),
         email: guestInfo.email,
         phone: guestInfo.phone,
-        isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
+        isBookingForSomeoneElse: false,
+        bookerNotificationMethod: "email",
+        bookerNotificationLanguage: "he"
       }
     }
+    
+    // Default for guests
     return {
-      isBookingForSomeoneElse: false, // Default to false for redemption
+      isBookingForSomeoneElse: false,
+      bookerNotificationMethod: "email",
+      bookerNotificationLanguage: "he"
     }
-  }, [voucher, userSubscription])
+  }, [voucher, userSubscription, currentUser])
 
   const lockedFields = useMemo(() => {
+    // If user is logged in, lock their basic info
+    if (currentUser) {
+      return ["firstName", "lastName", "email", "phone"] as const
+    }
+    
     if (voucher?.isGift && voucher.recipientName) {
       // For gift vouchers - lock name and phone, but email might be empty so allow editing
       const fields = ["firstName", "lastName", "phone"] as const
@@ -149,7 +188,7 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
       return ["firstName", "lastName", "email", "phone"] as const
     }
     return [] as const
-  }, [voucher, userSubscription])
+  }, [voucher, userSubscription, currentUser])
 
   // Hide "booking for someone else" option when redeeming voucher/subscription
   const hideBookingForSomeoneElse = useMemo(() => {
@@ -157,7 +196,36 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
   }, [voucher, userSubscription])
 
   const [guestInfo, setGuestInfoState] = useState<Partial<GuestInfo>>(prefilledGuestInfo)
-  const [guestAddress, setGuestAddress] = useState<Partial<GuestAddress>>({})
+  // Pre-fill address for logged-in users
+  const prefilledAddress = useMemo<Partial<GuestAddress>>(() => {
+    if (currentUser && initialData.userAddresses && initialData.userAddresses.length > 0) {
+      const defaultAddress = initialData.userAddresses.find(addr => addr.isDefault) || initialData.userAddresses[0]
+      if (defaultAddress) {
+        return {
+          city: defaultAddress.city,
+          street: defaultAddress.street,
+          houseNumber: defaultAddress.streetNumber || "",
+          addressType: defaultAddress.addressType as any,
+          floor: defaultAddress.addressType === "apartment" ? defaultAddress.apartmentDetails?.floor?.toString() : undefined,
+          apartmentNumber: defaultAddress.addressType === "apartment" ? defaultAddress.apartmentDetails?.apartmentNumber : undefined,
+          entrance: defaultAddress.addressType === "apartment" ? defaultAddress.apartmentDetails?.entrance : undefined,
+          parking: defaultAddress.hasPrivateParking || false,
+          notes: defaultAddress.additionalNotes || ""
+        }
+      }
+    }
+    return {}
+     }, [currentUser, initialData.userAddresses])
+  
+  const [guestAddress, setGuestAddress] = useState<Partial<GuestAddress>>(prefilledAddress)
+  
+  // Update address when prefilledAddress changes
+  useEffect(() => {
+    if (Object.keys(prefilledAddress).length > 0 && Object.keys(guestAddress).length === 0) {
+      setGuestAddress(prefilledAddress)
+    }
+  }, [prefilledAddress, guestAddress])
+  
   const defaultBookingOptions: Partial<SelectedBookingOptions> = {
     therapistGenderPreference: initialData.userPreferences?.therapistGender || "any",
     isFlexibleTime: false,
@@ -769,25 +837,7 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <GuestInfoStep
-            guestInfo={guestInfo}
-            setGuestInfo={setGuestInfo}
-            onNext={handleGuestInfoSubmit}
-            lockedFields={lockedFields as any}
-            hideBookingForSomeoneElse={hideBookingForSomeoneElse}
-          />
-        )
-      case 2:
-        return (
-          <GuestAddressStep
-            address={guestAddress}
-            setAddress={setGuestAddress}
-            onNext={nextStep}
-            onPrev={prevStep}
-          />
-        )
-      case 3:
+        // NEW ORDER: Treatment Selection First
         return (
           <GuestTreatmentSelectionStep
             initialData={initialData}
@@ -799,7 +849,8 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
             userSubscription={userSubscription}
           />
         )
-      case 4:
+      case 2:
+        // NEW ORDER: Scheduling Second
         return (
           <GuestSchedulingStep
             initialData={initialData}
@@ -808,6 +859,27 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
             timeSlots={timeSlots}
             isTimeSlotsLoading={isTimeSlotsLoading}
             workingHoursNote={workingHoursNote}
+            onNext={nextStep}
+            onPrev={prevStep}
+          />
+        )
+      case 3:
+        // NEW ORDER: Guest/User Info Third
+        return (
+          <GuestInfoStep
+            guestInfo={guestInfo}
+            setGuestInfo={setGuestInfo}
+            onNext={handleGuestInfoSubmit}
+            lockedFields={lockedFields as any}
+            hideBookingForSomeoneElse={hideBookingForSomeoneElse}
+          />
+        )
+      case 4:
+        // NEW ORDER: Address Fourth
+        return (
+          <GuestAddressStep
+            address={guestAddress}
+            setAddress={setGuestAddress}
             onNext={nextStep}
             onPrev={prevStep}
           />
@@ -893,19 +965,19 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
   const getStepTitle = () => {
     switch (currentStep) {
       case 1:
-        return t("bookings.steps.guestInfo.title")
+        return t("bookings.steps.treatment.title") || "בחירת טיפול"
       case 2:
-        return t("bookings.addressStep.title") || "הוסף כתובת חדשה"
+        return t("bookings.steps.scheduling.title") || "תזמון הטיפול"
       case 3:
-        return t("bookings.steps.treatment.title")
+        return currentUser ? "פרטים אישיים" : t("bookings.steps.guestInfo.title") || "פרטים אישיים"
       case 4:
-        return t("bookings.steps.scheduling.title")
+        return t("bookings.addressStep.title") || "כתובת הטיפול"
       case 5:
-        return t("bookings.steps.summary.title")
+        return t("bookings.steps.summary.title") || "סיכום ההזמנה"
       case 6:
-        return t("bookings.steps.payment.title")
+        return t("bookings.steps.payment.title") || "תשלום"
       case 7:
-        return t("bookings.steps.confirmation.title")
+        return t("bookings.steps.confirmation.title") || "אישור הזמנה"
       default:
         return ""
     }

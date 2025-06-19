@@ -1,8 +1,7 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { getBookingInitialData } from "@/actions/booking-actions"
-import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
-import type { UserSessionData } from "@/types/next-auth"
+import UniversalBookingWizard from "@/components/booking/guest-booking-wizard"
 
 // Force dynamic rendering to prevent build-time database connections
 export const dynamic = 'force-dynamic'
@@ -18,9 +17,9 @@ export default async function BookTreatmentPage({ params }: { params?: { lang?: 
     return null
   }
   return (
-    <BookingWizard
+    <UniversalBookingWizard
       initialData={initialDataResult.data}
-      currentUser={session.user as UserSessionData}
+      currentUser={session.user}
     />
   )
 }

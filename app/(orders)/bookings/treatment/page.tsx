@@ -1,19 +1,17 @@
 import { getGuestBookingInitialData, getBookingInitialData } from "@/actions/booking-actions"
 import { getGiftVoucherByCode } from "@/actions/gift-voucher-actions"
 import { getUserSubscriptionById } from "@/actions/user-subscription-actions"
-import GuestBookingWizard from "@/components/booking/guest-booking-wizard"
-import BookingWizard from "@/components/dashboard/member/book-treatment/booking-wizard"
+import UniversalBookingWizard from "@/components/booking/guest-booking-wizard"
 import MemberRedemptionModal from "@/components/booking/member-redemption-modal"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import type { UserSessionData } from "@/types/next-auth"
 
 // Force dynamic rendering to handle searchParams
 export const dynamic = 'force-dynamic'
 
-export default async function GuestBookTreatmentPage({
+export default async function UniversalBookTreatmentPage({
   searchParams,
 }: {
   searchParams?: { voucherCode?: string; subscriptionId?: string }
@@ -23,8 +21,12 @@ export default async function GuestBookTreatmentPage({
     const voucherCode = searchParams?.voucherCode
     const subscriptionId = searchParams?.subscriptionId
 
-    const [initialDataResult, voucherResult, subscriptionResult] = await Promise.all([
-      session?.user?.id ? getBookingInitialData(session.user.id) : getGuestBookingInitialData(),
+    // Always use getBookingInitialData to get full data regardless of user status
+    const initialDataResult = session?.user?.id 
+      ? await getBookingInitialData(session.user.id)
+      : await getGuestBookingInitialData()
+
+    const [voucherResult, subscriptionResult] = await Promise.all([
       voucherCode ? getGiftVoucherByCode(voucherCode) : Promise.resolve({ success: false }),
       subscriptionId ? getUserSubscriptionById(subscriptionId) : Promise.resolve({ success: false }),
     ])
@@ -48,34 +50,27 @@ export default async function GuestBookTreatmentPage({
     const voucher = voucherResult.success && 'voucher' in voucherResult ? (voucherResult as any).voucher : undefined
     const subscription = subscriptionResult.success && 'subscription' in subscriptionResult ? (subscriptionResult as any).subscription : undefined
 
-    if (session?.user?.id) {
-      return (
-        <GuestLayout>
-          <MemberRedemptionModal
-            subscriptions={initialDataResult.data.activeUserSubscriptions}
-            vouchers={initialDataResult.data.usableGiftVouchers}
-          />
-          <BookingWizard
-            initialData={initialDataResult.data}
-            currentUser={session.user as UserSessionData}
-            voucher={voucher}
-            userSubscription={subscription}
-          />
-        </GuestLayout>
-      )
-    }
-
     return (
       <GuestLayout>
-        <GuestBookingWizard
+        {/* Show redemption modal only for logged-in users */}
+        {session?.user?.id && (
+          <MemberRedemptionModal
+            subscriptions={initialDataResult.data.activeUserSubscriptions || []}
+            vouchers={initialDataResult.data.usableGiftVouchers || []}
+          />
+        )}
+        
+        {/* Universal booking wizard for both logged-in users and guests */}
+        <UniversalBookingWizard
           initialData={initialDataResult.data}
+          currentUser={session?.user}
           voucher={voucher}
           userSubscription={subscription}
         />
       </GuestLayout>
     )
   } catch (error) {
-    console.error('Error in guest book treatment page:', error)
+    console.error('Error in universal book treatment page:', error)
     return (
       <GuestLayout>
         <Card>

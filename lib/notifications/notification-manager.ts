@@ -83,10 +83,10 @@ export class NotificationManager {
       }
       return smsService.sendNotification(recipient as PhoneRecipient, data)
     } else {
-      logger.error(`Invalid recipient type: ${recipient.type}`)
+      logger.error(`Invalid recipient type: ${(recipient as any).type}`)
       return {
         success: false,
-        error: `Invalid recipient type: ${recipient.type}`,
+        error: `Invalid recipient type: ${(recipient as any).type}`,
       }
     }
   }

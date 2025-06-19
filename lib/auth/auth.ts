@@ -96,7 +96,7 @@ const defaultTreatmentPreferences: ITreatmentPreferences = { therapistGender: "a
 const defaultNotificationPreferences: INotificationPreferences = { methods: ["email", "sms"], language: "he" }
 
 export const authOptions: NextAuthOptions = {
-  adapter: MongoDBAdapter(clientPromise),
+  adapter: MongoDBAdapter(clientPromise) as any,
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -134,8 +134,8 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or phone format")
         }
         const user = (await User.findOne(query).select(
-          "+password email name image roles treatmentPreferences notificationPreferences",
-        )) as CustomUser // Include preferences
+          "+password email name image roles activeRole treatmentPreferences notificationPreferences",
+        )) as CustomUser // Include preferences and activeRole
         if (!user) {
           throw new Error("No user found with this identifier")
         }
@@ -147,14 +147,17 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid password")
         }
         const userRoles = user.roles && user.roles.length > 0 ? user.roles : ["member"]
+        const activeRole = user.activeRole || getDefaultActiveRole(userRoles)
+        
         return {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
           image: user.image,
           roles: userRoles,
-          treatmentPreferences: user.treatmentPreferences || defaultTreatmentPreferences, // Pass preferences
-          notificationPreferences: user.notificationPreferences || defaultNotificationPreferences, // Pass preferences
+          activeRole: activeRole,
+          treatmentPreferences: user.treatmentPreferences || defaultTreatmentPreferences,
+          notificationPreferences: user.notificationPreferences || defaultNotificationPreferences,
         }
       },
     }),
@@ -170,20 +173,23 @@ export const authOptions: NextAuthOptions = {
         }
         await dbConnect()
         const user = (await User.findById(credentials.userId).select(
-          "email name image roles treatmentPreferences notificationPreferences",
-        )) as CustomUser // Include preferences
+          "email name image roles activeRole treatmentPreferences notificationPreferences",
+        )) as CustomUser // Include preferences and activeRole
         if (!user) {
           throw new Error("User not found")
         }
         const userRoles = user.roles && user.roles.length > 0 ? user.roles : ["member"]
+        const activeRole = user.activeRole || getDefaultActiveRole(userRoles)
+        
         return {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
           image: user.image,
           roles: userRoles,
-          treatmentPreferences: user.treatmentPreferences || defaultTreatmentPreferences, // Pass preferences
-          notificationPreferences: user.notificationPreferences || defaultNotificationPreferences, // Pass preferences
+          activeRole: activeRole,
+          treatmentPreferences: user.treatmentPreferences || defaultTreatmentPreferences,
+          notificationPreferences: user.notificationPreferences || defaultNotificationPreferences,
         }
       },
     }),

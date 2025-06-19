@@ -15,6 +15,7 @@ import { GuestSchedulingStep } from "./steps/guest-scheduling-step"
 import { GuestSummaryStep } from "./steps/guest-summary-step"
 import { GuestPaymentStep } from "./steps/guest-payment-step"
 import { GuestBookingConfirmation } from "./steps/guest-booking-confirmation"
+import NotificationPreferencesSelector from "./notification-preferences-selector"
 
 import { 
   calculateBookingPrice, 
@@ -103,24 +104,26 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
         isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
       }
     }
-    if (voucher?.guestInfo) {
+    if ((voucher as any)?.guestInfo) {
       // For non-gift vouchers purchased by guests
-      const [first, ...rest] = voucher.guestInfo.name.split(" ")
+      const guestInfo = (voucher as any).guestInfo
+      const [first, ...rest] = guestInfo.name.split(" ")
       return {
         firstName: first,
         lastName: rest.join(" "),
-        email: voucher.guestInfo.email,
-        phone: voucher.guestInfo.phone,
+        email: guestInfo.email,
+        phone: guestInfo.phone,
         isBookingForSomeoneElse: false,
       }
     }
-    if (userSubscription?.guestInfo) {
-      const [first, ...rest] = userSubscription.guestInfo.name.split(" ")
+    if ((userSubscription as any)?.guestInfo) {
+      const guestInfo = (userSubscription as any).guestInfo
+      const [first, ...rest] = guestInfo.name.split(" ")
       return {
         firstName: first,
         lastName: rest.join(" "),
-        email: userSubscription.guestInfo.email,
-        phone: userSubscription.guestInfo.phone,
+        email: guestInfo.email,
+        phone: guestInfo.phone,
         isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
       }
     }
@@ -129,23 +132,23 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
     }
   }, [voucher, userSubscription])
 
-  const lockedFields = useMemo<(keyof GuestInfo)[]>(() => {
+  const lockedFields = useMemo(() => {
     if (voucher?.isGift && voucher.recipientName) {
       // For gift vouchers - lock name and phone, but email might be empty so allow editing
-      const fields: (keyof GuestInfo)[] = ["firstName", "lastName", "phone"]
-      if (voucher.recipientEmail) {
-        fields.push("email")
+      const fields = ["firstName", "lastName", "phone"] as const
+      if ((voucher as any).recipientEmail) {
+        return [...fields, "email"] as const
       }
       return fields
     }
-    if (voucher?.guestInfo) {
+    if ((voucher as any)?.guestInfo) {
       // For non-gift vouchers purchased by guests - lock all fields
-      return ["firstName", "lastName", "phone", "email"]
+      return ["firstName", "lastName", "phone", "email"] as const
     }
-    if (userSubscription?.guestInfo) {
-      return ["firstName", "lastName", "email", "phone"]
+    if ((userSubscription as any)?.guestInfo) {
+      return ["firstName", "lastName", "email", "phone"] as const
     }
-    return []
+    return [] as const
   }, [voucher, userSubscription])
 
   // Hide "booking for someone else" option when redeeming voucher/subscription
@@ -164,7 +167,7 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
       ? "subscription_redemption"
       : "new_purchase",
     selectedGiftVoucherId: voucher ? voucher._id.toString() : undefined,
-    selectedUserSubscriptionId: userSubscription ? userSubscription._id.toString() : undefined,
+    selectedUserSubscriptionId: userSubscription ? String(userSubscription._id) : undefined,
     selectedTreatmentId:
       voucher?.treatmentId?.toString() || userSubscription?.treatmentId?.toString(),
     selectedDurationId:
@@ -210,14 +213,14 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
         if (currentStep === 1 && !guestUserId) {
           
           if (updatedState.firstName && updatedState.lastName && updatedState.email && updatedState.phone) {
-          const guestUserData = {
-            firstName: updatedState.firstName,
-            lastName: updatedState.lastName,
-            email: updatedState.email,
-            phone: updatedState.phone,
-            birthDate: updatedState.birthDate,
-            gender: updatedState.gender,
-          }
+            const guestUserData = {
+              firstName: updatedState.firstName,
+              lastName: updatedState.lastName,
+              email: updatedState.email,
+              phone: updatedState.phone,
+              birthDate: updatedState.birthDate,
+              gender: updatedState.gender,
+            }
             try {
               const result = await createGuestUser(guestUserData)
               
@@ -228,7 +231,6 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
                 // Create initial pending booking immediately
                 await createInitialPendingBooking(result.userId, updatedState)
               } else {
-                console.error("❌ Failed to create guest user:", result.error)
                 toast({
                   variant: "destructive",
                   title: "שגיאה ביצירת משתמש אורח",
@@ -237,7 +239,6 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
                 return
               }
             } catch (error) {
-              console.error("❌ Error creating guest user:", error)
               toast({
                 variant: "destructive",
                 title: "שגיאה ביצירת משתמש אורח",
@@ -275,9 +276,11 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
           title: "התחלת תהליך הזמנה",
           description: "ההזמנה נשמרה במערכת ותופיע בעמוד הזמנות המנהל",
         })
+      } else {
+        console.warn("Failed to save initial pending booking:", result.error)
       }
     } catch (error) {
-      console.error("❌ Error creating initial pending booking:", error)
+      console.warn("Error creating initial pending booking:", error)
     }
   }
 
@@ -296,7 +299,7 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
             setShowRecoveryDialog(true)
           }
         } catch (error) {
-          console.error("❌ Error checking for abandoned booking:", error)
+          console.warn("Error checking for abandoned booking:", error)
         }
       }
     }
@@ -309,21 +312,22 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
   // Auto create guest user and initial booking once mandatory info is provided
   useEffect(() => {
     const attemptAutoCreate = async () => {
+      // Validate required fields first
       if (
         !guestUserId &&
         !guestUserCreatedRef.current &&
-        guestInfo.firstName &&
-        guestInfo.lastName &&
-        guestInfo.email &&
-        guestInfo.phone
+        guestInfo.firstName?.trim() &&
+        guestInfo.lastName?.trim() &&
+        guestInfo.email?.trim() &&
+        guestInfo.phone?.trim()
       ) {
         guestUserCreatedRef.current = true
         try {
           const result = await createGuestUser({
-            firstName: guestInfo.firstName,
-            lastName: guestInfo.lastName,
-            email: guestInfo.email,
-            phone: guestInfo.phone,
+            firstName: guestInfo.firstName.trim(),
+            lastName: guestInfo.lastName.trim(),
+            email: guestInfo.email.trim(),
+            phone: guestInfo.phone.trim(),
             birthDate: guestInfo.birthDate,
             gender: guestInfo.gender,
           })
@@ -335,7 +339,7 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
             guestUserCreatedRef.current = false
           }
         } catch (error) {
-          console.error('❌ Auto guest user creation failed:', error)
+          console.warn('Auto guest user creation failed:', error)
           guestUserCreatedRef.current = false
         }
       }
@@ -358,10 +362,10 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
           })
           
           if (!result.success) {
-            console.error("❌ Failed to save form state:", result.error)
+            console.warn("Failed to save form state:", result.error)
           }
         } catch (error) {
-          console.error("❌ Error saving form state:", error)
+          console.warn("Error saving form state:", error)
         }
       }
       
@@ -674,6 +678,13 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
         recipientGender: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientGender
           : guestInfo.gender,
+        // Add notification preferences
+        notificationMethods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
+                            guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
+        recipientNotificationMethods: guestInfo.isBookingForSomeoneElse ? 
+          (guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
+           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"]) : undefined,
+        notificationLanguage: guestInfo.bookerNotificationLanguage || "he",
       } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
 
 
@@ -681,8 +692,8 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
       
       
       if (result.success && result.booking) {
-        setPendingBookingId(result.booking._id.toString())
-        return result.booking._id.toString()
+        setPendingBookingId(String(result.booking._id))
+        return String(result.booking._id)
       } else {
         toast({
           variant: "destructive",
@@ -763,7 +774,7 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
             guestInfo={guestInfo}
             setGuestInfo={setGuestInfo}
             onNext={handleGuestInfoSubmit}
-            lockedFields={lockedFields}
+            lockedFields={lockedFields as any}
             hideBookingForSomeoneElse={hideBookingForSomeoneElse}
           />
         )
@@ -803,18 +814,55 @@ export default function GuestBookingWizard({ initialData, voucher, userSubscript
         )
       case 5:
         return (
-          <GuestSummaryStep
-            initialData={initialData}
-            bookingOptions={bookingOptions}
-            guestInfo={guestInfo}
-            calculatedPrice={calculatedPrice}
-            isPriceCalculating={isPriceCalculating}
-            onNext={nextStep}
-            onPrev={prevStep}
-            setBookingOptions={setBookingOptions}
-            voucher={voucher}
-            userSubscription={userSubscription}
-          />
+          <div className="space-y-6">
+            <GuestSummaryStep
+              initialData={initialData}
+              bookingOptions={bookingOptions}
+              guestInfo={guestInfo}
+              calculatedPrice={calculatedPrice}
+              isPriceCalculating={isPriceCalculating}
+              onNext={nextStep}
+              onPrev={prevStep}
+              setBookingOptions={setBookingOptions}
+              voucher={voucher}
+              userSubscription={userSubscription}
+            />
+            
+            {/* Notification Preferences for Booker */}
+            <NotificationPreferencesSelector
+              value={{
+                methods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
+                         guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
+                language: guestInfo.bookerNotificationLanguage || "he"
+              }}
+              onChange={(prefs) => setGuestInfo({
+                bookerNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
+                                         prefs.methods.includes("sms") ? "sms" : "email",
+                bookerNotificationLanguage: prefs.language
+              })}
+              isForRecipient={false}
+              className="mt-6"
+            />
+            
+            {/* Notification Preferences for Recipient (if booking for someone else) */}
+            {guestInfo.isBookingForSomeoneElse && (
+              <NotificationPreferencesSelector
+                value={{
+                  methods: guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
+                           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"],
+                  language: guestInfo.recipientNotificationLanguage || "he"
+                }}
+                onChange={(prefs) => setGuestInfo({
+                  recipientNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
+                                              prefs.methods.includes("sms") ? "sms" : "email",
+                  recipientNotificationLanguage: prefs.language
+                })}
+                isForRecipient={true}
+                recipientName={`${guestInfo.recipientFirstName || ''} ${guestInfo.recipientLastName || ''}`.trim()}
+                className="mt-4"
+              />
+            )}
+          </div>
         )
       case 6:
         return (

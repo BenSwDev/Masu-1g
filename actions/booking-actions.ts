@@ -36,10 +36,13 @@ import type { z } from "zod"
 import type { CreateBookingPayloadType as CreateBookingPayloadSchemaType, CreateGuestBookingPayloadType } from "@/lib/validation/booking-schemas"
 
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
+import { smartNotificationService } from "@/lib/notifications/smart-notification-service"
+import { sendBookingConfirmationToUser, sendGuestNotification } from "@/actions/notification-actions-smart"
 import type {
   EmailRecipient,
   PhoneRecipient,
   NotificationLanguage,
+  NotificationData,
 } from "@/lib/notifications/notification-types"
 
 import type { ICoupon } from "@/lib/db/models/coupon"
@@ -719,29 +722,61 @@ export async function createBooking(
         ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
       }
 
-      // REPLACED: Instead of handling notifications directly, emit an event
-      // The event system will handle notifications and revalidations with exact same logic
+      // Send booking confirmation using smart notification system
       try {
-        const bookingEvent = createBookingEvent(
-          'booking.created',
-          String(finalBookingObject._id),
-          String(finalBookingObject.userId),
-          { booking: finalBookingObject }
-        )
+        const userId = validatedPayload.userId
+        const isBookingForSomeoneElse = validatedPayload.isBookingForSomeoneElse || false
         
-        await eventBus.emit(bookingEvent)
-        logger.info(`Booking event emitted for: ${finalBookingObject.bookingNumber}`)
+        // Get notification preferences from payload (with defaults)
+        const notificationMethods = validatedPayload.notificationMethods || ["email"]
+        const recipientNotificationMethods = validatedPayload.recipientNotificationMethods || notificationMethods
+        const notificationLanguage = validatedPayload.notificationLanguage || "he"
         
-      } catch (eventError) {
-        // Same error handling as before - log but don't fail the booking creation
-                 logger.error("Failed to emit booking event:", {
-           error: eventError instanceof Error ? eventError.message : String(eventError),
-           bookingId: String(finalBookingObject._id),
-         })
-      }
+        const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
+        const bookingAddress = finalBookingObject.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה"
+        
+        if (treatment) {
+          const bookingData = {
+            recipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : bookingUser.name,
+            bookerName: isBookingForSomeoneElse ? bookingUser.name : undefined,
+            treatmentName: treatment.name,
+            bookingDateTime: finalBookingObject.bookingDateTime,
+            bookingNumber: finalBookingObject.bookingNumber,
+            bookingAddress: bookingAddress,
+            isForSomeoneElse: isBookingForSomeoneElse,
+          }
 
-      // REMOVED: All the old notification logic has been moved to NotificationHandler
-      // This reduces the function from ~792 lines to ~150 lines
+          // Send notification to booker using their notification preferences  
+          await sendBookingConfirmationToUser(userId, bookingData)
+          
+          // Send notification to recipient if booking for someone else
+          if (isBookingForSomeoneElse && validatedPayload.recipientEmail) {
+            await sendGuestNotification(
+              validatedPayload.recipientEmail,
+              recipientNotificationMethods.includes("sms") ? (validatedPayload.recipientPhone || null) : null,
+              {
+                type: "treatment-booking-success",
+                ...bookingData,
+              },
+              notificationLanguage,
+              validatedPayload.recipientName
+            )
+          }
+        }
+        
+        logger.info("Booking notifications sent successfully using smart system", { 
+          bookingId: String(finalBookingObject._id),
+          userId,
+          isForSomeoneElse: isBookingForSomeoneElse
+        })
+        
+      } catch (notificationError) {
+        // Log but don't fail the booking creation
+        logger.error("Failed to send booking notifications:", {
+          error: notificationError instanceof Error ? notificationError.message : String(notificationError),
+          bookingId: String(finalBookingObject._id),
+        })
+      }
       logger.info(`Booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
       
       return { success: true, booking: finalBookingObject }
@@ -1813,16 +1848,18 @@ export async function updateBookingByAdmin(
 export async function createGuestBooking(
   payload: unknown,
 ): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
-  console.log("🔍 createGuestBooking called with payload:", JSON.stringify(payload, null, 2))
+  // Remove debug console.log - only use logger for production logging
   
   const validationResult = CreateGuestBookingPayloadSchema.safeParse(payload)
   if (!validationResult.success) {
-    console.log("❌ Validation failed:", validationResult.error.issues)
     logger.warn("Invalid payload for createGuestBooking:", { issues: validationResult.error.issues })
     return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
   }
   
-  console.log("✅ Validation passed")
+  logger.info("Guest booking creation initiated", { 
+    treatmentId: validationResult.data.treatmentId,
+    source: validationResult.data.source 
+  })
   
   const validatedPayload = validationResult.data as CreateGuestBookingPayloadType & {
     priceDetails: ClientCalculatedPriceDetails
@@ -1833,42 +1870,50 @@ export async function createGuestBooking(
   let updatedVoucherDetails: IGiftVoucher | null = null
 
   try {
-    console.log("🔗 Connecting to database...")
     await dbConnect()
-    console.log("✅ Database connected")
 
     // For guest bookings, use provided guest info instead of fetching user
     const guestInfo = validatedPayload.guestInfo
     if (!guestInfo || !guestInfo.name || !guestInfo.email || !guestInfo.phone) {
-      console.log("❌ Missing or invalid guest info:", guestInfo)
+      logger.warn("Missing or invalid guest info in createGuestBooking", { guestInfo })
       return { success: false, error: "bookings.errors.guestInfoRequired" }
     }
-    console.log("✅ Guest info validated:", guestInfo)
 
+    // Enhanced address validation
     let bookingAddressSnapshot: IBookingAddressSnapshot | undefined
 
     if (validatedPayload.customAddressDetails) {
-      if (!validatedPayload.customAddressDetails.fullAddress) {
-        validatedPayload.customAddressDetails.fullAddress = constructFullAddressHelper(
-          validatedPayload.customAddressDetails as Partial<IAddress>,
-        )
+      // Validate required address fields
+      const addressDetails = validatedPayload.customAddressDetails
+      if (!addressDetails.city?.trim() || !addressDetails.street?.trim()) {
+        logger.warn("Incomplete address details provided", { addressDetails })
+        return { success: false, error: "bookings.errors.incompleteAddress" }
       }
-      bookingAddressSnapshot = validatedPayload.customAddressDetails
-      console.log("✅ Address details processed:", bookingAddressSnapshot)
+
+      // Build full address safely
+      const addressParts = [
+        addressDetails.street?.trim(),
+        addressDetails.streetNumber?.trim(),
+        addressDetails.city?.trim()
+      ].filter(Boolean)
+      
+      if (!addressDetails.fullAddress) {
+        addressDetails.fullAddress = addressParts.join(" ")
+      }
+      
+      bookingAddressSnapshot = {
+        ...addressDetails,
+        fullAddress: addressDetails.fullAddress || addressParts.join(" ")
+      }
     } else {
-      console.log("❌ No address provided for guest booking")
       logger.warn("No address provided for guest booking")
       return { success: false, error: "bookings.errors.addressRequired" }
     }
 
-    console.log("🔄 Starting database transaction...")
     await mongooseDbSession.withTransaction(async () => {
-      console.log("📊 Getting next booking number...")
       const nextBookingNum = await getNextSequenceValue("bookingNumber")
       const bookingNumber = nextBookingNum.toString().padStart(6, "0")
-      console.log("📋 Booking number generated:", bookingNumber)
 
-      console.log("🏗️ Creating new booking object...")
       const newBooking = new Booking({
         ...validatedPayload,
         userId: null, // Guest booking - no user association initially
@@ -1882,7 +1927,7 @@ export async function createGuestBooking(
         recipientBirthDate: validatedPayload.recipientBirthDate,
         recipientGender: validatedPayload.recipientGender,
         bookingAddressSnapshot,
-        status: "pending_payment", // Will be updated to "in_process" after successful payment
+        status: "pending_payment",
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
           surcharges: validatedPayload.priceDetails.surcharges,
@@ -1919,16 +1964,19 @@ export async function createGuestBooking(
         professionalId: null,
       })
 
-      console.log("💾 Saving booking to database...")
       await newBooking.save({ session: mongooseDbSession })
-      console.log("✅ Booking saved successfully with ID:", newBooking._id)
+      logger.info("Guest booking created successfully", { bookingId: newBooking._id, bookingNumber })
       bookingResult = newBooking
 
       // Handle gift voucher redemption for guest bookings
       if (validatedPayload.priceDetails.appliedGiftVoucherId && validatedPayload.priceDetails.voucherAppliedAmount > 0) {
-        console.log("🎁 Processing gift voucher redemption...")
+        logger.info("Processing gift voucher redemption for guest booking", { 
+          voucherId: validatedPayload.priceDetails.appliedGiftVoucherId 
+        })
         const voucher = await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(mongooseDbSession)
-        if (!voucher || (!voucher.isActive && voucher.status !== "sent")) throw new Error("bookings.errors.voucherRedemptionFailed")
+        if (!voucher || (!voucher.isActive && voucher.status !== "sent")) {
+          throw new Error("bookings.errors.voucherRedemptionFailed")
+        }
         
         if (
           voucher.voucherType === "treatment" &&
@@ -1958,18 +2006,20 @@ export async function createGuestBooking(
         })
         
         await voucher.save({ session: mongooseDbSession })
-        console.log("✅ Gift voucher updated")
+        logger.info("Gift voucher updated successfully", { voucherId: voucher._id })
         updatedVoucherDetails = voucher
       }
 
       // Handle coupon application for guest bookings
       if (validatedPayload.priceDetails.appliedCouponId && validatedPayload.priceDetails.couponDiscount > 0) {
-        console.log("🏷️ Processing coupon application...")
+        logger.info("Processing coupon application for guest booking", { 
+          couponId: validatedPayload.priceDetails.appliedCouponId 
+        })
         const coupon = await Coupon.findById(validatedPayload.priceDetails.appliedCouponId).session(mongooseDbSession)
         if (!coupon || !coupon.isActive) throw new Error("bookings.errors.couponApplyFailed")
         coupon.timesUsed += 1
         await coupon.save({ session: mongooseDbSession })
-        console.log("✅ Coupon updated")
+        logger.info("Coupon updated successfully", { couponId: coupon._id })
       }
 
       // Handle subscription redemption for guest bookings
@@ -1977,7 +2027,9 @@ export async function createGuestBooking(
         validatedPayload.priceDetails.redeemedUserSubscriptionId &&
         validatedPayload.priceDetails.isBaseTreatmentCoveredBySubscription
       ) {
-        console.log("📋 Processing subscription redemption...")
+        logger.info("Processing subscription redemption for guest booking", { 
+          subscriptionId: validatedPayload.priceDetails.redeemedUserSubscriptionId 
+        })
         const userSub = await UserSubscription.findById(
           validatedPayload.priceDetails.redeemedUserSubscriptionId,
         ).session(mongooseDbSession)
@@ -1987,7 +2039,7 @@ export async function createGuestBooking(
         userSub.remainingQuantity -= 1
         if (userSub.remainingQuantity === 0) userSub.status = "depleted"
         await userSub.save({ session: mongooseDbSession })
-        console.log("✅ Subscription updated")
+        logger.info("Subscription updated successfully", { subscriptionId: userSub._id })
       }
 
       if (bookingResult) {
@@ -1996,13 +2048,10 @@ export async function createGuestBooking(
         }
         bookingResult.priceDetails = newBooking.priceDetails
         await bookingResult.save({ session: mongooseDbSession })
-        console.log("✅ Final booking updates saved")
       }
     })
-    console.log("✅ Database transaction completed successfully")
 
     if (bookingResult) {
-      console.log("🔄 Revalidating paths...")
       // Revalidate relevant paths
       revalidatePath("/dashboard/admin/bookings")
 
@@ -2013,155 +2062,95 @@ export async function createGuestBooking(
 
       // Send booking success notifications
       try {
-        console.log("📧 Sending booking success notifications...")
         const treatment = await Treatment.findById(finalBookingObject.treatmentId).select("name").lean()
 
         if (treatment) {
           const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
           
-          const isBookingForSomeoneElse = Boolean(validatedPayload.guestInfo.isBookingForSomeoneElse)
-          const bookerName = `${guestInfo.name}`
-          const recipientName = isBookingForSomeoneElse 
-            ? `${validatedPayload.recipientName}` 
-            : bookerName
+          // Safely get notification preferences with fallbacks
+          const isBookingForSomeoneElse = Boolean(validatedPayload.recipientName && validatedPayload.recipientEmail)
+          const bookerName = guestInfo.name
+          const recipientName = isBookingForSomeoneElse ? validatedPayload.recipientName! : bookerName
           
           const bookingAddress = finalBookingObject.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה"
           
-          // Prepare notification recipients
-          const recipients = []
+          // Get notification preferences from payload (with defaults)
+          const notificationMethods = validatedPayload.notificationMethods || ["email"]
+          const recipientNotificationMethods = validatedPayload.recipientNotificationMethods || notificationMethods
+          const notificationLanguage = validatedPayload.notificationLanguage || "he"
           
-          // Add booker notification
-          const bookerNotificationMethod = validatedPayload.guestInfo.bookerNotificationMethod || "email"
-          const bookerNotificationLanguage = validatedPayload.guestInfo.bookerNotificationLanguage || "he"
-          
-          if (bookerNotificationMethod === "email" || bookerNotificationMethod === "both") {
-            recipients.push({
-              type: "email" as const,
-              value: guestInfo.email,
-              name: bookerName,
-              language: bookerNotificationLanguage,
-            })
-          }
-          
-          if (bookerNotificationMethod === "sms" || bookerNotificationMethod === "both") {
-            recipients.push({
-              type: "phone" as const,
-              value: guestInfo.phone,
-              language: bookerNotificationLanguage,
-            })
-          }
-          
-          // Add recipient notification if booking for someone else
-          if (isBookingForSomeoneElse && validatedPayload.recipientEmail && validatedPayload.recipientPhone) {
-            const recipientNotificationMethod = validatedPayload.guestInfo.recipientNotificationMethod || "email"
-            const recipientNotificationLanguage = validatedPayload.guestInfo.recipientNotificationLanguage || "he"
-            
-            if (recipientNotificationMethod === "email" || recipientNotificationMethod === "both") {
-              recipients.push({
-                type: "email" as const,
-                value: validatedPayload.recipientEmail,
-                name: recipientName,
-                language: recipientNotificationLanguage,
-              })
-            }
-            
-            if (recipientNotificationMethod === "sms" || recipientNotificationMethod === "both") {
-              recipients.push({
-                type: "phone" as const,
-                value: validatedPayload.recipientPhone,
-                language: recipientNotificationLanguage,
-              })
-            }
-          }
-          
-          // Send notifications
-          if (recipients.length > 0) {
-            if (isBookingForSomeoneElse) {
-              // Send separate notifications for booker and recipient
-              const bookerRecipients = recipients.filter(r => 
-                r.value === guestInfo.email || r.value === guestInfo.phone
-              )
-              const recipientRecipients = recipients.filter(r => 
-                r.value === validatedPayload.recipientEmail || r.value === validatedPayload.recipientPhone
-              )
-              
-              // Send notification to booker (special message for booking for someone else)
-              if (bookerRecipients.length > 0) {
-                const bookerNotificationResults = await unifiedNotificationService.sendTreatmentBookingSuccess(bookerRecipients, {
-                  recipientName: bookerName, // For booker message
-                  bookerName: bookerName,
-                  treatmentName: treatment.name,
-                  bookingDateTime: finalBookingObject.bookingDateTime,
-                  bookingNumber: finalBookingObject.bookingNumber,
-                  bookingAddress: bookingAddress,
-                  isForSomeoneElse: false, // This will trigger the "booking completed" message
-                  isBookerForSomeoneElse: true, // Special flag to indicate this is booker who booked for someone else
-                  actualRecipientName: recipientName, // The person they booked for
-                })
-                console.log("✅ Booker notifications sent:", bookerNotificationResults)
-              }
-              
-              // Send notification to recipient
-              if (recipientRecipients.length > 0) {
-                const recipientNotificationResults = await unifiedNotificationService.sendTreatmentBookingSuccess(recipientRecipients, {
-                  recipientName: recipientName,
-                  bookerName: bookerName,
-                  treatmentName: treatment.name,
-                  bookingDateTime: finalBookingObject.bookingDateTime,
-                  bookingNumber: finalBookingObject.bookingNumber,
-                  bookingAddress: bookingAddress,
-                  isForSomeoneElse: true, // Recipient gets "someone booked for you" message
-                })
-                console.log("✅ Recipient notifications sent:", recipientNotificationResults)
-              }
-            } else {
-              // Single notification for self-booking
-              const notificationResults = await unifiedNotificationService.sendTreatmentBookingSuccess(recipients, {
-                recipientName: recipientName,
-                bookerName: undefined,
-                treatmentName: treatment.name,
-                bookingDateTime: finalBookingObject.bookingDateTime,
-                bookingNumber: finalBookingObject.bookingNumber,
-                bookingAddress: bookingAddress,
-                isForSomeoneElse: false,
-              })
-              console.log("✅ Self-booking notifications sent:", notificationResults)
-            }
+          const bookingData: NotificationData = {
+            type: "treatment-booking-success",
+            recipientName: recipientName,
+            bookerName: isBookingForSomeoneElse ? bookerName : undefined,
+            treatmentName: treatment.name,
+            bookingDateTime: finalBookingObject.bookingDateTime,
+            bookingNumber: finalBookingObject.bookingNumber,
+            bookingAddress: bookingAddress,
+            isForSomeoneElse: isBookingForSomeoneElse,
           }
 
-          logger.info(`Guest booking status: ${finalBookingObject.status}, Number: ${finalBookingObject.bookingNumber}`)
+          // Send notification to booker (guest) using smart system
+          await sendGuestNotification(
+            guestInfo.email,
+            notificationMethods.includes("sms") ? guestInfo.phone : null,
+            bookingData,
+            notificationLanguage,
+            bookerName
+          )
+          
+          // Send notification to recipient if booking for someone else
+          if (isBookingForSomeoneElse && validatedPayload.recipientEmail) {
+            await sendGuestNotification(
+              validatedPayload.recipientEmail,
+              recipientNotificationMethods.includes("sms") ? validatedPayload.recipientPhone : null,
+              bookingData,
+              notificationLanguage,
+              recipientName
+            )
+          }
+          
+          logger.info("Guest booking notifications sent successfully using smart system", { 
+            bookingId: finalBookingObject._id,
+            bookerMethods: notificationMethods,
+            recipientMethods: isBookingForSomeoneElse ? recipientNotificationMethods : null,
+            language: notificationLanguage
+          })
         }
       } catch (notificationError) {
-        console.log("⚠️ Failed to send notification:", notificationError)
         logger.error("Failed to send notification for guest booking:", {
           bookingId: finalBookingObject._id.toString(),
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
         })
+        // Don't fail the booking if notifications fail
       }
 
-      logger.info(`Guest booking created successfully`, {
+      logger.info("Guest booking created successfully", {
         bookingId: finalBookingObject._id.toString(),
         bookingNumber: finalBookingObject.bookingNumber,
         guestEmail: guestInfo.email,
       })
 
-      console.log("🎉 Guest booking process completed successfully!")
       return { success: true, booking: finalBookingObject }
     }
 
-    console.log("❌ No booking result returned from transaction")
+    logger.error("No booking result returned from transaction")
     return { success: false, error: "bookings.errors.creationFailed" }
   } catch (error) {
     await mongooseDbSession.abortTransaction()
-    console.error("💥 Error creating guest booking:", error)
     logger.error("Error creating guest booking:", {
       error: error instanceof Error ? error.message : String(error),
       guestInfo: validatedPayload.guestInfo,
     })
-    return { success: false, error: error instanceof Error ? error.message : "bookings.errors.creationFailed" }
+    
+    // Return appropriate error message
+    const errorMessage = error instanceof Error ? error.message : "bookings.errors.creationFailed"
+    return { 
+      success: false, 
+      error: errorMessage.startsWith("bookings.errors.") ? errorMessage : "bookings.errors.creationFailed" 
+    }
   } finally {
     await mongooseDbSession.endSession()
-    console.log("🔚 Database session ended")
   }
 }
 
@@ -2237,65 +2226,75 @@ export async function createGuestUser(guestInfo: {
   gender?: "male" | "female" | "other"
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
   try {
-    console.log("🔍 Creating guest user with info:", guestInfo)
-    console.log("🔍 Guest info type check:", {
-      firstName: typeof guestInfo.firstName,
-      lastName: typeof guestInfo.lastName,
-      email: typeof guestInfo.email,
-      phone: typeof guestInfo.phone,
-      birthDate: typeof guestInfo.birthDate,
-      gender: typeof guestInfo.gender
-    })
-    console.log("🔍 Guest info values:", {
-      firstName: guestInfo.firstName,
-      lastName: guestInfo.lastName,
+    // Validate input data
+    if (!guestInfo.firstName?.trim() || !guestInfo.lastName?.trim()) {
+      return { success: false, error: "First name and last name are required" }
+    }
+    
+    if (!guestInfo.email?.trim() || !guestInfo.phone?.trim()) {
+      return { success: false, error: "Email and phone are required" }
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(guestInfo.email.trim())) {
+      return { success: false, error: "Invalid email format" }
+    }
+
+    // Validate phone format (basic Israeli phone validation)
+    const phoneRegex = /^(\+972|0)?[5-9]\d{8}$/
+    if (!phoneRegex.test(guestInfo.phone.replace(/[-\s]/g, ""))) {
+      return { success: false, error: "Invalid phone format" }
+    }
+
+    logger.info("Creating guest user", { 
       email: guestInfo.email,
-      phone: guestInfo.phone,
-      birthDate: guestInfo.birthDate,
-      gender: guestInfo.gender
+      phone: guestInfo.phone 
     })
+    
     await dbConnect()
 
     // Check if user already exists with this email or phone
     const existingUser = await User.findOne({
       $or: [
-        { email: guestInfo.email },
-        { phone: guestInfo.phone }
+        { email: guestInfo.email.trim().toLowerCase() },
+        { phone: guestInfo.phone.replace(/[-\s]/g, "") }
       ]
     })
 
     if (existingUser) {
-      console.log("✅ Found existing user:", existingUser._id.toString())
-      console.log("🔍 Existing user roles:", existingUser.roles)
+      logger.info("Found existing user for guest booking", { 
+        userId: existingUser._id.toString(),
+        existingRoles: existingUser.roles 
+      })
       
-      // Clean up invalid roles and ensure guest role is present
-      const validRoles = existingUser.roles.filter((role: string) => 
-        ['member', 'professional', 'partner', 'admin', 'guest'].includes(role)
-      )
-      
-      if (!validRoles.includes(UserRole.GUEST)) {
-        validRoles.push(UserRole.GUEST)
-      }
-      
-      // Update roles if they changed
-      if (JSON.stringify(validRoles) !== JSON.stringify(existingUser.roles)) {
-        existingUser.roles = validRoles
-        console.log("🔧 Updating user roles from:", existingUser.roles, "to:", validRoles)
+      // Safely ensure guest role is present without unsafe manipulation
+      if (!existingUser.roles.includes(UserRole.GUEST)) {
+        // Only add guest role if it's not already present
+        const updatedRoles = [...existingUser.roles, UserRole.GUEST]
+        existingUser.roles = updatedRoles
         await existingUser.save()
-        console.log("✅ Updated user roles successfully")
+        logger.info("Added guest role to existing user", { 
+          userId: existingUser._id.toString(),
+          newRoles: updatedRoles 
+        })
       }
       
       return { success: true, userId: existingUser._id.toString() }
     }
 
-    // Create new guest user
+    // Generate secure random password for guest user
+    const crypto = require('crypto')
+    const randomPassword = crypto.randomBytes(16).toString('hex')
+
+    // Create new guest user with validated data
     const guestUser = new User({
-      name: `${guestInfo.firstName} ${guestInfo.lastName}`,
-      email: guestInfo.email,
-      phone: guestInfo.phone,
+      name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
+      email: guestInfo.email.trim().toLowerCase(),
+      phone: guestInfo.phone.replace(/[-\s]/g, ""),
       gender: guestInfo.gender || "other",
       dateOfBirth: guestInfo.birthDate,
-      password: Math.random().toString(36).substring(2, 15), // Random password for guest
+      password: randomPassword, // Secure random password
       roles: [UserRole.GUEST],
       activeRole: UserRole.GUEST,
       emailVerified: null,
@@ -2304,7 +2303,6 @@ export async function createGuestUser(guestInfo: {
 
     await guestUser.save()
     
-    console.log("✅ Guest user created successfully:", guestUser._id.toString())
     logger.info("Guest user created successfully", {
       userId: guestUser._id.toString(),
       email: guestInfo.email,
@@ -2312,18 +2310,22 @@ export async function createGuestUser(guestInfo: {
 
     return { success: true, userId: guestUser._id.toString() }
   } catch (error) {
-    console.error("❌ Error creating guest user:", error)
-    logger.error("Error creating guest user:", { error, guestInfo })
+    logger.error("Error creating guest user:", { 
+      error: error instanceof Error ? error.message : String(error),
+      email: guestInfo.email 
+    })
     
-    // Return more specific error message
+    // Return appropriate error messages based on error type
     if (error instanceof Error) {
-      if (error.message.includes('duplicate key')) {
+      if (error.message.includes('duplicate key') || error.code === 11000) {
         return { success: false, error: "User with this email or phone already exists" }
       }
-      if (error.message.includes('validation')) {
+      if (error.message.includes('validation') || error.name === 'ValidationError') {
         return { success: false, error: "Invalid user data provided" }
       }
-      return { success: false, error: error.message }
+      if (error.message.includes('required')) {
+        return { success: false, error: "Required fields missing" }
+      }
     }
     
     return { success: false, error: "Failed to create guest user" }
@@ -2341,7 +2343,20 @@ export async function saveAbandonedBooking(
   }
 ): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   try {
-    console.log("💾 Saving abandoned booking for user:", userId, "step:", formData.currentStep)
+    // Validate input parameters
+    if (!userId?.trim()) {
+      return { success: false, error: "User ID is required" }
+    }
+
+    if (typeof formData.currentStep !== 'number' || formData.currentStep < 0) {
+      return { success: false, error: "Valid current step is required" }
+    }
+
+    logger.info("Saving abandoned booking", { 
+      userId, 
+      currentStep: formData.currentStep 
+    })
+    
     await dbConnect()
 
     // Check if there's already an abandoned booking for this user
@@ -2351,117 +2366,118 @@ export async function saveAbandonedBooking(
     }).sort({ createdAt: -1 })
 
     if (existingAbandoned) {
-      // Update existing abandoned booking
-      existingAbandoned.formState = {
-        currentStep: formData.currentStep,
-        guestInfo: formData.guestInfo,
-        guestAddress: formData.guestAddress,
-        bookingOptions: formData.bookingOptions,
-        calculatedPrice: formData.calculatedPrice,
-        savedAt: new Date(),
+      // Update existing abandoned booking safely
+      const updateData: any = {
+        formState: {
+          currentStep: formData.currentStep,
+          guestInfo: formData.guestInfo || null,
+          guestAddress: formData.guestAddress || null,
+          bookingOptions: formData.bookingOptions || null,
+          calculatedPrice: formData.calculatedPrice || null,
+          savedAt: new Date(),
+        }
       }
       
-      // Update other fields if they exist
+      // Update other fields if they exist with safe defaults
       if (formData.guestInfo?.firstName && formData.guestInfo?.lastName) {
-        existingAbandoned.bookedByUserName = `${formData.guestInfo.firstName} ${formData.guestInfo.lastName}`
-        existingAbandoned.bookedByUserEmail = formData.guestInfo.email || ""
-        existingAbandoned.bookedByUserPhone = formData.guestInfo.phone || ""
+        updateData.bookedByUserName = `${formData.guestInfo.firstName.trim()} ${formData.guestInfo.lastName.trim()}`
+        updateData.bookedByUserEmail = formData.guestInfo.email?.trim() || ""
+        updateData.bookedByUserPhone = formData.guestInfo.phone?.replace(/[-\s]/g, "") || ""
       }
       
       if (formData.bookingOptions?.selectedTreatmentId) {
-        existingAbandoned.treatmentId = new mongoose.Types.ObjectId(formData.bookingOptions.selectedTreatmentId)
+        try {
+          updateData.treatmentId = new mongoose.Types.ObjectId(formData.bookingOptions.selectedTreatmentId)
+        } catch (error) {
+          logger.warn("Invalid treatment ID in abandoned booking", { 
+            treatmentId: formData.bookingOptions.selectedTreatmentId 
+          })
+        }
       }
       
       if (formData.bookingOptions?.selectedDurationId) {
-        existingAbandoned.selectedDurationId = new mongoose.Types.ObjectId(formData.bookingOptions.selectedDurationId)
+        try {
+          updateData.selectedDurationId = new mongoose.Types.ObjectId(formData.bookingOptions.selectedDurationId)
+        } catch (error) {
+          logger.warn("Invalid duration ID in abandoned booking", { 
+            durationId: formData.bookingOptions.selectedDurationId 
+          })
+        }
       }
       
+      // Safely parse booking date and time
       if (formData.bookingOptions?.bookingDate && formData.bookingOptions?.bookingTime) {
-        const date = new Date(formData.bookingOptions.bookingDate)
-        const [hours, minutes] = formData.bookingOptions.bookingTime.split(":").map(Number)
-        date.setHours(hours, minutes, 0, 0)
-        existingAbandoned.bookingDateTime = date
+        try {
+          const date = new Date(formData.bookingOptions.bookingDate)
+          const timeParts = formData.bookingOptions.bookingTime.split(":")
+          if (timeParts.length >= 2) {
+            const hours = parseInt(timeParts[0], 10)
+            const minutes = parseInt(timeParts[1], 10)
+            if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
+              date.setHours(hours, minutes, 0, 0)
+              updateData.bookingDateTime = date
+            }
+          }
+        } catch (error) {
+          logger.warn("Invalid date/time in abandoned booking", { 
+            date: formData.bookingOptions.bookingDate,
+            time: formData.bookingOptions.bookingTime 
+          })
+        }
       }
 
+      // Update the existing booking
+      Object.assign(existingAbandoned, updateData)
       await existingAbandoned.save()
       
-      console.log("✅ Updated existing abandoned booking:", existingAbandoned._id.toString())
+      logger.info("Updated existing abandoned booking", { 
+        bookingId: existingAbandoned._id.toString(),
+        currentStep: formData.currentStep 
+      })
       return { success: true, bookingId: existingAbandoned._id.toString() }
     }
 
-    // Create new abandoned booking record with minimal required fields
-    const abandonedBooking = new Booking({
+    // Create new abandoned booking record with safe defaults
+    const abandonedBookingData: any = {
       userId: new mongoose.Types.ObjectId(userId),
       bookingNumber: `ABANDONED-${Date.now()}`,
       status: "pending_payment",
-      bookedByUserName: formData.guestInfo?.firstName ? `${formData.guestInfo.firstName} ${formData.guestInfo.lastName}` : "Guest User",
-      bookedByUserEmail: formData.guestInfo?.email || "",
-      bookedByUserPhone: formData.guestInfo?.phone || "",
-      recipientName: formData.guestInfo?.isBookingForSomeoneElse 
-        ? `${formData.guestInfo.recipientFirstName} ${formData.guestInfo.recipientLastName}`
-        : formData.guestInfo?.firstName ? `${formData.guestInfo.firstName} ${formData.guestInfo.lastName}` : "Guest User",
+      bookedByUserName: formData.guestInfo?.firstName && formData.guestInfo?.lastName 
+        ? `${formData.guestInfo.firstName.trim()} ${formData.guestInfo.lastName.trim()}` 
+        : "Guest User",
+      bookedByUserEmail: formData.guestInfo?.email?.trim() || "",
+      bookedByUserPhone: formData.guestInfo?.phone?.replace(/[-\s]/g, "") || "",
+      recipientName: formData.guestInfo?.isBookingForSomeoneElse && formData.guestInfo.recipientFirstName && formData.guestInfo.recipientLastName
+        ? `${formData.guestInfo.recipientFirstName.trim()} ${formData.guestInfo.recipientLastName.trim()}`
+        : formData.guestInfo?.firstName && formData.guestInfo?.lastName 
+          ? `${formData.guestInfo.firstName.trim()} ${formData.guestInfo.lastName.trim()}` 
+          : "Guest User",
       recipientEmail: formData.guestInfo?.isBookingForSomeoneElse 
-        ? formData.guestInfo.recipientEmail
-        : formData.guestInfo?.email,
+        ? formData.guestInfo.recipientEmail?.trim()
+        : formData.guestInfo?.email?.trim(),
       recipientPhone: formData.guestInfo?.isBookingForSomeoneElse 
-        ? formData.guestInfo.recipientPhone
-        : formData.guestInfo?.phone,
+        ? formData.guestInfo.recipientPhone?.replace(/[-\s]/g, "")
+        : formData.guestInfo?.phone?.replace(/[-\s]/g, ""),
       recipientBirthDate: formData.guestInfo?.isBookingForSomeoneElse 
         ? formData.guestInfo.recipientBirthDate
         : formData.guestInfo?.birthDate,
       recipientGender: formData.guestInfo?.isBookingForSomeoneElse 
         ? formData.guestInfo.recipientGender
         : formData.guestInfo?.gender,
-      treatmentId: formData.bookingOptions?.selectedTreatmentId ? new mongoose.Types.ObjectId(formData.bookingOptions.selectedTreatmentId) : undefined,
-      selectedDurationId: formData.bookingOptions?.selectedDurationId ? new mongoose.Types.ObjectId(formData.bookingOptions.selectedDurationId) : undefined,
-      bookingDateTime: formData.bookingOptions?.bookingDate && formData.bookingOptions?.bookingTime 
-        ? (() => {
-            const date = new Date(formData.bookingOptions.bookingDate)
-            const [hours, minutes] = formData.bookingOptions.bookingTime.split(":").map(Number)
-            date.setHours(hours, minutes, 0, 0)
-            return date
-          })()
-        : new Date(),
       therapistGenderPreference: formData.bookingOptions?.therapistGenderPreference || "any",
       source: "new_purchase",
-      bookingAddressSnapshot: formData.guestAddress ? {
-        fullAddress: `${formData.guestAddress.street || ""} ${formData.guestAddress.houseNumber || ""}, ${formData.guestAddress.city || ""}`,
-        city: formData.guestAddress.city || "",
-        street: formData.guestAddress.street || "",
-        streetNumber: formData.guestAddress.houseNumber || "",
-        apartment: formData.guestAddress.apartmentNumber,
-        entrance: formData.guestAddress.entrance,
-        floor: formData.guestAddress.floor,
-        notes: formData.guestAddress.notes,
-        doorName: formData.guestAddress.doorName,
-        buildingName: formData.guestAddress.buildingName,
-        hotelName: formData.guestAddress.hotelName,
-        roomNumber: formData.guestAddress.roomNumber,
-        otherInstructions: formData.guestAddress.instructions,
-        hasPrivateParking: formData.guestAddress.parking || false,
-      } : undefined,
-      priceDetails: formData.calculatedPrice ? {
-        basePrice: formData.calculatedPrice.basePrice || 0,
-        surcharges: formData.calculatedPrice.surcharges || [],
-        totalSurchargesAmount: formData.calculatedPrice.totalSurchargesAmount || 0,
-        treatmentPriceAfterSubscriptionOrTreatmentVoucher: formData.calculatedPrice.treatmentPriceAfterSubscriptionOrTreatmentVoucher || 0,
-        discountAmount: formData.calculatedPrice.couponDiscount || 0,
-        voucherAppliedAmount: formData.calculatedPrice.voucherAppliedAmount || 0,
-        finalAmount: formData.calculatedPrice.finalAmount || 0,
-        isBaseTreatmentCoveredBySubscription: formData.calculatedPrice.isBaseTreatmentCoveredBySubscription || false,
-        isBaseTreatmentCoveredByTreatmentVoucher: formData.calculatedPrice.isBaseTreatmentCoveredByTreatmentVoucher || false,
-        isFullyCoveredByVoucherOrSubscription: formData.calculatedPrice.isFullyCoveredByVoucherOrSubscription || false,
-      } : {
-        basePrice: 0,
-        surcharges: [],
-        totalSurchargesAmount: 0,
-        treatmentPriceAfterSubscriptionOrTreatmentVoucher: 0,
-        discountAmount: 0,
-        voucherAppliedAmount: 0,
-        finalAmount: 0,
-        isBaseTreatmentCoveredBySubscription: false,
-        isBaseTreatmentCoveredByTreatmentVoucher: false,
-        isFullyCoveredByVoucherOrSubscription: false,
+      bookingDateTime: new Date(),
+      priceDetails: {
+        basePrice: formData.calculatedPrice?.basePrice || 0,
+        surcharges: Array.isArray(formData.calculatedPrice?.surcharges) ? formData.calculatedPrice.surcharges : [],
+        totalSurchargesAmount: formData.calculatedPrice?.totalSurchargesAmount || 0,
+        treatmentPriceAfterSubscriptionOrTreatmentVoucher: formData.calculatedPrice?.treatmentPriceAfterSubscriptionOrTreatmentVoucher || 0,
+        discountAmount: formData.calculatedPrice?.couponDiscount || 0,
+        voucherAppliedAmount: formData.calculatedPrice?.voucherAppliedAmount || 0,
+        finalAmount: formData.calculatedPrice?.finalAmount || 0,
+        isBaseTreatmentCoveredBySubscription: Boolean(formData.calculatedPrice?.isBaseTreatmentCoveredBySubscription),
+        isBaseTreatmentCoveredByTreatmentVoucher: Boolean(formData.calculatedPrice?.isBaseTreatmentCoveredByTreatmentVoucher),
+        isFullyCoveredByVoucherOrSubscription: Boolean(formData.calculatedPrice?.isFullyCoveredByVoucherOrSubscription),
       },
       paymentDetails: {
         paymentStatus: "pending",
@@ -2470,27 +2486,93 @@ export async function saveAbandonedBooking(
       // Store form state for recovery
       formState: {
         currentStep: formData.currentStep,
-        guestInfo: formData.guestInfo,
-        guestAddress: formData.guestAddress,
-        bookingOptions: formData.bookingOptions,
-        calculatedPrice: formData.calculatedPrice,
+        guestInfo: formData.guestInfo || null,
+        guestAddress: formData.guestAddress || null,
+        bookingOptions: formData.bookingOptions || null,
+        calculatedPrice: formData.calculatedPrice || null,
         savedAt: new Date(),
       },
-    })
+    }
 
+    // Add optional fields with validation
+    if (formData.bookingOptions?.selectedTreatmentId) {
+      try {
+        abandonedBookingData.treatmentId = new mongoose.Types.ObjectId(formData.bookingOptions.selectedTreatmentId)
+      } catch (error) {
+        logger.warn("Invalid treatment ID, skipping", { treatmentId: formData.bookingOptions.selectedTreatmentId })
+      }
+    }
+
+    if (formData.bookingOptions?.selectedDurationId) {
+      try {
+        abandonedBookingData.selectedDurationId = new mongoose.Types.ObjectId(formData.bookingOptions.selectedDurationId)
+      } catch (error) {
+        logger.warn("Invalid duration ID, skipping", { durationId: formData.bookingOptions.selectedDurationId })
+      }
+    }
+
+    // Safely handle booking date and time
+    if (formData.bookingOptions?.bookingDate && formData.bookingOptions?.bookingTime) {
+      try {
+        const date = new Date(formData.bookingOptions.bookingDate)
+        const timeParts = formData.bookingOptions.bookingTime.split(":")
+        if (timeParts.length >= 2) {
+          const hours = parseInt(timeParts[0], 10)
+          const minutes = parseInt(timeParts[1], 10)
+          if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
+            date.setHours(hours, minutes, 0, 0)
+            abandonedBookingData.bookingDateTime = date
+          }
+        }
+      } catch (error) {
+        logger.warn("Invalid date/time, using current time", { 
+          date: formData.bookingOptions.bookingDate,
+          time: formData.bookingOptions.bookingTime 
+        })
+      }
+    }
+
+    // Safely handle address
+    if (formData.guestAddress) {
+      const addressParts = [
+        formData.guestAddress.street?.trim(),
+        formData.guestAddress.houseNumber?.trim(),
+        formData.guestAddress.city?.trim()
+      ].filter(Boolean)
+      
+      abandonedBookingData.bookingAddressSnapshot = {
+        fullAddress: addressParts.length > 0 ? addressParts.join(" ") : "כתובת לא זמינה",
+        city: formData.guestAddress.city?.trim() || "",
+        street: formData.guestAddress.street?.trim() || "",
+        streetNumber: formData.guestAddress.houseNumber?.trim() || "",
+        apartment: formData.guestAddress.apartmentNumber?.trim(),
+        entrance: formData.guestAddress.entrance?.trim(),
+        floor: formData.guestAddress.floor?.trim(),
+        notes: formData.guestAddress.notes?.trim(),
+        doorName: formData.guestAddress.doorName?.trim(),
+        buildingName: formData.guestAddress.buildingName?.trim(),
+        hotelName: formData.guestAddress.hotelName?.trim(),
+        roomNumber: formData.guestAddress.roomNumber?.trim(),
+        otherInstructions: formData.guestAddress.instructions?.trim(),
+        hasPrivateParking: Boolean(formData.guestAddress.parking),
+      }
+    }
+
+    const abandonedBooking = new Booking(abandonedBookingData)
     await abandonedBooking.save()
     
-    console.log("✅ Created new abandoned booking:", abandonedBooking._id.toString())
-    logger.info("Abandoned booking saved", {
+    logger.info("Created new abandoned booking", { 
       bookingId: abandonedBooking._id.toString(),
-      userId,
-      currentStep: formData.currentStep,
+      currentStep: formData.currentStep 
     })
-
     return { success: true, bookingId: abandonedBooking._id.toString() }
   } catch (error) {
-    console.error("❌ Error saving abandoned booking:", error)
-    logger.error("Error saving abandoned booking:", { error, userId, formData })
+    logger.error("Error saving abandoned booking:", { 
+      error: error instanceof Error ? error.message : String(error),
+      userId,
+      currentStep: formData.currentStep 
+    })
+    
     return { success: false, error: "Failed to save abandoned booking" }
   }
 }
@@ -2557,25 +2639,44 @@ export async function updateBookingStatusAfterPayment(
           calculatedAt: new Date()
         }))
         
-        console.log(`💾 Saved ${booking.suitableProfessionals.length} suitable professionals to booking ${bookingId}`)
+        logger.info("Saved suitable professionals to booking", { 
+          bookingId, 
+          professionalCount: booking.suitableProfessionals.length 
+        })
       }
       
       await booking.save()
       
       if (suitableProfessionals.success && suitableProfessionals.professionals && suitableProfessionals.professionals.length > 0) {
-        console.log(`Found ${suitableProfessionals.professionals.length} suitable professionals for booking ${bookingId}`)
+        logger.info("Found suitable professionals for booking", { 
+          bookingId,
+          professionalCount: suitableProfessionals.professionals.length 
+        })
         
         // Send SMS notifications to all suitable professionals
-        const { sendProfessionalNotifications } = await import("@/actions/professional-sms-actions")
-        const smsResult = await sendProfessionalNotifications(bookingId)
-        
-        if (smsResult.success) {
-          console.log(`✅ Sent SMS to ${smsResult.sentCount} professionals for booking ${bookingId}`)
-        } else {
-          console.error(`❌ Failed to send SMS notifications for booking ${bookingId}:`, smsResult.error)
+        try {
+          const { sendProfessionalNotifications } = await import("@/actions/professional-sms-actions")
+          const smsResult = await sendProfessionalNotifications(bookingId)
+          
+          if (smsResult.success) {
+            logger.info("Sent SMS notifications to professionals", { 
+              bookingId,
+              sentCount: smsResult.sentCount 
+            })
+          } else {
+            logger.error("Failed to send SMS notifications to professionals", { 
+              bookingId,
+              error: smsResult.error 
+            })
+          }
+        } catch (error) {
+          logger.error("Error sending SMS notifications", { 
+            bookingId,
+            error: error instanceof Error ? error.message : String(error) 
+          })
         }
       } else {
-        console.log(`⚠️ No suitable professionals found for booking ${bookingId}`)
+        logger.warn("No suitable professionals found for booking", { bookingId })
       }
       
       // TODO: Send confirmation notifications to user
@@ -2595,8 +2696,12 @@ export async function updateBookingStatusAfterPayment(
       
       return { success: true, booking: booking.toObject() as IBooking }
     }
-  } catch (error) {
-    console.error("Error updating booking status after payment:", error)
+      } catch (error) {
+    logger.error("Error updating booking status after payment:", {
+      bookingId,
+      paymentStatus,
+      error: error instanceof Error ? error.message : String(error)
+    })
     return { success: false, error: "Failed to update booking status" }
   }
 }
@@ -2676,15 +2781,21 @@ export async function findSuitableProfessionals(
       )
     }
     
-    console.log(`🔍 Found ${professionals.length} suitable professionals for booking ${bookingId}:`)
-    console.log(`   - Treatment: ${treatmentId}`)
-    console.log(`   - City: ${cityName}`)
-    console.log(`   - Gender preference: ${genderPreference || 'any'}`)
-    console.log(`   - Duration: ${durationId || 'any'}`)
+    logger.info("Found suitable professionals for booking", {
+      bookingId,
+      professionalCount: professionals.length,
+      treatmentId,
+      cityName,
+      genderPreference: genderPreference || 'any',
+      durationId: durationId || 'any'
+    })
     
     return { success: true, professionals }
   } catch (error) {
-    console.error("Error finding suitable professionals:", error)
+    logger.error("Error finding suitable professionals:", {
+      bookingId,
+      error: error instanceof Error ? error.message : String(error)
+    })
     return { success: false, error: "Failed to find suitable professionals" }
   }
 }

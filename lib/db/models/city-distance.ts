@@ -1,4 +1,19 @@
-import mongoose, { Schema, Document } from "mongoose"
+import mongoose, { Schema, Document, Model } from "mongoose"
+
+// Static methods interfaces
+interface ICityStaticMethods {
+  calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number
+  populateDistances(): Promise<void>
+  calculateDistancesForNewCity(newCityId: string): Promise<void>
+}
+
+interface ICityDistanceStaticMethods {
+  findCitiesWithinDistance(fromCityName: string, maxDistanceKm: number): any
+  getCoveredCities(cityName: string, distanceRadius: string): any
+}
+
+type CityModel = Model<ICity> & ICityStaticMethods
+type CityDistanceModel = Model<ICityDistance> & ICityDistanceStaticMethods
 
 // City interface - unified coordinates format
 export interface ICity extends Document {
@@ -108,7 +123,7 @@ CityDistanceSchema.statics.getCoveredCities = function(
     }).select('name').sort({ name: 1 })
   }
   
-  return this.findCitiesWithinDistance(cityName, maxDistance)
+  return (this as any).findCitiesWithinDistance(cityName, maxDistance)
 }
 
 // Method to calculate distance between two coordinates (Haversine formula)
@@ -139,7 +154,7 @@ CitySchema.statics.populateDistances = async function() {
       const city1 = cities[i]
       const city2 = cities[j]
       
-      const distance = this.calculateDistance(
+      const distance = (this as any).calculateDistance(
         city1.coordinates.lat,
         city1.coordinates.lng,
         city2.coordinates.lat,
@@ -189,7 +204,7 @@ CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: stri
   const CityDistance = mongoose.models.CityDistance
   
   for (const existingCity of existingCities) {
-    const distance = this.calculateDistance(
+    const distance = (this as any).calculateDistance(
       newCity.coordinates.lat,
       newCity.coordinates.lng,
       existingCity.coordinates.lat,
@@ -223,7 +238,7 @@ CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: stri
   }
 }
 
-export const City = mongoose.models.City || mongoose.model<ICity>("City", CitySchema)
-export const CityDistance = mongoose.models.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
+export const City = (mongoose.models.City || mongoose.model<ICity>("City", CitySchema)) as CityModel
+export const CityDistance = (mongoose.models.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)) as CityDistanceModel
 
 export default City 

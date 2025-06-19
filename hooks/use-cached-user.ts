@@ -7,9 +7,9 @@ import { getCacheItem, setCacheItem, CACHE_KEYS, CACHE_EXPIRY } from "@/lib/cach
 // Define types for cached user data (only non-sensitive information)
 export interface CachedUserProfile {
   id: string
-  name: string | null
-  email: string | null
-  image: string | null
+  name: string | null | undefined
+  email: string | null | undefined
+  image: string | null | undefined
   roles: string[]
   activeRole: string
   lastUpdated: number

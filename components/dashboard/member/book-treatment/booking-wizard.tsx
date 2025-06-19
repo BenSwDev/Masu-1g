@@ -20,6 +20,7 @@ import SchedulingStep from "./steps/scheduling-step"
 import SummaryStep from "./steps/summary-step"
 import PaymentStep from "./steps/payment-step"
 import BookingConfirmation from "./steps/booking-confirmation"
+import NotificationPreferencesSelector from "@/components/booking/notification-preferences-selector"
 
 import { calculateBookingPrice, createBooking, getAvailableTimeSlots } from "@/actions/booking-actions"
 import type { UserSessionData } from "@/types/next-auth"
@@ -75,6 +76,16 @@ export default function BookingWizard({
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false)
   const [bookingResult, setBookingResult] = useState<IBooking | null>(null)
   const [workingHoursNote, setWorkingHoursNote] = useState<string | undefined>(undefined)
+  
+  // Notification preferences state
+  const [notificationPreferences, setNotificationPreferences] = useState({
+    methods: ["email"] as ("email" | "sms")[],
+    language: "he" as "he" | "en" | "ru"
+  })
+  const [recipientNotificationPreferences, setRecipientNotificationPreferences] = useState({
+    methods: ["email"] as ("email" | "sms")[],
+    language: "he" as "he" | "en" | "ru"
+  })
 
   const { toast } = useToast()
   // const translations = useMemo(() => initialData.translations || {}, [initialData.translations])
@@ -287,6 +298,10 @@ export default function BookingWizard({
       recipientPhone: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientPhone : undefined,
       recipientEmail: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientEmail : undefined,
       recipientBirthDate: bookingOptions.isBookingForSomeoneElse ? bookingOptions.recipientBirthDate : undefined,
+      // Add notification preferences
+      notificationMethods: notificationPreferences.methods,
+      recipientNotificationMethods: bookingOptions.isBookingForSomeoneElse ? recipientNotificationPreferences.methods : undefined,
+      notificationLanguage: notificationPreferences.language,
     }
 
     const result = await createBooking(payload)
@@ -335,7 +350,30 @@ export default function BookingWizard({
           />
         )
       case 4:
-        return <SummaryStep {...stepProps} calculatedPrice={calculatedPrice} isLoadingPrice={isPriceCalculating} />
+        return (
+          <div className="space-y-6">
+            <SummaryStep {...stepProps} calculatedPrice={calculatedPrice} isLoadingPrice={isPriceCalculating} />
+            
+            {/* Notification Preferences */}
+            <NotificationPreferencesSelector
+              value={notificationPreferences}
+              onChange={setNotificationPreferences}
+              isForRecipient={false}
+              className="mt-6"
+            />
+            
+            {/* Recipient Notification Preferences (if booking for someone else) */}
+            {bookingOptions.isBookingForSomeoneElse && (
+              <NotificationPreferencesSelector
+                value={recipientNotificationPreferences}
+                onChange={setRecipientNotificationPreferences}
+                isForRecipient={true}
+                recipientName={bookingOptions.recipientName}
+                className="mt-4"
+              />
+            )}
+          </div>
+        )
       case 5:
         return (
           <PaymentStep

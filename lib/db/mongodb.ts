@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb"
 
-const options = { compressors: ["zlib"] } // Specify zlib compressor, excluding snappy and zstd
+const options = { compressors: ["zlib" as const] } // Specify zlib compressor with proper typing
 
 let client
 let clientPromise: Promise<MongoClient>

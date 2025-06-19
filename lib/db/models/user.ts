@@ -131,14 +131,14 @@ UserSchema.pre("save", function (next) {
   if (this.isNew || !this.notificationPreferences) {
     this.notificationPreferences = { methods: ["email", "sms"], language: "he" }
   }
-  if (this.treatmentPreferences && this.treatmentPreferences.therapistGender === undefined) {
-    this.treatmentPreferences.therapistGender = "any"
+  if (this.treatmentPreferences && (this.treatmentPreferences as any).therapistGender === undefined) {
+    (this.treatmentPreferences as any).therapistGender = "any"
   }
-  if (this.notificationPreferences && this.notificationPreferences.methods === undefined) {
-    this.notificationPreferences.methods = ["email", "sms"]
+  if (this.notificationPreferences && (this.notificationPreferences as any).methods === undefined) {
+    (this.notificationPreferences as any).methods = ["email", "sms"]
   }
-  if (this.notificationPreferences && this.notificationPreferences.language === undefined) {
-    this.notificationPreferences.language = "he"
+  if (this.notificationPreferences && (this.notificationPreferences as any).language === undefined) {
+    (this.notificationPreferences as any).language = "he"
   }
   next()
 })

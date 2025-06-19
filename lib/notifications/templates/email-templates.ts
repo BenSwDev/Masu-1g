@@ -7,6 +7,8 @@ export interface EmailNotificationData {
     | "otp"
     | "treatment-booking-success"
     | "professional-booking-notification"
+    | "purchase-success"
+    | "review-reminder"
   userName?: string
   email?: string
   resetLink?: string
@@ -14,6 +16,8 @@ export interface EmailNotificationData {
   organizationName?: string
   code?: string
   expiresIn?: number
+  message?: string // For purchase-success
+  reviewLink?: string // For review-reminder
   // Treatment booking fields
   recipientName?: string
   bookerName?: string
@@ -22,6 +26,8 @@ export interface EmailNotificationData {
   bookingNumber?: string
   bookingAddress?: string
   isForSomeoneElse?: boolean
+  isBookerForSomeoneElse?: boolean // Added missing field
+  actualRecipientName?: string // Added missing field
   // Professional booking notification fields
   responseLink?: string
   price?: number

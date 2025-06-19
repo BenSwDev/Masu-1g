@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer"
 import type { NotificationResult, EmailRecipient, NotificationData } from "./notification-types"
-import { getEmailTemplate } from "./templates/email-templates"
+import { getEmailTemplate, type EmailNotificationData } from "./templates/email-templates"
 import { logNotification } from "./notification-utils"
 
 /**
@@ -31,7 +31,7 @@ export class EmailService {
   async sendNotification(recipient: EmailRecipient, data: NotificationData): Promise<NotificationResult> {
     try {
       // Get the template for this notification type
-      const { subject, html, text } = getEmailTemplate(data, recipient.language || "en", recipient.name)
+      const { subject, html, text } = getEmailTemplate(data as EmailNotificationData, recipient.language || "en", recipient.name)
 
       // Log the notification in development
       logNotification("email", recipient.value, { subject, text })

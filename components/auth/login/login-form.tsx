@@ -17,7 +17,6 @@ import { useRouter } from "next/navigation"
 import { OTPForm } from "./otp-form"
 import { useToast } from "@/components/common/ui/use-toast"
 import { useSession } from "next-auth/react"
-
 interface LoginMethodProps {
   children: ReactNode
   className?: string
@@ -208,13 +207,17 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
                   <div className="grid gap-6">
                     <div className="grid gap-2">
+                      <Label htmlFor="identifier">
+                        {loginType === "phone" ? t("login.phoneLabel") : t("login.emailLabel")}
+                      </Label>
                       {loginType === "phone" ? (
                         <PhoneInput
                           name="identifier"
+                          fullNumberValue={phoneIdentifier}
+                          onPhoneChange={handlePhoneChange}
                           placeholder={t("login.phonePlaceholder")}
                           className="border-turquoise-200 focus-visible:ring-turquoise-500"
                           required
-                          onPhoneChange={handlePhoneChange}
                         />
                       ) : (
                         <Input
@@ -303,14 +306,18 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
                 <div className="grid gap-6">
                   <div className="grid gap-2">
+                    <Label htmlFor="otp-identifier">
+                      {loginType === "phone" ? t("login.phoneLabel") : t("login.emailLabel")}
+                    </Label>
                     {loginType === "phone" ? (
                       <PhoneInput
                         id="otp-identifier"
                         name="phone"
+                        fullNumberValue={phoneIdentifier}
+                        onPhoneChange={handlePhoneChange}
                         placeholder={t("login.phonePlaceholder")}
                         className="border-turquoise-200 focus-visible:ring-turquoise-500"
                         required
-                        onPhoneChange={handlePhoneChange}
                       />
                     ) : (
                       <Input

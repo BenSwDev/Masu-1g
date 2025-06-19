@@ -11,6 +11,7 @@ import { PhoneInput } from "@/components/common/phone-input"
 import { requestPhoneChange, confirmPhoneChange } from "@/actions/account-actions"
 import { Phone } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
+import { FormControl } from "@/components/common/ui/form"
 
 interface PhoneChangeFormProps {
   currentPhone?: string
@@ -220,17 +221,13 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
         <Label htmlFor="newPhone">
           {language === "he" ? "טלפון חדש" : language === "ru" ? "Новый телефон" : "New Phone"}
         </Label>
-        <PhoneInput
-          id="newPhone"
-          placeholder={
-            language === "he"
-              ? "הכנס מספר טלפון חדש"
-              : language === "ru"
-                ? "Введите новый номер телефона"
-                : "Enter new phone number"
-          }
-          className="border-turquoise-200 focus-visible:ring-turquoise-500"
-        />
+        <FormControl>
+          <PhoneInput
+            fullNumberValue={newPhone}
+            onPhoneChange={(value) => setNewPhone(value)}
+            placeholder={t("account.phonePlaceholder")}
+          />
+        </FormControl>
       </div>
 
       {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">{error}</div>}

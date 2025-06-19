@@ -449,12 +449,9 @@ export default function SchedulingStep({
                       <FormControl>
                         <div dir="ltr" className="w-full">
                           <PhoneInput
-                            id="recipientPhone"
-                            name={field.name}
-                            placeholder={t("users.fields.phonePlaceholder")}
                             fullNumberValue={field.value || ""}
                             onPhoneChange={field.onChange}
-                            ref={field.ref}
+                            placeholder={t("users.fields.phonePlaceholder")}
                             className="text-left"
                           />
                         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import { GuestTreatmentSelectionStep } from "@/components/booking/steps/guest-treatment-selection-step"
@@ -26,8 +26,6 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
   const { toast } = useToast()
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
-  const [guestInfo, setGuestInfo] = useState<any>({})
-  const [guestUserId, setGuestUserId] = useState<string | null>(null)
   const [voucherType, setVoucherType] = useState<"monetary" | "treatment">("monetary")
   const [monetaryValue, setMonetaryValue] = useState(150)
   const [selectedTreatmentId, setSelectedTreatmentId] = useState<string>("")
@@ -35,6 +33,26 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
   const [isLoading, setIsLoading] = useState(false)
   const [purchaseComplete, setPurchaseComplete] = useState(false)
   const [purchasedVoucher, setPurchasedVoucher] = useState<GiftVoucherPlain | null>(null)
+  const [guestUserId, setGuestUserId] = useState<string | null>(null)
+
+  // Add user detection (you might need to import useAuth or similar)
+  const currentUser: { name?: string; email?: string; phone?: string } | null = null // TODO: Add actual user detection
+
+  // Pre-fill guest info for logged-in users
+  const prefilledGuestInfo = useMemo(() => {
+    if (currentUser) {
+      const [first, ...rest] = (currentUser.name || "").split(" ")
+      return {
+        firstName: first || "",
+        lastName: rest.join(" ") || "",
+        email: currentUser.email || "",
+        phone: currentUser.phone || "",
+      }
+    }
+    return {}
+  }, [currentUser])
+
+  const [guestInfo, setGuestInfo] = useState<any>(prefilledGuestInfo)
 
   const selectedTreatment = treatments.find(t => t._id.toString() === selectedTreatmentId)
   const selectedDuration = selectedTreatment?.pricingType === "duration_based"
@@ -134,6 +152,7 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
     const confirmRes = await confirmGuestGiftVoucherPurchase({
       voucherId: initRes.voucherId,
       paymentId: `guest_payment_${Date.now()}`,
+      amount: price,
       success: true,
       guestInfo: {
         name: guestInfo.firstName + " " + guestInfo.lastName,
@@ -208,7 +227,24 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
 
   const renderTreatmentStep = () => (
     <GuestTreatmentSelectionStep
-      initialData={{ activeTreatments: treatments }}
+      initialData={{ 
+        activeTreatments: treatments,
+        activeUserSubscriptions: [],
+        usableGiftVouchers: [],
+        userPreferences: {
+          therapistGender: "any",
+          notificationMethods: [],
+          notificationLanguage: "he",
+        },
+        userAddresses: [],
+        userPaymentMethods: [],
+        workingHoursSettings: {},
+        currentUser: {
+          id: "",
+          name: "",
+          email: "",
+        },
+      }}
       bookingOptions={{ selectedTreatmentId, selectedDurationId }}
       setBookingOptions={(update: any) => {
         const prev = { selectedTreatmentId, selectedDurationId }
@@ -281,7 +317,10 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
 
 
   const renderStep = () => {
-    if (currentStep === 1)
+    if (currentStep === 1) return renderVoucherTypeStep()
+    if (currentStep === 2) return voucherType === "monetary" ? renderMonetaryStep() : renderTreatmentStep()
+    if (currentStep === 3) return renderSummaryStep()
+    if (currentStep === 4)
       return (
         <GuestInfoStep
           guestInfo={guestInfo}
@@ -292,9 +331,6 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
           showGiftOptions
         />
       )
-    if (currentStep === 2) return renderVoucherTypeStep()
-    if (currentStep === 3) return voucherType === "monetary" ? renderMonetaryStep() : renderTreatmentStep()
-    if (currentStep === 4) return renderSummaryStep()
     if (currentStep === 5) return (
       <GuestPaymentStep
         calculatedPrice={calculatedPrice}

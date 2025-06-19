@@ -308,7 +308,8 @@ export function GuestInfoStep({
                     </FormLabel>
                     <FormControl>
                       <PhoneInput
-                        {...field}
+                        fullNumberValue={field.value}
+                        onPhoneChange={field.onChange}
                         placeholder={t("guestInfo.phonePlaceholder")}
                         disabled={lockedFields.includes("phone")}
                       />
@@ -492,7 +493,8 @@ export function GuestInfoStep({
                       </FormLabel>
                       <FormControl>
                         <PhoneInput
-                          {...field}
+                          fullNumberValue={field.value}
+                          onPhoneChange={field.onChange}
                           placeholder={t("guestInfo.phonePlaceholder")}
                           disabled={lockedFields.includes("recipientPhone")}
                         />

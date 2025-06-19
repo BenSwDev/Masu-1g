@@ -181,13 +181,9 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                   <FormLabel>{t("admin.users.form.phone")}</FormLabel>
                   <FormControl>
                     <PhoneInput
-                      id="phone"
-                      name={field.name}
                       fullNumberValue={field.value}
                       onPhoneChange={field.onChange}
-                      ref={field.ref}
                       placeholder={t("admin.users.form.phonePlaceholder") || ""}
-                      className="border-turquoise-200 focus-visible:ring-turquoise-500"
                     />
                   </FormControl>
                   <FormMessage />

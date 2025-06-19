@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import GuestSubscriptionSelectionStep from "./guest-subscription-selection-step"
@@ -14,6 +14,7 @@ import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { BookingInitialData } from "@/types/booking"
 import { useTranslation } from "@/lib/translations/i18n"
+import { Progress } from "@/components/ui/progress"
 
 // Define serialized types that match the data we receive from the server
 interface SerializedSubscription {
@@ -81,12 +82,30 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
   const router = useRouter()
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
-  const [guestInfo, setGuestInfo] = useState<any>({})
-  const [guestUserId, setGuestUserId] = useState<string | null>(null)
   const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string>("")
   const [selectedTreatmentId, setSelectedTreatmentId] = useState<string>("")
   const [selectedDurationId, setSelectedDurationId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
+  const [guestUserId, setGuestUserId] = useState<string | null>(null)
+
+  // Add user detection (you might need to import useAuth or similar)
+  const currentUser: { name?: string; email?: string; phone?: string } | null = null // TODO: Add actual user detection
+
+  // Pre-fill guest info for logged-in users
+  const prefilledGuestInfo = useMemo(() => {
+    if (currentUser) {
+      const [first, ...rest] = (currentUser.name || "").split(" ")
+      return {
+        firstName: first || "",
+        lastName: rest.join(" ") || "",
+        email: currentUser.email || "",
+        phone: currentUser.phone || "",
+      }
+    }
+    return {}
+  }, [currentUser])
+
+  const [guestInfo, setGuestInfo] = useState<any>(prefilledGuestInfo)
 
   const selectedTreatment = treatments.find(t => t._id === selectedTreatmentId)
   const selectedDuration = selectedTreatment?.pricingType === "duration_based" ?
@@ -166,10 +185,6 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
     switch (currentStep) {
       case 1:
         return (
-          <GuestInfoStep guestInfo={guestInfo} setGuestInfo={setGuestInfo} onNext={handleGuestInfoSubmit} />
-        )
-      case 2:
-        return (
           <GuestSubscriptionSelectionStep
             subscriptions={subscriptions.map(convertToSubscription)}
             selectedId={selectedSubscriptionId}
@@ -178,7 +193,7 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
             onPrev={prevStep}
           />
         )
-      case 3:
+      case 2:
         const bookingOptions: SelectedBookingOptions = {
           selectedTreatmentId: (selectedTreatmentId ?? ""),
           selectedDurationId: (selectedDurationId ?? ""),
@@ -231,7 +246,7 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
             showPrice={false}
           />
         )
-      case 4:
+      case 3:
         const selectedSub = subscriptions.find(s=>s._id===selectedSubscriptionId)
         return (
           <GuestSubscriptionSummaryStep
@@ -242,6 +257,10 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
             onNext={nextStep}
             onPrev={prevStep}
           />
+        )
+      case 4:
+        return (
+          <GuestInfoStep guestInfo={guestInfo} setGuestInfo={setGuestInfo} onNext={handleGuestInfoSubmit} />
         )
       case 5:
         return (
@@ -261,6 +280,7 @@ export default function GuestSubscriptionWizard({ subscriptions, treatments }: P
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6" dir={dir} lang={language}>
+      <Progress value={(currentStep / 5) * 100} className="mb-8" />
       {renderStep()}
     </div>
   )

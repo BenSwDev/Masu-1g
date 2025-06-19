@@ -79,12 +79,9 @@ export function ProfileForm({ initialValues, onSubmit }: ProfileFormProps) {
               <FormControl>
                 <PhoneInput
                   id="phone"
-                  name={field.name}
-                  placeholder={t("profile.phonePlaceholder")}
-                  fullNumberValue={field.value || ""}
+                  fullNumberValue={field.value}
                   onPhoneChange={field.onChange}
-                  ref={field.ref}
-                  className="border-turquoise-200 focus-visible:ring-turquoise-500"
+                  placeholder={t("profile.phonePlaceholder")}
                 />
               </FormControl>
               <FormMessage />

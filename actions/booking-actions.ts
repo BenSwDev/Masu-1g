@@ -2666,8 +2666,8 @@ export async function updateBookingStatusAfterPayment(
         
         // Send SMS notifications to all suitable professionals
         try {
-          const { sendProfessionalNotifications } = await import("@/actions/professional-sms-actions")
-          const smsResult = await sendProfessionalNotifications(bookingId)
+          const { sendProfessionalBookingNotifications } = await import("@/actions/notification-service")
+          const smsResult = await sendProfessionalBookingNotifications(bookingId)
           
           if (smsResult.success) {
             logger.info("Sent SMS notifications to professionals", { 
@@ -2859,8 +2859,8 @@ export async function sendNotificationToSuitableProfessionals(
   }
 
   try {
-    const { sendProfessionalNotifications } = await import("@/actions/professional-sms-actions")
-    return await sendProfessionalNotifications(bookingId)
+    const { sendProfessionalBookingNotifications } = await import("@/actions/notification-service")
+    return await sendProfessionalBookingNotifications(bookingId)
   } catch (error) {
     logger.error("Error sending notifications to suitable professionals:", {
       bookingId,

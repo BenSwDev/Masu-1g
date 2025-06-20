@@ -2683,6 +2683,7 @@
       },
       "searchPlaceholder": "חפש טיפול לפי שם",
       "selectCategory": "בחר קטגוריה",
+      "selectCategoryFirst": "אנא בחר קטגוריה תחילה כדי לראות את הטיפולים הזמינים",
       "selectCategoryPlaceholder": "בחר קטגוריה",
       "selectDuration": "בחר משך טיפול",
       "selectDurationDesc": "בחר את משך הזמן עבור הטיפול שלך.",

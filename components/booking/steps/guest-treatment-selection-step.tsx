@@ -255,8 +255,13 @@ export function GuestTreatmentSelectionStep({
       )}
 
               {/* Treatment Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {availableTreatmentsForStep.map((treatment) => {
+        {(showCategorySelection && !selectedCategory) ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">{t("treatments.selectCategoryFirst")}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(showCategorySelection ? filteredTreatmentsByCategory : availableTreatmentsForStep).map((treatment) => {
             const treatmentId = treatment._id?.toString() || ""
             const isSelected = bookingOptions.selectedTreatmentId === treatmentId
             
@@ -307,7 +312,8 @@ export function GuestTreatmentSelectionStep({
               </Card>
             )
           })}
-        </div>
+          </div>
+        )}
 
       {/* Duration Selection */}
       {selectedTreatment?.pricingType === "duration_based" && availableDurations.length > 0 && (

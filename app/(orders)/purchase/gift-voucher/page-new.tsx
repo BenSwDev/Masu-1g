@@ -22,7 +22,7 @@ function convertToTreatment(treatment: SerializedTreatment): ITreatment {
   } as ITreatment
 }
 
-export default async function GuestBookGiftVoucherPage() {
+export default async function GuestBookGiftVoucherPageNew() {
   const treatmentsResult = await getTreatmentsForSelection()
 
   if (!treatmentsResult.success) {

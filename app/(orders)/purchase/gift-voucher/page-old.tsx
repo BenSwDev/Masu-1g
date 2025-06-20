@@ -1,7 +1,7 @@
 import { getTreatmentsForSelection } from "./actions"
 import type { SerializedTreatment } from "./actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
-import SimplifiedGiftVoucherWizard from "./simplified-gift-voucher-wizard"
+import GuestGiftVoucherWizard from "@/components/gift-vouchers/guest-gift-voucher-wizard"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { GuestLayout } from "@/components/layout/guest-layout"
 
@@ -44,7 +44,7 @@ export default async function GuestBookGiftVoucherPage() {
 
   return (
     <GuestLayout>
-      <SimplifiedGiftVoucherWizard treatments={treatments} />
+      <GuestGiftVoucherWizard treatments={treatments} />
     </GuestLayout>
   )
 } 

@@ -155,7 +155,7 @@ export const GuestSchedulingStep = memo(function GuestSchedulingStep({
   }, [bookingOptions.bookingDate])
 
   return (
-    <div className="space-y-6" dir={dir}>
+    <div className="space-y-6" dir={dir} lang={language}>
       <div className="text-center">
         <CalendarIcon className="mx-auto h-12 w-12 text-primary mb-4" />
         <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.scheduling.title")}</h2>

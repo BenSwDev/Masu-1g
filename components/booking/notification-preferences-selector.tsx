@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -44,6 +45,7 @@ export default function NotificationPreferencesSelector({
   showAlertPreferences = false,
   title
 }: NotificationPreferencesSelectorProps) {
+  const { t, dir, language } = useTranslation()
   const { data: session } = useSession()
   const [userPreferences, setUserPreferences] = useState<INotificationPreferences | null>(null)
   const [isLoadingUserPrefs, setIsLoadingUserPrefs] = useState(false)
@@ -120,25 +122,25 @@ export default function NotificationPreferencesSelector({
 
   const getLanguageLabel = (lang: string) => {
     switch (lang) {
-      case "he": return "עברית"
-      case "en": return "English"
-      case "ru": return "Русский"
+      case "he": return t("languages.hebrew") || "עברית"
+      case "en": return t("languages.english") || "English"
+      case "ru": return t("languages.russian") || "Русский"
       default: return lang
     }
   }
 
   const displayTitle = title || (isForRecipient 
-    ? `העדפות התראה עבור ${recipientName || 'הנמען'}`
-    : "העדפות התראה עבורך")
+    ? `${t("notifications.recipientTitle") || "העדפות התראה עבור"} ${recipientName || t("notifications.recipient") || "הנמען"}`
+    : t("notifications.yourTitle") || "העדפות התראה עבורך")
 
   const description = isForRecipient
-    ? "בחר כיצד הנמען ירצה לקבל את האישורים והעדכונים על ההזמנה"
-    : "בחר כיצד תרצה לקבל את האישורים והעדכונים על ההזמנה"
+    ? t("notifications.recipientDescription") || "בחר כיצד הנמען ירצה לקבל את האישורים והעדכונים על ההזמנה"
+    : t("notifications.yourDescription") || "בחר כיצד תרצה לקבל את האישורים והעדכונים על ההזמנה"
 
   return (
-    <Card className={className}>
+    <Card className={className} dir={dir}>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
+        <CardTitle className={`flex items-center gap-2 text-base ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
           <Bell className="h-4 w-4" />
           {displayTitle}
         </CardTitle>
@@ -153,16 +155,16 @@ export default function NotificationPreferencesSelector({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              העדפות ברירת המחדל שלך: {userPreferences.methods.map(m => m === "email" ? "אימייל" : "SMS").join(" + ")} 
+              {t("notifications.defaultPreferences") || "העדפות ברירת המחדל שלך"}: {userPreferences.methods.map(m => m === "email" ? t("notifications.email") || "אימייל" : t("notifications.sms") || "SMS").join(" + ")} 
               {" "}({getLanguageLabel(userPreferences.language)})
               {(value.methods.join(",") !== userPreferences.methods.join(",") || value.language !== userPreferences.language) && (
                 <button
                   type="button"
                   onClick={useUserDefaults}
-                  className="text-blue-600 hover:text-blue-800 underline ml-2"
+                  className={`text-blue-600 hover:text-blue-800 underline ${dir === "rtl" ? "mr-2" : "ml-2"}`}
                   disabled={disabled}
                 >
-                  השתמש בברירת המחדל
+                  {t("notifications.useDefaults") || "השתמש בברירת המחדל"}
                 </button>
               )}
             </AlertDescription>
@@ -171,10 +173,10 @@ export default function NotificationPreferencesSelector({
 
         {/* Communication Methods */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">אמצעי תקשורת</Label>
+          <Label className="text-sm font-medium">{t("notifications.communicationMethods") || "אמצעי תקשורת"}</Label>
           
           <div className="space-y-2">
-            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+            <div className={`flex items-center space-x-3 ${dir === "rtl" ? "space-x-reverse flex-row-reverse" : ""}`}>
               <Checkbox
                 id={isForRecipient ? "recipient-email-method" : "email-method"}
                 checked={value.methods.includes("email")}
@@ -183,17 +185,17 @@ export default function NotificationPreferencesSelector({
               />
               <Label 
                 htmlFor={isForRecipient ? "recipient-email-method" : "email-method"}
-                className="flex items-center gap-2 cursor-pointer text-sm"
+                className={`flex items-center gap-2 cursor-pointer text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
               >
                 <Mail className="h-4 w-4" />
-                דואר אלקטרוני
+                {t("notifications.email") || "דואר אלקטרוני"}
                 {value.methods.includes("email") && (
-                  <Badge variant="default" className="text-xs">פעיל</Badge>
+                  <Badge variant="default" className="text-xs">{t("notifications.active") || "פעיל"}</Badge>
                 )}
               </Label>
             </div>
             
-            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+            <div className={`flex items-center space-x-3 ${dir === "rtl" ? "space-x-reverse flex-row-reverse" : ""}`}>
               <Checkbox
                 id={isForRecipient ? "recipient-sms-method" : "sms-method"}
                 checked={value.methods.includes("sms")}
@@ -202,113 +204,69 @@ export default function NotificationPreferencesSelector({
               />
               <Label 
                 htmlFor={isForRecipient ? "recipient-sms-method" : "sms-method"}
-                className="flex items-center gap-2 cursor-pointer text-sm"
+                className={`flex items-center gap-2 cursor-pointer text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
               >
                 <MessageSquare className="h-4 w-4" />
-                הודעות SMS
+                {t("notifications.sms") || "הודעות טקסט (SMS)"}
                 {value.methods.includes("sms") && (
-                  <Badge variant="default" className="text-xs">פעיל</Badge>
+                  <Badge variant="default" className="text-xs">{t("notifications.active") || "פעיל"}</Badge>
                 )}
               </Label>
             </div>
           </div>
-
-          {value.methods.length === 0 && (
-            <p className="text-xs text-red-600">
-              חובה לבחור לפחות אמצעי תקשורת אחד
-            </p>
-          )}
         </div>
 
-        {/* Language Preference */}
-        <div className="space-y-3">
-          <Label className="text-sm font-medium">שפת התראות</Label>
-          
-          <div className="flex items-center gap-3">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-            <Select
-              value={value.language}
-              onValueChange={(lang: "he" | "en" | "ru") => handleLanguageChange(lang)}
+        {/* Language Selection */}
+        <div className="space-y-2">
+          <Label className={`text-sm font-medium flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+            <Globe className="h-4 w-4" />
+            {t("notifications.language") || "שפת התקשורת"}
+          </Label>
+          <Select value={value.language} onValueChange={handleLanguageChange} disabled={disabled}>
+            <SelectTrigger dir={dir} lang={language}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent dir={dir} lang={language}>
+              <SelectItem value="he">{t("languages.hebrew") || "עברית"}</SelectItem>
+              <SelectItem value="en">{t("languages.english") || "English"}</SelectItem>
+              <SelectItem value="ru">{t("languages.russian") || "Русский"}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Alert Preferences (Enhanced) */}
+        {showAlertPreferences && (
+          <div className="space-y-2 border-t pt-4">
+            <Label className={`text-sm font-medium flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+              <Bell className="h-4 w-4" />
+              {t("notifications.alertPreferences") || "העדפות התראה"}
+            </Label>
+            <Select 
+              value={value.alertPreference || "none"} 
+              onValueChange={handleAlertPreferenceChange}
               disabled={disabled}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger dir={dir} lang={language}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="he">עברית</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="ru">Русский</SelectItem>
+              <SelectContent dir={dir} lang={language}>
+                <SelectItem value="none">{t("notifications.noAlerts") || "ללא התראות"}</SelectItem>
+                <SelectItem value="email">{t("notifications.emailOnly") || "אימייל בלבד"}</SelectItem>
+                <SelectItem value="sms">{t("notifications.smsOnly") || "SMS בלבד"}</SelectItem>
               </SelectContent>
             </Select>
-            <Badge variant="secondary" className="text-xs">
-              {getLanguageLabel(value.language)}
-            </Badge>
-          </div>
-        </div>
-
-        {/* ➕ Alert Preferences (if enabled) */}
-        {showAlertPreferences && (
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">העדפות התראות</Label>
-            
-            <div className="flex items-center gap-3">
-              <Bell className="h-4 w-4 text-muted-foreground" />
-              <Select
-                value={value.alertPreference || "email"}
-                onValueChange={(pref: "sms" | "email" | "none") => handleAlertPreferenceChange(pref)}
-                disabled={disabled}
-              >
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="email">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      דואר אלקטרוני
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="sms">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4" />
-                      SMS
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="none">
-                    <div className="flex items-center gap-2">
-                      <Bell className="h-4 w-4" />
-                      ללא התראות
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Badge variant="secondary" className="text-xs">
-                {value.alertPreference === "email" ? "אימייל" : 
-                 value.alertPreference === "sms" ? "SMS" : "ללא התראות"}
-              </Badge>
-            </div>
           </div>
         )}
 
-        {/* Current Selection Summary */}
-        <div className="bg-gray-50 rounded-lg p-3 space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">יקבל התראות דרך:</span>
-            <div className="flex gap-1">
-              {value.methods.map(method => (
-                <Badge key={method} variant="outline" className="text-xs">
-                  {method === "email" ? "אימייל" : "SMS"}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">בשפה:</span>
-            <Badge variant="outline" className="text-xs">
-              {getLanguageLabel(value.language)}
-            </Badge>
-          </div>
-        </div>
+        {/* Method selection validation */}
+        {value.methods.length === 0 && (
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-sm text-orange-600">
+              {t("notifications.selectAtLeastOne") || "נא לבחור לפחות אמצעי תקשורת אחד"}
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
     </Card>
   )

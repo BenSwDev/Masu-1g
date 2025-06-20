@@ -11,7 +11,7 @@ import { Badge } from "@/components/common/ui/badge"
 import { Sparkles, Clock, Users, GiftIcon, Ticket } from "lucide-react"
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
 import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
-import type { ITreatment } from "@/lib/db/models"
+import type { ITreatment } from "@/lib/db/models/treatment"
 
 interface GuestTreatmentSelectionStepProps {
   hideGenderPreference?: boolean
@@ -42,7 +42,7 @@ export function GuestTreatmentSelectionStep({
   voucher,
   userSubscription,
 }: GuestTreatmentSelectionStepProps) {
-  const { t, dir } = useTranslation()
+  const { t, dir, language } = useTranslation()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [availableTreatmentsForStep, setAvailableTreatmentsForStep] = useState<ITreatment[]>(
     initialData?.activeTreatments || [],
@@ -160,7 +160,7 @@ export function GuestTreatmentSelectionStep({
   }
 
   return (
-    <div className="space-y-6" dir={dir}>
+    <div className="space-y-6" dir={dir} lang={language}>
       <div className="text-center">
         <Sparkles className="mx-auto h-12 w-12 text-primary mb-4" />
         <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.treatment.title")}</h2>

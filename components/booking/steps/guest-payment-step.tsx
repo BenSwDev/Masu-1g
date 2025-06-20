@@ -90,7 +90,7 @@ export function GuestPaymentStep({
   pendingBookingId = null,
   isRedeeming = false,
 }: GuestPaymentStepProps) {
-  const { t, dir } = useTranslation();
+  const { t, dir, language } = useTranslation();
   const { data: session } = useSession();
   const {
     showPaymentModal,
@@ -192,7 +192,7 @@ export function GuestPaymentStep({
 
   if (!calculatedPrice || (calculatedPrice.finalAmount === 0 && calculatedPrice.isFullyCoveredByVoucherOrSubscription)) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6" dir={dir}>
+      <div className="max-w-4xl mx-auto space-y-6" dir={dir} lang={language}>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
@@ -217,7 +217,7 @@ export function GuestPaymentStep({
 
   return (
     <>
-      <div className="max-w-4xl mx-auto space-y-6" dir={dir}>
+      <div className="max-w-4xl mx-auto space-y-6" dir={dir} lang={language}>
         {/* Price Summary */}
         <Card>
           <CardHeader>
@@ -469,7 +469,7 @@ export function GuestPaymentStep({
             <DialogTitle className="text-center">תשלום מאובטח</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6" dir={dir}>
+          <div className="space-y-6" dir={dir} lang={language}>
             {paymentStatus === "pending" && (
               <>
                 {/* Enhanced CardComm iframe simulation with demo data */}

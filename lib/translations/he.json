@@ -666,6 +666,24 @@
     "drawerTitle": "פרטי הזמנה"
   },
   "bookings": {
+    "payment": {
+      "iframe": {
+        "title": "תשלום מאובטח",
+        "description": "הזן את פרטי התשלום שלך להשלמת ההזמנה"
+      },
+      "amount": "סכום לתשלום",
+      "demo": {
+        "success": "התשלום בוצע בהצלחה (דמו)",
+        "failure": "התשלום נכשל (דמו)"
+      },
+      "success": {
+        "title": "התשלום התקבל בהצלחה",
+        "description": "ההזמנה שלך התקבלה ותישלח אליך הודעה בקרוב.",
+        "email": "אישור נשלח לאימייל שלך",
+        "sms": "אישור נשלח לטלפון שלך",
+        "professionals": "ההזמנה נשלחה למטפלים"
+      }
+    },
     "guestInformation": "פרטי האורח",
     "bookingDetails": "פרטי ההזמנה",
     "selectedTreatment": "הטיפול הנבחר",
@@ -720,6 +738,7 @@
     },
     "addressStep": {
       "title": "הוסף כתובת",
+      "cityPlaceholder": "בחר עיר",
       "city": "עיר",
       "street": "רחוב",
       "houseNumber": "מספר בית",
@@ -1002,6 +1021,14 @@
           "unknownVoucherCode": "קוד שובר לא מוכר"
         },
         "guestInfo": {
+          "bookingType": "סוג הזמנה",
+          "selectBirthDate": "בחר תאריך לידה",
+          "selectGender": "בחר מגדר",
+          "genders": {
+            "male": "זכר",
+            "female": "נקבה",
+            "other": "אחר"
+          },
           "title": "פרטי האורח",
           "description": "נא למלא את פרטיך האישיים להשלמת ההזמנה",
           "firstName": "שם פרטי",
@@ -4480,3 +4507,6 @@
     "yourDetails": "הפרטים שלך"
   }
 }  
+
+
+

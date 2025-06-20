@@ -17,7 +17,7 @@ export function GuestPaymentProcessingStep({
   bookingNumber,
   amount
 }: GuestPaymentProcessingStepProps) {
-  const { t, dir } = useTranslation()
+  const { t, dir, language } = useTranslation()
   const [progress, setProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState(0)
 
@@ -54,7 +54,7 @@ export function GuestPaymentProcessingStep({
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6" dir={dir}>
+    <div className="max-w-2xl mx-auto space-y-6" dir={dir} lang={language}>
       <div className="text-center">
         <div className="mx-auto h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
           <Loader2 className="h-8 w-8 text-primary animate-spin" />

@@ -101,7 +101,7 @@ export function GuestFinalConfirmationStep({
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6" dir={dir}>
+    <div className="max-w-4xl mx-auto space-y-6" dir={dir} lang={language}>
       {/* Header */}
       <div className="text-center">
         <div className="mx-auto h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mb-4">

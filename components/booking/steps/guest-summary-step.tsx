@@ -151,7 +151,7 @@ export function GuestSummaryStep({
   }
 
   return (
-    <div className="space-y-6" dir={dir}>
+    <div className="space-y-6" dir={dir} lang={language}>
       <div className="text-center">
         <CheckCircle className="mx-auto h-12 w-12 text-primary mb-4" />
         <h2 className="text-2xl font-semibold tracking-tight">סיכום ההזמנה</h2>

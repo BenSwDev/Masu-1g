@@ -137,7 +137,7 @@ export function GuestInfoStep({
 
   const form = useForm<GuestInfoFormData>({
     resolver: zodResolver(guestInfoSchema),
-    values: {
+    defaultValues: {
       firstName: guestInfo.firstName || "",
       lastName: guestInfo.lastName || "",
       email: guestInfo.email || "",
@@ -319,8 +319,8 @@ export function GuestInfoStep({
                     </FormLabel>
                     <FormControl>
                       <PhoneInput 
-                        value={field.value} 
-                        onChange={field.onChange} 
+                        fullNumberValue={field.value}
+                        onPhoneChange={field.onChange} 
                         disabled={lockedFields.includes("phone")}
                         dir={dir}
                       />
@@ -368,7 +368,6 @@ export function GuestInfoStep({
                             onSelect={field.onChange}
                             disabled={isDateDisabled}
                             initialFocus
-                            dir={dir}
                           />
                         </PopoverContent>
                       </Popover>

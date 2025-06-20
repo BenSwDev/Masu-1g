@@ -289,78 +289,108 @@ export function GuestPaymentStep({
             {/* Customer/Booker Alert Preferences */}
             <div className="space-y-3">
               <div className="font-medium text-sm">העדפות התראות למזמין ({guestInfo.firstName})</div>
-              <Select value={customerAlerts} onValueChange={(value: "sms" | "email" | "both") => setCustomerAlerts(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="email">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      דואר אלקטרוני
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="sms">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4" />
-                      SMS
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="both">
-                    <div className="flex items-center gap-2">
-                      <Bell className="h-4 w-4" />
-                      דואר אלקטרוני + SMS
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={customerAlerts === "email" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCustomerAlerts("email")}
+                  className="flex items-center gap-2"
+                >
+                  <Mail className="h-4 w-4" />
+                  דואר אלקטרוני
+                </Button>
+                <Button
+                  type="button"
+                  variant={customerAlerts === "sms" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCustomerAlerts("sms")}
+                  className="flex items-center gap-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  SMS
+                </Button>
+                <Button
+                  type="button"
+                  variant={customerAlerts === "both" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCustomerAlerts("both")}
+                  className="flex items-center gap-2"
+                >
+                  <Bell className="h-4 w-4" />
+                  שניהם
+                </Button>
+              </div>
             </div>
 
             {/* Patient Alert Preferences (if booking for someone else) */}
             {guestInfo.isBookingForSomeoneElse && (
               <div className="space-y-3">
                 <div className="font-medium text-sm">העדפות התראות למטופל ({guestInfo.recipientFirstName})</div>
-                <Select value={patientAlerts} onValueChange={(value: "sms" | "email" | "both") => setPatientAlerts(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="email">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        דואר אלקטרוני
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="sms">
-                      <div className="flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4" />
-                        SMS
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="both">
-                      <div className="flex items-center gap-2">
-                        <Bell className="h-4 w-4" />
-                        דואר אלקטרוני + SMS
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={patientAlerts === "email" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPatientAlerts("email")}
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="h-4 w-4" />
+                    דואר אלקטרוני
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={patientAlerts === "sms" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPatientAlerts("sms")}
+                    className="flex items-center gap-2"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    SMS
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={patientAlerts === "both" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPatientAlerts("both")}
+                    className="flex items-center gap-2"
+                  >
+                    <Bell className="h-4 w-4" />
+                    שניהם
+                  </Button>
+                </div>
               </div>
             )}
 
             {/* Notification Language */}
             <div className="space-y-3">
               <div className="font-medium text-sm">שפת ההתראות</div>
-              <Select value={notificationLanguage} onValueChange={(value: "he" | "en" | "ru") => setNotificationLanguage(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="he">עברית</SelectItem>
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="ru">Русский</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={notificationLanguage === "he" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNotificationLanguage("he")}
+                >
+                  עברית
+                </Button>
+                <Button
+                  type="button"
+                  variant={notificationLanguage === "en" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNotificationLanguage("en")}
+                >
+                  English
+                </Button>
+                <Button
+                  type="button"
+                  variant={notificationLanguage === "ru" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNotificationLanguage("ru")}
+                >
+                  Русский
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

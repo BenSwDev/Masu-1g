@@ -8,10 +8,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
-import { Sparkles, Clock, Users, GiftIcon, Ticket } from "lucide-react"
+import { Sparkles, Clock, Users, GiftIcon, Ticket, CheckCircle, Circle, DollarSign } from "lucide-react"
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
 import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { ITreatment } from "@/lib/db/models/treatment"
+import { cn } from "@/lib/utils"
 
 interface GuestTreatmentSelectionStepProps {
   hideGenderPreference?: boolean
@@ -253,66 +254,60 @@ export function GuestTreatmentSelectionStep({
         </Card>
       )}
 
-      {/* Treatment Selection */}
-      {((showCategorySelection && selectedCategory) || !showCategorySelection) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("treatments.selectTreatment")}</CardTitle>
-            <CardDescription>
-              {isTreatmentLockedBySource 
-                ? t("treatments.treatmentLockedBySource")
-                : t("treatments.selectTreatmentDescription")
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={bookingOptions.selectedTreatmentId || ""}
-              onValueChange={handleTreatmentSelect}
-              className="space-y-4"
-            >
-              {(showCategorySelection ? filteredTreatmentsByCategory : availableTreatmentsForStep).map((treatment) => {
-                const isSelected = bookingOptions.selectedTreatmentId === treatment._id.toString()
-                const isLocked = isTreatmentLockedBySource && !isSelected
-                
-                return (
-                  <Label
-                    key={treatment._id.toString()}
-                    htmlFor={treatment._id.toString()}
-                    className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${
-                      dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""
-                    } ${isLocked ? "opacity-50 cursor-not-allowed" : ""} ${
-                      isSelected ? "ring-2 ring-primary border-primary" : ""
-                    }`}
-                  >
-                    <RadioGroupItem 
-                      value={treatment._id.toString()} 
-                      id={treatment._id.toString()}
-                      disabled={isLocked}
-                    />
-                    <div className="flex-1 flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium">{treatment.name}</h4>
-                        {/* ❌ Remove description display - only show treatment name */}
+              {/* Treatment Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {availableTreatmentsForStep.map((treatment) => {
+            const treatmentId = treatment._id?.toString() || ""
+            const isSelected = bookingOptions.selectedTreatmentId === treatmentId
+            
+            return (
+              <Card 
+                key={treatmentId}
+                className={cn(
+                  "cursor-pointer transition-all duration-200 hover:shadow-md",
+                  isSelected 
+                    ? "ring-2 ring-primary shadow-lg" 
+                    : "hover:border-primary/50"
+                )}
+                onClick={() => handleTreatmentSelect(treatmentId)}
+              >
+                <CardContent className="p-4">
+                  <div className={`flex items-start justify-between gap-3 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg leading-tight mb-2">{treatment.name}</h3>
+                      
+                      {/* Duration and Price Row */}
+                      <div className={`flex items-center gap-4 text-sm text-muted-foreground mb-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                        <div className={`flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                          <Clock className="h-4 w-4" />
+                          <span>{typeof treatment.durations?.[0] === 'number' ? treatment.durations[0] : 60} {t("treatments.minutes") || "דקות"}</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                          <DollarSign className="h-4 w-4" />
+                          <span>₪{treatment.fixedPrice || 0}</span>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        {showPrice && treatment.pricingType === "fixed" && (
-                          <div className="text-lg font-semibold text-primary">
-                            {formatPrice(treatment.fixedPrice || 0)}
-                          </div>
-                        )}
-                        {treatment.pricingType === "duration_based" && (
-                          <Badge variant="secondary">{t("treatments.durationBased")}</Badge>
-                        )}
-                      </div>
+
+                      {/* Category Badge */}
+                      <Badge variant="secondary" className="text-xs">
+                        {treatment.category || t("treatments.general") || "כללי"}
+                      </Badge>
                     </div>
-                  </Label>
-                )
-              })}
-            </RadioGroup>
-          </CardContent>
-        </Card>
-      )}
+
+                    {/* Selection Indicator */}
+                    <div className={`flex-shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`}>
+                      {isSelected ? (
+                        <CheckCircle className="h-6 w-6 fill-current" />
+                      ) : (
+                        <Circle className="h-6 w-6" />
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
 
       {/* Duration Selection */}
       {selectedTreatment?.pricingType === "duration_based" && availableDurations.length > 0 && (

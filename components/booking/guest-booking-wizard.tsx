@@ -29,7 +29,7 @@ import {
 } from "@/actions/booking-actions"
 import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress"
-import { AlertCircle, RotateCcw } from "lucide-react"
+import { AlertCircle, RotateCcw, CheckCircle, ArrowRight, ArrowLeft, CreditCard } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
 import { Button } from "@/components/common/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
@@ -98,10 +98,43 @@ interface UniversalBookingWizardProps {
   currentUser?: any // User session data if logged in
 }
 
-const TOTAL_STEPS_WITH_PAYMENT = 8 // ➕ Updated to 8 steps as per new flow
+// 🎯 MODERN STREAMLINED FLOW - Reduced to 4 steps + confirmation
+const TOTAL_STEPS_WITH_PAYMENT = 4 // ✅ Streamlined: 1=Service+Time, 2=Details+Address, 3=Preferences, 4=Payment
 const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 
 const TIMEZONE = "Asia/Jerusalem"
+
+// 🎨 Modern step definitions with better UX
+const MODERN_STEPS = [
+  {
+    id: 1,
+    title: "זמן וטיפול",
+    subtitle: "בחר טיפול ותאריך",
+    icon: "🗓️",
+    estimatedTime: "2 דק'"
+  },
+  {
+    id: 2, 
+    title: "פרטים וכתובת",
+    subtitle: "פרטיך וכתובת הטיפול",
+    icon: "👤",
+    estimatedTime: "3 דק'"
+  },
+  {
+    id: 3,
+    title: "העדפות",
+    subtitle: "מתנה והתראות",
+    icon: "✨",
+    estimatedTime: "1 דק'"
+  },
+  {
+    id: 4,
+    title: "סיכום ותשלום",
+    subtitle: "אישור וסיום ההזמנה",
+    icon: "💳",
+    estimatedTime: "2 דק'"
+  }
+]
 
 export default function UniversalBookingWizard({ 
   initialData, 
@@ -711,11 +744,11 @@ export default function UniversalBookingWizard({
     }
 
     if (
-      currentStep === TOTAL_STEPS_WITH_PAYMENT - 1 && // Summary step (now step 5)
+      currentStep === TOTAL_STEPS_WITH_PAYMENT && // Payment step (step 4)
       calculatedPrice?.finalAmount === 0 &&
       calculatedPrice?.isFullyCoveredByVoucherOrSubscription
     ) {
-      // Skip payment step, go directly to confirmation by simulating final submit
+      // Skip payment, go directly to confirmation by simulating final submit
       handleFinalSubmit()
       return
     }
@@ -890,135 +923,186 @@ export default function UniversalBookingWizard({
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        // NEW ORDER: Treatment Selection First
-        return (
-          <GuestTreatmentSelectionStep
-            initialData={initialData}
-            bookingOptions={bookingOptions}
-            setBookingOptions={setBookingOptions}
-            onNext={nextStep}
-            onPrev={prevStep}
-            voucher={voucher}
-            userSubscription={userSubscription}
-          />
-        )
-      case 2:
-        // NEW ORDER: Scheduling Second
-        return (
-          <GuestSchedulingStep
-            initialData={initialData}
-            bookingOptions={bookingOptions}
-            setBookingOptions={setBookingOptions}
-            timeSlots={timeSlots}
-            isTimeSlotsLoading={isTimeSlotsLoading}
-            workingHoursNote={workingHoursNote}
-            onNext={nextStep}
-            onPrev={prevStep}
-          />
-        )
-      case 3:
-        // NEW ORDER: Guest/User Info Third
-        return (
-          <GuestInfoStep
-            guestInfo={guestInfo}
-            setGuestInfo={setGuestInfo}
-            onNext={handleGuestInfoSubmit}
-            onPrev={prevStep}
-            lockedFields={lockedFields as any}
-            hideBookingForSomeoneElse={hideBookingForSomeoneElse}
-          />
-        )
-      case 4:
-        // NEW ORDER: Address Fourth
-        return (
-          <GuestAddressStep
-            address={guestAddress}
-            setAddress={setGuestAddress}
-            onNext={nextStep}
-            onPrev={prevStep}
-          />
-        )
-      case 5:
-        // ➕ Step 5: Summary only (no notifications)
-        return (
-          <GuestSummaryStep
-            initialData={initialData}
-            bookingOptions={bookingOptions}
-            guestInfo={guestInfo}
-            calculatedPrice={calculatedPrice}
-            isPriceCalculating={isPriceCalculating}
-            onNext={nextStep}
-            onPrev={prevStep}
-            setBookingOptions={setBookingOptions}
-            voucher={voucher}
-            userSubscription={userSubscription}
-          />
-        )
-      case 6:
-        // ➕ Step 6: Payment with Notification Preferences
+        // 🎯 MODERN STEP 1: Treatment + Scheduling Combined
         return (
           <div className="space-y-6">
-            <GuestPaymentStep
-              calculatedPrice={calculatedPrice}
-              guestInfo={guestInfo}
-              setGuestInfo={setGuestInfo}
-              onConfirm={nextStep} // Changed to go to step 7 instead of final submit
+            {/* Treatment Display */}
+            <div className="text-center bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-6">
+              <div className="text-4xl mb-3">🌟</div>
+              <h2 className="text-2xl font-bold mb-2">מתי תרצה את הטיפול?</h2>
+              <p className="text-muted-foreground">בחר תאריך ושעה מועדפים</p>
+            </div>
+
+            {/* Treatment Info Card */}
+            <div className="bg-white rounded-xl border shadow-sm p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">✨</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{initialData.treatment?.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {initialData.treatment?.duration} דקות • ₪{initialData.treatment?.price}
+                  </p>
+                  {bookingOptions.selectedDurationId && (
+                    <span className="inline-block bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs mt-1">
+                      {initialData.treatment?.durations?.find(d => d.id === bookingOptions.selectedDurationId)?.name}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Scheduling Component */}
+            <GuestSchedulingStep
+              initialData={initialData}
+              bookingOptions={bookingOptions}
+              setBookingOptions={setBookingOptions}
+              timeSlots={timeSlots}
+              isTimeSlotsLoading={isTimeSlotsLoading}
+              workingHoursNote={workingHoursNote}
+              onNext={nextStep}
               onPrev={prevStep}
-              isLoading={isLoading}
-              createPendingBooking={createPendingBooking}
-              pendingBookingId={pendingBookingId}
-              isRedeeming={Boolean(voucher || userSubscription)}
             />
-            
-            {/* ➕ Notification Preferences for Booker */}
-            <NotificationPreferencesSelector
-              value={{
-                methods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
-                         guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
-                language: guestInfo.bookerNotificationLanguage || "he"
-              }}
-              onChange={(prefs) => setGuestInfo({
-                ...guestInfo,
-                bookerNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
-                                         prefs.methods.includes("sms") ? "sms" : "email",
-                bookerNotificationLanguage: prefs.language
-              })}
-              isForRecipient={false}
-              className="mt-6"
-            />
-            
-            {/* ➕ Notification Preferences for Recipient (if booking for someone else) */}
-            {guestInfo.isBookingForSomeoneElse && (
-              <NotificationPreferencesSelector
-                value={{
-                  methods: guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
-                           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"],
-                  language: guestInfo.recipientNotificationLanguage || "he"
-                }}
-                onChange={(prefs) => setGuestInfo({
-                  ...guestInfo,
-                  recipientNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
-                                              prefs.methods.includes("sms") ? "sms" : "email",
-                  recipientNotificationLanguage: prefs.language
-                })}
-                isForRecipient={true}
-                recipientName={`${guestInfo.recipientFirstName || ''} ${guestInfo.recipientLastName || ''}`.trim()}
-                className="mt-4"
-              />
-            )}
           </div>
         )
-      case 7:
-        // ➕ Step 7: Payment Processing Window
+      case 2:
+        // 🎯 MODERN STEP 2: Personal Details + Address Combined
         return (
-          <GuestPaymentProcessingStep
-            onComplete={() => handleFinalSubmit()}
-            bookingNumber={pendingBookingId || "000001"}
-            amount={calculatedPrice?.finalAmount || 0}
-          />
+          <div className="space-y-6">
+            <div className="text-center bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
+              <div className="text-4xl mb-3">👤</div>
+              <h2 className="text-2xl font-bold mb-2">פרטים אישיים</h2>
+              <p className="text-muted-foreground">נשמח להכיר אותך ולדעת לאן להגיע</p>
+            </div>
+
+            {/* Personal Info */}
+            <GuestInfoStep
+              guestInfo={guestInfo}
+              setGuestInfo={setGuestInfo}
+              onNext={handleGuestInfoSubmit}
+              onPrev={prevStep}
+              lockedFields={lockedFields as any}
+              hideBookingForSomeoneElse={hideBookingForSomeoneElse}
+            />
+
+            {/* Address */}
+            <GuestAddressStep
+              address={guestAddress}
+              setAddress={setGuestAddress}
+              onNext={nextStep}
+              onPrev={prevStep}
+            />
+          </div>
         )
-      case 8:
-        // ➕ Step 8: Final Confirmation + Order Events Trigger
+      case 3:
+        // 🎯 MODERN STEP 3: Preferences + Gift Options
+        return (
+          <div className="space-y-6">
+            <div className="text-center bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6">
+              <div className="text-4xl mb-3">✨</div>
+              <h2 className="text-2xl font-bold mb-2">העדפות נוספות</h2>
+              <p className="text-muted-foreground">כמה פרטים אחרונים לחוויה מושלמת</p>
+            </div>
+
+            {/* Gift & Notification Preferences Combined */}
+            <div className="bg-white rounded-xl border shadow-sm p-6 space-y-6">
+              {/* Gift Options */}
+              <div>
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  🎁 <span>האם זו מתנה?</span>
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="isGift"
+                      checked={guestInfo.isGift || false}
+                      onChange={(e) => setGuestInfo({ ...guestInfo, isGift: e.target.checked })}
+                      className="rounded border-gray-300"
+                    />
+                    <label htmlFor="isGift" className="text-sm">זהו טיפול מתנה למישהו אחר</label>
+                  </div>
+                  
+                  {guestInfo.isGift && (
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <label htmlFor="giftGreeting" className="block text-sm font-medium mb-2">מסר אישי למתנה</label>
+                      <textarea
+                        id="giftGreeting"
+                        value={guestInfo.giftGreeting || ""}
+                        onChange={(e) => setGuestInfo({ ...guestInfo, giftGreeting: e.target.value })}
+                        placeholder="כתוב כאן מסר חם ואישי..."
+                        className="w-full p-3 border rounded-lg resize-none"
+                        rows={3}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t pt-6">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  📱 <span>העדפות התראות</span>
+                </h3>
+                <NotificationPreferencesSelector
+                  value={{
+                    methods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
+                             guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
+                    language: guestInfo.bookerNotificationLanguage || "he"
+                  }}
+                  onChange={(prefs) => setGuestInfo({
+                    ...guestInfo,
+                    bookerNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
+                                             prefs.methods.includes("sms") ? "sms" : "email",
+                    bookerNotificationLanguage: prefs.language
+                  })}
+                  isForRecipient={false}
+                />
+              </div>
+            </div>
+          </div>
+        )
+      case 4:
+        // 🎯 MODERN STEP 4: Summary + Payment Combined
+        return (
+          <div className="space-y-6">
+            <div className="text-center bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6">
+              <div className="text-4xl mb-3">💳</div>
+              <h2 className="text-2xl font-bold mb-2">סיכום ההזמנה</h2>
+              <p className="text-muted-foreground">בדוק את הפרטים ושלם לסיום</p>
+            </div>
+
+            {/* Combined Summary + Payment */}
+            <div className="space-y-4">
+              <GuestSummaryStep
+                initialData={initialData}
+                bookingOptions={bookingOptions}
+                guestInfo={guestInfo}
+                calculatedPrice={calculatedPrice}
+                isPriceCalculating={isPriceCalculating}
+                onNext={nextStep}
+                onPrev={prevStep}
+                setBookingOptions={setBookingOptions}
+                voucher={voucher}
+                userSubscription={userSubscription}
+              />
+              
+              <GuestPaymentStep
+                calculatedPrice={calculatedPrice}
+                guestInfo={guestInfo}
+                setGuestInfo={setGuestInfo}
+                onConfirm={handleFinalSubmit} // Go directly to final submit
+                onPrev={prevStep}
+                isLoading={isLoading}
+                createPendingBooking={createPendingBooking}
+                pendingBookingId={pendingBookingId}
+                isRedeeming={Boolean(voucher || userSubscription)}
+              />
+            </div>
+          </div>
+        )
+      case 5:
+        // 🎯 SUCCESS PAGE
         if (bookingResult) {
           return (
             <GuestFinalConfirmationStep
@@ -1051,7 +1135,6 @@ export default function UniversalBookingWizard({
             />
           )
         }
-        // Fallback to old confirmation if no bookingResult
         return (
           <GuestBookingConfirmation
             bookingResult={bookingResult}
@@ -1066,21 +1149,49 @@ export default function UniversalBookingWizard({
   const getStepTitle = () => {
     switch (currentStep) {
       case 1:
-        return t("bookings.steps.treatment.title") || "בחירת טיפול"
+        return "זמן וטיפול"
       case 2:
-        return t("bookings.steps.scheduling.title") || "תזמון הטיפול"
+        return "פרטים וכתובת"
       case 3:
-        return currentUser ? "פרטים אישיים" : t("bookings.steps.guestInfo.title") || "פרטים אישיים"
+        return "העדפות"
       case 4:
-        return t("bookings.addressStep.title") || "כתובת הטיפול"
+        return "סיכום ותשלום"
       case 5:
-        return t("bookings.steps.summary.title") || "סיכום ההזמנה"
-      case 6:
-        return t("bookings.steps.payment.title") || "תשלום והעדפות"
-      case 7:
-        return t("bookings.steps.processing.title") || "עיבוד תשלום"
-      case 8:
-        return t("bookings.steps.final.title") || "אישור סופי"
+        return "אישור סופי"
+      default:
+        return ""
+    }
+  }
+
+  const getStepSubtitle = () => {
+    switch (currentStep) {
+      case 1:
+        return "בחר טיפול ותאריך"
+      case 2:
+        return "פרטיך וכתובת הטיפול"
+      case 3:
+        return "מתנה והתראות"
+      case 4:
+        return "אישור וסיום ההזמנה"
+      case 5:
+        return "ההזמנה הושלמה בהצלחה"
+      default:
+        return ""
+    }
+  }
+
+  const getStepIcon = () => {
+    switch (currentStep) {
+      case 1:
+        return "🗓️"
+      case 2:
+        return "👤"
+      case 3:
+        return "✨"
+      case 4:
+        return "💳"
+      case 5:
+        return "🎉"
       default:
         return ""
     }
@@ -1093,7 +1204,7 @@ export default function UniversalBookingWizard({
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">
       {/* Recovery Dialog */}
       <Dialog open={showRecoveryDialog} onOpenChange={setShowRecoveryDialog}>
         <DialogContent>
@@ -1107,17 +1218,6 @@ export default function UniversalBookingWizard({
             </DialogDescription>
           </DialogHeader>
           
-          {/* Debug info */}
-          {abandonedBooking && (
-            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-              <div>שלב: {abandonedBooking.formState?.currentStep || 'לא ידוע'}</div>
-              <div>נשמר: {abandonedBooking.formState?.savedAt ? new Date(abandonedBooking.formState.savedAt).toLocaleString('he-IL') : 'לא ידוע'}</div>
-              {abandonedBooking.formState?.guestInfo?.firstName && (
-                <div>שם: {abandonedBooking.formState.guestInfo.firstName} {abandonedBooking.formState.guestInfo.lastName}</div>
-              )}
-            </div>
-          )}
-          
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={handleStartFresh}>
               התחל מחדש
@@ -1129,26 +1229,136 @@ export default function UniversalBookingWizard({
         </DialogContent>
       </Dialog>
 
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="flex justify-between text-sm text-muted-foreground mb-2">
-          <span>{getStepTitle()}</span>
-          <span>{currentStep} / {TOTAL_STEPS_WITH_PAYMENT}</span>
+      {/* Modern Header with Progress */}
+      <div className="bg-white border-b shadow-sm sticky top-0 z-10">
+        <div className="max-w-4xl mx-auto px-3 md:px-4 py-3 md:py-4">
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="text-xl md:text-2xl">{getStepIcon()}</div>
+              <div>
+                <h1 className="text-lg md:text-xl font-bold">{getStepTitle()}</h1>
+                <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">{getStepSubtitle()}</p>
+              </div>
+            </div>
+            <div className="text-xs md:text-sm text-muted-foreground">
+              {currentStep}/{TOTAL_STEPS_WITH_PAYMENT}
+            </div>
+          </div>
+          
+          {/* Modern Progress Steps - Mobile Optimized */}
+          <div className="flex items-center justify-between">
+            {MODERN_STEPS.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                <div className={`flex items-center ${index === MODERN_STEPS.length - 1 ? '' : 'flex-1'}`}>
+                  <div className={`
+                    w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-xs md:text-sm font-medium transition-all
+                    ${currentStep >= step.id 
+                      ? 'bg-primary text-primary-foreground shadow-md' 
+                      : 'bg-muted text-muted-foreground'
+                    }
+                  `}>
+                    {currentStep > step.id ? (
+                      <CheckCircle className="h-3 w-3 md:h-5 md:w-5" />
+                    ) : (
+                      <span className="text-sm md:text-lg">{step.icon}</span>
+                    )}
+                  </div>
+                  
+                  <div className="mr-2 md:mr-3 hidden lg:block">
+                    <div className="text-sm font-medium">{step.title}</div>
+                    <div className="text-xs text-muted-foreground">{step.estimatedTime}</div>
+                  </div>
+                </div>
+                
+                {index < MODERN_STEPS.length - 1 && (
+                  <div className={`
+                    h-1 flex-1 mx-2 md:mx-4 rounded transition-all
+                    ${currentStep > step.id ? 'bg-primary' : 'bg-muted'}
+                  `} />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-        <Progress value={progressPercentage} className="h-2" />
       </div>
 
-      {/* Error Display */}
-      {isLoading && (
-        <Alert className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{t("common.loading")}</AlertTitle>
-          <AlertDescription>{t("bookings.processing")}</AlertDescription>
-        </Alert>
-      )}
+      {/* Content Area - Mobile Optimized */}
+      <div className="max-w-4xl mx-auto p-3 md:p-4 pb-24 min-h-[calc(100vh-200px)]">
+        {/* Error Display */}
+        {isLoading && (
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>טוען...</AlertTitle>
+            <AlertDescription>מעבד את ההזמנה שלך</AlertDescription>
+          </Alert>
+        )}
 
-      {/* Step Content */}
-      {renderStep()}
+        {/* Step Content */}
+        <div className="h-full">
+          {renderStep()}
+        </div>
+      </div>
+
+      {/* Modern Fixed Footer Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-10 safe-area-inset-bottom">
+        <div className="max-w-4xl mx-auto p-3 md:p-4">
+          <div className="flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              onClick={prevStep}
+              disabled={currentStep === 1}
+              className="flex items-center gap-1 md:gap-2 px-3 md:px-6 py-2 text-sm md:text-base"
+            >
+              <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">חזור</span>
+              <span className="sm:hidden">←</span>
+            </Button>
+            
+            <div className="text-center hidden lg:block">
+              <div className="text-sm text-muted-foreground">
+                {MODERN_STEPS[currentStep - 1]?.subtitle}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                זמן משוער: {MODERN_STEPS[currentStep - 1]?.estimatedTime}
+              </div>
+            </div>
+            
+            <Button 
+              onClick={nextStep}
+              disabled={isLoading}
+              className="flex items-center gap-1 md:gap-2 px-3 md:px-6 py-2 bg-primary hover:bg-primary/90 text-sm md:text-base"
+            >
+              {currentStep === TOTAL_STEPS_WITH_PAYMENT ? (
+                <>
+                  <span className="hidden sm:inline">💳 שלם וסיים</span>
+                  <span className="sm:hidden">💳 סיים</span>
+                  <CreditCard className="h-3 w-3 md:h-4 md:w-4" />
+                </>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">המשך</span>
+                  <span className="sm:hidden">→</span>
+                  <ArrowLeft className="h-3 w-3 md:h-4 md:w-4" />
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {/* Mobile progress with step info */}
+          <div className="lg:hidden mt-3">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs text-muted-foreground">{getStepSubtitle()}</span>
+              <span className="text-xs text-muted-foreground">{MODERN_STEPS[currentStep - 1]?.estimatedTime}</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div 
+                className="bg-primary h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 } 

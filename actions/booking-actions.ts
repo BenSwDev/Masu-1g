@@ -352,7 +352,7 @@ export async function calculateBookingPrice(
             description:
               daySettings.priceAddition.description ||
               daySettings.notes ||
-              `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
+              "bookings.surcharges.specialTime",
             amount: surchargeAmount,
           })
           priceDetails.totalSurchargesAmount += surchargeAmount

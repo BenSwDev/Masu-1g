@@ -14,10 +14,8 @@ import { GuestTreatmentSelectionStep } from "./steps/guest-treatment-selection-s
 import { GuestSchedulingStep } from "./steps/guest-scheduling-step"
 import { GuestSummaryStep } from "./steps/guest-summary-step"
 import { GuestPaymentStep } from "./steps/guest-payment-step"
-import { GuestPaymentProcessingStep } from "./steps/guest-payment-processing-step"
 import { GuestFinalConfirmationStep } from "./steps/guest-final-confirmation-step"
 import { GuestBookingConfirmation } from "./steps/guest-booking-confirmation"
-import NotificationPreferencesSelector from "./notification-preferences-selector"
 
 import { 
   calculateBookingPrice, 
@@ -27,7 +25,7 @@ import {
   saveAbandonedBooking,
   getAbandonedBooking
 } from "@/actions/booking-actions"
-import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
+import type { CreateGuestBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress"
 import { AlertCircle, RotateCcw } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
@@ -64,8 +62,9 @@ interface GuestInfo {
   recipientNotificationLanguage?: "he" | "en" | "ru"
   
   // ➕ Consents (Step 6)
-  customerAlerts?: "sms" | "email" | "none"
-  patientAlerts?: "sms" | "email" | "none"
+  customerAlerts?: "sms" | "email" | "both" | "none"
+  patientAlerts?: "sms" | "email" | "both" | "none"
+  notificationLanguage?: "he" | "en" | "ru"
   marketingOptIn?: boolean
   termsAccepted?: boolean
 }
@@ -98,7 +97,7 @@ interface UniversalBookingWizardProps {
   currentUser?: any // User session data if logged in
 }
 
-const TOTAL_STEPS_WITH_PAYMENT = 8 // ➕ Updated to 8 steps as per new flow
+const TOTAL_STEPS_WITH_PAYMENT = 7 // Updated to 7 steps: Treatment → Scheduling → Info → Address → Summary → Payment → Final
 const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 
 const TIMEZONE = "Asia/Jerusalem"
@@ -823,13 +822,13 @@ export default function UniversalBookingWizard({
           ? guestInfo.recipientGender
           : guestInfo.gender,
         // Add notification preferences
-        notificationMethods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
-                            guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
+        notificationMethods: guestInfo.customerAlerts === "both" ? ["email", "sms"] :
+                            guestInfo.customerAlerts === "sms" ? ["sms"] : ["email"],
         recipientNotificationMethods: guestInfo.isBookingForSomeoneElse ? 
-          (guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
-           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"]) : undefined,
-        notificationLanguage: guestInfo.bookerNotificationLanguage || "he",
-      } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
+          (guestInfo.patientAlerts === "both" ? ["email", "sms"] :
+           guestInfo.patientAlerts === "sms" ? ["sms"] : ["email"]) : undefined,
+        notificationLanguage: guestInfo.notificationLanguage || guestInfo.bookerNotificationLanguage || "he",
+      } as CreateGuestBookingPayloadType
 
 
       const result = await createGuestBooking(payload)
@@ -880,7 +879,7 @@ export default function UniversalBookingWizard({
       
       if (result.success && result.booking) {
         setBookingResult(result.booking)
-        setCurrentStep(CONFIRMATION_STEP_NUMBER)
+        setCurrentStep(7) // Go to final confirmation step
         
         // Clear saved form state on successful booking
         if (guestUserId) {
@@ -978,70 +977,22 @@ export default function UniversalBookingWizard({
           />
         )
       case 6:
-        // ➕ Step 6: Payment with Notification Preferences
+        // Step 6: Payment with Notification Preferences (second-to-last step)
         return (
-          <div className="space-y-6">
-            <GuestPaymentStep
-              calculatedPrice={calculatedPrice}
-              guestInfo={guestInfo}
-              setGuestInfo={setGuestInfo}
-              onConfirm={nextStep} // Changed to go to step 7 instead of final submit
-              onPrev={prevStep}
-              isLoading={isLoading}
-              createPendingBooking={createPendingBooking}
-              pendingBookingId={pendingBookingId}
-              isRedeeming={Boolean(voucher || userSubscription)}
-            />
-            
-            {/* ➕ Notification Preferences for Booker */}
-            <NotificationPreferencesSelector
-              value={{
-                methods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
-                         guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
-                language: guestInfo.bookerNotificationLanguage || "he"
-              }}
-              onChange={(prefs) => setGuestInfo({
-                ...guestInfo,
-                bookerNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
-                                         prefs.methods.includes("sms") ? "sms" : "email",
-                bookerNotificationLanguage: prefs.language
-              })}
-              isForRecipient={false}
-              className="mt-6"
-            />
-            
-            {/* ➕ Notification Preferences for Recipient (if booking for someone else) */}
-            {guestInfo.isBookingForSomeoneElse && (
-              <NotificationPreferencesSelector
-                value={{
-                  methods: guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
-                           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"],
-                  language: guestInfo.recipientNotificationLanguage || "he"
-                }}
-                onChange={(prefs) => setGuestInfo({
-                  ...guestInfo,
-                  recipientNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
-                                              prefs.methods.includes("sms") ? "sms" : "email",
-                  recipientNotificationLanguage: prefs.language
-                })}
-                isForRecipient={true}
-                recipientName={`${guestInfo.recipientFirstName || ''} ${guestInfo.recipientLastName || ''}`.trim()}
-                className="mt-4"
-              />
-            )}
-          </div>
-        )
-      case 7:
-        // ➕ Step 7: Payment Processing Window
-        return (
-          <GuestPaymentProcessingStep
-            onComplete={() => handleFinalSubmit()}
-            bookingNumber={pendingBookingId || "000001"}
-            amount={calculatedPrice?.finalAmount || 0}
+          <GuestPaymentStep
+            calculatedPrice={calculatedPrice}
+            guestInfo={guestInfo}
+            setGuestInfo={setGuestInfo}
+            onConfirm={handleFinalSubmit} // Go directly to final step after payment success
+            onPrev={prevStep}
+            isLoading={isLoading}
+            createPendingBooking={createPendingBooking}
+            pendingBookingId={pendingBookingId}
+            isRedeeming={Boolean(voucher || userSubscription)}
           />
         )
-      case 8:
-        // ➕ Step 8: Final Confirmation + Order Events Trigger
+      case 7:
+        // Step 7: Final Confirmation (last step)
         if (bookingResult) {
           return (
             <GuestFinalConfirmationStep
@@ -1065,7 +1016,7 @@ export default function UniversalBookingWizard({
                 isGift: guestInfo.isGift,
                 giftGreeting: guestInfo.giftGreeting,
                 consents: {
-                  customerAlerts: guestInfo.customerAlerts || "email",
+                  customerAlerts: guestInfo.customerAlerts || "both",
                   marketingOptIn: guestInfo.marketingOptIn || false,
                   termsAccepted: guestInfo.termsAccepted || false
                 }
@@ -1101,8 +1052,6 @@ export default function UniversalBookingWizard({
       case 6:
         return t("bookings.steps.payment.title") || "תשלום והעדפות"
       case 7:
-        return t("bookings.steps.processing.title") || "עיבוד תשלום"
-      case 8:
         return t("bookings.steps.final.title") || "אישור סופי"
       default:
         return ""

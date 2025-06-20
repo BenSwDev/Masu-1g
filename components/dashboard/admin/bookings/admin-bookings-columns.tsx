@@ -560,20 +560,40 @@ const PriceDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
   const priceDetails = booking.priceDetails
   const basePrice = priceDetails.basePrice || 0
   const totalSurcharges = priceDetails.totalSurchargesAmount || 0
-  const totalPriceBeforeDiscounts = basePrice + totalSurcharges
+  const discounts = (priceDetails.discountAmount || 0) + (priceDetails.voucherAppliedAmount || 0)
+  const finalAmount = priceDetails.finalAmount || 0
 
   return (
-    <div className="space-y-1 max-w-[180px]">
+    <div className="space-y-1 max-w-[200px]">
       <div className="text-sm">
         מחיר בסיס: ₪{basePrice.toFixed(2)}
       </div>
-      {totalSurcharges > 0 && (
-        <div className="text-sm text-orange-600">
-          כולל תוספות: ₪{totalSurcharges.toFixed(2)}
+      
+      {/* Display surcharges with their descriptions */}
+      {priceDetails.surcharges && Array.isArray(priceDetails.surcharges) && priceDetails.surcharges.length > 0 && (
+        <div className="space-y-1">
+          {priceDetails.surcharges.map((surcharge: any, index: number) => (
+            <div key={index} className="text-xs text-orange-600">
+              <div>
+                {/* Clean up the description - remove the time part if it's in the default format */}
+                {surcharge.description?.includes('bookings.surcharges.specialTime')
+                  ? surcharge.description.replace(/\s*\(.*?\)$/, '') // Remove (HH:mm) pattern
+                  : surcharge.description || t('bookings.surcharges.specialTime')
+                }: +₪{surcharge.amount.toFixed(2)}
+              </div>
+            </div>
+          ))}
         </div>
       )}
+      
+      {discounts > 0 && (
+        <div className="text-sm text-green-600">
+          הנחות: -₪{discounts.toFixed(2)}
+        </div>
+      )}
+      
       <div className="font-medium text-sm border-t pt-1">
-        מחיר כללי: ₪{totalPriceBeforeDiscounts.toFixed(2)}
+        סכום סופי: ₪{finalAmount.toFixed(2)}
       </div>
     </div>
   )
@@ -811,31 +831,8 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
   // Office commission = customer paid - professional payment (cannot be negative)
   const officeCommission = Math.max(0, actualPaid - totalProfessionalPayment)
 
-  // Calculate total surcharges amount
-  let totalSurcharges = 0
-  if (priceDetails.surcharges && Array.isArray(priceDetails.surcharges)) {
-    for (const surcharge of priceDetails.surcharges as any[]) {
-      if (surcharge && typeof surcharge.amount === 'number' && surcharge.amount > 0) {
-        totalSurcharges += surcharge.amount
-      }
-    }
-  }
-  
-  // Calculate total price including surcharges (before any discounts)
-  const basePrice = priceDetails.basePrice || 0
-  const totalPriceBeforeDiscounts = basePrice + totalSurcharges
-  
-  // Display discounts/redemptions
-  const totalDiscounts = (priceDetails.discountAmount || 0) + (priceDetails.voucherAppliedAmount || 0)
-
   return (
     <div className="space-y-1 max-w-[180px]">
-      <div className="text-sm">
-        עלות סופית: ₪{actualPaid.toFixed(2)}
-      </div>
-      <div className="text-sm">
-        שולם בפועל: ₪{actualPaid.toFixed(2)}
-      </div>
       <div className="text-sm text-green-600">
         רווח מטפל: ₪{totalProfessionalPayment.toFixed(2)}
       </div>

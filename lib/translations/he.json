@@ -788,6 +788,9 @@
           "confirmed": "אושר",
           "completed": "הושלם"
         },
+      "surcharges": {
+        "specialTime": "תוספת זמן מיוחד"
+      },
       "errors": {
         "assignProfessionalFailed": "שגיאה בשיוך המטפל להזמנה",
         "bookingAlreadyHasProfessional": "להזמנה זו כבר יש מטפל משויך",

@@ -9,7 +9,6 @@ import dbConnect from "@/lib/db/mongoose"
 import Booking, { type IBooking, type IPriceDetails, type IBookingAddressSnapshot, type BookingStatus } from "@/lib/db/models/booking"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
-import Subscription from "@/lib/db/models/subscription"
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
 import User, { type IUser, UserRole } from "@/lib/db/models/user"
@@ -37,7 +36,7 @@ import type { CreateBookingPayloadType as CreateBookingPayloadSchemaType, Create
 
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import { smartNotificationService } from "@/lib/notifications/smart-notification-service"
-import { sendBookingConfirmationToUser, sendGuestNotification } from "@/actions/notification-actions-smart"
+import { sendUserNotification, sendGuestNotification } from "@/actions/notification-service"
 import type {
   EmailRecipient,
   PhoneRecipient,
@@ -1930,7 +1929,25 @@ export async function createGuestBooking(
         recipientBirthDate: validatedPayload.recipientBirthDate,
         recipientGender: validatedPayload.recipientGender,
         bookingAddressSnapshot,
+        // ➕ Enhanced Booking Flow Fields
+        step: validatedPayload.step || 6, // Default to payment step
         status: "pending_payment",
+        // ➕ Static Pricing Snapshot
+        staticTreatmentPrice: validatedPayload.priceDetails.basePrice,
+        staticTherapistPay: validatedPayload.priceDetails.basePrice * 0.7, // Default 70% to therapist
+        staticSystemFee: validatedPayload.priceDetails.basePrice * 0.3, // Default 30% system fee
+        // ➕ Gift Functionality
+        isGift: validatedPayload.isGift || false,
+        giftGreeting: validatedPayload.giftGreeting,
+        giftSendWhen: validatedPayload.giftSendWhen || "now",
+        giftHidePrice: validatedPayload.giftHidePrice || false,
+        // ➕ Enhanced Consents
+        consents: {
+          customerAlerts: validatedPayload.consents?.customerAlerts || "email",
+          patientAlerts: validatedPayload.consents?.patientAlerts || "email",
+          marketingOptIn: validatedPayload.consents?.marketingOptIn ?? true,
+          termsAccepted: validatedPayload.consents?.termsAccepted ?? true,
+        },
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
           surcharges: validatedPayload.priceDetails.surcharges,
@@ -1954,6 +1971,7 @@ export async function createGuestBooking(
             ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.redeemedUserSubscriptionId)
             : undefined,
         } as IPriceDetails,
+        // ➕ Enhanced Payment Details
         paymentDetails: {
           paymentMethodId: validatedPayload.paymentDetails.paymentMethodId
             ? new mongoose.Types.ObjectId(validatedPayload.paymentDetails.paymentMethodId)
@@ -1963,6 +1981,10 @@ export async function createGuestBooking(
               ? "not_required"
               : validatedPayload.paymentDetails.paymentStatus || "pending",
           transactionId: validatedPayload.paymentDetails.transactionId,
+          amountPaid: validatedPayload.priceDetails.finalAmount,
+          cardLast4: validatedPayload.paymentDetails.cardLast4,
+          paymentProvider: validatedPayload.paymentDetails.paymentProvider || "cardcom",
+          paymentDate: new Date(),
         },
         professionalId: null,
       })
@@ -2611,94 +2633,44 @@ export async function getAbandonedBooking(userId: string): Promise<{
 export async function updateBookingStatusAfterPayment(
   bookingId: string,
   paymentStatus: "success" | "failed",
-  transactionId?: string
+  transactionId?: string,
+  cardLast4?: string,
+  amountPaid?: number
 ): Promise<{ success: boolean; booking?: IBooking; error?: string }> {
   try {
-    await dbConnect()
+    // ✅ Use centralized order processing system
+    const { processBookingOrder } = await import("@/actions/booking-order-processor")
     
-    const booking = await Booking.findById(bookingId)
-    if (!booking) {
-      return { success: false, error: "Booking not found" }
+    const processingResult = await processBookingOrder({
+      bookingId,
+      paymentStatus,
+      transactionId,
+      cardLast4,
+      amountPaid
+    })
+    
+    if (!processingResult.success) {
+      return { success: false, error: processingResult.error }
     }
-
-    if (paymentStatus === "success") {
-      // Update payment status and booking status
-      booking.paymentDetails.paymentStatus = "paid"
-      booking.paymentDetails.transactionId = transactionId
-      booking.status = "in_process" // Now in process - paid but not assigned professional
-      
-      // Find suitable professionals and save to booking
-      const suitableProfessionals = await findSuitableProfessionals(bookingId)
-      
-      if (suitableProfessionals.success && suitableProfessionals.professionals) {
-        // Save suitable professionals list to booking
-        booking.suitableProfessionals = suitableProfessionals.professionals.map((prof: any) => ({
-          professionalId: prof.userId._id,
-          name: prof.userId.name,
-          email: prof.userId.email,
-          phone: prof.userId.phone,
-          gender: prof.userId.gender,
-          profileId: prof._id,
-          calculatedAt: new Date()
-        }))
-        
-        logger.info("Saved suitable professionals to booking", { 
-          bookingId, 
-          professionalCount: booking.suitableProfessionals.length 
-        })
-      }
-      
-      await booking.save()
-      
-      if (suitableProfessionals.success && suitableProfessionals.professionals && suitableProfessionals.professionals.length > 0) {
-        logger.info("Found suitable professionals for booking", { 
-          bookingId,
-          professionalCount: suitableProfessionals.professionals.length 
-        })
-        
-        // Send SMS notifications to all suitable professionals
-        try {
-          const { sendProfessionalNotifications } = await import("@/actions/professional-sms-actions")
-          const smsResult = await sendProfessionalNotifications(bookingId)
-          
-          if (smsResult.success) {
-            logger.info("Sent SMS notifications to professionals", { 
-              bookingId,
-              sentCount: smsResult.sentCount 
-            })
-          } else {
-            logger.error("Failed to send SMS notifications to professionals", { 
-              bookingId,
-              error: smsResult.error 
-            })
-          }
-        } catch (error) {
-          logger.error("Error sending SMS notifications", { 
-            bookingId,
-            error: error instanceof Error ? error.message : String(error) 
-          })
-        }
-      } else {
-        logger.warn("No suitable professionals found for booking", { bookingId })
-      }
-      
-      // TODO: Send confirmation notifications to user
-      
-      revalidatePath("/dashboard/admin/bookings")
-      revalidatePath("/dashboard/member/bookings")
-      
-      return { success: true, booking: booking.toObject() as IBooking }
-    } else {
-      // Payment failed - keep as pending payment
-      booking.paymentDetails.paymentStatus = "failed"
-      if (transactionId) {
-        booking.paymentDetails.transactionId = transactionId
-      }
-      
-      await booking.save()
-      
-      return { success: true, booking: booking.toObject() as IBooking }
+    
+    // Get updated booking
+    await dbConnect()
+    const updatedBooking = await Booking.findById(bookingId)
+    if (!updatedBooking) {
+      return { success: false, error: "Booking not found after processing" }
     }
+    
+    // Revalidate paths
+    revalidatePath("/dashboard/admin/bookings")
+    revalidatePath("/dashboard/member/bookings")
+    
+    logger.info("✅ Booking status updated via centralized processor", {
+      bookingId,
+      paymentStatus,
+      details: processingResult.details
+    })
+    
+    return { success: true, booking: updatedBooking.toObject() as IBooking }
       } catch (error) {
     logger.error("Error updating booking status after payment:", {
       bookingId,
@@ -2851,8 +2823,8 @@ export async function sendNotificationToSuitableProfessionals(
   }
 
   try {
-    const { sendProfessionalNotifications } = await import("@/actions/professional-sms-actions")
-    return await sendProfessionalNotifications(bookingId)
+    const { resendProfessionalNotifications } = await import("@/actions/notification-service")
+    return await resendProfessionalNotifications(bookingId)
   } catch (error) {
     logger.error("Error sending notifications to suitable professionals:", {
       bookingId,

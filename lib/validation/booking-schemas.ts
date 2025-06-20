@@ -127,12 +127,86 @@ export const SchedulingDetailsSchema = z
     path: ["selectedAddressId"], // Or path: ["customAddressDetails"]
   })
 
-// Schema for the summary/coupon step
+// ➕ Schema for Gift functionality (Step 3 addition)
+export const GiftSettingsSchema = z.object({
+  isGift: z.boolean().default(false),
+  giftGreeting: z.string().max(500, "bookings.validation.giftGreetingTooLong").optional(),
+  giftSendWhen: z.union([z.literal("now"), z.date()]).default("now"),
+  giftHidePrice: z.boolean().default(false),
+}).refine((data) => {
+  if (data.isGift && !data.giftGreeting) {
+    return false // Gift must have a greeting
+  }
+  return true
+}, {
+  message: "bookings.validation.giftGreetingRequired",
+  path: ["giftGreeting"],
+})
+
+// ➕ Schema for Step 3 - Enhanced Details with Gift functionality  
+export const DetailsWithGiftSchema = z.object({
+  // All fields from SchedulingDetailsSchema manually included for clarity
+  bookingDate: z
+    .date({ required_error: "bookings.validation.dateRequired" })
+    .refine((date) => {
+      const today = getTodayInTimezone()
+      return date >= today
+    }, {
+      message: "bookings.validation.pastDateNotAllowed"
+    }),
+  bookingTime: z.string({ required_error: "bookings.validation.timeRequired" }),
+  selectedAddressId: z.string().optional(),
+  customAddressDetails: z
+    .object({
+      fullAddress: z.string({ required_error: "bookings.validation.address.fullAddressRequired" }),
+      city: z.string({ required_error: "bookings.validation.address.cityRequired" }),
+      street: z.string({ required_error: "bookings.validation.address.streetRequired" }),
+      streetNumber: z.string().optional(),
+      apartment: z.string().optional(),
+      entrance: z.string().optional(),
+      floor: z.string().optional(),
+      notes: z.string().max(200, "bookings.validation.address.notesTooLong").optional(),
+      hasPrivateParking: z.boolean().optional(),
+    })
+    .optional(),
+  notes: z.string().max(500, "bookings.validation.notesTooLong").optional(),
+  isFlexibleTime: z.boolean().default(false),
+  flexibilityRangeHours: z.number().min(1).max(12).optional(),
+  isBookingForSomeoneElse: z.boolean().default(false),
+  recipientName: z.string().optional(),
+  recipientPhone: z.string().optional(),
+  recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional(),
+  recipientBirthDate: z.date().optional(),
+  recipientGender: z.enum(["male", "female", "other"]).optional(),
+  
+  // Gift functionality
+  isGift: z.boolean().default(false),
+  giftGreeting: z.string().max(500, "bookings.validation.giftGreetingTooLong").optional(),
+  giftSendWhen: z.union([z.literal("now"), z.date()]).default("now"),
+  giftHidePrice: z.boolean().default(false),
+})
+
+// Schema for the summary/coupon step (Step 5)
 export const SummarySchema = z.object({
   // This schema is now effectively empty but kept for structure.
 })
 
-// Schema for payment details
+// ➕ Schema for Step 6 - Payment with Consents
+export const PaymentWithConsentsSchema = z.object({
+  selectedPaymentMethodId: z.string({
+    required_error: "bookings.validation.paymentMethodRequired",
+  }),
+  appliedCouponCode: z.string().optional(),
+  // Enhanced consents
+  customerAlerts: z.enum(["sms", "email", "none"]).default("email"),
+  patientAlerts: z.enum(["sms", "email", "none"]).default("email"),
+  marketingOptIn: z.boolean().default(false),
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: "bookings.validation.termsRequired",
+  }),
+})
+
+// Schema for payment details (backward compatibility)
 export const PaymentDetailsSchema = z.object({
   selectedPaymentMethodId: z.string({
     required_error: "bookings.validation.paymentMethodRequired",
@@ -142,6 +216,18 @@ export const PaymentDetailsSchema = z.object({
     message: "bookings.validation.termsRequired",
   }),
   agreedToMarketing: z.boolean().default(true),
+})
+
+// ➕ Schema for Step 7 - Payment Window (just processing, no additional fields)
+export const PaymentWindowSchema = z.object({
+  paymentProcessing: z.boolean().default(true),
+})
+
+// ➕ Schema for Step 8 - Final Confirmation with Reviews
+export const FinalConfirmationSchema = z.object({
+  reviewRating: z.number().min(1).max(5).optional(),
+  reviewComment: z.string().max(1000, "bookings.validation.reviewCommentTooLong").optional(),
+  orderEventTriggered: z.boolean().default(false),
 })
 
 // Combined schema for the entire booking wizard state (can be used for context or final validation)
@@ -158,6 +244,17 @@ const BaseBookingWizardSchema = z.object({
   selectedTreatmentId: z.string({ required_error: "bookings.validation.treatmentRequired" }),
   selectedDurationId: z.string().optional(),
   therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),
+  
+  // Step tracking
+  step: z.number().min(1).max(8).default(1),
+  
+  // Static pricing snapshots (added to validation)
+  staticTreatmentPrice: z.number().min(0).optional(),
+  staticTherapistPay: z.number().min(0).optional(),
+  staticTimeSurcharge: z.number().min(0).optional(),
+  staticTimeSurchargeReason: z.string().optional(),
+  staticTherapistPayExtra: z.number().min(0).optional(),
+  companyFee: z.number().min(0).optional(),
   
   // Scheduling details
   bookingDate: z
@@ -192,6 +289,29 @@ const BaseBookingWizardSchema = z.object({
   recipientEmail: z.string().email("bookings.validation.recipientEmailInvalid").optional(),
   recipientBirthDate: z.date().optional(),
   recipientGender: z.enum(["male", "female", "other"]).optional(),
+  
+  // ➕ Gift functionality (Step 3)
+  isGift: z.boolean().default(false),
+  giftGreeting: z.string().max(500, "bookings.validation.giftGreetingTooLong").optional(),
+  giftSendWhen: z.union([z.literal("now"), z.date()]).default("now"),
+  giftHidePrice: z.boolean().default(false),
+  
+  // ➕ Consents (Step 6)
+  customerAlerts: z.enum(["sms", "email", "none"]).default("email"),
+  patientAlerts: z.enum(["sms", "email", "none"]).default("email"),
+  marketingOptIn: z.boolean().default(false),
+  termsAccepted: z.boolean().default(false),
+  
+  // Enhanced payment details
+  enhancedPaymentTransactionId: z.string().optional(),
+  enhancedPaymentAmountPaid: z.number().min(0).optional(),
+  enhancedPaymentCardLast4: z.string().max(4).optional(),
+  enhancedPaymentCardHolder: z.string().optional(),
+  enhancedPaymentStatus: z.enum(["success", "fail"]).optional(),
+  
+  // Review system
+  reviewRating: z.number().min(1).max(5).optional(),
+  reviewComment: z.string().max(1000, "bookings.validation.reviewCommentTooLong").optional(),
   
   // Notification preferences for this booking
   notificationMethods: z.array(z.enum(["email", "sms"])).default(["email"]),
@@ -324,6 +444,13 @@ export type SchedulingFormValues = z.infer<typeof SchedulingDetailsSchema>
 export type SummaryFormValues = z.infer<typeof SummarySchema>
 export type PaymentFormValues = z.infer<typeof PaymentDetailsSchema>
 export type BookingWizardFormValues = z.infer<typeof BookingWizardSchema>
+
+// ➕ NEW FORM VALUE TYPES for enhanced wizard
+export type GiftSettingsFormValues = z.infer<typeof GiftSettingsSchema>
+export type DetailsWithGiftFormValues = z.infer<typeof DetailsWithGiftSchema>
+export type PaymentWithConsentsFormValues = z.infer<typeof PaymentWithConsentsSchema>
+export type PaymentWindowFormValues = z.infer<typeof PaymentWindowSchema>
+export type FinalConfirmationFormValues = z.infer<typeof FinalConfirmationSchema>
 
 // Schema for guest booking creation (similar to CreateBookingPayloadSchema but with different userId handling)
 export const CreateGuestBookingPayloadSchema = z.object({

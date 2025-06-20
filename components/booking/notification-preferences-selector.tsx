@@ -9,22 +9,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Mail, MessageSquare, Globe, Bell, Info } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { getUserNotificationPreferences } from "@/actions/notification-actions-smart"
+import { getUserNotificationPreferences } from "@/actions/notification-service"
 import type { INotificationPreferences } from "@/lib/db/models/user"
 
+// ➕ Enhanced notification preferences matching new booking schema
 interface NotificationPreferencesSelectorProps {
   value: {
     methods: ("email" | "sms")[]
     language: "he" | "en" | "ru"
+    alertPreference?: "sms" | "email" | "none"
   }
   onChange: (preferences: {
     methods: ("email" | "sms")[]
     language: "he" | "en" | "ru"
+    alertPreference?: "sms" | "email" | "none"
   }) => void
   isForRecipient?: boolean
   recipientName?: string
   disabled?: boolean
   className?: string
+  // ➕ New props for enhanced functionality
+  showAlertPreferences?: boolean
+  title?: string
 }
 
 export default function NotificationPreferencesSelector({ 
@@ -33,7 +39,10 @@ export default function NotificationPreferencesSelector({
   isForRecipient = false, 
   recipientName,
   disabled = false,
-  className 
+  className,
+  // ➕ New props
+  showAlertPreferences = false,
+  title
 }: NotificationPreferencesSelectorProps) {
   const { data: session } = useSession()
   const [userPreferences, setUserPreferences] = useState<INotificationPreferences | null>(null)
@@ -92,6 +101,14 @@ export default function NotificationPreferencesSelector({
     })
   }
 
+  // ➕ Handle alert preference changes
+  const handleAlertPreferenceChange = (alertPreference: "sms" | "email" | "none") => {
+    onChange({
+      ...value,
+      alertPreference
+    })
+  }
+
   const useUserDefaults = () => {
     if (userPreferences) {
       onChange({
@@ -110,9 +127,9 @@ export default function NotificationPreferencesSelector({
     }
   }
 
-  const title = isForRecipient 
+  const displayTitle = title || (isForRecipient 
     ? `העדפות התראה עבור ${recipientName || 'הנמען'}`
-    : "העדפות התראה עבורך"
+    : "העדפות התראה עבורך")
 
   const description = isForRecipient
     ? "בחר כיצד הנמען ירצה לקבל את האישורים והעדכונים על ההזמנה"
@@ -123,7 +140,7 @@ export default function NotificationPreferencesSelector({
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Bell className="h-4 w-4" />
-          {title}
+          {displayTitle}
         </CardTitle>
         <CardDescription className="text-sm">
           {description}
@@ -228,6 +245,50 @@ export default function NotificationPreferencesSelector({
             </Badge>
           </div>
         </div>
+
+        {/* ➕ Alert Preferences (if enabled) */}
+        {showAlertPreferences && (
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">העדפות התראות</Label>
+            
+            <div className="flex items-center gap-3">
+              <Bell className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={value.alertPreference || "email"}
+                onValueChange={(pref: "sms" | "email" | "none") => handleAlertPreferenceChange(pref)}
+                disabled={disabled}
+              >
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      דואר אלקטרוני
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="sms">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4" />
+                      SMS
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="none">
+                    <div className="flex items-center gap-2">
+                      <Bell className="h-4 w-4" />
+                      ללא התראות
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Badge variant="secondary" className="text-xs">
+                {value.alertPreference === "email" ? "אימייל" : 
+                 value.alertPreference === "sms" ? "SMS" : "ללא התראות"}
+              </Badge>
+            </div>
+          </div>
+        )}
 
         {/* Current Selection Summary */}
         <div className="bg-gray-50 rounded-lg p-3 space-y-1">

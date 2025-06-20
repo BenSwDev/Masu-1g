@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Mail, MessageSquare, Globe, Bell, Save, CheckCircle } from "lucide-react"
-import { getUserNotificationPreferences, updateUserNotificationPreferences } from "@/actions/notification-actions-smart"
+import { getUserNotificationPreferences, updateUserNotificationPreferences } from "@/actions/notification-service"
 import type { INotificationPreferences } from "@/lib/db/models/user"
 
 interface NotificationPreferencesProps {

@@ -714,7 +714,7 @@
     "bookAnother": "הזמן טיפול נוסף",
     "balance": "יתרה",
     "status": {
-      "confirmed": "אושר",
+      "confirmed": "מאושר",
       "cancelled": "בוטל",
       "abandoned_pending_payment": "הזמנה שננטשה"
     },
@@ -820,11 +820,91 @@
           "confirmBooking": "אישור הזמנה",
           "confirmDescNoPayment": "ההזמנה שלך מוכנה לאישור ללא צורך בתשלום",
           "confirmTitleNoPayment": "אישור הזמנה ללא תשלום",
-          "description": "בחר אמצעי תשלום ואשר את ההזמנה",
+          "description": "סיכום ההזמנה והמעבר לתשלום",
           "loadingPrice": "מחשב מחיר...",
           "payAndConfirm": "שלם ואשר",
           "selectPaymentMethod": "בחר אמצעי תשלום",
-          "title": "תשלום ואישור"
+          "title": "תשלום",
+          "amount": "סכום לתשלום",
+          "iframe": {
+            "title": "כאן יהיה IFRAME של CARDCOMM",
+            "description": "ממשק התשלום המאובטח של CardComm"
+          },
+          "demo": {
+            "success": "דימוי הצלחה",
+            "failure": "דימוי כישלון"
+          },
+          "success": {
+            "title": "התשלום בוצע בהצלחה!",
+            "description": "ההזמנה אושרה ופרטיה נשלחו אליך באימייל",
+            "email": "אימייל אישור נשלח",
+            "sms": "הודעת SMS נשלחה",
+            "professionals": "מטפלים הוזמנו"
+          },
+          "failure": {
+            "title": "התשלום נכשל",
+            "description": "אירעה שגיאה בביצוע התשלום. אנא נסה שוב.",
+            "noCharge": "לא חויבת. אין תשלום שבוצע עבור ההזמנה הזו.",
+            "retry": "נסה שנית"
+          },
+          "processing": {
+            "title": "מעבד תשלום",
+            "description": "אנא המתן בזמן שאנו מעבדים את התשלום שלך",
+            "progress": "התקדמות",
+            "steps": {
+              "payment": "עיבוד תשלום",
+              "validation": "אימות נתונים",
+              "booking": "יצירת הזמנה",
+              "notifications": "שליחת הודעות",
+              "processing": "מעבד"
+            },
+            "transaction": "פרטי עסקה",
+            "bookingNumber": "מספר הזמנה",
+            "amount": "סכום",
+            "status": "סטטוס",
+            "statusValue": "בעיבוד",
+            "estimated": "זמן משוער",
+            "estimatedValue": "30-60 שניות",
+            "security": "החיבור מאובטח ומוצפן"
+          }
+        },
+        "processing": {
+          "title": "עיבוד תשלום"
+        },
+        "final": {
+          "title": "ההזמנה הושלמה בהצלחה!",
+          "subtitle": "תודה שבחרת בנו! פרטי ההזמנה נשלחו אליך",
+          "summary": "סיכום ההזמנה",
+          "bookingNumber": "מספר הזמנה",
+          "treatment": "פרטי הטיפול",
+          "customer": "פרטי הלקוח",
+          "primaryContact": "איש קשר ראשי",
+          "confirmationSent": "אישור נשלח",
+          "smsUpdates": "עדכונים בSMS",
+          "emailUpdates": "עדכונים באימייל",
+          "giftDetails": "פרטי מתנה",
+          "giftMessage": "הודעת מתנה",
+          "payment": "פרטי תשלום",
+          "totalPaid": "סה\"כ שולם",
+          "noPaymentRequired": "לא נדרש תשלום",
+          "whatsNext": {
+            "title": "מה הלאה?",
+            "immediate": "מיידי",
+            "beforeTreatment": "לפני הטיפול",
+            "confirmationEmail": "אימייל אישור נשלח",
+            "professionalNotified": "המטפלים קיבלו הודעה",
+            "calendarAdded": "נוסף ליומן",
+            "professionalContact": "המטפל ייצור קשר",
+            "reminder24h": "תזכורת 24 שעות לפני",
+            "arrivalNotification": "הודעת הגעה"
+          },
+          "actions": {
+            "download": "הורד אישור",
+            "share": "שתף",
+            "calendar": "הוסף ליומן",
+            "review": "כתוב ביקורת"
+          },
+          "continue": "המשך לדף הבית"
         },
         "scheduling": {
           "description": "בחר תאריך, שעה וכתובת לטיפול",

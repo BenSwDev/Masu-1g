@@ -14,6 +14,8 @@ import { GuestTreatmentSelectionStep } from "./steps/guest-treatment-selection-s
 import { GuestSchedulingStep } from "./steps/guest-scheduling-step"
 import { GuestSummaryStep } from "./steps/guest-summary-step"
 import { GuestPaymentStep } from "./steps/guest-payment-step"
+import { GuestPaymentProcessingStep } from "./steps/guest-payment-processing-step"
+import { GuestFinalConfirmationStep } from "./steps/guest-final-confirmation-step"
 import { GuestBookingConfirmation } from "./steps/guest-booking-confirmation"
 import NotificationPreferencesSelector from "./notification-preferences-selector"
 
@@ -48,11 +50,24 @@ interface GuestInfo {
   recipientPhone?: string
   recipientBirthDate?: Date
   recipientGender?: "male" | "female" | "other"
-  // Notification preferences
+  
+  // ➕ Gift functionality (Step 3)
+  isGift?: boolean
+  giftGreeting?: string
+  giftSendWhen?: "now" | Date
+  giftHidePrice?: boolean
+  
+  // Notification preferences (moved to Step 6)
   bookerNotificationMethod?: "email" | "sms" | "both"
   bookerNotificationLanguage?: "he" | "en" | "ru"
   recipientNotificationMethod?: "email" | "sms" | "both"
   recipientNotificationLanguage?: "he" | "en" | "ru"
+  
+  // ➕ Consents (Step 6)
+  customerAlerts?: "sms" | "email" | "none"
+  patientAlerts?: "sms" | "email" | "none"
+  marketingOptIn?: boolean
+  termsAccepted?: boolean
 }
 
 interface GuestAddress {
@@ -83,7 +98,7 @@ interface UniversalBookingWizardProps {
   currentUser?: any // User session data if logged in
 }
 
-const TOTAL_STEPS_WITH_PAYMENT = 6
+const TOTAL_STEPS_WITH_PAYMENT = 8 // ➕ Updated to 8 steps as per new flow
 const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 
 const TIMEZONE = "Asia/Jerusalem"
@@ -100,29 +115,49 @@ export default function UniversalBookingWizard({
   const [isPriceCalculating, setIsPriceCalculating] = useState(false)
 
   const prefilledGuestInfo = useMemo<Partial<GuestInfo>>(() => {
-    // Priority 1: Logged in user data
+    // Priority 1: Logged-in user (highest priority)
     if (currentUser) {
-      const [first, ...rest] = (currentUser.name || "").split(" ")
+      // ✅ Phone normalization: Convert +972525131777 to 525131777 for UI
+      let normalizedPhone = currentUser.phone || ""
+      if (normalizedPhone.startsWith("+972")) {
+        normalizedPhone = normalizedPhone.substring(4) // Remove +972 prefix
+        if (normalizedPhone.startsWith("0")) {
+          normalizedPhone = normalizedPhone.substring(1) // Remove leading 0 if exists
+        }
+      }
+      
       return {
-        firstName: first || "",
-        lastName: rest.join(" ") || "",
+        firstName: currentUser.name?.split(" ")[0] || "",
+        lastName: currentUser.name?.split(" ").slice(1).join(" ") || "",
         email: currentUser.email || "",
-        phone: currentUser.phone || "",
+        phone: normalizedPhone, // ✅ Normalized phone without +972
+        birthDate: currentUser.dateOfBirth ? new Date(currentUser.dateOfBirth) : undefined, // ✅ Extract birth date
+        gender: currentUser.gender || undefined, // ✅ Extract gender
         isBookingForSomeoneElse: false,
-        bookerNotificationMethod: "email", // Default for logged in users
-        bookerNotificationLanguage: "he"
+        bookerNotificationMethod: currentUser.notificationPreferences?.methods?.includes("sms") ? 
+          (currentUser.notificationPreferences?.methods?.includes("email") ? "both" : "sms") : "email",
+        bookerNotificationLanguage: currentUser.notificationPreferences?.language || "he"
       }
     }
     
-    // Priority 2: Gift voucher data
+    // Priority 2: Gift voucher recipient data
     if (voucher?.isGift && voucher.recipientName) {
       const [first, ...rest] = voucher.recipientName.split(" ")
+      // ✅ Phone normalization for voucher recipient
+      let normalizedPhone = voucher.recipientPhone || ""
+      if (normalizedPhone.startsWith("+972")) {
+        normalizedPhone = normalizedPhone.substring(4)
+        if (normalizedPhone.startsWith("0")) {
+          normalizedPhone = normalizedPhone.substring(1)
+        }
+      }
+      
       return {
         firstName: first,
         lastName: rest.join(" "),
-        phone: voucher.recipientPhone,
-        email: "", // Gift vouchers usually don't have recipient email
-        isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
+        email: voucher.recipientEmail || "",
+        phone: normalizedPhone, // ✅ Normalized phone
+        isBookingForSomeoneElse: false,
         bookerNotificationMethod: "email",
         bookerNotificationLanguage: "he"
       }
@@ -132,11 +167,20 @@ export default function UniversalBookingWizard({
     if ((voucher as any)?.guestInfo) {
       const guestInfo = (voucher as any).guestInfo
       const [first, ...rest] = guestInfo.name.split(" ")
+      // ✅ Phone normalization for guest info
+      let normalizedPhone = guestInfo.phone || ""
+      if (normalizedPhone.startsWith("+972")) {
+        normalizedPhone = normalizedPhone.substring(4)
+        if (normalizedPhone.startsWith("0")) {
+          normalizedPhone = normalizedPhone.substring(1)
+        }
+      }
+      
       return {
         firstName: first,
         lastName: rest.join(" "),
         email: guestInfo.email,
-        phone: guestInfo.phone,
+        phone: normalizedPhone, // ✅ Normalized phone
         isBookingForSomeoneElse: false,
         bookerNotificationMethod: "email",
         bookerNotificationLanguage: "he"
@@ -147,11 +191,20 @@ export default function UniversalBookingWizard({
     if ((userSubscription as any)?.guestInfo) {
       const guestInfo = (userSubscription as any).guestInfo
       const [first, ...rest] = guestInfo.name.split(" ")
+      // ✅ Phone normalization for subscription guest info
+      let normalizedPhone = guestInfo.phone || ""
+      if (normalizedPhone.startsWith("+972")) {
+        normalizedPhone = normalizedPhone.substring(4)
+        if (normalizedPhone.startsWith("0")) {
+          normalizedPhone = normalizedPhone.substring(1)
+        }
+      }
+      
       return {
         firstName: first,
         lastName: rest.join(" "),
         email: guestInfo.email,
-        phone: guestInfo.phone,
+        phone: normalizedPhone, // ✅ Normalized phone
         isBookingForSomeoneElse: false,
         bookerNotificationMethod: "email",
         bookerNotificationLanguage: "he"
@@ -167,9 +220,10 @@ export default function UniversalBookingWizard({
   }, [voucher, userSubscription, currentUser])
 
   const lockedFields = useMemo(() => {
-    // If user is logged in, lock their basic info
+    // ✅ For logged-in users - make all basic fields editable but pre-filled
+    // Only show as "locked" visually but allow editing
     if (currentUser) {
-      return ["firstName", "lastName", "email", "phone"] as const
+      return [] as const // Don't lock any fields - just pre-fill them
     }
     
     if (voucher?.isGift && voucher.recipientName) {
@@ -885,22 +939,38 @@ export default function UniversalBookingWizard({
           />
         )
       case 5:
+        // ➕ Step 5: Summary only (no notifications)
+        return (
+          <GuestSummaryStep
+            initialData={initialData}
+            bookingOptions={bookingOptions}
+            guestInfo={guestInfo}
+            calculatedPrice={calculatedPrice}
+            isPriceCalculating={isPriceCalculating}
+            onNext={nextStep}
+            onPrev={prevStep}
+            setBookingOptions={setBookingOptions}
+            voucher={voucher}
+            userSubscription={userSubscription}
+          />
+        )
+      case 6:
+        // ➕ Step 6: Payment with Notification Preferences
         return (
           <div className="space-y-6">
-            <GuestSummaryStep
-              initialData={initialData}
-              bookingOptions={bookingOptions}
-              guestInfo={guestInfo}
+            <GuestPaymentStep
               calculatedPrice={calculatedPrice}
-              isPriceCalculating={isPriceCalculating}
-              onNext={nextStep}
+              guestInfo={guestInfo}
+              setGuestInfo={setGuestInfo}
+              onConfirm={nextStep} // Changed to go to step 7 instead of final submit
               onPrev={prevStep}
-              setBookingOptions={setBookingOptions}
-              voucher={voucher}
-              userSubscription={userSubscription}
+              isLoading={isLoading}
+              createPendingBooking={createPendingBooking}
+              pendingBookingId={pendingBookingId}
+              isRedeeming={Boolean(voucher || userSubscription)}
             />
             
-            {/* Notification Preferences for Booker */}
+            {/* ➕ Notification Preferences for Booker */}
             <NotificationPreferencesSelector
               value={{
                 methods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
@@ -908,6 +978,7 @@ export default function UniversalBookingWizard({
                 language: guestInfo.bookerNotificationLanguage || "he"
               }}
               onChange={(prefs) => setGuestInfo({
+                ...guestInfo,
                 bookerNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
                                          prefs.methods.includes("sms") ? "sms" : "email",
                 bookerNotificationLanguage: prefs.language
@@ -916,7 +987,7 @@ export default function UniversalBookingWizard({
               className="mt-6"
             />
             
-            {/* Notification Preferences for Recipient (if booking for someone else) */}
+            {/* ➕ Notification Preferences for Recipient (if booking for someone else) */}
             {guestInfo.isBookingForSomeoneElse && (
               <NotificationPreferencesSelector
                 value={{
@@ -925,6 +996,7 @@ export default function UniversalBookingWizard({
                   language: guestInfo.recipientNotificationLanguage || "he"
                 }}
                 onChange={(prefs) => setGuestInfo({
+                  ...guestInfo,
                   recipientNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
                                               prefs.methods.includes("sms") ? "sms" : "email",
                   recipientNotificationLanguage: prefs.language
@@ -936,21 +1008,50 @@ export default function UniversalBookingWizard({
             )}
           </div>
         )
-      case 6:
+      case 7:
+        // ➕ Step 7: Payment Processing Window
         return (
-          <GuestPaymentStep
-            calculatedPrice={calculatedPrice}
-            guestInfo={guestInfo}
-            setGuestInfo={setGuestInfo}
-            onConfirm={handleFinalSubmit}
-            onPrev={prevStep}
-            isLoading={isLoading}
-            createPendingBooking={createPendingBooking}
-            pendingBookingId={pendingBookingId}
-            isRedeeming={Boolean(voucher || userSubscription)}
+          <GuestPaymentProcessingStep
+            onComplete={() => handleFinalSubmit()}
+            bookingNumber={pendingBookingId || "000001"}
+            amount={calculatedPrice?.finalAmount || 0}
           />
         )
-      case 7:
+      case 8:
+        // ➕ Step 8: Final Confirmation + Order Events Trigger
+        if (bookingResult) {
+          return (
+            <GuestFinalConfirmationStep
+              bookingDetails={{
+                bookingNumber: bookingResult.bookingNumber || "000001",
+                treatmentName: initialData.treatment?.name || "",
+                treatmentDuration: initialData.treatment?.duration || 60,
+                bookingDateTime: bookingOptions.selectedDateTime || new Date(),
+                finalAmount: calculatedPrice?.finalAmount || 0,
+                paymentStatus: calculatedPrice?.finalAmount === 0 ? "not_required" : "paid",
+                guestInfo: {
+                  firstName: guestInfo.firstName || "",
+                  lastName: guestInfo.lastName || "",
+                  email: guestInfo.email || "",
+                  phone: guestInfo.phone || ""
+                },
+                address: {
+                  fullAddress: `${guestAddress.street || ""} ${guestAddress.houseNumber || ""}`,
+                  city: guestAddress.city || ""
+                },
+                isGift: guestInfo.isGift,
+                giftGreeting: guestInfo.giftGreeting,
+                consents: {
+                  customerAlerts: guestInfo.customerAlerts || "email",
+                  marketingOptIn: guestInfo.marketingOptIn || false,
+                  termsAccepted: guestInfo.termsAccepted || false
+                }
+              }}
+              onComplete={() => setCurrentStep(CONFIRMATION_STEP_NUMBER)}
+            />
+          )
+        }
+        // Fallback to old confirmation if no bookingResult
         return (
           <GuestBookingConfirmation
             bookingResult={bookingResult}
@@ -975,9 +1076,11 @@ export default function UniversalBookingWizard({
       case 5:
         return t("bookings.steps.summary.title") || "סיכום ההזמנה"
       case 6:
-        return t("bookings.steps.payment.title") || "תשלום"
+        return t("bookings.steps.payment.title") || "תשלום והעדפות"
       case 7:
-        return t("bookings.steps.confirmation.title") || "אישור הזמנה"
+        return t("bookings.steps.processing.title") || "עיבוד תשלום"
+      case 8:
+        return t("bookings.steps.final.title") || "אישור סופי"
       default:
         return ""
     }

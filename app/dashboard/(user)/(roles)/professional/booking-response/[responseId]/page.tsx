@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
-import { handleProfessionalResponse } from "@/actions/professional-sms-actions"
+import { handleProfessionalResponse } from "@/actions/notification-service"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react"

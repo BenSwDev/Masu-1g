@@ -43,7 +43,7 @@ import {
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { assignProfessionalToBooking, getAvailableProfessionals } from "@/actions/booking-actions"
-import { sendProfessionalNotifications } from "@/actions/professional-sms-actions"
+import { sendProfessionalBookingNotifications } from "@/actions/notification-service"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ProfessionalResponsesDialog } from "./professional-responses-dialog"
 import { SuitableProfessionalsModal } from "./suitable-professionals-modal"
@@ -243,7 +243,7 @@ const AdminBookingActions = ({
     
     setSendingNotifications(true)
     try {
-      const result = await sendProfessionalNotifications(booking._id)
+      const result = await sendProfessionalBookingNotifications(booking._id)
       if (result.success) {
         toast.success(`נשלחו הודעות ל-${result.sentCount} מטפלים מתאימים`)
         queryClient.invalidateQueries({ queryKey: ["adminBookings"] })

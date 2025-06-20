@@ -7,7 +7,7 @@ import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { useTranslation } from "@/lib/translations/i18n"
 import { MessageSquareCode, Loader2 } from "lucide-react"
-import { generateAndSendOTP, verifyOTP } from "@/actions/notification-actions"
+import { sendOTP, verifyOTP } from "@/actions/notification-service"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useToast } from "@/components/common/ui/use-toast"
@@ -229,7 +229,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
         description: loginType === "email" ? t("login.sendingOTPToEmail") : t("login.sendingOTPToPhone"),
       })
 
-      const result = await generateAndSendOTP(identifierValue, loginType, language)
+      const result = await sendOTP(identifierValue, loginType, language)
       console.log("OTP send result:", result)
 
       if (result.success) {

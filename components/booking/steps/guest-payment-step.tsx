@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/translations/i18n";
 import { usePaymentModal } from "@/hooks/use-payment-modal";
+import { updateBookingStatusAfterPayment } from "@/actions/booking-actions";
 import { Button } from "@/components/common/ui/button";
 import {
   Card,
@@ -57,11 +58,17 @@ interface GuestInfo {
   recipientPhone?: string;
   recipientBirthDate?: Date;
   recipientGender?: "male" | "female" | "other";
-  // Notification preferences
+  // Notification preferences (moved to Step 6)
   bookerNotificationMethod?: "email" | "sms" | "both";
   bookerNotificationLanguage?: "he" | "en" | "ru";
   recipientNotificationMethod?: "email" | "sms" | "both";
   recipientNotificationLanguage?: "he" | "en" | "ru";
+  
+  // ➕ Enhanced Consents (Step 6)
+  customerAlerts?: "sms" | "email" | "none";
+  patientAlerts?: "sms" | "email" | "none";
+  marketingOptIn?: boolean;
+  termsAccepted?: boolean;
 }
 
 interface GuestPaymentStepProps {
@@ -108,12 +115,34 @@ export function GuestPaymentStep({
           return;
         }
       }
-      // Execute the actual booking confirmation
-      onConfirm();
+      
+      // ✅ Process payment through centralized system with enhanced data
+      const processingResult = await updateBookingStatusAfterPayment(
+        pendingBookingId || "current-booking-id",
+        "success",
+        `TXN-${Date.now()}`, // Demo transaction ID
+        "1234", // Demo card last 4 digits
+        calculatedPrice?.finalAmount || 0
+      );
+      
+      if (processingResult.success) {
+        // Execute the actual booking confirmation
+        onConfirm();
+      } else {
+        // Handle processing error
+        console.error("Payment processing failed:", processingResult.error);
+      }
     }
   });
-  const [marketingConsent, setMarketingConsent] = useState(true);
-  const [termsAccepted, setTermsAccepted] = useState(true);
+  // ➕ Enhanced Consents State
+  const [marketingConsent, setMarketingConsent] = useState(guestInfo.marketingOptIn ?? true);
+  const [termsAccepted, setTermsAccepted] = useState(guestInfo.termsAccepted ?? true);
+  const [customerAlerts, setCustomerAlerts] = useState<"sms" | "email" | "none">(
+    guestInfo.customerAlerts || "email"
+  );
+  const [patientAlerts, setPatientAlerts] = useState<"sms" | "email" | "none">(
+    guestInfo.patientAlerts || "email"
+  );
 
   // Notification preferences state
   const [bookerNotificationMethod, setBookerNotificationMethod] = useState<
@@ -131,7 +160,7 @@ export function GuestPaymentStep({
       guestInfo.recipientNotificationLanguage || "he",
     );
 
-  // Update guest info when notification preferences change
+  // ➕ Update guest info when preferences and consents change
   useEffect(() => {
     setGuestInfo({
       ...guestInfo,
@@ -139,12 +168,21 @@ export function GuestPaymentStep({
       bookerNotificationLanguage,
       recipientNotificationMethod,
       recipientNotificationLanguage,
+      // Enhanced consents
+      customerAlerts,
+      patientAlerts,
+      marketingOptIn: marketingConsent,
+      termsAccepted,
     });
   }, [
     bookerNotificationMethod,
     bookerNotificationLanguage,
     recipientNotificationMethod,
     recipientNotificationLanguage,
+    customerAlerts,
+    patientAlerts,
+    marketingConsent,
+    termsAccepted,
   ]);
 
 
@@ -190,9 +228,9 @@ export function GuestPaymentStep({
       <div className="space-y-6" dir={dir}>
         <div className="text-center">
           <CreditCard className="mx-auto h-12 w-12 text-primary mb-4" />
-          <h2 className="text-2xl font-semibold tracking-tight">תשלום</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.payment.title")}</h2>
           <p className="text-muted-foreground mt-2">
-            סיכום ההזמנה והמעבר לתשלום
+            {t("bookings.steps.payment.description")}
           </p>
         </div>
 
@@ -501,48 +539,115 @@ export function GuestPaymentStep({
               </AlertDescription>
             </Alert>
 
-            {/* Checkboxes */}
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3 space-x-reverse">
-                <Checkbox
-                  id="marketing-consent"
-                  checked={marketingConsent}
-                  onCheckedChange={(checked) =>
-                    setMarketingConsent(checked as boolean)
-                  }
-                />
-                <label
-                  htmlFor="marketing-consent"
-                  className="text-sm leading-relaxed cursor-pointer"
-                >
-                  אני מאשר/ת קבלת דיוור של חומרים פרסומיים, הצעות ישווקיות
-                  ועדכונים באמצעי המדיה השונים, לרבות בדואר אלקטרוני SMS ו/או
-                  שיחה טלפונית
-                </label>
+            {/* ➕ Enhanced Consents and Preferences */}
+            <div className="space-y-6">
+              {/* Customer (Booker) Alert Preferences */}
+              <div className="space-y-3">
+                <div className="font-medium text-sm">העדפות התראות למזמין</div>
+                <Select value={customerAlerts} onValueChange={(value: "sms" | "email" | "none") => setCustomerAlerts(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="email">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        דואר אלקטרוני
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="sms">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4" />
+                        SMS
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="none">
+                      <div className="flex items-center gap-2">
+                        <Bell className="h-4 w-4" />
+                        ללא התראות
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="flex items-start space-x-3 space-x-reverse">
-                <Checkbox
-                  id="terms-accepted"
-                  checked={termsAccepted}
-                  onCheckedChange={(checked) =>
-                    setTermsAccepted(checked as boolean)
-                  }
-                />
-                <label
-                  htmlFor="terms-accepted"
-                  className="text-sm leading-relaxed cursor-pointer"
-                >
-                  בביצוע ההזמנה אני מאשר את הסכמתי לתנאי השימוש ומדיניות הפרטיות
-                  <span className="text-red-500 mr-1">*</span>
-                </label>
-              </div>
-
-              {!termsAccepted && (
-                <div className="text-red-500 text-sm">
-                  יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך
+              {/* Patient Alert Preferences (if booking for someone else) */}
+              {guestInfo.isBookingForSomeoneElse && (
+                <div className="space-y-3">
+                  <div className="font-medium text-sm">העדפות התראות למטופל</div>
+                  <Select value={patientAlerts} onValueChange={(value: "sms" | "email" | "none") => setPatientAlerts(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="email">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4" />
+                          דואר אלקטרוני
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="sms">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4" />
+                          SMS
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="none">
+                        <div className="flex items-center gap-2">
+                          <Bell className="h-4 w-4" />
+                          ללא התראות
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
+
+              <Separator />
+
+              {/* Consent Checkboxes */}
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3 space-x-reverse">
+                  <Checkbox
+                    id="marketing-consent"
+                    checked={marketingConsent}
+                    onCheckedChange={(checked) =>
+                      setMarketingConsent(checked as boolean)
+                    }
+                  />
+                  <label
+                    htmlFor="marketing-consent"
+                    className="text-sm leading-relaxed cursor-pointer"
+                  >
+                    אני מאשר/ת קבלת דיוור של חומרים פרסומיים, הצעות ישווקיות
+                    ועדכונים באמצעי המדיה השונים, לרבות בדואר אלקטרוני SMS ו/או
+                    שיחה טלפונית
+                  </label>
+                </div>
+
+                <div className="flex items-start space-x-3 space-x-reverse">
+                  <Checkbox
+                    id="terms-accepted"
+                    checked={termsAccepted}
+                    onCheckedChange={(checked) =>
+                      setTermsAccepted(checked as boolean)
+                    }
+                  />
+                  <label
+                    htmlFor="terms-accepted"
+                    className="text-sm leading-relaxed cursor-pointer"
+                  >
+                    בביצוע ההזמנה אני מאשר את הסכמתי לתנאי השימוש ומדיניות הפרטיות
+                    <span className="text-red-500 mr-1">*</span>
+                  </label>
+                </div>
+
+                {!termsAccepted && (
+                  <div className="text-red-500 text-sm">
+                    יש לאשר את תנאי השימוש ומדיניות הפרטיות כדי להמשיך
+                  </div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -576,22 +681,32 @@ export function GuestPaymentStep({
           <div className="space-y-6" dir={dir}>
             {paymentStatus === "pending" && (
               <>
-                {/* CardComm iframe simulation */}
+                {/* ➕ Enhanced CardComm iframe simulation with demo data */}
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
                   <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    כאן יהיה IFRAME של CARDCOMM
+                    {t("bookings.payment.iframe.title")}
                   </h3>
-                  <p className="text-gray-500">
-                    ממשק התשלום המאובטח של CardComm
+                  <p className="text-gray-500 mb-4">
+                    {t("bookings.payment.iframe.description")}
                   </p>
-                  <div className="mt-4 p-4 bg-white border rounded">
-                    <p className="text-sm text-gray-600">
-                      סכום לתשלום:{" "}
+                  
+                  {/* ➕ Demo payment form */}
+                  <div className="mt-4 p-4 bg-white border rounded space-y-3">
+                    <div className="text-sm text-gray-600 mb-3">
+                      {t("bookings.payment.amount")}: {" "}
                       <span className="font-bold">
                         {formatPrice(calculatedPrice.finalAmount)}
                       </span>
-                    </p>
+                    </div>
+                    
+                    {/* ➕ Demo transaction details */}
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <div>Transaction ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</div>
+                      <div>Terminal: {Math.floor(Math.random() * 9000) + 1000}</div>
+                      <div>Card Last 4: ****{Math.floor(Math.random() * 9000) + 1000}</div>
+                      <div>Provider: CardCom Demo</div>
+                    </div>
                   </div>
                 </div>
 
@@ -602,11 +717,11 @@ export function GuestPaymentStep({
                     className="bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    דימוי הצלחה
+                    {t("bookings.payment.demo.success")}
                   </Button>
                   <Button onClick={handlePaymentFailure} variant="destructive">
                     <XCircle className="mr-2 h-4 w-4" />
-                    דימוי כישלון
+                    {t("bookings.payment.demo.failure")}
                   </Button>
                 </div>
               </>
@@ -616,11 +731,17 @@ export function GuestPaymentStep({
               <div className="text-center py-8">
                 <CheckCircle className="mx-auto h-16 w-16 text-green-600 mb-4" />
                 <h3 className="text-xl font-semibold text-green-700 mb-2">
-                  התשלום בוצע בהצלחה!
+                  {t("bookings.payment.success.title")}
                 </h3>
-                <p className="text-gray-600">
-                  ההזמנה אושרה ופרטיה נשלחו אליך באימייל
+                <p className="text-gray-600 mb-4">
+                  {t("bookings.payment.success.description")}
                 </p>
+                {/* ➕ Demo success details */}
+                <div className="text-xs text-gray-500 space-y-1 max-w-sm mx-auto">
+                  <div>✓ {t("bookings.payment.success.email")}</div>
+                  <div>✓ {t("bookings.payment.success.sms")}</div>
+                  <div>✓ {t("bookings.payment.success.professionals")}</div>
+                </div>
               </div>
             )}
 
@@ -628,21 +749,21 @@ export function GuestPaymentStep({
               <div className="text-center py-8">
                 <XCircle className="mx-auto h-16 w-16 text-red-600 mb-4" />
                 <h3 className="text-xl font-semibold text-red-700 mb-2">
-                  התשלום נכשל
+                  {t("bookings.payment.failure.title")}
                 </h3>
                 <p className="text-gray-600 mb-6">
-                  אירעה שגיאה בביצוע התשלום. אנא נסה שוב.
+                  {t("bookings.payment.failure.description")}
                 </p>
 
                 <Alert className="mb-6">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    לא חויבת. אין תשלום שבוצע עבור ההזמנה הזו.
+                    {t("bookings.payment.failure.noCharge")}
                   </AlertDescription>
                 </Alert>
 
                 <Button onClick={handleTryAgain} className="w-full">
-                  נסה שנית
+                  {t("bookings.payment.failure.retry")}
                 </Button>
               </div>
             )}

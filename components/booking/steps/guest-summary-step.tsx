@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Input } from "@/components/common/ui/input"
 import { Label } from "@/components/common/ui/label"
 import { Separator } from "@/components/common/ui/separator"
@@ -13,7 +13,6 @@ import { CheckCircle, Calendar, Clock, User, Mail, Phone, FileText, CreditCard, 
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
-import { Alert, AlertDescription } from "@/components/common/ui/alert"
 
 interface GuestInfo {
   firstName: string

@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { he } from "date-fns/locale"
-import { getProfessionalResponses, resendProfessionalNotifications } from "@/actions/professional-sms-actions"
+import { getProfessionalResponses, resendProfessionalNotifications } from "@/actions/notification-service"
 import { toast } from "sonner"
 
 interface ProfessionalResponsesDialogProps {

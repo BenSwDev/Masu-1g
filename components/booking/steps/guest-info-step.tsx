@@ -35,12 +35,11 @@ interface GuestInfo {
   recipientPhone?: string
   recipientBirthDate?: Date
   recipientGender?: "male" | "female" | "other"
-  // Gift options
+  // ➕ Enhanced Gift options (Step 3)
   isGift?: boolean
-  greetingMessage?: string
-  sendOption?: "immediate" | "scheduled"
-  sendDate?: Date
-  sendTime?: string
+  giftGreeting?: string
+  giftSendWhen?: "now" | Date
+  giftHidePrice?: boolean
 }
 
 interface GuestInfoStepProps {
@@ -62,7 +61,7 @@ export function GuestInfoStep({
   onPrev,
   defaultBookingForSomeoneElse = false,
   hideRecipientBirthGender = false,
-  showGiftOptions = false,
+  showGiftOptions = true, // ➕ Always show gift options now
   lockedFields = [],
   hideBookingForSomeoneElse = false,
 }: GuestInfoStepProps) {
@@ -99,11 +98,11 @@ export function GuestInfoStep({
     recipientPhone: z.string().optional(),
     recipientBirthDate: z.date().optional(),
     recipientGender: z.enum(["male", "female", "other"]).optional(),
+    // ➕ Enhanced Gift functionality
     isGift: z.boolean().default(false),
-    greetingMessage: z.string().optional(),
-    sendOption: z.enum(["immediate", "scheduled"]).optional(),
-    sendDate: z.date().optional(),
-    sendTime: z.string().optional(),
+    giftGreeting: z.string().optional(),
+    giftSendWhen: z.union([z.literal("now"), z.date()]).optional(),
+    giftHidePrice: z.boolean().default(false),
   }).refine((data) => {
     if (data.isBookingForSomeoneElse) {
       return (
@@ -153,24 +152,17 @@ export function GuestInfoStep({
       recipientPhone: guestInfo.recipientPhone || "",
       recipientBirthDate: guestInfo.recipientBirthDate || undefined,
       recipientGender: guestInfo.recipientGender || undefined,
+      // ➕ Enhanced Gift values
       isGift: guestInfo.isGift || false,
-      greetingMessage: guestInfo.greetingMessage || "",
-      sendOption: guestInfo.sendOption || "immediate",
-      sendDate: guestInfo.sendDate || undefined,
-      sendTime: guestInfo.sendTime || "",
+      giftGreeting: guestInfo.giftGreeting || "",
+      giftSendWhen: guestInfo.giftSendWhen || "now",
+      giftHidePrice: guestInfo.giftHidePrice || false,
     },
   })
 
   const watchIsGift = form.watch("isGift")
-  const watchSendOption = form.watch("sendOption")
-  const timeOptions = useMemo(() => {
-    const opts = []
-    for (let i = 8; i <= 23; i++) {
-      opts.push(`${String(i).padStart(2, "0")}:00`)
-    }
-    opts.push("00:00")
-    return opts
-  }, [])
+  const watchGiftSendWhen = form.watch("giftSendWhen")
+  // timeOptions removed as no longer needed
 
   const onSubmit = (data: GuestInfoFormData) => {
     setGuestInfo(data)
@@ -584,101 +576,101 @@ export function GuestInfoStep({
                   </div>
                 )}
 
-                {showGiftOptions && (
-                  <div className="space-y-4">
-                    <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
-                      <Checkbox
-                        id="isGift"
-                        checked={watchIsGift}
-                        onCheckedChange={(checked) => form.setValue("isGift", checked as boolean)}
+                {/* ➕ Gift Options Section - Always show for regular bookings */}
+                <div className="space-y-4">
+                  <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
+                    <Checkbox
+                      id="isGift"
+                      checked={watchIsGift}
+                      onCheckedChange={(checked) => form.setValue("isGift", checked as boolean)}
+                    />
+                    <label htmlFor="isGift" className="flex items-center gap-2 cursor-pointer">
+                      זה מתנה?
+                    </label>
+                  </div>
+
+                  {watchIsGift && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="giftGreeting"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ברכה למתנה</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="כתוב ברכה אישית..." rows={3} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                      <label htmlFor="isGift" className="flex items-center gap-2 cursor-pointer">
-                        {t("purchaseGiftVoucher.sendAsGift")}
-                      </label>
-                    </div>
 
-                    {watchIsGift && (
-                      <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
-                          name="greetingMessage"
+                          name="giftSendWhen"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t("purchaseGiftVoucher.greetingMessage")}</FormLabel>
-                              <FormControl>
-                                <Textarea placeholder={t("purchaseGiftVoucher.greetingPlaceholder")} rows={3} {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="sendOption"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>{t("purchaseGiftVoucher.sendDate")}</FormLabel>
-                              <div className="flex gap-4">
-                                <Button type="button" variant={field.value === "immediate" ? "default" : "outline"} onClick={() => field.onChange("immediate")} className="flex-1">
-                                  {t("purchaseGiftVoucher.sendNow")}
+                              <FormLabel>מתי לשלוח המתנה?</FormLabel>
+                              <div className="flex gap-2">
+                                <Button 
+                                  type="button" 
+                                  variant={field.value === "now" ? "default" : "outline"} 
+                                  onClick={() => field.onChange("now")} 
+                                  className="flex-1"
+                                >
+                                  עכשיו
                                 </Button>
-                                <Button type="button" variant={field.value === "scheduled" ? "default" : "outline"} onClick={() => field.onChange("scheduled")} className="flex-1">
-                                  {t("purchaseGiftVoucher.sendOnDate")}
-                                </Button>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-
-                        {watchSendOption === "scheduled" && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
-                            <FormField
-                              control={form.control}
-                              name="sendDate"
-                              render={({ field }) => (
                                 <Popover>
                                   <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-start text-start font-normal h-11">
-                                      <CalendarIcon className={cn("h-4 w-4", dir === "rtl" ? "ml-2" : "mr-2")} />
-                                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
+                                    <Button 
+                                      type="button"
+                                      variant={field.value !== "now" && field.value ? "default" : "outline"} 
+                                      className="flex-1"
+                                    >
+                                      {field.value && field.value !== "now" ? 
+                                        format(field.value as Date, "dd/MM/yyyy") : 
+                                        "בתאריך"
+                                      }
                                     </Button>
                                   </PopoverTrigger>
                                   <PopoverContent className="w-auto p-0">
                                     <Calendar
                                       mode="single"
-                                      selected={field.value}
-                                      onSelect={field.onChange}
+                                      selected={field.value !== "now" ? field.value as Date : undefined}
+                                      onSelect={(date) => field.onChange(date)}
                                       initialFocus
                                       disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
                                     />
                                   </PopoverContent>
                                 </Popover>
-                              )}
-                            />
+                              </div>
+                            </FormItem>
+                          )}
+                        />
 
-                            <FormField
-                              control={form.control}
-                              name="sendTime"
-                              render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <SelectTrigger className="h-11">
-                                    <SelectValue placeholder={t("purchaseGiftVoucher.selectTime")} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {timeOptions.map((time) => (
-                                      <SelectItem key={time} value={time}>{time}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
+                        <FormField
+                          control={form.control}
+                          name="giftHidePrice"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col justify-end">
+                              <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
+                                <Checkbox
+                                  id="giftHidePrice"
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                                <label htmlFor="giftHidePrice" className="text-sm cursor-pointer">
+                                  הסתר מחיר במתנה
+                                </label>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}

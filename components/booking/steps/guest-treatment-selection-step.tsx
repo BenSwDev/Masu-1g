@@ -293,7 +293,7 @@ export function GuestTreatmentSelectionStep({
                     <div className="flex-1 flex justify-between items-center">
                       <div>
                         <h4 className="font-medium">{treatment.name}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">{treatment.description}</p>
+                        {/* ❌ Remove description display - only show treatment name */}
                       </div>
                       <div className="text-right">
                         {showPrice && treatment.pricingType === "fixed" && (

@@ -666,24 +666,6 @@
     "drawerTitle": "פרטי הזמנה"
   },
   "bookings": {
-    "payment": {
-      "iframe": {
-        "title": "תשלום מאובטח",
-        "description": "הזן את פרטי התשלום שלך להשלמת ההזמנה"
-      },
-      "amount": "סכום לתשלום",
-      "demo": {
-        "success": "התשלום בוצע בהצלחה (דמו)",
-        "failure": "התשלום נכשל (דמו)"
-      },
-      "success": {
-        "title": "התשלום התקבל בהצלחה",
-        "description": "ההזמנה שלך התקבלה ותישלח אליך הודעה בקרוב.",
-        "email": "אישור נשלח לאימייל שלך",
-        "sms": "אישור נשלח לטלפון שלך",
-        "professionals": "ההזמנה נשלחה למטפלים"
-      }
-    },
     "guestInformation": "פרטי האורח",
     "bookingDetails": "פרטי ההזמנה",
     "selectedTreatment": "הטיפול הנבחר",
@@ -732,13 +714,12 @@
     "bookAnother": "הזמן טיפול נוסף",
     "balance": "יתרה",
     "status": {
-      "confirmed": "מאושר",
+      "confirmed": "אושר",
       "cancelled": "בוטל",
       "abandoned_pending_payment": "הזמנה שננטשה"
     },
     "addressStep": {
       "title": "הוסף כתובת",
-      "cityPlaceholder": "בחר עיר",
       "city": "עיר",
       "street": "רחוב",
       "houseNumber": "מספר בית",
@@ -807,9 +788,6 @@
           "confirmed": "אושר",
           "completed": "הושלם"
         },
-      "surcharges": {
-        "specialTime": "תוספת זמן מיוחד"
-      },
       "errors": {
         "assignProfessionalFailed": "שגיאה בשיוך המטפל להזמנה",
         "bookingAlreadyHasProfessional": "להזמנה זו כבר יש מטפל משויך",
@@ -842,91 +820,11 @@
           "confirmBooking": "אישור הזמנה",
           "confirmDescNoPayment": "ההזמנה שלך מוכנה לאישור ללא צורך בתשלום",
           "confirmTitleNoPayment": "אישור הזמנה ללא תשלום",
-          "description": "סיכום ההזמנה והמעבר לתשלום",
+          "description": "בחר אמצעי תשלום ואשר את ההזמנה",
           "loadingPrice": "מחשב מחיר...",
           "payAndConfirm": "שלם ואשר",
           "selectPaymentMethod": "בחר אמצעי תשלום",
-          "title": "תשלום",
-          "amount": "סכום לתשלום",
-          "iframe": {
-            "title": "כאן יהיה IFRAME של CARDCOMM",
-            "description": "ממשק התשלום המאובטח של CardComm"
-          },
-          "demo": {
-            "success": "דימוי הצלחה",
-            "failure": "דימוי כישלון"
-          },
-          "success": {
-            "title": "התשלום בוצע בהצלחה!",
-            "description": "ההזמנה אושרה ופרטיה נשלחו אליך באימייל",
-            "email": "אימייל אישור נשלח",
-            "sms": "הודעת SMS נשלחה",
-            "professionals": "מטפלים הוזמנו"
-          },
-          "failure": {
-            "title": "התשלום נכשל",
-            "description": "אירעה שגיאה בביצוע התשלום. אנא נסה שוב.",
-            "noCharge": "לא חויבת. אין תשלום שבוצע עבור ההזמנה הזו.",
-            "retry": "נסה שנית"
-          },
-          "processing": {
-            "title": "מעבד תשלום",
-            "description": "אנא המתן בזמן שאנו מעבדים את התשלום שלך",
-            "progress": "התקדמות",
-            "steps": {
-              "payment": "עיבוד תשלום",
-              "validation": "אימות נתונים",
-              "booking": "יצירת הזמנה",
-              "notifications": "שליחת הודעות",
-              "processing": "מעבד"
-            },
-            "transaction": "פרטי עסקה",
-            "bookingNumber": "מספר הזמנה",
-            "amount": "סכום",
-            "status": "סטטוס",
-            "statusValue": "בעיבוד",
-            "estimated": "זמן משוער",
-            "estimatedValue": "30-60 שניות",
-            "security": "החיבור מאובטח ומוצפן"
-          }
-        },
-        "processing": {
-          "title": "עיבוד תשלום"
-        },
-        "final": {
-          "title": "ההזמנה הושלמה בהצלחה!",
-          "subtitle": "תודה שבחרת בנו! פרטי ההזמנה נשלחו אליך",
-          "summary": "סיכום ההזמנה",
-          "bookingNumber": "מספר הזמנה",
-          "treatment": "פרטי הטיפול",
-          "customer": "פרטי הלקוח",
-          "primaryContact": "איש קשר ראשי",
-          "confirmationSent": "אישור נשלח",
-          "smsUpdates": "עדכונים בSMS",
-          "emailUpdates": "עדכונים באימייל",
-          "giftDetails": "פרטי מתנה",
-          "giftMessage": "הודעת מתנה",
-          "payment": "פרטי תשלום",
-          "totalPaid": "סה\"כ שולם",
-          "noPaymentRequired": "לא נדרש תשלום",
-          "whatsNext": {
-            "title": "מה הלאה?",
-            "immediate": "מיידי",
-            "beforeTreatment": "לפני הטיפול",
-            "confirmationEmail": "אימייל אישור נשלח",
-            "professionalNotified": "המטפלים קיבלו הודעה",
-            "calendarAdded": "נוסף ליומן",
-            "professionalContact": "המטפל ייצור קשר",
-            "reminder24h": "תזכורת 24 שעות לפני",
-            "arrivalNotification": "הודעת הגעה"
-          },
-          "actions": {
-            "download": "הורד אישור",
-            "share": "שתף",
-            "calendar": "הוסף ליומן",
-            "review": "כתוב ביקורת"
-          },
-          "continue": "המשך לדף הבית"
+          "title": "תשלום ואישור"
         },
         "scheduling": {
           "description": "בחר תאריך, שעה וכתובת לטיפול",
@@ -1021,14 +919,6 @@
           "unknownVoucherCode": "קוד שובר לא מוכר"
         },
         "guestInfo": {
-          "bookingType": "סוג הזמנה",
-          "selectBirthDate": "בחר תאריך לידה",
-          "selectGender": "בחר מגדר",
-          "genders": {
-            "male": "זכר",
-            "female": "נקבה",
-            "other": "אחר"
-          },
           "title": "פרטי האורח",
           "description": "נא למלא את פרטיך האישיים להשלמת ההזמנה",
           "firstName": "שם פרטי",
@@ -2683,7 +2573,6 @@
       },
       "searchPlaceholder": "חפש טיפול לפי שם",
       "selectCategory": "בחר קטגוריה",
-      "selectCategoryFirst": "אנא בחר קטגוריה תחילה כדי לראות את הטיפולים הזמינים",
       "selectCategoryPlaceholder": "בחר קטגוריה",
       "selectDuration": "בחר משך טיפול",
       "selectDurationDesc": "בחר את משך הזמן עבור הטיפול שלך.",
@@ -4508,6 +4397,3 @@
     "yourDetails": "הפרטים שלך"
   }
 }  
-
-
-

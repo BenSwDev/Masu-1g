@@ -52,6 +52,26 @@ export interface IBookingAddressSnapshot {
   hasPrivateParking?: boolean
 }
 
+export interface IBookingConsents {
+  customerAlerts: "sms" | "email" | "none"
+  patientAlerts: "sms" | "email" | "none"
+  marketingOptIn: boolean
+  termsAccepted: boolean
+}
+
+export interface IEnhancedPaymentDetails {
+  transactionId?: Types.ObjectId
+  amountPaid?: number
+  cardLast4?: string
+  cardHolder?: string
+  paymentStatus?: "success" | "fail"
+}
+
+export interface IBookingReview {
+  rating: 1 | 2 | 3 | 4 | 5
+  comment?: string
+}
+
 export interface IBooking extends Document {
   bookingNumber: string // New: Unique 6-digit booking number
   userId?: Types.ObjectId // Made optional for guest bookings
@@ -94,50 +114,6 @@ export interface IBooking extends Document {
     calculatedPrice?: any
     savedAt: Date
   }
-  
-  // ➕ NEW FIELDS - Added carefully to preserve existing functionality
-  step: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 // Wizard step tracking
-  treatmentCategory?: Types.ObjectId // Treatment category reference
-  staticTreatmentPrice?: number // Static price snapshot
-  staticTherapistPay?: number // Static therapist payment snapshot  
-  staticTimeSurcharge?: number // Static time surcharge snapshot
-  staticTimeSurchargeReason?: string // Reason for time surcharge
-  staticTherapistPayExtra?: number // Extra payment for therapist from surcharge
-  companyFee?: number // Company fee calculation
-  
-  // Gift functionality
-  isGift?: boolean // Whether this booking is a gift
-  giftGreeting?: string // Gift greeting message
-  giftSendWhen?: "now" | Date // When to send the gift
-  giftHidePrice?: boolean // Whether to hide price in gift
-  
-  // Consents management
-  consents?: {
-    customerAlerts: "sms" | "email" | "none"
-    patientAlerts: "sms" | "email" | "none"
-    marketingOptIn: boolean
-    termsAccepted: boolean
-  }
-  
-  // Enhanced payment details
-  enhancedPaymentDetails?: {
-    transactionId?: Types.ObjectId
-    amountPaid?: number
-    cardLast4?: string
-    cardHolder?: string
-    paymentStatus?: "success" | "fail"
-  }
-  
-  // Review system
-  review?: {
-    rating: 1 | 2 | 3 | 4 | 5
-    comment?: string
-  }
-  
-  // Order event tracking
-  orderEventTriggered?: boolean // Whether order events were triggered
-  orderEventTimestamp?: Date // When order events were triggered
-  
   createdAt: Date
   updatedAt: Date
   reviewReminderSentAt?: Date
@@ -150,11 +126,47 @@ export interface IBooking extends Document {
     profileId: Types.ObjectId
     calculatedAt: Date
   }>
+  step: 1 | 2 | 3 | 4 | 5 | 6 | 7 // מעקב שלבי wizard
+  treatmentCategory: Types.ObjectId // קטגוריית טיפול
+  staticTreatmentPrice: number // מחיר טיפול סטטי
+  staticTherapistPay: number // תשלום מטפל סטטי
+  staticTimeSurcharge?: number // תוספת מחיר זמן סטטית
+  staticTimeSurchargeReason?: string // סיבת תוספת זמן
+  staticTherapistPayExtra?: number // תוספת תשלום למטפל
+  companyFee: number // עמלת החברה
+  isGift: boolean
+  giftGreeting?: string
+  giftSendWhen?: "now" | Date
+  giftHidePrice?: boolean
+  consents: IBookingConsents
+  enhancedPaymentDetails?: IEnhancedPaymentDetails
+  review?: IBookingReview
 }
 
 const ProfessionalShareSchema = new Schema<IProfessionalShare>({
   amount: { type: Number, default: 0 },
   type: { type: String, enum: ["fixed", "percentage"], default: "percentage" },
+}, { _id: false })
+
+// ➕ סכמות חדשות
+const BookingConsentsSchema = new Schema<IBookingConsents>({
+  customerAlerts: { type: String, enum: ["sms", "email", "none"], required: true },
+  patientAlerts: { type: String, enum: ["sms", "email", "none"], required: true },
+  marketingOptIn: { type: Boolean, required: true },
+  termsAccepted: { type: Boolean, required: true },
+}, { _id: false })
+
+const EnhancedPaymentDetailsSchema = new Schema<IEnhancedPaymentDetails>({
+  transactionId: { type: Schema.Types.ObjectId, ref: "Transaction" },
+  amountPaid: { type: Number, min: 0 },
+  cardLast4: { type: String, maxlength: 4 },
+  cardHolder: { type: String, trim: true },
+  paymentStatus: { type: String, enum: ["success", "fail"] },
+}, { _id: false })
+
+const BookingReviewSchema = new Schema<IBookingReview>({
+  rating: { type: Number, enum: [1, 2, 3, 4, 5], required: true },
+  comment: { type: String, trim: true },
 }, { _id: false })
 
 const PriceDetailsSchema = new Schema<IPriceDetails>(
@@ -276,48 +288,6 @@ const BookingSchema: Schema<IBooking> = new Schema(
       calculatedPrice: { type: Schema.Types.Mixed },
       savedAt: { type: Date },
     },
-    // ➕ NEW FIELDS - Added with safe defaults to prevent breaking changes
-    step: { type: Number, enum: [1, 2, 3, 4, 5, 6, 7, 8], default: 1 },
-    treatmentCategory: { type: Schema.Types.ObjectId, ref: "TreatmentCategory" },
-    staticTreatmentPrice: { type: Number, min: 0 },
-    staticTherapistPay: { type: Number, min: 0 },
-    staticTimeSurcharge: { type: Number, min: 0 },
-    staticTimeSurchargeReason: { type: String, trim: true },
-    staticTherapistPayExtra: { type: Number, min: 0 },
-    companyFee: { type: Number, min: 0 },
-    
-    // Gift functionality
-    isGift: { type: Boolean, default: false },
-    giftGreeting: { type: String, trim: true },
-    giftSendWhen: { type: Schema.Types.Mixed }, // Can be "now" or Date
-    giftHidePrice: { type: Boolean, default: false },
-    
-    // Consents management
-    consents: {
-      customerAlerts: { type: String, enum: ["sms", "email", "none"], default: "email" },
-      patientAlerts: { type: String, enum: ["sms", "email", "none"], default: "email" },
-      marketingOptIn: { type: Boolean, default: false },
-      termsAccepted: { type: Boolean, default: false },
-    },
-    
-    // Enhanced payment details
-    enhancedPaymentDetails: {
-      transactionId: { type: Schema.Types.ObjectId },
-      amountPaid: { type: Number, min: 0 },
-      cardLast4: { type: String, maxlength: 4 },
-      cardHolder: { type: String, trim: true },
-      paymentStatus: { type: String, enum: ["success", "fail"] },
-    },
-    
-    // Review system
-    review: {
-      rating: { type: Number, enum: [1, 2, 3, 4, 5] },
-      comment: { type: String, trim: true },
-    },
-    
-    // Order event tracking
-    orderEventTriggered: { type: Boolean, default: false },
-    orderEventTimestamp: { type: Date },
     suitableProfessionals: [
       {
         professionalId: { type: Schema.Types.ObjectId, ref: "User" },
@@ -329,6 +299,22 @@ const BookingSchema: Schema<IBooking> = new Schema(
         calculatedAt: { type: Date },
       },
     ],
+    // ➕ שדות חדשים
+    step: { type: Number, enum: [1, 2, 3, 4, 5, 6, 7], required: true, default: 1 },
+    treatmentCategory: { type: Schema.Types.ObjectId, ref: "TreatmentCategory", required: true },
+    staticTreatmentPrice: { type: Number, required: true, min: 0 },
+    staticTherapistPay: { type: Number, required: true, min: 0 },
+    staticTimeSurcharge: { type: Number, min: 0 },
+    staticTimeSurchargeReason: { type: String, trim: true },
+    staticTherapistPayExtra: { type: Number, min: 0 },
+    companyFee: { type: Number, required: true, min: 0 },
+    isGift: { type: Boolean, required: true, default: false },
+    giftGreeting: { type: String, trim: true },
+    giftSendWhen: { type: Schema.Types.Mixed }, // תומך ב"now" או Date
+    giftHidePrice: { type: Boolean, default: false },
+    consents: { type: BookingConsentsSchema, required: true },
+    enhancedPaymentDetails: { type: EnhancedPaymentDetailsSchema },
+    review: { type: BookingReviewSchema },
   },
   { timestamps: true },
 )

@@ -13,38 +13,30 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { CitySelectForm } from "@/components/common/ui/city-select-form"
-import { MapPin, Car, Home, Building, Hotel, MapPinned, Check, X, DollarSign } from "lucide-react"
-import { Label } from "@/components/common/ui/label"
 
 interface GuestAddress {
-  city?: string
-  street?: string
-  houseNumber?: string
-  addressType?: "apartment" | "house" | "office" | "hotel" | "other"
+  city: string
+  street: string
+  houseNumber: string
+  addressType: "apartment" | "house" | "office" | "hotel" | "other"
   floor?: string
-  apartment?: string
   apartmentNumber?: string
   entrance?: string
-  buildingCode?: string
-  doorCode?: string
-  parking?: boolean
-  parkingAvailable?: "free" | "paid" | "none"
-  parkingCost?: string
-  parkingInstructions?: string
-  parkingNotes?: string
+  parking: boolean
   notes?: string
+  // Removed isDefault as it's not needed for guest bookings
   
   // Type-specific details
   doorName?: string // for house
   buildingName?: string // for office
   hotelName?: string // for hotel
   roomNumber?: string // for hotel
-  instructions?: string // for other or general instructions
+  instructions?: string // for other
 }
 
 interface GuestAddressStepProps {
   address: Partial<GuestAddress>
-  setAddress: (address: Partial<GuestAddress> | ((prev: Partial<GuestAddress>) => Partial<GuestAddress>)) => void
+  setAddress: (address: Partial<GuestAddress>) => void
   onNext: () => void
   onPrev: () => void
 }
@@ -70,21 +62,7 @@ const addressSchema = z.object({
 type GuestAddressFormData = z.infer<typeof addressSchema>
 
 export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestAddressStepProps) {
-  const { t, dir, language } = useTranslation()
-  
-  const addressTypes = [
-    { value: "apartment" as const, label: "דירה", icon: Building },
-    { value: "house" as const, label: "בית פרטי", icon: Home },
-    { value: "office" as const, label: "משרד", icon: Building },
-    { value: "hotel" as const, label: "מלון", icon: Hotel },
-    { value: "other" as const, label: "אחר", icon: MapPinned }
-  ]
-
-  const parkingOptions = [
-    { value: "free" as const, label: "חניה חופשית", icon: Check },
-    { value: "paid" as const, label: "חניה בתשלום", icon: DollarSign },
-    { value: "none" as const, label: "אין חניה", icon: X }
-  ]
+  const { t, dir } = useTranslation()
   const [addressType, setAddressType] = useState<"apartment" | "house" | "office" | "hotel" | "other">(
     (address.addressType as "apartment" | "house" | "office" | "hotel" | "other") || "apartment"
   )
@@ -131,212 +109,299 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
   }
 
   return (
-    <div className="space-y-6" dir={dir} lang={language}>
+    <div className="space-y-6" dir={dir}>
       <div className="text-center">
         <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.addressStep.title") || "הוסף כתובת חדשה"}</h2>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-            <MapPin className="h-5 w-5" />
-            {t("bookings.addressStep.addressDetails") || "פרטי הכתובת"}
-          </CardTitle>
+          <CardTitle>{t("bookings.addressStep.title") || "הוסף כתובת חדשה"}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* סוג כתובת */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">{t("bookings.addressStep.addressType") || "סוג כתובת"}</Label>
-            <div className="flex flex-wrap gap-2">
-              {addressTypes.map((type) => (
-                <Button
-                  key={type.value}
-                  type="button"
-                  variant={addressType === type.value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setAddressType(type.value)}
-                  className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
-                >
-                  <type.icon className="h-4 w-4" />
-                  {type.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* כתובת ועיר בשורה אחת */}
-          <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 ${dir === "rtl" ? "md:grid-flow-col-dense" : ""}`}>
-            <div className="md:col-span-2">
-              <Label htmlFor="street">{t("bookings.addressStep.street") || "רחוב ומספר בית"} *</Label>
-              <Input
-                id="street"
-                value={address.street || ""}
-                onChange={(e) => setAddress(prev => ({ ...prev, street: e.target.value }))}
-                placeholder={t("bookings.addressStep.streetPlaceholder") || "רח' דוגמא 123"}
-                className="mt-1"
-                dir={dir}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="city">{t("bookings.addressStep.city") || "עיר"} *</Label>
-              <Input
-                id="city"
-                value={address.city || ""}
-                onChange={(e) => setAddress(prev => ({ ...prev, city: e.target.value }))}
-                placeholder={t("bookings.addressStep.cityPlaceholder") || "תל אביב"}
-                className="mt-1"
-                dir={dir}
-              />
-            </div>
-          </div>
-
-          {/* קומה ודירה בשורה אחת */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${dir === "rtl" ? "md:grid-flow-col-dense" : ""}`}>
-            <div>
-              <Label htmlFor="floor">{t("bookings.addressStep.floor") || "קומה"}</Label>
-              <Input
-                id="floor"
-                value={address.floor || ""}
-                onChange={(e) => setAddress(prev => ({ ...prev, floor: e.target.value }))}
-                placeholder={t("bookings.addressStep.floorPlaceholder") || "3"}
-                className="mt-1"
-                dir={dir}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="apartment">{t("bookings.addressStep.apartment") || "דירה"}</Label>
-              <Input
-                id="apartment"
-                value={address.apartment || ""}
-                onChange={(e) => setAddress(prev => ({ ...prev, apartment: e.target.value }))}
-                placeholder={t("bookings.addressStep.apartmentPlaceholder") || "12"}
-                className="mt-1"
-                dir={dir}
-              />
-            </div>
-          </div>
-
-          {/* קוד דלת וקוד בניין בשורה אחת */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${dir === "rtl" ? "md:grid-flow-col-dense" : ""}`}>
-            <div>
-              <Label htmlFor="buildingCode">{t("bookings.addressStep.buildingCode") || "קוד בניין"}</Label>
-              <Input
-                id="buildingCode"
-                value={address.buildingCode || ""}
-                onChange={(e) => setAddress(prev => ({ ...prev, buildingCode: e.target.value }))}
-                placeholder={t("bookings.addressStep.buildingCodePlaceholder") || "1234"}
-                className="mt-1"
-                dir={dir}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="doorCode">{t("bookings.addressStep.doorCode") || "קוד דלת"}</Label>
-              <Input
-                id="doorCode"
-                value={address.doorCode || ""}
-                onChange={(e) => setAddress(prev => ({ ...prev, doorCode: e.target.value }))}
-                placeholder={t("bookings.addressStep.doorCodePlaceholder") || "5678"}
-                className="mt-1"
-                dir={dir}
-              />
-            </div>
-          </div>
-
-          {/* הוראות והערות */}
-          <div>
-            <Label htmlFor="instructions">{t("bookings.addressStep.instructions") || "הוראות הגעה"}</Label>
-            <Textarea
-              id="instructions"
-              value={address.instructions || ""}
-              onChange={(e) => setAddress(prev => ({ ...prev, instructions: e.target.value }))}
-              placeholder={t("bookings.addressStep.instructionsPlaceholder") || "מעלית או מדרגות, איך למצוא את הכניסה..."}
-              className="mt-1 resize-none"
-              rows={3}
-              dir={dir}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* חניה */}
-      <Card>
-        <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-            <Car className="h-5 w-5" />
-            {t("bookings.addressStep.parking") || "חניה"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">{t("bookings.addressStep.parkingOptions") || "אפשרויות חניה"}</Label>
-            <div className="flex flex-wrap gap-2">
-              {parkingOptions.map((option) => (
-                <Button
-                  key={option.value}
-                  type="button"
-                  variant={address.parkingAvailable === option.value ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setAddress(prev => ({ ...prev, parkingAvailable: option.value }))}
-                  className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}
-                >
-                  <option.icon className="h-4 w-4" />
-                  {option.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {address.parkingAvailable === "paid" && (
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${dir === "rtl" ? "md:grid-flow-col-dense" : ""}`}>
-              <div>
-                <Label htmlFor="parkingCost">{t("bookings.addressStep.parkingCost") || "עלות חניה (לשעה)"}</Label>
-                <Input
-                  id="parkingCost"
-                  type="number"
-                  value={address.parkingCost || ""}
-                  onChange={(e) => setAddress(prev => ({ ...prev, parkingCost: e.target.value }))}
-                  placeholder="15"
-                  className="mt-1"
-                  dir={dir}
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("bookings.addressStep.city") || "עיר"}</FormLabel>
+                      <FormControl>
+                        <CitySelectForm 
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          placeholder={t("bookings.addressStep.cityPlaceholder") || "בחר עיר"}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="street"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("bookings.addressStep.street") || "רחוב"}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="houseNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("bookings.addressStep.houseNumber") || "מספר בית"}</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="addressType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("bookings.addressStep.addressType") || "סוג כתובת"}</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={handleAddressTypeChange} value={field.value}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="apartment">דירה</SelectItem>
+                            <SelectItem value="house">בית פרטי</SelectItem>
+                            <SelectItem value="office">משרד</SelectItem>
+                            <SelectItem value="hotel">מלון</SelectItem>
+                            <SelectItem value="other">אחר</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-              <div>
-                <Label htmlFor="parkingInstructions">{t("bookings.addressStep.parkingInstructions") || "הוראות חניה"}</Label>
-                <Input
-                  id="parkingInstructions"
-                  value={address.parkingInstructions || ""}
-                  onChange={(e) => setAddress(prev => ({ ...prev, parkingInstructions: e.target.value }))}
-                  placeholder={t("bookings.addressStep.parkingInstructionsPlaceholder") || "חניה ברחוב או חניון"}
-                  className="mt-1"
-                  dir={dir}
+
+              {/* Type-specific fields */}
+              {addressType === "apartment" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="floor"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("bookings.addressStep.floor") || "קומה"}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="apartmentNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("bookings.addressStep.apartmentNumber") || "מספר דירה"}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="entrance"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("bookings.addressStep.entrance") || "כניסה"}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {addressType === "house" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="doorName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>שם על הדלת</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="entrance"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("bookings.addressStep.entrance") || "כניסה"}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {addressType === "office" && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="buildingName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>שם הבניין</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="entrance"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("bookings.addressStep.entrance") || "כניסה"}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="floor"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("bookings.addressStep.floor") || "קומה"}</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {addressType === "hotel" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="hotelName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>שם המלון</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="roomNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>מספר חדר</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {addressType === "other" && (
+                <FormField
+                  control={form.control}
+                  name="instructions"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>הוראות הגעה</FormLabel>
+                      <FormControl>
+                        <Textarea rows={3} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {/* Parking checkbox */}
+              <div className="flex items-center space-x-2">
+                <FormField
+                  control={form.control}
+                  name="parking"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          {t("bookings.addressStep.privateParking") || "חניה פרטית"}
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
-          )}
 
-          {address.parkingAvailable !== "free" && (
-            <div>
-              <Label htmlFor="parkingNotes">{t("bookings.addressStep.parkingNotes") || "הערות נוספות על חניה"}</Label>
-              <Textarea
-                id="parkingNotes"
-                value={address.parkingNotes || ""}
-                onChange={(e) => setAddress(prev => ({ ...prev, parkingNotes: e.target.value }))}
-                placeholder={t("bookings.addressStep.parkingNotesPlaceholder") || "מידע נוסף על חניה באזור..."}
-                className="mt-1 resize-none"
-                rows={2}
-                dir={dir}
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("bookings.addressStep.notes") || "הערות נוספות"}</FormLabel>
+                    <FormControl>
+                      <Textarea rows={2} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          )}
+              
+              <div className="flex justify-between mt-4">
+                <Button variant="outline" type="button" onClick={onPrev}>{t("common.back")}</Button>
+                <Button type="submit">{t("common.continue")}</Button>
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
-
-      <div className="flex justify-between mt-4">
-        <Button variant="outline" type="button" onClick={onPrev}>{t("common.back")}</Button>
-        <Button type="submit">{t("common.continue")}</Button>
-      </div>
     </div>
   )
 } 

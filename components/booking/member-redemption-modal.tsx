@@ -13,7 +13,7 @@ interface MemberRedemptionModalProps {
 }
 
 export default function MemberRedemptionModal({ subscriptions, vouchers }: MemberRedemptionModalProps) {
-  const { t, dir, language } = useTranslation()
+  const { t } = useTranslation()
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function MemberRedemptionModal({ subscriptions, vouchers }: Membe
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-              <DialogContent className="max-w-lg" dir={dir} lang={language}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("bookings.redeem.chooseTitle") || "מימוש שובר או מנוי"}</DialogTitle>
         </DialogHeader>

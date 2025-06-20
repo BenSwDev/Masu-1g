@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -13,25 +12,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getUserNotificationPreferences } from "@/actions/notification-service"
 import type { INotificationPreferences } from "@/lib/db/models/user"
 
-// ➕ Enhanced notification preferences matching new booking schema
 interface NotificationPreferencesSelectorProps {
   value: {
     methods: ("email" | "sms")[]
     language: "he" | "en" | "ru"
-    alertPreference?: "sms" | "email" | "none"
   }
   onChange: (preferences: {
     methods: ("email" | "sms")[]
     language: "he" | "en" | "ru"
-    alertPreference?: "sms" | "email" | "none"
   }) => void
   isForRecipient?: boolean
   recipientName?: string
   disabled?: boolean
   className?: string
-  // ➕ New props for enhanced functionality
-  showAlertPreferences?: boolean
-  title?: string
 }
 
 export default function NotificationPreferencesSelector({ 
@@ -40,12 +33,8 @@ export default function NotificationPreferencesSelector({
   isForRecipient = false, 
   recipientName,
   disabled = false,
-  className,
-  // ➕ New props
-  showAlertPreferences = false,
-  title
+  className 
 }: NotificationPreferencesSelectorProps) {
-  const { t, dir, language } = useTranslation()
   const { data: session } = useSession()
   const [userPreferences, setUserPreferences] = useState<INotificationPreferences | null>(null)
   const [isLoadingUserPrefs, setIsLoadingUserPrefs] = useState(false)
@@ -103,14 +92,6 @@ export default function NotificationPreferencesSelector({
     })
   }
 
-  // ➕ Handle alert preference changes
-  const handleAlertPreferenceChange = (alertPreference: "sms" | "email" | "none") => {
-    onChange({
-      ...value,
-      alertPreference
-    })
-  }
-
   const useUserDefaults = () => {
     if (userPreferences) {
       onChange({
@@ -122,27 +103,27 @@ export default function NotificationPreferencesSelector({
 
   const getLanguageLabel = (lang: string) => {
     switch (lang) {
-      case "he": return t("languages.hebrew") || "עברית"
-      case "en": return t("languages.english") || "English"
-      case "ru": return t("languages.russian") || "Русский"
+      case "he": return "עברית"
+      case "en": return "English"
+      case "ru": return "Русский"
       default: return lang
     }
   }
 
-  const displayTitle = title || (isForRecipient 
-    ? `${t("notifications.recipientTitle") || "העדפות התראה עבור"} ${recipientName || t("notifications.recipient") || "הנמען"}`
-    : t("notifications.yourTitle") || "העדפות התראה עבורך")
+  const title = isForRecipient 
+    ? `העדפות התראה עבור ${recipientName || 'הנמען'}`
+    : "העדפות התראה עבורך"
 
   const description = isForRecipient
-    ? t("notifications.recipientDescription") || "בחר כיצד הנמען ירצה לקבל את האישורים והעדכונים על ההזמנה"
-    : t("notifications.yourDescription") || "בחר כיצד תרצה לקבל את האישורים והעדכונים על ההזמנה"
+    ? "בחר כיצד הנמען ירצה לקבל את האישורים והעדכונים על ההזמנה"
+    : "בחר כיצד תרצה לקבל את האישורים והעדכונים על ההזמנה"
 
   return (
-    <Card className={className} dir={dir}>
+    <Card className={className}>
       <CardHeader className="pb-3">
-        <CardTitle className={`flex items-center gap-2 text-base ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+        <CardTitle className="flex items-center gap-2 text-base">
           <Bell className="h-4 w-4" />
-          {displayTitle}
+          {title}
         </CardTitle>
         <CardDescription className="text-sm">
           {description}
@@ -155,16 +136,16 @@ export default function NotificationPreferencesSelector({
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              {t("notifications.defaultPreferences") || "העדפות ברירת המחדל שלך"}: {userPreferences.methods.map(m => m === "email" ? t("notifications.email") || "אימייל" : t("notifications.sms") || "SMS").join(" + ")} 
+              העדפות ברירת המחדל שלך: {userPreferences.methods.map(m => m === "email" ? "אימייל" : "SMS").join(" + ")} 
               {" "}({getLanguageLabel(userPreferences.language)})
               {(value.methods.join(",") !== userPreferences.methods.join(",") || value.language !== userPreferences.language) && (
                 <button
                   type="button"
                   onClick={useUserDefaults}
-                  className={`text-blue-600 hover:text-blue-800 underline ${dir === "rtl" ? "mr-2" : "ml-2"}`}
+                  className="text-blue-600 hover:text-blue-800 underline ml-2"
                   disabled={disabled}
                 >
-                  {t("notifications.useDefaults") || "השתמש בברירת המחדל"}
+                  השתמש בברירת המחדל
                 </button>
               )}
             </AlertDescription>
@@ -173,10 +154,10 @@ export default function NotificationPreferencesSelector({
 
         {/* Communication Methods */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium">{t("notifications.communicationMethods") || "אמצעי תקשורת"}</Label>
+          <Label className="text-sm font-medium">אמצעי תקשורת</Label>
           
           <div className="space-y-2">
-            <div className={`flex items-center space-x-3 ${dir === "rtl" ? "space-x-reverse flex-row-reverse" : ""}`}>
+            <div className="flex items-center space-x-3 rtl:space-x-reverse">
               <Checkbox
                 id={isForRecipient ? "recipient-email-method" : "email-method"}
                 checked={value.methods.includes("email")}
@@ -185,17 +166,17 @@ export default function NotificationPreferencesSelector({
               />
               <Label 
                 htmlFor={isForRecipient ? "recipient-email-method" : "email-method"}
-                className={`flex items-center gap-2 cursor-pointer text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                className="flex items-center gap-2 cursor-pointer text-sm"
               >
                 <Mail className="h-4 w-4" />
-                {t("notifications.email") || "דואר אלקטרוני"}
+                דואר אלקטרוני
                 {value.methods.includes("email") && (
-                  <Badge variant="default" className="text-xs">{t("notifications.active") || "פעיל"}</Badge>
+                  <Badge variant="default" className="text-xs">פעיל</Badge>
                 )}
               </Label>
             </div>
             
-            <div className={`flex items-center space-x-3 ${dir === "rtl" ? "space-x-reverse flex-row-reverse" : ""}`}>
+            <div className="flex items-center space-x-3 rtl:space-x-reverse">
               <Checkbox
                 id={isForRecipient ? "recipient-sms-method" : "sms-method"}
                 checked={value.methods.includes("sms")}
@@ -204,69 +185,69 @@ export default function NotificationPreferencesSelector({
               />
               <Label 
                 htmlFor={isForRecipient ? "recipient-sms-method" : "sms-method"}
-                className={`flex items-center gap-2 cursor-pointer text-sm ${dir === "rtl" ? "flex-row-reverse" : ""}`}
+                className="flex items-center gap-2 cursor-pointer text-sm"
               >
                 <MessageSquare className="h-4 w-4" />
-                {t("notifications.sms") || "הודעות טקסט (SMS)"}
+                הודעות SMS
                 {value.methods.includes("sms") && (
-                  <Badge variant="default" className="text-xs">{t("notifications.active") || "פעיל"}</Badge>
+                  <Badge variant="default" className="text-xs">פעיל</Badge>
                 )}
               </Label>
             </div>
           </div>
+
+          {value.methods.length === 0 && (
+            <p className="text-xs text-red-600">
+              חובה לבחור לפחות אמצעי תקשורת אחד
+            </p>
+          )}
         </div>
 
-        {/* Language Selection */}
-        <div className="space-y-2">
-          <Label className={`text-sm font-medium flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-            <Globe className="h-4 w-4" />
-            {t("notifications.language") || "שפת התקשורת"}
-          </Label>
-          <Select value={value.language} onValueChange={handleLanguageChange} disabled={disabled}>
-            <SelectTrigger dir={dir} lang={language}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent dir={dir} lang={language}>
-              <SelectItem value="he">{t("languages.hebrew") || "עברית"}</SelectItem>
-              <SelectItem value="en">{t("languages.english") || "English"}</SelectItem>
-              <SelectItem value="ru">{t("languages.russian") || "Русский"}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Alert Preferences (Enhanced) */}
-        {showAlertPreferences && (
-          <div className="space-y-2 border-t pt-4">
-            <Label className={`text-sm font-medium flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-              <Bell className="h-4 w-4" />
-              {t("notifications.alertPreferences") || "העדפות התראה"}
-            </Label>
-            <Select 
-              value={value.alertPreference || "none"} 
-              onValueChange={handleAlertPreferenceChange}
+        {/* Language Preference */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">שפת התראות</Label>
+          
+          <div className="flex items-center gap-3">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={value.language}
+              onValueChange={(lang: "he" | "en" | "ru") => handleLanguageChange(lang)}
               disabled={disabled}
             >
-              <SelectTrigger dir={dir} lang={language}>
+              <SelectTrigger className="w-[140px]">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent dir={dir} lang={language}>
-                <SelectItem value="none">{t("notifications.noAlerts") || "ללא התראות"}</SelectItem>
-                <SelectItem value="email">{t("notifications.emailOnly") || "אימייל בלבד"}</SelectItem>
-                <SelectItem value="sms">{t("notifications.smsOnly") || "SMS בלבד"}</SelectItem>
+              <SelectContent>
+                <SelectItem value="he">עברית</SelectItem>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="ru">Русский</SelectItem>
               </SelectContent>
             </Select>
+            <Badge variant="secondary" className="text-xs">
+              {getLanguageLabel(value.language)}
+            </Badge>
           </div>
-        )}
+        </div>
 
-        {/* Method selection validation */}
-        {value.methods.length === 0 && (
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription className="text-sm text-orange-600">
-              {t("notifications.selectAtLeastOne") || "נא לבחור לפחות אמצעי תקשורת אחד"}
-            </AlertDescription>
-          </Alert>
-        )}
+        {/* Current Selection Summary */}
+        <div className="bg-gray-50 rounded-lg p-3 space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">יקבל התראות דרך:</span>
+            <div className="flex gap-1">
+              {value.methods.map(method => (
+                <Badge key={method} variant="outline" className="text-xs">
+                  {method === "email" ? "אימייל" : "SMS"}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">בשפה:</span>
+            <Badge variant="outline" className="text-xs">
+              {getLanguageLabel(value.language)}
+            </Badge>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

@@ -35,11 +35,12 @@ interface GuestInfo {
   recipientPhone?: string
   recipientBirthDate?: Date
   recipientGender?: "male" | "female" | "other"
-  // ➕ Enhanced Gift options (Step 3)
+  // Gift options
   isGift?: boolean
-  giftGreeting?: string
-  giftSendWhen?: "now" | Date
-  giftHidePrice?: boolean
+  greetingMessage?: string
+  sendOption?: "immediate" | "scheduled"
+  sendDate?: Date
+  sendTime?: string
 }
 
 interface GuestInfoStepProps {
@@ -61,7 +62,7 @@ export function GuestInfoStep({
   onPrev,
   defaultBookingForSomeoneElse = false,
   hideRecipientBirthGender = false,
-  showGiftOptions = true, // ➕ Always show gift options now
+  showGiftOptions = false,
   lockedFields = [],
   hideBookingForSomeoneElse = false,
 }: GuestInfoStepProps) {
@@ -98,11 +99,11 @@ export function GuestInfoStep({
     recipientPhone: z.string().optional(),
     recipientBirthDate: z.date().optional(),
     recipientGender: z.enum(["male", "female", "other"]).optional(),
-    // ➕ Enhanced Gift functionality
     isGift: z.boolean().default(false),
-    giftGreeting: z.string().optional(),
-    giftSendWhen: z.union([z.literal("now"), z.date()]).optional(),
-    giftHidePrice: z.boolean().default(false),
+    greetingMessage: z.string().optional(),
+    sendOption: z.enum(["immediate", "scheduled"]).optional(),
+    sendDate: z.date().optional(),
+    sendTime: z.string().optional(),
   }).refine((data) => {
     if (data.isBookingForSomeoneElse) {
       return (
@@ -137,7 +138,7 @@ export function GuestInfoStep({
 
   const form = useForm<GuestInfoFormData>({
     resolver: zodResolver(guestInfoSchema),
-    defaultValues: {
+    values: {
       firstName: guestInfo.firstName || "",
       lastName: guestInfo.lastName || "",
       email: guestInfo.email || "",
@@ -152,17 +153,24 @@ export function GuestInfoStep({
       recipientPhone: guestInfo.recipientPhone || "",
       recipientBirthDate: guestInfo.recipientBirthDate || undefined,
       recipientGender: guestInfo.recipientGender || undefined,
-      // ➕ Enhanced Gift values
       isGift: guestInfo.isGift || false,
-      giftGreeting: guestInfo.giftGreeting || "",
-      giftSendWhen: guestInfo.giftSendWhen || "now",
-      giftHidePrice: guestInfo.giftHidePrice || false,
+      greetingMessage: guestInfo.greetingMessage || "",
+      sendOption: guestInfo.sendOption || "immediate",
+      sendDate: guestInfo.sendDate || undefined,
+      sendTime: guestInfo.sendTime || "",
     },
   })
 
   const watchIsGift = form.watch("isGift")
-  const watchGiftSendWhen = form.watch("giftSendWhen")
-  // timeOptions removed as no longer needed
+  const watchSendOption = form.watch("sendOption")
+  const timeOptions = useMemo(() => {
+    const opts = []
+    for (let i = 8; i <= 23; i++) {
+      opts.push(`${String(i).padStart(2, "0")}:00`)
+    }
+    opts.push("00:00")
+    return opts
+  }, [])
 
   const onSubmit = (data: GuestInfoFormData) => {
     setGuestInfo(data)
@@ -193,7 +201,7 @@ export function GuestInfoStep({
   }
 
   return (
-    <div className="space-y-6" dir={dir} lang={language}>
+    <div className="space-y-6">
       <div className="text-center">
         <User className="mx-auto h-12 w-12 text-primary mb-4" />
         <h2 className="text-2xl font-semibold tracking-tight">{t("guestInfo.title")}</h2>
@@ -201,109 +209,48 @@ export function GuestInfoStep({
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* Debug Info */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="p-3 bg-gray-100 rounded text-xs">
-              <strong>Debug (DEV only):</strong>
-              <div>Form values: {JSON.stringify(form.getValues(), null, 2)}</div>
-              <div>Guest info prop: {JSON.stringify(guestInfo, null, 2)}</div>
-              <div>Locked fields: {JSON.stringify(lockedFields, null, 2)}</div>
-            </div>
-          )}
-
-          {/* Booking for Someone Else Checkbox */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          
+          {/* Booking For Someone Else Option - Hide when redeeming voucher/subscription */}
           {!hideBookingForSomeoneElse && (
             <Card>
-              <CardHeader>
-                <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                  <Users className="h-5 w-5" />
-                  {t("guestInfo.bookingType")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className={`flex items-center space-x-2 ${dir === "rtl" ? "space-x-reverse flex-row-reverse" : ""}`}>
+              <CardContent className="pt-6">
+                <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
                   <Checkbox
-                    id="booking-for-someone-else"
+                    id="isBookingForSomeoneElse"
                     checked={isBookingForSomeoneElse}
                     onCheckedChange={handleBookingForSomeoneElseChange}
                   />
-                  <label htmlFor="booking-for-someone-else" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    {t("guestInfo.bookingForSomeoneElse")}
+                  <label htmlFor="isBookingForSomeoneElse" className={`flex items-center gap-2 cursor-pointer ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                    <Users className="h-4 w-4" />
+                    <span>{t("guestInfo.bookingForSomeoneElse")}</span>
                   </label>
                 </div>
               </CardContent>
             </Card>
           )}
 
-          {/* Booker Information */}
+          {/* Booker Details (Always required) */}
           <Card>
             <CardHeader>
               <CardTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                 <User className="h-5 w-5" />
-                {t("guestInfo.bookerDetails")}
+                {isBookingForSomeoneElse ? t("guestInfo.bookerDetails") : t("guestInfo.yourDetails")}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* First and Last Name Row */}
-                <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${dir === "rtl" ? "md:grid-flow-col-dense" : ""}`}>
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("guestInfo.firstName")} *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder={t("guestInfo.firstNamePlaceholder")} 
-                            {...field} 
-                            disabled={lockedFields.includes("firstName")}
-                            dir={dir}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("guestInfo.lastName")} *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder={t("guestInfo.lastNamePlaceholder")} 
-                            {...field} 
-                            disabled={lockedFields.includes("lastName")}
-                            dir={dir}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Email - Full Width */}
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                        <Mail className="h-4 w-4" />
-                        {t("guestInfo.email")} *
-                      </FormLabel>
+                      <FormLabel>{t("guestInfo.firstName")} *</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="email" 
-                          placeholder={t("guestInfo.emailPlaceholder")} 
-                          {...field} 
-                          disabled={lockedFields.includes("email")}
-                          dir={dir}
+                        <Input
+                          placeholder={t("guestInfo.firstNamePlaceholder")}
+                          {...field}
+                          disabled={lockedFields.includes("firstName")}
                         />
                       </FormControl>
                       <FormMessage />
@@ -311,25 +258,113 @@ export function GuestInfoStep({
                   )}
                 />
 
-                {/* Phone and Gender Row */}
-                <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${dir === "rtl" ? "md:grid-flow-col-dense" : ""}`}>
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t("guestInfo.lastName")} *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={t("guestInfo.lastNamePlaceholder")}
+                          {...field}
+                          disabled={lockedFields.includes("lastName")}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                      <Mail className="h-4 w-4" />
+                      {t("guestInfo.email")} *
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder={t("guestInfo.emailPlaceholder")}
+                        {...field}
+                        disabled={lockedFields.includes("email")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                      <Phone className="h-4 w-4" />
+                      {t("guestInfo.phone")} *
+                    </FormLabel>
+                    <FormControl>
+                      <PhoneInput
+                        fullNumberValue={field.value}
+                        onPhoneChange={field.onChange}
+                        placeholder={t("guestInfo.phonePlaceholder")}
+                        disabled={lockedFields.includes("phone")}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Only show birth date and gender for booker if NOT booking for someone else */}
+              {!isBookingForSomeoneElse && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="birthDate"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                          <Phone className="h-4 w-4" />
-                          {t("guestInfo.phone")} *
+                          <CalendarIcon className="h-4 w-4" />
+                          {t("guestInfo.birthDate")}
                         </FormLabel>
-                        <FormControl>
-                          <PhoneInput 
-                            fullNumberValue={field.value}
-                            onPhoneChange={field.onChange} 
-                            disabled={lockedFields.includes("phone")}
-                            dir={dir}
-                          />
-                        </FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP", { locale: language === "he" ? he : undefined })
+                                ) : (
+                                  <span>בחר תאריך לידה</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={isDateDisabled}
+                                initialFocus
+                                captionLayout="dropdown-buttons"
+                                fromYear={1900}
+                                toYear={new Date().getFullYear() - 16}
+                              />
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -341,95 +376,41 @@ export function GuestInfoStep({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("guestInfo.gender")}</FormLabel>
-                        <FormControl>
-                          <Select value={field.value || ""} onValueChange={field.onChange} disabled={lockedFields.includes("gender")}>
-                            <SelectTrigger dir={dir} lang={language}>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
                               <SelectValue placeholder={t("guestInfo.genderPlaceholder")} />
                             </SelectTrigger>
-                            <SelectContent dir={dir} lang={language}>
-                              <SelectItem value="male">{t("guestInfo.male")}</SelectItem>
-                              <SelectItem value="female">{t("guestInfo.female")}</SelectItem>
-                              <SelectItem value="other">{t("guestInfo.other")}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="male">{t("guestInfo.genderMale")}</SelectItem>
+                            <SelectItem value="female">{t("guestInfo.genderFemale")}</SelectItem>
+                            <SelectItem value="other">{t("guestInfo.genderOther")}</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+              )}
 
-                {/* Birth Date - Limited Width */}
-                <FormField
-                  control={form.control}
-                  name="birthDate"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                        <CalendarIcon className="h-4 w-4" />
-                        {t("guestInfo.birthDate")}
-                      </FormLabel>
-                      <FormControl>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full md:w-80 justify-start text-left font-normal",
-                                !field.value && "text-muted-foreground",
-                                dir === "rtl" && "text-right"
-                              )}
-                              disabled={lockedFields.includes("birthDate")}
-                              dir={dir}
-                            >
-                              <CalendarIcon className={cn("h-4 w-4", dir === "rtl" ? "ml-2" : "mr-2")} />
-                              {field.value ? (
-                                field.value.toLocaleDateString(language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US")
-                              ) : (
-                                <span>{t("guestInfo.birthDatePlaceholder")}</span>
-                              )}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              mode="single"
-                              selected={field.value}
-                              onSelect={field.onChange}
-                              disabled={isDateDisabled}
-                              initialFocus
-                            />
-                          </PopoverContent>
-                        </Popover>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Notes - Full Width */}
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
-                        <FileText className="h-4 w-4" />
-                        {t("guestInfo.notes")}
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder={t("guestInfo.notesPlaceholder")} 
-                          {...field} 
-                          disabled={lockedFields.includes("notes")}
-                          dir={dir}
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+                      <FileText className="h-4 w-4" />
+                      {t("guestInfo.notes")}
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea placeholder={t("guestInfo.notesPlaceholder")} rows={3} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
@@ -603,101 +584,101 @@ export function GuestInfoStep({
                   </div>
                 )}
 
-                {/* ➕ Gift Options Section - Always show for regular bookings */}
-                <div className="space-y-4">
-                  <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
-                    <Checkbox
-                      id="isGift"
-                      checked={watchIsGift}
-                      onCheckedChange={(checked) => form.setValue("isGift", checked as boolean)}
-                    />
-                    <label htmlFor="isGift" className="flex items-center gap-2 cursor-pointer">
-                      זה מתנה?
-                    </label>
-                  </div>
-
-                  {watchIsGift && (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="giftGreeting"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>ברכה למתנה</FormLabel>
-                            <FormControl>
-                              <Textarea placeholder="כתוב ברכה אישית..." rows={3} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                {showGiftOptions && (
+                  <div className="space-y-4">
+                    <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
+                      <Checkbox
+                        id="isGift"
+                        checked={watchIsGift}
+                        onCheckedChange={(checked) => form.setValue("isGift", checked as boolean)}
                       />
+                      <label htmlFor="isGift" className="flex items-center gap-2 cursor-pointer">
+                        {t("purchaseGiftVoucher.sendAsGift")}
+                      </label>
+                    </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {watchIsGift && (
+                      <>
                         <FormField
                           control={form.control}
-                          name="giftSendWhen"
+                          name="greetingMessage"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>מתי לשלוח המתנה?</FormLabel>
-                              <div className="flex gap-2">
-                                <Button 
-                                  type="button" 
-                                  variant={field.value === "now" ? "default" : "outline"} 
-                                  onClick={() => field.onChange("now")} 
-                                  className="flex-1"
-                                >
-                                  עכשיו
+                              <FormLabel>{t("purchaseGiftVoucher.greetingMessage")}</FormLabel>
+                              <FormControl>
+                                <Textarea placeholder={t("purchaseGiftVoucher.greetingPlaceholder")} rows={3} {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="sendOption"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>{t("purchaseGiftVoucher.sendDate")}</FormLabel>
+                              <div className="flex gap-4">
+                                <Button type="button" variant={field.value === "immediate" ? "default" : "outline"} onClick={() => field.onChange("immediate")} className="flex-1">
+                                  {t("purchaseGiftVoucher.sendNow")}
                                 </Button>
+                                <Button type="button" variant={field.value === "scheduled" ? "default" : "outline"} onClick={() => field.onChange("scheduled")} className="flex-1">
+                                  {t("purchaseGiftVoucher.sendOnDate")}
+                                </Button>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        {watchSendOption === "scheduled" && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                            <FormField
+                              control={form.control}
+                              name="sendDate"
+                              render={({ field }) => (
                                 <Popover>
                                   <PopoverTrigger asChild>
-                                    <Button 
-                                      type="button"
-                                      variant={field.value !== "now" && field.value ? "default" : "outline"} 
-                                      className="flex-1"
-                                    >
-                                      {field.value && field.value !== "now" ? 
-                                        format(field.value as Date, "dd/MM/yyyy") : 
-                                        "בתאריך"
-                                      }
+                                    <Button variant="outline" className="w-full justify-start text-start font-normal h-11">
+                                      <CalendarIcon className={cn("h-4 w-4", dir === "rtl" ? "ml-2" : "mr-2")} />
+                                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
                                     </Button>
                                   </PopoverTrigger>
                                   <PopoverContent className="w-auto p-0">
                                     <Calendar
                                       mode="single"
-                                      selected={field.value !== "now" ? field.value as Date : undefined}
-                                      onSelect={(date) => field.onChange(date)}
+                                      selected={field.value}
+                                      onSelect={field.onChange}
                                       initialFocus
                                       disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
                                     />
                                   </PopoverContent>
                                 </Popover>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
+                              )}
+                            />
 
-                        <FormField
-                          control={form.control}
-                          name="giftHidePrice"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-col justify-end">
-                              <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
-                                <Checkbox
-                                  id="giftHidePrice"
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                                <label htmlFor="giftHidePrice" className="text-sm cursor-pointer">
-                                  הסתר מחיר במתנה
-                                </label>
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
+                            <FormField
+                              control={form.control}
+                              name="sendTime"
+                              render={({ field }) => (
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <SelectTrigger className="h-11">
+                                    <SelectValue placeholder={t("purchaseGiftVoucher.selectTime")} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {timeOptions.map((time) => (
+                                      <SelectItem key={time} value={time}>{time}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}

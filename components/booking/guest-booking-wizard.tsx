@@ -14,8 +14,8 @@ import { GuestTreatmentSelectionStep } from "./steps/guest-treatment-selection-s
 import { GuestSchedulingStep } from "./steps/guest-scheduling-step"
 import { GuestSummaryStep } from "./steps/guest-summary-step"
 import { GuestPaymentStep } from "./steps/guest-payment-step"
-import { GuestFinalConfirmationStep } from "./steps/guest-final-confirmation-step"
 import { GuestBookingConfirmation } from "./steps/guest-booking-confirmation"
+import NotificationPreferencesSelector from "./notification-preferences-selector"
 
 import { 
   calculateBookingPrice, 
@@ -25,7 +25,7 @@ import {
   saveAbandonedBooking,
   getAbandonedBooking
 } from "@/actions/booking-actions"
-import type { CreateGuestBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
+import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress"
 import { AlertCircle, RotateCcw } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
@@ -48,25 +48,11 @@ interface GuestInfo {
   recipientPhone?: string
   recipientBirthDate?: Date
   recipientGender?: "male" | "female" | "other"
-  
-  // ➕ Gift functionality (Step 3)
-  isGift?: boolean
-  giftGreeting?: string
-  giftSendWhen?: "now" | Date
-  giftHidePrice?: boolean
-  
-  // Notification preferences (moved to Step 6)
+  // Notification preferences
   bookerNotificationMethod?: "email" | "sms" | "both"
   bookerNotificationLanguage?: "he" | "en" | "ru"
   recipientNotificationMethod?: "email" | "sms" | "both"
   recipientNotificationLanguage?: "he" | "en" | "ru"
-  
-  // ➕ Consents (Step 6)
-  customerAlerts?: "sms" | "email" | "both" | "none"
-  patientAlerts?: "sms" | "email" | "both" | "none"
-  notificationLanguage?: "he" | "en" | "ru"
-  marketingOptIn?: boolean
-  termsAccepted?: boolean
 }
 
 interface GuestAddress {
@@ -97,7 +83,7 @@ interface UniversalBookingWizardProps {
   currentUser?: any // User session data if logged in
 }
 
-const TOTAL_STEPS_WITH_PAYMENT = 7 // Updated to 7 steps: Treatment → Scheduling → Info → Address → Summary → Payment → Final
+const TOTAL_STEPS_WITH_PAYMENT = 6
 const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 
 const TIMEZONE = "Asia/Jerusalem"
@@ -114,72 +100,29 @@ export default function UniversalBookingWizard({
   const [isPriceCalculating, setIsPriceCalculating] = useState(false)
 
   const prefilledGuestInfo = useMemo<Partial<GuestInfo>>(() => {
-    // Priority 1: Logged-in user (highest priority)
+    // Priority 1: Logged in user data
     if (currentUser) {
-      console.log("🔍 Debug currentUser data:", {
-        name: currentUser.name,
-        email: currentUser.email,
-        phone: currentUser.phone,
-        gender: currentUser.gender,
-        dateOfBirth: currentUser.dateOfBirth,
-        birthDate: currentUser.birthDate, // Check alternative field name
-        notificationPreferences: currentUser.notificationPreferences,
-        raw: currentUser
-      })
-      
-      // ✅ Phone normalization: Convert +972525131777 to 525131777 for UI
-      let normalizedPhone = currentUser.phone || ""
-      if (normalizedPhone.startsWith("+972")) {
-        normalizedPhone = normalizedPhone.substring(4) // Remove +972 prefix
-        if (normalizedPhone.startsWith("0")) {
-          normalizedPhone = normalizedPhone.substring(1) // Remove leading 0 if exists
-        }
-      }
-      
-      // ✅ Check both possible field names for birth date
-      const birthDateField = currentUser.dateOfBirth || currentUser.birthDate
-      
-      console.log("🔍 Debug processed data:", {
-        originalPhone: currentUser.phone,
-        normalizedPhone,
-        birthDateField,
-        gender: currentUser.gender,
-        firstName: currentUser.name?.split(" ")[0],
-        lastName: currentUser.name?.split(" ").slice(1).join(" ")
-      })
-      
+      const [first, ...rest] = (currentUser.name || "").split(" ")
       return {
-        firstName: currentUser.name?.split(" ")[0] || "",
-        lastName: currentUser.name?.split(" ").slice(1).join(" ") || "",
+        firstName: first || "",
+        lastName: rest.join(" ") || "",
         email: currentUser.email || "",
-        phone: normalizedPhone, // ✅ Normalized phone without +972
-        birthDate: birthDateField ? new Date(birthDateField) : undefined, // ✅ Extract birth date from both possible fields
-        gender: currentUser.gender || undefined, // ✅ Extract gender
+        phone: currentUser.phone || "",
         isBookingForSomeoneElse: false,
-        bookerNotificationMethod: currentUser.notificationPreferences?.methods?.includes("sms") ? 
-          (currentUser.notificationPreferences?.methods?.includes("email") ? "both" : "sms") : "email",
-        bookerNotificationLanguage: currentUser.notificationPreferences?.language || "he"
+        bookerNotificationMethod: "email", // Default for logged in users
+        bookerNotificationLanguage: "he"
       }
     }
     
-    // Priority 2: Gift voucher recipient data
+    // Priority 2: Gift voucher data
     if (voucher?.isGift && voucher.recipientName) {
       const [first, ...rest] = voucher.recipientName.split(" ")
-      // ✅ Phone normalization for voucher recipient
-      let normalizedPhone = voucher.recipientPhone || ""
-      if (normalizedPhone.startsWith("+972")) {
-        normalizedPhone = normalizedPhone.substring(4)
-        if (normalizedPhone.startsWith("0")) {
-          normalizedPhone = normalizedPhone.substring(1)
-        }
-      }
-      
       return {
         firstName: first,
         lastName: rest.join(" "),
-        email: voucher.recipientEmail || "",
-        phone: normalizedPhone, // ✅ Normalized phone
-        isBookingForSomeoneElse: false,
+        phone: voucher.recipientPhone,
+        email: "", // Gift vouchers usually don't have recipient email
+        isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
         bookerNotificationMethod: "email",
         bookerNotificationLanguage: "he"
       }
@@ -189,20 +132,11 @@ export default function UniversalBookingWizard({
     if ((voucher as any)?.guestInfo) {
       const guestInfo = (voucher as any).guestInfo
       const [first, ...rest] = guestInfo.name.split(" ")
-      // ✅ Phone normalization for guest info
-      let normalizedPhone = guestInfo.phone || ""
-      if (normalizedPhone.startsWith("+972")) {
-        normalizedPhone = normalizedPhone.substring(4)
-        if (normalizedPhone.startsWith("0")) {
-          normalizedPhone = normalizedPhone.substring(1)
-        }
-      }
-      
       return {
         firstName: first,
         lastName: rest.join(" "),
         email: guestInfo.email,
-        phone: normalizedPhone, // ✅ Normalized phone
+        phone: guestInfo.phone,
         isBookingForSomeoneElse: false,
         bookerNotificationMethod: "email",
         bookerNotificationLanguage: "he"
@@ -213,20 +147,11 @@ export default function UniversalBookingWizard({
     if ((userSubscription as any)?.guestInfo) {
       const guestInfo = (userSubscription as any).guestInfo
       const [first, ...rest] = guestInfo.name.split(" ")
-      // ✅ Phone normalization for subscription guest info
-      let normalizedPhone = guestInfo.phone || ""
-      if (normalizedPhone.startsWith("+972")) {
-        normalizedPhone = normalizedPhone.substring(4)
-        if (normalizedPhone.startsWith("0")) {
-          normalizedPhone = normalizedPhone.substring(1)
-        }
-      }
-      
       return {
         firstName: first,
         lastName: rest.join(" "),
         email: guestInfo.email,
-        phone: normalizedPhone, // ✅ Normalized phone
+        phone: guestInfo.phone,
         isBookingForSomeoneElse: false,
         bookerNotificationMethod: "email",
         bookerNotificationLanguage: "he"
@@ -242,10 +167,9 @@ export default function UniversalBookingWizard({
   }, [voucher, userSubscription, currentUser])
 
   const lockedFields = useMemo(() => {
-    // ✅ For logged-in users - make all basic fields editable but pre-filled
-    // Only show as "locked" visually but allow editing
+    // If user is logged in, lock their basic info
     if (currentUser) {
-      return [] as const // Don't lock any fields - just pre-fill them
+      return ["firstName", "lastName", "email", "phone"] as const
     }
     
     if (voucher?.isGift && voucher.recipientName) {
@@ -822,13 +746,13 @@ export default function UniversalBookingWizard({
           ? guestInfo.recipientGender
           : guestInfo.gender,
         // Add notification preferences
-        notificationMethods: guestInfo.customerAlerts === "both" ? ["email", "sms"] :
-                            guestInfo.customerAlerts === "sms" ? ["sms"] : ["email"],
+        notificationMethods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
+                            guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
         recipientNotificationMethods: guestInfo.isBookingForSomeoneElse ? 
-          (guestInfo.patientAlerts === "both" ? ["email", "sms"] :
-           guestInfo.patientAlerts === "sms" ? ["sms"] : ["email"]) : undefined,
-        notificationLanguage: guestInfo.notificationLanguage || guestInfo.bookerNotificationLanguage || "he",
-      } as CreateGuestBookingPayloadType
+          (guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
+           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"]) : undefined,
+        notificationLanguage: guestInfo.bookerNotificationLanguage || "he",
+      } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
 
 
       const result = await createGuestBooking(payload)
@@ -879,7 +803,7 @@ export default function UniversalBookingWizard({
       
       if (result.success && result.booking) {
         setBookingResult(result.booking)
-        setCurrentStep(7) // Go to final confirmation step
+        setCurrentStep(CONFIRMATION_STEP_NUMBER)
         
         // Clear saved form state on successful booking
         if (guestUserId) {
@@ -961,29 +885,64 @@ export default function UniversalBookingWizard({
           />
         )
       case 5:
-        // ➕ Step 5: Summary only (no notifications)
         return (
-          <GuestSummaryStep
-            initialData={initialData}
-            bookingOptions={bookingOptions}
-            guestInfo={guestInfo}
-            calculatedPrice={calculatedPrice}
-            isPriceCalculating={isPriceCalculating}
-            onNext={nextStep}
-            onPrev={prevStep}
-            setBookingOptions={setBookingOptions}
-            voucher={voucher}
-            userSubscription={userSubscription}
-          />
+          <div className="space-y-6">
+            <GuestSummaryStep
+              initialData={initialData}
+              bookingOptions={bookingOptions}
+              guestInfo={guestInfo}
+              calculatedPrice={calculatedPrice}
+              isPriceCalculating={isPriceCalculating}
+              onNext={nextStep}
+              onPrev={prevStep}
+              setBookingOptions={setBookingOptions}
+              voucher={voucher}
+              userSubscription={userSubscription}
+            />
+            
+            {/* Notification Preferences for Booker */}
+            <NotificationPreferencesSelector
+              value={{
+                methods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
+                         guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
+                language: guestInfo.bookerNotificationLanguage || "he"
+              }}
+              onChange={(prefs) => setGuestInfo({
+                bookerNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
+                                         prefs.methods.includes("sms") ? "sms" : "email",
+                bookerNotificationLanguage: prefs.language
+              })}
+              isForRecipient={false}
+              className="mt-6"
+            />
+            
+            {/* Notification Preferences for Recipient (if booking for someone else) */}
+            {guestInfo.isBookingForSomeoneElse && (
+              <NotificationPreferencesSelector
+                value={{
+                  methods: guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
+                           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"],
+                  language: guestInfo.recipientNotificationLanguage || "he"
+                }}
+                onChange={(prefs) => setGuestInfo({
+                  recipientNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
+                                              prefs.methods.includes("sms") ? "sms" : "email",
+                  recipientNotificationLanguage: prefs.language
+                })}
+                isForRecipient={true}
+                recipientName={`${guestInfo.recipientFirstName || ''} ${guestInfo.recipientLastName || ''}`.trim()}
+                className="mt-4"
+              />
+            )}
+          </div>
         )
       case 6:
-        // Step 6: Payment with Notification Preferences (second-to-last step)
         return (
           <GuestPaymentStep
             calculatedPrice={calculatedPrice}
             guestInfo={guestInfo}
             setGuestInfo={setGuestInfo}
-            onConfirm={handleFinalSubmit} // Go directly to final step after payment success
+            onConfirm={handleFinalSubmit}
             onPrev={prevStep}
             isLoading={isLoading}
             createPendingBooking={createPendingBooking}
@@ -992,40 +951,6 @@ export default function UniversalBookingWizard({
           />
         )
       case 7:
-        // Step 7: Final Confirmation (last step)
-        if (bookingResult) {
-          return (
-            <GuestFinalConfirmationStep
-              bookingDetails={{
-                bookingNumber: bookingResult.bookingNumber || "000001",
-                treatmentName: initialData.treatment?.name || "",
-                treatmentDuration: initialData.treatment?.duration || 60,
-                bookingDateTime: bookingOptions.selectedDateTime || new Date(),
-                finalAmount: calculatedPrice?.finalAmount || 0,
-                paymentStatus: calculatedPrice?.finalAmount === 0 ? "not_required" : "paid",
-                guestInfo: {
-                  firstName: guestInfo.firstName || "",
-                  lastName: guestInfo.lastName || "",
-                  email: guestInfo.email || "",
-                  phone: guestInfo.phone || ""
-                },
-                address: {
-                  fullAddress: `${guestAddress.street || ""} ${guestAddress.houseNumber || ""}`,
-                  city: guestAddress.city || ""
-                },
-                isGift: guestInfo.isGift,
-                giftGreeting: guestInfo.giftGreeting,
-                consents: {
-                  customerAlerts: guestInfo.customerAlerts || "both",
-                  marketingOptIn: guestInfo.marketingOptIn || false,
-                  termsAccepted: guestInfo.termsAccepted || false
-                }
-              }}
-              onComplete={() => setCurrentStep(CONFIRMATION_STEP_NUMBER)}
-            />
-          )
-        }
-        // Fallback to old confirmation if no bookingResult
         return (
           <GuestBookingConfirmation
             bookingResult={bookingResult}
@@ -1050,9 +975,9 @@ export default function UniversalBookingWizard({
       case 5:
         return t("bookings.steps.summary.title") || "סיכום ההזמנה"
       case 6:
-        return t("bookings.steps.payment.title") || "תשלום והעדפות"
+        return t("bookings.steps.payment.title") || "תשלום"
       case 7:
-        return t("bookings.steps.final.title") || "אישור סופי"
+        return t("bookings.steps.confirmation.title") || "אישור הזמנה"
       default:
         return ""
     }
@@ -1065,23 +990,23 @@ export default function UniversalBookingWizard({
   }
 
   return (
-    <div className="max-w-4xl mx-auto" dir={dir} lang={language}>
+    <div className="max-w-4xl mx-auto">
       {/* Recovery Dialog */}
       <Dialog open={showRecoveryDialog} onOpenChange={setShowRecoveryDialog}>
-        <DialogContent dir={dir}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+            <DialogTitle className="flex items-center gap-2">
               <RotateCcw className="h-5 w-5" />
               שחזור הזמנה
             </DialogTitle>
-            <DialogDescription dir={dir}>
+            <DialogDescription>
               נמצאה הזמנה שלא הושלמה מהיום האחרון. האם תרצה להמשיך מהנקודה בה עצרת או להתחיל מחדש?
             </DialogDescription>
           </DialogHeader>
           
           {/* Debug info */}
           {abandonedBooking && (
-            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded" dir={dir}>
+            <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
               <div>שלב: {abandonedBooking.formState?.currentStep || 'לא ידוע'}</div>
               <div>נשמר: {abandonedBooking.formState?.savedAt ? new Date(abandonedBooking.formState.savedAt).toLocaleString('he-IL') : 'לא ידוע'}</div>
               {abandonedBooking.formState?.guestInfo?.firstName && (
@@ -1090,7 +1015,7 @@ export default function UniversalBookingWizard({
             </div>
           )}
           
-          <div className={`flex gap-3 ${dir === "rtl" ? "justify-start" : "justify-end"}`}>
+          <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={handleStartFresh}>
               התחל מחדש
             </Button>
@@ -1103,14 +1028,11 @@ export default function UniversalBookingWizard({
 
       {/* Progress Bar */}
       <div className="mb-8">
-        <div className={`flex justify-between text-sm text-muted-foreground mb-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
+        <div className="flex justify-between text-sm text-muted-foreground mb-2">
           <span>{getStepTitle()}</span>
           <span>{currentStep} / {TOTAL_STEPS_WITH_PAYMENT}</span>
         </div>
-        <Progress 
-          value={progressPercentage} 
-          className={`h-2 ${dir === "rtl" ? "[&>div]:origin-right" : ""}`} 
-        />
+        <Progress value={progressPercentage} className="h-2" />
       </div>
 
       {/* Error Display */}

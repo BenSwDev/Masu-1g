@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions, hashPassword, verifyPassword, validateEmail, validatePhone } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
-import { sendOTP, verifyOTP } from "./notification-service"
+import { generateAndSendOTP, verifyOTP } from "./notification-actions"
 import type { NotificationLanguage } from "@/lib/notifications/notification-types"
 
 export async function changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
@@ -84,7 +84,7 @@ export async function requestEmailChange(newEmail: string, language: Notificatio
     }
 
     // Send OTP to new email
-    const otpResult = await sendOTP(newEmail, "email", language)
+    const otpResult = await generateAndSendOTP(newEmail, "email", language)
 
     if (!otpResult.success) {
       return { success: false, message: otpResult.message }
@@ -165,7 +165,7 @@ export async function requestPhoneChange(newPhone: string, language: Notificatio
     }
 
     // Send OTP to new phone
-    const otpResult = await sendOTP(newPhone, "phone", language)
+    const otpResult = await generateAndSendOTP(newPhone, "phone", language)
 
     if (!otpResult.success) {
       return { success: false, message: otpResult.message }

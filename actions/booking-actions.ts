@@ -607,6 +607,17 @@ export async function createBooking(
         bookedByUserPhone: bookingUser.phone,
         bookingAddressSnapshot,
         status: "pending_payment", // Will be updated to "in_process" after successful payment
+        // Required fields with defaults for backward compatibility
+        treatmentCategory: validatedPayload.treatmentCategory || new mongoose.Types.ObjectId(),
+        staticTreatmentPrice: validatedPayload.staticPricingData?.staticTreatmentPrice || validatedPayload.priceDetails.basePrice || 0,
+        staticTherapistPay: validatedPayload.staticPricingData?.staticTherapistPay || 0,
+        companyFee: validatedPayload.staticPricingData?.companyFee || 0,
+        consents: validatedPayload.consents || {
+          customerAlerts: "email",
+          patientAlerts: "email",
+          marketingOptIn: false,
+          termsAccepted: false
+        },
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
           surcharges: validatedPayload.priceDetails.surcharges,

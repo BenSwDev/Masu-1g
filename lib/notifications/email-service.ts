@@ -34,14 +34,14 @@ export class EmailService {
 
     // Check if we have the minimum required configuration
     if (!host || !port || !user || !password) {
-      if (!this.isDevelopment) {
-        logger.warn("Email service not configured - missing required environment variables", {
-          hasHost: !!host,
-          hasPort: !!port,
-          hasUser: !!user,
-          hasPassword: !!password
-        })
-      }
+      logger.warn("Email service not configured - missing required environment variables", {
+        hasHost: !!host,
+        hasPort: !!port,
+        hasUser: !!user,
+        hasPassword: !!password,
+        environment: this.isDevelopment ? "development" : "production",
+        nodeEnv: process.env.NODE_ENV
+      })
       return
     }
 
@@ -81,7 +81,15 @@ export class EmailService {
         environment: this.isDevelopment ? "development" : "production"
       })
     } catch (error) {
-      logger.error("Failed to initialize email service:", error)
+      logger.error("Failed to initialize email service:", {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        host,
+        port: Number(port),
+        hasUser: !!user,
+        hasPassword: !!password,
+        environment: this.isDevelopment ? "development" : "production"
+      })
       this.isConfigured = false
     }
   }

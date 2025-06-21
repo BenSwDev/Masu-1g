@@ -1,5 +1,14 @@
+"use client"
+
 import { Skeleton } from "@/components/common/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/common/ui/table"
 import { useTranslation } from "@/lib/translations/i18n"
 
 export function BookingsTableSkeleton() {

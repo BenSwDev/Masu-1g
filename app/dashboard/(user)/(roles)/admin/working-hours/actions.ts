@@ -247,7 +247,7 @@ export async function deleteSpecialDateEvent(index: number) {
  */
 export async function getWorkingHours(): Promise<{
   success: boolean
-  workingHours?: any
+  data?: any
   error?: string
 }> {
   try {
@@ -267,7 +267,7 @@ export async function getWorkingHours(): Promise<{
       saturday: { enabled: false, start: "09:00", end: "17:00" },
     }
 
-    return { success: true, workingHours: defaultWorkingHours }
+    return { success: true, data: defaultWorkingHours }
   } catch (error) {
     logger.error("Error fetching working hours:", error)
     return { success: false, error: "Failed to fetch working hours" }
@@ -279,7 +279,7 @@ export async function getWorkingHours(): Promise<{
  */
 export async function updateWorkingHours(workingHours: any): Promise<{
   success: boolean
-  workingHours?: any
+  data?: any
   error?: string
 }> {
   try {
@@ -295,7 +295,7 @@ export async function updateWorkingHours(workingHours: any): Promise<{
     
     revalidatePath("/dashboard/admin/working-hours")
 
-    return { success: true, workingHours }
+    return { success: true, data: workingHours }
   } catch (error) {
     logger.error("Error updating working hours:", error)
     return { success: false, error: "Failed to update working hours" }

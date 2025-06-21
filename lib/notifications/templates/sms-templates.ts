@@ -81,53 +81,50 @@ function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSL
 
   const responseUrl = `${process.env.NEXT_PUBLIC_APP_URL}/professional/booking-response/${data.responseId}`
 
+  // Extract city from address (assuming format like "Street, City" or just "City")
+  const city = data.address ? data.address.split(',').pop().trim() : data.city || ''
+
+  // Format treatment name with duration if available
+  let treatmentDisplay = data.treatmentName || ''
+  if (data.treatmentDuration) {
+    treatmentDisplay += ` (${data.treatmentDuration} דקות)`
+  }
+
   let message: string
   switch (language) {
     case "he":
       message = `🔔 הזמנה חדשה זמינה!
 
-📋 טיפול: ${data.treatmentName}
+📋 טיפול: ${treatmentDisplay}
 📅 תאריך: ${bookingDate}
 🕐 שעה: ${bookingTime}
-📍 כתובת: ${data.address}
-💰 תשלום: ${data.price}₪
-
-⏰ יש לך 30 דקות לענות!
+📍 עיר: ${city}
 
 ✅ לקבלת ההזמנה: ${responseUrl}?action=accept
-❌ לדחיית ההזמנה: ${responseUrl}?action=decline
 
 או הכנס לאפליקציה: masu.co.il`
       break
     case "ru":
       message = `🔔 Доступен новый заказ!
 
-📋 Процедура: ${data.treatmentName}
+📋 Процедура: ${treatmentDisplay}
 📅 Дата: ${bookingDate}
 🕐 Время: ${bookingTime}
-📍 Адрес: ${data.address}
-💰 Оплата: ${data.price}₪
-
-⏰ У вас есть 30 минут для ответа!
+📍 Город: ${city}
 
 ✅ Принять заказ: ${responseUrl}?action=accept
-❌ Отклонить заказ: ${responseUrl}?action=decline
 
 Или войдите в приложение: masu.co.il`
       break
     default: // English
       message = `🔔 New booking available!
 
-📋 Treatment: ${data.treatmentName}
+📋 Treatment: ${treatmentDisplay}
 📅 Date: ${bookingDate}
 🕐 Time: ${bookingTime}
-📍 Address: ${data.address}
-💰 Payment: ${data.price}₪
-
-⏰ You have 30 minutes to respond!
+📍 City: ${city}
 
 ✅ Accept booking: ${responseUrl}?action=accept
-❌ Decline booking: ${responseUrl}?action=decline
 
 Or enter the app: masu.co.il`
   }

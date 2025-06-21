@@ -3332,7 +3332,7 @@
     "privacyPolicy": "מדיניות פרטיות"
   },
   "success": {
-    "registrationComplete": "success.registrationComplete"
+    "registrationComplete": "ההרשמה הושלמה בהצלחה! מעביר לדף ההתחברות..."
   },
   "paymentMethods": {
     "noPaymentMethods": "אין אמצעי תשלום",

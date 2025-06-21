@@ -485,8 +485,7 @@ export async function updateProfessionalTreatments(
       
       return {
         treatmentId: new Types.ObjectId(treatment.treatmentId),
-        durationId: treatment.durationId ? new Types.ObjectId(treatment.durationId) : undefined,
-        professionalPrice: Number(treatment.professionalPrice) || 0
+        // Remove durationId and professionalPrice as they are now calculated automatically
       }
     })
 
@@ -522,6 +521,66 @@ export async function updateProfessionalTreatments(
     return { 
       success: false, 
       error: error instanceof Error ? error.message : "שגיאה בעדכון טיפולי המטפל" 
+    }
+  }
+}
+
+export async function updateProfessionalBankDetails(
+  id: string,
+  bankDetails: { bankName: string; branchNumber: string; accountNumber: string }
+): Promise<UpdateProfessionalResult> {
+  try {
+    // Validate input
+    if (!id || !Types.ObjectId.isValid(id)) {
+      return { success: false, error: "מזהה מטפל לא תקין" }
+    }
+
+    if (!bankDetails.bankName || !bankDetails.branchNumber || !bankDetails.accountNumber) {
+      return { success: false, error: "כל פרטי חשבון הבנק נדרשים" }
+    }
+
+    // Authorize user
+    await requireAdminAuth()
+
+    // Connect to database
+    await dbConnect()
+
+    const professional = await ProfessionalProfile.findByIdAndUpdate(
+      id,
+      { 
+        bankDetails: {
+          bankName: bankDetails.bankName.trim(),
+          branchNumber: bankDetails.branchNumber.trim(),
+          accountNumber: bankDetails.accountNumber.trim()
+        },
+        lastActiveAt: new Date()
+      },
+      { new: true, runValidators: true }
+    )
+      .populate("userId", "name email phone gender birthDate roles")
+      .lean()
+
+    if (!professional) {
+      return { success: false, error: "מטפל לא נמצא" }
+    }
+
+    // Revalidate the professional management page
+    revalidatePath("/dashboard/admin/professional-management")
+
+    return { 
+      success: true, 
+      professional: professional as ProfessionalWithUser 
+    }
+  } catch (error) {
+    console.error("Error updating professional bank details:", error)
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה לעדכן פרטי חשבון הבנק" }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה בעדכון פרטי חשבון הבנק" 
     }
   }
 }

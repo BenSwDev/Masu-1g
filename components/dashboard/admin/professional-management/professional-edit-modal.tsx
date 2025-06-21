@@ -6,11 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui
 import { useTranslation } from "@/lib/translations/i18n"
 import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
-import { AlertTriangle, X, User, Stethoscope, MapPin, TrendingUp } from "lucide-react"
+import { AlertTriangle, X, User, Stethoscope, MapPin, CreditCard, FileText, ScrollText } from "lucide-react"
 import ProfessionalBasicInfoTabSimple from "./tabs/professional-basic-info-tab-simple"
 import ProfessionalTreatmentsTabSimple from "./tabs/professional-treatments-tab-simple"
 import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
-import ProfessionalEarningsTab from "./tabs/professional-earnings-tab"
+import ProfessionalBankDetailsTab from "./tabs/professional-bank-details-tab"
+import ProfessionalDocumentsTab from "./tabs/professional-documents-tab"
+import ProfessionalContractTab from "./tabs/professional-contract-tab"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
 
@@ -36,6 +38,11 @@ interface Professional {
     distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
     coveredCities: string[]
   }>
+  bankDetails?: {
+    bankName: string
+    branchNumber: string
+    accountNumber: string
+  }
   totalEarnings: number
   pendingPayments: number
   adminNotes?: string
@@ -119,7 +126,7 @@ export default function ProfessionalEditModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
@@ -146,31 +153,41 @@ export default function ProfessionalEditModal({
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4 flex-shrink-0">
-              <TabsTrigger value="basic" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-6 flex-shrink-0">
+              <TabsTrigger value="basic" className="flex items-center gap-1">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">פרטים בסיסיים</span>
                 <span className="sm:hidden">פרטים</span>
               </TabsTrigger>
-              <TabsTrigger value="treatments" className="flex items-center gap-2">
+              <TabsTrigger value="treatments" className="flex items-center gap-1">
                 <Stethoscope className="w-4 h-4" />
                 <span className="hidden sm:inline">טיפולים</span>
                 <span className="sm:hidden">טיפולים</span>
               </TabsTrigger>
-              <TabsTrigger value="workAreas" className="flex items-center gap-2">
+              <TabsTrigger value="workAreas" className="flex items-center gap-1">
                 <MapPin className="w-4 h-4" />
                 <span className="hidden sm:inline">איזורי פעילות</span>
                 <span className="sm:hidden">איזורים</span>
               </TabsTrigger>
-              <TabsTrigger value="earnings" className="flex items-center gap-2" disabled={isCreatingNew}>
-                <TrendingUp className="w-4 h-4" />
-                <span className="hidden sm:inline">הזמנות</span>
-                <span className="sm:hidden">הזמנות</span>
+              <TabsTrigger value="bankDetails" className="flex items-center gap-1" disabled={isCreatingNew}>
+                <CreditCard className="w-4 h-4" />
+                <span className="hidden sm:inline">חשבון בנק</span>
+                <span className="sm:hidden">בנק</span>
+              </TabsTrigger>
+              <TabsTrigger value="documents" className="flex items-center gap-1" disabled={isCreatingNew}>
+                <FileText className="w-4 h-4" />
+                <span className="hidden sm:inline">מסמכים</span>
+                <span className="sm:hidden">מסמכים</span>
+              </TabsTrigger>
+              <TabsTrigger value="contract" className="flex items-center gap-1" disabled={isCreatingNew}>
+                <ScrollText className="w-4 h-4" />
+                <span className="hidden sm:inline">הסכם מטפל</span>
+                <span className="sm:hidden">הסכם</span>
               </TabsTrigger>
             </TabsList>
 
             <div className="flex-1 overflow-y-auto">
-              <TabsContent value="basic" className="h-full">
+              <TabsContent value="basic" className="h-full overflow-y-auto">
                 <ProfessionalBasicInfoTabSimple
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
@@ -183,7 +200,7 @@ export default function ProfessionalEditModal({
                 />
               </TabsContent>
 
-              <TabsContent value="treatments" className="h-full">
+              <TabsContent value="treatments" className="h-full overflow-y-auto">
                 <ProfessionalTreatmentsTabSimple
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
@@ -191,7 +208,7 @@ export default function ProfessionalEditModal({
                 />
               </TabsContent>
 
-              <TabsContent value="workAreas" className="h-full">
+              <TabsContent value="workAreas" className="h-full overflow-y-auto">
                 <ProfessionalWorkAreasTabSimple
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
@@ -199,9 +216,30 @@ export default function ProfessionalEditModal({
                 />
               </TabsContent>
 
-              <TabsContent value="earnings" className="h-full">
+              <TabsContent value="bankDetails" className="h-full overflow-y-auto">
                 {!isCreatingNew && (
-                  <ProfessionalEarningsTab professional={updatedProfessional} />
+                  <ProfessionalBankDetailsTab 
+                    professional={updatedProfessional} 
+                    onUpdate={handleUpdate}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="documents" className="h-full overflow-y-auto">
+                {!isCreatingNew && (
+                  <ProfessionalDocumentsTab 
+                    professional={updatedProfessional} 
+                    onUpdate={handleUpdate}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="contract" className="h-full overflow-y-auto">
+                {!isCreatingNew && (
+                  <ProfessionalContractTab 
+                    professional={updatedProfessional} 
+                    onUpdate={handleUpdate}
+                  />
                 )}
               </TabsContent>
             </div>

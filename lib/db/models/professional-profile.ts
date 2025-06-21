@@ -37,6 +37,26 @@ export interface IFinancialTransaction {
   adminNote?: string
 }
 
+// Bank details interface
+export interface IBankDetails {
+  bankName: string
+  branchNumber: string
+  accountNumber: string
+}
+
+// Document interface
+export interface IProfessionalDocument {
+  id: string
+  type: string
+  name: string
+  status: "pending" | "approved" | "rejected"
+  uploadDate: Date
+  approvedDate?: Date
+  rejectedDate?: Date
+  rejectionReason?: string
+  fileUrl?: string
+}
+
 // Professional profile interface
 export interface IProfessionalProfile extends Document {
   _id: mongoose.Types.ObjectId
@@ -61,6 +81,10 @@ export interface IProfessionalProfile extends Document {
   totalEarnings: number
   pendingPayments: number
   financialTransactions: IFinancialTransaction[]
+  
+  // Bank details and documents
+  bankDetails?: IBankDetails
+  documents?: IProfessionalDocument[]
   
   // Admin notes
   adminNotes?: string
@@ -143,6 +167,31 @@ const FinancialTransactionSchema = new Schema<IFinancialTransaction>({
   adminNote: { type: String, trim: true }
 }, { _id: false })
 
+// Bank details schema
+const BankDetailsSchema = new Schema<IBankDetails>({
+  bankName: { type: String, required: true, trim: true },
+  branchNumber: { type: String, required: true, trim: true },
+  accountNumber: { type: String, required: true, trim: true }
+}, { _id: false })
+
+// Professional document schema
+const ProfessionalDocumentSchema = new Schema<IProfessionalDocument>({
+  id: { type: String, required: true },
+  type: { type: String, required: true, trim: true },
+  name: { type: String, required: true, trim: true },
+  status: { 
+    type: String, 
+    enum: ["pending", "approved", "rejected"], 
+    default: "pending",
+    required: true 
+  },
+  uploadDate: { type: Date, default: Date.now, required: true },
+  approvedDate: { type: Date },
+  rejectedDate: { type: Date },
+  rejectionReason: { type: String, trim: true },
+  fileUrl: { type: String, trim: true }
+}, { _id: false })
+
 // Professional profile schema
 const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
   userId: { 
@@ -176,6 +225,10 @@ const ProfessionalProfileSchema = new Schema<IProfessionalProfile>({
   totalEarnings: { type: Number, default: 0, min: 0 },
   pendingPayments: { type: Number, default: 0, min: 0 },
   financialTransactions: [FinancialTransactionSchema],
+  
+  // Bank details and documents
+  bankDetails: BankDetailsSchema,
+  documents: [ProfessionalDocumentSchema],
   
   // Admin notes
   adminNotes: { type: String, trim: true },

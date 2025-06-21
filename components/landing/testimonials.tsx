@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -149,20 +149,25 @@ export function LandingTestimonials() {
   const itemsPerSlide = isMobile ? 1 : 4
   const maxSlides = Math.ceil(testimonials.length / itemsPerSlide)
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % maxSlides)
-  }
+  }, [maxSlides])
 
-  const prevSlide = () => {
+  const prevSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev - 1 + maxSlides) % maxSlides)
-  }
+  }, [maxSlides])
 
   useEffect(() => {
     const timer = setInterval(() => {
       nextSlide()
     }, 5000)
     return () => clearInterval(timer)
-  }, [])
+  }, [nextSlide])
+
+  // Ensure we don't show an out-of-range slide when screen size changes
+  useEffect(() => {
+    setCurrentSlide(0)
+  }, [maxSlides])
 
   const getCurrentSlideItems = () => {
     const startIndex = currentSlide * itemsPerSlide

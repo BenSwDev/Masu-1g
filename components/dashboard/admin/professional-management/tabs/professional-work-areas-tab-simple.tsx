@@ -51,7 +51,7 @@ export default function ProfessionalWorkAreasTab({
     professional?.workAreas?.map((area: any) => ({
       cityId: area.cityId?.toString() || "",
       cityName: area.cityName,
-      distanceRadius: (area.distanceRadius || "km20") as DistanceRadius,
+      distanceRadius: (area.distanceRadius || "20km") as DistanceRadius,
       coveredCities: area.coveredCities || []
     })) || []
   )
@@ -90,8 +90,11 @@ export default function ProfessionalWorkAreasTab({
   }, [toast])
 
   // Update covered cities when work area changes
-  const updateCoveredCities = async (workAreaIndex: number) => {
-    const workArea = workAreas[workAreaIndex]
+  const updateCoveredCities = async (
+    workAreaIndex: number,
+    areas: WorkArea[] = workAreas
+  ) => {
+    const workArea = areas[workAreaIndex]
     if (!workArea.cityName || !workArea.distanceRadius) return
 
     try {
@@ -104,7 +107,7 @@ export default function ProfessionalWorkAreasTab({
       const data = await response.json()
       
       if (data.success) {
-        const updatedWorkAreas = [...workAreas]
+        const updatedWorkAreas = [...areas]
         updatedWorkAreas[workAreaIndex].coveredCities = data.cities || []
         setWorkAreas(updatedWorkAreas)
       }
@@ -118,7 +121,7 @@ export default function ProfessionalWorkAreasTab({
     setWorkAreas([...workAreas, {
       cityId: "",
       cityName: "",
-      distanceRadius: "km20" as DistanceRadius,
+      distanceRadius: "20km" as DistanceRadius,
       coveredCities: []
     }])
   }
@@ -139,8 +142,8 @@ export default function ProfessionalWorkAreasTab({
     updated[index].cityName = city.name
     setWorkAreas(updated)
 
-    // Update covered cities
-    updateCoveredCities(index)
+    // Update covered cities with new state
+    updateCoveredCities(index, updated)
   }
 
   // Update work area distance radius
@@ -149,8 +152,8 @@ export default function ProfessionalWorkAreasTab({
     updated[index].distanceRadius = radius as DistanceRadius
     setWorkAreas(updated)
 
-    // Update covered cities
-    updateCoveredCities(index)
+    // Update covered cities with new state
+    updateCoveredCities(index, updated)
   }
 
   // Save changes
@@ -289,10 +292,10 @@ export default function ProfessionalWorkAreasTab({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="km20">עד 20 ק״מ</SelectItem>
-                      <SelectItem value="km40">עד 40 ק״מ</SelectItem>
-                      <SelectItem value="km60">עד 60 ק״מ</SelectItem>
-                      <SelectItem value="km80">עד 80 ק"מ</SelectItem>
+                      <SelectItem value="20km">עד 20 ק״מ</SelectItem>
+                      <SelectItem value="40km">עד 40 ק״מ</SelectItem>
+                      <SelectItem value="60km">עד 60 ק"מ</SelectItem>
+                      <SelectItem value="80km">עד 80 ק"מ</SelectItem>
                       <SelectItem value="unlimited">ללא הגבלה</SelectItem>
                     </SelectContent>
                   </Select>

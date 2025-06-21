@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/common/ui/button"
+import { MasuLogo } from "@/components/common/masu-logo"
 import { useTranslation } from "@/lib/translations/i18n"
 import Link from "next/link"
 import { ArrowLeft, Sparkles } from "lucide-react"
@@ -23,24 +24,17 @@ export function LandingHero() {
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-turquoise-200 rounded-full px-4 py-2 mb-8">
             <Sparkles className="w-4 h-4 text-turquoise-600" />
             <span className="text-sm font-medium text-turquoise-800">
-              {dir === "rtl" ? "הפלטפורמה המובילה לטיפולי יופי" : "Leading Beauty Treatment Platform"}
+            {dir === "rtl" ? "הפלטפורמה המובילה לטיפולים עד הבית" : "Leading At-Home Treatment Platform"}
             </span>
           </div>
 
           {/* Main heading */}
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
             {dir === "rtl" ? (
-              <>
-                <span className="bg-gradient-to-r from-turquoise-600 to-blue-600 bg-clip-text text-transparent">MASU</span>
-                <br />
-                <span>טיפולי יופי</span>
-                <br />
-                <span className="text-3xl md:text-5xl">בבית שלך</span>
-              </>
+              <MasuLogo className="mx-auto scale-150" />
             ) : (
               <>
-                <span className="bg-gradient-to-r from-turquoise-600 to-blue-600 bg-clip-text text-transparent">MASU</span>
-                <br />
+                <MasuLogo className="mx-auto mb-4 scale-150" />
                 <span>Beauty at</span>
                 <br />
                 <span className="text-3xl md:text-5xl">Your Doorstep</span>
@@ -50,41 +44,41 @@ export function LandingHero() {
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-            {dir === "rtl" 
-              ? "חווי את החוויה הכי נוחה ויוקרתית של טיפולי יופי עם המטפלים המקצועיים ביותר, ישירות אליך הביתה"
-              : "Experience the most convenient and luxurious beauty treatments with the most professional therapists, directly to your home"
-            }
+            {dir === "rtl"
+              ? "עיסויים, טיפולי יופי, איפור ועיצוב שיער עד אליך, בכל מקום ובכל זמן"
+              : "Massages, beauty treatments, makeup and hairstyling delivered to you anywhere, anytime"}
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Button asChild size="lg" className="bg-gradient-to-r from-turquoise-600 to-blue-600 hover:from-turquoise-700 hover:to-blue-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
               <Link href="/bookings/treatment?category=massages" className="flex items-center gap-2">
-                {dir === "rtl" ? "הזמנת עיסוי" : "Book Massage"}
+                {dir === "rtl" ? "הזמנת עיסוי עד הבית" : "Book Massage at Home"}
                 <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
               </Link>
             </Button>
 
             <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
               <Link href="/bookings/treatment?category=facial_treatments" className="flex items-center gap-2">
-                {dir === "rtl" ? "הזמנת טיפול פנים" : "Book Facial"}
-                <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
-              </Link>
-            </Button>
-            
-            <Button asChild size="lg" variant="outline" className="border-2 border-turquoise-600 text-turquoise-600 hover:bg-turquoise-600 hover:text-white px-8 py-4 text-lg rounded-full transition-all duration-300">
-              <Link href="/purchase/subscription" className="flex items-center gap-2">
-                {dir === "rtl" ? "רכישת מנוי" : "Buy Subscription"}
+                {dir === "rtl" ? "הזמנת טיפול פנים עד הבית" : "Book Facial at Home"}
                 <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
               </Link>
             </Button>
 
-            <Button asChild size="lg" variant="outline" className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white px-8 py-4 text-lg rounded-full transition-all duration-300">
-              <Link href="/purchase/gift-voucher" className="flex items-center gap-2">
-                {dir === "rtl" ? "רכישת שובר מתנה" : "Buy Gift Voucher"}
+            <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
+              <Link href="#" className="flex items-center gap-2">
+                {dir === "rtl" ? "הזמנת מאפרת עד הבית" : "Book Makeup Artist"}
                 <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
               </Link>
             </Button>
+
+            <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
+              <Link href="#" className="flex items-center gap-2">
+                {dir === "rtl" ? "הזמנת מאפרת ועיצוב שיער עד הבית" : "Book Makeup & Hair"}
+                <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
+              </Link>
+            </Button>
+            
           </div>
 
           {/* Stats */}

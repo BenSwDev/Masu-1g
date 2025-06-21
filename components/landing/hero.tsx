@@ -10,7 +10,7 @@ export function LandingHero() {
   const { t, dir } = useTranslation()
 
   return (
-    <section className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-start justify-center overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
@@ -18,7 +18,7 @@ export function LandingHero() {
         <div className="absolute top-40 left-40 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="relative container mx-auto px-4 py-20">
+      <div className="relative container mx-auto px-4 pt-16 pb-20">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm border border-turquoise-200 rounded-full px-4 py-2 mb-8">
@@ -29,20 +29,8 @@ export function LandingHero() {
           </div>
 
           {/* Main heading */}
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-            {dir === "rtl" ? (
-              <>
-                <MasuLogo className="mx-auto mb-4 scale-150" />
-                <span className="text-3xl md:text-5xl">יופי עד פתח ביתך</span>
-              </>
-            ) : (
-              <>
-                <MasuLogo className="mx-auto mb-4 scale-150" />
-                <span>Beauty at</span>
-                <br />
-                <span className="text-3xl md:text-5xl">Your Doorstep</span>
-              </>
-            )}
+          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight flex justify-center">
+            <MasuLogo className="mx-auto mb-4 scale-150" />
           </h1>
 
           {/* Subtitle */}

@@ -76,10 +76,13 @@ export default function ProfessionalTreatmentsTab({
       // Update professional's treatments
       const updatedTreatments = selectedTreatments.map(treatmentId => {
         const treatment = allTreatments.find(t => t._id === treatmentId)
+        const existing = professional?.treatments?.find((t: any) => {
+          return t.treatmentId?.toString() === treatmentId || t._id?.toString() === treatmentId
+        })
         return {
           treatmentId: treatmentId, // Use string instead of ObjectId
           treatmentName: treatment?.name,
-          professionalPrice: 0 // Default price, can be edited later
+          professionalPrice: existing?.professionalPrice || 0
         }
       })
 

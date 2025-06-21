@@ -122,9 +122,9 @@ export default async function AdminDashboardPage() {
                   {pendingProfessionals.length > 0 ? (
                     pendingProfessionals.map((p: any) => (
                       <TableRow key={p._id}>
-                        <TableCell>{p.user.name}</TableCell>
-                        <TableCell>{p.user.email}</TableCell>
-                        <TableCell>{p.user.phone}</TableCell>
+                        <TableCell>{p.userId?.name ?? "-"}</TableCell>
+                        <TableCell>{p.userId?.email ?? "-"}</TableCell>
+                        <TableCell>{p.userId?.phone ?? "-"}</TableCell>
                         <TableCell>
                           {new Date(p.appliedAt).toLocaleDateString("he-IL")}
                         </TableCell>

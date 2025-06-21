@@ -102,12 +102,9 @@ const GiftVoucherSchema: Schema<IGiftVoucher> = new Schema(
     ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: false }, // Made optional for guest purchases
     guestInfo: {
       // Guest information for non-user purchases
-      type: {
-        name: { type: String, required: true },
-        email: { type: String, required: true },
-        phone: { type: String, required: true },
-      },
-      required: false,
+      name: { type: String },
+      email: { type: String },
+      phone: { type: String },
     },
     isGift: { type: Boolean, default: false },
     recipientName: { type: String },

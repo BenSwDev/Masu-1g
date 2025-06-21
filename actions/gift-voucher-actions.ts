@@ -1336,6 +1336,30 @@ export async function initiateGuestPurchaseGiftVoucher(data: PurchaseInitiationD
 
     const { voucherType, treatmentId, selectedDurationId, monetaryValue: inputMonetaryValue, isGift, guestInfo } = data
 
+    // Validate guest info
+    if (!guestInfo || !guestInfo.name || !guestInfo.email || !guestInfo.phone) {
+      logger.warn(`[${requestId}] Invalid guest info provided`, { 
+        hasGuestInfo: !!guestInfo,
+        hasName: !!guestInfo?.name,
+        hasEmail: !!guestInfo?.email,
+        hasPhone: !!guestInfo?.phone
+      })
+      return { success: false, error: "Guest information (name, email, phone) is required." }
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(guestInfo.email)) {
+      logger.warn(`[${requestId}] Invalid email format`, { email: guestInfo.email })
+      return { success: false, error: "Valid email address is required." }
+    }
+
+    // Validate phone format (basic check for non-empty)
+    if (guestInfo.phone.trim().length < 10) {
+      logger.warn(`[${requestId}] Invalid phone format`, { phone: guestInfo.phone })
+      return { success: false, error: "Valid phone number is required." }
+    }
+
     let determinedPrice = 0
 
     if (voucherType === "monetary") {

@@ -318,6 +318,28 @@ export async function updateBookingByAdmin(
     if (updates.professionalId) booking.professionalId = new Types.ObjectId(updates.professionalId)
     if (updates.paymentStatus) booking.paymentDetails.paymentStatus = updates.paymentStatus
 
+    // Ensure required fields have valid values for backward compatibility
+    if (!booking.treatmentCategory) {
+      booking.treatmentCategory = new Types.ObjectId()
+    }
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+
     await booking.save()
     revalidatePath("/dashboard/admin/bookings")
 
@@ -360,6 +382,29 @@ export async function assignProfessionalToBooking(
     }
 
     booking.professionalId = new Types.ObjectId(professionalId)
+    
+    // Ensure required fields have valid values for backward compatibility
+    if (!booking.treatmentCategory) {
+      booking.treatmentCategory = new Types.ObjectId()
+    }
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+    
     await booking.save()
     revalidatePath("/dashboard/admin/bookings")
 
@@ -400,6 +445,29 @@ export async function cancelBooking(
     booking.status = "cancelled"
     booking.cancellationReason = reason
     booking.cancelledBy = "admin"
+    
+    // Ensure required fields have valid values for backward compatibility
+    if (!booking.treatmentCategory) {
+      booking.treatmentCategory = new Types.ObjectId()
+    }
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+    
     await booking.save()
     revalidatePath("/dashboard/admin/bookings")
 
@@ -446,6 +514,29 @@ export async function refundBooking(
     booking.status = "refunded"
     booking.refundAmount = refundAmount
     booking.refundTransactionId = refundTransactionId
+    
+    // Ensure required fields have valid values for backward compatibility
+    if (!booking.treatmentCategory) {
+      booking.treatmentCategory = new Types.ObjectId()
+    }
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+    
     await booking.save()
     revalidatePath("/dashboard/admin/bookings")
 
@@ -577,6 +668,29 @@ export async function removeProfessionalAssignment(bookingId: string): Promise<U
     }
 
     booking.professionalId = undefined
+    
+    // Ensure required fields have valid values for backward compatibility
+    if (!booking.treatmentCategory) {
+      booking.treatmentCategory = new Types.ObjectId()
+    }
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+    
     await booking.save()
     revalidatePath("/dashboard/admin/bookings")
 

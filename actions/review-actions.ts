@@ -491,6 +491,29 @@ export async function sendReviewReminder(
     await unifiedNotificationService.sendNotificationToMultiple(recipients, data)
 
     booking.reviewReminderSentAt = new Date()
+    
+    // Ensure required fields have valid values for backward compatibility
+    if (!booking.treatmentCategory) {
+      booking.treatmentCategory = new mongoose.Types.ObjectId()
+    }
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+    
     await booking.save()
     revalidatePath("/dashboard/admin/bookings")
 

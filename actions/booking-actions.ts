@@ -1351,6 +1351,29 @@ export async function professionalMarkEnRoute(
     }
 
     booking.status = "confirmed" // Keep as confirmed when en route
+    
+    // Ensure required fields have valid values for backward compatibility
+    if (!booking.treatmentCategory) {
+      booking.treatmentCategory = new mongoose.Types.ObjectId()
+    }
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+    
     await booking.save()
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
 
@@ -1386,6 +1409,29 @@ export async function professionalMarkCompleted(
     }
 
     booking.status = "completed"
+    
+    // Ensure required fields have valid values for backward compatibility
+    if (!booking.treatmentCategory) {
+      booking.treatmentCategory = new mongoose.Types.ObjectId()
+    }
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
+    }
+    
     await booking.save()
     revalidatePath(`/dashboard/professional/booking-management/${bookingId}`)
     revalidatePath("/dashboard/admin/bookings")
@@ -1839,6 +1885,28 @@ export async function updateBookingByAdmin(
     
     if (updates.paymentStatus !== undefined) {
       booking.paymentDetails.paymentStatus = updates.paymentStatus
+    }
+
+    // Ensure required fields have valid values for backward compatibility
+    if (!booking.treatmentCategory) {
+      booking.treatmentCategory = new mongoose.Types.ObjectId()
+    }
+    if (typeof booking.staticTreatmentPrice !== 'number') {
+      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+    }
+    if (typeof booking.staticTherapistPay !== 'number') {
+      booking.staticTherapistPay = 0
+    }
+    if (typeof booking.companyFee !== 'number') {
+      booking.companyFee = 0
+    }
+    if (!booking.consents) {
+      booking.consents = {
+        customerAlerts: "email",
+        patientAlerts: "email",
+        marketingOptIn: false,
+        termsAccepted: false
+      }
     }
 
     await booking.save()
@@ -2707,6 +2775,28 @@ export async function updateBookingStatusAfterPayment(
         })
       }
       
+      // Ensure required fields have valid values for backward compatibility
+      if (!booking.treatmentCategory) {
+        booking.treatmentCategory = new mongoose.Types.ObjectId()
+      }
+      if (typeof booking.staticTreatmentPrice !== 'number') {
+        booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+      }
+      if (typeof booking.staticTherapistPay !== 'number') {
+        booking.staticTherapistPay = 0
+      }
+      if (typeof booking.companyFee !== 'number') {
+        booking.companyFee = 0
+      }
+      if (!booking.consents) {
+        booking.consents = {
+          customerAlerts: "email",
+          patientAlerts: "email",
+          marketingOptIn: false,
+          termsAccepted: false
+        }
+      }
+      
       await booking.save()
       
       if (suitableProfessionals.success && suitableProfessionals.professionals && suitableProfessionals.professionals.length > 0) {
@@ -2752,6 +2842,28 @@ export async function updateBookingStatusAfterPayment(
       booking.paymentDetails.paymentStatus = "failed"
       if (transactionId) {
         booking.paymentDetails.transactionId = transactionId
+      }
+      
+      // Ensure required fields have valid values for backward compatibility
+      if (!booking.treatmentCategory) {
+        booking.treatmentCategory = new mongoose.Types.ObjectId()
+      }
+      if (typeof booking.staticTreatmentPrice !== 'number') {
+        booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+      }
+      if (typeof booking.staticTherapistPay !== 'number') {
+        booking.staticTherapistPay = 0
+      }
+      if (typeof booking.companyFee !== 'number') {
+        booking.companyFee = 0
+      }
+      if (!booking.consents) {
+        booking.consents = {
+          customerAlerts: "email",
+          patientAlerts: "email",
+          marketingOptIn: false,
+          termsAccepted: false
+        }
       }
       
       await booking.save()

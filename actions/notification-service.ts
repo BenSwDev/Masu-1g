@@ -315,6 +315,8 @@ export async function sendBookingConfirmationToUser(
     bookingNumber: string
     bookingAddress: string
     isForSomeoneElse: boolean
+    isBookerForSomeoneElse?: boolean
+    actualRecipientName?: string
   }
 ): Promise<{ success: boolean; message: string; sentVia?: string[]; error?: string }> {
   return sendUserNotification(userId, {

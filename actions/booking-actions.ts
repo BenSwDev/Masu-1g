@@ -755,27 +755,41 @@ export async function createBooking(
         const bookingAddress = finalBookingObject.bookingAddressSnapshot?.fullAddress || "כתובת לא זמינה"
         
         if (treatment) {
-          const bookingData = {
-            recipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : bookingUser.name,
-            bookerName: isBookingForSomeoneElse ? bookingUser.name : undefined,
+          // Prepare booking data for the booker (who is the logged-in user)
+          const bookerBookingData = {
+            recipientName: bookingUser.name, // Always the booker's name for their own notification
+            bookerName: undefined, // No booker name needed when notifying the booker themselves
             treatmentName: treatment.name,
             bookingDateTime: finalBookingObject.bookingDateTime,
             bookingNumber: finalBookingObject.bookingNumber,
             bookingAddress: bookingAddress,
             isForSomeoneElse: isBookingForSomeoneElse,
+            isBookerForSomeoneElse: isBookingForSomeoneElse, // Special flag for booker
+            actualRecipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : undefined,
           }
 
           // Send notification to booker using their notification preferences  
-          await sendBookingConfirmationToUser(userId, bookingData)
+          await sendBookingConfirmationToUser(userId, bookerBookingData)
           
           // Send notification to recipient if booking for someone else
           if (isBookingForSomeoneElse && validatedPayload.recipientEmail) {
+            // Prepare booking data for the recipient
+            const recipientBookingData = {
+              recipientName: validatedPayload.recipientName!,
+              bookerName: bookingUser.name,
+              treatmentName: treatment.name,
+              bookingDateTime: finalBookingObject.bookingDateTime,
+              bookingNumber: finalBookingObject.bookingNumber,
+              bookingAddress: bookingAddress,
+              isForSomeoneElse: true,
+            }
+            
             await sendGuestNotification(
               validatedPayload.recipientEmail,
               recipientNotificationMethods.includes("sms") ? (validatedPayload.recipientPhone || null) : null,
               {
                 type: "treatment-booking-success",
-                ...bookingData,
+                ...recipientBookingData,
               },
               notificationLanguage,
               validatedPayload.recipientName
@@ -2180,32 +2194,47 @@ export async function createGuestBooking(
           const recipientNotificationMethods = validatedPayload.recipientNotificationMethods || notificationMethods
           const notificationLanguage = validatedPayload.notificationLanguage || "he"
           
-          const bookingData: NotificationData = {
+          // Prepare booking data for the booker (guest)
+          const bookerBookingData: NotificationData = {
             type: "treatment-booking-success",
-            recipientName: recipientName,
-            bookerName: isBookingForSomeoneElse ? bookerName : undefined,
+            recipientName: bookerName, // Always the booker's name for their own notification
+            bookerName: undefined, // No booker name needed when notifying the booker themselves
             treatmentName: treatment.name,
             bookingDateTime: finalBookingObject.bookingDateTime,
             bookingNumber: finalBookingObject.bookingNumber,
             bookingAddress: bookingAddress,
             isForSomeoneElse: isBookingForSomeoneElse,
+            isBookerForSomeoneElse: isBookingForSomeoneElse, // Special flag for booker
+            actualRecipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : undefined,
           }
 
           // Send notification to booker (guest) using smart system
           await sendGuestNotification(
             guestInfo.email,
             notificationMethods.includes("sms") ? guestInfo.phone : null,
-            bookingData,
+            bookerBookingData,
             notificationLanguage,
             bookerName
           )
           
           // Send notification to recipient if booking for someone else
           if (isBookingForSomeoneElse && validatedPayload.recipientEmail) {
+            // Prepare booking data for the recipient
+            const recipientBookingData: NotificationData = {
+              type: "treatment-booking-success",
+              recipientName: validatedPayload.recipientName!,
+              bookerName: bookerName,
+              treatmentName: treatment.name,
+              bookingDateTime: finalBookingObject.bookingDateTime,
+              bookingNumber: finalBookingObject.bookingNumber,
+              bookingAddress: bookingAddress,
+              isForSomeoneElse: true,
+            }
+            
             await sendGuestNotification(
               validatedPayload.recipientEmail,
               recipientNotificationMethods.includes("sms") ? validatedPayload.recipientPhone : null,
-              bookingData,
+              recipientBookingData,
               notificationLanguage,
               recipientName
             )

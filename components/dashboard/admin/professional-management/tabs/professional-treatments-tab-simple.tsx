@@ -79,7 +79,7 @@ export default function ProfessionalTreatmentsTab({
   const [treatments, setTreatments] = useState<ProfessionalTreatment[]>(professional.treatments || [])
   const [availableTreatments, setAvailableTreatments] = useState<TreatmentOption[]>([])
   const [categories, setCategories] = useState<string[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [selectedCategory, setSelectedCategory] = useState<string>("all_categories")
   const [loading, setLoading] = useState(false)
   const [loadingTreatments, setLoadingTreatments] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -197,7 +197,7 @@ export default function ProfessionalTreatmentsTab({
   }
 
   const getFilteredTreatments = () => {
-    if (!selectedCategory) return availableTreatments
+    if (!selectedCategory || selectedCategory === "all_categories") return availableTreatments
     return availableTreatments.filter(t => t.category === selectedCategory)
   }
 
@@ -272,7 +272,7 @@ export default function ProfessionalTreatmentsTab({
                 <SelectValue placeholder="כל הקטגוריות" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">כל הקטגוריות</SelectItem>
+                <SelectItem value="all_categories">כל הקטגוריות</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>
                     {category}

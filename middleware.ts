@@ -18,10 +18,22 @@ async function initializeDataIfNeeded(origin: string) {
     const res = await fetch(`${origin}/api/init`, { method: "POST" })
 
     if (!res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      let body: string;
+      if (contentType.includes("application/json")) {
+        try {
+          body = JSON.stringify(await res.json());
+        } catch {
+          body = await res.text();
+        }
+      } else {
+        const text = await res.text();
+        body = text.length > 500 ? text.slice(0, 500) + "..." : text;
+      }
       console.error(
-        "❌ Automatic data initialization failed:",
-        await res.text()
-      )
+        `❌ Automatic data initialization failed (status ${res.status}):`,
+        body
+      );
     } else {
       isInitialized = true
       console.log("✅ Automatic data initialization completed")

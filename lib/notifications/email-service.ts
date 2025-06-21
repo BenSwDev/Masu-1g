@@ -9,15 +9,36 @@ import { logger } from "@/lib/logs/logger"
  * Handles email notifications with proper configuration validation and error handling
  */
 export class EmailService {
-  private transporter: nodemailer.Transporter
+  private transporter!: nodemailer.Transporter
   private isDevelopment: boolean
   private isConfigured: boolean
   private fromEmail: string
 
   constructor() {
-    this.isDevelopment = process.env.NODE_ENV === "development"
+    // Robust development detection with multiple fallbacks
+    // Default to production for safety unless explicitly in development
+    this.isDevelopment = (
+      process.env.NODE_ENV === "development" || 
+      process.env.VERCEL_ENV === "development" ||
+      process.env.NEXT_PUBLIC_VERCEL_ENV === "development" ||
+      // Additional checks for local development
+      (!process.env.VERCEL && !process.env.VERCEL_URL && process.env.NODE_ENV !== "production")
+    )
+    
     this.isConfigured = false
     this.fromEmail = process.env.EMAIL_FROM || "noreply@masu.co.il"
+    
+    // Log environment detection with more details
+    logger.info("EmailService constructor - Environment Detection", {
+      nodeEnv: process.env.NODE_ENV,
+      vercelEnv: process.env.VERCEL_ENV,
+      nextPublicVercelEnv: process.env.NEXT_PUBLIC_VERCEL_ENV,
+      hasVercel: !!process.env.VERCEL,
+      hasVercelUrl: !!process.env.VERCEL_URL,
+      isDevelopment: this.isDevelopment,
+      fromEmail: this.fromEmail,
+      finalDecision: this.isDevelopment ? "DEVELOPMENT - emails will be logged only" : "PRODUCTION - emails will be sent"
+    })
     
     // Initialize email transporter with proper validation
     this.initializeTransporter()
@@ -32,15 +53,40 @@ export class EmailService {
     const user = process.env.EMAIL_SERVER_USER
     const password = process.env.EMAIL_SERVER_PASSWORD
 
+    // Debug logging for environment variables
+    logger.info("Email service initialization debug", {
+      hasHost: !!host,
+      hasPort: !!port,
+      hasUser: !!user,
+      hasPassword: !!password,
+      hostValue: host ? `${host.substring(0, 10)}***` : "undefined",
+      portValue: port,
+      userValue: user ? `${user.substring(0, 5)}***` : "undefined",
+      environment: this.isDevelopment ? "development" : "production",
+      nodeEnv: process.env.NODE_ENV,
+      vercelEnv: process.env.VERCEL_ENV,
+      allEnvKeys: Object.keys(process.env).filter(key => key.includes('EMAIL')).join(', '),
+      totalEnvVars: Object.keys(process.env).length,
+      sampleEnvKeys: Object.keys(process.env).slice(0, 10).join(', ')
+    })
+
     // Check if we have the minimum required configuration
     if (!host || !port || !user || !password) {
-      logger.warn("Email service not configured - missing required environment variables", {
+      logger.error("❌ EMAIL SERVICE NOT CONFIGURED", {
         hasHost: !!host,
         hasPort: !!port,
         hasUser: !!user,
         hasPassword: !!password,
         environment: this.isDevelopment ? "development" : "production",
-        nodeEnv: process.env.NODE_ENV
+        nodeEnv: process.env.NODE_ENV,
+        message: "Please configure these environment variables in Vercel:",
+        required: [
+          "EMAIL_SERVER_HOST=smtp.gmail.com",
+          "EMAIL_SERVER_PORT=465", 
+          "EMAIL_SERVER_USER=your-email@gmail.com",
+          "EMAIL_SERVER_PASSWORD=your-app-password",
+          "EMAIL_FROM=noreply@masu.co.il"
+        ]
       })
       return
     }
@@ -57,7 +103,7 @@ export class EmailService {
 
     try {
       // Create reusable transporter object using SMTP transport
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         host,
         port: Number(port),
         secure: Number(port) === 465, // true for 465, false for other ports
@@ -106,8 +152,12 @@ export class EmailService {
     try {
       // Check if service is configured
       if (!this.isConfigured) {
-        const error = "Email service not configured"
-        logger.error(`[${logId}] ${error}`)
+        const error = "❌ Email service not configured - missing environment variables in Vercel"
+        logger.error(`[${logId}] ${error}`, {
+          recipient: this.obscureEmail(recipient.value),
+          notificationType: data.type,
+          instructions: "Go to Vercel Dashboard → Project Settings → Environment Variables and add EMAIL_* variables"
+        })
         return { success: false, error }
       }
 
@@ -126,6 +176,12 @@ export class EmailService {
         logger.info(`[${logId}] Development mode - email logged only`)
         return { success: true, messageId: `dev_email_${logId}` }
       }
+
+      logger.info(`[${logId}] Production mode - sending actual email`, {
+        isDevelopment: this.isDevelopment,
+        nodeEnv: process.env.NODE_ENV,
+        vercelEnv: process.env.VERCEL_ENV
+      })
 
       // Send mail with defined transport object
       const info = await this.transporter.sendMail({
@@ -223,20 +279,7 @@ export class EmailService {
     }
   }
 
-  /**
-   * Test email sending with a test message
-   */
-  async sendTestEmail(to: string): Promise<NotificationResult> {
-    const testData = {
-      type: "test" as const,
-      message: "This is a test email from Masu notification system"
-    }
 
-    return this.sendNotification(
-      { type: "email", value: to, language: "he" },
-      testData
-    )
-  }
 }
 
 // Export a singleton instance

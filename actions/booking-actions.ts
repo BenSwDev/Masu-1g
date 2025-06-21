@@ -757,14 +757,14 @@ export async function createBooking(
         if (treatment) {
           // Prepare booking data for the booker (who is the logged-in user)
           const bookerBookingData = {
-            recipientName: bookingUser.name, // Always the booker's name for their own notification
-            bookerName: undefined, // No booker name needed when notifying the booker themselves
+            recipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : bookingUser.name,
+            bookerName: isBookingForSomeoneElse ? bookingUser.name : undefined,
             treatmentName: treatment.name,
             bookingDateTime: finalBookingObject.bookingDateTime,
             bookingNumber: finalBookingObject.bookingNumber,
             bookingAddress: bookingAddress,
             isForSomeoneElse: isBookingForSomeoneElse,
-            isBookerForSomeoneElse: isBookingForSomeoneElse, // Special flag for booker
+            isBookerForSomeoneElse: false, // Always false for booker's own notification
             actualRecipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : undefined,
           }
 

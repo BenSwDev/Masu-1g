@@ -22,6 +22,8 @@ interface GuestTreatmentSelectionStepProps {
    */
   showPrice?: boolean
 
+  initialCategory?: string
+
   initialData: BookingInitialData
   bookingOptions: Partial<SelectedBookingOptions>
   setBookingOptions: React.Dispatch<React.SetStateAction<Partial<SelectedBookingOptions>>>
@@ -35,6 +37,7 @@ export function GuestTreatmentSelectionStep({
   hideGenderPreference,
   showPrice = true,
   initialData,
+  initialCategory,
   bookingOptions,
   setBookingOptions,
   onNext,
@@ -43,7 +46,7 @@ export function GuestTreatmentSelectionStep({
   userSubscription,
 }: GuestTreatmentSelectionStepProps) {
   const { t, dir } = useTranslation()
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory ?? null)
   const [availableTreatmentsForStep, setAvailableTreatmentsForStep] = useState<ITreatment[]>(
     initialData?.activeTreatments || [],
   )
@@ -111,8 +114,9 @@ export function GuestTreatmentSelectionStep({
       // New purchase
       setAvailableTreatmentsForStep(initialData.activeTreatments || [])
       setIsTreatmentLockedBySource(false)
+      setSelectedCategory(initialCategory ?? null)
     }
-  }, [bookingOptions.source, voucher, userSubscription, initialData.activeTreatments, setBookingOptions])
+  }, [bookingOptions.source, voucher, userSubscription, initialData.activeTreatments, setBookingOptions, initialCategory])
 
   const availableDurations = useMemo(() => {
     if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {

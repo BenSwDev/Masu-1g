@@ -7,7 +7,7 @@ import UniversalBookingWizard from "@/components/booking/guest-booking-wizard"
 export const dynamic = 'force-dynamic'
 
 
-export default async function BookTreatmentPage({ params }: { params?: { lang?: string } }) {
+export default async function BookTreatmentPage({ params, searchParams }: { params?: { lang?: string }; searchParams?: { category?: string } }) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) {
     return null
@@ -20,6 +20,7 @@ export default async function BookTreatmentPage({ params }: { params?: { lang?: 
     <UniversalBookingWizard
       initialData={initialDataResult.data}
       currentUser={session.user}
+      initialCategory={searchParams?.category}
     />
   )
 }

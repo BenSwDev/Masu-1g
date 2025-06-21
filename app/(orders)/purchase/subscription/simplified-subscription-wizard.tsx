@@ -72,6 +72,9 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   const [isLoading, setIsLoading] = useState(false)
   const [purchaseComplete, setPurchaseComplete] = useState(false)
   const [purchasedSubscription, setPurchasedSubscription] = useState<any>(null)
+  
+  // Category selection state
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
 
   // Load data on mount if not provided via props
   useEffect(() => {
@@ -220,8 +223,6 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   if (purchaseComplete) {
     return <GuestSubscriptionConfirmation userSubscription={purchasedSubscription} />
   }
-
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
 
   const treatmentCategories = [...new Set(treatments.map(t => t.category))]
   const categoryTreatments = selectedCategory ? 

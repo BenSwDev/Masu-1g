@@ -243,7 +243,7 @@ export async function purchaseSubscription({
       subscriptionId: subscription._id,
       treatmentId: treatment._id,
       selectedDurationId:
-        treatment.pricingType === "duration_based" && selectedDurationId
+        treatment.pricingType === "duration_based" && selectedDurationId && mongoose.Types.ObjectId.isValid(selectedDurationId)
           ? new mongoose.Types.ObjectId(selectedDurationId)
           : undefined,
       purchaseDate,
@@ -740,7 +740,7 @@ export async function purchaseGuestSubscription({
       subscriptionId: subscription._id,
       treatmentId: treatment._id,
       selectedDurationId:
-        treatment.pricingType === "duration_based" && selectedDurationId
+        treatment.pricingType === "duration_based" && selectedDurationId && mongoose.Types.ObjectId.isValid(selectedDurationId)
           ? new mongoose.Types.ObjectId(selectedDurationId)
           : undefined,
       purchaseDate,
@@ -748,7 +748,7 @@ export async function purchaseGuestSubscription({
       totalQuantity: subscription.quantity + subscription.bonusQuantity,
       remainingQuantity: subscription.quantity + subscription.bonusQuantity,
       status: "active",
-      paymentMethodId: paymentMethodId ? new mongoose.Types.ObjectId(paymentMethodId) : undefined,
+      paymentMethodId: paymentMethodId && mongoose.Types.ObjectId.isValid(paymentMethodId) ? new mongoose.Types.ObjectId(paymentMethodId) : undefined,
       paymentAmount: totalPaymentAmount,
       pricePerSession: singleSessionPrice,
       // Store guest info in the record for reference

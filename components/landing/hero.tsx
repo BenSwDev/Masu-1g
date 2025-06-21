@@ -31,7 +31,10 @@ export function LandingHero() {
           {/* Main heading */}
           <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
             {dir === "rtl" ? (
-              <MasuLogo className="mx-auto scale-150" />
+              <>
+                <MasuLogo className="mx-auto mb-4 scale-150" />
+                <span className="text-3xl md:text-5xl">יופי עד פתח ביתך</span>
+              </>
             ) : (
               <>
                 <MasuLogo className="mx-auto mb-4 scale-150" />

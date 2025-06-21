@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Star, Quote, ChevronLeft, ChevronRight } from "lucide-react"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export function LandingTestimonials() {
   const { dir } = useTranslation()
   const [currentSlide, setCurrentSlide] = useState(0)
+  const isMobile = useIsMobile()
 
   const testimonials = [
     {
@@ -64,17 +66,61 @@ export function LandingTestimonials() {
       treatment: dir === "rtl" ? "מניקור ופדיקור" : "Manicure & Pedicure",
       image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face"
     },
-    {
-      id: 6,
-      name: dir === "rtl" ? "אלון דוד" : "Alon David",
-      location: dir === "rtl" ? "נתניה" : "Netanya",
+  {
+    id: 6,
+    name: dir === "rtl" ? "אלון דוד" : "Alon David",
+    location: dir === "rtl" ? "נתניה" : "Netanya",
       rating: 5,
       text: dir === "rtl"
         ? "טיפול האנטי אייגינג שקיבלתי היה מעבר לציפיות. המטפלת הייתה מקצועית מאוד והסבירה לי על כל שלב."
         : "The anti-aging treatment I received exceeded expectations. The therapist was very professional and explained each step to me.",
-      treatment: dir === "rtl" ? "טיפול אנטי אייגינג" : "Anti-Aging Treatment",
-      image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face"
-    }
+    treatment: dir === "rtl" ? "טיפול אנטי אייגינג" : "Anti-Aging Treatment",
+    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&h=100&fit=crop&crop=face"
+  },
+  {
+    id: 7,
+    name: dir === "rtl" ? "לי רון" : "Lee Ron",
+    location: dir === "rtl" ? "הרצליה" : "Herzliya",
+    rating: 5,
+    text: dir === "rtl"
+      ? "הזמנתי עיסוי רקמות עמוק והמטפלת הייתה פשוט מעולה. הזמינות נוחה והמחיר משתלם."
+      : "I ordered a deep tissue massage and the therapist was excellent. Convenient availability and reasonable price.",
+    treatment: dir === "rtl" ? "עיסוי רקמות עמוק" : "Deep Tissue Massage",
+    image: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=100&h=100&fit=crop&crop=face"
+  },
+  {
+    id: 8,
+    name: dir === "rtl" ? "יעל פרץ" : "Yael Peretz",
+    location: dir === "rtl" ? "אשדוד" : "Ashdod",
+    rating: 5,
+    text: dir === "rtl"
+      ? "השירות של MASU תמיד מדויק ומקצועי. אני מרוצה כל פעם מחדש."
+      : "MASU's service is always precise and professional. I'm satisfied every time.",
+    treatment: dir === "rtl" ? "טיפול פדיקור" : "Pedicure Treatment",
+    image: "https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?w=100&h=100&fit=crop&crop=face"
+  },
+  {
+    id: 9,
+    name: dir === "rtl" ? "עידן כהן" : "Idan Cohen",
+    location: dir === "rtl" ? "ראשון לציון" : "Rishon LeZion",
+    rating: 5,
+    text: dir === "rtl"
+      ? "הגיעו אליי בזמן והביאו את כל הציוד הנדרש. מרגיש כמו ספא בבית."
+      : "They arrived on time and brought all necessary equipment. Feels like a spa at home.",
+    treatment: dir === "rtl" ? "טיפול ספא בבית" : "Home Spa Treatment",
+    image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&crop=face"
+  },
+  {
+    id: 10,
+    name: dir === "rtl" ? "גלית מזרחי" : "Galit Mizrahi",
+    location: dir === "rtl" ? "טבריה" : "Tiberias",
+    rating: 5,
+    text: dir === "rtl"
+      ? "הזמנתי טיפול מהיום למחר וקיבלתי שירות מעולה בלי פשרות."
+      : "I booked a last-minute treatment and received excellent uncompromising service.",
+    treatment: dir === "rtl" ? "טיפול אקספרס" : "Express Treatment",
+    image: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&h=100&fit=crop&crop=face"
+  }
   ]
 
   const stats = [
@@ -100,7 +146,7 @@ export function LandingTestimonials() {
     }
   ]
 
-  const itemsPerSlide = 4
+  const itemsPerSlide = isMobile ? 1 : 4
   const maxSlides = Math.ceil(testimonials.length / itemsPerSlide)
 
   const nextSlide = () => {

@@ -319,8 +319,7 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
   const renderStep = () => {
     if (currentStep === 1) return renderVoucherTypeStep()
     if (currentStep === 2) return voucherType === "monetary" ? renderMonetaryStep() : renderTreatmentStep()
-    if (currentStep === 3) return renderSummaryStep()
-    if (currentStep === 4)
+    if (currentStep === 3)
       return (
         <GuestInfoStep
           guestInfo={guestInfo}
@@ -332,6 +331,7 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
           showGiftOptions
         />
       )
+    if (currentStep === 4) return renderSummaryStep()
     if (currentStep === 5) return (
       <GuestPaymentStep
         calculatedPrice={calculatedPrice}

@@ -14,32 +14,10 @@ import type {
   NotificationLanguage,
   TreatmentBookingSuccessNotificationData,
 } from "./notification-types"
-import { Resend } from "resend"
-import twilio from "twilio"
-import { getSMSTemplate } from "./templates/sms-templates"
-import { getEmailTemplate } from "./templates/email-templates"
-
-// Initialize services
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
-
-// Only initialize Twilio if both credentials are properly set and valid
-let twilioClient: any = null
-try {
-  if (process.env.TWILIO_ACCOUNT_SID && 
-      process.env.TWILIO_AUTH_TOKEN && 
-      process.env.TWILIO_ACCOUNT_SID.startsWith('AC')) {
-    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-  }
-} catch (error) {
-  console.warn("Failed to initialize Twilio client:", error)
-  twilioClient = null
-}
-
-const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@masu.com"
-const FROM_PHONE = process.env.TWILIO_PHONE_NUMBER || ""
 
 /**
- * Notification manager to handle different notification types
+ * Centralized notification manager to handle all notification types
+ * This is the single source of truth for notification logic
  */
 export class NotificationManager {
   private isDevelopment: boolean
@@ -49,45 +27,105 @@ export class NotificationManager {
   }
 
   /**
-   * Send a notification
+   * Send a single notification
    * @param recipient Recipient information
    * @param data Notification data
    * @returns Result of the send operation
    */
   async sendNotification(recipient: NotificationRecipient, data: NotificationData): Promise<NotificationResult> {
-    logger.info(`Sending ${data.type} notification to ${recipient.type}: ${recipient.value}`)
+    const logId = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+    
+    logger.info(`[${logId}] Sending ${data.type} notification to ${recipient.type}: ${this.obscureContact(recipient.value)}`)
 
     // In development mode, just log the notification
     if (this.isDevelopment) {
       logNotification(recipient.type === "email" ? "email" : "sms", recipient.value, data)
-      return { success: true }
+      logger.info(`[${logId}] Development mode - notification logged only`)
+      return { success: true, messageId: `dev_${logId}` }
     }
 
-    // Validate recipient type
+    // Validate recipient type and service configuration
     if (recipient.type === "email") {
-      if (!emailService.isConfigured()) {
-        logger.error("Email service not configured")
-        return {
-          success: false,
-          error: "Email service not configured",
-        }
+      if (!emailService.isServiceConfigured()) {
+        const error = "Email service not configured"
+        logger.error(`[${logId}] ${error}`)
+        return { success: false, error }
       }
-      return emailService.sendNotification(recipient as EmailRecipient, data)
-    } else if (recipient.type === "phone") {
-      if (!smsService.isConfigured()) {
-        logger.error("SMS service not configured")
-        return {
-          success: false,
-          error: "SMS service not configured",
-        }
+      
+      try {
+        const result = await emailService.sendNotification(recipient as EmailRecipient, data)
+        logger.info(`[${logId}] Email notification result:`, { success: result.success, messageId: result.messageId })
+        return result
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown email error"
+        logger.error(`[${logId}] Email notification failed:`, { error: errorMessage })
+        return { success: false, error: errorMessage }
       }
-      return smsService.sendNotification(recipient as PhoneRecipient, data)
-    } else {
-      logger.error(`Invalid recipient type: ${(recipient as any).type}`)
-      return {
-        success: false,
-        error: `Invalid recipient type: ${(recipient as any).type}`,
+    } 
+    
+    if (recipient.type === "phone") {
+      if (!smsService.isServiceConfigured()) {
+        const error = "SMS service not configured"
+        logger.error(`[${logId}] ${error}`)
+        return { success: false, error }
       }
+      
+      try {
+        const result = await smsService.sendNotification(recipient as PhoneRecipient, data)
+        logger.info(`[${logId}] SMS notification result:`, { success: result.success, messageId: result.messageId })
+        return result
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown SMS error"
+        logger.error(`[${logId}] SMS notification failed:`, { error: errorMessage })
+        return { success: false, error: errorMessage }
+      }
+    }
+
+    const error = `Invalid recipient type: ${(recipient as any).type}`
+    logger.error(`[${logId}] ${error}`)
+    return { success: false, error }
+  }
+
+  /**
+   * Send notifications to multiple recipients
+   * @param recipients Array of recipients
+   * @param data Notification data
+   * @returns Array of results for each recipient
+   */
+  async sendNotificationToMultiple(
+    recipients: NotificationRecipient[], 
+    data: NotificationData
+  ): Promise<NotificationResult[]> {
+    const logId = `multi_notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+    
+    logger.info(`[${logId}] Sending ${data.type} notification to ${recipients.length} recipients`)
+
+    if (recipients.length === 0) {
+      logger.warn(`[${logId}] No recipients provided`)
+      return []
+    }
+
+    try {
+      // Send all notifications in parallel for better performance
+      const promises = recipients.map((recipient, index) => 
+        this.sendNotification(recipient, data).catch(error => {
+          logger.error(`[${logId}] Failed to send to recipient ${index}:`, { error, recipient: this.obscureContact(recipient.value) })
+          return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+        })
+      )
+      
+      const results = await Promise.all(promises)
+      
+      const successCount = results.filter(r => r.success).length
+      logger.info(`[${logId}] Sent ${successCount}/${recipients.length} notifications successfully`)
+      
+      return results
+    } catch (error) {
+      logger.error(`[${logId}] Error in batch notification send:`, { error })
+      return recipients.map(() => ({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Unknown batch error" 
+      }))
     }
   }
 
@@ -103,55 +141,200 @@ export class NotificationManager {
     length: number = 6,
     expiryMinutes: number = 10,
   ): Promise<{ code: string; expiryDate: Date; result: NotificationResult }> {
+    const logId = `otp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
     const code = this.generateOTP(length)
-    // Calculate expiry time in UTC to ensure consistency across timezones
     const expiryDate = new Date(Date.now() + expiryMinutes * 60 * 1000)
+
+    logger.info(`[${logId}] Generating OTP for ${recipient.type}: ${this.obscureContact(recipient.value)}`)
 
     // In development mode, store and log the OTP
     if (this.isDevelopment) {
-      // Store the OTP for verification
       storeDevOTP(recipient.value, recipient.type, code)
-      
       logNotification(recipient.type === "email" ? "email" : "sms", recipient.value, { 
         code, 
         expiryDate,
         expiresIn: expiryMinutes 
       })
-      return { code, expiryDate, result: { success: true } }
+      logger.info(`[${logId}] Development mode - OTP: ${code}`)
+      return { code, expiryDate, result: { success: true, messageId: `dev_otp_${logId}` } }
     }
 
     // In production, actually send the notification
     try {
       const data: OTPNotificationData = { type: "otp", code, expiresIn: expiryMinutes }
-      if (recipient.type === "email") {
-        await emailService.sendNotification(recipient, data)
+      const result = await this.sendNotification(recipient, data)
+      
+      if (result.success) {
+        logger.info(`[${logId}] OTP sent successfully`)
       } else {
-        await smsService.sendNotification(recipient, data)
+        logger.error(`[${logId}] Failed to send OTP:`, { error: result.error })
       }
-      return { code, expiryDate, result: { success: true } }
+      
+      return { code, expiryDate, result }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
-      const errorStack = error instanceof Error ? error.stack : undefined
-      logger.error("Failed to send OTP:", {
-        error: errorMessage,
-        stack: errorStack,
-        recipientType: recipient.type,
-        recipientValue: recipient.value,
-        language: recipient.language
-      })
+      logger.error(`[${logId}] Error sending OTP:`, { error: errorMessage })
+      
       return {
         code,
         expiryDate,
         result: {
           success: false,
-          error: errorMessage,
-          details: {
-            type: recipient.type,
-            value: recipient.value,
-            language: recipient.language
-          }
-        },
+          error: errorMessage
+        }
       }
+    }
+  }
+
+  /**
+   * Send a welcome notification
+   * @param recipient Recipient information
+   * @param name Recipient name
+   * @returns Send result
+   */
+  async sendWelcome(recipient: EmailRecipient, name: string): Promise<NotificationResult> {
+    const logId = `welcome_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+    
+    logger.info(`[${logId}] Sending welcome notification to: ${this.obscureContact(recipient.value)}`)
+
+    try {
+      const data: WelcomeNotificationData = { type: "welcome", name }
+      const result = await this.sendNotification(recipient, data)
+      
+      if (result.success) {
+        logger.info(`[${logId}] Welcome notification sent successfully`)
+      } else {
+        logger.error(`[${logId}] Failed to send welcome notification:`, { error: result.error })
+      }
+      
+      return result
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send welcome notification"
+      logger.error(`[${logId}] Error sending welcome notification:`, { error: errorMessage })
+      return { success: false, error: errorMessage }
+    }
+  }
+
+  /**
+   * Send a password reset notification
+   * @param recipient Recipient information
+   * @param resetUrl Password reset URL
+   * @param expiryMinutes Expiration time in minutes (default: 60)
+   * @returns Send result
+   */
+  async sendPasswordReset(
+    recipient: EmailRecipient,
+    resetUrl: string,
+    expiryMinutes: number = 60,
+  ): Promise<NotificationResult> {
+    const logId = `pwd_reset_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+    
+    logger.info(`[${logId}] Sending password reset notification to: ${this.obscureContact(recipient.value)}`)
+
+    try {
+      const data: PasswordResetNotificationData = { type: "password-reset", resetUrl, expiresIn: expiryMinutes }
+      const result = await this.sendNotification(recipient, data)
+      
+      if (result.success) {
+        logger.info(`[${logId}] Password reset notification sent successfully`)
+      } else {
+        logger.error(`[${logId}] Failed to send password reset notification:`, { error: result.error })
+      }
+      
+      return result
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send password reset notification"
+      logger.error(`[${logId}] Error sending password reset notification:`, { error: errorMessage })
+      return { success: false, error: errorMessage }
+    }
+  }
+
+  /**
+   * Send treatment booking success notifications
+   * @param recipients Array of recipients
+   * @param bookingData Booking information
+   * @returns Array of results for each recipient
+   */
+  async sendTreatmentBookingSuccess(
+    recipients: NotificationRecipient[],
+    bookingData: {
+      recipientName: string
+      bookerName?: string
+      treatmentName: string
+      bookingDateTime: Date
+      bookingNumber: string
+      bookingAddress: string
+      isForSomeoneElse: boolean
+      isBookerForSomeoneElse?: boolean
+      actualRecipientName?: string
+    },
+  ): Promise<NotificationResult[]> {
+    const logId = `booking_success_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+    
+    logger.info(`[${logId}] Sending booking success notifications to ${recipients.length} recipients`)
+
+    try {
+      const data: TreatmentBookingSuccessNotificationData = {
+        type: "treatment-booking-success",
+        ...bookingData
+      }
+      
+      const results = await this.sendNotificationToMultiple(recipients, data)
+      
+      const successCount = results.filter(r => r.success).length
+      logger.info(`[${logId}] Sent ${successCount}/${recipients.length} booking success notifications`)
+      
+      return results
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send booking success notifications"
+      logger.error(`[${logId}] Error sending booking success notifications:`, { error: errorMessage })
+      return recipients.map(() => ({ success: false, error: errorMessage }))
+    }
+  }
+
+  /**
+   * Send purchase success notifications
+   * @param recipients Array of recipients
+   * @param message Custom message
+   * @returns Array of results for each recipient
+   */
+  async sendPurchaseSuccess(
+    recipients: NotificationRecipient[],
+    message: string
+  ): Promise<NotificationResult[]> {
+    const logId = `purchase_success_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+    
+    logger.info(`[${logId}] Sending purchase success notifications to ${recipients.length} recipients`)
+
+    try {
+      const data = { type: "purchase-success" as const, message }
+      const results = await this.sendNotificationToMultiple(recipients, data)
+      
+      const successCount = results.filter(r => r.success).length
+      logger.info(`[${logId}] Sent ${successCount}/${recipients.length} purchase success notifications`)
+      
+      return results
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send purchase success notifications"
+      logger.error(`[${logId}] Error sending purchase success notifications:`, { error: errorMessage })
+      return recipients.map(() => ({ success: false, error: errorMessage }))
+    }
+  }
+
+  /**
+   * Check service configuration status
+   */
+  getServiceStatus() {
+    return {
+      email: {
+        configured: emailService.isServiceConfigured(),
+        service: "NodeMailer"
+      },
+      sms: {
+        configured: smsService.isServiceConfigured(),
+        service: "Twilio"
+      },
+      environment: this.isDevelopment ? "development" : "production"
     }
   }
 
@@ -170,312 +353,21 @@ export class NotificationManager {
   }
 
   /**
-   * Send a welcome notification
-   * @param recipient Recipient information
-   * @param name Recipient name
-   * @returns Send result
+   * Obscure contact information for logging
+   * @param contact Email or phone number
+   * @returns Obscured contact
    */
-  async sendWelcome(recipient: EmailRecipient, name: string): Promise<NotificationResult> {
-    // In development mode, just log the welcome message
-    if (this.isDevelopment) {
-      logNotification("email", recipient.value, { type: "welcome", name })
-      return { success: true }
+  private obscureContact(contact: string): string {
+    if (contact.includes("@")) {
+      // Email
+      const [local, domain] = contact.split("@")
+      return `${local.substring(0, 2)}***@${domain}`
+    } else {
+      // Phone
+      return `${contact.substring(0, 3)}***${contact.substring(contact.length - 2)}`
     }
-
-    // In production, actually send the welcome email
-    try {
-      const data: WelcomeNotificationData = { type: "welcome", name }
-      await emailService.sendNotification(recipient, data)
-      return { success: true }
-    } catch (error) {
-      logger.error("Failed to send welcome email:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to send welcome email",
-      }
-    }
-  }
-
-  /**
-   * Send a password reset notification
-   * @param recipient Recipient information
-   * @param resetUrl Password reset URL
-   * @param expiryMinutes Expiration time in minutes (default: 60)
-   * @returns Send result
-   */
-  async sendPasswordReset(
-    recipient: EmailRecipient,
-    resetUrl: string,
-    expiryMinutes: number,
-  ): Promise<NotificationResult> {
-    // In development mode, just log the password reset
-    if (this.isDevelopment) {
-      logNotification("email", recipient.value, { type: "password-reset", resetUrl, expiresIn: expiryMinutes })
-      return { success: true }
-    }
-
-    // In production, actually send the password reset email
-    try {
-      const data: PasswordResetNotificationData = { type: "password-reset", resetUrl, expiresIn: expiryMinutes }
-      await emailService.sendNotification(recipient, data)
-      return { success: true }
-    } catch (error) {
-      logger.error("Failed to send password reset email:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to send password reset email",
-      }
-    }
-  }
-
-  /**
-   * Send treatment booking success notification
-   * @param recipients Recipients list
-   * @param bookingData Booking details
-   * @returns Send results
-   */
-  async sendTreatmentBookingSuccess(
-    recipients: NotificationRecipient[],
-    bookingData: {
-      recipientName: string
-      bookerName?: string
-      treatmentName: string
-      bookingDateTime: Date
-      bookingNumber: string
-      bookingAddress: string
-      isForSomeoneElse: boolean
-      isBookerForSomeoneElse?: boolean
-      actualRecipientName?: string
-    },
-  ): Promise<NotificationResult[]> {
-    const data: TreatmentBookingSuccessNotificationData = {
-      type: "treatment-booking-success",
-      recipientName: bookingData.recipientName,
-      bookerName: bookingData.bookerName,
-      treatmentName: bookingData.treatmentName,
-      bookingDateTime: bookingData.bookingDateTime,
-      bookingNumber: bookingData.bookingNumber,
-      bookingAddress: bookingData.bookingAddress,
-      isForSomeoneElse: bookingData.isForSomeoneElse,
-      isBookerForSomeoneElse: bookingData.isBookerForSomeoneElse,
-      actualRecipientName: bookingData.actualRecipientName,
-    }
-
-    const promises = recipients.map(recipient => this.sendNotification(recipient, data))
-    return Promise.all(promises)
   }
 }
 
-// Export a singleton instance
+// Export singleton instance
 export const notificationManager = new NotificationManager()
-
-/**
- * Send notification via email
- */
-async function sendEmailNotification(
-  recipient: string,
-  data: NotificationData,
-  language: NotificationLanguage = "en",
-  recipientName?: string
-): Promise<NotificationResult> {
-  try {
-    if (!resend) {
-      console.warn("RESEND_API_KEY not configured, skipping email notification")
-      return { success: false, error: "Email service not configured" }
-    }
-
-    // Convert notification data to email template data
-    let emailData: any = { type: data.type }
-    
-    switch (data.type) {
-      case "otp":
-        emailData = {
-          type: "otp",
-          code: data.code,
-          expiresIn: data.expiresIn,
-        }
-        break
-      case "welcome":
-        emailData = {
-          type: "welcome",
-          userName: data.name,
-        }
-        break
-      case "password-reset":
-        emailData = {
-          type: "passwordReset",
-          resetLink: data.resetUrl,
-          userName: recipientName,
-        }
-        break
-      case "treatment-booking-success":
-        emailData = {
-          type: "treatment-booking-success",
-          recipientName: data.recipientName,
-          bookerName: data.bookerName,
-          treatmentName: data.treatmentName,
-          bookingDateTime: data.bookingDateTime,
-          bookingNumber: data.bookingNumber,
-          bookingAddress: data.bookingAddress,
-          isForSomeoneElse: data.isForSomeoneElse,
-        }
-        break
-    }
-
-    const template = getEmailTemplate(emailData, language, recipientName)
-
-    const result = await resend!.emails.send({
-      from: FROM_EMAIL,
-      to: recipient,
-      subject: template.subject,
-      text: template.text,
-      html: template.html,
-    })
-
-    return {
-      success: true,
-      messageId: result.data?.id,
-      details: result,
-    }
-  } catch (error) {
-    console.error("Email notification failed:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown email error",
-      details: error,
-    }
-  }
-}
-
-/**
- * Send notification via SMS
- */
-async function sendSMSNotification(
-  recipient: string,
-  data: NotificationData,
-  language: NotificationLanguage = "en"
-): Promise<NotificationResult> {
-  try {
-    if (!twilioClient || !FROM_PHONE) {
-      console.warn("Twilio not configured, skipping SMS notification")
-      return { success: false, error: "SMS service not configured" }
-    }
-
-    const message = getSMSTemplate(data, language)
-
-    const result = await twilioClient.messages.create({
-      body: message,
-      from: FROM_PHONE,
-      to: recipient,
-    })
-
-    return {
-      success: true,
-      messageId: result.sid,
-      details: result,
-    }
-  } catch (error) {
-    console.error("SMS notification failed:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown SMS error",
-      details: error,
-    }
-  }
-}
-
-/**
- * Send notification to a single recipient
- */
-export async function sendNotification(
-  recipient: NotificationRecipient,
-  data: NotificationData
-): Promise<NotificationResult> {
-  if (recipient.type === "email") {
-    return sendEmailNotification(recipient.value, data, recipient.language, recipient.name)
-  } else if (recipient.type === "phone") {
-    return sendSMSNotification(recipient.value, data, recipient.language)
-  }
-
-  return { success: false, error: "Invalid recipient type" }
-}
-
-/**
- * Send notification to multiple recipients
- */
-export async function sendNotificationToMultiple(
-  recipients: NotificationRecipient[],
-  data: NotificationData
-): Promise<NotificationResult[]> {
-  const promises = recipients.map(recipient => sendNotification(recipient, data))
-  return Promise.all(promises)
-}
-
-/**
- * Send OTP notification
- */
-export async function sendOTP(
-  recipients: NotificationRecipient[],
-  code: string,
-  expiresIn: number = 10
-): Promise<NotificationResult[]> {
-  const data: NotificationData = {
-    type: "otp",
-    code,
-    expiresIn,
-  }
-
-  return sendNotificationToMultiple(recipients, data)
-}
-
-/**
- * Send welcome notification
- */
-export async function sendWelcome(
-  recipients: NotificationRecipient[],
-  name: string
-): Promise<NotificationResult[]> {
-  const data: NotificationData = {
-    type: "welcome",
-    name,
-  }
-
-  return sendNotificationToMultiple(recipients, data)
-}
-
-/**
- * Send password reset notification
- */
-export async function sendPasswordReset(
-  recipients: NotificationRecipient[],
-  resetUrl: string,
-  expiresIn: number = 60
-): Promise<NotificationResult[]> {
-  const data: NotificationData = {
-    type: "password-reset",
-    resetUrl,
-    expiresIn,
-  }
-
-  return sendNotificationToMultiple(recipients, data)
-}
-
-/**
- * Send treatment booking success notification
- */
-export async function sendTreatmentBookingSuccess(
-  recipients: NotificationRecipient[],
-  bookingData: {
-    recipientName: string
-    bookerName?: string
-    treatmentName: string
-    bookingDateTime: Date
-    bookingNumber: string
-    bookingAddress: string
-    isForSomeoneElse: boolean
-    isBookerForSomeoneElse?: boolean
-    actualRecipientName?: string
-  }
-): Promise<NotificationResult[]> {
-  return notificationManager.sendTreatmentBookingSuccess(recipients, bookingData)
-}

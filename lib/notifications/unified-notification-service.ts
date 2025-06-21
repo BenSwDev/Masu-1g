@@ -26,29 +26,30 @@ interface UnifiedNotificationServiceReturn {
 
 /**
  * Unified notification service for sending SMS and Email with proper configuration checking
- * Handles missing RESEND_API_KEY and Twilio configuration gracefully
+ * This is a wrapper around the centralized notification manager
  */
 class UnifiedNotificationService {
   private isEmailConfigured: boolean
   private isSMSConfigured: boolean
 
   constructor() {
-    // Check if services are configured
-    this.isEmailConfigured = Boolean(process.env.RESEND_API_KEY)
-    this.isSMSConfigured = Boolean(
-      process.env.TWILIO_ACCOUNT_SID && 
-      process.env.TWILIO_AUTH_TOKEN && 
-      process.env.TWILIO_ACCOUNT_SID.startsWith('AC')
-    )
+    // Get service status from notification manager
+    const status = notificationManager.getServiceStatus()
+    this.isEmailConfigured = status.email.configured
+    this.isSMSConfigured = status.sms.configured
+
+    logger.info("Unified notification service initialized", {
+      emailConfigured: this.isEmailConfigured,
+      smsConfigured: this.isSMSConfigured,
+      environment: status.environment
+    })
   }
 
   private logConfigurationWarning(type: 'email' | 'sms'): void {
     if (type === 'email' && !this.isEmailConfigured) {
-      console.warn("RESEND_API_KEY not configured, skipping email notification")
-      logger.warn("RESEND_API_KEY not configured, skipping email notification")
+      logger.warn("Email service not configured - check EMAIL_SERVER_* environment variables")
     } else if (type === 'sms' && !this.isSMSConfigured) {
-      console.warn("Twilio not configured, skipping SMS notification")
-      logger.warn("Twilio not configured, skipping SMS notification")
+      logger.warn("SMS service not configured - check TWILIO_* environment variables")
     }
   }
 
@@ -59,17 +60,18 @@ class UnifiedNotificationService {
     try {
       // Check configuration and log warning if needed
       if (recipient.type === 'email') {
-        this.logConfigurationWarning('email')
         if (!this.isEmailConfigured) {
+          this.logConfigurationWarning('email')
           return { success: false, error: "Email service not configured" }
         }
       } else if (recipient.type === 'phone') {
-        this.logConfigurationWarning('sms')
         if (!this.isSMSConfigured) {
+          this.logConfigurationWarning('sms')
           return { success: false, error: "SMS service not configured" }
         }
       }
 
+      // Use the centralized notification manager
       const result = await notificationManager.sendNotification(recipient, data)
       return result
     } catch (error) {
@@ -112,11 +114,8 @@ class UnifiedNotificationService {
         return recipients.map(() => ({ success: false, error: "No configured notification services" }))
       }
 
-      const promises = filteredRecipients.map(recipient => 
-        notificationManager.sendNotification(recipient, data)
-      )
-      
-      const results = await Promise.all(promises)
+      // Use the centralized notification manager
+      const results = await notificationManager.sendNotificationToMultiple(filteredRecipients, data)
       
       // Fill in failed results for filtered out recipients
       const fullResults: NotificationResult[] = []
@@ -141,14 +140,14 @@ class UnifiedNotificationService {
       
       return fullResults
     } catch (error) {
-      logger.error("Failed to send notifications to multiple recipients:", {
+      logger.error("Failed to send multiple notifications:", {
         error: error instanceof Error ? error.message : String(error),
         recipientCount: recipients.length,
         notificationType: data.type
       })
-      return recipients.map(() => ({
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown notification error"
+      return recipients.map(() => ({ 
+        success: false, 
+        error: error instanceof Error ? error.message : "Unknown batch notification error" 
       }))
     }
   }
@@ -180,6 +179,7 @@ class UnifiedNotificationService {
         }
       }
 
+      // Use the centralized notification manager
       return await notificationManager.sendOTP(recipient as any, length, expiryMinutes)
     } catch (error) {
       logger.error("Failed to send OTP:", {
@@ -201,34 +201,58 @@ class UnifiedNotificationService {
   }
 
   async sendWelcome(
-    recipient: NotificationRecipient,
+    recipient: NotificationRecipient, 
     name: string
   ): Promise<NotificationResult> {
-    if (recipient.type !== 'email') {
-      return { success: false, error: "Welcome notifications only support email" }
-    }
+    try {
+      if (recipient.type === 'email' && !this.isEmailConfigured) {
+        this.logConfigurationWarning('email')
+        return { success: false, error: "Email service not configured" }
+      }
 
-    return this.sendNotification(recipient, { type: 'welcome', name })
+      // Use the centralized notification manager
+      return await notificationManager.sendWelcome(recipient as any, name)
+    } catch (error) {
+      logger.error("Failed to send welcome notification:", {
+        error: error instanceof Error ? error.message : String(error),
+        recipientType: recipient.type,
+        recipientValue: recipient.value
+      })
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown welcome error"
+      }
+    }
   }
 
   async sendPasswordReset(
-    recipient: NotificationRecipient,
-    resetUrl: string,
+    recipient: NotificationRecipient, 
+    resetUrl: string, 
     expiryMinutes: number = 60
   ): Promise<NotificationResult> {
-    if (recipient.type !== 'email') {
-      return { success: false, error: "Password reset notifications only support email" }
-    }
+    try {
+      if (recipient.type === 'email' && !this.isEmailConfigured) {
+        this.logConfigurationWarning('email')
+        return { success: false, error: "Email service not configured" }
+      }
 
-    return this.sendNotification(recipient, { 
-      type: 'password-reset', 
-      resetUrl, 
-      expiresIn: expiryMinutes 
-    })
+      // Use the centralized notification manager
+      return await notificationManager.sendPasswordReset(recipient as any, resetUrl, expiryMinutes)
+    } catch (error) {
+      logger.error("Failed to send password reset notification:", {
+        error: error instanceof Error ? error.message : String(error),
+        recipientType: recipient.type,
+        recipientValue: recipient.value
+      })
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown password reset error"
+      }
+    }
   }
 
   async sendTreatmentBookingSuccess(
-    recipients: NotificationRecipient[],
+    recipients: NotificationRecipient[], 
     bookingData: {
       recipientName: string
       bookerName?: string
@@ -241,32 +265,62 @@ class UnifiedNotificationService {
       actualRecipientName?: string
     }
   ): Promise<NotificationResult[]> {
-    return this.sendNotificationToMultiple(recipients, {
-      type: 'treatment-booking-success',
-      ...bookingData
-    })
+    try {
+      // Use the centralized notification manager
+      return await notificationManager.sendTreatmentBookingSuccess(recipients, bookingData)
+    } catch (error) {
+      logger.error("Failed to send booking success notifications:", {
+        error: error instanceof Error ? error.message : String(error),
+        recipientCount: recipients.length
+      })
+      return recipients.map(() => ({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown booking success error"
+      }))
+    }
   }
 
   async sendPurchaseSuccess(
-    recipients: NotificationRecipient[],
+    recipients: NotificationRecipient[], 
     message: string
   ): Promise<NotificationResult[]> {
-    return this.sendNotificationToMultiple(recipients, {
-      type: 'purchase-success',
-      message
-    })
+    try {
+      // Use the centralized notification manager
+      return await notificationManager.sendPurchaseSuccess(recipients, message)
+    } catch (error) {
+      logger.error("Failed to send purchase success notifications:", {
+        error: error instanceof Error ? error.message : String(error),
+        recipientCount: recipients.length
+      })
+      return recipients.map(() => ({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown purchase success error"
+      }))
+    }
   }
 
   get serviceStatus() {
     return {
       isEmailConfigured: this.isEmailConfigured,
-      isSMSConfigured: this.isSMSConfigured
+      isSMSConfigured: this.isSMSConfigured,
+      manager: notificationManager.getServiceStatus()
     }
+  }
+
+  /**
+   * Refresh service configuration status
+   */
+  refreshStatus() {
+    const status = notificationManager.getServiceStatus()
+    this.isEmailConfigured = status.email.configured
+    this.isSMSConfigured = status.sms.configured
+    
+    logger.info("Notification service status refreshed", {
+      emailConfigured: this.isEmailConfigured,
+      smsConfigured: this.isSMSConfigured
+    })
   }
 }
 
-// Export a singleton instance
-export const unifiedNotificationService = new UnifiedNotificationService()
-
-// Export the service interface for convenience
-export type { UnifiedNotificationServiceReturn } 
+// Export singleton instance
+export const unifiedNotificationService = new UnifiedNotificationService() 

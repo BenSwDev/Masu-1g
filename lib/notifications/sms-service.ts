@@ -6,34 +6,75 @@ import { logger } from "@/lib/logs/logger"
 
 /**
  * SMS service implementation using Twilio
+ * Handles SMS notifications with proper configuration validation and error handling
  */
 export class SMSService {
   private client: any
+  private fromNumber: string | undefined
   private messagingServiceSid: string | undefined
   private isDevelopment: boolean
+  private isConfigured: boolean
 
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === "development"
+    this.isConfigured = false
     
-    // Only initialize Twilio in production mode or when valid credentials are provided
-    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-      // Skip validation in development mode with placeholder values
-      if (this.isDevelopment && process.env.TWILIO_ACCOUNT_SID === "your-twilio-account-sid") {
-        return
-      }
-      
-      if (!process.env.TWILIO_ACCOUNT_SID.startsWith("AC")) {
-        // Only warn in production or when not using placeholder values
-        if (!this.isDevelopment && process.env.TWILIO_ACCOUNT_SID !== "your-twilio-account-sid") {
-          logger.warn("Invalid Twilio Account SID format - must start with 'AC'")
-        }
-        return
-      }
-      
+    // Initialize Twilio client with proper validation
+    this.initializeTwilio()
+  }
+
+  /**
+   * Initialize Twilio client with proper configuration validation
+   */
+  private initializeTwilio(): void {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID
+    const authToken = process.env.TWILIO_AUTH_TOKEN
+    const fromNumber = process.env.TWILIO_PHONE_NUMBER
+    const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID
+
+    // Check if we have the minimum required configuration
+    if (!accountSid || !authToken) {
       if (!this.isDevelopment) {
-        this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
-        this.messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID
+        logger.warn("Twilio SMS service not configured - missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN")
       }
+      return
+    }
+
+    // Skip placeholder values in development
+    if (this.isDevelopment && (
+      accountSid === "your-twilio-account-sid" || 
+      authToken === "your-twilio-auth-token"
+    )) {
+      logger.info("Development mode - Twilio SMS service using placeholder values")
+      return
+    }
+
+    // Validate Account SID format
+    if (!accountSid.startsWith("AC")) {
+      logger.error("Invalid Twilio Account SID format - must start with 'AC'")
+      return
+    }
+
+    // We need either a phone number OR a messaging service SID
+    if (!fromNumber && !messagingServiceSid) {
+      logger.error("Twilio SMS service requires either TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID")
+      return
+    }
+
+    try {
+      this.client = twilio(accountSid, authToken)
+      this.fromNumber = fromNumber
+      this.messagingServiceSid = messagingServiceSid
+      this.isConfigured = true
+      
+      logger.info("Twilio SMS service initialized successfully", {
+        hasFromNumber: !!fromNumber,
+        hasMessagingService: !!messagingServiceSid,
+        environment: this.isDevelopment ? "development" : "production"
+      })
+    } catch (error) {
+      logger.error("Failed to initialize Twilio SMS service:", error)
+      this.isConfigured = false
     }
   }
 
@@ -44,40 +85,77 @@ export class SMSService {
    * @returns Result of the send operation
    */
   async sendNotification(recipient: PhoneRecipient, data: NotificationData): Promise<NotificationResult> {
-    // Check if Twilio client is initialized
-    if (!this.client || !this.messagingServiceSid) {
-      return {
-        success: false,
-        error: "SMS service not configured",
-      }
-    }
-
+    const logId = `sms_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+    
     try {
-      // Format phone number to ensure it includes country code
+      // Check if service is configured
+      if (!this.isConfigured) {
+        const error = "SMS service not configured"
+        logger.error(`[${logId}] ${error}`)
+        return { success: false, error }
+      }
+
+      // Format phone number
       const phoneNumber = this.formatPhoneNumber(recipient.value)
+      logger.info(`[${logId}] Sending SMS to: ${this.obscurePhone(phoneNumber)}`)
 
-      // Get the template for this notification type
-      const messageBody = getSMSTemplate(data, recipient.language || "en")
+      // Get message template
+      const messageBody = getSMSTemplate(data, recipient.language || "he")
+      
+      // In development mode, just log
+      if (this.isDevelopment) {
+        logNotification("sms", phoneNumber, { body: messageBody, data })
+        logger.info(`[${logId}] Development mode - SMS logged only`)
+        return { success: true, messageId: `dev_sms_${logId}` }
+      }
 
-      // Log the notification in development
-      logNotification("sms", phoneNumber, messageBody)
+      // Prepare message options
+      const messageOptions: any = {
+        body: messageBody,
+        to: phoneNumber,
+      }
+
+      // Use messaging service if available, otherwise use from number
+      if (this.messagingServiceSid) {
+        messageOptions.messagingServiceSid = this.messagingServiceSid
+      } else if (this.fromNumber) {
+        messageOptions.from = this.fromNumber
+      } else {
+        const error = "No from number or messaging service configured"
+        logger.error(`[${logId}] ${error}`)
+        return { success: false, error }
+      }
 
       // Send the SMS
-      const message = await this.client.messages.create({
-        body: messageBody,
-        messagingServiceSid: this.messagingServiceSid,
-        to: phoneNumber,
+      const message = await this.client.messages.create(messageOptions)
+
+      logger.info(`[${logId}] SMS sent successfully`, { 
+        messageId: message.sid,
+        status: message.status 
       })
 
       return {
         success: true,
         messageId: message.sid,
+        details: {
+          status: message.status,
+          direction: message.direction,
+          price: message.price,
+          priceUnit: message.priceUnit
+        }
       }
     } catch (error) {
-      console.error("SMS send error:", error)
+      const errorMessage = error instanceof Error ? error.message : "Unknown SMS error"
+      logger.error(`[${logId}] SMS send failed:`, { 
+        error: errorMessage,
+        recipient: this.obscurePhone(recipient.value),
+        data: data.type 
+      })
+      
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error sending SMS",
+        error: errorMessage,
+        details: error
       }
     }
   }
@@ -88,55 +166,104 @@ export class SMSService {
    * @returns Formatted phone number
    */
   private formatPhoneNumber(phoneNumber: string): string {
-    // Remove all non-digit characters except the plus sign
-    let cleaned = phoneNumber.replace(/[^\d+]/g, "")
+    try {
+      // Remove all non-digit characters except the plus sign
+      let cleaned = phoneNumber.replace(/[^\d+]/g, "")
 
-    // If there's no plus sign, assume it's a local number
-    if (!cleaned.startsWith("+")) {
-      // Handle Israeli numbers specifically
-      if (cleaned.startsWith("0")) {
-        // Israeli number starting with 0 (e.g., 0525131777)
-        cleaned = "+972" + cleaned.substring(1)
-      } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-        // Israeli mobile number without 0 (e.g., 525131777)
-        cleaned = "+972" + cleaned
-      } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-        // Number with 972 but no plus (e.g., 972525131777)
-        cleaned = "+" + cleaned
-      } else if (cleaned.length === 10 && /^[5-9]/.test(cleaned)) {
-        // Israeli mobile number without country code (e.g., 5251317777)
-        cleaned = "+972" + cleaned
+      // If there's no plus sign, assume it's a local number
+      if (!cleaned.startsWith("+")) {
+        // Handle Israeli numbers specifically
+        if (cleaned.startsWith("0")) {
+          // Israeli number starting with 0 (e.g., 0525131777)
+          cleaned = "+972" + cleaned.substring(1)
+        } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
+          // Israeli mobile number without 0 (e.g., 525131777)
+          cleaned = "+972" + cleaned
+        } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
+          // Number with 972 but no plus (e.g., 972525131777)
+          cleaned = "+" + cleaned
+        } else if (cleaned.length === 10 && /^[5-9]/.test(cleaned)) {
+          // Israeli mobile number without country code (e.g., 5251317777)
+          cleaned = "+972" + cleaned
+        } else {
+          // Default: assume Israeli number and add +972
+          cleaned = "+972" + cleaned
+        }
       } else {
-        // Default: assume Israeli number and add +972
-        cleaned = "+972" + cleaned
+        // Handle +972 numbers that might have 0 after country code
+        if (cleaned.startsWith("+9720")) {
+          // Remove the 0 after +972 (e.g., +9720525131777 -> +972525131777)
+          cleaned = "+972" + cleaned.substring(5)
+        }
       }
-    } else {
-      // Handle +972 numbers that might have 0 after country code
-      if (cleaned.startsWith("+9720")) {
-        // Remove the 0 after +972 (e.g., +9720525131777 -> +972525131777)
-        cleaned = "+972" + cleaned.substring(5)
-      }
-    }
 
-    // Validate Israeli mobile number format
-    if (cleaned.startsWith("+972")) {
-      const nationalNumber = cleaned.substring(4)
-      if (nationalNumber.length !== 9 || !/^[5-9]/.test(nationalNumber)) {
-        logger.warn(`Invalid Israeli mobile format: ${cleaned}`)
-        throw new Error("Invalid Israeli mobile format")
+      // Validate Israeli mobile number format
+      if (cleaned.startsWith("+972")) {
+        const nationalNumber = cleaned.substring(4)
+        if (nationalNumber.length !== 9 || !/^[5-9]/.test(nationalNumber)) {
+          logger.warn(`Invalid Israeli mobile format: ${cleaned}`)
+          throw new Error(`Invalid Israeli mobile format: ${cleaned}`)
+        }
       }
-    }
 
-    return cleaned
+      return cleaned
+    } catch (error) {
+      logger.error("Phone number formatting error:", { phoneNumber, error })
+      throw new Error(`Invalid phone number format: ${phoneNumber}`)
+    }
+  }
+
+  /**
+   * Obscure phone number for logging
+   * @param phoneNumber Phone number to obscure
+   * @returns Obscured phone number
+   */
+  private obscurePhone(phoneNumber: string): string {
+    if (phoneNumber.length <= 6) return phoneNumber
+    return `${phoneNumber.substring(0, 4)}***${phoneNumber.substring(phoneNumber.length - 2)}`
   }
 
   /**
    * Check if the SMS service is properly configured
    */
-  isConfigured(): boolean {
-    return Boolean(
-      process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_MESSAGING_SERVICE_SID,
-    )
+  isServiceConfigured(): boolean {
+    return this.isConfigured
+  }
+
+  /**
+   * Get service configuration status
+   */
+  getStatus() {
+    return {
+      configured: this.isConfigured,
+      hasClient: !!this.client,
+      hasFromNumber: !!this.fromNumber,
+      hasMessagingService: !!this.messagingServiceSid,
+      environment: this.isDevelopment ? "development" : "production"
+    }
+  }
+
+  /**
+   * Test the SMS service configuration
+   */
+  async testConfiguration(): Promise<{ success: boolean; error?: string }> {
+    if (!this.isConfigured) {
+      return { success: false, error: "SMS service not configured" }
+    }
+
+    try {
+      // Try to fetch account information to verify credentials
+      const account = await this.client.api.accounts(process.env.TWILIO_ACCOUNT_SID).fetch()
+      logger.info("SMS service configuration test successful", { 
+        accountSid: account.sid,
+        status: account.status 
+      })
+      return { success: true }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      logger.error("SMS service configuration test failed:", error)
+      return { success: false, error: errorMessage }
+    }
   }
 }
 

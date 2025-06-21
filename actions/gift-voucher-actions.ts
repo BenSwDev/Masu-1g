@@ -1076,13 +1076,29 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
 
     if (sendNotificationToRecipientNow && voucher.recipientPhone && voucher.recipientName) {
       try {
-        const recipientLang = session.user.language || "he" // Or detect recipient's language if possible
+        const recipientLang = session.user.language || "he"
+        const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+        const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
+        
+        // Get purchaser name for the gift message
+        const purchaser = await User.findById(voucher.purchaserUserId).select("name").lean()
+        const purchaserName = purchaser?.name || "מישהו"
+        
+        // Send gift voucher to recipient
+        const giftMessage = voucher.greetingMessage 
+          ? `🎁 קיבלת שובר מתנה מ${purchaserName}!\n\n"${voucher.greetingMessage}"\n\nלמימוש השובר לחץ כאן: ${redeemLink}`
+          : `🎁 קיבלת שובר מתנה מ${purchaserName}!\n\nלמימוש השובר לחץ כאן: ${redeemLink}`
+        
+        const recipients = []
+        if (voucher.recipientPhone) {
+          recipients.push({ type: "phone" as const, value: voucher.recipientPhone, language: recipientLang as any })
+        }
+        
+        if (recipients.length > 0) {
+          await unifiedNotificationService.sendPurchaseSuccess(recipients, giftMessage)
+        }
 
-        // Gift voucher received notifications removed as per requirements
         logger.info(`Gift voucher SMS notification sent to ${voucher.recipientPhone} for voucher ${voucher.code}`)
-
-        // Optionally, send an email to the recipient if their email is known/collected
-        // For now, only SMS as per original logic.
       } catch (notificationError) {
         logger.error("Failed to send gift voucher notification to recipient", {
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
@@ -1555,29 +1571,63 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
       }
       await voucher.save()
 
-      // Send purchase success notification to guest
+      // Send notifications
       try {
         const lang = "he" // Default to Hebrew for guests
         const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-
         const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
-        const message = `תודה על רכישתך. למימוש השובר לחץ כאן: ${redeemLink}`
 
-        const recipients = []
-        if (guestInfo.email) {
-          recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
-        }
-        if (guestInfo.phone) {
-          recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
-        }
-        
-        if (recipients.length > 0) {
-          await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
+        if (voucher.isGift && voucher.recipientName && voucher.recipientPhone) {
+          // Send gift voucher to recipient
+          const giftMessage = voucher.greetingMessage 
+            ? `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\n"${voucher.greetingMessage}"\n\nלמימוש השובר לחץ כאן: ${redeemLink}`
+            : `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\nלמימוש השובר לחץ כאן: ${redeemLink}`
+          
+          const recipientRecipients = []
+          if (voucher.recipientPhone) {
+            recipientRecipients.push({ type: "phone" as const, value: voucher.recipientPhone, language: lang as any })
+          }
+          
+          if (recipientRecipients.length > 0) {
+            await unifiedNotificationService.sendPurchaseSuccess(recipientRecipients, giftMessage)
+          }
+
+          // Send confirmation to purchaser
+          const purchaserMessage = `✅ השובר נשלח בהצלחה ל${voucher.recipientName}!\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
+          
+          const purchaserRecipients = []
+          if (guestInfo.email) {
+            purchaserRecipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
+          }
+          if (guestInfo.phone) {
+            purchaserRecipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
+          }
+          
+          if (purchaserRecipients.length > 0) {
+            await unifiedNotificationService.sendPurchaseSuccess(purchaserRecipients, purchaserMessage)
+          }
+        } else {
+          // Regular voucher (not a gift) - send to purchaser
+          const message = `תודה על רכישתך. למימוש השובר לחץ כאן: ${redeemLink}`
+
+          const recipients = []
+          if (guestInfo.email) {
+            recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
+          }
+          if (guestInfo.phone) {
+            recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
+          }
+          
+          if (recipients.length > 0) {
+            await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
+          }
         }
       } catch (notificationError) {
-        logger.error("Failed to send purchase success notification for guest gift voucher:", {
+        logger.error("Failed to send notification for guest gift voucher:", {
           guestEmail: guestInfo.email,
           voucherId: voucher._id.toString(),
+          isGift: voucher.isGift,
+          hasRecipientPhone: !!voucher.recipientPhone,
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
         })
       }

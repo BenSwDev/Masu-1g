@@ -1939,6 +1939,17 @@ export async function createGuestBooking(
         recipientGender: validatedPayload.recipientGender,
         bookingAddressSnapshot,
         status: "pending_payment",
+        // Required fields with defaults for backward compatibility
+        treatmentCategory: validatedPayload.treatmentCategory || new mongoose.Types.ObjectId(),
+        staticTreatmentPrice: validatedPayload.staticPricingData?.staticTreatmentPrice || validatedPayload.priceDetails.basePrice || 0,
+        staticTherapistPay: validatedPayload.staticPricingData?.staticTherapistPay || 0,
+        companyFee: validatedPayload.staticPricingData?.companyFee || 0,
+        consents: validatedPayload.consents || {
+          customerAlerts: "email",
+          patientAlerts: "email",
+          marketingOptIn: false,
+          termsAccepted: false
+        },
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
           surcharges: validatedPayload.priceDetails.surcharges,
@@ -2386,6 +2397,17 @@ export async function saveAbandonedBooking(
           bookingOptions: formData.bookingOptions || null,
           calculatedPrice: formData.calculatedPrice || null,
           savedAt: new Date(),
+        },
+        // Update required fields if available
+        treatmentCategory: formData.bookingOptions?.treatmentCategory || existingAbandoned.treatmentCategory,
+        staticTreatmentPrice: formData.calculatedPrice?.basePrice || existingAbandoned.staticTreatmentPrice || 0,
+        staticTherapistPay: formData.calculatedPrice?.therapistPay || existingAbandoned.staticTherapistPay || 0,
+        companyFee: formData.calculatedPrice?.companyFee || existingAbandoned.companyFee || 0,
+        consents: existingAbandoned.consents || {
+          customerAlerts: "email",
+          patientAlerts: "email", 
+          marketingOptIn: false,
+          termsAccepted: false
         }
       }
       
@@ -2478,6 +2500,17 @@ export async function saveAbandonedBooking(
       therapistGenderPreference: formData.bookingOptions?.therapistGenderPreference || "any",
       source: "new_purchase",
       bookingDateTime: new Date(),
+      // Required fields for new schema
+      treatmentCategory: formData.bookingOptions?.treatmentCategory || new mongoose.Types.ObjectId(),
+      staticTreatmentPrice: formData.calculatedPrice?.basePrice || 0,
+      staticTherapistPay: formData.calculatedPrice?.therapistPay || 0,
+      companyFee: formData.calculatedPrice?.companyFee || 0,
+      consents: {
+        customerAlerts: "email",
+        patientAlerts: "email", 
+        marketingOptIn: false,
+        termsAccepted: false
+      },
       priceDetails: {
         basePrice: formData.calculatedPrice?.basePrice || 0,
         surcharges: Array.isArray(formData.calculatedPrice?.surcharges) ? formData.calculatedPrice.surcharges : [],
@@ -2553,8 +2586,8 @@ export async function saveAbandonedBooking(
       
       abandonedBookingData.bookingAddressSnapshot = {
         fullAddress: addressParts.length > 0 ? addressParts.join(" ") : "כתובת לא זמינה",
-        city: formData.guestAddress.city?.trim() || "",
-        street: formData.guestAddress.street?.trim() || "",
+        city: formData.guestAddress.city?.trim() || "לא צוין",
+        street: formData.guestAddress.street?.trim() || "לא צוין",
         streetNumber: formData.guestAddress.houseNumber?.trim() || "",
         apartment: formData.guestAddress.apartmentNumber?.trim(),
         entrance: formData.guestAddress.entrance?.trim(),
@@ -2566,6 +2599,13 @@ export async function saveAbandonedBooking(
         roomNumber: formData.guestAddress.roomNumber?.trim(),
         otherInstructions: formData.guestAddress.instructions?.trim(),
         hasPrivateParking: Boolean(formData.guestAddress.parking),
+      }
+    } else {
+      // Provide default address if none provided
+      abandonedBookingData.bookingAddressSnapshot = {
+        fullAddress: "כתובת לא זמינה",
+        city: "לא צוין",
+        street: "לא צוין",
       }
     }
 

@@ -454,12 +454,12 @@ export const CreateGuestBookingPayloadSchema = z.object({
       }),
   }).required(), // Required for guest bookings
   
-  // ➕ שדות חדשים לאורחים
-  step: z.number().int().min(1).max(7).default(1),
-  treatmentCategory: z.string(), // ObjectId as string
-  staticPricingData: StaticPricingDataSchema,
+  // ➕ שדות חדשים לאורחים - אופציונליים לתאימות לאחור
+  step: z.number().int().min(1).max(7).default(1).optional(),
+  treatmentCategory: z.string().optional(), // ObjectId as string
+  staticPricingData: StaticPricingDataSchema.optional(),
   giftInfo: BookingGiftInfoSchema.optional(),
-  consents: BookingConsentsSchema,
+  consents: BookingConsentsSchema.optional(),
   enhancedPaymentDetails: EnhancedPaymentDetailsSchema.optional(),
   review: BookingReviewSchema.optional(),
 })

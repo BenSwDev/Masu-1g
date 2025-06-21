@@ -29,6 +29,11 @@ interface GetProfessionalsResult {
       total: number
       pages: number
     }
+    stats: {
+      total: number
+      active: number
+      byStatus: Record<string, number>
+    }
   }
   error?: string
 }
@@ -83,12 +88,16 @@ export async function getProfessionals(options: GetProfessionalsOptions = {}): P
     const total = await ProfessionalProfile.countDocuments(query)
     const pages = Math.ceil(total / limit)
 
+    const sortField = sortBy === "user.name" ? "userId.name" : sortBy
+
     const professionals = await ProfessionalProfile.find(query)
       .populate("userId", "name email phone gender birthDate")
-      .sort({ [sortBy]: sortOrder === "asc" ? 1 : -1 })
+      .sort({ [sortField]: sortOrder === "asc" ? 1 : -1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .lean()
+
+    const stats = await ProfessionalProfile.getStatistics()
 
     return {
       success: true,
@@ -99,7 +108,8 @@ export async function getProfessionals(options: GetProfessionalsOptions = {}): P
           limit,
           total,
           pages
-        }
+        },
+        stats
       }
     }
   } catch (error) {

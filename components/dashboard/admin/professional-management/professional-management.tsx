@@ -62,6 +62,11 @@ export function ProfessionalManagement({
     total: 0,
     pages: initialTotalPages
   })
+  const [stats, setStats] = useState<{
+    total: number
+    active: number
+    byStatus: Record<string, number>
+  }>({ total: 0, active: 0, byStatus: {} })
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState(initialSearch)
   const [statusFilter, setStatusFilter] = useState<ProfessionalStatus | "all">("all")
@@ -91,6 +96,7 @@ export function ProfessionalManagement({
           _id: p._id.toString()
         })) as Professional[])
         setPagination(result.data?.pagination || pagination)
+        setStats(result.data?.stats || stats)
       } else {
         toast({
           variant: "destructive",
@@ -200,12 +206,12 @@ export function ProfessionalManagement({
     return new Date(dateString).toLocaleDateString("he-IL")
   }
 
-  // Statistics
-  const stats = {
-    total: pagination.total,
-    active: professionals.filter(p => p.status === "active").length,
-    pending: professionals.filter(p => p.status === "pending_admin_approval").length,
-    rejected: professionals.filter(p => p.status === "rejected").length
+  // Statistics from server
+  const computedStats = {
+    total: stats.total,
+    active: stats.active,
+    pending: stats.byStatus["pending_admin_approval"] || 0,
+    rejected: stats.byStatus["rejected"] || 0
   }
 
   if (loading && professionals.length === 0) {
@@ -248,7 +254,7 @@ export function ProfessionalManagement({
           <CardContent>
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-blue-600" />
-              <span className="text-2xl font-bold">{stats.total}</span>
+              <span className="text-2xl font-bold">{computedStats.total}</span>
             </div>
           </CardContent>
         </Card>
@@ -262,7 +268,7 @@ export function ProfessionalManagement({
           <CardContent>
             <div className="flex items-center gap-2">
               <UserCheck className="w-4 h-4 text-green-600" />
-              <span className="text-2xl font-bold text-green-600">{stats.active}</span>
+              <span className="text-2xl font-bold text-green-600">{computedStats.active}</span>
             </div>
           </CardContent>
         </Card>
@@ -276,7 +282,7 @@ export function ProfessionalManagement({
           <CardContent>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-orange-600" />
-              <span className="text-2xl font-bold text-orange-600">{stats.pending}</span>
+              <span className="text-2xl font-bold text-orange-600">{computedStats.pending}</span>
             </div>
           </CardContent>
         </Card>
@@ -290,7 +296,7 @@ export function ProfessionalManagement({
           <CardContent>
             <div className="flex items-center gap-2">
               <UserX className="w-4 h-4 text-red-600" />
-              <span className="text-2xl font-bold text-red-600">{stats.rejected}</span>
+              <span className="text-2xl font-bold text-red-600">{computedStats.rejected}</span>
             </div>
           </CardContent>
         </Card>
@@ -440,7 +446,7 @@ export function ProfessionalManagement({
           </Button>
           
           <div className="flex items-center gap-2">
-            {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+            {Array.from({ length: pagination.pages }, (_, i) => {
               const page = i + 1
               return (
                 <Button

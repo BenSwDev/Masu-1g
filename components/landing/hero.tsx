@@ -59,8 +59,15 @@ export function LandingHero() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Button asChild size="lg" className="bg-gradient-to-r from-turquoise-600 to-blue-600 hover:from-turquoise-700 hover:to-blue-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
-              <Link href="/bookings/treatment" className="flex items-center gap-2">
-                {dir === "rtl" ? "הזמן טיפול עכשיו" : "Book Treatment Now"}
+              <Link href="/bookings/treatment?category=massages" className="flex items-center gap-2">
+                {dir === "rtl" ? "הזמנת עיסוי" : "Book Massage"}
+                <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
+              </Link>
+            </Button>
+
+            <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
+              <Link href="/bookings/treatment?category=facial_treatments" className="flex items-center gap-2">
+                {dir === "rtl" ? "הזמנת טיפול פנים" : "Book Facial"}
                 <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
               </Link>
             </Button>

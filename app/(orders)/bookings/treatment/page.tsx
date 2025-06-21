@@ -14,13 +14,14 @@ export const dynamic = 'force-dynamic'
 export default async function UniversalBookTreatmentPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ voucherCode?: string; subscriptionId?: string }>
+  searchParams?: Promise<{ voucherCode?: string; subscriptionId?: string; category?: string }>
 }) {
   try {
     const session = await getServerSession(authOptions)
     const resolvedSearchParams = await searchParams
     const voucherCode = resolvedSearchParams?.voucherCode
     const subscriptionId = resolvedSearchParams?.subscriptionId
+    const category = resolvedSearchParams?.category
 
     // Always use getBookingInitialData to get full data regardless of user status
     const initialDataResult = session?.user?.id 
@@ -67,6 +68,7 @@ export default async function UniversalBookTreatmentPage({
           currentUser={session?.user}
           voucher={voucher}
           userSubscription={subscription}
+          initialCategory={category}
         />
       </GuestLayout>
     )

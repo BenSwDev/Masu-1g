@@ -81,6 +81,7 @@ interface UniversalBookingWizardProps {
   voucher?: GiftVoucherPlain
   userSubscription?: IUserSubscription & { treatmentId?: any }
   currentUser?: any // User session data if logged in
+  initialCategory?: string
 }
 
 const TOTAL_STEPS_WITH_PAYMENT = 6
@@ -88,11 +89,12 @@ const CONFIRMATION_STEP_NUMBER = TOTAL_STEPS_WITH_PAYMENT + 1
 
 const TIMEZONE = "Asia/Jerusalem"
 
-export default function UniversalBookingWizard({ 
-  initialData, 
-  voucher, 
-  userSubscription, 
-  currentUser 
+export default function UniversalBookingWizard({
+  initialData,
+  voucher,
+  userSubscription,
+  currentUser,
+  initialCategory
 }: UniversalBookingWizardProps) {
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
@@ -840,6 +842,7 @@ export default function UniversalBookingWizard({
         return (
           <GuestTreatmentSelectionStep
             initialData={initialData}
+            initialCategory={initialCategory}
             bookingOptions={bookingOptions}
             setBookingOptions={setBookingOptions}
             onNext={nextStep}

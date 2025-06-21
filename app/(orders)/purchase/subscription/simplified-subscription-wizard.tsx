@@ -221,246 +221,269 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     return <GuestSubscriptionConfirmation userSubscription={purchasedSubscription} />
   }
 
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
+
+  const treatmentCategories = [...new Set(treatments.map(t => t.category))]
+  const categoryTreatments = selectedCategory ? 
+    treatments.filter(t => t.category === selectedCategory) : []
+
   const renderStep1 = () => (
-    <div className="space-y-6" dir={dir} lang={language}>
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900">{t("subscriptions.purchase.selectSubscription")}</h2>
-        <p className="text-gray-600 mt-2">בחר מנוי וטיפול במחיר מיוחד</p>
+    <div className="max-w-2xl mx-auto space-y-6" dir={dir} lang={language}>
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">רכישת מנוי</h2>
+        <p className="text-gray-600">בחר מנוי וטיפול במחיר מיוחד</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5" />
-            בחירת מנוי
-          </CardTitle>
+      {/* מנוי */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">בחירת מנוי</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Select value={selectedSubscriptionId} onValueChange={setSelectedSubscriptionId}>
-            <SelectTrigger>
-              <SelectValue placeholder="בחר מנוי..." />
-            </SelectTrigger>
-            <SelectContent>
-              {subscriptions.map((sub) => (
-                <SelectItem key={sub._id} value={sub._id}>
+        <CardContent>
+          <div className="grid gap-3">
+            {subscriptions.map((sub) => (
+              <div
+                key={sub._id}
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  selectedSubscriptionId === sub._id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                }`}
+                onClick={() => setSelectedSubscriptionId(sub._id)}
+              >
+                <div className="flex justify-between items-center">
                   <div>
-                    <div className="font-medium">{sub.name}</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="font-semibold">{sub.name}</div>
+                    <div className="text-sm text-gray-600">
                       {sub.quantity + sub.bonusQuantity} טיפולים • {sub.validityMonths} חודשים
                     </div>
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {selectedSubscription && (
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <div className="font-medium">{selectedSubscription.description}</div>
-              <div className="flex gap-2 mt-2">
-                <Badge variant="secondary">
-                  {selectedSubscription.quantity} טיפולים
-                </Badge>
-                {selectedSubscription.bonusQuantity > 0 && (
-                  <Badge variant="outline" className="bg-green-50">
-                    +{selectedSubscription.bonusQuantity} בונוס
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>בחירת טיפול</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Object.entries(treatmentsByCategory).map(([category, categoryTreatments]) => (
-            <div key={category}>
-              <h4 className="font-medium mb-2">
-                {t(`treatments.categories.${category}`, category)}
-              </h4>
-              <Select 
-                value={selectedTreatmentId} 
-                onValueChange={(value) => {
-                  setSelectedTreatmentId(value)
-                  setSelectedDurationId("")
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר טיפול..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryTreatments.map((treatment) => (
-                    <SelectItem key={treatment._id} value={treatment._id}>
-                      <div>
-                        <div className="font-medium">{treatment.name}</div>
-                        {treatment.description && (
-                          <div className="text-sm text-gray-500">{treatment.description}</div>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          ))}
-
-          {selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations && (
-            <div>
-              <h4 className="font-medium mb-2">בחירת משך זמן</h4>
-              <Select value={selectedDurationId} onValueChange={setSelectedDurationId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר משך זמן..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedTreatment.durations.filter(d => d.isActive).map((duration) => (
-                    <SelectItem key={duration._id} value={duration._id}>
-                      <div className="flex justify-between items-center w-full">
-                        <span>{duration.minutes} דקות</span>
-                        <span className="font-medium">₪{duration.price}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {selectedTreatment && (
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <div className="font-medium">{selectedTreatment.name}</div>
-              {selectedTreatment.description && (
-                <div className="text-sm text-gray-600 mt-1">{selectedTreatment.description}</div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {canProceedToStep2 && (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-800 mb-2">
-                סה"כ לתשלום: ₪{totalPrice.toFixed(2)}
-              </div>
-              <div className="text-sm text-green-700">
-                {selectedSubscription?.quantity} טיפולים × ₪{pricePerSession} = ₪{totalPrice.toFixed(2)}
-              </div>
-              {selectedSubscription?.bonusQuantity > 0 && (
-                <div className="text-sm text-green-700 mt-1">
-                  + {selectedSubscription.bonusQuantity} טיפולים בונוס חינם!
+                  <div className="flex gap-2">
+                    <Badge variant="secondary">{sub.quantity}</Badge>
+                    {sub.bonusQuantity > 0 && (
+                      <Badge variant="outline" className="bg-green-50">+{sub.bonusQuantity}</Badge>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* קטגוריית טיפול */}
+      {selectedSubscriptionId && (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">סוג טיפול</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              {treatmentCategories.map((category) => (
+                <div
+                  key={category}
+                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all text-center ${
+                    selectedCategory === category ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                  }`}
+                  onClick={() => {
+                    setSelectedCategory(category)
+                    setSelectedTreatmentId("")
+                    setSelectedDurationId("")
+                  }}
+                >
+                  <div className="font-medium">
+                    {t(`treatments.categories.${category}`, category)}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       )}
 
-      <div className="flex justify-center">
-        <Button 
-          onClick={() => setCurrentStep(2)} 
-          disabled={!canProceedToStep2}
-          size="lg"
-          className="min-w-48"
-        >
-          המשך לפרטים אישיים
-        </Button>
-      </div>
+      {/* טיפולים לפי קטגוריה */}
+      {selectedCategory && (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">בחירת טיפול</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3">
+              {categoryTreatments.map((treatment) => (
+                <div
+                  key={treatment._id}
+                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                    selectedTreatmentId === treatment._id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                  }`}
+                  onClick={() => {
+                    setSelectedTreatmentId(treatment._id)
+                    setSelectedDurationId("")
+                  }}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="font-medium">{treatment.name}</div>
+                    {treatment.pricingType === "fixed" && (
+                      <div className="font-bold text-blue-600">₪{treatment.fixedPrice}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* משכי זמן */}
+      {selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations && (
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">משך זמן</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              {selectedTreatment.durations.filter(d => d.isActive).map((duration) => (
+                <div
+                  key={duration._id}
+                  className={`p-4 border-2 rounded-lg cursor-pointer transition-all text-center ${
+                    selectedDurationId === duration._id ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                  }`}
+                  onClick={() => setSelectedDurationId(duration._id)}
+                >
+                  <div className="font-medium">{duration.minutes} דקות</div>
+                  <div className="font-bold text-blue-600">₪{duration.price}</div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* סיכום מחיר */}
+      {canProceedToStep2 && (
+        <Card className="border-green-200 bg-green-50 shadow-sm">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-800 mb-2">
+                ₪{totalPrice.toFixed(2)}
+              </div>
+              <div className="text-green-700">
+                {selectedSubscription?.quantity} טיפולים × ₪{pricePerSession}
+              </div>
+              {selectedSubscription?.bonusQuantity > 0 && (
+                <div className="text-green-700 mt-1 font-medium">
+                  + {selectedSubscription.bonusQuantity} טיפולים בונוס!
+                </div>
+              )}
+              <Button 
+                onClick={() => setCurrentStep(2)} 
+                size="lg"
+                className="mt-4 w-full"
+              >
+                המשך לתשלום
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 
   const renderStep2 = () => (
-    <div className="space-y-6" dir={dir} lang={language}>
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gray-900">פרטים אישיים ותשלום</h2>
-        <p className="text-gray-600 mt-2">מלא פרטים אישיים ובצע תשלום</p>
+    <div className="max-w-4xl mx-auto space-y-6" dir={dir} lang={language}>
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">השלמת הרכישה</h2>
+        <p className="text-gray-600">מלא פרטים אישיים ובצע תשלום</p>
       </div>
 
-      {/* Summary Card */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardHeader>
-          <CardTitle className="text-lg">סיכום הזמנה</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <div className="font-medium text-gray-700">מנוי:</div>
-              <div>{selectedSubscription?.name}</div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700">טיפול:</div>
-              <div>{selectedTreatment?.name}</div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700">כמות:</div>
-              <div>{selectedSubscription?.quantity} טיפולים</div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700">מחיר:</div>
-              <div className="font-bold text-lg">₪{totalPrice.toFixed(2)}</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* פרטים אישיים ותשלום */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">פרטים אישיים</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GuestInfoStep
+                guestInfo={guestInfo}
+                setGuestInfo={setGuestInfo}
+                onNext={(info) => {
+                  setGuestInfo(info)
+                  if (!guestUserId) {
+                    createGuestUser({
+                      firstName: info.firstName,
+                      lastName: info.lastName,
+                      email: info.email,
+                      phone: info.phone,
+                      birthDate: info.birthDate,
+                      gender: info.gender,
+                    }).then((result) => {
+                      if (result.success && result.userId) {
+                        setGuestUserId(result.userId)
+                      }
+                    })
+                  }
+                }}
+                hideBookingForSomeoneElse={true}
+              />
+            </CardContent>
+          </Card>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              פרטים אישיים
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <GuestInfoStep
-              guestInfo={guestInfo}
-              setGuestInfo={setGuestInfo}
-              onNext={(info) => {
-                setGuestInfo(info)
-                // Create guest user if needed but don't proceed to purchase yet
-                if (!guestUserId) {
-                  createGuestUser({
-                    firstName: info.firstName,
-                    lastName: info.lastName,
-                    email: info.email,
-                    phone: info.phone,
-                    birthDate: info.birthDate,
-                    gender: info.gender,
-                  }).then((result) => {
-                    if (result.success && result.userId) {
-                      setGuestUserId(result.userId)
-                    }
-                  })
-                }
-              }}
-              onPrev={() => setCurrentStep(1)}
-              hideBookingForSomeoneElse={true}
-            />
-          </CardContent>
-        </Card>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">תשלום</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <GuestPaymentStep
+                calculatedPrice={calculatedPrice}
+                guestInfo={guestInfo}
+                setGuestInfo={setGuestInfo}
+                onConfirm={handlePurchase}
+                isLoading={isLoading}
+              />
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5" />
-              תשלום
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <GuestPaymentStep
-              calculatedPrice={calculatedPrice}
-              guestInfo={guestInfo}
-              setGuestInfo={setGuestInfo}
-              onConfirm={handlePurchase}
-              onPrev={() => setCurrentStep(1)}
-              isLoading={isLoading}
-            />
-          </CardContent>
-        </Card>
+        {/* סיכום הזמנה */}
+        <div>
+          <Card className="border-blue-200 bg-blue-50 shadow-sm sticky top-6">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">סיכום הזמנה</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">מנוי</span>
+                  <span className="font-medium">{selectedSubscription?.name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">טיפול</span>
+                  <span className="font-medium">{selectedTreatment?.name}</span>
+                </div>
+                {selectedDuration && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">משך זמן</span>
+                    <span className="font-medium">{selectedDuration.minutes} דקות</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                  <span>כמות טיפולים</span>
+                  <span>{selectedSubscription?.quantity}</span>
+                </div>
+                {selectedSubscription?.bonusQuantity > 0 && (
+                  <div className="flex justify-between items-center text-sm text-green-600">
+                    <span>בונוס</span>
+                    <span>+{selectedSubscription.bonusQuantity}</span>
+                  </div>
+                )}
+                <div className="border-t pt-3 mt-3">
+                  <div className="flex justify-between items-center text-xl font-bold text-blue-800">
+                    <span>סה"כ</span>
+                    <span>₪{totalPrice.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
@@ -473,4 +496,4 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
       {currentStep === 1 ? renderStep1() : renderStep2()}
     </div>
   )
-} 
+}

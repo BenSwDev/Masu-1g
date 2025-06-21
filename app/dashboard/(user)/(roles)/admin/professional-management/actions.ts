@@ -9,6 +9,25 @@ import { revalidatePath } from "next/cache"
 import { Types } from "mongoose"
 import { hash } from "bcryptjs"
 import Booking, { IBooking } from "@/lib/db/models/booking"
+import { z } from "zod"
+
+// Validation schemas
+const GetProfessionalsSchema = z.object({
+  page: z.number().min(1).optional().default(1),
+  limit: z.number().min(1).max(100).optional().default(10),
+  search: z.string().optional().default(""),
+  status: z.enum(["active", "pending_admin_approval", "pending_user_action", "rejected", "suspended"]).optional(),
+  sortBy: z.string().optional().default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).optional().default("desc")
+})
+
+const CreateProfessionalSchema = z.object({
+  name: z.string().min(2, "שם חייב להכיל לפחות 2 תווים"),
+  email: z.string().email("כתובת אימייל לא תקינה"),
+  phone: z.string().min(10, "מספר טלפון חייב להכיל לפחות 10 ספרות"),
+  gender: z.enum(["male", "female"]),
+  birthDate: z.string().optional()
+})
 
 interface GetProfessionalsOptions {
   page?: number
@@ -57,52 +76,123 @@ interface DeleteProfessionalResult {
 
 type ProfessionalWithUser = IProfessionalProfile & { userId: IUser }
 
+// Helper function to check admin authorization
+async function requireAdminAuth() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.roles?.includes("admin")) {
+    throw new Error("Unauthorized: Admin access required")
+  }
+  return session
+}
+
+// Helper function to build search query
+function buildSearchQuery(search: string, status?: ProfessionalStatus) {
+  const query: any = {}
+  
+  // Add search conditions if search term provided
+  if (search.trim()) {
+    const searchRegex = { $regex: search.trim(), $options: "i" }
+    query.$or = [
+      { "userId.name": searchRegex },
+      { "userId.email": searchRegex },
+      { "userId.phone": searchRegex }
+    ]
+  }
+
+  // Add status filter
+  if (status) {
+    query.status = status
+  }
+
+  return query
+}
+
 export async function getProfessionals(options: GetProfessionalsOptions = {}): Promise<GetProfessionalsResult> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
-    }
+    // Authorize user
+    await requireAdminAuth()
 
+    // Connect to database
     await dbConnect()
 
-    const {
-      page = 1,
-      limit = 10,
-      search = "",
-      status,
-      sortBy = "createdAt",
-      sortOrder = "desc"
-    } = options
+    // Validate and sanitize input
+    const validatedOptions = GetProfessionalsSchema.parse(options)
+    const { page, limit, search, status, sortBy, sortOrder } = validatedOptions
 
-    const query: Record<string, unknown> = {}
+    // Build aggregation pipeline for better performance
+    const pipeline: any[] = [
+      // Lookup user data
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userId"
+        }
+      },
+      // Unwind user data
+      {
+        $unwind: "$userId"
+      },
+      // Match only users with professional role
+      {
+        $match: {
+          "userId.roles": "professional"
+        }
+      }
+    ]
 
-    if (search) {
-      query["userId.name"] = { $regex: search, $options: "i" }
+    // Add search and status filters
+    const matchStage: any = {}
+    
+    if (search.trim()) {
+      const searchRegex = { $regex: search.trim(), $options: "i" }
+      matchStage.$or = [
+        { "userId.name": searchRegex },
+        { "userId.email": searchRegex },
+        { "userId.phone": searchRegex }
+      ]
     }
 
     if (status) {
-      query.status = status
+      matchStage.status = status
     }
 
-    const total = await ProfessionalProfile.countDocuments(query)
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage })
+    }
+
+    // Count total documents for pagination
+    const countPipeline = [...pipeline, { $count: "total" }]
+    const countResult = await ProfessionalProfile.aggregate(countPipeline)
+    const total = countResult[0]?.total || 0
     const pages = Math.ceil(total / limit)
 
-    const sortField = sortBy === "user.name" ? "userId.name" : sortBy
+    // Add sorting
+    const sortStage: any = {}
+    if (sortBy === "user.name") {
+      sortStage["userId.name"] = sortOrder === "asc" ? 1 : -1
+    } else {
+      sortStage[sortBy] = sortOrder === "asc" ? 1 : -1
+    }
+    pipeline.push({ $sort: sortStage })
 
-    const professionals = await ProfessionalProfile.find(query)
-      .populate("userId", "name email phone gender birthDate")
-      .sort({ [sortField]: sortOrder === "asc" ? 1 : -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean()
+    // Add pagination
+    pipeline.push(
+      { $skip: (page - 1) * limit },
+      { $limit: limit }
+    )
 
+    // Execute query
+    const professionals = await ProfessionalProfile.aggregate(pipeline)
+
+    // Get statistics
     const stats = await ProfessionalProfile.getStatistics()
 
     return {
       success: true,
       data: {
-        professionals: professionals as unknown as ProfessionalWithUser[],
+        professionals: professionals as ProfessionalWithUser[],
         pagination: {
           page,
           limit,
@@ -114,87 +204,165 @@ export async function getProfessionals(options: GetProfessionalsOptions = {}): P
     }
   } catch (error) {
     console.error("Error getting professionals:", error)
-    return { success: false, error: "Failed to get professionals" }
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה לצפות במטפלים" }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה בטעינת המטפלים" 
+    }
   }
 }
 
 export async function getProfessionalById(id: string): Promise<CreateProfessionalResult> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+    // Validate input
+    if (!id || !Types.ObjectId.isValid(id)) {
+      return { success: false, error: "מזהה מטפל לא תקין" }
     }
 
+    // Authorize user
+    await requireAdminAuth()
+
+    // Connect to database
     await dbConnect()
 
     const professional = await ProfessionalProfile.findById(id)
-      .populate("userId", "name email phone gender birthDate")
-      .populate("bookings")
+      .populate("userId", "name email phone gender birthDate roles")
       .lean()
 
     if (!professional) {
-      return { success: false, error: "Professional not found" }
+      return { success: false, error: "מטפל לא נמצא" }
     }
 
-    return { success: true, professional: professional as unknown as ProfessionalWithUser }
+    // Verify user has professional role
+    const user = professional.userId as IUser
+    if (!user.roles?.includes("professional")) {
+      return { success: false, error: "המשתמש אינו מטפל" }
+    }
+
+    return { success: true, professional: professional as ProfessionalWithUser }
   } catch (error) {
     console.error("Error getting professional:", error)
-    return { success: false, error: "Failed to get professional" }
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה לצפות במטפל" }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה בטעינת המטפל" 
+    }
   }
 }
 
 export async function createProfessional(formData: FormData): Promise<CreateProfessionalResult> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+    // Authorize user
+    await requireAdminAuth()
+
+    // Extract and validate form data
+    const rawData = {
+      name: formData.get("name") as string,
+      email: formData.get("email") as string,
+      phone: formData.get("phone") as string,
+      gender: formData.get("gender") as string,
+      birthDate: formData.get("birthDate") as string
     }
 
+    const validatedData = CreateProfessionalSchema.parse(rawData)
+
+    // Connect to database
     await dbConnect()
 
-    const name = formData.get("name") as string
-    const email = formData.get("email") as string
-    const phone = formData.get("phone") as string
-    const gender = formData.get("gender") as string
-    const birthDate = formData.get("birthDate") as string
-
     // Check if user already exists
-    const existingUser = await User.findOne({ email })
+    const existingUser = await User.findOne({ 
+      $or: [
+        { email: validatedData.email },
+        { phone: validatedData.phone }
+      ]
+    })
+    
     if (existingUser) {
-      return { success: false, error: "User already exists" }
+      return { 
+        success: false, 
+        error: "משתמש עם אימייל או טלפון זה כבר קיים במערכת" 
+      }
     }
 
-    // Create user
-    const hashedPassword = await hash("123456", 12) // Default password
-    const user = await User.create({
-      name,
-      email,
-      phone,
-      gender,
-      birthDate,
-      password: hashedPassword,
-      roles: ["professional"],
-      activeRole: "professional"
-    })
+    // Create user with transaction
+    const session = await User.startSession()
+    
+    try {
+      await session.withTransaction(async () => {
+        // Create user
+        const hashedPassword = await hash("123456", 12) // Default password
+        const user = await User.create([{
+          name: validatedData.name,
+          email: validatedData.email,
+          phone: validatedData.phone,
+          gender: validatedData.gender,
+          birthDate: validatedData.birthDate ? new Date(validatedData.birthDate) : undefined,
+          password: hashedPassword,
+          roles: ["professional"],
+          activeRole: "professional",
+          isEmailVerified: false,
+          isPhoneVerified: false
+        }], { session })
 
-    // Create professional profile
-    const professional = await ProfessionalProfile.create({
-      userId: user._id,
-      status: "pending_admin_approval" as ProfessionalStatus,
-      appliedAt: new Date()
-    })
+        // Create professional profile
+        await ProfessionalProfile.create([{
+          userId: user[0]._id,
+          status: "pending_admin_approval" as ProfessionalStatus,
+          isActive: true,
+          treatments: [],
+          workAreas: [],
+          totalEarnings: 0,
+          pendingPayments: 0,
+          financialTransactions: [],
+          appliedAt: new Date()
+        }], { session })
+      })
+    } finally {
+      await session.endSession()
+    }
 
-    const populatedProfessional = await ProfessionalProfile.findById(professional._id)
-      .populate("userId", "name email phone gender birthDate")
+    // Fetch the created professional with populated user data
+    const createdProfessionalQuery = await ProfessionalProfile.findOne({ 
+      "userId": { $in: await User.find({ email: validatedData.email }).select("_id") }
+    })
+      .populate("userId", "name email phone gender birthDate roles")
       .lean()
+
+    if (!createdProfessionalQuery) {
+      throw new Error("שגיאה ביצירת המטפל")
+    }
+
+    // Revalidate the professional management page
+    revalidatePath("/dashboard/admin/professional-management")
 
     return { 
       success: true, 
-      professional: populatedProfessional as unknown as ProfessionalWithUser 
+      professional: createdProfessionalQuery as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error creating professional:", error)
-    return { success: false, error: "Failed to create professional" }
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה ליצור מטפל" }
+    }
+    
+    if (error instanceof z.ZodError) {
+      const fieldErrors = error.errors.map(err => err.message).join(", ")
+      return { success: false, error: `שגיאות בנתונים: ${fieldErrors}` }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה ביצירת המטפל" 
+    }
   }
 }
 
@@ -205,27 +373,50 @@ export async function updateProfessionalStatus(
   rejectionReason?: string
 ): Promise<UpdateProfessionalResult> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+    // Validate input
+    if (!id || !Types.ObjectId.isValid(id)) {
+      return { success: false, error: "מזהה מטפל לא תקין" }
     }
 
+    if (!["active", "pending_admin_approval", "pending_user_action", "rejected", "suspended"].includes(status)) {
+      return { success: false, error: "סטטוס לא תקין" }
+    }
+
+    // Authorize user
+    const session = await requireAdminAuth()
+
+    // Connect to database
     await dbConnect()
 
     const professional = await ProfessionalProfile.findById(id)
     if (!professional) {
-      return { success: false, error: "Professional not found" }
+      return { success: false, error: "מטפל לא נמצא" }
     }
 
-    const updateData: Partial<IProfessionalProfile> = { status }
+    // Prepare update data
+    const updateData: Partial<IProfessionalProfile> = { 
+      status,
+      lastActiveAt: new Date()
+    }
 
+    // Add status-specific fields
     if (status === "active") {
       updateData.approvedAt = new Date()
+      updateData.rejectedAt = undefined
+      updateData.rejectionReason = undefined
     } else if (status === "rejected") {
       updateData.rejectedAt = new Date()
-      updateData.rejectionReason = rejectionReason
+      updateData.approvedAt = undefined
+      if (rejectionReason) {
+        updateData.rejectionReason = rejectionReason
+      }
+    } else if (status === "pending_admin_approval" || status === "pending_user_action") {
+      updateData.approvedAt = undefined
+      updateData.rejectedAt = undefined
+      updateData.rejectionReason = undefined
     }
 
+    // Add admin notes
     if (adminNote) {
       updateData.adminNotes = adminNote
     }
@@ -233,23 +424,36 @@ export async function updateProfessionalStatus(
     const updatedProfessional = await ProfessionalProfile.findByIdAndUpdate(
       id,
       updateData,
-      { new: true }
+      { new: true, runValidators: true }
     )
-      .populate("userId", "name email phone gender birthDate")
+      .populate("userId", "name email phone gender birthDate roles")
       .lean()
 
     if (!updatedProfessional) {
-      return { success: false, error: "Failed to update professional" }
+      return { success: false, error: "שגיאה בעדכון המטפל" }
     }
 
+    // Log the status change for audit
+    console.log(`Professional ${id} status changed to ${status} by admin ${session.user.id}`)
+
+    // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
+
     return { 
       success: true, 
-      professional: updatedProfessional as unknown as ProfessionalWithUser 
+      professional: updatedProfessional as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error updating professional status:", error)
-    return { success: false, error: "Failed to update professional status" }
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה לעדכן מטפל" }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה בעדכון סטטוס המטפל" 
+    }
   }
 }
 
@@ -258,33 +462,67 @@ export async function updateProfessionalTreatments(
   treatments: IProfessionalProfile["treatments"]
 ): Promise<UpdateProfessionalResult> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+    // Validate input
+    if (!id || !Types.ObjectId.isValid(id)) {
+      return { success: false, error: "מזהה מטפל לא תקין" }
     }
 
+    if (!Array.isArray(treatments)) {
+      return { success: false, error: "רשימת טיפולים לא תקינה" }
+    }
+
+    // Authorize user
+    await requireAdminAuth()
+
+    // Connect to database
     await dbConnect()
+
+    // Validate treatment objects
+    const validatedTreatments = treatments.map(treatment => {
+      if (!treatment.treatmentId) {
+        throw new Error("מזהה טיפול חסר")
+      }
+      
+      return {
+        treatmentId: new Types.ObjectId(treatment.treatmentId),
+        durationId: treatment.durationId ? new Types.ObjectId(treatment.durationId) : undefined,
+        professionalPrice: Number(treatment.professionalPrice) || 0
+      }
+    })
 
     const professional = await ProfessionalProfile.findByIdAndUpdate(
       id,
-      { treatments },
-      { new: true }
+      { 
+        treatments: validatedTreatments,
+        lastActiveAt: new Date()
+      },
+      { new: true, runValidators: true }
     )
-      .populate("userId", "name email phone gender birthDate")
+      .populate("userId", "name email phone gender birthDate roles")
       .lean()
 
     if (!professional) {
-      return { success: false, error: "Professional not found" }
+      return { success: false, error: "מטפל לא נמצא" }
     }
 
+    // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
+
     return { 
       success: true, 
-      professional: professional as unknown as ProfessionalWithUser 
+      professional: professional as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error updating professional treatments:", error)
-    return { success: false, error: "Failed to update professional treatments" }
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה לעדכן טיפולי המטפל" }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה בעדכון טיפולי המטפל" 
+    }
   }
 }
 
@@ -293,48 +531,105 @@ export async function updateProfessionalWorkAreas(
   workAreas: IProfessionalProfile["workAreas"]
 ): Promise<UpdateProfessionalResult> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+    // Validate input
+    if (!id || !Types.ObjectId.isValid(id)) {
+      return { success: false, error: "מזהה מטפל לא תקין" }
     }
 
+    if (!Array.isArray(workAreas)) {
+      return { success: false, error: "רשימת איזורי עבודה לא תקינה" }
+    }
+
+    // Authorize user
+    await requireAdminAuth()
+
+    // Connect to database
     await dbConnect()
+
+    // Validate work area objects
+    const validatedWorkAreas = workAreas.map(workArea => {
+      if (!workArea.cityId || !workArea.cityName) {
+        throw new Error("נתוני איזור עבודה חסרים")
+      }
+      
+      const validDistanceRadii = ["20km", "40km", "60km", "80km", "unlimited"]
+      if (!validDistanceRadii.includes(workArea.distanceRadius)) {
+        throw new Error("רדיוס מרחק לא תקין")
+      }
+      
+      return {
+        cityId: new Types.ObjectId(workArea.cityId),
+        cityName: workArea.cityName,
+        distanceRadius: workArea.distanceRadius,
+        coveredCities: Array.isArray(workArea.coveredCities) ? workArea.coveredCities : []
+      }
+    })
 
     const professional = await ProfessionalProfile.findByIdAndUpdate(
       id,
-      { workAreas },
-      { new: true }
+      { 
+        workAreas: validatedWorkAreas,
+        lastActiveAt: new Date()
+      },
+      { new: true, runValidators: true }
     )
-      .populate("userId", "name email phone gender birthDate")
+      .populate("userId", "name email phone gender birthDate roles")
       .lean()
 
     if (!professional) {
-      return { success: false, error: "Professional not found" }
+      return { success: false, error: "מטפל לא נמצא" }
     }
 
+    // Update covered cities for each work area
+    try {
+      const updatedProfessional = await ProfessionalProfile.findById(id)
+      if (updatedProfessional) {
+        for (let i = 0; i < updatedProfessional.workAreas.length; i++) {
+          await updatedProfessional.updateCoveredCities(i)
+        }
+      }
+    } catch (coveredCitiesError) {
+      // Log error but don't fail the main operation
+      console.warn("Error updating covered cities:", coveredCitiesError)
+    }
+
+    // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
+
     return { 
       success: true, 
-      professional: professional as unknown as ProfessionalWithUser 
+      professional: professional as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error updating professional work areas:", error)
-    return { success: false, error: "Failed to update professional work areas" }
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה לעדכן איזורי עבודה של המטפל" }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה בעדכון איזורי העבודה" 
+    }
   }
 }
 
 export async function deleteProfessional(id: string): Promise<DeleteProfessionalResult> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+    // Validate input
+    if (!id || !Types.ObjectId.isValid(id)) {
+      return { success: false, error: "מזהה מטפל לא תקין" }
     }
 
+    // Authorize user
+    await requireAdminAuth()
+
+    // Connect to database
     await dbConnect()
 
     const professional = await ProfessionalProfile.findById(id)
     if (!professional) {
-      return { success: false, error: "Professional not found" }
+      return { success: false, error: "מטפל לא נמצא" }
     }
 
     // Check if professional has any active bookings
@@ -344,19 +639,54 @@ export async function deleteProfessional(id: string): Promise<DeleteProfessional
     })
 
     if (activeBookings > 0) {
-      return { success: false, error: "Cannot delete professional with active bookings" }
+      return { 
+        success: false, 
+        error: `לא ניתן למחוק מטפל עם ${activeBookings} הזמנות פעילות` 
+      }
     }
 
-    // Delete professional profile
-    await ProfessionalProfile.findByIdAndDelete(id)
+    // Check if professional has any pending bookings
+    const pendingBookings = await Booking.countDocuments({
+      professionalId: new Types.ObjectId(id),
+      status: { $in: ["pending_professional_assignment", "pending_payment"] as IBooking["status"][] }
+    })
 
-    // Delete associated user
-    await User.findByIdAndDelete(professional.userId)
+    if (pendingBookings > 0) {
+      return { 
+        success: false, 
+        error: `לא ניתן למחוק מטפל עם ${pendingBookings} הזמנות ממתינות` 
+      }
+    }
 
+    // Use transaction for safe deletion
+    const session = await ProfessionalProfile.startSession()
+    
+    try {
+      await session.withTransaction(async () => {
+        // Delete professional profile first
+        await ProfessionalProfile.findByIdAndDelete(id, { session })
+
+        // Delete associated user
+        await User.findByIdAndDelete(professional.userId, { session })
+      })
+    } finally {
+      await session.endSession()
+    }
+
+    // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
+
     return { success: true }
   } catch (error) {
     console.error("Error deleting professional:", error)
-    return { success: false, error: "Failed to delete professional" }
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה למחוק מטפל" }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה במחיקת המטפל" 
+    }
   }
 } 

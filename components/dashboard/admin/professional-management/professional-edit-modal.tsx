@@ -4,31 +4,48 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 import { useTranslation } from "@/lib/translations/i18n"
+import { Badge } from "@/components/common/ui/badge"
+import { Button } from "@/components/common/ui/button"
+import { AlertTriangle, X, User, Stethoscope, MapPin, TrendingUp } from "lucide-react"
 import ProfessionalBasicInfoTabSimple from "./tabs/professional-basic-info-tab-simple"
 import ProfessionalTreatmentsTabSimple from "./tabs/professional-treatments-tab-simple"
 import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
 import ProfessionalEarningsTab from "./tabs/professional-earnings-tab"
+import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import type { IUser } from "@/lib/db/models/user"
 
 interface Professional {
   _id: string
-  userId: {
-    _id: string
-    name: string
-    email: string
-    phone: string
-    gender: string
-    birthDate?: string
-  }
-  status: string
-  treatments: any[]
-  workAreas: any[]
+  userId: IUser
+  status: ProfessionalStatus
+  isActive: boolean
+  specialization?: string
+  experience?: string
+  certifications?: string[]
+  bio?: string
+  profileImage?: string
+  treatments: Array<{
+    treatmentId: string
+    durationId?: string
+    professionalPrice: number
+    treatmentName?: string
+  }>
+  workAreas: Array<{
+    cityId: string
+    cityName: string
+    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
+    coveredCities: string[]
+  }>
+  totalEarnings: number
+  pendingPayments: number
   adminNotes?: string
   rejectionReason?: string
-  appliedAt: string
-  approvedAt?: string
-  rejectedAt?: string
-  lastActiveAt?: string
-  bookings?: any[]
+  appliedAt: Date
+  approvedAt?: Date
+  rejectedAt?: Date
+  lastActiveAt?: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
 interface ProfessionalEditModalProps {
@@ -47,58 +64,172 @@ export default function ProfessionalEditModal({
   const { t, dir } = useTranslation()
   const [activeTab, setActiveTab] = useState("basic")
   const [updatedProfessional, setUpdatedProfessional] = useState<Professional>(professional)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   const handleUpdate = (updatedData: Partial<Professional>) => {
     setUpdatedProfessional(prev => ({
       ...prev,
       ...updatedData
     }))
+    if (!isCreatingNew) {
+      setHasUnsavedChanges(true)
+    }
+  }
+
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      const confirmClose = window.confirm("יש לך שינויים שלא נשמרו. האם אתה בטוח שברצונך לסגור?")
+      if (!confirmClose) return
+    }
+    setHasUnsavedChanges(false)
+    onClose()
+  }
+
+  const getStatusBadge = (status: ProfessionalStatus) => {
+    const statusConfig = {
+      active: { variant: "default" as const, icon: User, text: "פעיל", color: "text-green-600" },
+      pending_admin_approval: { variant: "secondary" as const, icon: AlertTriangle, text: "ממתין לאישור", color: "text-orange-600" },
+      pending_user_action: { variant: "outline" as const, icon: AlertTriangle, text: "ממתין למשתמש", color: "text-blue-600" },
+      rejected: { variant: "destructive" as const, icon: X, text: "נדחה", color: "text-red-600" },
+      suspended: { variant: "destructive" as const, icon: AlertTriangle, text: "מושהה", color: "text-red-600" }
+    }
+
+    const config = statusConfig[status]
+    if (!config) return null
+    
+    const Icon = config.icon
+
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        <Icon className="w-3 h-3" />
+        {config.text}
+      </Badge>
+    )
+  }
+
+  const formatDate = (date?: Date | string) => {
+    if (!date) return "-"
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date
+      return dateObj.toLocaleDateString("he-IL")
+    } catch {
+      return "-"
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {isCreatingNew ? "יצירת מטפל חדש" : "עריכת מטפל"}
-          </DialogTitle>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle className="text-xl">
+                {isCreatingNew ? "יצירת מטפל חדש" : `עריכת מטפל - ${updatedProfessional.userId.name}`}
+              </DialogTitle>
+              {!isCreatingNew && (
+                <div className="flex items-center gap-3 mt-2">
+                  {getStatusBadge(updatedProfessional.status)}
+                  <span className="text-sm text-muted-foreground">
+                    הצטרף ב-{formatDate(updatedProfessional.appliedAt)}
+                  </span>
+                </div>
+              )}
+            </div>
+            {hasUnsavedChanges && (
+              <div className="flex items-center gap-2 text-orange-600">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm">שינויים לא נשמרו</span>
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="basic">פרטים בסיסיים</TabsTrigger>
-            <TabsTrigger value="treatments">טיפולים</TabsTrigger>
-            <TabsTrigger value="workAreas">איזורי פעילות</TabsTrigger>
-            <TabsTrigger value="earnings">הזמנות</TabsTrigger>
-          </TabsList>
+        <div className="flex-1 overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir} className="h-full flex flex-col">
+            <TabsList className="grid w-full grid-cols-4 flex-shrink-0">
+              <TabsTrigger value="basic" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">פרטים בסיסיים</span>
+                <span className="sm:hidden">פרטים</span>
+              </TabsTrigger>
+              <TabsTrigger value="treatments" className="flex items-center gap-2">
+                <Stethoscope className="w-4 h-4" />
+                <span className="hidden sm:inline">טיפולים</span>
+                <span className="sm:hidden">טיפולים</span>
+              </TabsTrigger>
+              <TabsTrigger value="workAreas" className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                <span className="hidden sm:inline">איזורי פעילות</span>
+                <span className="sm:hidden">איזורים</span>
+              </TabsTrigger>
+              <TabsTrigger value="earnings" className="flex items-center gap-2" disabled={isCreatingNew}>
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:inline">הזמנות</span>
+                <span className="sm:hidden">הזמנות</span>
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="basic">
-            <ProfessionalBasicInfoTabSimple
-              professional={updatedProfessional}
-              onUpdate={handleUpdate}
-              loading={false}
-              isCreatingNew={isCreatingNew}
-            />
-          </TabsContent>
+            <div className="flex-1 overflow-y-auto">
+              <TabsContent value="basic" className="h-full">
+                <ProfessionalBasicInfoTabSimple
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                  loading={false}
+                  isCreatingNew={isCreatingNew}
+                  onCreated={(newProfessional) => {
+                    setUpdatedProfessional(newProfessional)
+                    setHasUnsavedChanges(false)
+                  }}
+                />
+              </TabsContent>
 
-          <TabsContent value="treatments">
-            <ProfessionalTreatmentsTabSimple
-              professional={updatedProfessional}
-              onUpdate={handleUpdate}
-            />
-          </TabsContent>
+              <TabsContent value="treatments" className="h-full">
+                <ProfessionalTreatmentsTabSimple
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                  disabled={isCreatingNew && updatedProfessional._id === "new"}
+                />
+              </TabsContent>
 
-          <TabsContent value="workAreas">
-            <ProfessionalWorkAreasTabSimple
-              professional={updatedProfessional}
-              onUpdate={handleUpdate}
-            />
-          </TabsContent>
+              <TabsContent value="workAreas" className="h-full">
+                <ProfessionalWorkAreasTabSimple
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                  disabled={isCreatingNew && updatedProfessional._id === "new"}
+                />
+              </TabsContent>
 
-          <TabsContent value="earnings">
-            <ProfessionalEarningsTab professional={updatedProfessional} />
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="earnings" className="h-full">
+                {!isCreatingNew && (
+                  <ProfessionalEarningsTab professional={updatedProfessional} />
+                )}
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
+
+        {/* Modal Footer */}
+        <div className="flex-shrink-0 border-t pt-4 mt-4">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-muted-foreground">
+              {isCreatingNew ? (
+                "צור מטפל חדש ואז הגדר את הטיפולים ואיזורי הפעילות"
+              ) : (
+                `עודכן לאחרונה: ${formatDate(updatedProfessional.updatedAt)}`
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleClose}>
+                {hasUnsavedChanges ? "בטל" : "סגור"}
+              </Button>
+              {hasUnsavedChanges && !isCreatingNew && (
+                <Button onClick={() => setHasUnsavedChanges(false)}>
+                  שמור שינויים
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

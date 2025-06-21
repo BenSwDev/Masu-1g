@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
@@ -10,26 +10,45 @@ import { Badge } from "@/components/common/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { useToast } from "@/components/common/ui/use-toast"
-import { Search, Filter, Users, UserCheck, UserX, Clock, AlertTriangle, Plus } from "lucide-react"
+import { Search, Filter, Users, UserCheck, UserX, Clock, AlertTriangle, Plus, RefreshCw } from "lucide-react"
 import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import ProfessionalEditModal from "./professional-edit-modal"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
-import type { IProfessionalProfile } from "@/lib/db/models/professional-profile"
+import type { ProfessionalStatus, IProfessionalProfile } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
 
+// תיקון הInterface להתאמה מושלמת למודל
 interface Professional {
   _id: string
   userId: IUser
-  status?: ProfessionalStatus
-  treatments?: any[]
-  workAreas?: any[]
+  status: ProfessionalStatus
+  isActive: boolean
+  specialization?: string
+  experience?: string
+  certifications?: string[]
+  bio?: string
+  profileImage?: string
+  treatments: Array<{
+    treatmentId: string
+    durationId?: string
+    professionalPrice: number
+    treatmentName?: string
+  }>
+  workAreas: Array<{
+    cityId: string
+    cityName: string
+    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
+    coveredCities: string[]
+  }>
+  totalEarnings: number
+  pendingPayments: number
   adminNotes?: string
   rejectionReason?: string
-  appliedAt?: Date
+  appliedAt: Date
   approvedAt?: Date
   rejectedAt?: Date
   lastActiveAt?: Date
-  bookings?: any[]
+  createdAt: Date
+  updatedAt: Date
 }
 
 interface PaginationInfo {
@@ -39,18 +58,63 @@ interface PaginationInfo {
   pages: number
 }
 
+interface StatsInfo {
+  total: number
+  active: number
+  byStatus: Record<string, number>
+}
+
 interface ProfessionalManagementProps {
   initialProfessionals: Professional[]
   totalPages: number
   currentPage: number
   initialSearch?: string
+  initialStats?: StatsInfo
+}
+
+// פונקציה לטרנספורמציה של נתונים מהשרת
+function transformProfessionalData(rawProfessional: IProfessionalProfile & { userId: IUser }): Professional {
+  return {
+    _id: rawProfessional._id.toString(),
+    userId: rawProfessional.userId,
+    status: rawProfessional.status,
+    isActive: rawProfessional.isActive,
+    specialization: rawProfessional.specialization,
+    experience: rawProfessional.experience,
+    certifications: rawProfessional.certifications,
+    bio: rawProfessional.bio,
+    profileImage: rawProfessional.profileImage,
+    treatments: (rawProfessional.treatments || []).map(t => ({
+      treatmentId: t.treatmentId?.toString() || '',
+      durationId: t.durationId?.toString(),
+      professionalPrice: t.professionalPrice || 0,
+      treatmentName: (t as any).treatmentName
+    })),
+    workAreas: (rawProfessional.workAreas || []).map(w => ({
+      cityId: w.cityId?.toString() || '',
+      cityName: w.cityName || '',
+      distanceRadius: w.distanceRadius,
+      coveredCities: w.coveredCities || []
+    })),
+    totalEarnings: rawProfessional.totalEarnings || 0,
+    pendingPayments: rawProfessional.pendingPayments || 0,
+    adminNotes: rawProfessional.adminNotes,
+    rejectionReason: rawProfessional.rejectionReason,
+    appliedAt: rawProfessional.appliedAt,
+    approvedAt: rawProfessional.approvedAt,
+    rejectedAt: rawProfessional.rejectedAt,
+    lastActiveAt: rawProfessional.lastActiveAt,
+    createdAt: rawProfessional.createdAt,
+    updatedAt: rawProfessional.updatedAt
+  }
 }
 
 export function ProfessionalManagement({ 
   initialProfessionals = [], 
   totalPages: initialTotalPages = 1, 
   currentPage: initialPage = 1, 
-  initialSearch = "" 
+  initialSearch = "",
+  initialStats = { total: 0, active: 0, byStatus: {} }
 }: ProfessionalManagementProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
@@ -62,24 +126,23 @@ export function ProfessionalManagement({
     total: 0,
     pages: initialTotalPages
   })
-  const [stats, setStats] = useState<{
-    total: number
-    active: number
-    byStatus: Record<string, number>
-  }>({ total: 0, active: 0, byStatus: {} })
+  const [stats, setStats] = useState<StatsInfo>(initialStats)
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState(initialSearch)
   const [statusFilter, setStatusFilter] = useState<ProfessionalStatus | "all">("all")
   const [sortBy, setSortBy] = useState("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
-
   const [isCreatingNew, setIsCreatingNew] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Fetch professionals
-  const fetchProfessionals = async (page = 1) => {
-    setLoading(true)
+  // Fetch professionals with improved error handling
+  const fetchProfessionals = useCallback(async (page = 1, showLoadingState = true) => {
+    if (showLoadingState) setLoading(true)
+    setError(null)
+    
     try {
       const result = await getProfessionals({
         page,
@@ -90,14 +153,13 @@ export function ProfessionalManagement({
         sortOrder
       })
 
-      if (result.success) {
-        setProfessionals((result.data?.professionals || []).map(p => ({
-          ...p,
-          _id: p._id.toString()
-        })) as Professional[])
-        setPagination(result.data?.pagination || pagination)
-        setStats(result.data?.stats || stats)
+      if (result.success && result.data) {
+        const transformedProfessionals = (result.data.professionals || []).map(transformProfessionalData)
+        setProfessionals(transformedProfessionals)
+        setPagination(result.data.pagination)
+        setStats(result.data.stats)
       } else {
+        setError(result.error || "שגיאה בטעינת המטפלים")
         toast({
           variant: "destructive",
           title: "שגיאה",
@@ -105,53 +167,70 @@ export function ProfessionalManagement({
         })
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "שגיאה בטעינת המטפלים"
+      setError(errorMessage)
       console.error("Error fetching professionals:", error)
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בטעינת המטפלים"
+        description: errorMessage
       })
     } finally {
-      setLoading(false)
+      if (showLoadingState) setLoading(false)
     }
-  }
+  }, [pagination.limit, searchTerm, statusFilter, sortBy, sortOrder, toast])
 
-  // Initial load
-  useEffect(() => {
-    fetchProfessionals()
-  }, [searchTerm, statusFilter, sortBy, sortOrder])
+  // Refresh data
+  const refreshData = useCallback(async () => {
+    setRefreshing(true)
+    await fetchProfessionals(pagination.page, false)
+    setRefreshing(false)
+    toast({
+      title: "הצלחה",
+      description: "הנתונים עודכנו בהצלחה"
+    })
+  }, [fetchProfessionals, pagination.page, toast])
 
-  // Handle search with debounce
+  // Debounced search effect
   useEffect(() => {
     const timer = setTimeout(() => {
       if (pagination.page !== 1) {
         setPagination(prev => ({ ...prev, page: 1 }))
-      } else {
-        fetchProfessionals(1)
       }
+      fetchProfessionals(1)
     }, 500)
 
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  // Handle filter changes
+  // Filter and sort effects
   useEffect(() => {
     fetchProfessionals(1)
   }, [statusFilter, sortBy, sortOrder])
 
-  const handleRowClick = (professional: Professional) => {
-    setSelectedProfessional(professional)
-    setShowEditModal(true)
-  }
+  // Initial load effect
+  useEffect(() => {
+    if (initialProfessionals.length === 0) {
+      fetchProfessionals()
+    }
+  }, [])
 
-  const handleModalClose = () => {
+  const handleRowClick = useCallback((professional: Professional) => {
+    setSelectedProfessional(professional)
+    setIsCreatingNew(false)
+    setShowEditModal(true)
+  }, [])
+
+  const handleModalClose = useCallback(() => {
     setShowEditModal(false)
     setSelectedProfessional(null)
-    fetchProfessionals(pagination.page) // Refresh current page
-  }
+    setIsCreatingNew(false)
+    // רענן את העמוד הנוכחי
+    fetchProfessionals(pagination.page, false)
+  }, [fetchProfessionals, pagination.page])
 
-  const handleCreateNew = () => {
-    // Create empty professional object for new professional
+  const handleCreateNew = useCallback(() => {
+    // יצירת אובייקט מטפל ריק ליצירת חדש
     const newProfessional: Professional = {
       _id: "new",
       userId: {
@@ -160,28 +239,33 @@ export function ProfessionalManagement({
         email: "",
         phone: "",
         gender: "male",
-        roles: [],
+        roles: ["professional"],
+        activeRole: "professional",
         createdAt: new Date(),
         updatedAt: new Date()
-      } as unknown as IUser,
+      } as IUser,
       status: "pending_admin_approval",
+      isActive: true,
       treatments: [],
       workAreas: [],
+      totalEarnings: 0,
+      pendingPayments: 0,
       adminNotes: "",
       rejectionReason: "",
       appliedAt: new Date(),
       approvedAt: undefined,
       rejectedAt: undefined,
-      lastActiveAt: undefined,
-      bookings: []
+      lastActiveAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
     
     setSelectedProfessional(newProfessional)
     setIsCreatingNew(true)
     setShowEditModal(true)
-  }
+  }, [])
 
-  const getStatusBadge = (status: ProfessionalStatus) => {
+  const getStatusBadge = useCallback((status: ProfessionalStatus) => {
     const statusConfig = {
       active: { variant: "default" as const, icon: UserCheck, text: "פעיל" },
       pending_admin_approval: { variant: "secondary" as const, icon: Clock, text: "ממתין לאישור" },
@@ -191,6 +275,8 @@ export function ProfessionalManagement({
     }
 
     const config = statusConfig[status]
+    if (!config) return null
+    
     const Icon = config.icon
 
     return (
@@ -199,14 +285,19 @@ export function ProfessionalManagement({
         {config.text}
       </Badge>
     )
-  }
+  }, [])
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "-"
-    return new Date(dateString).toLocaleDateString("he-IL")
-  }
+  const formatDate = useCallback((date?: Date | string) => {
+    if (!date) return "-"
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date
+      return dateObj.toLocaleDateString("he-IL")
+    } catch {
+      return "-"
+    }
+  }, [])
 
-  // Statistics from server
+  // חישוב סטטיסטיקות
   const computedStats = {
     total: stats.total,
     active: stats.active,
@@ -214,6 +305,26 @@ export function ProfessionalManagement({
     rejected: stats.byStatus["rejected"] || 0
   }
 
+  // Error state
+  if (error && professionals.length === 0) {
+    return (
+      <div className="space-y-6" dir={dir}>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-8">
+            <AlertTriangle className="w-12 h-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">שגיאה בטעינת הנתונים</h3>
+            <p className="text-muted-foreground mb-4 text-center">{error}</p>
+            <Button onClick={() => fetchProfessionals()} disabled={loading}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              נסה שוב
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Loading skeleton
   if (loading && professionals.length === 0) {
     return (
       <div className="space-y-6">
@@ -349,6 +460,16 @@ export function ProfessionalManagement({
               </SelectContent>
             </Select>
 
+            <Button 
+              onClick={refreshData} 
+              disabled={refreshing}
+              variant="outline"
+              size="sm"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              רענן
+            </Button>
+
             <Button onClick={handleCreateNew} className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
               הוסף מטפל
@@ -372,9 +493,10 @@ export function ProfessionalManagement({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
+              {loading && professionals.length > 0 ? (
+                // Show skeleton rows when refreshing existing data
+                Array.from({ length: 3 }).map((_, i) => (
+                  <TableRow key={`skeleton-${i}`}>
                     <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-48" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-20" /></TableCell>
@@ -386,20 +508,22 @@ export function ProfessionalManagement({
               ) : professionals.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    לא נמצאו מטפלים
+                    {error ? "אירעה שגיאה בטעינת הנתונים" : "לא נמצאו מטפלים"}
                   </TableCell>
                 </TableRow>
               ) : (
                 professionals.map((professional) => (
                   <TableRow 
-                    key={professional._id.toString()} 
-                    className="cursor-pointer hover:bg-muted/50"
+                    key={professional._id} 
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={() => handleRowClick(professional)}
                   >
                     <TableCell>
                       <div>
                         <div className="font-medium">{professional.userId.name}</div>
-                        <div className="text-sm text-muted-foreground">{professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -409,7 +533,7 @@ export function ProfessionalManagement({
                       </div>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(professional.status ?? "pending_admin_approval")}
+                      {getStatusBadge(professional.status)}
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
@@ -423,7 +547,7 @@ export function ProfessionalManagement({
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {formatDate(professional.appliedAt?.toISOString())}
+                        {formatDate(professional.appliedAt)}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -439,20 +563,31 @@ export function ProfessionalManagement({
         <div className="flex justify-center gap-2">
           <Button
             variant="outline"
-            disabled={pagination.page === 1}
+            disabled={pagination.page === 1 || loading}
             onClick={() => fetchProfessionals(pagination.page - 1)}
           >
             הקודם
           </Button>
           
           <div className="flex items-center gap-2">
-            {Array.from({ length: pagination.pages }, (_, i) => {
-              const page = i + 1
+            {Array.from({ length: Math.min(pagination.pages, 7) }, (_, i) => {
+              let page: number
+              if (pagination.pages <= 7) {
+                page = i + 1
+              } else {
+                // Show current page and surrounding pages
+                const start = Math.max(1, pagination.page - 3)
+                const end = Math.min(pagination.pages, start + 6)
+                page = start + i
+                if (page > end) return null
+              }
+              
               return (
                 <Button
                   key={page}
                   variant={pagination.page === page ? "default" : "outline"}
                   size="sm"
+                  disabled={loading}
                   onClick={() => fetchProfessionals(page)}
                 >
                   {page}
@@ -463,7 +598,7 @@ export function ProfessionalManagement({
           
           <Button
             variant="outline"
-            disabled={pagination.page === pagination.pages}
+            disabled={pagination.page === pagination.pages || loading}
             onClick={() => fetchProfessionals(pagination.page + 1)}
           >
             הבא
@@ -474,14 +609,9 @@ export function ProfessionalManagement({
       {/* Edit/Create Modal */}
       {selectedProfessional && (
         <ProfessionalEditModal
-          professional={selectedProfessional as any}
+          professional={selectedProfessional}
           open={showEditModal}
-          onClose={() => {
-            setShowEditModal(false)
-            setSelectedProfessional(null)
-            setIsCreatingNew(false)
-            fetchProfessionals(pagination.page)
-          }}
+          onClose={handleModalClose}
           isCreatingNew={isCreatingNew}
         />
       )}

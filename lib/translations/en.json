@@ -602,7 +602,10 @@
       "searchPlaceholder": "[admin.cities.searchPlaceholder]",
       "noCitiesFound": "[admin.cities.noCitiesFound]",
       "form": {"name": "[admin.cities.form.name]", "lat": "[admin.cities.form.lat]", "lng": "[admin.cities.form.lng]", "active": "[admin.cities.form.active]"},
-      "table": {"name": "[admin.cities.table.name]", "coordinates": "[admin.cities.table.coordinates]", "status": "[admin.cities.table.status]"}
+      "table": {"name": "[admin.cities.table.name]", "coordinates": "[admin.cities.table.coordinates]", "status": "[admin.cities.table.status]"},
+      "activateSuccess": "City activated successfully",
+      "deactivateSuccess": "City deactivated successfully",
+      "statusUpdateError": "Error updating city status"
     }
   },
   "roles": {

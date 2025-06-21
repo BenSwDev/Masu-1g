@@ -43,7 +43,14 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Badge } from "@/components/common/ui/badge"
 
-import { getWorkingHours, updateWorkingHours } from "@/app/dashboard/(user)/(roles)/admin/working-hours/actions"
+import {
+  getWorkingHoursSettings,
+  updateFixedHours,
+  updateSpecialDates,
+  updateSpecialDateEvents,
+  deleteSpecialDate,
+  deleteSpecialDateEvent,
+} from "@/app/dashboard/(user)/(roles)/admin/working-hours/actions"
 import type { IWorkingHoursSettings, IFixedHours, ISpecialDateEvent } from "@/lib/db/models/working-hours"
 import { ISpecialDate } from "@/lib/db/models/working-hours"
 
@@ -152,7 +159,7 @@ export default function WorkingHoursClient() {
   const { data: workingHoursData, isLoading } = useQuery({
     queryKey: ["workingHours"],
     queryFn: async () => {
-      const result = await getWorkingHours()
+      const result = await getWorkingHoursSettings()
       if (!result.success) {
         throw new Error(result.error)
       }
@@ -211,12 +218,13 @@ export default function WorkingHoursClient() {
   }, [workingHoursData, fixedHoursForm])
 
   const updateFixedHoursMutation = useMutation({
-    mutationFn: updateWorkingHours,
-    onSuccess: () => {
-        toast({
+    mutationFn: updateFixedHours,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["workingHours"] })
+      toast({
         title: t("workingHours.fixedHoursUpdated"),
         variant: "default",
-        })
+      })
     },
     onError: (error) => {
       console.error("Error updating fixed hours:", error)
@@ -228,14 +236,15 @@ export default function WorkingHoursClient() {
   })
 
   const addSpecialDateMutation = useMutation({
-    mutationFn: updateWorkingHours,
-    onSuccess: () => {
-        toast({
+    mutationFn: updateSpecialDates,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["workingHours"] })
+      toast({
         title: t("workingHours.specialDateAdded"),
         variant: "default",
-        })
-        setIsSpecialDateDialogOpen(false)
-        specialDateForm.reset()
+      })
+      setIsSpecialDateDialogOpen(false)
+      specialDateForm.reset()
     },
     onError: (error) => {
       console.error("Error adding special date:", error)
@@ -247,15 +256,16 @@ export default function WorkingHoursClient() {
   })
 
   const updateSpecialDateMutation = useMutation({
-    mutationFn: updateWorkingHours,
-    onSuccess: () => {
-        toast({
+    mutationFn: updateSpecialDates,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["workingHours"] })
+      toast({
         title: t("workingHours.specialDateUpdated"),
         variant: "default",
-        })
-        setIsSpecialDateDialogOpen(false)
-        setEditingSpecialDateIndex(null)
-        specialDateForm.reset()
+      })
+      setIsSpecialDateDialogOpen(false)
+      setEditingSpecialDateIndex(null)
+      specialDateForm.reset()
     },
     onError: (error) => {
       console.error("Error updating special date:", error)
@@ -267,8 +277,9 @@ export default function WorkingHoursClient() {
   })
 
   const deleteSpecialDateMutation = useMutation({
-    mutationFn: updateWorkingHours,
-    onSuccess: () => {
+    mutationFn: deleteSpecialDate,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["workingHours"] })
       toast({
         title: t("workingHours.specialDateDeleted"),
         variant: "default",
@@ -284,12 +295,13 @@ export default function WorkingHoursClient() {
   })
 
   const updateSpecialDateEventsMutation = useMutation({
-    mutationFn: updateWorkingHours,
-    onSuccess: () => {
-        toast({
+    mutationFn: updateSpecialDateEvents,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["workingHours"] })
+      toast({
         title: t("workingHours.specialEventUpdated"),
         variant: "default",
-        })
+      })
       setIsSpecialEventDialogOpen(false)
       setEditingSpecialEventIndex(null)
       specialEventForm.reset()
@@ -304,8 +316,9 @@ export default function WorkingHoursClient() {
   })
 
   const deleteSpecialDateEventMutation = useMutation({
-    mutationFn: updateWorkingHours,
-    onSuccess: () => {
+    mutationFn: deleteSpecialDateEvent,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["workingHours"] })
       toast({
         title: t("workingHours.specialEventDeleted"),
         variant: "default",

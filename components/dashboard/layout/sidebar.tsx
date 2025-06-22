@@ -275,6 +275,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string; section?: string }>> = {
       admin: [
         // רכישות ומימושים (Purchases & Redemptions)
+        { titleKey: "transactions", icon: BarChart3, hrefSuffix: "transactions" },
         { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings", section: "purchases" },
         { titleKey: "reviews", icon: Star, hrefSuffix: "reviews", section: "purchases" },
         { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions", section: "purchases" },

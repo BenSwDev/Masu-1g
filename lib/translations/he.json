@@ -3573,6 +3573,47 @@
       "buySubscription": "רכוש מנוי"
     }
   },
+  "transactions": {
+    "title": "דוח עסקאות",
+    "description": "טבלה שבועית של כל העסקאות והמימושים",
+    "weeklyReport": "דוח שבועי",
+    "dailyReport": "דוח יומי של {date}",
+    "navigation": {
+      "previousWeek": "השבוע הקודם", 
+      "nextWeek": "השבוע הבא",
+      "currentWeek": "השבוע הנוכחי"
+    },
+    "columns": {
+      "date": "תאריך",
+      "day": "יום", 
+      "bookings": "הזמנות",
+      "newVouchers": "שוברים חדשים",
+      "redeemedVouchers": "שוברים מומשים",
+      "newSubscriptions": "מנויים חדשים",
+      "redeemedSubscriptions": "מנויים מומשים",
+      "newCoupons": "קופונים חדשים",
+      "redeemedCoupons": "קופונים מומשים", 
+      "newPartnerCoupons": "קופוני שותפים חדשים",
+      "redeemedPartnerCoupons": "קופוני שותפים מומשים",
+      "totalRevenue": "סך הכנסה",
+      "totalRedemptions": "סך מימושים",
+      "professionalCosts": "עלות למטפלים",
+      "officeProfit": "רווח למשרד",
+      "count": "כמות",
+      "amount": "סכום"
+    },
+    "summary": {
+      "weekTotal": "סיכום שבועי",
+      "dailyDetails": "פירוט יומי ל{date}"
+    },
+    "errors": {
+      "loadFailed": "שגיאה בטעינת נתוני העסקאות",
+      "dayDetailsFailed": "שגיאה בטעינת פירוט היום"
+    },
+    "noData": "אין נתונים להצגה",
+    "loadingData": "טוען נתונים...",
+    "viewDayDetails": "לחץ לצפייה בפירוט היום"
+  },
   "purchaseStats": {
     "totalRevenue": "סך כל ההכנסות",
     "totalRevenueDesc": "סך כל ההכנסות מכל העסקאות",
@@ -4110,13 +4151,14 @@
       "addresses": "כתובות",
       "paymentMethods": "אמצעי תשלום",
       "purchaseHistory": "היסטוריית רכישות",
-      "partnerCouponBatches": "קופוני שותפים",
-      "sections": {
-        "mainMenu": "תפריט ראשי",
-        "purchases": "רכישות ומימושים",
-        "users": "משתמשים",
-        "settings": "הגדרות"
-      },
+              "partnerCouponBatches": "קופוני שותפים",
+        "transactions": "עסקאות",
+        "sections": {
+          "mainMenu": "תפריט ראשי",
+          "purchases": "רכישות ומימושים",
+          "users": "משתמשים",
+          "settings": "הגדרות"
+        },
       "userMenu": {
         "toggleTooltip": "תפריט משתמש",
         "treatmentPreferences": "העדפות טיפול",

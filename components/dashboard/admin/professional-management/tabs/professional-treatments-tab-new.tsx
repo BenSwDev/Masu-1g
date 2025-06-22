@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -8,9 +8,19 @@ import { Badge } from "@/components/common/ui/badge"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Checkbox } from "@/components/common/ui/checkbox"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
+import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
-import { Stethoscope, Save, Loader2, AlertTriangle, Check, Package } from "lucide-react"
+import { 
+  Stethoscope, 
+  Save, 
+  Loader2, 
+  AlertTriangle, 
+  Check, 
+  Package,
+  ChevronRight,
+  Circle,
+  CheckCircle2
+} from "lucide-react"
 import { updateProfessionalTreatments } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
@@ -52,14 +62,23 @@ interface TreatmentOption {
   name: string
   category: string
   description?: string
-  defaultDurationMinutes: number
+  pricingType: "fixed" | "duration_based"
   fixedPrice?: number
+  durations?: Array<{
+    _id: string
+    minutes: number
+    price: number
+    isActive: boolean
+  }>
+  isActive: boolean
 }
 
 interface CategoryData {
   name: string
+  displayName: string
   treatments: TreatmentOption[]
-  selected: boolean
+  selectedTreatments: string[]
+  isExpanded: boolean
 }
 
 interface ProfessionalTreatmentsTabProps {
@@ -77,13 +96,19 @@ export default function ProfessionalTreatmentsTabNew({
   const { toast } = useToast()
   
   const [categories, setCategories] = useState<CategoryData[]>([])
+  const [allTreatments, setAllTreatments] = useState<TreatmentOption[]>([])
   const [selectedTreatments, setSelectedTreatments] = useState<string[]>(
     professional.treatments?.map(t => t.treatmentId) || []
   )
   const [loadingTreatments, setLoadingTreatments] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
-  const [activeCategory, setActiveCategory] = useState<string>("")
+
+  // Category display names mapping
+  const categoryDisplayNames: Record<string, string> = {
+    "massages": "עיסויים",
+    "facial_treatments": "טיפולי פנים"
+  }
 
   // Load available treatments and organize by categories
   useEffect(() => {
@@ -94,32 +119,33 @@ export default function ProfessionalTreatmentsTabNew({
           const data = await response.json()
           const treatmentList = data.treatments || []
           
+          setAllTreatments(treatmentList)
+          
           // Group treatments by category
           const categoryMap = new Map<string, TreatmentOption[]>()
           treatmentList.forEach((treatment: TreatmentOption) => {
-            if (!categoryMap.has(treatment.category)) {
-              categoryMap.set(treatment.category, [])
+            const category = treatment.category || "other"
+            if (!categoryMap.has(category)) {
+              categoryMap.set(category, [])
             }
-            categoryMap.get(treatment.category)!.push(treatment)
+            categoryMap.get(category)!.push(treatment)
           })
           
           // Convert to CategoryData array
           const categoryData: CategoryData[] = Array.from(categoryMap.entries()).map(([categoryName, treatments]) => {
-            const hasSelectedTreatments = treatments.some(t => selectedTreatments.includes(t._id))
+            const categoryTreatmentIds = treatments.map(t => t._id)
+            const selectedInCategory = selectedTreatments.filter(id => categoryTreatmentIds.includes(id))
+            
             return {
               name: categoryName,
-              treatments,
-              selected: hasSelectedTreatments
+              displayName: categoryDisplayNames[categoryName] || categoryName,
+              treatments: treatments.sort((a, b) => a.name.localeCompare(b.name)),
+              selectedTreatments: selectedInCategory,
+              isExpanded: selectedInCategory.length > 0
             }
           })
           
-          setCategories(categoryData)
-          
-          // Set first selected category as active
-          const firstSelectedCategory = categoryData.find(c => c.selected)
-          if (firstSelectedCategory) {
-            setActiveCategory(firstSelectedCategory.name)
-          }
+          setCategories(categoryData.sort((a, b) => a.displayName.localeCompare(b.displayName)))
         } else {
           throw new Error('Failed to fetch treatments')
         }
@@ -138,36 +164,68 @@ export default function ProfessionalTreatmentsTabNew({
     loadTreatments()
   }, [selectedTreatments, toast])
 
-  const handleCategoryChange = (categoryName: string, checked: boolean) => {
-    setCategories(prev => prev.map(cat => {
-      if (cat.name === categoryName) {
-        const updatedCategory = { ...cat, selected: checked }
-        
-        // If unchecking category, remove all its treatments from selection
-        if (!checked) {
-          const categoryTreatmentIds = cat.treatments.map(t => t._id)
-          setSelectedTreatments(current => current.filter(id => !categoryTreatmentIds.includes(id)))
-        }
-        
-        // If checking category and it's the first selected one, make it active
-        if (checked && !activeCategory) {
-          setActiveCategory(categoryName)
-        }
-        
-        return updatedCategory
-      }
-      return cat
-    }))
-    setHasChanges(true)
+  // Update selected treatments when professional data changes
+  useEffect(() => {
+    const newSelected = professional.treatments?.map(t => t.treatmentId) || []
+    setSelectedTreatments(newSelected)
+  }, [professional.treatments])
+
+  const handleCategoryToggle = (categoryName: string) => {
+    setCategories(prev => prev.map(cat => 
+      cat.name === categoryName 
+        ? { ...cat, isExpanded: !cat.isExpanded }
+        : cat
+    ))
   }
 
   const handleTreatmentChange = (treatmentId: string, checked: boolean) => {
     setSelectedTreatments(prev => {
-      if (checked) {
-        return [...prev, treatmentId]
+      const newSelection = checked 
+        ? [...prev, treatmentId]
+        : prev.filter(id => id !== treatmentId)
+      
+      // Update categories with new selection
+      setCategories(prevCategories => prevCategories.map(cat => {
+        const categoryTreatmentIds = cat.treatments.map(t => t._id)
+        const selectedInCategory = newSelection.filter(id => categoryTreatmentIds.includes(id))
+        return {
+          ...cat,
+          selectedTreatments: selectedInCategory
+        }
+      }))
+      
+      return newSelection
+    })
+    setHasChanges(true)
+  }
+
+  const handleSelectAllInCategory = (categoryName: string, selectAll: boolean) => {
+    const category = categories.find(c => c.name === categoryName)
+    if (!category) return
+
+    const categoryTreatmentIds = category.treatments.map(t => t._id)
+    
+    setSelectedTreatments(prev => {
+      let newSelection
+      if (selectAll) {
+        // Add all treatments from this category
+        newSelection = [...new Set([...prev, ...categoryTreatmentIds])]
       } else {
-        return prev.filter(id => id !== treatmentId)
+        // Remove all treatments from this category
+        newSelection = prev.filter(id => !categoryTreatmentIds.includes(id))
       }
+      
+      // Update categories with new selection
+      setCategories(prevCategories => prevCategories.map(cat => {
+        const catTreatmentIds = cat.treatments.map(t => t._id)
+        const selectedInCat = newSelection.filter(id => catTreatmentIds.includes(id))
+        return {
+          ...cat,
+          selectedTreatments: selectedInCat
+        }
+      }))
+      
+      return newSelection
     })
     setHasChanges(true)
   }
@@ -178,7 +236,7 @@ export default function ProfessionalTreatmentsTabNew({
     try {
       const treatmentsToSave = selectedTreatments.map(treatmentId => ({
         treatmentId,
-        treatmentName: getAllTreatments().find(t => t._id === treatmentId)?.name || ""
+        treatmentName: allTreatments.find(t => t._id === treatmentId)?.name || ""
       }))
       
       const result = await updateProfessionalTreatments(professional._id, treatmentsToSave)
@@ -200,7 +258,7 @@ export default function ProfessionalTreatmentsTabNew({
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בעדכון הטיפולים"
+          description: result.error || "שגיאה בעדכון טיפולי המטפל"
         })
       }
     } catch (error) {
@@ -208,68 +266,99 @@ export default function ProfessionalTreatmentsTabNew({
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בעדכון הטיפולים"
+        description: "שגיאה בעדכון טיפולי המטפל"
       })
     } finally {
       setSaving(false)
     }
   }
 
-  const getAllTreatments = () => {
-    return categories.flatMap(cat => cat.treatments)
-  }
-
-  const getSelectedCategories = () => {
-    return categories.filter(cat => cat.selected)
-  }
-
   const getTreatmentStats = () => {
-    const totalSelected = selectedTreatments.length
-    const totalAvailable = getAllTreatments().length
-    const selectedCategories = getSelectedCategories().length
-    const totalCategories = categories.length
+    const totalTreatments = allTreatments.length
+    const selectedCount = selectedTreatments.length
+    const categoriesWithTreatments = categories.filter(c => c.selectedTreatments.length > 0).length
     
-    return { totalSelected, totalAvailable, selectedCategories, totalCategories }
+    return {
+      totalTreatments,
+      selectedCount,
+      categoriesWithTreatments,
+      totalCategories: categories.length
+    }
   }
 
-  if (disabled) {
+  const formatPrice = (treatment: TreatmentOption) => {
+    if (treatment.pricingType === "fixed" && treatment.fixedPrice) {
+      return `₪${treatment.fixedPrice}`
+    } else if (treatment.pricingType === "duration_based" && treatment.durations) {
+      const activeDurations = treatment.durations.filter(d => d.isActive)
+      if (activeDurations.length > 0) {
+        const prices = activeDurations.map(d => d.price)
+        const minPrice = Math.min(...prices)
+        const maxPrice = Math.max(...prices)
+        return minPrice === maxPrice ? `₪${minPrice}` : `₪${minPrice}-${maxPrice}`
+      }
+    }
+    return "לא צוין"
+  }
+
+  const formatDuration = (treatment: TreatmentOption) => {
+    if (treatment.pricingType === "duration_based" && treatment.durations) {
+      const activeDurations = treatment.durations.filter(d => d.isActive)
+      if (activeDurations.length > 0) {
+        const durations = activeDurations.map(d => `${d.minutes} דק'`)
+        return durations.join(", ")
+      }
+    }
+    return "סטנדרטי"
+  }
+
+  if (loadingTreatments) {
     return (
-      <div className="p-6">
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            נא ליצור תחילה את המטפל כדי להגדיר טיפולים
-          </AlertDescription>
-        </Alert>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Stethoscope className="h-5 w-5" />
+          <h3 className="text-lg font-semibold">טיפולי המטפל</h3>
+        </div>
+        <div className="grid gap-4">
+          {[1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {[1, 2, 3].map(j => (
+                    <Skeleton key={j} className="h-12 w-full" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     )
   }
 
   const stats = getTreatmentStats()
-  const selectedCategories = getSelectedCategories()
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Stethoscope className="h-5 w-5" />
-            טיפולי המטפל
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            בחר קטגוריות טיפול ולאחר מכן בחר טיפולים ספציפיים מכל קטגוריה
-          </p>
+        <div className="flex items-center gap-2">
+          <Stethoscope className="h-5 w-5" />
+          <h3 className="text-lg font-semibold">טיפולי המטפל</h3>
         </div>
         {hasChanges && (
           <Button onClick={handleSave} disabled={saving}>
             {saving ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 שומר...
               </>
             ) : (
               <>
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="w-4 h-4 mr-2" />
                 שמור שינויים
               </>
             )}
@@ -277,151 +366,176 @@ export default function ProfessionalTreatmentsTabNew({
         )}
       </div>
 
-      {/* Statistics */}
+      {/* Stats Summary */}
       <Card>
-        <CardHeader>
-          <CardTitle>סיכום</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{stats.selectedCategories}</div>
-              <div className="text-sm text-blue-600">קטגוריות נבחרו</div>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div className="text-2xl font-bold text-primary">{stats.selectedCount}</div>
+              <div className="text-sm text-muted-foreground">טיפולים נבחרו</div>
             </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{stats.totalSelected}</div>
-              <div className="text-sm text-green-600">טיפולים נבחרו</div>
+            <div>
+              <div className="text-2xl font-bold text-blue-600">{stats.categoriesWithTreatments}</div>
+              <div className="text-sm text-muted-foreground">קטגוריות פעילות</div>
             </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-gray-600">{stats.totalCategories}</div>
-              <div className="text-sm text-gray-600">סה"כ קטגוריות</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold text-gray-600">{stats.totalAvailable}</div>
-              <div className="text-sm text-gray-600">סה"כ טיפולים</div>
+            <div>
+              <div className="text-2xl font-bold text-muted-foreground">{stats.totalTreatments}</div>
+              <div className="text-sm text-muted-foreground">סה"כ טיפולים</div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Category Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            בחירת קטגוריות
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loadingTreatments ? (
-            <div className="space-y-3">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categories.map(category => (
-                <div key={category.name} className="flex items-center space-x-2 p-3 border rounded-lg">
-                  <Checkbox
-                    id={`category-${category.name}`}
-                    checked={category.selected}
-                    onCheckedChange={(checked) => handleCategoryChange(category.name, checked as boolean)}
-                  />
-                  <label
-                    htmlFor={`category-${category.name}`}
-                    className="flex-1 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                  >
-                    {category.name}
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {category.treatments.length} טיפולים
-                    </div>
-                  </label>
-                  {category.selected && (
-                    <Badge variant="default" className="text-xs">
-                      <Check className="h-3 w-3 mr-1" />
-                      נבחר
-                    </Badge>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Treatment Selection by Category */}
-      {selectedCategories.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>בחירת טיפולים</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
-              <TabsList className="grid w-full" style={{ gridTemplateColumns: `repeat(${selectedCategories.length}, minmax(0, 1fr))` }}>
-                {selectedCategories.map(category => (
-                  <TabsTrigger key={category.name} value={category.name} className="text-xs">
-                    {category.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              
-              {selectedCategories.map(category => (
-                <TabsContent key={category.name} value={category.name} className="mt-4">
-                  <div className="space-y-3">
-                    <div className="text-sm text-muted-foreground mb-3">
-                      בחר טיפולים מקטגוריה: <span className="font-medium">{category.name}</span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {category.treatments.map(treatment => (
-                        <div key={treatment._id} className="flex items-center space-x-2 p-3 border rounded-lg">
-                          <Checkbox
-                            id={`treatment-${treatment._id}`}
-                            checked={selectedTreatments.includes(treatment._id)}
-                            onCheckedChange={(checked) => handleTreatmentChange(treatment._id, checked as boolean)}
-                          />
-                          <label
-                            htmlFor={`treatment-${treatment._id}`}
-                            className="flex-1 text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                          >
-                            <div className="font-medium">{treatment.name}</div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {treatment.defaultDurationMinutes} דקות
-                              {treatment.fixedPrice && ` • ₪${treatment.fixedPrice}`}
-                            </div>
-                            {treatment.description && (
-                              <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                {treatment.description}
-                              </div>
-                            )}
-                          </label>
-                          {selectedTreatments.includes(treatment._id) && (
-                            <Badge variant="default" className="text-xs">
-                              <Check className="h-3 w-3 mr-1" />
-                              נבחר
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
+      {/* Treatment Categories */}
+      <div className="space-y-4">
+        {categories.map((category) => {
+          const isAllSelected = category.selectedTreatments.length === category.treatments.length
+          const isPartiallySelected = category.selectedTreatments.length > 0 && !isAllSelected
+          
+          return (
+            <Card key={category.name} className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCategoryToggle(category.name)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight className={`h-4 w-4 transition-transform ${category.isExpanded ? 'rotate-90' : ''}`} />
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Package className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-base">{category.displayName}</CardTitle>
+                      <Badge variant={category.selectedTreatments.length > 0 ? "default" : "secondary"}>
+                        {category.selectedTreatments.length}/{category.treatments.length}
+                      </Badge>
                     </div>
                   </div>
-                </TabsContent>
-              ))}
-            </Tabs>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSelectAllInCategory(category.name, !isAllSelected)}
+                      disabled={disabled}
+                      className="text-xs"
+                    >
+                      {isAllSelected ? (
+                        <>
+                          <Circle className="w-3 h-3 mr-1" />
+                          בטל הכל
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          בחר הכל
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              
+              {category.isExpanded && (
+                <CardContent className="pt-0">
+                  <div className="space-y-2">
+                    {category.treatments.map((treatment) => {
+                      const isSelected = selectedTreatments.includes(treatment._id)
+                      
+                      return (
+                        <div
+                          key={treatment._id}
+                          className={`flex items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors ${
+                            isSelected ? "ring-2 ring-primary border-primary bg-primary/5" : ""
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                            <Checkbox
+                              id={`treatment-${treatment._id}`}
+                              checked={isSelected}
+                              onCheckedChange={(checked) => 
+                                handleTreatmentChange(treatment._id, checked as boolean)
+                              }
+                              disabled={disabled}
+                            />
+                            <Label
+                              htmlFor={`treatment-${treatment._id}`}
+                              className="flex-1 cursor-pointer"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="font-medium">{treatment.name}</div>
+                                  {treatment.description && (
+                                    <div className="text-sm text-muted-foreground mt-1">
+                                      {treatment.description}
+                                    </div>
+                                  )}
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    משך: {formatDuration(treatment)}
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-semibold text-primary">
+                                    {formatPrice(treatment)}
+                                  </div>
+                                  <Badge 
+                                    variant={treatment.pricingType === "fixed" ? "secondary" : "outline"}
+                                    className="text-xs mt-1"
+                                  >
+                                    {treatment.pricingType === "fixed" ? "מחיר קבוע" : "לפי משך"}
+                                  </Badge>
+                                </div>
+                              </div>
+                            </Label>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          )
+        })}
+      </div>
+
+      {/* Action Buttons */}
+      {hasChanges && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <Alert className="flex-1 mr-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  יש לך שינויים שלא נשמרו בטיפולי המטפל
+                </AlertDescription>
+              </Alert>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    שומר...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    שמור שינויים
+                  </>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {selectedCategories.length === 0 && !loadingTreatments && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Stethoscope className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">לא נבחרו קטגוריות</h3>
-            <p className="text-muted-foreground text-center">
-              בחר לפחות קטגוריה אחת כדי להתחיל לבחור טיפולים
-            </p>
-          </CardContent>
-        </Card>
+      {disabled && (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            ניהול טיפולים זמין רק למטפלים קיימים. שמור תחילה את פרטי המטפל.
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   )

@@ -111,10 +111,10 @@ export default function CustomersClient() {
     }
   }
 
-  const loadCustomerTransactions = async (customerId: string) => {
+  const loadCustomerTransactions = async (customerId: string, page = transactionsPage) => {
     try {
       setLoadingTransactions(true)
-      const result = await getAllPurchaseTransactions(transactionsPage, 20)
+      const result = await getAllPurchaseTransactions(page, 20, { userId: customerId })
       
       if (result.success && result.data) {
         setCustomerTransactions(result.data.transactions)
@@ -162,7 +162,7 @@ export default function CustomersClient() {
 
   const handleTransactionsPageChange = (newPage: number) => {
     setTransactionsPage(newPage)
-    loadCustomerTransactions(selectedCustomer?.userId || "")
+    loadCustomerTransactions(selectedCustomer?.userId || "", newPage)
   }
 
   const formatCurrency = (amount: number | undefined | null) => {

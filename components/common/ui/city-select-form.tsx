@@ -77,6 +77,7 @@ export const CitySelectForm = forwardRef<HTMLButtonElement, CitySelectFormProps>
               autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.stopPropagation()}
               placeholder={t("admin.cities.searchPlaceholder")}
             />
           </div>

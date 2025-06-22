@@ -5,7 +5,7 @@ import { AuthRedirect } from "@/components/auth/auth-redirect"
 export default function RegisterPage() {
   return (
     <AuthRedirect>
-      <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-br from-turquoise-50 via-white to-turquoise-100 p-4 py-6 md:p-6">
+      <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-br from-turquoise-50 via-white to-turquoise-100 p-4 py-6 md:p-6 overflow-y-auto md:overflow-hidden">
         <div className="w-full max-w-lg">
           <div className="mb-4 flex justify-center">
             <MasuLogo />

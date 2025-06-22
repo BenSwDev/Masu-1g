@@ -55,20 +55,54 @@ export function BookingEditPage({ booking }: BookingEditPageProps) {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      // Here we would call the update booking API
-      // For now, just simulate success
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Call the update booking API with the changed fields
+      const updates = {
+        status: updatedBooking.status !== booking.status ? updatedBooking.status : undefined,
+        bookingDateTime: updatedBooking.startTime !== booking.startTime ? updatedBooking.startTime : undefined,
+        recipientName: updatedBooking.recipientName !== booking.recipientName ? updatedBooking.recipientName : undefined,
+        recipientPhone: updatedBooking.recipientPhone !== booking.recipientPhone ? updatedBooking.recipientPhone : undefined,
+        recipientEmail: updatedBooking.recipientEmail !== booking.recipientEmail ? updatedBooking.recipientEmail : undefined,
+        notes: updatedBooking.notes !== booking.notes ? updatedBooking.notes : undefined,
+        professionalId: updatedBooking.professionalId !== booking.professionalId ? 
+          (typeof updatedBooking.professionalId === 'object' ? updatedBooking.professionalId._id.toString() : updatedBooking.professionalId) : undefined,
+        paymentStatus: updatedBooking.paymentStatus !== booking.paymentStatus ? updatedBooking.paymentStatus : undefined,
+      }
+
+      // Remove undefined values
+      const cleanUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([_, value]) => value !== undefined)
+      )
+
+      if (Object.keys(cleanUpdates).length === 0) {
+        toast({
+          description: "אין שינויים לשמירה"
+        })
+        setIsSaving(false)
+        return
+      }
+
+      // Import the update function dynamically to avoid circular imports
+      const { updateBookingByAdmin } = await import("@/app/dashboard/(user)/(roles)/admin/bookings/actions")
+      const result = await updateBookingByAdmin(updatedBooking._id.toString(), cleanUpdates)
       
-      setHasUnsavedChanges(false)
-      toast({
-        title: "הצלחה",
-        description: "ההזמנה עודכנה בהצלחה"
-      })
+      if (result.success) {
+        setHasUnsavedChanges(false)
+        toast({
+          title: "הצלחה",
+          description: "ההזמנה עודכנה בהצלחה"
+        })
+        
+        // Refresh the page data
+        window.location.reload()
+      } else {
+        throw new Error(result.error || "שגיאה בעדכון ההזמנה")
+      }
     } catch (error) {
+      console.error("Error saving booking:", error)
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בעדכון ההזמנה"
+        description: error instanceof Error ? error.message : "שגיאה בעדכון ההזמנה"
       })
     } finally {
       setIsSaving(false)

@@ -625,4 +625,132 @@ export async function getSuitableProfessionals(bookingId: string): Promise<GetSu
     logger.error("Error fetching suitable professionals:", error)
     return { success: false, error: "Failed to fetch suitable professionals" }
   }
+}
+
+export interface CreateBookingResult {
+  success: boolean
+  error?: string
+  booking?: PopulatedBooking
+}
+
+/**
+ * Creates a new booking
+ * @param bookingData The booking data
+ * @returns CreateBookingResult
+ */
+export async function createNewBooking(bookingData: {
+  // Customer data
+  bookedByUserName?: string
+  bookedByUserEmail?: string  
+  bookedByUserPhone?: string
+  userId?: string
+  
+  // Recipient data
+  recipientName?: string
+  recipientEmail?: string
+  recipientPhone?: string
+  recipientBirthDate?: Date
+  recipientGender?: string
+  isBookingForSomeoneElse?: boolean
+  
+  // Treatment data
+  treatmentId: string
+  startTime: Date
+  endTime: Date
+  
+  // Address data
+  bookingAddressSnapshot?: {
+    street?: string
+    buildingNumber?: string
+    city?: string
+    postalCode?: string
+    floor?: string
+    apartment?: string
+    notes?: string
+    otherInstructions?: string
+    coordinates?: {
+      lat: number
+      lng: number
+    }
+  }
+  
+  // Pricing data
+  basePrice?: number
+  transportFee?: number
+  serviceFee?: number
+  discountAmount?: number
+  totalPrice?: number
+  
+  // Payment data
+  paymentMethod?: string
+  paymentStatus?: string
+  
+  // Additional data
+  notes?: string
+  isGift?: boolean
+  giftGreeting?: string
+  couponId?: string
+  source?: string
+}): Promise<CreateBookingResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    // Generate booking number
+    const bookingNumber = `BK${Date.now().toString().slice(-8)}`
+    
+    // Create the booking
+    const newBooking = new Booking({
+      ...bookingData,
+      bookingNumber,
+      status: "pending_payment",
+      bookingDateTime: bookingData.startTime,
+      treatmentCategory: new Types.ObjectId(), // Required field for backward compatibility
+      staticTreatmentPrice: bookingData.basePrice || 0,
+      staticTherapistPay: 0,
+      companyFee: 0,
+      consents: {
+        customerAlerts: "email",
+        patientAlerts: "email", 
+        marketingOptIn: false,
+        termsAccepted: false
+      },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      statusHistory: [{
+        status: "pending_payment",
+        changedAt: new Date(),
+        reason: "Booking created by admin"
+      }]
+    })
+
+    await newBooking.save()
+
+    // Populate the created booking  
+    const populatedBooking = await Booking.findById(newBooking._id)
+      .populate("treatmentId")
+      .populate("professionalId")
+      .populate("userId")
+      .populate("priceDetails.appliedCouponId")
+      .populate("priceDetails.appliedGiftVoucherId")
+      .populate("paymentDetails.paymentMethodId")
+      .lean()
+
+    revalidatePath("/dashboard/admin/bookings")
+
+    return {
+      success: true,
+      booking: populatedBooking as PopulatedBooking
+    }
+  } catch (error) {
+    logger.error("Error creating new booking:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to create booking"
+    }
+  }
 } 

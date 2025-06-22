@@ -99,6 +99,123 @@ export function LandingTreatments() {
           </p>
         </div>
 
+        {/* Pricing Table */}
+        <div className="mb-16">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+              {dir === "rtl" ? "·· מחירון ··" : "·· Price List ··"}
+            </h3>
+            <p className="text-lg text-gray-600">
+              {dir === "rtl" 
+                ? "תמחור פשוט – כל התשלומים וההוצאות למטפל כלולים במחיר"
+                : "Simple pricing – all payments and therapist expenses included in the price"
+              }
+            </p>
+          </div>
+
+          <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-turquoise-50 border-b border-turquoise-200">
+                  <tr>
+                    <th className="text-right p-4 font-bold text-gray-800">
+                      {dir === "rtl" ? "סוג טיפול" : "Treatment Type"}
+                    </th>
+                    <th className="text-center p-4 font-bold text-gray-800">
+                      {dir === "rtl" ? "60 דק'" : "60 min"}
+                    </th>
+                    <th className="text-center p-4 font-bold text-gray-800">
+                      {dir === "rtl" ? "75 דק'" : "75 min"}
+                    </th>
+                    <th className="text-center p-4 font-bold text-gray-800">
+                      {dir === "rtl" ? "90 דק'" : "90 min"}
+                    </th>
+                    <th className="text-center p-4 font-bold text-gray-800">
+                      {dir === "rtl" ? "120 דק'" : "120 min"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="p-4 font-medium text-gray-800">
+                      {dir === "rtl" ? "עיסוי שוודי" : "Swedish Massage"}
+                    </td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪320</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪380</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪440</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪580</td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="p-4 font-medium text-gray-800">
+                      {dir === "rtl" ? "עיסוי רקמות עמוק" : "Deep Tissue Massage"}
+                    </td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪370</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪430</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪490</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪630</td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="p-4 font-medium text-gray-800">
+                      {dir === "rtl" ? "עיסוי נשים הרות" : "Prenatal Massage"}
+                    </td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪320</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪380</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪440</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪580</td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="p-4 font-medium text-gray-800">
+                      {dir === "rtl" ? "עיסוי ספורטאים" : "Sports Massage"}
+                    </td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪370</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪430</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪490</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪630</td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="p-4 font-medium text-gray-800">
+                      {dir === "rtl" ? "עיסוי רגליים" : "Foot Massage"}
+                    </td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪370</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪430</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪490</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪630</td>
+                  </tr>
+                  <tr className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="p-4 font-medium text-gray-800">
+                      {dir === "rtl" ? "עיסוי קצוות (רגליים, ראש וצוואר)" : "Targeted Massage (feet, head & neck)"}
+                    </td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪320</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪380</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪440</td>
+                    <td className="text-center p-4 text-turquoise-600 font-bold">₪580</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="mt-8 space-y-4">
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <p className="text-sm text-orange-800">
+                {dir === "rtl" 
+                  ? "* שימו לב, מחירי טיפולים החל משעה 20:00, בימים שישי, שבת ובמועדים מיוחדים הינם בתוספת של 50 ש\"ח לטיפול."
+                  : "* Please note, treatment prices from 8:00 PM, on Fridays, Saturdays and special holidays are with an additional 50 NIS per treatment."
+                }
+              </p>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                {dir === "rtl" 
+                  ? "עיסויים מיוחדים : עיסוי תאילנדי, עיסוי אבנים חמות ניתן להזמין בתיאום מול נציג השירות"
+                  : "Special massages: Thai massage, hot stone massage can be ordered in coordination with the service representative"
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Treatments Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {treatments.map((treatment) => (

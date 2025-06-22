@@ -285,6 +285,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         // משתמשים (Users)
         { titleKey: "customers", icon: Users, hrefSuffix: "customers", section: "users" },
         { titleKey: "professional-management", icon: Users, hrefSuffix: "professional-management", section: "users" },
+        { titleKey: "partners", icon: Handshake, hrefSuffix: "partners", section: "users" },
         { titleKey: "users", icon: User, hrefSuffix: "users", section: "users" },
         
         // הגדרות (Settings)

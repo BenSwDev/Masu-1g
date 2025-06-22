@@ -1,28 +1,33 @@
-"use server"
+"use server";
 
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth/auth"
-import { revalidatePath } from "next/cache"
-import dbConnect from "@/lib/db/mongoose"
-import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
-import { logger } from "@/lib/logs/logger"
-import type { IWorkingHoursSettings, IFixedHours, ISpecialDate, ISpecialDateEvent } from "@/lib/db/models/working-hours"
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth/auth";
+import { revalidatePath } from "next/cache";
+import dbConnect from "@/lib/db/mongoose";
+import { WorkingHoursSettings } from "@/lib/db/models/working-hours";
+import { logger } from "@/lib/logs/logger";
+import type {
+  IWorkingHoursSettings,
+  IFixedHours,
+  ISpecialDate,
+  ISpecialDateEvent,
+} from "@/lib/db/models/working-hours";
 
 /**
  * Fetches the working hours settings from the database
  * Creates default settings if none exist
  */
 export async function getWorkingHoursSettings() {
-  const requestId = `get_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+  const requestId = `get_working_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
   try {
-    logger.info(`[${requestId}] Fetching working hours settings`)
-    await dbConnect()
+    logger.info(`[${requestId}] Fetching working hours settings`);
+    await dbConnect();
 
-    let settings = await WorkingHoursSettings.findOne().lean()
+    let settings = await WorkingHoursSettings.findOne().lean();
 
     if (!settings) {
-      logger.info(`[${requestId}] No settings found, creating default`)
+      logger.info(`[${requestId}] No settings found, creating default`);
       const defaultSettings = new WorkingHoursSettings({
         fixedHours: Array.from({ length: 7 }, (_, i) => ({
           dayOfWeek: i,
@@ -34,19 +39,20 @@ export async function getWorkingHoursSettings() {
           notes: "",
           minimumBookingAdvanceHours: 2,
           cutoffTime: null,
-          professionalShare: { amount: 70, type: "percentage" },
         })),
         specialDates: [],
         specialDateEvents: [],
-      })
+      });
 
-      settings = await defaultSettings.save()
-      logger.info(`[${requestId}] Default settings created with ID: ${settings._id}`)
+      settings = await defaultSettings.save();
+      logger.info(
+        `[${requestId}] Default settings created with ID: ${settings._id}`,
+      );
     }
 
     // Ensure fixedHours are sorted by dayOfWeek
     if (settings.fixedHours) {
-      settings.fixedHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+      settings.fixedHours.sort((a, b) => a.dayOfWeek - b.dayOfWeek);
     }
 
     // Convert dates to strings for client
@@ -63,17 +69,20 @@ export async function getWorkingHoursSettings() {
         settings.specialDateEvents?.map((event) => ({
           ...event,
           _id: event._id?.toString(),
-          dates: event.dates.map(date => date.toISOString().split("T")[0]),
+          dates: event.dates.map((date) => date.toISOString().split("T")[0]),
         })) || [],
       createdAt: settings.createdAt?.toISOString(),
       updatedAt: settings.updatedAt?.toISOString(),
-    }
+    };
 
-    logger.info(`[${requestId}] Successfully fetched working hours settings`)
-    return { success: true, data: serializedSettings }
+    logger.info(`[${requestId}] Successfully fetched working hours settings`);
+    return { success: true, data: serializedSettings };
   } catch (error) {
-    logger.error(`[${requestId}] Error fetching working hours settings:`, error)
-    return { success: false, error: "Failed to fetch working hours settings" }
+    logger.error(
+      `[${requestId}] Error fetching working hours settings:`,
+      error,
+    );
+    return { success: false, error: "Failed to fetch working hours settings" };
   }
 }
 
@@ -81,42 +90,47 @@ export async function getWorkingHoursSettings() {
  * Updates the fixed hours settings
  */
 export async function updateFixedHours(fixedHours: IFixedHours[]) {
-  const requestId = `update_fixed_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+  const requestId = `update_fixed_hours_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
   try {
-    logger.info(`[${requestId}] Updating fixed hours`)
-    await dbConnect()
+    logger.info(`[${requestId}] Updating fixed hours`);
+    await dbConnect();
 
     // Validate fixedHours
     if (!fixedHours || fixedHours.length !== 7) {
-      logger.error(`[${requestId}] Invalid fixedHours length: ${fixedHours?.length}`)
-      return { success: false, error: "Fixed hours must contain exactly 7 days" }
+      logger.error(
+        `[${requestId}] Invalid fixedHours length: ${fixedHours?.length}`,
+      );
+      return {
+        success: false,
+        error: "Fixed hours must contain exactly 7 days",
+      };
     }
 
     // Ensure all days 0-6 are present
     for (let i = 0; i < 7; i++) {
-      const dayExists = fixedHours.some((day) => day.dayOfWeek === i)
+      const dayExists = fixedHours.some((day) => day.dayOfWeek === i);
       if (!dayExists) {
-        logger.error(`[${requestId}] Missing day ${i} in fixedHours`)
-        return { success: false, error: `Missing day ${i} in fixed hours` }
+        logger.error(`[${requestId}] Missing day ${i} in fixedHours`);
+        return { success: false, error: `Missing day ${i} in fixed hours` };
       }
     }
 
-    const settings = await WorkingHoursSettings.findOne()
+    const settings = await WorkingHoursSettings.findOne();
     if (!settings) {
-      logger.error(`[${requestId}] No settings found`)
-      return { success: false, error: "Working hours settings not found" }
+      logger.error(`[${requestId}] No settings found`);
+      return { success: false, error: "Working hours settings not found" };
     }
 
-    settings.fixedHours = fixedHours
-    await settings.save()
+    settings.fixedHours = fixedHours;
+    await settings.save();
 
-    revalidatePath("/dashboard/admin/working-hours")
-    logger.info(`[${requestId}] Successfully updated fixed hours`)
-    return { success: true }
+    revalidatePath("/dashboard/admin/working-hours");
+    logger.info(`[${requestId}] Successfully updated fixed hours`);
+    return { success: true };
   } catch (error) {
-    logger.error(`[${requestId}] Error updating fixed hours:`, error)
-    return { success: false, error: "Failed to update fixed hours" }
+    logger.error(`[${requestId}] Error updating fixed hours:`, error);
+    return { success: false, error: "Failed to update fixed hours" };
   }
 }
 
@@ -124,55 +138,57 @@ export async function updateFixedHours(fixedHours: IFixedHours[]) {
  * Updates the special dates settings
  */
 export async function updateSpecialDates(specialDates: ISpecialDate[]) {
-  const requestId = `update_special_dates_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+  const requestId = `update_special_dates_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
   try {
-    logger.info(`[${requestId}] Updating special dates`)
-    await dbConnect()
+    logger.info(`[${requestId}] Updating special dates`);
+    await dbConnect();
 
-    const settings = await WorkingHoursSettings.findOne()
+    const settings = await WorkingHoursSettings.findOne();
     if (!settings) {
-      logger.error(`[${requestId}] No settings found`)
-      return { success: false, error: "Working hours settings not found" }
+      logger.error(`[${requestId}] No settings found`);
+      return { success: false, error: "Working hours settings not found" };
     }
 
-    settings.specialDates = specialDates
-    await settings.save()
+    settings.specialDates = specialDates;
+    await settings.save();
 
-    revalidatePath("/dashboard/admin/working-hours")
-    logger.info(`[${requestId}] Successfully updated special dates`)
-    return { success: true }
+    revalidatePath("/dashboard/admin/working-hours");
+    logger.info(`[${requestId}] Successfully updated special dates`);
+    return { success: true };
   } catch (error) {
-    logger.error(`[${requestId}] Error updating special dates:`, error)
-    return { success: false, error: "Failed to update special dates" }
+    logger.error(`[${requestId}] Error updating special dates:`, error);
+    return { success: false, error: "Failed to update special dates" };
   }
 }
 
 /**
  * Updates the special date events settings
  */
-export async function updateSpecialDateEvents(specialDateEvents: ISpecialDateEvent[]) {
-  const requestId = `update_special_date_events_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+export async function updateSpecialDateEvents(
+  specialDateEvents: ISpecialDateEvent[],
+) {
+  const requestId = `update_special_date_events_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
   try {
-    logger.info(`[${requestId}] Updating special date events`)
-    await dbConnect()
+    logger.info(`[${requestId}] Updating special date events`);
+    await dbConnect();
 
-    const settings = await WorkingHoursSettings.findOne()
+    const settings = await WorkingHoursSettings.findOne();
     if (!settings) {
-      logger.error(`[${requestId}] No settings found`)
-      return { success: false, error: "Working hours settings not found" }
+      logger.error(`[${requestId}] No settings found`);
+      return { success: false, error: "Working hours settings not found" };
     }
 
-    settings.specialDateEvents = specialDateEvents
-    await settings.save()
+    settings.specialDateEvents = specialDateEvents;
+    await settings.save();
 
-    revalidatePath("/dashboard/admin/working-hours")
-    logger.info(`[${requestId}] Successfully updated special date events`)
-    return { success: true }
+    revalidatePath("/dashboard/admin/working-hours");
+    logger.info(`[${requestId}] Successfully updated special date events`);
+    return { success: true };
   } catch (error) {
-    logger.error(`[${requestId}] Error updating special date events:`, error)
-    return { success: false, error: "Failed to update special date events" }
+    logger.error(`[${requestId}] Error updating special date events:`, error);
+    return { success: false, error: "Failed to update special date events" };
   }
 }
 
@@ -180,32 +196,32 @@ export async function updateSpecialDateEvents(specialDateEvents: ISpecialDateEve
  * Deletes a special date by index
  */
 export async function deleteSpecialDate(index: number) {
-  const requestId = `delete_special_date_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+  const requestId = `delete_special_date_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
   try {
-    logger.info(`[${requestId}] Deleting special date at index ${index}`)
-    await dbConnect()
+    logger.info(`[${requestId}] Deleting special date at index ${index}`);
+    await dbConnect();
 
-    const settings = await WorkingHoursSettings.findOne()
+    const settings = await WorkingHoursSettings.findOne();
     if (!settings) {
-      logger.error(`[${requestId}] No settings found`)
-      return { success: false, error: "Working hours settings not found" }
+      logger.error(`[${requestId}] No settings found`);
+      return { success: false, error: "Working hours settings not found" };
     }
 
     if (!settings.specialDates || index >= settings.specialDates.length) {
-      logger.error(`[${requestId}] Invalid index: ${index}`)
-      return { success: false, error: "Invalid special date index" }
+      logger.error(`[${requestId}] Invalid index: ${index}`);
+      return { success: false, error: "Invalid special date index" };
     }
 
-    settings.specialDates.splice(index, 1)
-    await settings.save()
+    settings.specialDates.splice(index, 1);
+    await settings.save();
 
-    revalidatePath("/dashboard/admin/working-hours")
-    logger.info(`[${requestId}] Successfully deleted special date`)
-    return { success: true }
+    revalidatePath("/dashboard/admin/working-hours");
+    logger.info(`[${requestId}] Successfully deleted special date`);
+    return { success: true };
   } catch (error) {
-    logger.error(`[${requestId}] Error deleting special date:`, error)
-    return { success: false, error: "Failed to delete special date" }
+    logger.error(`[${requestId}] Error deleting special date:`, error);
+    return { success: false, error: "Failed to delete special date" };
   }
 }
 
@@ -213,32 +229,35 @@ export async function deleteSpecialDate(index: number) {
  * Deletes a special date event by index
  */
 export async function deleteSpecialDateEvent(index: number) {
-  const requestId = `delete_special_date_event_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+  const requestId = `delete_special_date_event_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
   try {
-    logger.info(`[${requestId}] Deleting special date event at index ${index}`)
-    await dbConnect()
+    logger.info(`[${requestId}] Deleting special date event at index ${index}`);
+    await dbConnect();
 
-    const settings = await WorkingHoursSettings.findOne()
+    const settings = await WorkingHoursSettings.findOne();
     if (!settings) {
-      logger.error(`[${requestId}] No settings found`)
-      return { success: false, error: "Working hours settings not found" }
+      logger.error(`[${requestId}] No settings found`);
+      return { success: false, error: "Working hours settings not found" };
     }
 
-    if (!settings.specialDateEvents || index >= settings.specialDateEvents.length) {
-      logger.error(`[${requestId}] Invalid index: ${index}`)
-      return { success: false, error: "Invalid special date event index" }
+    if (
+      !settings.specialDateEvents ||
+      index >= settings.specialDateEvents.length
+    ) {
+      logger.error(`[${requestId}] Invalid index: ${index}`);
+      return { success: false, error: "Invalid special date event index" };
     }
 
-    settings.specialDateEvents.splice(index, 1)
-    await settings.save()
+    settings.specialDateEvents.splice(index, 1);
+    await settings.save();
 
-    revalidatePath("/dashboard/admin/working-hours")
-    logger.info(`[${requestId}] Successfully deleted special date event`)
-    return { success: true }
+    revalidatePath("/dashboard/admin/working-hours");
+    logger.info(`[${requestId}] Successfully deleted special date event`);
+    return { success: true };
   } catch (error) {
-    logger.error(`[${requestId}] Error deleting special date event:`, error)
-    return { success: false, error: "Failed to delete special date event" }
+    logger.error(`[${requestId}] Error deleting special date event:`, error);
+    return { success: false, error: "Failed to delete special date event" };
   }
 }
 
@@ -246,14 +265,14 @@ export async function deleteSpecialDateEvent(index: number) {
  * Get working hours settings
  */
 export async function getWorkingHours(): Promise<{
-  success: boolean
-  data?: any
-  error?: string
+  success: boolean;
+  data?: any;
+  error?: string;
 }> {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "Unauthorized" };
     }
 
     // Return default working hours for now
@@ -265,12 +284,12 @@ export async function getWorkingHours(): Promise<{
       thursday: { enabled: true, start: "09:00", end: "17:00" },
       friday: { enabled: true, start: "09:00", end: "15:00" },
       saturday: { enabled: false, start: "09:00", end: "17:00" },
-    }
+    };
 
-    return { success: true, data: defaultWorkingHours }
+    return { success: true, data: defaultWorkingHours };
   } catch (error) {
-    logger.error("Error fetching working hours:", error)
-    return { success: false, error: "Failed to fetch working hours" }
+    logger.error("Error fetching working hours:", error);
+    return { success: false, error: "Failed to fetch working hours" };
   }
 }
 
@@ -278,26 +297,26 @@ export async function getWorkingHours(): Promise<{
  * Update working hours settings
  */
 export async function updateWorkingHours(workingHours: any): Promise<{
-  success: boolean
-  data?: any
-  error?: string
+  success: boolean;
+  data?: any;
+  error?: string;
 }> {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions);
     if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
+      return { success: false, error: "Unauthorized" };
     }
 
-    await dbConnect()
+    await dbConnect();
 
     // For now, just return the same working hours (no actual DB update)
     // TODO: Implement actual working hours storage
-    
-    revalidatePath("/dashboard/admin/working-hours")
 
-    return { success: true, data: workingHours }
+    revalidatePath("/dashboard/admin/working-hours");
+
+    return { success: true, data: workingHours };
   } catch (error) {
-    logger.error("Error updating working hours:", error)
-    return { success: false, error: "Failed to update working hours" }
+    logger.error("Error updating working hours:", error);
+    return { success: false, error: "Failed to update working hours" };
   }
-} 
+}

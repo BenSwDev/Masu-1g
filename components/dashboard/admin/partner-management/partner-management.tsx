@@ -7,9 +7,11 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { useToast } from "@/components/common/ui/use-toast"
-import { Search, RefreshCw } from "lucide-react"
+import { Search, RefreshCw, Plus, Edit, Trash2 } from "lucide-react"
 import { getPartners } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
 import PartnerProfileDialog from "./partner-profile-dialog"
+import PartnerFormDialog, { type PartnerData } from "./partner-form-dialog"
+import { removePartner } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
 import type { IPartnerProfile } from "@/lib/db/models/partner-profile"
 import type { IUser } from "@/lib/db/models/user"
 
@@ -37,6 +39,9 @@ export default function PartnerManagement({
   const [searchTerm, setSearchTerm] = useState(initialSearch)
   const [loading, setLoading] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingPartner, setEditingPartner] = useState<PartnerData | null>(null)
+  const [deleteDialog, setDeleteDialog] = useState<{open: boolean; id: string | null}>({open:false,id:null})
 
   const fetchPartners = useCallback(async (page = 1) => {
     setLoading(true)
@@ -64,6 +69,47 @@ export default function PartnerManagement({
 
   const refresh = () => fetchPartners(pagination.page)
 
+  const handleCreate = () => {
+    setEditingPartner(null)
+    setIsFormOpen(true)
+  }
+
+  const handleEdit = (p: Partner) => {
+    setEditingPartner({
+      id: p._id,
+      name: p.userId.name,
+      email: p.userId.email,
+      phone: p.userId.phone,
+      gender: p.userId.gender,
+      businessNumber: p.businessNumber,
+      contactName: p.contactName,
+    })
+    setIsFormOpen(true)
+  }
+
+  const handleDelete = async () => {
+    if (!deleteDialog.id) return
+    try {
+      const res = await removePartner(deleteDialog.id)
+      if (res.success) {
+        toast({ title: "הצלחה", description: "השותף נמחק" })
+        fetchPartners(pagination.page)
+      } else {
+        toast({ variant: "destructive", title: "שגיאה", description: res.error || "שגיאה במחיקה" })
+      }
+    } finally {
+      setDeleteDialog({open:false,id:null})
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle>חיפוש שותפים</CardTitle>
+          <Button onClick={handleCreate} className="flex items-center gap-1">
+            <Plus className="w-4 h-4" /> הוסף שותף
+          </Button>
   return (
     <div className="space-y-6">
       <Card>
@@ -92,6 +138,7 @@ export default function PartnerManagement({
                 <TableHead>טלפון</TableHead>
                 <TableHead>ח.פ</TableHead>
                 <TableHead>איש קשר</TableHead>
+                <TableHead className="w-24">פעולות</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -111,6 +158,24 @@ export default function PartnerManagement({
                 </TableRow>
               ) : (
                 partners.map(p => (
+                  <TableRow key={p._id} className="hover:bg-muted">
+                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.userId.name}</TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.userId.email}</TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.userId.phone}</TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.businessNumber}</TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.contactName}</TableCell>
+                    <TableCell className="space-x-2">
+                      <Button size="icon" variant="ghost" onClick={() => handleEdit(p)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setDeleteDialog({open:true,id:p._id})}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
                   <TableRow key={p._id} className="hover:bg-muted cursor-pointer" onClick={() => setSelectedId(p._id)}>
                     <TableCell>{p.userId.name}</TableCell>
                     <TableCell>{p.userId.email}</TableCell>
@@ -139,6 +204,25 @@ export default function PartnerManagement({
 
       {selectedId && (
         <PartnerProfileDialog partnerId={selectedId} open={!!selectedId} onOpenChange={() => setSelectedId(null)} />
+      )}
+
+      <PartnerFormDialog
+        isOpen={isFormOpen}
+        onOpenChange={(o) => setIsFormOpen(o)}
+        initialData={editingPartner || undefined}
+        onSuccess={() => fetchPartners(pagination.page)}
+      />
+
+      {deleteDialog.open && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow space-y-4">
+            <p>האם למחוק שותף זה?</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setDeleteDialog({open:false,id:null})}>ביטול</Button>
+              <Button variant="destructive" onClick={handleDelete}>מחק</Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

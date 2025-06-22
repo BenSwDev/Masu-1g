@@ -488,15 +488,6 @@ export default function ProfessionalTreatmentsTabNew({
         )}
       </div>
 
-      {professional.status !== "approved" && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            ניתן לערוך טיפולים רק עבור מטפלים מאושרים
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="space-y-4">
         {categories.map((category) => {
           const selectedCount = getSelectedCount(category)
@@ -529,7 +520,7 @@ export default function ProfessionalTreatmentsTabNew({
                         e.stopPropagation()
                         handleCategoryToggle(category.name)
                       }}
-                      disabled={disabled || professional.status !== "approved"}
+                      disabled={disabled}
                     >
                       {allSelected ? "בטל הכל" : "בחר הכל"}
                     </Button>
@@ -553,7 +544,7 @@ export default function ProfessionalTreatmentsTabNew({
                                 onCheckedChange={(checked) => 
                                   handleTreatmentToggle(treatment._id, treatment)
                                 }
-                                disabled={disabled || professional.status !== "approved"}
+                                disabled={disabled}
                               />
                               
                               <div className="flex-1 space-y-2">
@@ -614,7 +605,7 @@ export default function ProfessionalTreatmentsTabNew({
                                             onCheckedChange={() => 
                                               handleDurationToggle(treatment._id, duration._id, duration)
                                             }
-                                            disabled={disabled || professional.status !== "approved"}
+                                            disabled={disabled}
                                           />
                                           <div className="flex-1">
                                             <Label 
@@ -645,7 +636,7 @@ export default function ProfessionalTreatmentsTabNew({
                                                   parseFloat(e.target.value) || 0
                                                 )}
                                                 className="w-20 px-2 py-1 text-xs border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                                disabled={disabled || professional.status !== "approved"}
+                                                disabled={disabled}
                                               />
                                             </div>
                                           </div>
@@ -699,7 +690,7 @@ export default function ProfessionalTreatmentsTabNew({
                                           parseFloat(e.target.value) || 0
                                         )}
                                         className="w-20 px-2 py-1 text-xs border rounded focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                        disabled={disabled || professional.status !== "approved"}
+                                        disabled={disabled}
                                       />
                                     </div>
                                   </div>

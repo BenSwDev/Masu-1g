@@ -1,0 +1,401 @@
+"use client"
+
+import { useState } from "react"
+import { useTranslation } from "@/lib/translations/i18n"
+import { Button } from "@/components/common/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Input } from "@/components/common/ui/input"
+import { Label } from "@/components/common/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Textarea } from "@/components/common/ui/textarea"
+import { Switch } from "@/components/common/ui/switch"
+import { useToast } from "@/components/common/ui/use-toast"
+import { User, Save, Loader2, AlertTriangle, CheckCircle } from "lucide-react"
+import { updateProfessionalProfile } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import type { IUser } from "@/lib/db/models/user"
+
+interface Professional {
+  _id: string
+  userId: IUser
+  status: ProfessionalStatus
+  isActive: boolean
+  treatments: Array<{
+    treatmentId: string
+    treatmentName?: string
+  }>
+  workAreas: Array<{
+    cityId: string
+    cityName: string
+    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
+    coveredCities: string[]
+  }>
+  bankDetails?: {
+    bankName: string
+    branchNumber: string
+    accountNumber: string
+  }
+  totalEarnings: number
+  pendingPayments: number
+  adminNotes?: string
+  rejectionReason?: string
+  appliedAt: Date
+  approvedAt?: Date
+  rejectedAt?: Date
+  lastActiveAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface ProfessionalProfileTabProps {
+  professional: Professional
+  onUpdate: (professional: Partial<Professional>) => void
+  loading: boolean
+  isCreatingNew?: boolean
+  onCreated?: (professional: Professional) => void
+}
+
+export default function ProfessionalProfileTab({
+  professional,
+  onUpdate,
+  loading,
+  isCreatingNew = false,
+  onCreated
+}: ProfessionalProfileTabProps) {
+  const { t, dir } = useTranslation()
+  const { toast } = useToast()
+  
+  const [userDetails, setUserDetails] = useState({
+    name: professional.userId.name || "",
+    email: professional.userId.email || "",
+    phone: professional.userId.phone || "",
+    gender: professional.userId.gender || "",
+    birthDate: professional.userId.birthDate ? new Date(professional.userId.birthDate).toISOString().split('T')[0] : ""
+  })
+  
+  const [professionalDetails, setProfessionalDetails] = useState({
+    status: professional.status,
+    isActive: professional.isActive,
+    adminNotes: professional.adminNotes || "",
+    rejectionReason: professional.rejectionReason || ""
+  })
+  
+  const [saving, setSaving] = useState(false)
+  const [hasChanges, setHasChanges] = useState(false)
+
+  const handleUserDetailChange = (field: keyof typeof userDetails, value: string) => {
+    setUserDetails(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    setHasChanges(true)
+  }
+
+  const handleProfessionalDetailChange = (field: keyof typeof professionalDetails, value: any) => {
+    setProfessionalDetails(prev => ({
+      ...prev,
+      [field]: value
+    }))
+    setHasChanges(true)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    
+    try {
+      // Validate required fields
+      if (!userDetails.name.trim() || !userDetails.email.trim()) {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: "שם ואימייל הם שדות חובה"
+        })
+        return
+      }
+
+      // Here you would typically make an API call to update the professional profile
+      // For now, we'll update the local state
+      const updatedUser = {
+        ...professional.userId,
+        ...userDetails,
+        birthDate: userDetails.birthDate ? new Date(userDetails.birthDate) : professional.userId.birthDate
+      }
+      
+      const updatedProfessional = {
+        ...professional,
+        userId: updatedUser,
+        ...professionalDetails
+      }
+      
+      onUpdate(updatedProfessional)
+      setHasChanges(false)
+      
+      toast({
+        title: "הצלחה",
+        description: "פרופיל המטפל עודכן בהצלחה"
+      })
+    } catch (error) {
+      console.error("Error saving profile:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בשמירת פרופיל המטפל"
+      })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const getStatusColor = (status: ProfessionalStatus) => {
+    switch (status) {
+      case "active": return "text-green-600"
+      case "pending_admin_approval": return "text-orange-600"
+      case "pending_user_action": return "text-blue-600"
+      case "rejected": return "text-red-600"
+      case "suspended": return "text-red-600"
+      default: return "text-gray-600"
+    }
+  }
+
+  const getStatusText = (status: ProfessionalStatus) => {
+    switch (status) {
+      case "active": return "פעיל"
+      case "pending_admin_approval": return "ממתין לאישור אדמין"
+      case "pending_user_action": return "ממתין לפעולת משתמש"
+      case "rejected": return "נדחה"
+      case "suspended": return "מושהה"
+      default: return "לא ידוע"
+    }
+  }
+
+  const formatDate = (date?: Date | string) => {
+    if (!date) return "-"
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date
+      return dateObj.toLocaleDateString("he-IL")
+    } catch {
+      return "-"
+    }
+  }
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <User className="h-5 w-5" />
+            פרופיל המטפל
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            עריכת פרטי המשתמש וסטטוס המטפל
+          </p>
+        </div>
+        {hasChanges && (
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                שומר...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                שמור שינויים
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+
+      {/* User Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>פרטי משתמש</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">שם מלא *</Label>
+              <Input
+                id="name"
+                value={userDetails.name}
+                onChange={(e) => handleUserDetailChange("name", e.target.value)}
+                placeholder="הכנס שם מלא"
+                className="text-right"
+                dir={dir}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">כתובת אימייל *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={userDetails.email}
+                onChange={(e) => handleUserDetailChange("email", e.target.value)}
+                placeholder="הכנס כתובת אימייל"
+                className="text-right"
+                dir={dir}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="phone">טלפון</Label>
+              <Input
+                id="phone"
+                value={userDetails.phone}
+                onChange={(e) => handleUserDetailChange("phone", e.target.value)}
+                placeholder="הכנס מספר טלפון"
+                className="text-right"
+                dir={dir}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="gender">מגדר</Label>
+              <Select value={userDetails.gender} onValueChange={(value) => handleUserDetailChange("gender", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר מגדר" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">זכר</SelectItem>
+                  <SelectItem value="female">נקבה</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="birthDate">תאריך לידה</Label>
+              <Input
+                id="birthDate"
+                type="date"
+                value={userDetails.birthDate}
+                onChange={(e) => handleUserDetailChange("birthDate", e.target.value)}
+                className="text-right"
+                dir={dir}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Professional Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle>סטטוס מטפל</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="status">סטטוס</Label>
+              <Select 
+                value={professionalDetails.status} 
+                onValueChange={(value: ProfessionalStatus) => handleProfessionalDetailChange("status", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">פעיל</SelectItem>
+                  <SelectItem value="pending_admin_approval">ממתין לאישור אדמין</SelectItem>
+                  <SelectItem value="pending_user_action">ממתין לפעולת משתמש</SelectItem>
+                  <SelectItem value="rejected">נדחה</SelectItem>
+                  <SelectItem value="suspended">מושהה</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="isActive" className="flex items-center gap-2">
+                פעיל במערכת
+              </Label>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={professionalDetails.isActive}
+                  onCheckedChange={(checked) => handleProfessionalDetailChange("isActive", checked)}
+                />
+                <span className={professionalDetails.isActive ? "text-green-600" : "text-red-600"}>
+                  {professionalDetails.isActive ? "פעיל" : "לא פעיל"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="adminNotes">הערות אדמין</Label>
+            <Textarea
+              id="adminNotes"
+              value={professionalDetails.adminNotes}
+              onChange={(e) => handleProfessionalDetailChange("adminNotes", e.target.value)}
+              placeholder="הכנס הערות אדמין..."
+              className="text-right min-h-[80px]"
+              dir={dir}
+            />
+          </div>
+
+          {professionalDetails.status === "rejected" && (
+            <div className="space-y-2">
+              <Label htmlFor="rejectionReason">סיבת דחייה</Label>
+              <Textarea
+                id="rejectionReason"
+                value={professionalDetails.rejectionReason}
+                onChange={(e) => handleProfessionalDetailChange("rejectionReason", e.target.value)}
+                placeholder="הכנס סיבת דחייה..."
+                className="text-right min-h-[80px]"
+                dir={dir}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Professional Info Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>מידע כללי</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="space-y-2">
+              <div>
+                <span className="font-medium">תאריך הצטרפות:</span>
+                <div className="text-muted-foreground">{formatDate(professional.appliedAt)}</div>
+              </div>
+              {professional.approvedAt && (
+                <div>
+                  <span className="font-medium">תאריך אישור:</span>
+                  <div className="text-muted-foreground">{formatDate(professional.approvedAt)}</div>
+                </div>
+              )}
+              {professional.rejectedAt && (
+                <div>
+                  <span className="font-medium">תאריך דחייה:</span>
+                  <div className="text-muted-foreground">{formatDate(professional.rejectedAt)}</div>
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <div>
+                <span className="font-medium">סטטוס נוכחי:</span>
+                <div className={getStatusColor(professionalDetails.status)}>
+                  {getStatusText(professionalDetails.status)}
+                </div>
+              </div>
+              <div>
+                <span className="font-medium">פעילות אחרונה:</span>
+                <div className="text-muted-foreground">{formatDate(professional.lastActiveAt)}</div>
+              </div>
+              <div>
+                <span className="font-medium">עודכן לאחרונה:</span>
+                <div className="text-muted-foreground">{formatDate(professional.updatedAt)}</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+} 

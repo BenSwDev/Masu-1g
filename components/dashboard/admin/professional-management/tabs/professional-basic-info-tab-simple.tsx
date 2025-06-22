@@ -69,7 +69,7 @@ export default function ProfessionalBasicInfoTab({
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
-  // Form state for creating/editing professional
+  // Form state for creating new professional
   const [formData, setFormData] = useState({
     name: professional?.userId?.name || "",
     email: professional?.userId?.email || "",
@@ -77,9 +77,6 @@ export default function ProfessionalBasicInfoTab({
     gender: professional?.userId?.gender || "male",
     birthDate: professional?.userId?.birthDate ? 
       new Date(professional.userId.birthDate).toISOString().split('T')[0] : "",
-    specialization: professional?.specialization || "",
-    experience: professional?.experience || "",
-    bio: professional?.bio || ""
   })
 
   // State for status management
@@ -88,10 +85,8 @@ export default function ProfessionalBasicInfoTab({
   const [rejectionReason, setRejectionReason] = useState(professional?.rejectionReason || "")
   const [selectedStatus, setSelectedStatus] = useState<ProfessionalStatus>(professional?.status || "pending_admin_approval")
 
-  // State for creation/editing process
+  // State for creation process
   const [creationLoading, setCreationLoading] = useState(false)
-  const [editLoading, setEditLoading] = useState(false)
-  const [hasChanges, setHasChanges] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   const validateForm = () => {
@@ -203,56 +198,6 @@ export default function ProfessionalBasicInfoTab({
       })
     } finally {
       setCreationLoading(false)
-    }
-  }
-
-  const handleUpdateProfessional = async () => {
-    const errors = validateForm()
-    setValidationErrors(errors)
-    
-    if (Object.keys(errors).length > 0) {
-      toast({
-        variant: "destructive",
-        title: "שגיאות בטופס",
-        description: "נא לתקן את השגיאות ולנסות שוב"
-      })
-      return
-    }
-
-    setEditLoading(true)
-    
-    try {
-      // Here you would typically call an API to update the professional details
-      // For now, we'll just update the local state
-      onUpdate({
-        specialization: formData.specialization,
-        experience: formData.experience,
-        bio: formData.bio
-      })
-      
-      setHasChanges(false)
-      
-      toast({
-        title: "הצלחה",
-        description: "פרטי המטפל עודכנו בהצלחה"
-      })
-    } catch (error) {
-      console.error("Error updating professional:", error)
-      toast({
-        variant: "destructive",
-        title: "שגיאה",
-        description: "שגיאה בעדכון פרטי המטפל"
-      })
-    } finally {
-      setEditLoading(false)
-    }
-  }
-
-  const handleFormChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-    setHasChanges(true)
-    if (validationErrors[field]) {
-      setValidationErrors(prev => ({ ...prev, [field]: "" }))
     }
   }
 
@@ -604,77 +549,6 @@ export default function ProfessionalBasicInfoTab({
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">תאריך הצטרפות</Label>
               <p className="text-sm">{formatDate(professional.appliedAt)}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Editable Professional Information Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              עריכת פרטי מטפל
-            </div>
-            {hasChanges && (
-              <Button 
-                onClick={handleUpdateProfessional}
-                disabled={editLoading}
-                size="sm"
-              >
-                {editLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    שומר...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    שמור שינויים
-                  </>
-                )}
-              </Button>
-            )}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="specialization" className="text-sm font-medium">
-                התמחות
-              </Label>
-              <Input
-                id="specialization"
-                value={formData.specialization}
-                onChange={(e) => handleFormChange("specialization", e.target.value)}
-                placeholder="הכנס את התמחות המטפל..."
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="experience" className="text-sm font-medium">
-                ניסיון
-              </Label>
-              <Input
-                id="experience"
-                value={formData.experience}
-                onChange={(e) => handleFormChange("experience", e.target.value)}
-                placeholder="הכנס את ניסיון המטפל..."
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="bio" className="text-sm font-medium">
-                אודות המטפל
-              </Label>
-              <Textarea
-                id="bio"
-                value={formData.bio}
-                onChange={(e) => handleFormChange("bio", e.target.value)}
-                placeholder="הכנס תיאור על המטפל..."
-                rows={4}
-              />
             </div>
           </div>
         </CardContent>

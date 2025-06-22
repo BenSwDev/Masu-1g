@@ -64,12 +64,8 @@ interface ProfessionalDocumentsTabProps {
 }
 
 const requiredDocuments = [
-  { type: "license", name: "רישיון מטפל", required: true },
-  { type: "certification", name: "תעודת הסמכה", required: true },
   { type: "insurance", name: "ביטוח אחריות מקצועית", required: true },
-  { type: "id_copy", name: "צילום תעודת זהות", required: true },
-  { type: "cv", name: "קורות חיים", required: false },
-  { type: "recommendations", name: "מכתבי המלצה", required: false }
+  { type: "diploma", name: "תעודת הכשרה/דיפלומה", required: true }
 ]
 
 export default function ProfessionalDocumentsTab({

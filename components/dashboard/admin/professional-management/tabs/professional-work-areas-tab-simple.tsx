@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -20,15 +20,8 @@ interface Professional {
   userId: IUser
   status: ProfessionalStatus
   isActive: boolean
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
-  profileImage?: string
   treatments: Array<{
     treatmentId: string
-    durationId?: string
-    professionalPrice: number
     treatmentName?: string
   }>
   workAreas: Array<{
@@ -37,6 +30,11 @@ interface Professional {
     distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
     coveredCities: string[]
   }>
+  bankDetails?: {
+    bankName: string
+    branchNumber: string
+    accountNumber: string
+  }
   totalEarnings: number
   pendingPayments: number
   adminNotes?: string
@@ -86,6 +84,7 @@ export default function ProfessionalWorkAreasTab({
   const [loadingCities, setLoadingCities] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load available cities
   useEffect(() => {
@@ -146,6 +145,15 @@ export default function ProfessionalWorkAreasTab({
       return workArea
     }))
     setHasChanges(true)
+    
+    // Auto-save after a short delay to avoid multiple saves
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current)
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      handleSave()
+    }, 1500) // Save after 1.5 seconds of no changes
   }
 
   const handleSave = async () => {

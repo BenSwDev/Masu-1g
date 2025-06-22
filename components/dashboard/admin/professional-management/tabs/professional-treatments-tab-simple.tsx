@@ -79,7 +79,7 @@ export default function ProfessionalTreatmentsTab({
   const [treatments, setTreatments] = useState<ProfessionalTreatment[]>(professional.treatments || [])
   const [availableTreatments, setAvailableTreatments] = useState<TreatmentOption[]>([])
   const [categories, setCategories] = useState<string[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>("all_categories")
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [loadingTreatments, setLoadingTreatments] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -118,7 +118,7 @@ export default function ProfessionalTreatmentsTab({
 
   const handleAddTreatment = () => {
     const newTreatment: ProfessionalTreatment = {
-      treatmentId: "",
+      treatmentId: "placeholder",
       treatmentName: ""
     }
     setTreatments(prev => [...prev, newTreatment])
@@ -197,12 +197,12 @@ export default function ProfessionalTreatmentsTab({
   }
 
   const getFilteredTreatments = () => {
-    if (!selectedCategory || selectedCategory === "all_categories") return availableTreatments
+    if (!selectedCategory) return availableTreatments
     return availableTreatments.filter(t => t.category === selectedCategory)
   }
 
   const isValidTreatment = (treatment: ProfessionalTreatment) => {
-    return treatment.treatmentId !== ""
+    return treatment.treatmentId !== "" && treatment.treatmentId !== "placeholder"
   }
 
   const getAvailableTreatmentsForSelect = (currentIndex: number) => {
@@ -272,7 +272,7 @@ export default function ProfessionalTreatmentsTab({
                 <SelectValue placeholder="כל הקטגוריות" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all_categories">כל הקטגוריות</SelectItem>
+                <SelectItem value="">כל הקטגוריות</SelectItem>
                 {categories.map(category => (
                   <SelectItem key={category} value={category}>
                     {category}
@@ -308,7 +308,7 @@ export default function ProfessionalTreatmentsTab({
                       <div className="space-y-2">
                         <Label>טיפול</Label>
                         <Select
-                          value={treatment.treatmentId}
+                          value={treatment.treatmentId === "placeholder" ? "" : treatment.treatmentId}
                           onValueChange={(value) => handleTreatmentChange(index, value)}
                         >
                           <SelectTrigger>

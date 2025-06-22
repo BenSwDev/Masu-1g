@@ -6,12 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui
 import { useTranslation } from "@/lib/translations/i18n"
 import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
-import { AlertTriangle, X, User, Stethoscope, MapPin, CreditCard, FileText, ScrollText } from "lucide-react"
-import ProfessionalBasicInfoTabSimple from "./tabs/professional-basic-info-tab-simple"
-import ProfessionalTreatmentsTabSimple from "./tabs/professional-treatments-tab-simple"
+import { AlertTriangle, X, User, Stethoscope, MapPin, CreditCard, FileText, DollarSign, ScrollText } from "lucide-react"
+import ProfessionalProfileTab from "./tabs/professional-profile-tab"
+import ProfessionalTreatmentsTabNew from "./tabs/professional-treatments-tab-new"
 import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
 import ProfessionalBankDetailsTab from "./tabs/professional-bank-details-tab"
 import ProfessionalDocumentsTab from "./tabs/professional-documents-tab"
+import ProfessionalFinancialTab from "./tabs/professional-financial-tab"
 import ProfessionalContractTab from "./tabs/professional-contract-tab"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
@@ -21,15 +22,8 @@ interface Professional {
   userId: IUser
   status: ProfessionalStatus
   isActive: boolean
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
-  profileImage?: string
   treatments: Array<{
     treatmentId: string
-    durationId?: string
-    professionalPrice: number
     treatmentName?: string
   }>
   workAreas: Array<{
@@ -69,7 +63,7 @@ export default function ProfessionalEditModal({
   isCreatingNew = false
 }: ProfessionalEditModalProps) {
   const { t, dir } = useTranslation()
-  const [activeTab, setActiveTab] = useState("basic")
+  const [activeTab, setActiveTab] = useState("profile")
   const [updatedProfessional, setUpdatedProfessional] = useState<Professional>(professional)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
@@ -126,7 +120,7 @@ export default function ProfessionalEditModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
@@ -153,11 +147,11 @@ export default function ProfessionalEditModal({
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-6 flex-shrink-0">
-              <TabsTrigger value="basic" className="flex items-center gap-1">
+            <TabsList className="grid w-full grid-cols-7 flex-shrink-0">
+              <TabsTrigger value="profile" className="flex items-center gap-1">
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline">פרטים בסיסיים</span>
-                <span className="sm:hidden">פרטים</span>
+                <span className="hidden sm:inline">פרופיל</span>
+                <span className="sm:hidden">פרופיל</span>
               </TabsTrigger>
               <TabsTrigger value="treatments" className="flex items-center gap-1">
                 <Stethoscope className="w-4 h-4" />
@@ -179,16 +173,21 @@ export default function ProfessionalEditModal({
                 <span className="hidden sm:inline">מסמכים</span>
                 <span className="sm:hidden">מסמכים</span>
               </TabsTrigger>
+              <TabsTrigger value="financial" className="flex items-center gap-1" disabled={isCreatingNew}>
+                <DollarSign className="w-4 h-4" />
+                <span className="hidden sm:inline">כספים</span>
+                <span className="sm:hidden">כספים</span>
+              </TabsTrigger>
               <TabsTrigger value="contract" className="flex items-center gap-1" disabled={isCreatingNew}>
                 <ScrollText className="w-4 h-4" />
-                <span className="hidden sm:inline">הסכם מטפל</span>
-                <span className="sm:hidden">הסכם</span>
+                <span className="hidden sm:inline">הסכמים</span>
+                <span className="sm:hidden">הסכמים</span>
               </TabsTrigger>
             </TabsList>
 
             <div className="flex-1 overflow-y-auto">
-              <TabsContent value="basic" className="h-full overflow-y-auto">
-                <ProfessionalBasicInfoTabSimple
+              <TabsContent value="profile" className="h-full overflow-y-auto">
+                <ProfessionalProfileTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                   loading={false}
@@ -201,7 +200,7 @@ export default function ProfessionalEditModal({
               </TabsContent>
 
               <TabsContent value="treatments" className="h-full overflow-y-auto">
-                <ProfessionalTreatmentsTabSimple
+                <ProfessionalTreatmentsTabNew
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                   disabled={isCreatingNew && updatedProfessional._id === "new"}
@@ -228,6 +227,15 @@ export default function ProfessionalEditModal({
               <TabsContent value="documents" className="h-full overflow-y-auto">
                 {!isCreatingNew && (
                   <ProfessionalDocumentsTab 
+                    professional={updatedProfessional} 
+                    onUpdate={handleUpdate}
+                  />
+                )}
+              </TabsContent>
+
+              <TabsContent value="financial" className="h-full overflow-y-auto">
+                {!isCreatingNew && (
+                  <ProfessionalFinancialTab 
                     professional={updatedProfessional} 
                     onUpdate={handleUpdate}
                   />

@@ -1856,6 +1856,17 @@
       "noCoupons": "לא נמצאו קופוני שותפים",
       "title": "קופוני שותפים"
     },
+    "partners": {
+      "title": "ניהול שותפים",
+      "description": "ניהול וצפייה ברשימת השותפים במערכת",
+      "table": {
+        "name": "שם",
+        "email": "אימייל",
+        "phone": "טלפון",
+        "businessNumber": "ח.פ",
+        "contactName": "איש קשר"
+      }
+    },
     "password": "סיסמה",
     "paymentMethods": {
       "addNew": "הוסף אמצעי תשלום חדש",

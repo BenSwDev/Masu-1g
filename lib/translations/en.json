@@ -444,6 +444,17 @@
     "description": "Manage Partner Coupons",
     "noCoupons": "No partner coupons found"
   },
+  "partners": {
+    "title": "Partners Management",
+    "description": "View and manage partners",
+    "table": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "businessNumber": "Business ID",
+      "contactName": "Contact Name"
+    }
+  },
   "memberCoupons": {
     "title": "Member Coupons",
     "description": "View Available Coupons",

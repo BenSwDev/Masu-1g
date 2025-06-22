@@ -9,6 +9,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { Menu, X, Home, Calendar, CreditCard, Gift, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
+import { TreatmentsMenu } from "@/components/common/treatments-menu"
 
 export function LandingHeader() {
   const { t, dir } = useTranslation()
@@ -45,10 +46,12 @@ export function LandingHeader() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className={cn(
-            "hidden md:flex items-center",
-            dir === "rtl" ? "space-x-reverse space-x-6" : "space-x-6"
-          )}>
+          <nav
+            className={cn(
+              "hidden md:flex items-center",
+              dir === "rtl" ? "space-x-reverse space-x-6" : "space-x-6"
+            )}
+          >
             {navigation.map((item) => {
               const Icon = item.icon
               return (
@@ -66,6 +69,7 @@ export function LandingHeader() {
                 </Link>
               )
             })}
+            <TreatmentsMenu />
           </nav>
 
           {/* Right side actions */}
@@ -120,6 +124,7 @@ export function LandingHeader() {
                   </Link>
                 )
               })}
+              <TreatmentsMenu mobile onNavigate={() => setIsMobileMenuOpen(false)} />
             </nav>
           </div>
         )}

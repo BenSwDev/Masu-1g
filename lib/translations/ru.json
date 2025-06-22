@@ -1904,6 +1904,9 @@
     "bookSubscription": "Купить подписку",
     "bookGiftVoucher": "Купить подарочный сертификат",
     "useVoucher": "У меня есть ваучер/купон",
+    "haveCode": "У меня есть код",
+    "enterCode": "Введите код",
+    "codePlaceholder": "Введите код",
     "professionalInterface": "Интерфейс специалиста",
     "partnerInterface": "Интерфейс партнера",
     "adminInterface": "Интерфейс администратора"

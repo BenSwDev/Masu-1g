@@ -3,7 +3,8 @@
     "home": "בית",
     "bookTreatment": "הזמן טיפול",
     "bookSubscription": "הזמן מנוי",
-    "bookGiftVoucher": "הזמן שובר מתנה"
+    "bookGiftVoucher": "הזמן שובר מתנה",
+    "ourTreatments": "הטיפולים שלנו"
   },
   "roles": {
     "admin": "מנהל",
@@ -4420,6 +4421,9 @@
     "bookSubscription": "הזמן מנוי",
     "bookGiftVoucher": "הזמן שובר מתנה",
     "useVoucher": "יש לי שובר/קופון",
+    "haveCode": "יש לי קוד",
+    "enterCode": "הזן קוד",
+    "codePlaceholder": "הזן קוד",
     "professionalInterface": "כניסה לממשק מטפלים",
     "partnerInterface": "כניסה לממשק שותפים",
     "adminInterface": "כניסה לממשק מנהל"

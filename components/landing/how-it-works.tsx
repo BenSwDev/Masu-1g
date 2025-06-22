@@ -12,7 +12,7 @@ export function LandingHowItWorks() {
       icon: Search,
       title: dir === "rtl" ? "בחר טיפול" : "Choose Treatment",
       description: dir === "rtl" 
-        ? "בחר מתוך מגוון רחב של טיפולי יופי מקצועיים המותאמים לצרכים שלך"
+        ? "בחר מתוך מגוון רחב של עיסויים וטיפולי יופי מקצועיים המותאמים לצרכים שלך"
         : "Choose from a wide range of professional beauty treatments tailored to your needs",
       color: "from-turquoise-500 to-turquoise-600"
     },

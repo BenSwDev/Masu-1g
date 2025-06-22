@@ -11,7 +11,7 @@ export function LandingServices() {
       icon: Home,
       title: dir === "rtl" ? "טיפולים בבית" : "Home Treatments",
       description: dir === "rtl" 
-        ? "נהנה מטיפולי יופי מקצועיים בנוחות הבית שלך, ללא צורך לנסוע או להמתין בתורים"
+        ? "נהנה מעיסויים וטיפולי יופי מקצועיים בנוחות הבית שלך, ללא צורך לנסוע או להמתין בתורים"
         : "Enjoy professional beauty treatments in the comfort of your home, no need to travel or wait in queues",
       color: "from-turquoise-500 to-turquoise-600"
     },
@@ -51,8 +51,8 @@ export function LandingServices() {
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             {dir === "rtl"
-              ? "אנחנו מציעים חוויה ייחודית של טיפולי יופי עם הסטנדרטים הגבוהים ביותר של איכות ושירות"
-              : "We offer a unique beauty treatment experience with the highest standards of quality and service"
+              ? "אנחנו מציעים חוויה ייחודית הכוללת עיסויים, טיפולי פנים, איפור ועיצוב שיער בסטנדרטים הגבוהים ביותר של איכות ושירות"
+              : "We offer a unique experience including massages, facials, makeup, and hair styling with the highest standards of quality and service"
             }
           </p>
         </div>

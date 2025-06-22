@@ -14,6 +14,7 @@ import { LanguageSelector } from "@/components/common/language-selector"
 import { PhoneInput } from "@/components/common/phone-input"
 import { useRouter } from "next/navigation"
 import { registerUser } from "@/actions/auth-actions"
+import { signIn } from "next-auth/react"
   import { Checkbox } from "@/components/common/ui/checkbox"
   import { useToast } from "@/components/common/ui/use-toast"
 
@@ -119,6 +120,15 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
       } else {
         setSuccess(true)
         toast({ title: t("success.registrationComplete"), variant: "default" })
+
+        const signInResult = await signIn("credentials", {
+          redirect: false,
+          email: (formData.get("email") as string) || "",
+          password,
+        })
+        if (signInResult?.ok) {
+          router.push("/")
+        }
       }
     } catch (error) {
       setError(t("errors.unknown"))

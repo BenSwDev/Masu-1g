@@ -175,7 +175,8 @@
     "home": "Home",
     "bookTreatment": "Book Treatment",
     "bookSubscription": "Book Subscription",
-    "bookGiftVoucher": "Book Gift Voucher"
+    "bookGiftVoucher": "Book Gift Voucher",
+    "ourTreatments": "Our Treatments"
   },
   "dashboard": {
     "sidebar": {
@@ -1559,6 +1560,9 @@
     "bookSubscription": "Book Subscription",
     "bookGiftVoucher": "Book Gift Voucher",
     "useVoucher": "I have a voucher/coupon",
+    "haveCode": "I have a code",
+    "enterCode": "Enter Code",
+    "codePlaceholder": "Enter code",
     "professionalInterface": "Professional Interface",
     "partnerInterface": "Partner Interface",
     "adminInterface": "Admin Interface"

@@ -67,6 +67,9 @@ export type { IGiftVoucherUsageHistory } from "@/types/booking"
 
 // Define the timezone we'll use throughout the app
 const TIMEZONE = "Asia/Jerusalem" // Israel timezone
+// Evening surcharge between 20:00-22:00 on weekdays (Sun-Thu)
+const EVENING_SURCHARGE_AMOUNT = 50
+const EVENING_SURCHARGE_DESCRIPTION = "bookings.surcharges.specialTime"
 
 // Replace the isSameUTCDay function with a timezone-aware version
 function isSameDay(dateLeft: Date, dateRight: Date): boolean {
@@ -158,6 +161,7 @@ export async function getAvailableTimeSlots(
     }
 
     const daySettings = getDayWorkingHours(selectedDateUTC, settings)
+    const dayOfWeek = selectedDateInTZ.getDay()
     
     if (!daySettings || !daySettings.isActive) {
       return {
@@ -284,6 +288,16 @@ export async function getAvailableTimeSlots(
           slot.surcharge = {
             description: surchargeDescription,
             amount: surchargeAmount,
+          }
+        }
+
+        // Weekday evening surcharge between 20:00-22:00
+        const isWeekday = dayOfWeek >= 0 && dayOfWeek <= 4
+        const isEvening = slotHour >= 20 && slotHour < 22
+        if (isWeekday && isEvening) {
+          slot.surcharge = slot.surcharge || {
+            description: EVENING_SURCHARGE_DESCRIPTION,
+            amount: EVENING_SURCHARGE_AMOUNT,
           }
         }
         
@@ -416,6 +430,28 @@ export async function calculateBookingPrice(
           }
         }
       }
+    }
+
+    // Weekday evening surcharge between 20:00-22:00
+    const bookingDateInTZ = toZonedTime(bookingDateTime, TIMEZONE)
+    const weekdayEvening =
+      bookingDateInTZ.getDay() >= 0 &&
+      bookingDateInTZ.getDay() <= 4 &&
+      bookingDateInTZ.getHours() >= 20 &&
+      bookingDateInTZ.getHours() < 22
+    const alreadyAdded = priceDetails.surcharges.some(
+      (s) =>
+        s.description === EVENING_SURCHARGE_DESCRIPTION &&
+        s.amount === EVENING_SURCHARGE_AMOUNT,
+    )
+    // Align with time slot display logic and only apply the evening surcharge
+    // if no other surcharge is already present
+    if (weekdayEvening && !alreadyAdded && priceDetails.surcharges.length === 0) {
+      priceDetails.surcharges.push({
+        description: EVENING_SURCHARGE_DESCRIPTION,
+        amount: EVENING_SURCHARGE_AMOUNT,
+      })
+      priceDetails.totalSurchargesAmount += EVENING_SURCHARGE_AMOUNT
     }
 
     if (userSubscriptionId) {
@@ -1349,13 +1385,17 @@ export async function professionalAcceptBooking(
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
 
+          const baseUrl =
+            process.env.NEXT_PUBLIC_APP_URL ||
+            process.env.NEXTAUTH_URL ||
+            ""
           const notificationData = {
             type: "BOOKING_CONFIRMED_CLIENT",
             userName: clientUser.name || "לקוח/ה",
             professionalName: professional.name || "מטפל/ת",
             bookingDateTime: acceptedBooking.bookingDateTime,
             treatmentName: treatment.name,
-            bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${acceptedBooking._id.toString()}`,
+            bookingDetailsLink: `${baseUrl}/dashboard/member/bookings?bookingId=${acceptedBooking._id.toString()}`,
           }
 
           const recipients = []
@@ -1766,13 +1806,17 @@ export async function assignProfessionalToBooking(
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
 
+          const baseUrl =
+            process.env.NEXT_PUBLIC_APP_URL ||
+            process.env.NEXTAUTH_URL ||
+            ""
           const clientNotificationData = {
             type: "BOOKING_CONFIRMED_CLIENT",
             userName: clientUser.name || "לקוח/ה",
             professionalName: professional.name || "מטפל/ת",
             bookingDateTime: assignedBooking.bookingDateTime,
             treatmentName: treatment.name,
-            bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${assignedBooking._id.toString()}`,
+            bookingDetailsLink: `${baseUrl}/dashboard/member/bookings?bookingId=${assignedBooking._id.toString()}`,
           }
 
           const clientRecipients = []

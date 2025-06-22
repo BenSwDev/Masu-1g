@@ -120,8 +120,8 @@ export default function ProfessionalEditModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl max-h-[95vh] flex flex-col p-0">
-        <DialogHeader className="flex-shrink-0 p-6 pb-4">
+      <DialogContent className="max-w-7xl max-h-[95vh] !grid-rows-[auto_1fr] !grid !p-0">
+        <div className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-xl">
@@ -143,10 +143,10 @@ export default function ProfessionalEditModal({
               </div>
             )}
           </div>
-        </DialogHeader>
+        </div>
 
-        <div className="flex-1 overflow-hidden px-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir} className="h-full flex flex-col">
+        <div className="flex flex-col min-h-0 p-6 pt-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir} className="flex flex-col min-h-0 flex-1">
             <TabsList className="grid w-full grid-cols-7 flex-shrink-0 mb-4">
               <TabsTrigger value="profile" className="flex items-center gap-1">
                 <User className="w-4 h-4" />
@@ -185,102 +185,65 @@ export default function ProfessionalEditModal({
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-hidden">
-              <TabsContent value="profile" className="h-full overflow-y-auto data-[state=active]:flex data-[state=active]:flex-col m-0">
-                <div className="flex-1 pb-6">
-                  <ProfessionalProfileTab
-                    professional={updatedProfessional}
-                    onUpdate={handleUpdate}
-                    loading={false}
-                    isCreatingNew={isCreatingNew}
-                    onCreated={(newProfessional) => {
-                      setUpdatedProfessional(newProfessional)
-                      setHasUnsavedChanges(false)
-                    }}
-                  />
-                </div>
+            <div className="flex-1 min-h-0">
+              <TabsContent value="profile" className="h-full overflow-y-auto data-[state=active]:block m-0">
+                <ProfessionalProfileTab
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                  loading={false}
+                  isCreatingNew={isCreatingNew}
+                  onCreated={(newProfessional) => {
+                    setUpdatedProfessional(newProfessional)
+                    setHasUnsavedChanges(false)
+                  }}
+                />
               </TabsContent>
 
-              <TabsContent value="treatments" className="h-full overflow-y-auto data-[state=active]:flex data-[state=active]:flex-col m-0">
-                <div className="flex-1 pb-6">
-                  <ProfessionalTreatmentsTabNew
-                    professional={updatedProfessional}
-                    onUpdate={handleUpdate}
-                    disabled={isCreatingNew}
-                  />
-                </div>
+              <TabsContent value="treatments" className="h-full overflow-y-auto data-[state=active]:block m-0">
+                <ProfessionalTreatmentsTabNew
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                  disabled={isCreatingNew}
+                />
               </TabsContent>
 
-              <TabsContent value="workAreas" className="h-full overflow-y-auto data-[state=active]:flex data-[state=active]:flex-col m-0">
-                <div className="flex-1 pb-6">
-                  <ProfessionalWorkAreasTabSimple
-                    professional={updatedProfessional}
-                    onUpdate={handleUpdate}
-                    disabled={isCreatingNew}
-                  />
-                </div>
+              <TabsContent value="workAreas" className="h-full overflow-y-auto data-[state=active]:block m-0">
+                <ProfessionalWorkAreasTabSimple
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                  disabled={isCreatingNew}
+                />
               </TabsContent>
 
-              <TabsContent value="bankDetails" className="h-full overflow-y-auto data-[state=active]:flex data-[state=active]:flex-col m-0">
-                <div className="flex-1 pb-6">
-                  <ProfessionalBankDetailsTab
-                    professional={updatedProfessional}
-                    onUpdate={handleUpdate}
-                  />
-                </div>
+              <TabsContent value="bankDetails" className="h-full overflow-y-auto data-[state=active]:block m-0">
+                <ProfessionalBankDetailsTab
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                />
               </TabsContent>
 
-              <TabsContent value="documents" className="h-full overflow-y-auto data-[state=active]:flex data-[state=active]:flex-col m-0">
-                <div className="flex-1 pb-6">
-                  <ProfessionalDocumentsTab
-                    professional={updatedProfessional}
-                    onUpdate={handleUpdate}
-                  />
-                </div>
+              <TabsContent value="documents" className="h-full overflow-y-auto data-[state=active]:block m-0">
+                <ProfessionalDocumentsTab
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                />
               </TabsContent>
 
-              <TabsContent value="financial" className="h-full overflow-y-auto data-[state=active]:flex data-[state=active]:flex-col m-0">
-                <div className="flex-1 pb-6">
-                  <ProfessionalFinancialTab
-                    professional={updatedProfessional}
-                    onUpdate={handleUpdate}
-                  />
-                </div>
+              <TabsContent value="financial" className="h-full overflow-y-auto data-[state=active]:block m-0">
+                <ProfessionalFinancialTab
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                />
               </TabsContent>
 
-              <TabsContent value="contract" className="h-full overflow-y-auto data-[state=active]:flex data-[state=active]:flex-col m-0">
-                <div className="flex-1 pb-6">
-                  <ProfessionalContractTab
-                    professional={updatedProfessional}
-                    onUpdate={handleUpdate}
-                  />
-                </div>
+              <TabsContent value="contract" className="h-full overflow-y-auto data-[state=active]:block m-0">
+                <ProfessionalContractTab
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                />
               </TabsContent>
             </div>
           </Tabs>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="flex-shrink-0 border-t pt-4 mt-4">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-muted-foreground">
-              {isCreatingNew ? (
-                "צור מטפל חדש ואז הגדר את הטיפולים ואיזורי הפעילות"
-              ) : (
-                `עודכן לאחרונה: ${formatDate(updatedProfessional.updatedAt)}`
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleClose}>
-                {hasUnsavedChanges ? "בטל" : "סגור"}
-              </Button>
-              {hasUnsavedChanges && !isCreatingNew && (
-                <Button onClick={() => setHasUnsavedChanges(false)}>
-                  שמור שינויים
-                </Button>
-              )}
-            </div>
-          </div>
         </div>
       </DialogContent>
     </Dialog>

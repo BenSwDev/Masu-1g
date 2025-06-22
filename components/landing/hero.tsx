@@ -84,14 +84,14 @@ export function LandingHero() {
             </Button>
 
             <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
-              <Link href="#" className="flex items-center gap-2">
+              <Link href="/bookings/treatment" className="flex items-center gap-2">
                 {dir === "rtl" ? "הזמנת מאפרת עד הבית" : "Book Makeup Artist"}
                 <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
               </Link>
             </Button>
 
             <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
-              <Link href="#" className="flex items-center gap-2">
+              <Link href="/bookings/treatment" className="flex items-center gap-2">
                 {dir === "rtl" ? "הזמנת מאפרת ועיצוב שיער עד הבית" : "Book Makeup & Hair"}
                 <ArrowLeft className={`w-5 h-5 ${dir === "rtl" ? "rotate-180" : ""}`} />
               </Link>
@@ -115,11 +115,26 @@ export function LandingHero() {
             </div>
           </div>
 
-          {/* Have Code Button */}
-          <div className="mt-8 flex justify-center">
-            <Button size="lg" onClick={() => setOpen(true)}>
-              {t("landing.haveCode")}
+          {/* Have Code Button and Offers */}
+          <div className="mt-8 flex flex-col items-center space-y-6">
+            <Button
+              size="lg"
+              onClick={() => setOpen(true)}
+              className="px-10 py-6 text-xl bg-gradient-to-r from-amber-500 to-pink-500 text-white shadow-xl hover:shadow-2xl animate-pulse"
+            >
+              {t("landing.haveCodeLong")}
             </Button>
+
+            <p className="text-lg text-gray-700">{t("landing.treatYourself")}</p>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button asChild size="lg" className="bg-gradient-to-r from-turquoise-600 to-blue-600 text-white">
+                <Link href="/purchase/gift-voucher">{t("landing.purchaseGiftVoucher")}</Link>
+              </Button>
+              <Button asChild size="lg" className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                <Link href="/purchase/subscription">{t("landing.purchaseSubscription")}</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </div>

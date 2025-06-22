@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { getTreatments } from "@/actions/treatment-actions"
 import { GuestLayout } from "@/components/layout/guest-layout"
+import { Card } from "@/components/common/ui/card"
 
 export const dynamic = 'force-dynamic'
 
@@ -15,17 +16,17 @@ export default async function CategoryPage({ params }: { params: { category: str
   }
   return (
     <GuestLayout>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">{params.category}</h1>
-        <ul className="space-y-4">
+      <div className="space-y-8">
+        <h1 className="text-3xl font-bold text-center capitalize">{params.category}</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {treatments.map(t => (
-            <li key={t._id}>
-              <Link href={`/our-treatments/${params.category}/${t._id}`} className="text-lg text-blue-600 hover:underline">
-                {t.name}
-              </Link>
-            </li>
+            <Link key={t._id} href={`/our-treatments/${params.category}/${t._id}`} className="block">
+              <Card className="p-6 text-center hover:shadow-lg transition-all">
+                <span className="font-medium">{t.name}</span>
+              </Card>
+            </Link>
           ))}
-        </ul>
+        </div>
       </div>
     </GuestLayout>
   )

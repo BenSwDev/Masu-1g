@@ -2,6 +2,8 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 import { Home, Clock, Shield, Star } from "lucide-react"
+import { Button } from "@/components/common/ui/button"
+import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/common/ui/drawer"
 
 export function LandingServices() {
   const { dir } = useTranslation()
@@ -58,33 +60,57 @@ export function LandingServices() {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
           {services.map((service, index) => {
             const Icon = service.icon
             return (
-              <div 
+              <div
                 key={index}
-                className="group relative bg-white rounded-2xl border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
+                className="group flex items-center bg-white rounded-xl border border-gray-100 p-4 hover:shadow-lg transition-all"
               >
-                {/* Icon */}
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-r ${service.color} mb-6 text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className="w-8 h-8" />
+                <div className={`p-3 rounded-lg bg-gradient-to-r ${service.color} text-white shadow-lg mr-4 rtl:ml-4 rtl:mr-0`}> 
+                  <Icon className="w-6 h-6" />
                 </div>
-
-                {/* Content */}
-                <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-turquoise-600 transition-colors">
-                  {service.title}
-                </h3>
-                
-                <p className="text-gray-600 leading-relaxed">
-                  {service.description}
-                </p>
-
-                {/* Hover effect background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-turquoise-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl -z-10"></div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 group-hover:text-turquoise-600 transition-colors">
+                    {service.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {service.description}
+                  </p>
+                </div>
               </div>
             )
           })}
+        </div>
+
+        <div className="text-center mt-8">
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button className="mx-auto" size="lg">
+                {t("landing.seeWhatsWaiting")}
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle>{t("landing.whatToExpect")}</DrawerTitle>
+              </DrawerHeader>
+              <div className="space-y-4">
+                <div className="aspect-video">
+                  <iframe
+                    className="w-full h-full rounded"
+                    src="https://www.youtube.com/embed/92m64NPdVak?si=XFbFF1ceBWDiBF2Z"
+                    title="YouTube video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                </div>
+                <p className="text-sm whitespace-pre-wrap">
+                  {t("landing.expectText")}
+                </p>
+              </div>
+            </DrawerContent>
+          </Drawer>
         </div>
 
         {/* Bottom CTA */}

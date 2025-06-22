@@ -110,11 +110,6 @@ export default function PartnerManagement({
           <Button onClick={handleCreate} className="flex items-center gap-1">
             <Plus className="w-4 h-4" /> הוסף שותף
           </Button>
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>חיפוש שותפים</CardTitle>
         </CardHeader>
         <CardContent className="flex gap-4">
           <div className="relative flex-1">
@@ -158,13 +153,13 @@ export default function PartnerManagement({
                 </TableRow>
               ) : (
                 partners.map(p => (
-                  <TableRow key={p._id} className="hover:bg-muted">
-                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.userId.name}</TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.userId.email}</TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.userId.phone}</TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.businessNumber}</TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => setSelectedId(p._id)}>{p.contactName}</TableCell>
-                    <TableCell className="space-x-2">
+                  <TableRow key={p._id} className="hover:bg-muted cursor-pointer" onClick={() => setSelectedId(p._id)}>
+                    <TableCell>{p.userId.name}</TableCell>
+                    <TableCell>{p.userId.email}</TableCell>
+                    <TableCell>{p.userId.phone}</TableCell>
+                    <TableCell>{p.businessNumber}</TableCell>
+                    <TableCell>{p.contactName}</TableCell>
+                    <TableCell className="space-x-2" onClick={e => e.stopPropagation()}>
                       <Button size="icon" variant="ghost" onClick={() => handleEdit(p)}>
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -176,12 +171,6 @@ export default function PartnerManagement({
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </TableCell>
-                  <TableRow key={p._id} className="hover:bg-muted cursor-pointer" onClick={() => setSelectedId(p._id)}>
-                    <TableCell>{p.userId.name}</TableCell>
-                    <TableCell>{p.userId.email}</TableCell>
-                    <TableCell>{p.userId.phone}</TableCell>
-                    <TableCell>{p.businessNumber}</TableCell>
-                    <TableCell>{p.contactName}</TableCell>
                   </TableRow>
                 ))
               )}

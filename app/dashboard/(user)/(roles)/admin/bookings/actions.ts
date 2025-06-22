@@ -7,6 +7,11 @@ import dbConnect from "@/lib/db/mongoose"
 import Booking, { type IBooking, type BookingStatus } from "@/lib/db/models/booking"
 import User, { type IUser, UserRole } from "@/lib/db/models/user"
 import Review, { type IReview } from "@/lib/db/models/review"
+import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
+import PaymentMethod, { type IPaymentMethod } from "@/lib/db/models/payment-method"
+import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
+import Coupon from "@/lib/db/models/coupon"
+import GiftVoucher from "@/lib/db/models/gift-voucher"
 import { logger } from "@/lib/logs/logger"
 import type { PopulatedBooking } from "@/types/booking"
 import { Types } from "mongoose"
@@ -45,17 +50,10 @@ export interface AssignProfessionalResult {
   booking?: IBooking
 }
 
-export interface GetAvailableProfessionalsResult {
+export interface GetBookingByIdResult {
   success: boolean
-  professionals?: Array<{
-    _id: string
-    firstName: string
-    lastName: string
-    email: string
-    phone: string
-    isActive: boolean
-  }>
   error?: string
+  booking?: PopulatedBooking
 }
 
 export interface CancelBookingResult {
@@ -64,20 +62,21 @@ export interface CancelBookingResult {
   booking?: IBooking
 }
 
-export interface RefundBookingResult {
+export interface GetBookingInitialDataResult {
   success: boolean
   error?: string
-  booking?: IBooking
+  data?: {
+    treatments: ITreatment[]
+    paymentMethods: any[]
+    workingHours: any
+    activeCoupons: any[]
+    activeGiftVouchers: any[]
+  }
 }
 
-export interface GetBookingDetailsResult {
+export interface GetAvailableProfessionalsResult {
   success: boolean
-  booking?: PopulatedBooking
   error?: string
-}
-
-export interface GetSuitableProfessionalsResult {
-  success: boolean
   professionals?: Array<{
     _id: string
     firstName: string
@@ -87,24 +86,20 @@ export interface GetSuitableProfessionalsResult {
     isActive: boolean
     gender?: string
   }>
-  error?: string
 }
 
-export interface SendReviewReminderResult {
+export interface GetSuitableProfessionalsResult {
   success: boolean
   error?: string
-}
-
-export interface GetBookingReviewResult {
-  success: boolean
-  review?: {
+  professionals?: Array<{
     _id: string
-    rating: number
-    comment: string
-    createdAt: Date
-    updatedAt: Date
-  }
-  error?: string
+    firstName: string
+    lastName: string
+    email: string
+    phone: string
+    isActive: boolean
+    gender?: string
+  }>
 }
 
 /**
@@ -224,11 +219,11 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
 }
 
 /**
- * Gets detailed information about a specific booking
- * @param bookingId The ID of the booking to get details for
- * @returns GetBookingDetailsResult
+ * Gets a specific booking by ID with full population
+ * @param bookingId The ID of the booking to retrieve
+ * @returns GetBookingByIdResult
  */
-export async function getBookingDetails(bookingId: string): Promise<GetBookingDetailsResult> {
+export async function getBookingById(bookingId: string): Promise<GetBookingByIdResult> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles?.includes("admin")) {
@@ -271,8 +266,67 @@ export async function getBookingDetails(bookingId: string): Promise<GetBookingDe
       } as unknown as PopulatedBooking,
     }
   } catch (error) {
-    logger.error("Error fetching booking details:", error)
-    return { success: false, error: "Failed to fetch booking details" }
+    logger.error("Error fetching booking by ID:", error)
+    return { success: false, error: "Failed to fetch booking" }
+  }
+}
+
+/**
+ * Gets initial data needed for creating a new booking
+ * @returns GetBookingInitialDataResult
+ */
+export async function getBookingInitialData(): Promise<GetBookingInitialDataResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      return { success: false, error: "Unauthorized" }
+    }
+
+    await dbConnect()
+
+    // Get all active treatments
+    const treatments = await Treatment.find({ isActive: true })
+      .select("name description pricingType fixedPrice defaultDurationMinutes durations")
+      .lean()
+
+    // Get payment methods (system payment methods) - just get basic info
+    const paymentMethodsRaw = await PaymentMethod.find({ isSystemMethod: true })
+      .select("type displayName isActive")
+      .lean()
+
+    // Get working hours settings
+    const workingHours = await WorkingHoursSettings.findOne().lean()
+
+    // Get active coupons
+    const activeCoupons = await Coupon.find({
+      isActive: true,
+      expiresAt: { $gt: new Date() },
+      $or: [
+        { maxUses: { $exists: false } },
+        { $expr: { $lt: ["$currentUses", "$maxUses"] } }
+      ]
+    }).lean()
+
+    // Get active gift vouchers
+    const activeGiftVouchers = await GiftVoucher.find({
+      status: "active",
+      expiresAt: { $gt: new Date() },
+      $expr: { $gt: ["$remainingValue", 0] }
+    }).lean()
+
+    return {
+      success: true,
+      data: {
+        treatments,
+        paymentMethods: paymentMethodsRaw || [],
+        workingHours,
+        activeCoupons,
+        activeGiftVouchers
+      }
+    }
+  } catch (error) {
+    logger.error("Error fetching booking initial data:", error)
+    return { success: false, error: "Failed to fetch initial data" }
   }
 }
 
@@ -368,20 +422,18 @@ export async function assignProfessionalToBooking(
 
     await dbConnect()
 
-    const [booking, professional] = await Promise.all([
-      Booking.findById(bookingId),
-      User.findOne({ _id: professionalId, roles: UserRole.PROFESSIONAL }),
-    ])
-
+    const booking = await Booking.findById(bookingId)
     if (!booking) {
       return { success: false, error: "Booking not found" }
     }
 
-    if (!professional) {
+    const professional = await User.findById(professionalId)
+    if (!professional || !professional.roles.includes("professional")) {
       return { success: false, error: "Professional not found" }
     }
 
     booking.professionalId = new Types.ObjectId(professionalId)
+    booking.status = "confirmed"
     
     // Ensure required fields have valid values for backward compatibility
     if (!booking.treatmentCategory) {
@@ -404,13 +456,13 @@ export async function assignProfessionalToBooking(
         termsAccepted: false
       }
     }
-    
+
     await booking.save()
     revalidatePath("/dashboard/admin/bookings")
 
     return { success: true, booking }
   } catch (error) {
-    logger.error("Error assigning professional to booking:", error)
+    logger.error("Error assigning professional:", error)
     return { success: false, error: "Failed to assign professional" }
   }
 }
@@ -475,75 +527,6 @@ export async function cancelBooking(
   } catch (error) {
     logger.error("Error cancelling booking:", error)
     return { success: false, error: "Failed to cancel booking" }
-  }
-}
-
-/**
- * Refunds a booking
- * @param bookingId The ID of the booking to refund
- * @param refundAmount The amount to refund
- * @param refundTransactionId The transaction ID for the refund
- * @returns RefundBookingResult
- */
-export async function refundBooking(
-  bookingId: string,
-  refundAmount: number,
-  refundTransactionId: string,
-): Promise<RefundBookingResult> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
-    }
-
-    await dbConnect()
-
-    const booking = await Booking.findById(bookingId)
-    if (!booking) {
-      return { success: false, error: "Booking not found" }
-    }
-
-    if (booking.status === "refunded") {
-      return { success: false, error: "Booking is already refunded" }
-    }
-
-    if (booking.paymentDetails.paymentStatus !== "paid") {
-      return { success: false, error: "Booking is not paid" }
-    }
-
-    booking.status = "refunded"
-    booking.refundAmount = refundAmount
-    booking.refundTransactionId = refundTransactionId
-    
-    // Ensure required fields have valid values for backward compatibility
-    if (!booking.treatmentCategory) {
-      booking.treatmentCategory = new Types.ObjectId()
-    }
-    if (typeof booking.staticTreatmentPrice !== 'number') {
-      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
-    }
-    if (typeof booking.staticTherapistPay !== 'number') {
-      booking.staticTherapistPay = 0
-    }
-    if (typeof booking.companyFee !== 'number') {
-      booking.companyFee = 0
-    }
-    if (!booking.consents) {
-      booking.consents = {
-        customerAlerts: "email",
-        patientAlerts: "email",
-        marketingOptIn: false,
-        termsAccepted: false
-      }
-    }
-    
-    await booking.save()
-    revalidatePath("/dashboard/admin/bookings")
-
-    return { success: true, booking }
-  } catch (error) {
-    logger.error("Error refunding booking:", error)
-    return { success: false, error: "Failed to refund booking" }
   }
 }
 
@@ -641,280 +624,5 @@ export async function getSuitableProfessionals(bookingId: string): Promise<GetSu
   } catch (error) {
     logger.error("Error fetching suitable professionals:", error)
     return { success: false, error: "Failed to fetch suitable professionals" }
-  }
-}
-
-/**
- * Removes professional assignment from a booking
- * @param bookingId The ID of the booking
- * @returns UpdateBookingResult
- */
-export async function removeProfessionalAssignment(bookingId: string): Promise<UpdateBookingResult> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
-    }
-
-    await dbConnect()
-
-    const booking = await Booking.findById(bookingId)
-    if (!booking) {
-      return { success: false, error: "Booking not found" }
-    }
-
-    if (!booking.professionalId) {
-      return { success: false, error: "Booking has no assigned professional" }
-    }
-
-    booking.professionalId = undefined
-    
-    // Ensure required fields have valid values for backward compatibility
-    if (!booking.treatmentCategory) {
-      booking.treatmentCategory = new Types.ObjectId()
-    }
-    if (typeof booking.staticTreatmentPrice !== 'number') {
-      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
-    }
-    if (typeof booking.staticTherapistPay !== 'number') {
-      booking.staticTherapistPay = 0
-    }
-    if (typeof booking.companyFee !== 'number') {
-      booking.companyFee = 0
-    }
-    if (!booking.consents) {
-      booking.consents = {
-        customerAlerts: "email",
-        patientAlerts: "email",
-        marketingOptIn: false,
-        termsAccepted: false
-      }
-    }
-    
-    await booking.save()
-    revalidatePath("/dashboard/admin/bookings")
-
-    return { success: true, booking }
-  } catch (error) {
-    logger.error("Error removing professional assignment:", error)
-    return { success: false, error: "Failed to remove professional assignment" }
-  }
-}
-
-/**
- * Sends notifications to all suitable professionals for a booking
- * @param bookingId The ID of the booking
- * @returns SendReviewReminderResult
- */
-export async function notifySuitableProfessionals(bookingId: string): Promise<SendReviewReminderResult> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
-    }
-
-    await dbConnect()
-
-    const booking = await Booking.findById(bookingId)
-      .populate("treatmentId")
-      .lean()
-
-    if (!booking) {
-      return { success: false, error: "Booking not found" }
-    }
-
-    if (booking.professionalId) {
-      return { success: false, error: "Booking already has an assigned professional" }
-    }
-
-    // Get all suitable professionals
-    const professionals = await User.find({
-      roles: UserRole.PROFESSIONAL,
-      isActive: true,
-      ...(booking.therapistGenderPreference !== "any" && {
-        gender: booking.therapistGenderPreference,
-      }),
-    })
-      .select("email phone name")
-      .lean()
-
-    // Send notifications to all professionals
-    const notificationPromises = professionals.map(professional => {
-      const recipients: NotificationRecipient[] = []
-      
-      if (professional.email) {
-        recipients.push({
-          type: "email",
-          value: professional.email,
-          name: professional.name,
-          language: "en"
-        })
-      }
-      
-      if (professional.phone) {
-        recipients.push({
-          type: "phone",
-          value: professional.phone,
-          language: "en"
-        })
-      }
-
-      if (recipients.length === 0) {
-        return Promise.resolve({ success: false, error: "No contact information available" })
-      }
-
-      return unifiedNotificationService.sendNotificationToMultiple(
-        recipients,
-        {
-          type: "professional-booking-notification",
-          treatmentName: (booking.treatmentId as any).name,
-          bookingDateTime: booking.bookingDateTime,
-          address: booking.bookingAddressSnapshot?.fullAddress || "",
-          price: booking.priceDetails?.finalAmount || 0,
-          responseLink: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/professional/bookings/${booking._id}`
-        }
-      )
-    })
-
-    const results = await Promise.all(notificationPromises)
-    const allSuccessful = results.every(result => 
-      Array.isArray(result) ? result.every(r => r.success) : result.success
-    )
-
-    return { success: allSuccessful }
-  } catch (error) {
-    logger.error("Error sending notifications to professionals:", error)
-    return { success: false, error: "Failed to send notifications" }
-  }
-}
-
-/**
- * Sends a review reminder for a completed booking
- * @param bookingId The ID of the booking
- * @returns SendReviewReminderResult
- */
-export async function sendReviewReminder(bookingId: string): Promise<SendReviewReminderResult> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
-    }
-
-    await dbConnect()
-
-    const booking = await Booking.findById(bookingId)
-      .populate("treatmentId")
-      .populate("professionalId")
-      .populate("userId")
-      .lean()
-
-    if (!booking) {
-      return { success: false, error: "Booking not found" }
-    }
-
-    if (booking.status !== "completed") {
-      return { success: false, error: "Booking is not completed" }
-    }
-
-    // Check if review already exists
-    const existingReview = await Review.findOne({ bookingId: booking._id })
-    if (existingReview) {
-      return { success: false, error: "Review already exists" }
-    }
-
-    // Get user contact information
-    const user = await User.findById(booking.userId)
-      .select("email phone name")
-      .lean()
-
-    if (!user) {
-      return { success: false, error: "User not found" }
-    }
-
-    // Prepare recipients
-    const recipients: NotificationRecipient[] = []
-    
-    if (user.email) {
-      recipients.push({
-        type: "email",
-        value: user.email,
-        name: user.name,
-        language: "en"
-      })
-    }
-    
-    if (user.phone) {
-      recipients.push({
-        type: "phone",
-        value: user.phone,
-        language: "en"
-      })
-    }
-
-    if (recipients.length === 0) {
-      return { success: false, error: "No contact information available for user" }
-    }
-
-    // Send review reminder notification
-    const results = await unifiedNotificationService.sendNotificationToMultiple(
-      recipients,
-      {
-        type: "review-reminder",
-        recipientName: user.name,
-        reviewLink: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/member/bookings/${booking._id}/review`
-      }
-    )
-
-    const allSuccessful = results.every(result => result.success)
-
-    if (allSuccessful) {
-      // Update booking with reminder sent timestamp
-      await Booking.findByIdAndUpdate(bookingId, {
-        reviewReminderSentAt: new Date(),
-      })
-    }
-
-    return { success: allSuccessful }
-  } catch (error) {
-    logger.error("Error sending review reminder:", error)
-    return { success: false, error: "Failed to send review reminder" }
-  }
-}
-
-/**
- * Gets the review for a booking if it exists
- * @param bookingId The ID of the booking
- * @returns GetBookingReviewResult
- */
-export async function getBookingReview(bookingId: string): Promise<GetBookingReviewResult> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.roles?.includes("admin")) {
-      return { success: false, error: "Unauthorized" }
-    }
-
-    await dbConnect()
-
-    const review = await Review.findOne({ bookingId: new Types.ObjectId(bookingId) })
-      .select("rating comment createdAt updatedAt")
-      .lean()
-
-    if (!review) {
-      return { success: false, error: "No review found" }
-    }
-
-    return {
-      success: true,
-      review: {
-        _id: review._id.toString(),
-        rating: review.rating,
-        comment: review.comment || "",
-        createdAt: review.createdAt,
-        updatedAt: review.updatedAt,
-      },
-    }
-  } catch (error) {
-    logger.error("Error fetching booking review:", error)
-    return { success: false, error: "Failed to fetch review" }
   }
 } 

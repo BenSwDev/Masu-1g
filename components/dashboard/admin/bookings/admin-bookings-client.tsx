@@ -13,7 +13,7 @@ import { getAllBookings } from "@/actions/booking-actions"
 import { Input } from "@/components/common/ui/input"
 import { Button } from "@/components/common/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Search, RefreshCw, Filter, X } from "lucide-react"
+import { Search, RefreshCw, Filter, X, Plus } from "lucide-react"
 import { useDebounce } from "@/hooks/use-debounce"
 import { Badge } from "@/components/common/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
@@ -101,13 +101,17 @@ export default function AdminBookingsClient() {
   })
 
   const handleRowClick = (booking: PopulatedBooking) => {
-    setSelectedBooking(booking)
-    setIsEditModalOpen(true)
+    // Navigate to the booking edit page instead of opening modal
+    window.location.href = `/dashboard/admin/bookings/${booking._id}`
   }
 
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false)
     setSelectedBooking(null)
+  }
+
+  const handleCreateNewBooking = () => {
+    window.location.href = "/dashboard/admin/bookings/new"
   }
 
   const columns = useMemo(() => getAdminBookingColumns(t, language, handleRowClick), [t, language, handleRowClick])
@@ -153,263 +157,142 @@ export default function AdminBookingsClient() {
 
   if (error) {
     return (
-      <div className="text-center text-red-500 w-full max-w-full overflow-hidden">
+      <div className="w-full max-w-full overflow-hidden">
         <div className="mb-6 text-center md:text-right">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
         </div>
-        <p>
-          {t("common.error")}: {error.message}
-        </p>
+        <div className="text-center py-8">
+          <p className="text-destructive">{t("common.error")}: {error.message}</p>
+          <Button onClick={handleRefresh} className="mt-4">
+            {t("common.tryAgain")}
+          </Button>
+        </div>
       </div>
     )
   }
 
-  return (
-    <div dir={dir} className="h-full flex flex-col space-y-4">
-      <div className="flex-shrink-0">
-        <div className="mb-6 text-center md:text-right">
-          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
-        </div>
-        
-        {/* Search and Filters Bar - Responsive */}
-        <div className="space-y-4">
-          {/* Main search bar */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="relative flex-1 max-w-full sm:max-w-md">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t("adminBookings.searchPlaceholder")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 w-full"
-              />
-            </div>
-            
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" onClick={handleRefresh}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {t("common.refresh")}
-              </Button>
-              
-              <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-2" />
-                    {t("adminBookings.filters")}
-                    {activeFiltersCount > 0 && (
-                      <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 text-xs">
-                        {activeFiltersCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80" align="end">
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">{t("adminBookings.advancedFilters")}</h4>
-                      {activeFiltersCount > 0 && (
-                        <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                          <X className="h-4 w-4 mr-1" />
-                          {t("common.clearAll")}
-                        </Button>
-                      )}
-                    </div>
-                    
-                    <Separator />
-                    
-                    {/* Status Filter */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">{t("adminBookings.filterByStatus")}</label>
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("adminBookings.allStatuses")}</SelectItem>
-                          <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
-                          <SelectItem value="in_process">בטיפול</SelectItem>
-                          <SelectItem value="confirmed">מאושר</SelectItem>
-                          <SelectItem value="completed">הושלם</SelectItem>
-                          <SelectItem value="cancelled">בוטל</SelectItem>
-                          <SelectItem value="refunded">הוחזר</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+  const totalBookings = data?.totalBookings || 0
+  const totalPages = data?.totalPages || 1
 
-                    {/* Professional Filter */}
-                    <div className="space-y-2">
+  return (
+    <div className="w-full max-w-full overflow-hidden" dir={dir}>
+      {/* Header with Create Button */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">{t("adminBookings.title")}</h2>
+          <p className="text-muted-foreground">
+            ניהול כל ההזמנות במערכת - סה"כ {totalBookings} הזמנות
+          </p>
+        </div>
+        <Button 
+          onClick={handleCreateNewBooking}
+          className="flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          הזמנה חדשה
+        </Button>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+            <Input
+              placeholder={t("adminBookings.searchPlaceholder")}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Quick Filters */}
+          <div className="flex gap-2">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder={t("adminBookings.filterByStatus")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("common.all")}</SelectItem>
+                <SelectItem value="pending_payment">ממתין לתשלום</SelectItem>
+                <SelectItem value="in_process">בטיפול</SelectItem>
+                <SelectItem value="confirmed">מאושר</SelectItem>
+                <SelectItem value="completed">הושלם</SelectItem>
+                <SelectItem value="cancelled">בוטל</SelectItem>
+                <SelectItem value="refunded">הוחזר</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="relative">
+                  <Filter className="w-4 h-4 mr-2" />
+                  {t("common.filters")}
+                  {activeFiltersCount > 0 && (
+                    <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+                      {activeFiltersCount}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-medium">{t("common.advancedFilters")}</h4>
+                    {activeFiltersCount > 0 && (
+                      <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                        <X className="w-4 h-4 mr-1" />
+                        {t("common.clearAll")}
+                      </Button>
+                    )}
+                  </div>
+                  <Separator />
+                  
+                  {/* Additional filter controls would go here */}
+                  <div className="space-y-3">
+                    <div>
                       <label className="text-sm font-medium">{t("adminBookings.filterByProfessional")}</label>
                       <Select value={professionalFilter} onValueChange={setProfessionalFilter}>
-                        <SelectTrigger>
-                          <SelectValue />
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder={t("common.selectProfessional")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">{t("adminBookings.allProfessionals")}</SelectItem>
-                          <SelectItem value="assigned">{t("adminBookings.assignedOnly")}</SelectItem>
-                          <SelectItem value="unassigned">{t("adminBookings.unassignedOnly")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Date Range Filter */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">{t("adminBookings.filterByDate")}</label>
-                      <Select value={dateRangeFilter} onValueChange={setDateRangeFilter}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("adminBookings.allDates")}</SelectItem>
-                          <SelectItem value="today">{t("adminBookings.today")}</SelectItem>
-                          <SelectItem value="tomorrow">{t("adminBookings.tomorrow")}</SelectItem>
-                          <SelectItem value="this_week">{t("adminBookings.thisWeek")}</SelectItem>
-                          <SelectItem value="next_week">{t("adminBookings.nextWeek")}</SelectItem>
-                          <SelectItem value="this_month">{t("adminBookings.thisMonth")}</SelectItem>
-                          <SelectItem value="next_month">{t("adminBookings.nextMonth")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Price Range Filter */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">{t("adminBookings.filterByPrice")}</label>
-                      <Select value={priceRangeFilter} onValueChange={setPriceRangeFilter}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("adminBookings.allPrices")}</SelectItem>
-                          <SelectItem value="0-50">{t("adminBookings.priceRange0to50")}</SelectItem>
-                          <SelectItem value="50-100">{t("adminBookings.priceRange50to100")}</SelectItem>
-                          <SelectItem value="100-200">{t("adminBookings.priceRange100to200")}</SelectItem>
-                          <SelectItem value="200-500">{t("adminBookings.priceRange200to500")}</SelectItem>
-                          <SelectItem value="500+">{t("adminBookings.priceRange500plus")}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Address Type Filter */}
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">{t("adminBookings.filterByAddress")}</label>
-                      <Select value={addressFilter} onValueChange={setAddressFilter}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("adminBookings.allAddresses")}</SelectItem>
-                          <SelectItem value="with_parking">{t("adminBookings.withParking")}</SelectItem>
-                          <SelectItem value="without_parking">{t("adminBookings.withoutParking")}</SelectItem>
-                          <SelectItem value="apartment">{t("adminBookings.apartmentType")}</SelectItem>
-                          <SelectItem value="house">{t("adminBookings.houseType")}</SelectItem>
-                          <SelectItem value="office">{t("adminBookings.officeType")}</SelectItem>
-                          <SelectItem value="hotel">{t("adminBookings.hotelType")}</SelectItem>
+                          <SelectItem value="all">{t("common.all")}</SelectItem>
+                          <SelectItem value="assigned">משויך למטפל</SelectItem>
+                          <SelectItem value="unassigned">לא משויך למטפל</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
-          {/* Active filters display */}
-          {activeFiltersCount > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {statusFilter !== "all" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  {t("adminBookings.filterByStatus")}: {t(`adminBookings.status.${statusFilter}`)}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => setStatusFilter("all")} />
-                </Badge>
-              )}
-              {professionalFilter !== "all" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  {t("adminBookings.filterByProfessional")}: {t(`adminBookings.${professionalFilter}`)}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => setProfessionalFilter("all")} />
-                </Badge>
-              )}
-              {dateRangeFilter !== "all" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  {t("adminBookings.filterByDate")}: {t(`adminBookings.${dateRangeFilter}`)}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => setDateRangeFilter("all")} />
-                </Badge>
-              )}
-              {priceRangeFilter !== "all" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  {t("adminBookings.filterByPrice")}: {t(`adminBookings.priceRange${priceRangeFilter.replace(/[+-]/g, '').replace('-', 'to')}`)}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => setPriceRangeFilter("all")} />
-                </Badge>
-              )}
-              {addressFilter !== "all" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  {t("adminBookings.filterByAddress")}: {t(`adminBookings.${addressFilter}`)}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => setAddressFilter("all")} />
-                </Badge>
-              )}
-            </div>
-          )}
+            <Button variant="outline" onClick={handleRefresh}>
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-
-        {/* Summary */}
-        {data && (
-          <div className="mb-4 text-sm text-muted-foreground">
-            {t("adminBookings.summary", { 
-              total: data.totalBookings,
-              showing: data.bookings.length 
-            })}
-          </div>
-        )}
       </div>
 
-      {/* Scrollable Content Area */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        {/* No results */}
-        {(!data?.bookings || data.bookings.length === 0) && !isLoading && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">{t("adminBookings.noBookings")}</p>
-            {activeFiltersCount > 0 && (
-              <Button variant="outline" onClick={clearAllFilters} className="mt-2">
-                {t("adminBookings.clearFiltersToSeeAll")}
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Helpful instruction for clicking rows */}
-        {data?.bookings && data.bookings.length > 0 && (
-          <>
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex-shrink-0">
-              <p className="text-sm text-blue-800 text-center">
-                💡 {t("adminBookings.clickRowToEdit")}
-              </p>
-            </div>
-
-            <div className="flex-1 min-h-0 overflow-hidden rounded-lg border bg-white">
-              <div className="h-full overflow-auto">
-                <DataTable
-                  columns={columns}
-                  data={data?.bookings || []}
-                  onRowClick={handleRowClick}
-                  hideDefaultPagination={true}
-                  hideColumnsSelector={true}
-                />
-              </div>
-            </div>
-          </>
-        )}
+      {/* Data Table */}
+      <div className="bg-white border rounded-lg overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={data?.bookings || []}
+          searchKey="bookingNumber"
+          onRowClick={handleRowClick}
+        />
       </div>
 
-      {/* Pagination and Footer - Fixed at Bottom */}
-      {data && data.totalPages > 1 && (
-        <div className="flex-shrink-0 flex items-center justify-between border-t pt-4 bg-white">
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
           <div className="text-sm text-muted-foreground">
-            {t("adminBookings.showingPage", { 
-              current: currentPage, 
-              total: data.totalPages,
-              totalBookings: data.totalBookings
-            })}
+            {t("common.pagination.showing")} {((currentPage - 1) * 20) + 1} - {Math.min(currentPage * 20, totalBookings)} {t("common.pagination.of")} {totalBookings}
           </div>
-          
-          <div className="flex items-center space-x-2">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -426,26 +309,6 @@ export default function AdminBookingsClient() {
             >
               {t("common.pagination.previous")}
             </Button>
-            
-            <div className="flex items-center space-x-1">
-              {Array.from({ length: Math.min(5, data.totalPages) }, (_, i) => {
-                const page = Math.max(1, currentPage - 2) + i
-                if (page > data.totalPages) return null
-                
-                return (
-                  <Button
-                    key={page}
-                    variant={page === currentPage ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(page)}
-                    className="w-8 h-8 p-0"
-                  >
-                    {page}
-                  </Button>
-                )
-              })}
-            </div>
-            
             <Button
               variant="outline"
               size="sm"
@@ -466,8 +329,8 @@ export default function AdminBookingsClient() {
         </div>
       )}
 
-      {/* Comprehensive Booking Edit Modal */}
-              <EnhancedBookingModal
+      {/* Keep the old modal for backward compatibility, but it won't be used anymore */}
+      <EnhancedBookingModal
         booking={selectedBooking}
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}

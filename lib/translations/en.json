@@ -209,13 +209,18 @@
       "orders": "Orders",
       "coupons": "Coupons",
       "giftVouchers": "Gift Vouchers",
+      "reports": "Reports",
+      "bookingsPerProfessional": "Bookings per Professional",
+      "bookingsPerCity": "Bookings per City",
+      "revenueSummary": "Revenue Summary",
       "support": "Support",
       "settings": "Settings",
       "sections": {
         "mainMenu": "Main Menu",
         "purchases": "Purchases & Redemptions",
         "users": "Users",
-        "settings": "Settings"
+        "settings": "Settings",
+        "reports": "Reports"
       },
       "userMenu": {
         "treatmentPreferences": "Treatment Preferences",

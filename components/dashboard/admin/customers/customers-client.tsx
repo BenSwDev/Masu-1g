@@ -111,7 +111,7 @@ export default function CustomersClient() {
     }
   }
 
-  const loadCustomerTransactions = async (customerId: string, page = transactionsPage) => {
+  const loadCustomerTransactions = async (customerId: string, page: number = 1) => {
     try {
       setLoadingTransactions(true)
       const result = await getAllPurchaseTransactions(page, 20, { userId: customerId })
@@ -157,7 +157,8 @@ export default function CustomersClient() {
 
   const handleCustomerView = async (customer: CustomerSummary) => {
     setSelectedCustomer(customer)
-    await loadCustomerTransactions(customer.userId)
+    setTransactionsPage(1)
+    await loadCustomerTransactions(customer.userId, 1)
   }
 
   const handleTransactionsPageChange = (newPage: number) => {

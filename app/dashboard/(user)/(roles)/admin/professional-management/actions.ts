@@ -472,112 +472,92 @@ export async function updateProfessionalTreatments(
     durationId?: string
     professionalPrice: number
   }>
-) {
+): Promise<UpdateProfessionalResult> {
   try {
+    console.log('updateProfessionalTreatments called with:', { professionalId, treatmentsCount: treatments.length })
+    
     // Validate input
+    if (!professionalId || !Array.isArray(treatments)) {
+      return { success: false, error: "נתונים לא תקינים" }
+    }
+
     const validatedTreatments = treatments.map(treatment => 
       ProfessionalTreatmentPricingSchema.parse(treatment)
     )
+    
+    console.log('Treatments validated successfully:', validatedTreatments.length)
 
     // Authorization check
+    console.log('Checking admin authorization...')
     await requireAdminAuth()
+    console.log('Admin authorization passed')
 
     // Connect to database
+    console.log('Connecting to database...')
     await dbConnect()
+    console.log('Database connected')
 
-    // Start transaction
-    const mongoSession = await mongoose.startSession()
+    // Verify professional exists
+    const professional = await ProfessionalProfile.findById(professionalId)
+    if (!professional) {
+      return { success: false, error: "מטפל לא נמצא" }
+    }
+
+    console.log('Professional found:', professional._id)
+
+    // Validate treatments exist and are active
+    const treatmentIds = [...new Set(validatedTreatments.map(t => t.treatmentId))]
+    console.log('Validating treatments:', treatmentIds)
     
-    try {
-      await mongoSession.withTransaction(async () => {
-        // Verify professional exists
-        const professional = await ProfessionalProfile.findById(professionalId).session(mongoSession)
-        if (!professional) {
-          throw new Error("מטפל לא נמצא")
+    const existingTreatments = await Treatment.find({
+      _id: { $in: treatmentIds },
+      isActive: true
+    })
+
+    console.log('Found treatments:', existingTreatments.length, 'expected:', treatmentIds.length)
+
+    if (existingTreatments.length !== treatmentIds.length) {
+      return { success: false, error: "חלק מהטיפולים לא נמצאו או לא פעילים" }
+    }
+
+    // Update professional treatments
+    console.log('Updating professional treatments...')
+    const updatedProfessional = await ProfessionalProfile.findByIdAndUpdate(
+      professionalId,
+      {
+        $set: {
+          treatments: validatedTreatments,
+          updatedAt: new Date()
         }
-
-        // Validate treatments exist and are active
-        const treatmentIds = [...new Set(validatedTreatments.map(t => t.treatmentId))]
-        const existingTreatments = await Treatment.find({
-          _id: { $in: treatmentIds },
-          isActive: true
-        }).session(mongoSession)
-
-        if (existingTreatments.length !== treatmentIds.length) {
-          throw new Error("חלק מהטיפולים לא נמצאו או לא פעילים")
-        }
-
-        // Validate duration IDs for duration-based treatments
-        for (const treatment of validatedTreatments) {
-          if (treatment.durationId) {
-            const treatmentDoc = existingTreatments.find(t => t._id.toString() === treatment.treatmentId)
-            if (treatmentDoc?.pricingType === "duration_based") {
-              const durationExists = treatmentDoc.durations?.some(
-                d => d._id.toString() === treatment.durationId && d.isActive
-              )
-              if (!durationExists) {
-                throw new Error(`משך זמן לא תקין עבור טיפול ${treatmentDoc.name}`)
-              }
-            }
-          }
-        }
-
-        // Update professional treatments
-        const updatedProfessional = await ProfessionalProfile.findByIdAndUpdate(
-          professionalId,
-          {
-            $set: {
-              treatments: validatedTreatments,
-              updatedAt: new Date()
-            }
-          },
-          { 
-            new: true, 
-            session: mongoSession,
-            populate: {
-              path: 'userId',
-              select: 'firstName lastName email phone'
-            }
-          }
-        )
-
-        if (!updatedProfessional) {
-          throw new Error("שגיאה בעדכון הטיפולים")
-        }
-
-        // Log the action (optional - remove if logAction is not available)
-        // await logAction({
-        //   action: 'professional_treatments_updated',
-        //   userId: session.user.id,
-        //   targetId: professionalId,
-        //   details: {
-        //     treatmentsCount: validatedTreatments.length,
-        //     treatments: validatedTreatments
-        //   }
-        // })
-      })
-
-      // Fetch updated professional with populated data
-      const updatedProfessional = await ProfessionalProfile.findById(professionalId)
-        .populate("userId", "name email phone gender birthDate roles")
-        .lean()
-
-      // Revalidate the professional management page
-      revalidatePath("/dashboard/admin/professional-management")
-
-      return {
-        success: true,
-        professional: updatedProfessional as ProfessionalWithUser
+      },
+      { 
+        new: true,
+        runValidators: true
       }
+    )
+      .populate("userId", "name email phone gender birthDate roles")
+      .lean()
 
-    } finally {
-      await mongoSession.endSession()
+    if (!updatedProfessional) {
+      return { success: false, error: "שגיאה בעדכון הטיפולים" }
+    }
+
+    console.log('Professional treatments updated successfully')
+
+    // Revalidate the professional management page
+    revalidatePath("/dashboard/admin/professional-management")
+
+    return {
+      success: true,
+      professional: updatedProfessional as unknown as ProfessionalWithUser
     }
 
   } catch (error) {
     console.error('Error updating professional treatments:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack available')
     
     if (error instanceof z.ZodError) {
+      console.error('Validation errors:', error.errors)
       return {
         success: false,
         error: error.errors.map(e => e.message).join(', ')

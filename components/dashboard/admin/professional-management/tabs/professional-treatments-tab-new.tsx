@@ -353,7 +353,24 @@ export default function ProfessionalTreatmentsTabNew({
     setSaving(true)
     
     try {
-      const result = await updateProfessionalTreatments(professional._id, selectedTreatments)
+      console.log('Sending treatments to server:', { 
+        professionalId: professional._id, 
+        selectedTreatments,
+        treatmentsCount: selectedTreatments.length 
+      })
+      
+      let result
+      try {
+        result = await updateProfessionalTreatments(professional._id, selectedTreatments)
+        console.log('Server response:', result)
+      } catch (networkError) {
+        console.error('Network error calling server action:', networkError)
+        throw new Error(`שגיאת רשת: ${networkError instanceof Error ? networkError.message : 'שגיאה לא ידועה'}`)
+      }
+      
+      if (!result) {
+        throw new Error('לא התקבלה תגובה מהשרת')
+      }
       
       if (result.success && result.professional) {
         toast({

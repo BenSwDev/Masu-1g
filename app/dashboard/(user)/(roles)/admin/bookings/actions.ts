@@ -373,9 +373,6 @@ export async function updateBookingByAdmin(
     if (updates.paymentStatus) booking.paymentDetails.paymentStatus = updates.paymentStatus
 
     // Ensure required fields have valid values for backward compatibility
-    if (!booking.treatmentCategory) {
-      booking.treatmentCategory = new Types.ObjectId()
-    }
     if (typeof booking.staticTreatmentPrice !== 'number') {
       booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
     }
@@ -436,9 +433,6 @@ export async function assignProfessionalToBooking(
     booking.status = "confirmed"
     
     // Ensure required fields have valid values for backward compatibility
-    if (!booking.treatmentCategory) {
-      booking.treatmentCategory = new Types.ObjectId()
-    }
     if (typeof booking.staticTreatmentPrice !== 'number') {
       booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
     }
@@ -499,9 +493,6 @@ export async function cancelBooking(
     booking.cancelledBy = "admin"
     
     // Ensure required fields have valid values for backward compatibility
-    if (!booking.treatmentCategory) {
-      booking.treatmentCategory = new Types.ObjectId()
-    }
     if (typeof booking.staticTreatmentPrice !== 'number') {
       booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
     }

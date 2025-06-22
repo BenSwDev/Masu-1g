@@ -130,7 +130,13 @@ export async function createCity(formData: FormData): Promise<CityActionResponse
 
     // Calculate distances to all existing cities
     console.log("Calculating distances for new city:", name)
-    await (City as any).calculateDistancesForNewCity(city._id.toString())
+    try {
+      await City.calculateDistancesForNewCity(city._id.toString())
+    } catch (error) {
+      console.error("Error calculating distances for new city:", error)
+      // Return success but log the issue
+      console.warn("City created but distance calculation failed")
+    }
 
     revalidatePath("/dashboard/admin/cities")
 
@@ -195,7 +201,13 @@ export async function updateCity(cityId: string, formData: FormData): Promise<Ci
     // Recalculate distances if coordinates changed
     if (coordsChanged) {
       console.log("Recalculating distances for updated city:", name)
-      await (City as any).calculateDistancesForNewCity(cityId)
+      try {
+        await City.calculateDistancesForNewCity(cityId)
+      } catch (error) {
+        console.error("Error recalculating distances for updated city:", error)
+        // Return success but log the issue
+        console.warn("City updated but distance calculation failed")
+      }
     }
 
     revalidatePath("/dashboard/admin/cities")

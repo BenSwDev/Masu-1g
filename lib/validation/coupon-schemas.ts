@@ -2,7 +2,11 @@ import { z } from "zod"
 
 export const CouponBaseSchema = z
   .object({
-    code: z.string().min(3, "Code must be at least 3 characters").trim(),
+    code: z.string()
+      .min(3, "Code must be at least 3 characters")
+      .trim()
+      .refine((code) => /[A-Za-z]/.test(code), "Code must contain at least one letter")
+      .refine((code) => /[0-9]/.test(code), "Code must contain at least one number"),
     description: z.string().optional(),
     discountType: z.enum(["percentage", "fixedAmount"]),
     discountValue: z.number().min(0, "Discount value must be non-negative"),
@@ -25,7 +29,11 @@ export const CreateCouponSchema = CouponBaseSchema
 export const UpdateCouponSchema = z
   .object({
     // Fields from CouponBaseSchema (copied)
-    code: z.string().min(3, "Code must be at least 3 characters").trim(),
+    code: z.string()
+      .min(3, "Code must be at least 3 characters")
+      .trim()
+      .refine((code) => /[A-Za-z]/.test(code), "Code must contain at least one letter")
+      .refine((code) => /[0-9]/.test(code), "Code must contain at least one number"),
     description: z.string().optional(),
     discountType: z.enum(["percentage", "fixedAmount"]),
     discountValue: z.number().min(0, "Discount value must be non-negative"),

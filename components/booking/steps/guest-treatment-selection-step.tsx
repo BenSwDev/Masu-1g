@@ -8,10 +8,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Label } from "@/components/common/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
-import { Sparkles, Clock, Users, GiftIcon, Ticket } from "lucide-react"
+import { Sparkles, Clock, Users, GiftIcon, Ticket, Tag, Loader2 } from "lucide-react"
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
 import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { ITreatment } from "@/lib/db/models"
+import { validateRedemptionCode } from "@/actions/booking-actions"
+import { Input } from "@/components/common/ui/input"
 
 interface GuestTreatmentSelectionStepProps {
   hideGenderPreference?: boolean
@@ -31,6 +33,7 @@ interface GuestTreatmentSelectionStepProps {
   onPrev: () => void
   voucher?: IGiftVoucher
   userSubscription?: any
+  currentUser?: any
 }
 
 export function GuestTreatmentSelectionStep({
@@ -44,6 +47,7 @@ export function GuestTreatmentSelectionStep({
   onPrev,
   voucher,
   userSubscription,
+  currentUser,
 }: GuestTreatmentSelectionStepProps) {
   const { t, dir } = useTranslation()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory ?? null)
@@ -51,6 +55,11 @@ export function GuestTreatmentSelectionStep({
     initialData?.activeTreatments || [],
   )
   const [isTreatmentLockedBySource, setIsTreatmentLockedBySource] = useState(false)
+  
+  // Redemption code state
+  const [redemptionCode, setRedemptionCode] = useState("")
+  const [isValidatingCode, setIsValidatingCode] = useState(false)
+  const [redemptionError, setRedemptionError] = useState<string | null>(null)
 
   const treatmentCategories = useMemo(() => {
     const categories = new Set(availableTreatmentsForStep.map((t) => t.category || "Uncategorized"))
@@ -73,15 +82,17 @@ export function GuestTreatmentSelectionStep({
       (bookingOptions.source === "gift_voucher_redemption" && voucher?.voucherType === "monetary")) &&
     !isTreatmentLockedBySource
 
-  // Effect to handle voucher/subscription specific treatment locking
+  // Effect to handle redemption-specific treatment locking
   useEffect(() => {
     setIsTreatmentLockedBySource(false)
     setSelectedCategory(null)
     
-    if (bookingOptions.source === "gift_voucher_redemption" && voucher) {
-      if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+    if (bookingOptions.redemptionData) {
+      const redemption = bookingOptions.redemptionData
+      
+      if (redemption.type === "treatment_voucher" && (redemption.data as any)?.treatmentId) {
         const treatmentFromVoucher = (initialData.activeTreatments || []).find(
-          (t) => t._id.toString() === voucher.treatmentId?.toString(),
+          (t) => t._id.toString() === (redemption.data as any).treatmentId?.toString(),
         )
         if (treatmentFromVoucher) {
           setAvailableTreatmentsForStep([treatmentFromVoucher])
@@ -89,34 +100,32 @@ export function GuestTreatmentSelectionStep({
           setBookingOptions((prev) => ({
             ...prev,
             selectedTreatmentId: treatmentFromVoucher._id.toString(),
-            selectedDurationId: voucher.selectedDurationId?.toString(),
+            selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
           }))
           setIsTreatmentLockedBySource(true)
         }
-      } else {
-        // Monetary voucher - show all treatments
-        setAvailableTreatmentsForStep(initialData.activeTreatments || [])
-        setIsTreatmentLockedBySource(false)
-      }
-    } else if (bookingOptions.source === "subscription_redemption" && userSubscription) {
-      if (userSubscription.treatmentId) {
-        const treatmentFromSub = userSubscription.treatmentId
+      } else if (redemption.type === "subscription" && (redemption.data as any)?.treatmentId) {
+        const treatmentFromSub = (redemption.data as any).treatmentId
         setAvailableTreatmentsForStep([treatmentFromSub])
         setSelectedCategory(treatmentFromSub.category || "Uncategorized")
         setBookingOptions((prev) => ({
           ...prev,
           selectedTreatmentId: treatmentFromSub._id.toString(),
-          selectedDurationId: userSubscription.selectedDurationId?.toString(),
+          selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
         }))
         setIsTreatmentLockedBySource(true)
+      } else {
+        // Monetary voucher or coupon - show all treatments
+        setAvailableTreatmentsForStep(initialData.activeTreatments || [])
+        setIsTreatmentLockedBySource(false)
       }
     } else {
-      // New purchase
+      // No redemption - show all treatments
       setAvailableTreatmentsForStep(initialData.activeTreatments || [])
       setIsTreatmentLockedBySource(false)
       setSelectedCategory(initialCategory ?? null)
     }
-  }, [bookingOptions.source, voucher, userSubscription, initialData.activeTreatments, setBookingOptions, initialCategory])
+  }, [bookingOptions.redemptionData, initialData.activeTreatments, setBookingOptions, initialCategory])
 
   const availableDurations = useMemo(() => {
     if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {
@@ -163,6 +172,63 @@ export function GuestTreatmentSelectionStep({
     }))
   }
 
+  const handleRedemptionCodeSubmit = async () => {
+    if (!redemptionCode.trim()) return
+    
+    setIsValidatingCode(true)
+    setRedemptionError(null)
+    
+    try {
+      const result = await validateRedemptionCode(redemptionCode.trim(), currentUser?.id)
+      
+      if (result.success && result.redemption) {
+        // Update booking options with redemption data
+        setBookingOptions(prev => ({
+          ...prev,
+          redemptionCode: redemptionCode.trim(),
+          redemptionData: result.redemption,
+          source: result.redemption.type === "subscription" 
+            ? "subscription_redemption" 
+            : result.redemption.type.includes("voucher") 
+              ? "gift_voucher_redemption"
+              : "new_purchase",
+          selectedGiftVoucherId: result.redemption.type.includes("voucher") 
+            ? (result.redemption.data as any)?._id?.toString()
+            : undefined,
+          selectedUserSubscriptionId: result.redemption.type === "subscription"
+            ? (result.redemption.data as any)?._id?.toString()
+            : undefined,
+          appliedCouponCode: result.redemption.type.includes("coupon")
+            ? redemptionCode.trim()
+            : undefined
+        }))
+        
+        // Clear the input
+        setRedemptionCode("")
+      } else {
+        setRedemptionError(result.error || "קוד לא תקף")
+      }
+    } catch (error) {
+      setRedemptionError("שגיאה בבדיקת הקוד")
+    } finally {
+      setIsValidatingCode(false)
+    }
+  }
+
+  const handleClearRedemption = () => {
+    setBookingOptions(prev => ({
+      ...prev,
+      redemptionCode: undefined,
+      redemptionData: undefined,
+      source: "new_purchase",
+      selectedGiftVoucherId: undefined,
+      selectedUserSubscriptionId: undefined,
+      appliedCouponCode: undefined
+    }))
+    setRedemptionCode("")
+    setRedemptionError(null)
+  }
+
   return (
     <div className="space-y-6" dir={dir}>
       <div className="text-center">
@@ -170,6 +236,92 @@ export function GuestTreatmentSelectionStep({
         <h2 className="text-2xl font-semibold tracking-tight">{t("bookings.steps.treatment.title")}</h2>
         <p className="text-muted-foreground mt-2">{t("bookings.steps.treatment.description")}</p>
       </div>
+
+      {/* Redemption Code Input - Show only when no active redemption */}
+      {!bookingOptions.redemptionData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5 text-primary" />
+              הזן קוד מימוש
+            </CardTitle>
+            <CardDescription>הזן קוד קופון, שובר מתנה או מנוי</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Input
+                  placeholder="הזן קוד מימוש"
+                  value={redemptionCode}
+                  onChange={(e) => setRedemptionCode(e.target.value.toUpperCase())}
+                  onKeyPress={(e) => e.key === "Enter" && handleRedemptionCodeSubmit()}
+                  className="text-base"
+                />
+                {redemptionError && (
+                  <p className="text-sm text-red-500 mt-1">{redemptionError}</p>
+                )}
+              </div>
+              <Button
+                onClick={handleRedemptionCodeSubmit}
+                disabled={isValidatingCode || !redemptionCode.trim()}
+                type="button"
+              >
+                {isValidatingCode && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                בדוק קוד
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Active Redemption Display */}
+      {bookingOptions.redemptionData && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {bookingOptions.redemptionData.type.includes("voucher") && <GiftIcon className="h-5 w-5 text-primary" />}
+              {bookingOptions.redemptionData.type === "subscription" && <Ticket className="h-5 w-5 text-primary" />}
+              {bookingOptions.redemptionData.type.includes("coupon") && <Tag className="h-5 w-5 text-primary" />}
+              מימוש פעיל
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="font-semibold text-green-800">
+                    {bookingOptions.redemptionCode}
+                  </p>
+                  <p className="text-sm text-green-600">
+                    {bookingOptions.redemptionData.type === "subscription" && (
+                      `מנוי - נותרו: ${(bookingOptions.redemptionData.data as any)?.remainingQuantity} טיפולים`
+                    )}
+                    {bookingOptions.redemptionData.type === "treatment_voucher" && (
+                      `שובר טיפול - ${(bookingOptions.redemptionData.data as any)?.treatmentName}`
+                    )}
+                    {bookingOptions.redemptionData.type === "monetary_voucher" && (
+                      `שובר כספי - יתרה: ${(bookingOptions.redemptionData.data as any)?.remainingAmount?.toFixed(2)} ₪`
+                    )}
+                    {bookingOptions.redemptionData.type.includes("coupon") && (
+                      `קופון - ${(bookingOptions.redemptionData.data as any)?.discountType === "percentage" 
+                        ? `${(bookingOptions.redemptionData.data as any)?.discountValue}%` 
+                        : `₪${(bookingOptions.redemptionData.data as any)?.discountValue}`}`
+                    )}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearRedemption}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  הסר
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Show voucher/subscription selection for redemption */}
       {bookingOptions.source === "gift_voucher_redemption" && voucher && (

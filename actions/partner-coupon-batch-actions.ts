@@ -42,8 +42,12 @@ function calculateBatchEffectiveStatus(batch: IPartnerCouponBatch): "active" | "
 
 // Helper function to generate unique coupon codes
 function generateCouponCode(prefix: string, index: number): string {
-  const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase()
-  return `${prefix}-${String(index).padStart(3, '0')}-${randomSuffix}`
+  // Generate PC + 6 random alphanumeric characters
+  const randomSuffix = Array.from({ length: 6 }, () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return chars.charAt(Math.floor(Math.random() * chars.length))
+  }).join('')
+  return `PC${randomSuffix}`
 }
 
 // Admin Actions

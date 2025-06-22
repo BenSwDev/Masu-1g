@@ -65,8 +65,12 @@ function calculateCouponEffectiveStatus(coupon: ICoupon): "active" | "expired" |
 
 // Function to generate coupon code
 function generateCouponCode(prefix: string, index: number): string {
-  const paddedIndex = index.toString().padStart(4, "0")
-  return `${prefix}${paddedIndex}`
+  // Generate PC + 6 random alphanumeric characters
+  const randomSuffix = Array.from({ length: 6 }, () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return chars.charAt(Math.floor(Math.random() * chars.length))
+  }).join('')
+  return `PC${randomSuffix}`
 }
 
 export interface GetPartnerCouponBatchesResult {

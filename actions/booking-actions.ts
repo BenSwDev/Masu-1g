@@ -61,6 +61,7 @@ import { getActivePaymentMethods as fetchUserActivePaymentMethods } from "@/acti
 
 // Add import for event system
 import { eventBus, createBookingEvent } from "@/lib/events/booking-event-system"
+import type { RedemptionCode } from "@/types/booking"
 
 export type { IGiftVoucherUsageHistory } from "@/types/booking"
 
@@ -3107,6 +3108,148 @@ export async function sendNotificationToSuitableProfessionals(
       error: error instanceof Error ? error.message : String(error)
     })
     return { success: false, error: "Failed to send notifications" }
+  }
+}
+
+/**
+ * Unified redemption code validation and identification
+ */
+export async function validateRedemptionCode(
+  code: string,
+  userId?: string
+): Promise<{ success: boolean; redemption?: RedemptionCode; error?: string }> {
+  try {
+    await dbConnect()
+    
+    if (!code || !code.trim()) {
+      return { success: false, error: "קוד מימוש נדרש" }
+    }
+
+    const trimmedCode = code.trim().toUpperCase()
+
+    // Try to identify by code pattern and validate
+    
+    // 1. Check if it's a gift voucher (starts with GV)
+    if (trimmedCode.startsWith('GV')) {
+      const voucher = await GiftVoucher.findOne({
+        code: { $regex: new RegExp(`^${trimmedCode}$`, 'i') },
+        status: { $in: ["active", "partially_used", "sent"] },
+        validUntil: { $gte: new Date() }
+      }).lean()
+
+      if (voucher) {
+        const isValid = (voucher.isActive || voucher.status === "sent") && 
+                       (voucher.voucherType !== "monetary" || (voucher.remainingAmount && voucher.remainingAmount > 0))
+        
+        if (isValid) {
+          return {
+            success: true,
+            redemption: {
+              code: trimmedCode,
+              type: voucher.voucherType === "monetary" ? "monetary_voucher" : "treatment_voucher",
+              isValid: true,
+              data: voucher as any
+            }
+          }
+        } else {
+          return { success: false, error: "השובר לא תקף או נוצל במלואו" }
+        }
+      }
+    }
+
+    // 2. Check if it's a subscription code (starts with SB)
+    if (trimmedCode.startsWith('SB')) {
+      const userSubscription = await UserSubscription.findOne({
+        code: { $regex: new RegExp(`^${trimmedCode}$`, 'i') },
+        remainingQuantity: { $gt: 0 },
+        status: "active",
+        expiryDate: { $gte: new Date() }
+      }).populate('subscriptionId').populate('treatmentId').lean()
+
+      if (userSubscription) {
+        // For logged-in users, verify ownership (unless it's a guest subscription)
+        if (userId && userSubscription.userId && userSubscription.userId.toString() !== userId) {
+          return { success: false, error: "המנוי לא שייך למשתמש זה" }
+        }
+        
+        return {
+          success: true,
+          redemption: {
+            code: trimmedCode,
+            type: "subscription",
+            isValid: true,
+            data: userSubscription as any
+          }
+        }
+      }
+    }
+
+    // 3. Check if it's a partner coupon (starts with PC)
+    if (trimmedCode.startsWith('PC')) {
+      const coupon = await Coupon.findOne({ 
+        code: { $regex: new RegExp(`^${trimmedCode}$`, 'i') },
+        isActive: true,
+        assignedPartnerId: { $exists: true, $ne: null }
+      }).lean()
+      
+      if (coupon) {
+        const now = new Date()
+        const isValidDate = new Date(coupon.validFrom) <= now && new Date(coupon.validUntil) >= now
+        const hasUsageLeft = coupon.usageLimit === 0 || coupon.timesUsed < coupon.usageLimit
+        
+        if (isValidDate && hasUsageLeft) {
+          return {
+            success: true,
+            redemption: {
+              code: trimmedCode,
+              type: "partner_coupon",
+              isValid: true,
+              data: coupon as any
+            }
+          }
+        } else {
+          return { success: false, error: isValidDate ? "הקופון הגיע למכסת השימוש" : "הקופון פג תוקף" }
+        }
+      }
+    }
+
+    // 4. Check if it's a regular coupon (doesn't start with GV, SB, or PC)
+    if (!trimmedCode.startsWith('GV') && !trimmedCode.startsWith('SB') && !trimmedCode.startsWith('PC')) {
+      const coupon = await Coupon.findOne({ 
+        code: { $regex: new RegExp(`^${trimmedCode}$`, 'i') },
+        isActive: true,
+        $or: [
+          { assignedPartnerId: { $exists: false } },
+          { assignedPartnerId: null }
+        ]
+      }).lean()
+      
+      if (coupon) {
+        const now = new Date()
+        const isValidDate = new Date(coupon.validFrom) <= now && new Date(coupon.validUntil) >= now
+        const hasUsageLeft = coupon.usageLimit === 0 || coupon.timesUsed < coupon.usageLimit
+        
+        if (isValidDate && hasUsageLeft) {
+          return {
+            success: true,
+            redemption: {
+              code: trimmedCode,
+              type: "coupon",
+              isValid: true,
+              data: coupon as any
+            }
+          }
+        } else {
+          return { success: false, error: isValidDate ? "הקופון הגיע למכסת השימוש" : "הקופון פג תוקף" }
+        }
+      }
+    }
+
+    return { success: false, error: "קוד מימוש לא נמצא או לא תקף" }
+
+  } catch (error) {
+    logger.error("Error validating redemption code:", { error, code })
+    return { success: false, error: "שגיאה בבדיקת קוד המימוש" }
   }
 }
 

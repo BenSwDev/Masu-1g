@@ -20,7 +20,12 @@ import type {
 async function generateUniqueVoucherCode(): Promise<string> {
   await dbConnect()
   for (let attempt = 0; attempt < 5; attempt++) {
-    const code = Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join("")
+    // Generate GV + 6 random alphanumeric characters
+    const code = 'GV' + Array.from({ length: 6 }, () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+      return chars.charAt(Math.floor(Math.random() * chars.length))
+    }).join('')
+    
     const exists = await GiftVoucher.exists({ code })
     if (!exists) return code
   }

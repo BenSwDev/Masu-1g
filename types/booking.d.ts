@@ -150,32 +150,28 @@ export interface BookingInitialData {
   }
 }
 
+// Add unified redemption types
+export interface RedemptionCode {
+  code: string
+  type: "coupon" | "partner_coupon" | "monetary_voucher" | "treatment_voucher" | "subscription"
+  isValid: boolean
+  data?: ICoupon | IGiftVoucher | IUserSubscription
+}
+
+// Update booking options to include unified redemption
 export interface SelectedBookingOptions {
-  selectedTreatmentId?: string
+  selectedTreatmentId: string
   selectedDurationId?: string
-  bookingDate?: string
-  bookingTime?: string
+  selectedDateTime: Date | null
+  selectedAddressId?: string
+  customAddressDetails?: Partial<IAddress>
   therapistGenderPreference: "male" | "female" | "any"
-  isFlexibleTime: boolean
-  flexibilityRangeHours?: number
-  notes?: string
+  selectedPaymentMethodId?: string
   source: "new_purchase" | "subscription_redemption" | "gift_voucher_redemption"
   selectedUserSubscriptionId?: string
   selectedGiftVoucherId?: string
   appliedCouponCode?: string
-  recipientName?: string
-  recipientPhone?: string
-  recipientEmail?: string
-  recipientBirthDate?: Date
-  recipientGender?: "male" | "female" | "other"
-  isBookingForSomeoneElse?: boolean
-  selectedAddressId?: string
-  customAddressDetails?: any
-  paymentMethodId?: string
-  
-  // ➕ שדות חדשים
-  step?: 1 | 2 | 3 | 4 | 5 | 6 | 7
-  giftInfo?: BookingGiftInfo
-  consents?: IBookingConsents
-  enhancedPaymentDetails?: IEnhancedPaymentDetails
+  // New unified redemption field
+  redemptionCode?: string
+  redemptionData?: RedemptionCode
 }

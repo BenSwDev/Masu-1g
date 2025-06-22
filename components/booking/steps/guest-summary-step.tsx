@@ -4,12 +4,11 @@ import { useState, useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Input } from "@/components/common/ui/input"
-import { Label } from "@/components/common/ui/label"
+
 import { Separator } from "@/components/common/ui/separator"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Badge } from "@/components/common/ui/badge"
-import { CheckCircle, Calendar, Clock, User, Mail, Phone, FileText, CreditCard, Tag, Loader2 } from "lucide-react"
+import { CheckCircle, Calendar, Clock, User, Mail, Phone, FileText, CreditCard, Tag } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
@@ -57,8 +56,6 @@ export function GuestSummaryStep({
   userSubscription,
 }: GuestSummaryStepProps) {
   const { t, language, dir } = useTranslation()
-  const [couponCode, setCouponCode] = useState(bookingOptions.appliedCouponCode || "")
-  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
   const isRedeeming = Boolean(voucher || userSubscription)
 
@@ -125,30 +122,7 @@ export function GuestSummaryStep({
     return `₪${amount.toFixed(2)}`
   }
 
-  const handleCouponApply = async () => {
-    if (!couponCode.trim() || !setBookingOptions) return
-    setIsApplyingCoupon(true)
-    try {
-      // Apply coupon to booking options - this will trigger price recalculation
-      setBookingOptions(prev => ({
-        ...prev,
-        appliedCouponCode: couponCode.trim()
-      }))
-    } catch (error) {
-      console.error("Failed to apply coupon:", error)
-    } finally {
-      setIsApplyingCoupon(false)
-    }
-  }
 
-  const handleCouponRemove = () => {
-    if (!setBookingOptions) return
-    setCouponCode("")
-    setBookingOptions(prev => ({
-      ...prev,
-      appliedCouponCode: undefined
-    }))
-  }
 
   return (
     <div className="space-y-6" dir={dir}>
@@ -325,57 +299,7 @@ export function GuestSummaryStep({
         </Card>
       </div>
 
-      {/* Coupon Code Section - Hide when redeeming voucher/subscription */}
-      {setBookingOptions && !isRedeeming && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5" />
-              קוד קופון
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Label htmlFor="coupon-code" className="sr-only">
-                  קוד קופון
-                </Label>
-                <Input
-                  id="coupon-code"
-                  placeholder="הכנס קוד קופון"
-                  value={couponCode}
-                  onChange={(e) => setCouponCode(e.target.value)}
-                  className="text-base"
-                />
-              </div>
-              <Button
-                onClick={handleCouponApply}
-                disabled={isApplyingCoupon || !couponCode.trim()}
-                type="button"
-              >
-                {isApplyingCoupon && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                החל קופון
-              </Button>
-            </div>
-            {bookingOptions.appliedCouponCode && (
-              <div className="mt-2 flex items-center justify-between text-sm text-green-600">
-                <span className="flex items-center">
-                  <CheckCircle className="mr-1 h-4 w-4" />
-                  קופון הוחל בהצלחה
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCouponRemove}
-                  className="h-6 px-2 text-xs"
-                >
-                  הסר קופון
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Price Breakdown */}
       <Card>
@@ -451,7 +375,7 @@ export function GuestSummaryStep({
               )}
 
               {/* Coupon discount */}
-              {!isRedeeming && calculatedPrice.couponDiscount > 0 && (
+              {calculatedPrice.couponDiscount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span className="flex items-center gap-1">
                     <Tag className="h-4 w-4" />
@@ -481,7 +405,7 @@ export function GuestSummaryStep({
               {calculatedPrice.isFullyCoveredByVoucherOrSubscription && (
                 <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-green-800 text-center font-medium">
-                    🎉 הטיפול מכוסה במלואה על ידי {voucher ? "השובר" : "המנוי"}!
+                    🎉 הטיפול מכוסה במלואה על ידי המימוש!
                   </p>
                 </div>
               )}

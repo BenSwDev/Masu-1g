@@ -18,6 +18,22 @@ import type {
   PhoneRecipient,
 } from "@/lib/notifications/notification-types"
 
+// Helper function to generate unique subscription code
+async function generateUniqueSubscriptionCode(): Promise<string> {
+  await dbConnect()
+  for (let attempt = 0; attempt < 5; attempt++) {
+    // Generate SB + 6 random alphanumeric characters
+    const code = 'SB' + Array.from({ length: 6 }, () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+      return chars.charAt(Math.floor(Math.random() * chars.length))
+    }).join('')
+    
+    const exists = await UserSubscription.exists({ code })
+    if (!exists) return code
+  }
+  throw new Error("Failed to generate unique subscription code")
+}
+
 // Rate limiting store (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; firstRequest: number }>()
 
@@ -238,7 +254,9 @@ export async function purchaseSubscription({
     expiryDate.setMonth(expiryDate.getMonth() + subscription.validityMonths)
 
     const saveStart = Date.now()
+    const code = await generateUniqueSubscriptionCode()
     const newUserSubscription = new UserSubscription({
+      code,
       userId: sessionData.user.id,
       subscriptionId: subscription._id,
       treatmentId: treatment._id,
@@ -734,8 +752,10 @@ export async function purchaseGuestSubscription({
     expiryDate.setMonth(expiryDate.getMonth() + subscription.validityMonths)
 
     const saveStart = Date.now()
+    const code = await generateUniqueSubscriptionCode()
     // For guest purchases, we create a special UserSubscription record without userId
     const newUserSubscription = new UserSubscription({
+      code,
       userId: null, // Guest purchase - no user association
       subscriptionId: subscription._id,
       treatmentId: treatment._id,
@@ -771,8 +791,8 @@ export async function purchaseGuestSubscription({
     try {
       const lang = "he"
       const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-      const redeemLink = `${appBaseUrl}/redeem-subscription/${newUserSubscription._id}`
-      const message = `תודה על רכישתך. למימוש המנוי לחץ כאן: ${redeemLink}`
+      const bookingLink = `${appBaseUrl}/bookings/treatment`
+      const message = `תודה על רכישתך! קוד המנוי שלך: ${code}. להזמנת טיפול עם המנוי היכנס לאתר ובשלב בחירת הטיפול הזן את הקוד. לינק להזמנה: ${bookingLink}`
       const recipients = []
       if (guestInfo.email) {
         recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })

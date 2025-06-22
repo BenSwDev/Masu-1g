@@ -849,6 +849,7 @@ export default function UniversalBookingWizard({
             onPrev={prevStep}
             voucher={voucher}
             userSubscription={userSubscription}
+            currentUser={currentUser}
           />
         )
       case 2:

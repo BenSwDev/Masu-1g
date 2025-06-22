@@ -10,6 +10,8 @@ import { Types } from "mongoose"
 import { hash } from "bcryptjs"
 import Booking, { IBooking } from "@/lib/db/models/booking"
 import { z } from "zod"
+import mongoose from "mongoose"
+import Treatment from "@/lib/db/models/treatment"
 
 // Validation schemas
 const GetProfessionalsSchema = z.object({
@@ -27,6 +29,12 @@ const CreateProfessionalSchema = z.object({
   phone: z.string().min(10, "מספר טלפון חייב להכיל לפחות 10 ספרות"),
   gender: z.enum(["male", "female"]),
   birthDate: z.string().optional()
+})
+
+const ProfessionalTreatmentPricingSchema = z.object({
+  treatmentId: z.string().min(1, "מזהה טיפול נדרש"),
+  durationId: z.string().optional(),
+  professionalPrice: z.number().min(0, "מחיר מטפל חייב להיות חיובי")
 })
 
 interface GetProfessionalsOptions {
@@ -458,69 +466,127 @@ export async function updateProfessionalStatus(
 }
 
 export async function updateProfessionalTreatments(
-  id: string,
-  treatments: IProfessionalProfile["treatments"]
-): Promise<UpdateProfessionalResult> {
+  professionalId: string,
+  treatments: Array<{
+    treatmentId: string
+    durationId?: string
+    professionalPrice: number
+  }>
+) {
   try {
     // Validate input
-    if (!id || !Types.ObjectId.isValid(id)) {
-      return { success: false, error: "מזהה מטפל לא תקין" }
-    }
+    const validatedTreatments = treatments.map(treatment => 
+      ProfessionalTreatmentPricingSchema.parse(treatment)
+    )
 
-    if (!Array.isArray(treatments)) {
-      return { success: false, error: "רשימת טיפולים לא תקינה" }
-    }
-
-    // Authorize user
+    // Authorization check
     await requireAdminAuth()
 
     // Connect to database
     await dbConnect()
 
-    // Validate treatment objects
-    const validatedTreatments = treatments.map(treatment => {
-      if (!treatment.treatmentId) {
-        throw new Error("מזהה טיפול חסר")
-      }
-      
+    // Start transaction
+    const mongoSession = await mongoose.startSession()
+    
+    try {
+      await mongoSession.withTransaction(async () => {
+        // Verify professional exists
+        const professional = await ProfessionalProfile.findById(professionalId).session(mongoSession)
+        if (!professional) {
+          throw new Error("מטפל לא נמצא")
+        }
+
+        // Validate treatments exist and are active
+        const treatmentIds = [...new Set(validatedTreatments.map(t => t.treatmentId))]
+        const existingTreatments = await Treatment.find({
+          _id: { $in: treatmentIds },
+          isActive: true
+        }).session(mongoSession)
+
+        if (existingTreatments.length !== treatmentIds.length) {
+          throw new Error("חלק מהטיפולים לא נמצאו או לא פעילים")
+        }
+
+        // Validate duration IDs for duration-based treatments
+        for (const treatment of validatedTreatments) {
+          if (treatment.durationId) {
+            const treatmentDoc = existingTreatments.find(t => t._id.toString() === treatment.treatmentId)
+            if (treatmentDoc?.pricingType === "duration_based") {
+              const durationExists = treatmentDoc.durations?.some(
+                d => d._id.toString() === treatment.durationId && d.isActive
+              )
+              if (!durationExists) {
+                throw new Error(`משך זמן לא תקין עבור טיפול ${treatmentDoc.name}`)
+              }
+            }
+          }
+        }
+
+        // Update professional treatments
+        const updatedProfessional = await ProfessionalProfile.findByIdAndUpdate(
+          professionalId,
+          {
+            $set: {
+              treatments: validatedTreatments,
+              updatedAt: new Date()
+            }
+          },
+          { 
+            new: true, 
+            session: mongoSession,
+            populate: {
+              path: 'userId',
+              select: 'firstName lastName email phone'
+            }
+          }
+        )
+
+        if (!updatedProfessional) {
+          throw new Error("שגיאה בעדכון הטיפולים")
+        }
+
+        // Log the action (optional - remove if logAction is not available)
+        // await logAction({
+        //   action: 'professional_treatments_updated',
+        //   userId: session.user.id,
+        //   targetId: professionalId,
+        //   details: {
+        //     treatmentsCount: validatedTreatments.length,
+        //     treatments: validatedTreatments
+        //   }
+        // })
+      })
+
+      // Fetch updated professional with populated data
+      const updatedProfessional = await ProfessionalProfile.findById(professionalId)
+        .populate("userId", "name email phone gender birthDate roles")
+        .lean()
+
+      // Revalidate the professional management page
+      revalidatePath("/dashboard/admin/professional-management")
+
       return {
-        treatmentId: new Types.ObjectId(treatment.treatmentId),
-        // Remove durationId and professionalPrice as they are now calculated automatically
+        success: true,
+        professional: updatedProfessional as ProfessionalWithUser
       }
-    })
 
-    const professional = await ProfessionalProfile.findByIdAndUpdate(
-      id,
-      { 
-        treatments: validatedTreatments,
-        lastActiveAt: new Date()
-      },
-      { new: true, runValidators: true }
-    )
-      .populate("userId", "name email phone gender birthDate roles")
-      .lean()
-
-    if (!professional) {
-      return { success: false, error: "מטפל לא נמצא" }
+    } finally {
+      await mongoSession.endSession()
     }
 
-    // Revalidate the professional management page
-    revalidatePath("/dashboard/admin/professional-management")
-
-    return { 
-      success: true, 
-      professional: professional as ProfessionalWithUser 
-    }
   } catch (error) {
-    console.error("Error updating professional treatments:", error)
+    console.error('Error updating professional treatments:', error)
     
-    if (error instanceof Error && error.message.includes("Unauthorized")) {
-      return { success: false, error: "אין לך הרשאה לעדכן טיפולי המטפל" }
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: error.errors.map(e => e.message).join(', ')
+      }
     }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "שגיאה בעדכון טיפולי המטפל" 
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "שגיאה בעדכון הטיפולים"
     }
   }
 }

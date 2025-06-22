@@ -19,6 +19,16 @@ import { Skeleton } from "@/components/common/ui/skeleton"
 import { useIsMobile } from "@/components/common/ui/use-mobile" // Corrected import
 import UserSubscriptionAdminCard from "./user-subscription-admin-card"
 import UserSubscriptionAdminCardSkeleton from "./user-subscription-admin-card-skeleton"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/common/ui/dialog"
+import UserSubscriptionEditForm, {
+  type UserSubscriptionEditValues,
+} from "./user-subscription-edit-form"
+import { updateUserSubscription } from "@/app/dashboard/(user)/(roles)/admin/user-subscriptions/actions"
 
 interface PopulatedUserSubscription extends IUserSubscription {
   userId: Pick<User, "name" | "email"> & { _id: string }
@@ -54,6 +64,10 @@ const AdminUserSubscriptionsClient = ({
 
   const [userSubscriptions, setUserSubscriptions] = useState<PopulatedUserSubscription[]>(initialUserSubscriptions)
   const [pagination, setPagination] = useState(initialPagination)
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingSubscription, setEditingSubscription] = useState<PopulatedUserSubscription | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   const stats = {
     total: pagination?.total || 0,
@@ -128,6 +142,42 @@ const AdminUserSubscriptionsClient = ({
 
   const handleExport = () => {
     toast.info(t("common.featureComingSoon"))
+  }
+
+  const handleEditClick = (sub: PopulatedUserSubscription) => {
+    setEditingSubscription(sub)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdate = async (values: UserSubscriptionEditValues) => {
+    if (!editingSubscription) return
+    setIsSaving(true)
+    try {
+      const result = await updateUserSubscription(editingSubscription._id.toString(), {
+        remainingQuantity: values.remainingQuantity,
+        expiryDate: values.expiryDate.toISOString(),
+      })
+      if (result.success && result.userSubscription) {
+        const updatedSub: PopulatedUserSubscription = {
+          ...editingSubscription,
+          remainingQuantity: result.userSubscription.remainingQuantity,
+          expiryDate: result.userSubscription.expiryDate,
+        }
+        setUserSubscriptions((prev) =>
+          prev.map((s) =>
+            String(s._id) === String(updatedSub._id) ? updatedSub : s,
+          ),
+        )
+        toast.success(t("common.success"))
+        setIsEditDialogOpen(false)
+      } else {
+        toast.error(result.error || t("common.error"))
+      }
+    } catch (err) {
+      toast.error(t("common.error"))
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const TableSkeleton = () => (
@@ -351,6 +401,7 @@ const AdminUserSubscriptionsClient = ({
               key={String(subscription._id)}
               userSubscription={subscription}
               onSubscriptionUpdate={() => fetchData(currentPage, limit, searchTerm, statusFilter)}
+              onEdit={handleEditClick}
             />
           ))}
         </div>
@@ -395,6 +446,7 @@ const AdminUserSubscriptionsClient = ({
                       key={String(subscription._id)}
                       userSubscription={subscription}
                       onSubscriptionUpdate={() => fetchData(currentPage, limit, searchTerm, statusFilter)}
+                      onEdit={handleEditClick}
                     />
                   ))}
                 </tbody>
@@ -459,6 +511,20 @@ const AdminUserSubscriptionsClient = ({
           </div>
         </div>
       )}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("common.edit")}</DialogTitle>
+          </DialogHeader>
+          {editingSubscription && (
+            <UserSubscriptionEditForm
+              initialData={editingSubscription}
+              onSubmit={handleUpdate}
+              loading={isSaving}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

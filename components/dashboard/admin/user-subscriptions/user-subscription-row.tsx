@@ -51,9 +51,10 @@ interface PopulatedUserSubscription extends IUserSubscription {
 interface UserSubscriptionRowProps {
   userSubscription: PopulatedUserSubscription
   onSubscriptionUpdate: () => void
+  onEdit: (subscription: PopulatedUserSubscription) => void
 }
 
-export default function UserSubscriptionRow({ userSubscription, onSubscriptionUpdate }: UserSubscriptionRowProps) {
+export default function UserSubscriptionRow({ userSubscription, onSubscriptionUpdate, onEdit }: UserSubscriptionRowProps) {
   const { t } = useTranslation()
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -98,7 +99,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
   }
 
   const handleEdit = () => {
-    toast.info(t("common.featureComingSoon"))
+    onEdit(userSubscription)
   }
 
   const getStatusBadge = (status: string) => {

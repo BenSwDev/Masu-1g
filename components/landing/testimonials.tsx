@@ -284,33 +284,48 @@ export function LandingTestimonials() {
           </div>
         </div>
 
-        {/* Bottom CTA */}
+        {/* Service Charter */}
         <div className="text-center mt-16">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 text-white max-w-4xl mx-auto">
-            <h3 className="text-3xl font-bold mb-4">
-              {dir === "rtl" ? "הצטרף לאלפי הלקוחות המרוצים שלנו" : "Join Our Thousands of Satisfied Customers"}
+          <div className="bg-gradient-to-r from-turquoise-500 to-blue-600 rounded-3xl p-8 text-white max-w-5xl mx-auto">
+            <h3 className="text-3xl font-bold mb-8">
+              {dir === "rtl" ? "אמנת השירות" : "Service Charter"}
             </h3>
-            <p className="text-xl mb-6 text-blue-100">
-              {dir === "rtl"
-                ? "גלה מדוע MASU הפכה לבחירה הראשונה עבור טיפולי יופי בבית"
-                : "Discover why MASU has become the first choice for home beauty treatments"
-              }
-            </p>
             
-            {/* Review encouragement */}
-            <div className="bg-white/10 rounded-2xl p-6 mb-6">
-              <p className="text-lg text-blue-100 mb-4">
-                {dir === "rtl"
-                  ? "היית לקוח שלנו? נשמח לשמוע את הדעה שלך!"
-                  : "Been our customer? We'd love to hear your opinion!"
-                }
-              </p>
-              <div className="flex items-center justify-center gap-2">
-                <Star className="w-6 h-6 text-yellow-400 fill-current" />
-                <span className="text-lg font-semibold">
-                  {dir === "rtl" ? "דרג אותנו וזכה בהנחה של 20%" : "Rate us and get 20% discount"}
-                </span>
-                <Star className="w-6 h-6 text-yellow-400 fill-current" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-right">
+              <div className="bg-white/10 rounded-2xl p-6">
+                <p className="text-lg text-white leading-relaxed">
+                  {dir === "rtl"
+                    ? "עיסוי צריך להיות חוויה מרגיעה, ללא דאגות. במאסו תמיד תקבלו את אותו טיפול איכותי במחיר קבוע ותהליך הזמנה פשוט"
+                    : "Massage should be a relaxing experience, worry-free. At MASU you will always receive the same quality treatment at a fixed price and simple booking process"
+                  }
+                </p>
+              </div>
+              
+              <div className="bg-white/10 rounded-2xl p-6">
+                <p className="text-lg text-white leading-relaxed">
+                  {dir === "rtl"
+                    ? "המטפלים שלנו מקצועים, אמינים ונדרשים לשמור על רמת הגיינה גבוהה"
+                    : "Our therapists are professional, reliable and required to maintain a high level of hygiene"
+                  }
+                </p>
+              </div>
+              
+              <div className="bg-white/10 rounded-2xl p-6">
+                <p className="text-lg text-white leading-relaxed">
+                  {dir === "rtl"
+                    ? "עם מאסו תמיד תדע בדיוק מי יטפל בך ובדיוק מתי הוא יגיע"
+                    : "With MASU you will always know exactly who will treat you and exactly when they will arrive"
+                  }
+                </p>
+              </div>
+              
+              <div className="bg-white/10 rounded-2xl p-6">
+                <p className="text-lg text-white leading-relaxed">
+                  {dir === "rtl"
+                    ? "תהליך הזמנה פשוט ומהיר ללא עלויות נסתרות והוצאות נוספות"
+                    : "Simple and fast booking process with no hidden costs and additional expenses"
+                  }
+                </p>
               </div>
             </div>
           </div>

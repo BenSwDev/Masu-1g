@@ -171,7 +171,6 @@ export async function updatePartner(id: string, formData: FormData) {
     userForm.append("email", String(formData.get("email") || ""))
     userForm.append("phone", String(formData.get("phone") || ""))
     userForm.append("gender", String(formData.get("gender") || "male"))
-    userForm.append("dateOfBirth", String(formData.get("dateOfBirth") || ""))
     userForm.append("roles[]", "partner")
 
     const res = await updateUserByAdmin(String(existing.userId), userForm)

@@ -8,7 +8,8 @@ import { Input } from "@/components/common/ui/input"
 import { Label } from "@/components/common/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { CreditCard, ArrowLeft, Banknote, FileText, Gift } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { CreditCard, ArrowLeft, Banknote, FileText, Gift, Info } from "lucide-react"
 
 interface BookingCreatePaymentStepProps {
   formData: any
@@ -322,6 +323,29 @@ export default function BookingCreatePaymentStep({
           </CardContent>
         </Card>
       )}
+
+      {/* Cancellation Policy */}
+      <Card>
+        <CardContent className="pt-6">
+          <Alert className="mb-6">
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-sm leading-relaxed">
+              <div className="space-y-2">
+                <div className="font-medium">מדיניות ביטול:</div>
+                <div>
+                  • ביטול הזמנה מרגע ביצועה יחוייב בדמי ביטול של 5% מסכום ההזמנה.
+                </div>
+                <div>
+                  • ביטול הזמנה פחות מ 24 שעות ממועד הטיפול יחוייב בדמי ביטול של 50% מסכום ההזמנה.
+                </div>
+                <div>
+                  • ביטול הזמנה פחות מ 4 שעות ממועד הטיפול יחוייב בדמי ביטול מלאים של 100%.
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
 
       {/* Navigation */}
       <div className="flex justify-between">

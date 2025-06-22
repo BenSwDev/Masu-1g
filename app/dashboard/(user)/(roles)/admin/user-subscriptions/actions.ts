@@ -106,4 +106,60 @@ export async function getAllUserSubscriptions(
     logger.error("Error fetching user subscriptions:", error)
     return { success: false, error: "Failed to fetch user subscriptions" }
   }
-} 
+}
+
+export interface UpdateUserSubscriptionData {
+  remainingQuantity?: number
+  expiryDate?: string
+}
+
+export interface UpdateUserSubscriptionResult {
+  success: boolean
+  userSubscription?: IUserSubscription
+  error?: string
+}
+
+export async function updateUserSubscription(
+  id: string,
+  data: UpdateUserSubscriptionData,
+): Promise<UpdateUserSubscriptionResult> {
+  const session = await getServerSession(authOptions)
+  if (!session || !isAdminUser(session.user)) {
+    return { success: false, error: "Unauthorized" }
+  }
+
+  try {
+    await connectDB()
+
+    const updateFields: any = {}
+    if (data.remainingQuantity !== undefined) {
+      updateFields.remainingQuantity = Number(data.remainingQuantity)
+    }
+    if (data.expiryDate) {
+      const date = new Date(data.expiryDate)
+      if (isNaN(date.getTime())) {
+        return { success: false, error: "Invalid expiry date" }
+      }
+      updateFields.expiryDate = date
+    }
+
+    const updated = await UserSubscription.findByIdAndUpdate(id, updateFields, {
+      new: true,
+    })
+
+    if (!updated) {
+      return { success: false, error: "User subscription not found" }
+    }
+
+    revalidatePath("/dashboard/admin/user-subscriptions")
+    revalidatePath("/dashboard/member/subscriptions")
+
+    return {
+      success: true,
+      userSubscription: JSON.parse(JSON.stringify(updated)),
+    }
+  } catch (error) {
+    logger.error("Error updating user subscription:", error)
+    return { success: false, error: "Failed to update user subscription" }
+  }
+}

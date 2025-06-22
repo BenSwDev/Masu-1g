@@ -163,14 +163,14 @@ export default function CustomersClient() {
 
   const handleCustomerView = async (customer: CustomerSummary) => {
     setSelectedCustomer(customer)
-    await loadCustomerTransactions(customer.userId)
+    setTransactionsPage(1)
+    await loadCustomerTransactions(customer.userId, 1)
   }
 
   const handleTransactionsPageChange = (newPage: number) => {
+    if (!selectedCustomer) return
     setTransactionsPage(newPage)
-    if (selectedCustomer) {
-      loadCustomerTransactions(selectedCustomer.userId, newPage)
-    }
+    loadCustomerTransactions(selectedCustomer.userId, newPage)
   }
 
   const formatCurrency = (amount: number | undefined | null) => {

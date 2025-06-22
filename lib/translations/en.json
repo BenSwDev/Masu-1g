@@ -1565,7 +1565,14 @@
     "codePlaceholder": "Enter code",
     "professionalInterface": "Professional Interface",
     "partnerInterface": "Partner Interface",
-    "adminInterface": "Admin Interface"
+    "adminInterface": "Admin Interface",
+    "haveCodeLong": "I have a code for redeeming a coupon/subscription/gift voucher",
+    "treatYourself": "Want to pamper yourself or the important people in your life?",
+    "purchaseGiftVoucher": "Purchase a monetary voucher or a pampering treatment",
+    "purchaseSubscription": "Purchase a treatment subscription at a special price",
+    "seeWhatsWaiting": "Click here to see what awaits you",
+    "whatToExpect": "What to expect?",
+    "expectText": "With over 150 certified therapists nationwide, MASU delivers massage services directly to your home. After placing an order, it is sent to nearby therapists via our app and you'll receive confirmation within minutes. Our size allows us to guarantee high availability every day from 8:00-22:00. Only qualified therapists matching your criteria will see the order. In rare cases where none are found, we'll contact you to reschedule or cancel. Your card is charged only after the treatment is confirmed. The therapist arrives with a treatment table, oils and clean linens. After the session you'll receive a link to rate the therapist so we keep only the best."
   },
   "adminBookings": {
     "accountCreated": "[adminBookings.accountCreated]",

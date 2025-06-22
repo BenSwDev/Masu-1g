@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { getTreatments } from "@/actions/treatment-actions"
 import { GuestLayout } from "@/components/layout/guest-layout"
+import { Card } from "@/components/common/ui/card"
 
 export const dynamic = 'force-dynamic'
 
@@ -19,17 +20,20 @@ export default async function OurTreatmentsPage() {
 
   return (
     <GuestLayout>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Our Treatments</h1>
-        <ul className="space-y-4">
+      <div className="space-y-8">
+        <h1 className="text-3xl font-bold text-center">Our Treatments</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {Object.entries(categoriesMap).map(([cat]) => (
-            <li key={cat}>
-              <Link href={`/our-treatments/${cat}`} className="text-xl font-semibold text-blue-600 hover:underline">
-                {cat}
-              </Link>
-            </li>
+            <Link
+              key={cat}
+              href={`/our-treatments/${cat}`}
+              className="block">
+              <Card className="p-6 text-center hover:shadow-lg transition-all">
+                <span className="text-lg font-semibold capitalize">{cat}</span>
+              </Card>
+            </Link>
           ))}
-        </ul>
+        </div>
       </div>
     </GuestLayout>
   )

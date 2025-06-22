@@ -120,8 +120,30 @@ export function LandingTestimonials() {
       : "I booked a last-minute treatment and received excellent uncompromising service.",
     treatment: dir === "rtl" ? "טיפול אקספרס" : "Express Treatment",
     image: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&h=100&fit=crop&crop=face"
+  },
+  {
+    id: 11,
+    name: dir === "rtl" ? "אסף לוי" : "Asaf Levi",
+    location: dir === "rtl" ? "אשקלון" : "Ashkelon",
+    rating: 5,
+    text: dir === "rtl"
+      ? "שירות מקצועי ומהיר, המטפל הגיע בדיוק בזמן והטיפול היה מצוין."
+      : "Professional and fast service, the therapist arrived on time and the treatment was excellent.",
+    treatment: dir === "rtl" ? "עיסוי שוודי" : "Swedish Massage",
+    image: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=100&h=100&fit=crop&crop=face"
+  },
+  {
+    id: 12,
+    name: dir === "rtl" ? "חני כהן" : "Hani Cohen",
+    location: dir === "rtl" ? "רעננה" : "Ra'anana",
+    rating: 5,
+    text: dir === "rtl"
+      ? "היה לי יום פינוק מושלם. תודה על השירות המעולה!"
+      : "Had a perfect pampering day. Thanks for the excellent service!",
+    treatment: dir === "rtl" ? "יום פינוק" : "Pamper Day",
+    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face"
   }
-  ]
+]
 
   const stats = [
     {

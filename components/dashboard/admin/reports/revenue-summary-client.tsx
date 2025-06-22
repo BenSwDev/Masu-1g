@@ -52,7 +52,7 @@ export default function RevenueSummaryClient() {
       const json = await res.json()
       setTotals(json.totals)
     } catch (e) {
-      setError(t("reports.revenueSummary.errorLoading"))
+      setError("reports.revenueSummary.errorLoading")
     } finally {
       setLoading(false)
     }
@@ -84,7 +84,7 @@ export default function RevenueSummaryClient() {
         {loading ? (
           <div>{t("reports.revenueSummary.loading")}</div>
         ) : error ? (
-          <div className="text-red-600">{t("reports.revenueSummary.errorLoading")}</div>
+          <div className="text-red-600">{t(error)}</div>
         ) : totals ? (
           <Table>
             <TableHeader>

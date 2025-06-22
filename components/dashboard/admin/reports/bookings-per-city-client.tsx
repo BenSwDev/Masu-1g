@@ -45,7 +45,7 @@ export default function BookingsPerCityClient() {
       const json = await res.json()
       setData(json.data || [])
     } catch (e) {
-      setError(t("reports.bookingsByCity.errorLoading"))
+      setError("reports.bookingsByCity.errorLoading")
     } finally {
       setLoading(false)
     }
@@ -77,7 +77,7 @@ export default function BookingsPerCityClient() {
         {loading ? (
           <div>{t("reports.bookingsByCity.loading")}</div>
         ) : error ? (
-          <div className="text-red-600">{t("reports.bookingsByCity.errorLoading")}</div>
+          <div className="text-red-600">{t(error)}</div>
         ) : (
           <Table>
             <TableHeader>

@@ -45,7 +45,7 @@ export default function BookingsPerProfessionalClient() {
       const json = await res.json()
       setData(json.data || [])
     } catch (e) {
-      setError(t("reports.bookingsByProfessional.errorLoading"))
+      setError("reports.bookingsByProfessional.errorLoading")
     } finally {
       setLoading(false)
     }
@@ -77,7 +77,7 @@ export default function BookingsPerProfessionalClient() {
         {loading ? (
           <div>{t("reports.bookingsByProfessional.loading")}</div>
         ) : error ? (
-          <div className="text-red-600">{t("reports.bookingsByProfessional.errorLoading")}</div>
+          <div className="text-red-600">{t(error)}</div>
         ) : (
           <Table>
             <TableHeader>

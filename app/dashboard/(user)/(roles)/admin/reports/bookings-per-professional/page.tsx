@@ -25,8 +25,8 @@ export default async function BookingsPerProfessionalPage() {
         <div className="flex items-center gap-2">
           <BarChart3 className="h-6 w-6" />
           <Heading
-            title="Bookings Per Professional"
-            description="Number of bookings grouped by professional"
+            titleKey="reports.bookingsByProfessional.title"
+            descriptionKey="reports.bookingsByProfessional.description"
           />
         </div>
         <Separator />

@@ -25,8 +25,8 @@ export default async function BookingsPerCityPage() {
         <div className="flex items-center gap-2">
           <MapPin className="h-6 w-6" />
           <Heading
-            title="Bookings Per City"
-            description="Number of bookings grouped by city"
+            titleKey="reports.bookingsByCity.title"
+            descriptionKey="reports.bookingsByCity.description"
           />
         </div>
         <Separator />

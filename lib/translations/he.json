@@ -4148,6 +4148,10 @@
       "userSubscriptions": "מנויי משתמשים",
       "coupons": "קופונים",
       "giftVouchers": "שוברי מתנה",
+      "reports": "דוחות",
+      "bookingsPerProfessional": "הזמנות לפי מטפל",
+      "bookingsPerCity": "הזמנות לפי עיר",
+      "revenueSummary": "סיכום הכנסות",
       "reviews": "חוות דעת",
       "addresses": "כתובות",
       "paymentMethods": "אמצעי תשלום",
@@ -4158,7 +4162,8 @@
           "mainMenu": "תפריט ראשי",
           "purchases": "רכישות ומימושים",
           "users": "משתמשים",
-          "settings": "הגדרות"
+          "settings": "הגדרות",
+          "reports": "דוחות"
         },
       "userMenu": {
         "toggleTooltip": "תפריט משתמש",

@@ -32,6 +32,7 @@ import {
   History,
   Users,
   BarChart3,
+  PieChart,
   Star,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
@@ -294,6 +295,11 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "cities", icon: MapPin, hrefSuffix: "cities", section: "settings" },
         { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours", section: "settings" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions", section: "settings" },
+
+        // דוחות (Reports)
+        { titleKey: "revenueSummary", icon: PieChart, hrefSuffix: "reports/revenue-summary", section: "reports" },
+        { titleKey: "bookingsPerProfessional", icon: Users, hrefSuffix: "reports/bookings-per-professional", section: "reports" },
+        { titleKey: "bookingsPerCity", icon: MapPin, hrefSuffix: "reports/bookings-per-city", section: "reports" },
       ],
       member: [
         { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },
@@ -615,6 +621,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       const purchasesItems: any[] = []
       const usersItems: any[] = []
       const settingsItems: any[] = []
+      const reportsItems: any[] = []
       
       items.forEach((item: any) => {
         if (!item.section) {
@@ -625,6 +632,8 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
           usersItems.push(item)
         } else if (item.section === "settings") {
           settingsItems.push(item)
+        } else if (item.section === "reports") {
+          reportsItems.push(item)
         }
       })
 
@@ -735,6 +744,14 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
             <>
               {renderSectionLabel("settings")}
               {renderItemGroup(settingsItems, false)}
+            </>
+          )}
+
+          {/* Reports */}
+          {reportsItems.length > 0 && (
+            <>
+              {renderSectionLabel("reports")}
+              {renderItemGroup(reportsItems, false)}
             </>
           )}
         </nav>

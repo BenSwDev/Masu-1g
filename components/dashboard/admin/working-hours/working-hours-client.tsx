@@ -231,7 +231,12 @@ const getDefaultFixedHours = (): IFixedHours[] => {
       startTime: "09:00",
       endTime: "17:00",
       hasPriceAddition: false,
-      priceAddition: { amount: 0, type: "fixed" as const },
+      priceAddition: {
+        amount: 0,
+        type: "fixed" as const,
+        appliesToEntireDay: true,
+        professionalShare: { amount: 70, type: "percentage" },
+      },
       notes: "",
       minimumBookingAdvanceHours: 2,
       cutoffTime: null,
@@ -285,7 +290,12 @@ export default function WorkingHoursClient() {
       endTime: "17:00",
       hasPriceAddition: false,
       notes: "",
-      priceAddition: { amount: 0, type: "fixed" },
+      priceAddition: {
+        amount: 0,
+        type: "fixed",
+        appliesToEntireDay: true,
+        professionalShare: { amount: 70, type: "percentage" },
+      },
       minimumBookingAdvanceHours: 2,
       cutoffTime: undefined,
     },
@@ -308,7 +318,12 @@ export default function WorkingHoursClient() {
       notes: "",
       minimumBookingAdvanceHours: 2,
       cutoffTime: undefined,
-      priceAddition: { amount: 0, type: "fixed" },
+      priceAddition: {
+        amount: 0,
+        type: "fixed",
+        appliesToEntireDay: true,
+        professionalShare: { amount: 70, type: "percentage" },
+      },
     },
   });
 
@@ -1275,7 +1290,12 @@ export default function WorkingHoursClient() {
                       endTime: "17:00",
                       hasPriceAddition: false,
                       notes: "",
-                      priceAddition: { amount: 0, type: "fixed" },
+                      priceAddition: {
+                        amount: 0,
+                        type: "fixed",
+                        appliesToEntireDay: true,
+                        professionalShare: { amount: 70, type: "percentage" },
+                      },
                       minimumBookingAdvanceHours: 2,
                       cutoffTime: undefined,
                     });

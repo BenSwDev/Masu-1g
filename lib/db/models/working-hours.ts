@@ -170,10 +170,20 @@ const FixedHoursSchema = new Schema<IFixedHours>({
 
 FixedHoursSchema.pre("save", function (next) {
   if (this.isActive && !this.priceAddition) {
-    this.priceAddition = { amount: 0, type: "fixed" };
+    this.priceAddition = {
+      amount: 0,
+      type: "fixed",
+      appliesToEntireDay: true,
+      professionalShare: { amount: 70, type: "percentage" },
+    };
   }
   if (!this.hasPriceAddition) {
-    this.priceAddition = { amount: 0, type: "fixed" };
+    this.priceAddition = {
+      amount: 0,
+      type: "fixed",
+      appliesToEntireDay: true,
+      professionalShare: { amount: 70, type: "percentage" },
+    };
   } else if (
     this.hasPriceAddition &&
     this.priceAddition &&
@@ -349,7 +359,12 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
         startTime: "09:00",
         endTime: "17:00",
         hasPriceAddition: false,
-        priceAddition: { amount: 0, type: "fixed" },
+        priceAddition: {
+          amount: 0,
+          type: "fixed",
+          appliesToEntireDay: true,
+          professionalShare: { amount: 70, type: "percentage" },
+        },
         notes: "",
         minimumBookingAdvanceHours: 2,
         cutoffTime: null,
@@ -366,7 +381,12 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
         startTime: "09:00",
         endTime: "17:00",
         hasPriceAddition: false,
-        priceAddition: { amount: 0, type: "fixed" },
+        priceAddition: {
+          amount: 0,
+          type: "fixed",
+          appliesToEntireDay: true,
+          professionalShare: { amount: 70, type: "percentage" },
+        },
         notes: "",
         minimumBookingAdvanceHours: 2,
         cutoffTime: null,

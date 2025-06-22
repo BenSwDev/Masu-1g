@@ -35,7 +35,12 @@ export async function getWorkingHoursSettings() {
           startTime: "09:00",
           endTime: "17:00",
           hasPriceAddition: false,
-          priceAddition: { amount: 0, type: "fixed" },
+          priceAddition: {
+            amount: 0,
+            type: "fixed",
+            appliesToEntireDay: true,
+            professionalShare: { amount: 70, type: "percentage" },
+          },
           notes: "",
           minimumBookingAdvanceHours: 2,
           cutoffTime: null,

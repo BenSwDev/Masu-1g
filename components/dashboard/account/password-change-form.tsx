@@ -144,10 +144,10 @@ export function PasswordChangeForm() {
         </div>
         <p className="text-xs text-muted-foreground">
           {language === "he"
-            ? "חייב להיות לפחות 8 תווים עם אותיות גדולות, קטנות ומספרים"
+            ? "חייב להיות לפחות 8 תווים עם לפחות 3 מתוך 4: אותיות גדולות, קטנות, מספרים או תווים מיוחדים"
             : language === "ru"
-              ? "Должно быть не менее 8 символов с заглавными, строчными буквами и цифрами"
-              : "Must be at least 8 characters with uppercase, lowercase and number"}
+              ? "Должно быть не менее 8 символов с минимум 3 из 4: заглавные, строчные буквы, цифры или спецсимволы"
+              : "Must be at least 8 characters with at least 3 of 4: uppercase, lowercase, numbers or special characters"}
         </p>
       </div>
 

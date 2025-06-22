@@ -31,18 +31,24 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 
 export function validatePassword(password: string): { isValid: boolean; errors: string[] } {
   const errors: string[] = []
+  
+  // Length check
   if (password.length < 8) {
-    errors.push("Password must be at least 8 characters long")
+    errors.push("הסיסמה חייבת להיות לפחות 8 תווים")
   }
-  if (!/[A-Z]/.test(password)) {
-    errors.push("Password must contain at least one uppercase letter")
+  
+  // Check character types (need at least 3 out of 4)
+  const hasUppercase = /[A-Z]/.test(password)
+  const hasLowercase = /[a-z]/.test(password)
+  const hasNumber = /[0-9]/.test(password)
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>_+=\-\[\]\\\/~`]/.test(password)
+  
+  const typesCount = [hasUppercase, hasLowercase, hasNumber, hasSpecialChar].filter(Boolean).length
+  
+  if (typesCount < 3) {
+    errors.push("הסיסמה חייבת להכיל לפחות 3 מתוך 4 הקטגוריות הבאות: אות גדולה (A-Z), אות קטנה (a-z), מספר (0-9), או תו מיוחד (!@#$%^&*...)")
   }
-  if (!/[a-z]/.test(password)) {
-    errors.push("Password must contain at least one lowercase letter")
-  }
-  if (!/[0-9]/.test(password)) {
-    errors.push("Password must contain at least one number")
-  }
+  
   return {
     isValid: errors.length === 0,
     errors,

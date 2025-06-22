@@ -2405,7 +2405,7 @@
       "other": "אחר",
       "password": "סיסמה",
       "passwordPlaceholder": "צור סיסמה",
-      "passwordRequirements": "חייב להיות לפחות 8 תווים עם אותיות גדולות, קטנות ומספרים",
+      "passwordRequirements": "חייב להיות לפחות 8 תווים עם לפחות 3 מתוך 4: אותיות גדולות, קטנות, מספרים או תווים מיוחדים",
       "phone": "טלפון",
       "phonePlaceholder": "הכנס את מספר הטלפון שלך",
       "privacyPolicy": "מדיניות הפרטיות",

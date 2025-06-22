@@ -63,7 +63,7 @@ export function LandingHero() {
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
             {dir === "rtl"
-              ? "עיסויים, טיפולי יופי, איפור ועיצוב שיער עד אליך, בכל מקום ובכל זמן"
+              ? "עיסויים וטיפולי יופי, איפור ועיצוב שיער עד אליך, בכל מקום ובכל זמן"
               : "Massages, beauty treatments, makeup and hairstyling delivered to you anywhere, anytime"}
           </p>
 

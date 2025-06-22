@@ -3,7 +3,8 @@
     "home": "בית",
     "bookTreatment": "הזמן טיפול",
     "bookSubscription": "הזמן מנוי",
-    "bookGiftVoucher": "הזמן שובר מתנה"
+    "bookGiftVoucher": "הזמן שובר מתנה",
+    "ourTreatments": "הטיפולים שלנו"
   },
   "roles": {
     "admin": "מנהל",

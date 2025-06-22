@@ -59,6 +59,7 @@ export interface GetGiftVouchersOptions {
     voucherType?: "treatment" | "monetary"
     status?: IGiftVoucher["status"]
     dateRange?: { from?: string; to?: string }
+    isActive?: boolean
   }
 }
 
@@ -181,6 +182,9 @@ export async function getGiftVouchers(
     }
     if (filters?.status) {
       query.status = filters.status
+    }
+    if (typeof filters?.isActive === "boolean") {
+      query.isActive = filters.isActive
     }
     if (filters?.dateRange) {
       if (filters.dateRange.from) {

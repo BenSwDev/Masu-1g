@@ -1,11 +1,11 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Filter, RotateCcw, Loader2, Gift } from "lucide-react"
-import { format } from "date-fns"
+import { Plus, Search, FilterX, Loader2, Gift } from "lucide-react"
 
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
+import { Card, CardContent } from "@/components/common/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/common/ui/dialog"
 import {
@@ -25,9 +25,6 @@ import { GiftVoucherForm } from "./gift-voucher-form"
 import { GiftVoucherRow } from "./gift-voucher-row"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
 import { getGiftVouchers, deleteGiftVoucher, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
-import { Calendar } from "@/components/common/ui/calendar"
-import type { DateRange } from "react-day-picker"
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface GiftVouchersClientProps {
@@ -40,17 +37,6 @@ interface GiftVouchersClientProps {
   }
 }
 
-const VOUCHER_STATUSES: GiftVoucherPlain["status"][] = [
-  "pending_payment",
-  "active",
-  "partially_used",
-  "fully_used",
-  "expired",
-  "pending_send",
-  "sent",
-  "cancelled",
-]
-const VOUCHER_TYPES: GiftVoucherPlain["voucherType"][] = ["monetary", "treatment"]
 
 export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftVouchersClientProps) {
   const { toast } = useToast()
@@ -60,9 +46,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
 
   // Filters
   const [search, setSearch] = useState("")
-  const [filterVoucherType, setFilterVoucherType] = useState<GiftVoucherPlain["voucherType"] | "all">("all")
-  const [filterStatus, setFilterStatus] = useState<GiftVoucherPlain["status"] | "all">("all")
-  const [filterDateRange, setFilterDateRange] = useState<DateRange | undefined>(undefined)
+  const [filterActive, setFilterActive] = useState<string>("all")
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false)
   const [editingVoucher, setEditingVoucher] = useState<GiftVoucherPlain | null>(null)
@@ -73,19 +57,12 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
 
   const { t } = useTranslation()
 
-  const loadVouchers = useCallback(
+  const fetchVouchers = useCallback(
     async (page = 1, newSearch = search, newFilters?: any) => {
-      setIsLoading(true)
+      setIsSearching(true)
       try {
         const currentFilters = newFilters || {
-          voucherType: filterVoucherType === "all" ? undefined : filterVoucherType,
-          status: filterStatus === "all" ? undefined : filterStatus,
-          dateRange: filterDateRange
-            ? {
-                from: filterDateRange.from ? format(filterDateRange.from, "yyyy-MM-dd") : undefined,
-                to: filterDateRange.to ? format(filterDateRange.to, "yyyy-MM-dd") : undefined,
-              }
-            : undefined,
+          isActive: filterActive === "all" ? undefined : filterActive === "active",
         }
 
         const result = await getGiftVouchers(page, pagination.limit, newSearch, currentFilters)
@@ -102,19 +79,18 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
           variant: "destructive",
         })
       } finally {
-        setIsLoading(false)
+        setIsSearching(false)
       }
     },
-    [search, filterVoucherType, filterStatus, filterDateRange, pagination.limit, toast],
+    [search, filterActive, pagination.limit, toast],
   )
 
   useEffect(() => {
-    // Debounce search or load on filter change
-    const timer = setTimeout(() => {
-      loadVouchers(1) // Reset to page 1 on filter change
-    }, 500) // Debounce search/filter changes
-    return () => clearTimeout(timer)
-  }, [search, filterVoucherType, filterStatus, filterDateRange, loadVouchers])
+    const isActive = filterActive === "active" ? true : filterActive === "inactive" ? false : undefined
+    if (filterActive !== "all" || currentPage > 1) {
+      fetchVouchers(currentPage, search, { isActive })
+    }
+  }, [currentPage, filterActive])
 
   const handleOpenFormModal = (voucher?: GiftVoucherPlain) => {
     setEditingVoucher(voucher || null)
@@ -129,7 +105,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
   const handleFormSuccess = () => {
     setIsFormModalOpen(false)
     setEditingVoucher(null)
-    loadVouchers(pagination.page) // Reload current page or page 1
+    fetchVouchers(pagination.page) // Reload current page or page 1
   }
 
   const handleOpenDeleteDialog = (id: string) => {
@@ -144,7 +120,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       const result = await deleteGiftVoucher(voucherToDeleteId)
       if (result.success) {
         toast({ title: "Success", description: "Gift voucher deleted successfully." })
-        loadVouchers(pagination.page) // Reload current page
+        fetchVouchers(pagination.page) // Reload current page
       } else {
         throw new Error(result.error || "Failed to delete gift voucher")
       }
@@ -166,12 +142,26 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
     setSelectedVoucher(null)
   }
 
-  const resetFilters = () => {
+  const [currentPage, setCurrentPage] = useState(pagination.page)
+  const [isSearching, setIsSearching] = useState(false)
+
+  const handleSearch = () => {
+    const isActive = filterActive === "active" ? true : filterActive === "inactive" ? false : undefined
+    setCurrentPage(1)
+    fetchVouchers(1, search, { isActive })
+  }
+
+  const handleResetFilters = () => {
     setSearch("")
-    setFilterVoucherType("all")
-    setFilterStatus("all")
-    setFilterDateRange(undefined)
-    // loadVouchers will be called by useEffect
+    setFilterActive("all")
+    setCurrentPage(1)
+    fetchVouchers(1, "", { isActive: undefined })
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    const isActive = filterActive === "active" ? true : filterActive === "inactive" ? false : undefined
+    fetchVouchers(page, search, { isActive })
   }
 
   return (
@@ -183,90 +173,52 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         </Button>
       </div>
 
-      {/* Filters Section */}
-      <div className="p-4 border rounded-lg space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <Input
-            placeholder={t("giftVouchers.searchPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="lg:col-span-2"
-            disabled={isLoading}
-          />
-          <Select
-            value={filterVoucherType}
-            onValueChange={(value) => setFilterVoucherType(value as any)}
-            disabled={isLoading}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t("giftVouchers.admin.filterByType")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              {VOUCHER_TYPES.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {t(`giftVouchers.types.${type}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)} disabled={isLoading}>
-            <SelectTrigger>
-              <SelectValue placeholder={t("giftVouchers.filterByStatus")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              {VOUCHER_STATUSES.map((status) => (
-                <SelectItem key={status} value={status}>
-                  {t(`giftVouchers.statuses.${status}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant={"outline"} className="w-full justify-start text-left font-normal" disabled={isLoading}>
-                <Filter className="mr-2 h-4 w-4" />
-                {filterDateRange?.from ? (
-                  filterDateRange.to ? (
-                    <>
-                      {format(filterDateRange.from, "LLL dd, y")} - {format(filterDateRange.to, "LLL dd, y")}
-                    </>
-                  ) : (
-                    format(filterDateRange.from, "LLL dd, y")
-                  )
-                ) : (
-                  <span>{t("giftVouchers.fields.validFrom")}</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                initialFocus
-                mode="range"
-                defaultMonth={filterDateRange?.from}
-                selected={filterDateRange}
-                onSelect={setFilterDateRange}
-                numberOfMonths={2}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+              <Input
+                placeholder={t("giftVouchers.searchPlaceholder") || t("common.search")}
+                className="pl-8"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={resetFilters} disabled={isLoading}>
-            <RotateCcw className="mr-2 h-4 w-4" /> {t("giftVouchers.admin.clearFilters")}
-          </Button>
-        </div>
-      </div>
+            </div>
+            <div className="w-full md:w-48">
+              <Select value={filterActive} onValueChange={setFilterActive}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("common.status")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("common.all")}</SelectItem>
+                  <SelectItem value="active">{t("common.active")}</SelectItem>
+                  <SelectItem value="inactive">{t("common.inactive")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleSearch} disabled={isSearching}>
+                {isSearching ? t("common.searching") : t("common.search")}
+              </Button>
+              <Button variant="ghost" onClick={handleResetFilters} disabled={isSearching}>
+                <FilterX className="h-4 w-4 mr-2" />
+                {t("common.reset")}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {isLoading && vouchers.length === 0 && (
+      {isSearching && vouchers.length === 0 && (
         <div className="flex justify-center items-center py-10">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="ml-2">{t("common.loading")}</p>
         </div>
       )}
 
-      {!isLoading && vouchers.length === 0 && (
+      {!isSearching && vouchers.length === 0 && (
         <div className="text-center py-10">
           <Gift className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-medium text-gray-900">{t("giftVouchers.noGiftVouchers")}</h3>
@@ -280,17 +232,7 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
       )}
 
       {vouchers.length > 0 && (
-        <div className="rounded-md border bg-card">
-          <div className="hidden md:grid grid-cols-8 gap-4 p-4 font-semibold text-sm text-muted-foreground border-b">
-            <div>{t("giftVouchers.fields.code")}</div>
-            <div>{t("giftVouchers.fields.voucherType")}</div>
-            <div>{t("giftVouchers.fields.owner")}</div>
-            <div>{t("giftVouchers.fields.purchaseDate")}</div>
-            <div>{t("giftVouchers.fields.validUntil")}</div>
-            <div>{t("giftVouchers.fields.status")}</div>
-            <div>{t("giftVouchers.purchase.sendAsGift")}</div>
-            <div className="text-right">{t("common.actions")}</div>
-          </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {vouchers.map((voucher) => (
             <GiftVoucherRow
               key={voucher._id}
@@ -307,8 +249,8 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
         <Pagination
           currentPage={pagination.page}
           totalPages={pagination.totalPages}
-          onPageChange={(newPage) => loadVouchers(newPage)}
-          isLoading={isLoading}
+          onPageChange={handlePageChange}
+          isLoading={isSearching}
         />
       )}
 

@@ -7,7 +7,6 @@ import { Facebook, Instagram, Twitter, Linkedin, Phone, Mail, MapPin, Clock } fr
 
 export function LandingFooter() {
   const { language, dir } = useTranslation()
-  const currentYear = new Date().getFullYear()
 
   const footerLinks = {
     services: {
@@ -86,19 +85,8 @@ export function LandingFooter() {
     { icon: Linkedin, href: "https://linkedin.com/company/masu", label: "LinkedIn" }
   ]
 
-  const getFooterText = () => {
-    switch (language) {
-      case "he":
-        return `© ${currentYear} Masu. כל הזכויות שמורות.`
-      case "ru":
-        return `© ${currentYear} Masu. Все права защищены.`
-      default:
-        return `© ${currentYear} Masu. All rights reserved.`
-    }
-  }
-
   return (
-    <footer className="bg-turquoise-100 py-16">
+    <section className="bg-turquoise-100 py-16">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
           {/* Social Media Links */}
@@ -220,25 +208,9 @@ export function LandingFooter() {
               ))}
             </div>
             
-            <div className="mt-8 pt-8 border-t border-turquoise-200">
-              <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-                <div className="text-sm text-gray-600">{getFooterText()}</div>
-                <div className="flex space-x-6">
-                  <Link href="/privacy" className="text-sm text-gray-600 hover:text-turquoise-600 transition-colors">
-                    {dir === "rtl" ? "מדיניות פרטיות" : "Privacy Policy"}
-                  </Link>
-                  <Link href="/terms" className="text-sm text-gray-600 hover:text-turquoise-600 transition-colors">
-                    {dir === "rtl" ? "תנאי שימוש" : "Terms of Service"}
-                  </Link>
-                  <Link href="/cookies" className="text-sm text-gray-600 hover:text-turquoise-600 transition-colors">
-                    {dir === "rtl" ? "מדיניות עוגיות" : "Cookie Policy"}
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
-    </footer>
+    </section>
   )
-} 
+}

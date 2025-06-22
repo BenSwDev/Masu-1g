@@ -13,7 +13,7 @@ export const PartnerCouponBatchBaseSchema = z
     usageLimit: z.number().min(0, "Usage limit must be non-negative").default(1),
     usageLimitPerUser: z.number().min(0, "Usage limit per user must be non-negative").default(1),
     isActive: z.boolean().default(true),
-    codePrefix: z.string().min(2, "Code prefix must be at least 2 characters").max(10, "Code prefix cannot exceed 10 characters").trim(),
+  
     notesForPartner: z.string().optional(),
   })
   .refine((data) => data.validUntil >= data.validFrom, {

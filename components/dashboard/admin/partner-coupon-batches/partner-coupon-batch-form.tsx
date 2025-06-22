@@ -34,7 +34,7 @@ const formSchema = z
     usageLimit: z.coerce.number().min(0, "Usage limit must be non-negative"),
     usageLimitPerUser: z.coerce.number().min(0, "Usage limit per user must be non-negative"),
     isActive: z.boolean().default(true),
-    codePrefix: z.string().min(2, "Code prefix must be at least 2 characters").max(10, "Code prefix cannot exceed 10 characters").trim(),
+
     notesForPartner: z.string().optional(),
   })
   .refine((data) => data.validUntil >= data.validFrom, {
@@ -70,7 +70,7 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
       usageLimit: initialData?.usageLimit ?? 1,
       usageLimitPerUser: initialData?.usageLimitPerUser ?? 1,
       isActive: initialData?.isActive !== undefined ? initialData.isActive : true,
-      codePrefix: initialData?.codePrefix || "",
+
       notesForPartner: initialData?.notesForPartner || "",
     }),
     [initialData],
@@ -121,18 +121,7 @@ export function PartnerCouponBatchForm({ initialData, partnersForSelect, onSubmi
             )}
           </div>
 
-          <div>
-            <Label htmlFor="codePrefix">{t("adminPartnerCouponBatches.form.codePrefixLabel")}</Label>
-            <Input 
-              id="codePrefix" 
-              {...form.register("codePrefix")} 
-              disabled={loading || !!initialData} // Disable editing prefix for existing batches
-              placeholder="SUMMER"
-            />
-            {form.formState.errors.codePrefix && (
-              <p className="text-sm text-red-500 mt-1">{form.formState.errors.codePrefix.message}</p>
-            )}
-          </div>
+
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

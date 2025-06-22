@@ -37,7 +37,6 @@ const giftVoucherStatuses = [
 // Define Zod schema based on AdminGiftVoucherFormData
 const giftVoucherSchema = z
   .object({
-    code: z.string().min(3, "Code must be at least 3 characters"),
     voucherType: z.enum(["treatment", "monetary"]),
     treatmentId: z.string().optional(),
     selectedDurationId: z.string().optional(),
@@ -110,7 +109,6 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
   const form = useForm<GiftVoucherFormValues>({
     resolver: zodResolver(giftVoucherSchema),
     defaultValues: {
-      code: initialData?.code ?? "",
       voucherType: initialData?.voucherType ?? "monetary",
       treatmentId: initialData?.treatmentId ?? undefined,
       selectedDurationId: initialData?.selectedDurationId ?? undefined,
@@ -184,7 +182,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
     try {
       setIsLoading(true)
       const formData: AdminGiftVoucherFormData = {
-        code: values.code,
+        code: "", // Will be generated automatically
         voucherType: values.voucherType,
         treatmentId: values.treatmentId,
         selectedDurationId: values.selectedDurationId,
@@ -228,20 +226,6 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="code"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>{t("giftVouchers.fields.code")}</FormLabel>
-              <FormControl>
-                <Input {...field} disabled={isLoading} placeholder={t("giftVouchers.fields.codePlaceholder")} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <FormField
           control={form.control}
           name="ownerUserId"

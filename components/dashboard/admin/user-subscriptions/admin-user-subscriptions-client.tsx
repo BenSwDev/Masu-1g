@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/common/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Search, Filter, Download, RefreshCw, Users, TrendingUp, CalendarIcon, CreditCard, List } from "lucide-react" // Renamed Calendar to CalendarIcon
+import { Search, Filter, Download, RefreshCw, Users, TrendingUp, CalendarIcon, CreditCard, List, Plus } from "lucide-react" // Renamed Calendar to CalendarIcon
 import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Button } from "@/components/ui/button" // Corrected path
@@ -14,13 +14,14 @@ import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { User } from "next-auth"
-import { getAllUserSubscriptions, updateUserSubscription } from "@/app/dashboard/(user)/(roles)/admin/user-subscriptions/actions"
+import { getAllUserSubscriptions, updateUserSubscription, createUserSubscription } from "@/app/dashboard/(user)/(roles)/admin/user-subscriptions/actions"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { useIsMobile } from "@/components/common/ui/use-mobile" // Corrected import
 import UserSubscriptionAdminCard from "./user-subscription-admin-card"
 import UserSubscriptionAdminCardSkeleton from "./user-subscription-admin-card-skeleton"
 import UserSubscriptionForm from "./user-subscription-form"
+import CreateUserSubscriptionForm from "./create-user-subscription-form"
 
 interface PopulatedUserSubscription extends IUserSubscription {
   userId: Pick<User, "name" | "email"> & { _id: string }
@@ -56,6 +57,7 @@ const AdminUserSubscriptionsClient = ({
   const [isSaving, setIsSaving] = useState(false)
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [currentSubscription, setCurrentSubscription] = useState<PopulatedUserSubscription | null>(null)
 
   const [userSubscriptions, setUserSubscriptions] = useState<PopulatedUserSubscription[]>(initialUserSubscriptions)
@@ -155,6 +157,19 @@ const AdminUserSubscriptionsClient = ({
     setIsSaving(false)
   }
 
+  const handleCreate = async (data: FormData) => {
+    setIsSaving(true)
+    const result = await createUserSubscription(data)
+    if (result.success) {
+      toast.success(t("userSubscriptions.createSuccess"))
+      setIsCreateDialogOpen(false)
+      await fetchData(currentPage, limit, searchTerm, statusFilter)
+    } else {
+      toast.error(result.error || t("userSubscriptions.createError"))
+    }
+    setIsSaving(false)
+  }
+
   const TableSkeleton = () => (
     <Card>
       <CardContent className="p-0">
@@ -211,6 +226,10 @@ const AdminUserSubscriptionsClient = ({
           <p className="text-gray-600 dark:text-gray-300">{t("userSubscriptions.pageDescription")}</p>
         </div>
         <div className="flex gap-2">
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            {t("userSubscriptions.createNew")}
+          </Button>
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="gap-2">
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
             {t("common.refresh")}
@@ -486,6 +505,19 @@ const AdminUserSubscriptionsClient = ({
           </div>
         </div>
       )}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("userSubscriptions.createNew")}</DialogTitle>
+          </DialogHeader>
+          <CreateUserSubscriptionForm
+            onSubmit={handleCreate}
+            isLoading={isSaving}
+            onCancel={() => setIsCreateDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>

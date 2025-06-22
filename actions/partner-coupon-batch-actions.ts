@@ -78,7 +78,7 @@ export async function createPartnerCouponBatch(payload: CreatePartnerCouponBatch
     // Generate individual coupons
     const coupons = []
     for (let i = 1; i <= validatedFields.data.couponCount; i++) {
-      const couponCode = generateCouponCode(validatedFields.data.codePrefix, i)
+      const couponCode = generateCouponCode("", i) // No prefix needed, will generate PC codes
       
       const coupon = new Coupon({
         code: couponCode,

@@ -183,11 +183,11 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
     }
     await dbConnect()
 
-    // Basic validations (code, ownerUserId, dates)
+    // Generate unique voucher code automatically
+    const generatedCode = await generateUniqueVoucherCode()
+
+    // Basic validations (ownerUserId, dates)
     // ... (keep existing validations)
-    if (!data.code || typeof data.code !== "string" || data.code.trim() === "") {
-      return { success: false, error: "Code is required." }
-    }
     if (!data.voucherType || (data.voucherType !== "monetary" && data.voucherType !== "treatment")) {
       return { success: false, error: "Valid voucher type is required." }
     }
@@ -237,7 +237,7 @@ export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
     if (!owner) return { success: false, error: "Owner user not found." }
 
     const giftVoucherData: Partial<IGiftVoucher> = {
-      code: data.code,
+      code: generatedCode,
       voucherType: data.voucherType,
       amount: effectiveAmount,
       monetaryValue: effectiveAmount, // For consistency or if schema differentiates

@@ -444,7 +444,9 @@ export async function calculateBookingPrice(
         s.description === EVENING_SURCHARGE_DESCRIPTION &&
         s.amount === EVENING_SURCHARGE_AMOUNT,
     )
-    if (weekdayEvening && !alreadyAdded) {
+    // Align with time slot display logic and only apply the evening surcharge
+    // if no other surcharge is already present
+    if (weekdayEvening && !alreadyAdded && priceDetails.surcharges.length === 0) {
       priceDetails.surcharges.push({
         description: EVENING_SURCHARGE_DESCRIPTION,
         amount: EVENING_SURCHARGE_AMOUNT,

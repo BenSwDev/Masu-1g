@@ -15,6 +15,7 @@ import { createAddress, updateAddress } from "@/actions/address-actions"
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
 import { Loader2 } from "lucide-react"
+import { getCurrentCoordinates, reverseGeocode } from "@/lib/utils/location"
 
 interface AddressFormProps {
   address?: IAddress
@@ -26,6 +27,7 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [isLoading, setIsLoading] = useState(false)
+  const [isLocating, setIsLocating] = useState(false)
   const [addressType, setAddressType] = useState(address?.addressType || "apartment")
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -105,8 +107,31 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
     }
   }
 
+  const handleUseCurrentLocation = async () => {
+    setIsLocating(true)
+    try {
+      const { lat, lon } = await getCurrentCoordinates()
+      const result = await reverseGeocode(lat, lon)
+      const form = document.forms.namedItem('address-form') as HTMLFormElement | null
+      if (form) {
+        if (result.city) (form.elements.namedItem('city') as HTMLInputElement).value = result.city
+        if (result.street) (form.elements.namedItem('street') as HTMLInputElement).value = result.street
+        if (result.houseNumber) (form.elements.namedItem('streetNumber') as HTMLInputElement).value = result.houseNumber
+      }
+    } catch (err: any) {
+      const key = err.message === 'permission_denied'
+        ? 'common.locationPermissionDenied'
+        : err.message === 'geolocation_not_supported'
+        ? 'common.geolocationNotSupported'
+        : 'common.locationLookupFailed'
+      toast.error(t(key))
+    } finally {
+      setIsLocating(false)
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 py-4">
+    <form onSubmit={handleSubmit} name="address-form" className="space-y-6 py-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="city">{t("addresses.fields.city")}</Label>
@@ -156,6 +181,11 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
               <SelectItem value="other">{t("addresses.types.other")}</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+        <div className="md:col-span-2 flex justify-end">
+          <Button type="button" variant="outline" onClick={handleUseCurrentLocation} disabled={isLocating}>
+            {isLocating ? t("common.loading") : t("common.useCurrentLocation")}
+          </Button>
         </div>
       </div>
 

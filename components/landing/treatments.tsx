@@ -1,87 +1,11 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
-import { Clock, Star, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/common/ui/button"
 import Link from "next/link"
 
 export function LandingTreatments() {
   const { dir } = useTranslation()
-
-  const treatments = [
-    {
-      id: 1,
-      name: dir === "rtl" ? "עיסוי רילקס מלא" : "Full Relaxation Massage",
-      description: dir === "rtl" 
-        ? "עיסוי מרגיע ומקצועי לכל הגוף שיעזור לך להשתחרר מלחץ ומתח יומיומי"
-        : "Soothing and professional full-body massage to help you release daily stress and tension",
-      duration: 90,
-      price: 299,
-      image: "https://images.unsplash.com/photo-1560253024-c7a0f4340475?w=400&h=300&fit=crop&crop=center",
-      rating: 4.9,
-      popular: true
-    },
-    {
-      id: 2,
-      name: dir === "rtl" ? "טיפול פנים מקצועי" : "Professional Facial Treatment",
-      description: dir === "rtl"
-        ? "טיפול פנים מעמיק הכולל ניקוי יסודי, קילוף עדין ומסכה מזינה לעור זוהר"
-        : "Deep facial treatment including thorough cleansing, gentle peeling and nourishing mask for glowing skin",
-      duration: 60,
-      price: 199,
-      image: "https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=400&h=300&fit=crop&crop=center",
-      rating: 4.8,
-      popular: false
-    },
-    {
-      id: 3,
-      name: dir === "rtl" ? "מניקור ופדיקור" : "Manicure & Pedicure",
-      description: dir === "rtl"
-        ? "טיפול מושלם לידיים ולרגליים כולל עיצוב, צביעה וטיפוח מקצועי"
-        : "Perfect treatment for hands and feet including shaping, painting and professional care",
-      duration: 75,
-      price: 149,
-      image: "https://images.unsplash.com/photo-1599948128020-9a44fe0d9d16?w=400&h=300&fit=crop&crop=center",
-      rating: 4.7,
-      popular: false
-    },
-    {
-      id: 4,
-      name: dir === "rtl" ? "הסרת שיער בוואקס" : "Waxing Treatment",
-      description: dir === "rtl"
-        ? "הסרת שיער מקצועית ועדינה עם שעווה איכותית לתוצאות חלקות וארוכות טווח"
-        : "Professional and gentle hair removal with quality wax for smooth and long-lasting results",
-      duration: 45,
-      price: 89,
-      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop&crop=center",
-      rating: 4.6,
-      popular: false
-    },
-    {
-      id: 5,
-      name: dir === "rtl" ? "טיפול אנטי אייגינג" : "Anti-Aging Treatment",
-      description: dir === "rtl"
-        ? "טיפול מתקדם למיצוק העור, הפחתת קמטים ושיפור מרקם העור"
-        : "Advanced treatment for skin firming, wrinkle reduction and skin texture improvement",
-      duration: 90,
-      price: 399,
-      image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=300&fit=crop&crop=center",
-      rating: 5.0,
-      popular: true
-    },
-    {
-      id: 6,
-      name: dir === "rtl" ? "עיסוי אבנים חמות" : "Hot Stone Massage",
-      description: dir === "rtl"
-        ? "עיסוי יוקרתי עם אבנים חמות וחלקות לרילקס עמוק וחוויה מיוחדת"
-        : "Luxurious massage with hot and smooth stones for deep relaxation and special experience",
-      duration: 75,
-      price: 349,
-      image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=300&fit=crop&crop=center",
-      rating: 4.9,
-      popular: false
-    }
-  ]
 
   return (
     <section className="py-20 bg-white">
@@ -89,12 +13,12 @@ export function LandingTreatments() {
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            {dir === "rtl" ? "הטיפולים שלנו" : "Our Treatments"}
+            {dir === "rtl" ? "השירותים שלנו" : "Our Services"}
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             {dir === "rtl"
-              ? "מגוון רחב של טיפולי יופי מקצועיים המבוצעים על ידי מטפלים מיומנים בנוחות הבית שלך"
-              : "Wide range of professional beauty treatments performed by skilled therapists in the comfort of your home"
+              ? "מגוון רחב של שירותי עיסוי מקצועיים המבוצעים על ידי מטפלים מיומנים בנוחות הבית שלך"
+              : "Wide range of professional massage services performed by skilled therapists in the comfort of your home"
             }
           </p>
         </div>
@@ -216,68 +140,120 @@ export function LandingTreatments() {
           </div>
         </div>
 
-        {/* Treatments Grid */}
+        {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {treatments.map((treatment) => (
-            <div key={treatment.id} className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              {/* Popular Badge */}
-              {treatment.popular && (
-                <div className="absolute top-4 right-4 bg-gradient-to-r from-orange-400 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
-                  {dir === "rtl" ? "פופולרי" : "Popular"}
-                </div>
-              )}
-
-              {/* Image */}
-              <div className="relative h-48 overflow-hidden">
-                <img 
-                  src={treatment.image} 
-                  alt={treatment.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-              </div>
-
-              {/* Content */}
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-turquoise-600 transition-colors">
-                    {treatment.name}
-                  </h3>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm font-semibold text-gray-700">{treatment.rating}</span>
-                  </div>
-                </div>
-
-                <p className="text-gray-600 mb-4 leading-relaxed">
-                  {treatment.description}
-                </p>
-
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">
-                      {treatment.duration} {dir === "rtl" ? "דקות" : "min"}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-2xl font-bold text-turquoise-600">₪{treatment.price}</span>
-                  </div>
-                </div>
-
-                <Button 
-                  asChild 
-                  size="sm" 
-                  className="w-full bg-turquoise-600 hover:bg-turquoise-700 text-white"
-                >
-                  <Link href="/bookings/treatment" className="flex items-center justify-center gap-2">
-                    {dir === "rtl" ? "הזמן טיפול" : "Book Treatment"}
-                    <ArrowLeft className={`w-4 h-4 ${dir === "rtl" ? "rotate-180" : ""}`} />
-                  </Link>
-                </Button>
-              </div>
+          {/* Gift Voucher Service */}
+          <div className="group relative bg-turquoise-100 rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 p-8">
+            {/* Icon */}
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 mx-auto">
+              <svg className="w-10 h-10 text-turquoise-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
             </div>
-          ))}
+
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                {dir === "rtl" ? "שובר עיסוי במתנה" : "Massage Gift Voucher"}
+              </h3>
+              
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                {dir === "rtl"
+                  ? "עיסוי הוא המתנה המושלמת לכל אירוע הפתע ופנק את חבריך וקרוביך בשובר מתנה להזמנת עיסוי מקצועי מתי ואיפה שירצו בלי לצאת מהבית"
+                  : "Massage is the perfect gift for any occasion. Surprise and pamper your friends and family with a gift voucher for professional massage whenever and wherever they want without leaving home"
+                }
+              </p>
+
+              <p className="text-lg font-semibold text-gray-800 mb-6">
+                {dir === "rtl"
+                  ? "הראו למישהו חשוב שאתם אוהבים אותו עם שובר מתנה החל מ290 ש\"ח"
+                  : "Show someone special that you love them with a gift voucher starting from 290 NIS"
+                }
+              </p>
+
+              <Button 
+                asChild 
+                size="lg" 
+                className="bg-white text-turquoise-600 hover:bg-gray-50 border-2 border-white font-semibold px-8 py-3 rounded-full"
+              >
+                <Link href="/purchase/gift-voucher" className="flex items-center justify-center gap-2">
+                  {dir === "rtl" ? "הזמן עכשיו" : "Order Now"}
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Office Massage Service */}
+          <div className="group relative bg-turquoise-100 rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 p-8">
+            {/* Icon */}
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 mx-auto">
+              <svg className="w-10 h-10 text-turquoise-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10z"/>
+              </svg>
+            </div>
+
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                {dir === "rtl" ? "עיסוי במשרד" : "Office Massage"}
+              </h3>
+              
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                {dir === "rtl"
+                  ? "מאסו מפנקת עובדים לאירוע של יום כיף ומפנק או קבוע לבריאות פעם בשבוע או פעם בחודש. מטפלים בדוקים ומבוטחים מגיעים עם כיסא או מיטת טיפולים ויוצרים אווירת ספא מרגיעה ומפנקת במשרד."
+                  : "Masu pampers employees for a fun and relaxing day event or regularly for health once a week or once a month. Certified and insured therapists arrive with a chair or treatment bed and create a relaxing and pampering spa atmosphere in the office."
+                }
+              </p>
+
+              <p className="text-lg font-semibold text-gray-800 mb-6">
+                {dir === "rtl"
+                  ? "מחירים מתחילים מ -450 ₪ לטיפול של עד 10 עובדים."
+                  : "Prices start from 450 NIS for treatment of up to 10 employees."
+                }
+              </p>
+
+              <Button 
+                asChild 
+                size="lg" 
+                className="bg-white text-turquoise-600 hover:bg-gray-50 border-2 border-white font-semibold px-8 py-3 rounded-full"
+              >
+                <Link href="/bookings/treatment" className="flex items-center justify-center gap-2">
+                  {dir === "rtl" ? "הזמן עכשיו" : "Order Now"}
+                </Link>
+              </Button>
+            </div>
+          </div>
+
+          {/* Event Massage Service */}
+          <div className="group relative bg-turquoise-100 rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 p-8">
+            {/* Icon */}
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 mx-auto">
+              <svg className="w-10 h-10 text-turquoise-600" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"/>
+              </svg>
+            </div>
+
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                {dir === "rtl" ? "עיסוי באירועים" : "Event Massage"}
+              </h3>
+              
+              <p className="text-gray-700 mb-6 leading-relaxed">
+                {dir === "rtl"
+                  ? "אין דבר יותר מרשים או מפנק ממעסה פרטי משלך באירוע חברה או מסיבה. עם מאסו תוכל לארגן מעסים מקצועיים לאירועים במשרד, מפגשים חברתיים, מסיבות רווקים ועוד. אנחנו נארגן מטפלים עם ציוד שיגיעו לאן שתרצה ויעזרו לאורחים שלך להשתחרר ולהרגע."
+                  : "Nothing is more impressive or pampering than your own private masseur at a company event or party. With Masu you can arrange professional masseurs for office events, social gatherings, bachelor parties and more. We will arrange therapists with equipment who will come wherever you want and help your guests relax and unwind."
+                }
+              </p>
+
+              <Button 
+                asChild 
+                size="lg" 
+                className="bg-white text-turquoise-600 hover:bg-gray-50 border-2 border-white font-semibold px-8 py-3 rounded-full"
+              >
+                <Link href="/bookings/treatment" className="flex items-center justify-center gap-2">
+                  {dir === "rtl" ? "הזמן עכשיו" : "Order Now"}
+                </Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </section>

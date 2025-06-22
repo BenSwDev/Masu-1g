@@ -98,9 +98,146 @@ export function LandingFooter() {
   }
 
   return (
-    <footer className="flex-shrink-0 border-t bg-white">
-      <div className="container mx-auto px-4 py-4">
-        <div className="text-center text-sm text-gray-600">{getFooterText()}</div>
+    <footer className="bg-turquoise-100 py-16">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
+          {/* Social Media Links */}
+          <div className="lg:col-span-1">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              {dir === "rtl" ? "שמור על קשר" : "Stay Connected"}
+            </h3>
+            <div className="flex flex-col space-y-3">
+              {socialLinks.map((social, index) => (
+                <Link
+                  key={index}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center text-gray-700 hover:text-turquoise-600 transition-colors"
+                >
+                  <social.icon className="w-5 h-5 mr-2" />
+                  <span>{social.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Services */}
+          <div className="lg:col-span-1">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              {footerLinks.services.title}
+            </h3>
+            <div className="flex flex-col space-y-3">
+              {footerLinks.services.links.map((link, index) => (
+                <Link
+                  key={index}
+                  href={link.href}
+                  className="text-gray-700 hover:text-turquoise-600 transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Popular Treatments */}
+          <div className="lg:col-span-1">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              {dir === "rtl" ? "טיפולים פופולריים" : "Popular Treatments"}
+            </h3>
+            <div className="flex flex-col space-y-3">
+              <Link href="/treatments/massage" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי עד הבית" : "Home Massage"}
+              </Link>
+              <Link href="/treatments/facial" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי בירושלים" : "Massage in Jerusalem"}
+              </Link>
+              <Link href="/treatments/manicure" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי בגבעת שמואל" : "Massage in Givat Shmuel"}
+              </Link>
+              <Link href="/treatments/pedicure" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי בבת חפר" : "Massage in Bat Hefer"}
+              </Link>
+              <Link href="/treatments/waxing" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי בבת גן" : "Massage in Bat Yam"}
+              </Link>
+              <Link href="/treatments/anti-aging" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "הזמן עכשיו" : "Order Now"}
+              </Link>
+            </div>
+          </div>
+
+          {/* Massage Types */}
+          <div className="lg:col-span-1">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">
+              {dir === "rtl" ? "סוגי עיסויים" : "Massage Types"}
+            </h3>
+            <div className="flex flex-col space-y-3">
+              <Link href="/treatments/swedish" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי שוודי" : "Swedish Massage"}
+              </Link>
+              <Link href="/treatments/deep-tissue" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי הקמה עמוק" : "Deep Tissue Massage"}
+              </Link>
+              <Link href="/treatments/sports" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי ספורט" : "Sports Massage"}
+              </Link>
+              <Link href="/treatments/prenatal" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי לנשים בהריון" : "Prenatal Massage"}
+              </Link>
+              <Link href="/treatments/foot" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי רגליים" : "Foot Massage"}
+              </Link>
+              <Link href="/treatments/reflexology" className="text-gray-700 hover:text-turquoise-600 transition-colors">
+                {dir === "rtl" ? "עיסוי רפלקסולוגיה" : "Reflexology"}
+              </Link>
+            </div>
+          </div>
+
+          {/* Masu Info */}
+          <div className="lg:col-span-2">
+            <div className="mb-6">
+              <MasuLogo />
+            </div>
+            <div className="space-y-4">
+              {contactInfo.map((contact, index) => (
+                <div key={index} className="flex items-start">
+                  <contact.icon className="w-5 h-5 text-turquoise-600 mt-1 mr-3 flex-shrink-0" />
+                  <div>
+                    <div className="font-medium text-gray-900">{contact.title}</div>
+                    {contact.href ? (
+                      <Link
+                        href={contact.href}
+                        className="text-gray-700 hover:text-turquoise-600 transition-colors"
+                      >
+                        {contact.value}
+                      </Link>
+                    ) : (
+                      <div className="text-gray-700">{contact.value}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-8 pt-8 border-t border-turquoise-200">
+              <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div className="text-sm text-gray-600">{getFooterText()}</div>
+                <div className="flex space-x-6">
+                  <Link href="/privacy" className="text-sm text-gray-600 hover:text-turquoise-600 transition-colors">
+                    {dir === "rtl" ? "מדיניות פרטיות" : "Privacy Policy"}
+                  </Link>
+                  <Link href="/terms" className="text-sm text-gray-600 hover:text-turquoise-600 transition-colors">
+                    {dir === "rtl" ? "תנאי שימוש" : "Terms of Service"}
+                  </Link>
+                  <Link href="/cookies" className="text-sm text-gray-600 hover:text-turquoise-600 transition-colors">
+                    {dir === "rtl" ? "מדיניות עוגיות" : "Cookie Policy"}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </footer>
   )

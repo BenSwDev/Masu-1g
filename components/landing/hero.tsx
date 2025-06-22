@@ -127,12 +127,18 @@ export function LandingHero() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{dir === "rtl" ? "הזן קוד" : "Enter Code"}</DialogTitle>
+            <DialogTitle>{t("landing.enterCode")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               value={code}
               onChange={(e) => setCode(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleCodeSubmit()
+                }
+              }}
               placeholder={t("landing.codePlaceholder")}
             />
             <DialogFooter>

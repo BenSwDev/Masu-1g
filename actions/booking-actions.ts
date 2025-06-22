@@ -258,6 +258,7 @@ export async function getAvailableTimeSlots(
           slot.surcharge = {
             description: surchargeDescription,
             amount: surchargeAmount,
+            professionalShare: daySettings.priceAddition?.professionalShare,
           }
         }
         
@@ -363,6 +364,7 @@ export async function calculateBookingPrice(
               daySettings.notes ||
               `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
             amount: surchargeAmount,
+            professionalShare: daySettings.priceAddition.professionalShare,
           })
           priceDetails.totalSurchargesAmount += surchargeAmount
         }

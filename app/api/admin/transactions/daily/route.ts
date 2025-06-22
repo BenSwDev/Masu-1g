@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireAdminSession } from "@/lib/auth/require-admin-session"
-import { connectToDatabase } from "@/lib/db/mongodb"
+import { connectDB } from "@/lib/db/mongodb"
 
 export const dynamic = 'force-dynamic'
 
@@ -85,7 +85,8 @@ export async function GET(request: NextRequest) {
     const dayEnd = new Date(targetDate)
     dayEnd.setHours(23, 59, 59, 999)
 
-    const { db } = await connectToDatabase()
+    const client = await connectDB()
+    const db = client.db()
     
     const transactions: DailyTransactionDetail[] = []
     const summary: DailySummary = {

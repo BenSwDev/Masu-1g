@@ -6,7 +6,7 @@ import { Button } from "@/components/common/ui/button"
 import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/common/ui/drawer"
 
 export function LandingServices() {
-  const { dir } = useTranslation()
+  const { t, dir } = useTranslation()
 
   const services = [
     {

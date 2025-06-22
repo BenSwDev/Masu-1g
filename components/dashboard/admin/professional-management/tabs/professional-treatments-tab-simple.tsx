@@ -13,8 +13,40 @@ import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Stethoscope, Plus, Trash2, Save, Loader2, AlertTriangle, Check, X, Filter } from "lucide-react"
 import { updateProfessionalTreatments } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
+import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
+
+interface Professional {
+  _id: string
+  userId: IUser
+  status: ProfessionalStatus
+  isActive: boolean
+  specialization?: string
+  experience?: string
+  certifications?: string[]
+  bio?: string
+  profileImage?: string
+  treatments: Array<{
+    treatmentId: string
+    treatmentName?: string
+  }>
+  workAreas: Array<{
+    cityId: string
+    cityName: string
+    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
+    coveredCities: string[]
+  }>
+  totalEarnings: number
+  pendingPayments: number
+  adminNotes?: string
+  rejectionReason?: string
+  appliedAt: Date
+  approvedAt?: Date
+  rejectedAt?: Date
+  lastActiveAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
 
 interface TreatmentOption {
   _id: string
@@ -30,11 +62,17 @@ interface ProfessionalTreatment {
   treatmentName?: string
 }
 
-export default function ProfessionalTreatmentsTabSimple({
+interface ProfessionalTreatmentsTabProps {
+  professional: Professional
+  onUpdate: (professional: Partial<Professional>) => void
+  disabled?: boolean
+}
+
+export default function ProfessionalTreatmentsTab({
   professional,
   onUpdate,
-  loading = false
-}: ProfessionalTabProps) {
+  disabled = false
+}: ProfessionalTreatmentsTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
@@ -42,6 +80,7 @@ export default function ProfessionalTreatmentsTabSimple({
   const [availableTreatments, setAvailableTreatments] = useState<TreatmentOption[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [loading, setLoading] = useState(false)
   const [loadingTreatments, setLoadingTreatments] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -52,7 +91,7 @@ export default function ProfessionalTreatmentsTabSimple({
       try {
         const response = await fetch('/api/treatments')
         if (response.ok) {
-          const data = await response.json()
+        const data = await response.json()
           const treatmentList = data.treatments || []
           setAvailableTreatments(treatmentList)
           
@@ -98,7 +137,7 @@ export default function ProfessionalTreatmentsTabSimple({
         return {
           treatmentId,
           treatmentName: selectedTreatment?.name || ""
-        }
+      }
       }
       return treatment
     }))
@@ -143,13 +182,13 @@ export default function ProfessionalTreatmentsTabSimple({
           variant: "destructive",
           title: "שגיאה",
           description: result.error || "שגיאה בעדכון הטיפולים"
-        })
+      })
       }
     } catch (error) {
       console.error("Error saving treatments:", error)
       toast({
         variant: "destructive",
-        title: "שגיאה",
+        title: "שגיאה", 
         description: "שגיאה בעדכון הטיפולים"
       })
     } finally {
@@ -175,7 +214,7 @@ export default function ProfessionalTreatmentsTabSimple({
     return getFilteredTreatments().filter(t => !selectedTreatmentIds.includes(t._id))
   }
 
-  if (loading) {
+  if (disabled) {
     return (
       <div className="p-6">
         <Alert>
@@ -220,10 +259,10 @@ export default function ProfessionalTreatmentsTabSimple({
       {/* Category Filter */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
             סינון לפי קטגוריה
-          </CardTitle>
+            </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -284,13 +323,13 @@ export default function ProfessionalTreatmentsTabSimple({
                                     {t.category} • {t.defaultDurationMinutes} דקות
                                     {t.fixedPrice && ` • ₪${t.fixedPrice}`}
                                   </span>
-                                </div>
+                  </div>
                               </SelectItem>
-                            ))}
+                ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                      
+              </div>
+              
                       {selectedTreatmentData && (
                         <div className="mt-2 p-2 bg-muted rounded text-sm">
                           <div className="font-medium text-muted-foreground">פרטי הטיפול:</div>
@@ -301,9 +340,9 @@ export default function ProfessionalTreatmentsTabSimple({
                           {selectedTreatmentData.description && (
                             <div className="text-xs mt-1">{selectedTreatmentData.description}</div>
                           )}
-                        </div>
-                      )}
-                    </div>
+                </div>
+              )}
+            </div>
 
                     <div className="flex items-center gap-2">
                       {isValidTreatment(treatment) ? (

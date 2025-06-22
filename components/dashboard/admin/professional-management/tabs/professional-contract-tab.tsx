@@ -1,23 +1,76 @@
 "use client"
 
-import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Input } from "@/components/common/ui/input"
-import { Label } from "@/components/common/ui/label"
-import { Textarea } from "@/components/common/ui/textarea"
-import { Badge } from "@/components/common/ui/badge"
-import { useToast } from "@/components/common/ui/use-toast"
-import { ScrollText, Save, Loader2, Calendar, FileText, AlertTriangle } from "lucide-react"
-import { updateProfessionalContract } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
+import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { ScrollText, Clock, Info } from "lucide-react"
+import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import type { IUser } from "@/lib/db/models/user"
+
+interface Professional {
+  _id: string
+  userId: IUser
+  status: ProfessionalStatus
+  isActive: boolean
+  specialization?: string
+  experience?: string
+  certifications?: string[]
+  bio?: string
+  profileImage?: string
+  treatments: Array<{
+    treatmentId: string
+    treatmentName?: string
+  }>
+  workAreas: Array<{
+    cityId: string
+    cityName: string
+    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
+    coveredCities: string[]
+  }>
+  bankDetails?: {
+    bankName: string
+    branchNumber: string
+    accountNumber: string
+  }
+  documents?: Array<{
+    id: string
+    type: string
+    name: string
+    status: "pending" | "approved" | "rejected"
+    uploadDate: Date
+    approvedDate?: Date
+    rejectedDate?: Date
+    rejectionReason?: string
+    fileUrl?: string
+  }>
+  contract?: {
+    status: "draft" | "sent" | "signed" | "expired"
+    sentDate?: Date
+    signedDate?: Date
+    expiryDate?: Date
+    contractUrl?: string
+  }
+  totalEarnings: number
+  pendingPayments: number
+  adminNotes?: string
+  rejectionReason?: string
+  appliedAt: Date
+  approvedAt?: Date
+  rejectedAt?: Date
+  lastActiveAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface ProfessionalContractTabProps {
+  professional: Professional
+  onUpdate: (professional: Partial<Professional>) => void
+}
 
 export default function ProfessionalContractTab({
   professional,
-  onUpdate,
-  loading = false
-}: ProfessionalTabProps) {
+  onUpdate
+}: ProfessionalContractTabProps) {
   const { t, dir } = useTranslation()
 
   return (

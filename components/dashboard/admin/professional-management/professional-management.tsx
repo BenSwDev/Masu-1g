@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
@@ -12,16 +13,101 @@ import { Skeleton } from "@/components/common/ui/skeleton"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Search, Filter, Users, UserCheck, UserX, Clock, AlertTriangle, Plus, RefreshCw } from "lucide-react"
 import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import ProfessionalEditModal from "./professional-edit-modal"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import type { ProfessionalStatus, IProfessionalProfile } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
-import type { 
-  Professional, 
-  ProfessionalManagementProps, 
-  PaginationInfo, 
-  StatsInfo
-} from "@/lib/types/professional"
-import { transformProfessionalData } from "@/lib/types/professional"
+
+// תיקון הInterface להתאמה מושלמת למודל
+interface Professional {
+  _id: string
+  userId: IUser
+  status: ProfessionalStatus
+  isActive: boolean
+  specialization?: string
+  experience?: string
+  certifications?: string[]
+  bio?: string
+  profileImage?: string
+  treatments: Array<{
+    treatmentId: string
+    durationId?: string
+    professionalPrice: number
+    treatmentName?: string
+  }>
+  workAreas: Array<{
+    cityId: string
+    cityName: string
+    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
+    coveredCities: string[]
+  }>
+  totalEarnings: number
+  pendingPayments: number
+  adminNotes?: string
+  rejectionReason?: string
+  appliedAt: Date
+  approvedAt?: Date
+  rejectedAt?: Date
+  lastActiveAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface PaginationInfo {
+  page: number
+  limit: number
+  total: number
+  pages: number
+}
+
+interface StatsInfo {
+  total: number
+  active: number
+  byStatus: Record<string, number>
+}
+
+interface ProfessionalManagementProps {
+  initialProfessionals: Professional[]
+  totalPages: number
+  currentPage: number
+  initialSearch?: string
+  initialStats?: StatsInfo
+}
+
+// פונקציה לטרנספורמציה של נתונים מהשרת
+function transformProfessionalData(rawProfessional: IProfessionalProfile & { userId: IUser }): Professional {
+  return {
+    _id: rawProfessional._id.toString(),
+    userId: rawProfessional.userId,
+    status: rawProfessional.status,
+    isActive: rawProfessional.isActive,
+    specialization: rawProfessional.specialization,
+    experience: rawProfessional.experience,
+    certifications: rawProfessional.certifications,
+    bio: rawProfessional.bio,
+    profileImage: rawProfessional.profileImage,
+    treatments: (rawProfessional.treatments || []).map(t => ({
+      treatmentId: t.treatmentId?.toString() || '',
+      durationId: t.durationId?.toString(),
+      professionalPrice: t.professionalPrice || 0,
+      treatmentName: (t as any).treatmentName
+    })),
+    workAreas: (rawProfessional.workAreas || []).map(w => ({
+      cityId: w.cityId?.toString() || '',
+      cityName: w.cityName || '',
+      distanceRadius: w.distanceRadius,
+      coveredCities: w.coveredCities || []
+    })),
+    totalEarnings: rawProfessional.totalEarnings || 0,
+    pendingPayments: rawProfessional.pendingPayments || 0,
+    adminNotes: rawProfessional.adminNotes,
+    rejectionReason: rawProfessional.rejectionReason,
+    appliedAt: rawProfessional.appliedAt,
+    approvedAt: rawProfessional.approvedAt,
+    rejectedAt: rawProfessional.rejectedAt,
+    lastActiveAt: rawProfessional.lastActiveAt,
+    createdAt: rawProfessional.createdAt,
+    updatedAt: rawProfessional.updatedAt
+  }
+}
 
 export function ProfessionalManagement({ 
   initialProfessionals = [], 
@@ -32,6 +118,7 @@ export function ProfessionalManagement({
 }: ProfessionalManagementProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
+  const router = useRouter()
   
   const [professionals, setProfessionals] = useState<Professional[]>(initialProfessionals)
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -47,9 +134,6 @@ export function ProfessionalManagement({
   const [statusFilter, setStatusFilter] = useState<ProfessionalStatus | "all">("all")
   const [sortBy, setSortBy] = useState("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
-  const [selectedProfessional, setSelectedProfessional] = useState<Professional | null>(null)
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [isCreatingNew, setIsCreatingNew] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Fetch professionals with improved error handling
@@ -122,7 +206,7 @@ export function ProfessionalManagement({
     fetchProfessionals(1)
   }, [statusFilter, sortBy, sortOrder])
 
-  // Initial load effect - only run once
+  // Initial load effect
   useEffect(() => {
     if (initialProfessionals.length === 0) {
       fetchProfessionals()
@@ -130,54 +214,14 @@ export function ProfessionalManagement({
   }, [])
 
   const handleRowClick = useCallback((professional: Professional) => {
-    setSelectedProfessional(professional)
-    setIsCreatingNew(false)
-    setShowEditModal(true)
-  }, [])
+    router.push(`/dashboard/admin/professional-management/${professional._id}`)
+  }, [router])
 
-  const handleModalClose = useCallback(() => {
-    setShowEditModal(false)
-    setSelectedProfessional(null)
-    setIsCreatingNew(false)
-    // רענן את העמוד הנוכחי
-    fetchProfessionals(pagination.page, false)
-  }, [fetchProfessionals, pagination.page])
+
 
   const handleCreateNew = useCallback(() => {
-    // יצירת אובייקט מטפל ריק ליצירת חדש
-    const newProfessional: Professional = {
-      _id: "new",
-      userId: {
-        _id: "new",
-        name: "",
-        email: "",
-        phone: "",
-        gender: "male",
-        roles: ["professional"],
-        activeRole: "professional",
-        createdAt: new Date(),
-        updatedAt: new Date()
-      } as IUser,
-      status: "pending_admin_approval",
-      isActive: true,
-      treatments: [],
-      workAreas: [],
-      totalEarnings: 0,
-      pendingPayments: 0,
-      adminNotes: "",
-      rejectionReason: "",
-      appliedAt: new Date(),
-      approvedAt: undefined,
-      rejectedAt: undefined,
-      lastActiveAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }
-    
-    setSelectedProfessional(newProfessional)
-    setIsCreatingNew(true)
-    setShowEditModal(true)
-  }, [])
+    router.push("/dashboard/admin/professional-management/new")
+  }, [router])
 
   const getStatusBadge = useCallback((status: ProfessionalStatus) => {
     const statusConfig = {
@@ -520,15 +564,6 @@ export function ProfessionalManagement({
         </div>
       )}
 
-      {/* Edit/Create Modal */}
-      {selectedProfessional && (
-        <ProfessionalEditModal
-          professional={selectedProfessional}
-          open={showEditModal}
-          onClose={handleModalClose}
-          isCreatingNew={isCreatingNew}
-        />
-      )}
     </div>
   )
 }

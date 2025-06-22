@@ -1,17 +1,16 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/common/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Search, RefreshCw, Plus, Edit, Trash2 } from "lucide-react"
-import { getPartners } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
+import { getPartners, removePartner } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
+import PartnerFormDialog from "./partner-form-dialog"
 import PartnerProfileDialog from "./partner-profile-dialog"
-import PartnerFormDialog, { type PartnerData } from "./partner-form-dialog"
-import { removePartner } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
 import type { IPartnerProfile } from "@/lib/db/models/partner-profile"
 import type { IUser } from "@/lib/db/models/user"
 
@@ -27,7 +26,17 @@ interface PartnerManagementProps {
   initialSearch?: string
 }
 
-export default function PartnerManagement({
+interface PartnerData {
+  id?: string
+  name: string
+  email: string
+  phone: string
+  gender: "male" | "female"
+  businessNumber: string
+  contactName: string
+}
+
+export function PartnerManagement({
   initialPartners,
   totalPages: initialTotalPages,
   currentPage: initialPage,

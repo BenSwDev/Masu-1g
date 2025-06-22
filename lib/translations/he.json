@@ -1618,7 +1618,32 @@
       "useCode": "השתמש בקוד זה בקופה או בעת הזמנה",
       "validFrom": "תקף מ",
       "validUntil": "תקף עד",
-      "value": "ערך"
+      "value": "ערך",
+      "manage": "נהל",
+      "totalVouchers": "סה\"כ שוברים",
+      "activeVouchers": "שוברים פעילים",
+      "usedVouchers": "שוברים שנוצלו",
+      "revenue": "הכנסות",
+      "totalRevenue": "סה\"כ הכנסות",
+      "used": "נוצל",
+      "remaining": "נותר",
+      "details": {
+        "title": "פרטי שובר מתנה",
+        "basicInfo": "מידע בסיסי",
+        "ownerInfo": "מידע בעלים",
+        "timeline": "ציר זמן",
+        "paymentInfo": "מידע תשלום",
+        "adminInfo": "מידע מנהל"
+      },
+      "expiringToday": "פג תוקף היום",
+      "expiringIn": "פג תוקף בעוד {days} ימים",
+      "notifications": {
+        "codeCopied": "קוד הועתק",
+        "copyError": "שגיאה בהעתקה", 
+        "dataRefreshed": "נתונים עודכנו",
+        "deleteSuccess": "שובר נמחק בהצלחה",
+        "deleteError": "שגיאה במחיקת שובר"
+      }
     },
     "hasPrivateParking": "חניה פרטית",
     "hotelName": "שם מלון",

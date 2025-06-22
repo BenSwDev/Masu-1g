@@ -1367,8 +1367,6 @@
         "profile": "פרופיל",
         "purchaseGiftVoucher": "קניית שובר מתנה",
         "purchaseHistory": "היסטוריית רכישות",
-        "purchaseReports": "דוחות רכישות",
-        "transactions": "עסקאות",
         "purchaseSubscription": "קניית מנוי",
         "roleSwitcherTooltip": "החלף תפקיד משתמש",
         "settings": "הגדרות",
@@ -4065,12 +4063,17 @@
       "userSubscriptions": "מנויי משתמשים",
       "coupons": "קופונים",
       "giftVouchers": "שוברי מתנה",
-      "purchaseReports": "דוחות רכישות",
       "reviews": "חוות דעת",
       "addresses": "כתובות",
       "paymentMethods": "אמצעי תשלום",
       "purchaseHistory": "היסטוריית רכישות",
       "partnerCouponBatches": "קופוני שותפים",
+      "sections": {
+        "mainMenu": "תפריט ראשי",
+        "purchases": "רכישות ומימושים",
+        "users": "משתמשים",
+        "settings": "הגדרות"
+      },
       "userMenu": {
         "toggleTooltip": "תפריט משתמש",
         "treatmentPreferences": "העדפות טיפול",

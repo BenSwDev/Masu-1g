@@ -6,13 +6,11 @@ export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: "לוח בקרה למנהל",
-  description: "סקירה מהירה של עסקאות ומשימות הדורשות טיפול מיידי"
+  description: "סקירה מהירה של משימות הדורשות טיפול מיידי"
 }
 
 import {
   getPurchaseStats,
-  getAllPurchaseTransactions,
-  getWeeklyAdminTransactionStats,
 } from "@/actions/purchase-summary-actions"
 import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
@@ -33,7 +31,6 @@ import {
   TableRow,
 } from "@/components/common/ui/table"
 import PurchaseStatsOverview from "@/components/common/purchase/purchase-stats-overview"
-import PurchaseHistoryTable from "@/components/common/purchase/purchase-history-table"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 
@@ -43,19 +40,12 @@ export default async function AdminDashboardPage() {
     redirect("/dashboard")
   }
 
-  const [statsRes, transactionsRes, weeklyRes, pendingProsRes] = await Promise.all([
+  const [statsRes, pendingProsRes] = await Promise.all([
     getPurchaseStats(),
-    getAllPurchaseTransactions(1, 5),
-    getWeeklyAdminTransactionStats(),
     getProfessionals({ page: 1, limit: 5, status: "pending_admin_approval", sortBy: "appliedAt", sortOrder: "asc" }),
   ])
 
   const stats = statsRes.success && statsRes.data ? statsRes.data : null
-  const transactions =
-    transactionsRes.success && transactionsRes.data
-      ? transactionsRes.data.transactions
-      : []
-  const weekly = weeklyRes.success && weeklyRes.data ? weeklyRes.data : []
   const pendingProfessionals =
     pendingProsRes.success && pendingProsRes.data?.professionals
       ? pendingProsRes.data.professionals
@@ -66,35 +56,13 @@ export default async function AdminDashboardPage() {
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <Heading
           title="לוח בקרה למנהל"
-          description="סקירה מהירה של עסקאות ומשימות הדורשות טיפול מיידי"
+          description="סקירה מהירה של משימות הדורשות טיפול מיידי"
         />
         <Separator />
 
         {stats && <PurchaseStatsOverview stats={stats} />}
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>עסקאות אחרונות</span>
-                <Link
-                  href="/dashboard/admin/transactions"
-                  className="text-sm text-primary flex items-center gap-1"
-                >
-                  לכל העסקאות
-                  <ChevronLeft className="h-4 w-4" />
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PurchaseHistoryTable
-                transactions={transactions}
-                isLoading={false}
-                showCustomerInfo={true}
-              />
-            </CardContent>
-          </Card>
-
+        <div className="grid gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
@@ -142,44 +110,6 @@ export default async function AdminDashboardPage() {
             </CardContent>
           </Card>
         </div>
-
-        {weekly.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>סטטיסטיקה שבועית</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>תאריך</TableHead>
-                    <TableHead>הזמנות</TableHead>
-                    <TableHead>רכישות מנוי</TableHead>
-                    <TableHead>מימוש מנוי</TableHead>
-                    <TableHead>מימוש שובר</TableHead>
-                    <TableHead>קנסות</TableHead>
-                    <TableHead>זיכויים</TableHead>
-                    <TableHead>קופונים</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {weekly.map((day: any) => (
-                    <TableRow key={day.date}>
-                      <TableCell>{day.date}</TableCell>
-                      <TableCell>{day.bookings}</TableCell>
-                      <TableCell>{day.subscriptionPurchases}</TableCell>
-                      <TableCell>{day.subscriptionRedemptions}</TableCell>
-                      <TableCell>{day.voucherUsages}</TableCell>
-                      <TableCell>{day.penalties}</TableCell>
-                      <TableCell>{day.credits}</TableCell>
-                      <TableCell>{day.couponUsages}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </ScrollArea>
   )

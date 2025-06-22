@@ -208,9 +208,14 @@
       "orders": "Orders",
       "coupons": "Coupons",
       "giftVouchers": "Gift Vouchers",
-      "transactions": "Transactions",
       "support": "Support",
       "settings": "Settings",
+      "sections": {
+        "mainMenu": "Main Menu",
+        "purchases": "Purchases & Redemptions",
+        "users": "Users",
+        "settings": "Settings"
+      },
       "userMenu": {
         "treatmentPreferences": "Treatment Preferences",
         "notifications": "Notifications",
@@ -2275,22 +2280,7 @@
       "validUntil": "[purchaseHistory.voucherDetails.validUntil]"
     }
   },
-  "purchaseReports": {
-    "error": {
-      "statsFailed": "[purchaseReports.error.statsFailed]",
-      "transactionsFailed": "[purchaseReports.error.transactionsFailed]"
-    },
-    "exportReport": "[purchaseReports.exportReport]",
-    "exportTransactions": "[purchaseReports.exportTransactions]",
-    "lastUpdated": "[purchaseReports.lastUpdated]",
-    "of": "[purchaseReports.of]",
-    "showing": "[purchaseReports.showing]",
-    "tabs": {
-      "overview": "[purchaseReports.tabs.overview]",
-      "transactions": "[purchaseReports.tabs.transactions]"
-    },
-    "transactions": "[purchaseReports.transactions]"
-  },
+
   "purchaseStats": {
     "active": "[purchaseStats.active]",
     "activeSubscriptions": "[purchaseStats.activeSubscriptions]",

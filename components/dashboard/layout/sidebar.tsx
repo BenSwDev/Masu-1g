@@ -272,23 +272,26 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
       },
     ]
 
-    const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string }>> = {
+    const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string; section?: string }>> = {
       admin: [
-        { titleKey: "users", icon: User, hrefSuffix: "users" },
-        { titleKey: "customers", icon: Users, hrefSuffix: "customers" },
-        { titleKey: "professional-management", icon: Users, hrefSuffix: "professional-management" },
-        { titleKey: "cities", icon: Users, hrefSuffix: "cities" },
-        { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings" },
-        { titleKey: "reviews", icon: Star, hrefSuffix: "reviews" },
-        { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments" },
-        { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours" },
-        { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions" },
-        { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions" },
-        { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons" },
-        { titleKey: "partnerCouponBatches", icon: Handshake, hrefSuffix: "partner-coupon-batches" },
-        { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers" },
-        { titleKey: "purchaseReports", icon: BarChart3, hrefSuffix: "purchase-reports" },
-        { titleKey: "transactions", icon: BarChart3, hrefSuffix: "transactions" },
+        // רכישות ומימושים (Purchases & Redemptions)
+        { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings", section: "purchases" },
+        { titleKey: "reviews", icon: Star, hrefSuffix: "reviews", section: "purchases" },
+        { titleKey: "userSubscriptions", icon: CreditCard, hrefSuffix: "user-subscriptions", section: "purchases" },
+        { titleKey: "giftVouchers", icon: Gift, hrefSuffix: "gift-vouchers", section: "purchases" },
+        { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons", section: "purchases" },
+        { titleKey: "partnerCouponBatches", icon: Handshake, hrefSuffix: "partner-coupon-batches", section: "purchases" },
+        
+        // משתמשים (Users)
+        { titleKey: "customers", icon: Users, hrefSuffix: "customers", section: "users" },
+        { titleKey: "professional-management", icon: Users, hrefSuffix: "professional-management", section: "users" },
+        { titleKey: "users", icon: User, hrefSuffix: "users", section: "users" },
+        
+        // הגדרות (Settings)
+        { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments", section: "settings" },
+        { titleKey: "cities", icon: MapPin, hrefSuffix: "cities", section: "settings" },
+        { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours", section: "settings" },
+        { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions", section: "settings" },
       ],
       member: [
         { titleKey: "addresses", icon: MapPin, hrefSuffix: "addresses" },
@@ -317,6 +320,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         icon: item.icon,
         href,
         isActive: pathname === href,
+        section: item.section,
       })
     })
     return baseItems
@@ -600,72 +604,209 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
     )
   }
 
-  const renderMenuItems = (items: ReturnType<typeof getMenuItems>, isMobile: boolean) => (
-    <nav className={cn("flex flex-col gap-0.5", isMobile ? "px-3.5 py-4" : "px-2 py-3")}>
-      {items.map((item) => {
-        const content = (
-          <>
-            <item.icon
+  const renderMenuItems = (items: ReturnType<typeof getMenuItems>, isMobile: boolean) => {
+    const activeRole = session?.user?.activeRole || "member"
+    
+    // For admin role, group items by section
+    if (activeRole === "admin") {
+      const mainMenuItems: any[] = []
+      const purchasesItems: any[] = []
+      const usersItems: any[] = []
+      const settingsItems: any[] = []
+      
+      items.forEach((item: any) => {
+        if (!item.section) {
+          mainMenuItems.push(item)
+        } else if (item.section === "purchases") {
+          purchasesItems.push(item)
+        } else if (item.section === "users") {
+          usersItems.push(item)
+        } else if (item.section === "settings") {
+          settingsItems.push(item)
+        }
+      })
+
+      const renderSectionLabel = (labelKey: string) => {
+        if (isCollapsed && !isMobile) return null
+        return (
+          <div className={cn("text-xs font-semibold text-gray-500 uppercase tracking-wider", 
+            isMobile ? "px-3 pt-4 pb-2" : "px-2 pt-4 pb-2")}>
+            {t(`dashboard.sidebar.sections.${labelKey}`)}
+          </div>
+        )
+      }
+
+      const renderItemGroup = (groupItems: any[], showDivider = true) => (
+        <>
+          {groupItems.map((item) => {
+            const content = (
+              <>
+                <item.icon
+                  className={cn(
+                    "flex-shrink-0 transition-colors",
+                    isMobile ? "h-5 w-5" : "h-[18px] w-[18px]",
+                    isCollapsed && !isMobile ? "mx-auto" : isMobile ? "mr-3" : "mr-2.5",
+                    item.isActive
+                      ? isCollapsed && !isMobile
+                        ? "text-white"
+                        : "text-turquoise-600"
+                      : "text-gray-500 group-hover:text-turquoise-600",
+                  )}
+                />
+                {!(isCollapsed && !isMobile) && (
+                  <span
+                    className={cn(
+                      "text-sm transition-colors",
+                      item.isActive ? "font-medium text-turquoise-600" : "text-gray-700 group-hover:text-turquoise-600",
+                    )}
+                  >
+                    {item.title}
+                  </span>
+                )}
+              </>
+            )
+
+            const linkButton = (
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full h-auto justify-start group transition-all duration-150 ease-in-out",
+                  isMobile ? "py-3 px-3 rounded-lg" : "py-2.5 px-2.5 rounded-md",
+                  item.isActive
+                    ? isCollapsed && !isMobile
+                      ? "bg-turquoise-500 hover:bg-turquoise-600"
+                      : "bg-turquoise-50 hover:bg-turquoise-100"
+                    : "hover:bg-gray-100/80",
+                  isCollapsed && !isMobile && "w-11 h-11 !p-0 flex items-center justify-center",
+                )}
+                onClick={() => {
+                  navigateTo(item.href)
+                  if (isMobile) onMobileOpenChange(false)
+                }}
+              >
+                {content}
+              </Button>
+            )
+
+            if (isCollapsed && !isMobile) {
+              return (
+                <Tooltip key={item.href}>
+                  <TooltipTrigger asChild>{linkButton}</TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8}>
+                    <p>{item.title}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )
+            }
+            return <div key={item.href}>{linkButton}</div>
+          })}
+          {showDivider && groupItems.length > 0 && (
+            <div className={cn("border-b border-gray-200", isMobile ? "mx-3 my-3" : "mx-2 my-3")} />
+          )}
+        </>
+      )
+
+      return (
+        <nav className={cn("flex flex-col gap-0.5", isMobile ? "px-3.5 py-4" : "px-2 py-3")}>
+          {/* Main Menu */}
+          {renderSectionLabel("mainMenu")}
+          {renderItemGroup(mainMenuItems)}
+          
+          {/* Purchases & Redemptions */}
+          {purchasesItems.length > 0 && (
+            <>
+              {renderSectionLabel("purchases")}
+              {renderItemGroup(purchasesItems)}
+            </>
+          )}
+          
+          {/* Users */}
+          {usersItems.length > 0 && (
+            <>
+              {renderSectionLabel("users")}
+              {renderItemGroup(usersItems)}
+            </>
+          )}
+          
+          {/* Settings */}
+          {settingsItems.length > 0 && (
+            <>
+              {renderSectionLabel("settings")}
+              {renderItemGroup(settingsItems, false)}
+            </>
+          )}
+        </nav>
+      )
+    }
+    
+    // For non-admin roles, use the original simple layout
+    return (
+      <nav className={cn("flex flex-col gap-0.5", isMobile ? "px-3.5 py-4" : "px-2 py-3")}>
+        {items.map((item) => {
+          const content = (
+            <>
+              <item.icon
+                className={cn(
+                  "flex-shrink-0 transition-colors",
+                  isMobile ? "h-5 w-5" : "h-[18px] w-[18px]",
+                  isCollapsed && !isMobile ? "mx-auto" : isMobile ? "mr-3" : "mr-2.5",
+                  item.isActive
+                    ? isCollapsed && !isMobile
+                      ? "text-white"
+                      : "text-turquoise-600"
+                    : "text-gray-500 group-hover:text-turquoise-600",
+                )}
+              />
+              {!(isCollapsed && !isMobile) && (
+                <span
+                  className={cn(
+                    "text-sm transition-colors",
+                    item.isActive ? "font-medium text-turquoise-600" : "text-gray-700 group-hover:text-turquoise-600",
+                  )}
+                >
+                  {item.title}
+                </span>
+              )}
+            </>
+          )
+
+          const linkButton = (
+            <Button
+              variant="ghost"
               className={cn(
-                "flex-shrink-0 transition-colors",
-                isMobile ? "h-5 w-5" : "h-[18px] w-[18px]",
-                isCollapsed && !isMobile ? "mx-auto" : isMobile ? "mr-3" : "mr-2.5",
+                "w-full h-auto justify-start group transition-all duration-150 ease-in-out",
+                isMobile ? "py-3 px-3 rounded-lg" : "py-2.5 px-2.5 rounded-md",
                 item.isActive
                   ? isCollapsed && !isMobile
-                    ? "text-white"
-                    : "text-turquoise-600"
-                  : "text-gray-500 group-hover:text-turquoise-600",
+                    ? "bg-turquoise-500 hover:bg-turquoise-600"
+                    : "bg-turquoise-50 hover:bg-turquoise-100"
+                  : "hover:bg-gray-100/80",
+                isCollapsed && !isMobile && "w-11 h-11 !p-0 flex items-center justify-center",
               )}
-            />
-            {!(isCollapsed && !isMobile) && (
-              <span
-                className={cn(
-                  "text-sm transition-colors",
-                  item.isActive ? "font-medium text-turquoise-600" : "text-gray-700 group-hover:text-turquoise-600",
-                )}
-              >
-                {item.title}
-              </span>
-            )}
-          </>
-        )
-
-        const linkButton = (
-          <Button
-            variant="ghost"
-            className={cn(
-              "w-full h-auto justify-start group transition-all duration-150 ease-in-out",
-              isMobile ? "py-3 px-3 rounded-lg" : "py-2.5 px-2.5 rounded-md",
-              item.isActive
-                ? isCollapsed && !isMobile
-                  ? "bg-turquoise-500 hover:bg-turquoise-600"
-                  : "bg-turquoise-50 hover:bg-turquoise-100"
-                : "hover:bg-gray-100/80",
-              isCollapsed && !isMobile && "w-11 h-11 !p-0 flex items-center justify-center",
-            )}
-            onClick={() => {
-              navigateTo(item.href)
-              if (isMobile) onMobileOpenChange(false)
-            }}
-          >
-            {content}
-          </Button>
-        )
-
-        if (isCollapsed && !isMobile) {
-          return (
-            <Tooltip key={item.href}>
-              <TooltipTrigger asChild>{linkButton}</TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
-                <p>{item.title}</p>
-              </TooltipContent>
-            </Tooltip>
+              onClick={() => {
+                navigateTo(item.href)
+                if (isMobile) onMobileOpenChange(false)
+              }}
+            >
+              {content}
+            </Button>
           )
-        }
-        return <div key={item.href}>{linkButton}</div>
-      })}
-    </nav>
-  )
+
+          if (isCollapsed && !isMobile) {
+            return (
+              <Tooltip key={item.href}>
+                <TooltipTrigger asChild>{linkButton}</TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                  <p>{item.title}</p>
+                </TooltipContent>
+              </Tooltip>
+            )
+          }
+          return <div key={item.href}>{linkButton}</div>
+        })}
+      </nav>
+    )
+  }
 
   const DesktopSidebarContent = (
     <TooltipProvider delayDuration={100}>

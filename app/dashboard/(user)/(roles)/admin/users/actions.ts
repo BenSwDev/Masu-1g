@@ -237,9 +237,24 @@ export async function initiatePasswordResetByAdmin(userId: string): Promise<Init
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
     })
 
-    // Send email
+    // Send email using the centralized notification system
     const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`
-    await emailService.sendPasswordResetEmail(user.email, resetLink)
+
+    const notificationData: NotificationData = {
+      type: "password-reset",
+      resetUrl: resetLink,
+      expiresIn: 60 * 24, // 24 hours
+    }
+
+    const emailResult = await emailService.sendNotification(
+      { value: user.email, name: user.name || user.email, language: "en" },
+      notificationData,
+    )
+
+    if (!emailResult.success) {
+      console.error("Failed to send password reset email:", emailResult.error)
+      return { success: false, message: "passwordResetFailed" }
+    }
 
     return { success: true, message: "passwordResetInitiated" }
   } catch (error) {

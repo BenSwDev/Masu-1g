@@ -185,7 +185,7 @@ export class EmailService {
 
       // Send mail with defined transport object
       const info = await this.transporter.sendMail({
-        from: `"Masu" <${process.env.EMAIL_SERVER_USER}>`,
+        from: `"Masu" <${this.fromEmail}>`,
         to: recipient.value,
         subject,
         text,

@@ -110,11 +110,6 @@ export default function PartnerManagement({
           <Button onClick={handleCreate} className="flex items-center gap-1">
             <Plus className="w-4 h-4" /> הוסף שותף
           </Button>
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>חיפוש שותפים</CardTitle>
         </CardHeader>
         <CardContent className="flex gap-4">
           <div className="relative flex-1">
@@ -150,11 +145,12 @@ export default function PartnerManagement({
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                   </TableRow>
                 ))
               ) : partners.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">לא נמצאו שותפים</TableCell>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">לא נמצאו שותפים</TableCell>
                 </TableRow>
               ) : (
                 partners.map(p => (
@@ -176,12 +172,6 @@ export default function PartnerManagement({
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </TableCell>
-                  <TableRow key={p._id} className="hover:bg-muted cursor-pointer" onClick={() => setSelectedId(p._id)}>
-                    <TableCell>{p.userId.name}</TableCell>
-                    <TableCell>{p.userId.email}</TableCell>
-                    <TableCell>{p.userId.phone}</TableCell>
-                    <TableCell>{p.businessNumber}</TableCell>
-                    <TableCell>{p.contactName}</TableCell>
                   </TableRow>
                 ))
               )}

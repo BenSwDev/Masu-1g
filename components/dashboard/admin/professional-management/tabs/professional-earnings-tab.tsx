@@ -12,40 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TrendingUp, DollarSign, Calendar, Clock, Star, AlertTriangle, Eye, BarChart3 } from "lucide-react"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
-  profileImage?: string
-  treatments: Array<{
-    treatmentId: string
-    durationId?: string
-    professionalPrice: number
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 
 interface Booking {
   _id: string
@@ -78,18 +45,14 @@ interface EarningsStats {
   }>
 }
 
-interface ProfessionalEarningsTabProps {
-  professional: Professional
-}
-
 export default function ProfessionalEarningsTab({
-  professional
-}: ProfessionalEarningsTabProps) {
+  professional,
+  loading = false
+}: Omit<ProfessionalTabProps, 'onUpdate'>) {
   const { t, dir } = useTranslation()
   
   const [bookings, setBookings] = useState<Booking[]>([])
   const [stats, setStats] = useState<EarningsStats | null>(null)
-  const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [timeFrame, setTimeFrame] = useState<string>("3months")
 

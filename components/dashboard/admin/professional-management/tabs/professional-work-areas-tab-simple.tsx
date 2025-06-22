@@ -12,49 +12,14 @@ import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
 import { MapPin, Plus, Trash2, Save, Loader2, AlertTriangle, Check, Navigation } from "lucide-react"
 import { updateProfessionalWorkAreas } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
 
 interface City {
   _id: string
   name: string
+  hebrewName: string
   region?: string
-  coordinates?: {
-    lat: number
-    lng: number
-  }
 }
 
 interface WorkArea {
@@ -64,23 +29,16 @@ interface WorkArea {
   coveredCities: string[]
 }
 
-interface ProfessionalWorkAreasTabProps {
-  professional: Professional
-  onUpdate: (professional: Partial<Professional>) => void
-  disabled?: boolean
-}
-
-export default function ProfessionalWorkAreasTab({
+export default function ProfessionalWorkAreasTabSimple({
   professional,
   onUpdate,
-  disabled = false
-}: ProfessionalWorkAreasTabProps) {
+  loading = false
+}: ProfessionalTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
   const [workAreas, setWorkAreas] = useState<WorkArea[]>(professional.workAreas || [])
   const [availableCities, setAvailableCities] = useState<City[]>([])
-  const [loading, setLoading] = useState(false)
   const [loadingCities, setLoadingCities] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -225,20 +183,7 @@ export default function ProfessionalWorkAreasTab({
     }
   }
 
-  if (disabled) {
-    return (
-      <div className="p-6 space-y-6" dir={dir}>
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            יש ליצור את המטפל תחילה לפני הגדרת איזורי העבודה
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
-
-  if (loadingCities) {
+  if (loading) {
     return (
       <div className="p-6 space-y-6" dir={dir}>
         <div className="space-y-4">

@@ -15,46 +15,7 @@ import ProfessionalDocumentsTab from "./tabs/professional-documents-tab"
 import ProfessionalFinancialTab from "./tabs/professional-financial-tab"
 import ProfessionalContractTab from "./tabs/professional-contract-tab"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
-import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface ProfessionalEditModalProps {
-  professional: Professional
-  open: boolean
-  onClose: () => void
-  isCreatingNew?: boolean
-}
+import type { Professional, ProfessionalEditModalProps } from "@/lib/types/professional"
 
 export default function ProfessionalEditModal({ 
   professional, 
@@ -203,7 +164,7 @@ export default function ProfessionalEditModal({
                 <ProfessionalTreatmentsTabNew
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
-                  disabled={isCreatingNew}
+                  loading={false}
                 />
               </TabsContent>
 
@@ -211,7 +172,7 @@ export default function ProfessionalEditModal({
                 <ProfessionalWorkAreasTabSimple
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
-                  disabled={isCreatingNew}
+                  loading={false}
                 />
               </TabsContent>
 
@@ -219,6 +180,7 @@ export default function ProfessionalEditModal({
                 <ProfessionalBankDetailsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
+                  loading={false}
                 />
               </TabsContent>
 
@@ -226,6 +188,7 @@ export default function ProfessionalEditModal({
                 <ProfessionalDocumentsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
+                  loading={false}
                 />
               </TabsContent>
 
@@ -233,6 +196,7 @@ export default function ProfessionalEditModal({
                 <ProfessionalFinancialTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
+                  loading={false}
                 />
               </TabsContent>
 
@@ -240,6 +204,7 @@ export default function ProfessionalEditModal({
                 <ProfessionalContractTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
+                  loading={false}
                 />
               </TabsContent>
             </div>

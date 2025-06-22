@@ -7,57 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Input } from "@/components/common/ui/input"
 import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
-import { CreditCard, Save, Loader2 } from "lucide-react"
+import { CreditCard, Save, Loader2, AlertTriangle, Eye, EyeOff } from "lucide-react"
 import { updateProfessionalBankDetails } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
-import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
-  profileImage?: string
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface ProfessionalBankDetailsTabProps {
-  professional: Professional
-  onUpdate: (professional: Partial<Professional>) => void
-}
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 
 export default function ProfessionalBankDetailsTab({
   professional,
-  onUpdate
-}: ProfessionalBankDetailsTabProps) {
+  onUpdate,
+  loading = false
+}: ProfessionalTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   

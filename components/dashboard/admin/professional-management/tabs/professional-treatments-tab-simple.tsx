@@ -13,40 +13,8 @@ import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Stethoscope, Plus, Trash2, Save, Loader2, AlertTriangle, Check, X, Filter } from "lucide-react"
 import { updateProfessionalTreatments } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
-  profileImage?: string
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
 
 interface TreatmentOption {
   _id: string
@@ -62,17 +30,11 @@ interface ProfessionalTreatment {
   treatmentName?: string
 }
 
-interface ProfessionalTreatmentsTabProps {
-  professional: Professional
-  onUpdate: (professional: Partial<Professional>) => void
-  disabled?: boolean
-}
-
-export default function ProfessionalTreatmentsTab({
+export default function ProfessionalTreatmentsTabSimple({
   professional,
   onUpdate,
-  disabled = false
-}: ProfessionalTreatmentsTabProps) {
+  loading = false
+}: ProfessionalTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
@@ -80,7 +42,6 @@ export default function ProfessionalTreatmentsTab({
   const [availableTreatments, setAvailableTreatments] = useState<TreatmentOption[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [loading, setLoading] = useState(false)
   const [loadingTreatments, setLoadingTreatments] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -214,7 +175,7 @@ export default function ProfessionalTreatmentsTab({
     return getFilteredTreatments().filter(t => !selectedTreatmentIds.includes(t._id))
   }
 
-  if (disabled) {
+  if (loading) {
     return (
       <div className="p-6">
         <Alert>

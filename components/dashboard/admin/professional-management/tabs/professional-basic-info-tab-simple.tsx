@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
@@ -12,60 +12,21 @@ import { Badge } from "@/components/common/ui/badge"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { Separator } from "@/components/common/ui/separator"
 import { useToast } from "@/components/common/ui/use-toast"
-import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX } from "lucide-react"
-import { updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX, MapPin } from "lucide-react"
+import { updateProfessionalStatus, createProfessional, updateProfessionalBasicInfo } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
 
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
-  profileImage?: string
-  treatments: Array<{
-    treatmentId: string
-    durationId?: string
-    professionalPrice: number
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
 
-interface ProfessionalBasicInfoTabProps {
-  professional: Professional
-  onUpdate: (professional: Partial<Professional>) => void
-  loading: boolean
-  isCreatingNew?: boolean
-  onCreated?: (professional: Professional) => void
-}
 
-export default function ProfessionalBasicInfoTab({
+export default function ProfessionalBasicInfoTabSimple({
   professional,
   onUpdate,
-  loading,
+  loading = false,
   isCreatingNew = false,
   onCreated
-}: ProfessionalBasicInfoTabProps) {
+}: ProfessionalTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   

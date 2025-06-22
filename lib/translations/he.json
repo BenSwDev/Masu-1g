@@ -1336,6 +1336,56 @@
       "viewDetails": "צפה בפרטים",
       "vouchers": "שוברים"
     },
+    "dashboard": {
+      "roles": {
+        "admin": "מנהל",
+        "member": "חבר",
+        "partner": "שותף",
+        "professional": "מטפל",
+        "switchRole": "החלף תפקיד"
+      },
+      "sidebar": {
+        "account": "חשבון",
+        "addresses": "כתובות",
+        "bankAccount": "פרטי חשבון בנק",
+        "bookTreatment": "הזמנת טיפול",
+        "bookings": "הזמנות",
+        "categories": "קטגוריות",
+        "clients": "לקוחות",
+        "coupons": "קופונים",
+        "customers": "לקוחות",
+        "dashboard": "לוח בקרה",
+        "documents": "העלאת מסמכים",
+        "giftVouchers": "שוברי מתנה",
+        "location": "הגדרות מיקום",
+        "mainMenu": "תפריט ראשי",
+        "orders": "הזמנות",
+        "partners": "שותפים",
+        "paymentMethods": "אמצעי תשלום",
+        "products": "מוצרים",
+        "professionals": "מטפלים",
+        "profile": "פרופיל",
+        "purchaseGiftVoucher": "קניית שובר מתנה",
+        "purchaseHistory": "היסטוריית רכישות",
+        "purchaseSubscription": "קניית מנוי",
+        "roleSwitcherTooltip": "החלף תפקיד משתמש",
+        "settings": "הגדרות",
+        "signOut": "התנתק",
+        "subscriptions": "מנויים",
+        "support": "תמיכה",
+        "title": "לוח בקרה",
+        "treatments": "טיפולים",
+        "userMenu": {
+          "notifications": "התראות",
+          "toggleTooltip": "פתח/סגור תפריט משתמש",
+          "treatmentPreferences": "העדפות טיפול"
+        },
+        "userSubscriptions": "מנויי משתמשים",
+        "users": "משתמשים",
+        "workingHours": "שעות פעילות",
+        "reviews": "חוות דעת"
+      }
+    },
     "doorName": "שם דלת",
     "email": "דוא״ל",
     "entrance": "כניסה",
@@ -4002,6 +4052,49 @@
     "roleSwitchSuccess": "תפקיד הוחלף בהצלחה",
     "roleSwitchError": "שגיאה בהחלפת תפקיד"
   },
+  "dashboard": {
+    "sidebar": {
+      "roleSwitcherTooltip": "החלף תפקיד",
+      "dashboard": "לוח בקרה",
+      "${item": {
+        "titleKey}": "dashboard.sidebar.${item.titleKey}"
+      },
+      "cities": "איזורי פעילות",
+      "bookTreatment": "הזמן טיפול",
+      "purchaseSubscription": "רכוש מנוי",
+      "purchaseGiftVoucher": "רכוש שובר מתנה",
+      "users": "משתמשים",
+      "customers": "לקוחות",
+              "professionals": "מטפלים",
+        "professional-management": "ניהול מטפלים",
+        "bookings": "הזמנות",
+      "treatments": "טיפולים",
+      "workingHours": "שעות פעילות",
+      "subscriptions": "מנויים",
+      "userSubscriptions": "מנויי משתמשים",
+      "coupons": "קופונים",
+      "giftVouchers": "שוברי מתנה",
+      "reviews": "חוות דעת",
+      "addresses": "כתובות",
+      "paymentMethods": "אמצעי תשלום",
+      "purchaseHistory": "היסטוריית רכישות",
+      "partnerCouponBatches": "קופוני שותפים",
+      "sections": {
+        "mainMenu": "תפריט ראשי",
+        "purchases": "רכישות ומימושים",
+        "users": "משתמשים",
+        "settings": "הגדרות"
+      },
+      "userMenu": {
+        "toggleTooltip": "תפריט משתמש",
+        "treatmentPreferences": "העדפות טיפול",
+        "notifications": "התראות"
+      },
+      "profile": "פרופיל",
+      "account": "חשבון",
+      "signOut": "התנתק"
+    }
+  },
   " ": " ",
   "city": "עיר",
   "street": "רחוב",
@@ -4318,57 +4411,6 @@
       "phoneMin": "יש להזין מספר טלפון תקין",
       "recipientDetailsRequired": "יש למלא את פרטי המקבל"
     },
-  "yourDetails": "הפרטים שלך"
-  },
-  "dashboard": {
-    "sidebar": {
-      "account": "חשבון",
-      "addresses": "כתובות",
-      "bankAccount": "פרטי חשבון בנק",
-      "bookTreatment": "הזמנת טיפול",
-      "bookings": "הזמנות",
-      "categories": "קטגוריות",
-      "clients": "לקוחות",
-      "coupons": "קופונים",
-      "customers": "לקוחות",
-      "dashboard": "לוח בקרה",
-      "documents": "העלאת מסמכים",
-      "giftVouchers": "שוברי מתנה",
-      "location": "הגדרות מיקום",
-      "cities": "איזורי פעילות",
-      "mainMenu": "תפריט ראשי",
-      "orders": "הזמנות",
-      "partners": "שותפים",
-      "paymentMethods": "אמצעי תשלום",
-      "products": "מוצרים",
-      "professionals": "מטפלים",
-      "profile": "פרופיל",
-      "purchaseGiftVoucher": "קניית שובר מתנה",
-      "purchaseHistory": "היסטוריית רכישות",
-      "partnerCouponBatches": "קופוני שותפים",
-      "purchaseSubscription": "קניית מנוי",
-      "roleSwitcherTooltip": "החלף תפקיד משתמש",
-      "settings": "הגדרות",
-      "sections": {
-        "mainMenu": "תפריט ראשי",
-        "purchases": "רכישות ומימושים",
-        "users": "משתמשים",
-        "settings": "הגדרות"
-      },
-      "signOut": "התנתק",
-      "subscriptions": "מנויים",
-      "support": "תמיכה",
-      "title": "לוח בקרה",
-      "treatments": "טיפולים",
-      "userMenu": {
-        "notifications": "התראות",
-        "toggleTooltip": "פתח/סגור תפריט משתמש",
-        "treatmentPreferences": "העדפות טיפול"
-      },
-      "userSubscriptions": "מנויי משתמשים",
-      "users": "משתמשים",
-      "workingHours": "שעות פעילות",
-      "reviews": "חוות דעת"
-    }
+    "yourDetails": "הפרטים שלך"
   }
-}
+}  

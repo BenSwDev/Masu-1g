@@ -12,48 +12,7 @@ import { Switch } from "@/components/common/ui/switch"
 import { useToast } from "@/components/common/ui/use-toast"
 import { User, Save, Loader2, AlertTriangle, CheckCircle } from "lucide-react"
 import { updateProfessionalProfile } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
-import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface ProfessionalProfileTabProps {
-  professional: Professional
-  onUpdate: (professional: Partial<Professional>) => void
-  loading: boolean
-  isCreatingNew?: boolean
-  onCreated?: (professional: Professional) => void
-}
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 
 export default function ProfessionalProfileTab({
   professional,
@@ -61,341 +20,258 @@ export default function ProfessionalProfileTab({
   loading,
   isCreatingNew = false,
   onCreated
-}: ProfessionalProfileTabProps) {
+}: ProfessionalTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
-  const [userDetails, setUserDetails] = useState({
-    name: professional.userId.name || "",
-    email: professional.userId.email || "",
-    phone: professional.userId.phone || "",
-    gender: professional.userId.gender || "",
-    birthDate: professional.userId.birthDate ? new Date(professional.userId.birthDate).toISOString().split('T')[0] : ""
-  })
-  
-  const [professionalDetails, setProfessionalDetails] = useState({
-    status: professional.status,
-    isActive: professional.isActive,
-    adminNotes: professional.adminNotes || "",
-    rejectionReason: professional.rejectionReason || ""
+  const [formData, setFormData] = useState({
+    specialization: professional?.specialization || "",
+    experience: professional?.experience || "",
+    certifications: professional?.certifications || [],
+    bio: professional?.bio || "",
+    profileImage: professional?.profileImage || "",
+    isActive: professional?.isActive ?? true
   })
   
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
-  const handleUserDetailChange = (field: keyof typeof userDetails, value: string) => {
-    setUserDetails(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  const handleFieldChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
     setHasChanges(true)
   }
 
-  const handleProfessionalDetailChange = (field: keyof typeof professionalDetails, value: any) => {
-    setProfessionalDetails(prev => ({
-      ...prev,
-      [field]: value
-    }))
-    setHasChanges(true)
+  const handleCertificationChange = (index: number, value: string) => {
+    const newCertifications = [...formData.certifications]
+    newCertifications[index] = value
+    handleFieldChange('certifications', newCertifications)
+  }
+
+  const addCertification = () => {
+    handleFieldChange('certifications', [...formData.certifications, ''])
+  }
+
+  const removeCertification = (index: number) => {
+    const newCertifications = formData.certifications.filter((_, i) => i !== index)
+    handleFieldChange('certifications', newCertifications)
   }
 
   const handleSave = async () => {
+    if (!hasChanges || saving || isCreatingNew) return
+    
     setSaving(true)
     
     try {
-      // Validate required fields
-      if (!userDetails.name.trim() || !userDetails.email.trim()) {
+      const result = await updateProfessionalProfile(professional._id, {
+        specialization: formData.specialization.trim(),
+        experience: formData.experience.trim(),
+        certifications: formData.certifications.filter(cert => cert.trim().length > 0),
+        bio: formData.bio.trim(),
+        profileImage: formData.profileImage.trim()
+      })
+      
+      if (result.success && result.professional) {
+        toast({
+          title: "הצלחה",
+          description: "פרופיל המטפל עודכן בהצלחה"
+        })
+        
+        // Update parent component with new data
+        onUpdate(result.professional)
+        setHasChanges(false)
+      } else {
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: "שם ואימייל הם שדות חובה"
+          description: result.error || "שגיאה בעדכון הפרופיל"
         })
-        return
       }
-
-      // Here you would typically make an API call to update the professional profile
-      // For now, we'll update the local state
-      const updatedUser = {
-        ...professional.userId,
-        ...userDetails,
-        birthDate: userDetails.birthDate ? new Date(userDetails.birthDate) : professional.userId.birthDate
-      }
-      
-      const updatedProfessional = {
-        ...professional,
-        userId: updatedUser,
-        ...professionalDetails
-      }
-      
-      onUpdate(updatedProfessional)
-      setHasChanges(false)
-      
-      toast({
-        title: "הצלחה",
-        description: "פרופיל המטפל עודכן בהצלחה"
-      })
     } catch (error) {
-      console.error("Error saving profile:", error)
+      console.error("Error updating professional profile:", error)
       toast({
         variant: "destructive",
         title: "שגיאה",
-        description: "שגיאה בשמירת פרופיל המטפל"
+        description: "שגיאה בעדכון הפרופיל"
       })
     } finally {
       setSaving(false)
     }
   }
 
-  const getStatusColor = (status: ProfessionalStatus) => {
-    switch (status) {
-      case "active": return "text-green-600"
-      case "pending_admin_approval": return "text-orange-600"
-      case "pending_user_action": return "text-blue-600"
-      case "rejected": return "text-red-600"
-      case "suspended": return "text-red-600"
-      default: return "text-gray-600"
-    }
-  }
-
-  const getStatusText = (status: ProfessionalStatus) => {
-    switch (status) {
-      case "active": return "פעיל"
-      case "pending_admin_approval": return "ממתין לאישור אדמין"
-      case "pending_user_action": return "ממתין לפעולת משתמש"
-      case "rejected": return "נדחה"
-      case "suspended": return "מושהה"
-      default: return "לא ידוע"
-    }
-  }
-
-  const formatDate = (date?: Date | string) => {
-    if (!date) return "-"
-    try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date
-      return dateObj.toLocaleDateString("he-IL")
-    } catch {
-      return "-"
-    }
-  }
-
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-6" dir={dir}>
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <User className="h-5 w-5" />
-            פרופיל המטפל
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            עריכת פרטי המשתמש וסטטוס המטפל
-          </p>
+        <div className="flex items-center gap-2">
+          <User className="w-5 h-5" />
+          <h3 className="text-lg font-semibold">פרופיל מטפל</h3>
         </div>
-        {hasChanges && (
-          <Button onClick={handleSave} disabled={saving}>
+        {!isCreatingNew && (
+          <Button 
+            onClick={handleSave} 
+            disabled={!hasChanges || saving}
+            className="flex items-center gap-2"
+          >
             {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                שומר...
-              </>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                שמור שינויים
-              </>
+              <Save className="w-4 h-4" />
             )}
+            {saving ? "שומר..." : "שמור שינויים"}
           </Button>
         )}
       </div>
 
-      {/* User Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>פרטי משתמש</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">שם מלא *</Label>
-              <Input
-                id="name"
-                value={userDetails.name}
-                onChange={(e) => handleUserDetailChange("name", e.target.value)}
-                placeholder="הכנס שם מלא"
-                className="text-right"
-                dir={dir}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">כתובת אימייל *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={userDetails.email}
-                onChange={(e) => handleUserDetailChange("email", e.target.value)}
-                placeholder="הכנס כתובת אימייל"
-                className="text-right"
-                dir={dir}
-              />
-            </div>
+      {isCreatingNew && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-blue-800">
+            <AlertTriangle className="w-4 h-4" />
+            <span className="font-medium">מטפל חדש</span>
           </div>
+          <p className="text-blue-700 text-sm mt-1">
+            נתוני הפרופיל יישמרו לאחר יצירת המטפל בטאב הראשי
+          </p>
+        </div>
+      )}
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid gap-6">
+        {/* Basic Professional Info */}
+        <Card>
+          <CardHeader>
+            <CardTitle>מידע מקצועי בסיסי</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="specialization">התמחות</Label>
+                <Input
+                  id="specialization"
+                  value={formData.specialization}
+                  onChange={(e) => handleFieldChange('specialization', e.target.value)}
+                  placeholder="לדוגמה: עיסוי רפואי, פיזיותרפיה"
+                  disabled={loading}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="experience">ניסיון מקצועי</Label>
+                <Input
+                  id="experience"
+                  value={formData.experience}
+                  onChange={(e) => handleFieldChange('experience', e.target.value)}
+                  placeholder="לדוגמה: 5 שנות ניסיון"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="phone">טלפון</Label>
-              <Input
-                id="phone"
-                value={userDetails.phone}
-                onChange={(e) => handleUserDetailChange("phone", e.target.value)}
-                placeholder="הכנס מספר טלפון"
-                className="text-right"
-                dir={dir}
+              <Label htmlFor="bio">תיאור מקצועי</Label>
+              <Textarea
+                id="bio"
+                value={formData.bio}
+                onChange={(e) => handleFieldChange('bio', e.target.value)}
+                placeholder="תיאור קצר על הרקע המקצועי והשירותים שהמטפל מציע..."
+                rows={4}
+                disabled={loading}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="gender">מגדר</Label>
-              <Select value={userDetails.gender} onValueChange={(value) => handleUserDetailChange("gender", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="בחר מגדר" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">זכר</SelectItem>
-                  <SelectItem value="female">נקבה</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="birthDate">תאריך לידה</Label>
+              <Label htmlFor="profileImage">תמונת פרופיל (URL)</Label>
               <Input
-                id="birthDate"
-                type="date"
-                value={userDetails.birthDate}
-                onChange={(e) => handleUserDetailChange("birthDate", e.target.value)}
-                className="text-right"
-                dir={dir}
+                id="profileImage"
+                type="url"
+                value={formData.profileImage}
+                onChange={(e) => handleFieldChange('profileImage', e.target.value)}
+                placeholder="https://example.com/profile-image.jpg"
+                disabled={loading}
               />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Professional Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle>סטטוס מטפל</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="status">סטטוס</Label>
-              <Select 
-                value={professionalDetails.status} 
-                onValueChange={(value: ProfessionalStatus) => handleProfessionalDetailChange("status", value)}
+        {/* Certifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              תעודות והסמכות
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addCertification}
+                disabled={loading}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">פעיל</SelectItem>
-                  <SelectItem value="pending_admin_approval">ממתין לאישור אדמין</SelectItem>
-                  <SelectItem value="pending_user_action">ממתין לפעולת משתמש</SelectItem>
-                  <SelectItem value="rejected">נדחה</SelectItem>
-                  <SelectItem value="suspended">מושהה</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                הוסף תעודה
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {formData.certifications.length === 0 ? (
+              <p className="text-muted-foreground text-center py-4">
+                לא נוספו תעודות עדיין
+              </p>
+            ) : (
+              formData.certifications.map((cert, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={cert}
+                    onChange={(e) => handleCertificationChange(index, e.target.value)}
+                    placeholder="שם התעודה או ההסמכה"
+                    disabled={loading}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeCertification(index)}
+                    disabled={loading}
+                    className="px-3"
+                  >
+                    הסר
+                  </Button>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="isActive" className="flex items-center gap-2">
-                פעיל במערכת
-              </Label>
-              <div className="flex items-center space-x-2">
+        {/* Status */}
+        {!isCreatingNew && (
+          <Card>
+            <CardHeader>
+              <CardTitle>סטטוס פעילות</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="isActive">מטפל פעיל</Label>
+                  <p className="text-sm text-muted-foreground">
+                    קובע האם המטפל יופיע בחיפושים ויוכל לקבל הזמנות
+                  </p>
+                </div>
                 <Switch
                   id="isActive"
-                  checked={professionalDetails.isActive}
-                  onCheckedChange={(checked) => handleProfessionalDetailChange("isActive", checked)}
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) => handleFieldChange('isActive', checked)}
+                  disabled={loading}
                 />
-                <span className={professionalDetails.isActive ? "text-green-600" : "text-red-600"}>
-                  {professionalDetails.isActive ? "פעיל" : "לא פעיל"}
-                </span>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="adminNotes">הערות אדמין</Label>
-            <Textarea
-              id="adminNotes"
-              value={professionalDetails.adminNotes}
-              onChange={(e) => handleProfessionalDetailChange("adminNotes", e.target.value)}
-              placeholder="הכנס הערות אדמין..."
-              className="text-right min-h-[80px]"
-              dir={dir}
-            />
+      {hasChanges && !isCreatingNew && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-orange-800">
+            <AlertTriangle className="w-4 h-4" />
+            <span className="font-medium">יש שינויים שלא נשמרו</span>
           </div>
-
-          {professionalDetails.status === "rejected" && (
-            <div className="space-y-2">
-              <Label htmlFor="rejectionReason">סיבת דחייה</Label>
-              <Textarea
-                id="rejectionReason"
-                value={professionalDetails.rejectionReason}
-                onChange={(e) => handleProfessionalDetailChange("rejectionReason", e.target.value)}
-                placeholder="הכנס סיבת דחייה..."
-                className="text-right min-h-[80px]"
-                dir={dir}
-              />
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Professional Info Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>מידע כללי</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
-              <div>
-                <span className="font-medium">תאריך הצטרפות:</span>
-                <div className="text-muted-foreground">{formatDate(professional.appliedAt)}</div>
-              </div>
-              {professional.approvedAt && (
-                <div>
-                  <span className="font-medium">תאריך אישור:</span>
-                  <div className="text-muted-foreground">{formatDate(professional.approvedAt)}</div>
-                </div>
-              )}
-              {professional.rejectedAt && (
-                <div>
-                  <span className="font-medium">תאריך דחייה:</span>
-                  <div className="text-muted-foreground">{formatDate(professional.rejectedAt)}</div>
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <div>
-                <span className="font-medium">סטטוס נוכחי:</span>
-                <div className={getStatusColor(professionalDetails.status)}>
-                  {getStatusText(professionalDetails.status)}
-                </div>
-              </div>
-              <div>
-                <span className="font-medium">פעילות אחרונה:</span>
-                <div className="text-muted-foreground">{formatDate(professional.lastActiveAt)}</div>
-              </div>
-              <div>
-                <span className="font-medium">עודכן לאחרונה:</span>
-                <div className="text-muted-foreground">{formatDate(professional.updatedAt)}</div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          <p className="text-orange-700 text-sm mt-1">
+            לא לשכוח לשמור את השינויים לפני מעבר לטאב אחר
+          </p>
+        </div>
+      )}
     </div>
   )
 } 

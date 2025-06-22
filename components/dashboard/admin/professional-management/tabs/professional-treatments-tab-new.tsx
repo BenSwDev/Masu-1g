@@ -27,6 +27,7 @@ import {
 import { updateProfessionalTreatments } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 
 // מבנה טיפול כפי שמגיע מה-API
 interface TreatmentFromAPI {
@@ -61,39 +62,7 @@ interface ProfessionalTreatmentPricing {
 }
 
 // מבנה מטפל
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  treatments: Array<{
-    treatmentId: string
-    durationId?: string
-    professionalPrice: number
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
+
 
 // מבנה קטגוריה עם טיפולים
 interface CategoryData {
@@ -104,17 +73,11 @@ interface CategoryData {
   isExpanded: boolean
 }
 
-interface ProfessionalTreatmentsTabProps {
-  professional: Professional
-  onUpdate: (professional: Partial<Professional>) => void
-  disabled?: boolean
-}
-
 export default function ProfessionalTreatmentsTabNew({
   professional,
   onUpdate,
   disabled = false
-}: ProfessionalTreatmentsTabProps) {
+}: ProfessionalTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   

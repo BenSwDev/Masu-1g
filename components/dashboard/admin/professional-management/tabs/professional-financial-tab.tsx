@@ -1,53 +1,22 @@
 "use client"
 
+import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
+import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Input } from "@/components/common/ui/input"
+import { Label } from "@/components/common/ui/label"
 import { Badge } from "@/components/common/ui/badge"
-import { DollarSign, TrendingUp, CreditCard, Clock, AlertTriangle } from "lucide-react"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
-import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface ProfessionalFinancialTabProps {
-  professional: Professional
-  onUpdate: (professional: Partial<Professional>) => void
-}
+import { useToast } from "@/components/common/ui/use-toast"
+import { DollarSign, TrendingUp, TrendingDown, Calendar, CreditCard, Save, Loader2 } from "lucide-react"
+import { updateProfessionalFinancials } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 
 export default function ProfessionalFinancialTab({
   professional,
-  onUpdate
-}: ProfessionalFinancialTabProps) {
+  onUpdate,
+  loading = false
+}: ProfessionalTabProps) {
   const { t, dir } = useTranslation()
 
   const formatCurrency = (amount: number) => {
@@ -70,7 +39,7 @@ export default function ProfessionalFinancialTab({
           </p>
         </div>
         <Badge variant="secondary" className="flex items-center gap-1">
-          <Clock className="w-3 h-3" />
+          <Calendar className="w-3 h-3" />
           בטיפול
         </Badge>
       </div>
@@ -116,7 +85,7 @@ export default function ProfessionalFinancialTab({
       <Card className="border-dashed border-2 border-muted">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-            <AlertTriangle className="w-8 h-8 text-muted-foreground" />
+            <TrendingDown className="w-8 h-8 text-muted-foreground" />
           </div>
           <h3 className="text-lg font-semibold mb-2">תכונה בפיתוח</h3>
           <p className="text-muted-foreground text-center max-w-md">

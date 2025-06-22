@@ -3243,6 +3243,10 @@
     "notSpecified": "לא מוגדר",
     "of": "מתוך",
     "orderSummary": "סיכום הזמנה",
+    "useCurrentLocation": "השתמש במיקום הנוכחי",
+    "locationPermissionDenied": "אין הרשאה למיקום",
+    "locationLookupFailed": "נכשל באיתור הכתובת מהמיקום",
+    "geolocationNotSupported": "דפדפן זה לא תומך במיקום",
     "page": "דף",
     "pagination": {
       "first": "ראשון",

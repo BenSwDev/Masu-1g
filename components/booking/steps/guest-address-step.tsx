@@ -13,6 +13,8 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { CitySelectForm } from "@/components/common/ui/city-select-form"
+import { toast } from "sonner"
+import { getCurrentCoordinates, reverseGeocode } from "@/lib/utils/location"
 
 interface GuestAddress {
   city: string
@@ -93,6 +95,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
   const [addressType, setAddressType] = useState<"apartment" | "house" | "office" | "hotel" | "other">(
     (address.addressType as "apartment" | "house" | "office" | "hotel" | "other") || "apartment"
   )
+  const [isLocating, setIsLocating] = useState(false)
 
   const form = useForm<GuestAddressFormData>({
     resolver: zodResolver(addressSchema),
@@ -117,6 +120,26 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
   const onSubmit = (data: GuestAddressFormData) => {
     setAddress(data)
     onNext()
+  }
+
+  const handleUseCurrentLocation = async () => {
+    setIsLocating(true)
+    try {
+      const { lat, lon } = await getCurrentCoordinates()
+      const result = await reverseGeocode(lat, lon)
+      if (result.city) form.setValue('city', result.city)
+      if (result.street) form.setValue('street', result.street)
+      if (result.houseNumber) form.setValue('houseNumber', result.houseNumber)
+    } catch (err: any) {
+      const key = err.message === 'permission_denied'
+        ? 'common.locationPermissionDenied'
+        : err.message === 'geolocation_not_supported'
+        ? 'common.geolocationNotSupported'
+        : 'common.locationLookupFailed'
+      toast.error(t(key))
+    } finally {
+      setIsLocating(false)
+    }
   }
 
   const handleAddressTypeChange = (value: string) => {
@@ -215,6 +238,12 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
                     </FormItem>
                   )}
                 />
+
+              <div className="flex justify-end md:col-span-2">
+                <Button type="button" variant="outline" onClick={handleUseCurrentLocation} disabled={isLocating}>
+                  {isLocating ? t("common.loading") : t("common.useCurrentLocation")}
+                </Button>
+              </div>
               </div>
 
               {/* Type-specific fields */}

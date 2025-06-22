@@ -134,6 +134,10 @@
     "currencySymbol": "₪",
     "cardEndingIn": "Card ending in {last4}",
     "orderSummary": "Order Summary",
+    "useCurrentLocation": "Use current location",
+    "locationPermissionDenied": "Location permission denied",
+    "locationLookupFailed": "Failed to retrieve address from location",
+    "geolocationNotSupported": "Geolocation not supported",
     "termsOfService": "Terms of Service",
     "errors": {
       "unknown": "An unknown error occurred.",

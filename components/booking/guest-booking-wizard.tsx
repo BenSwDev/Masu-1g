@@ -23,7 +23,8 @@ import {
   getAvailableTimeSlots,
   createGuestUser,
   saveAbandonedBooking,
-  getAbandonedBooking
+  getAbandonedBooking,
+  updateBookingStatusAfterPayment
 } from "@/actions/booking-actions"
 import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress"
@@ -788,19 +789,22 @@ export default function UniversalBookingWizard({
   const handleFinalSubmit = async () => {
     
     if (!pendingBookingId) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "מזהה הזמנה חסר. אנא נסה שוב.",
+      })
       return
     }
 
     setIsLoading(true)
 
     try {
-      // Import the updateBookingStatusAfterPayment function
-      const { updateBookingStatusAfterPayment } = await import("@/actions/booking-actions")
-      
+      // ✅ תיקון: import סטטי במקום דינמי + מזהה עסקה אמיתי
       const result = await updateBookingStatusAfterPayment(
         pendingBookingId,
         "success",
-        `DEMO-${Date.now()}` // Demo transaction ID
+        `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` // Proper transaction ID format
       )
       
       if (result.success && result.booking) {

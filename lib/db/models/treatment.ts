@@ -31,7 +31,7 @@ const TreatmentDurationSchema = new Schema<ITreatmentDuration>(
     minutes: {
       type: Number,
       required: true,
-      enum: [60, 75, 90, 120],
+      enum: [50, 60, 75, 90, 120],
     },
     price: {
       type: Number,

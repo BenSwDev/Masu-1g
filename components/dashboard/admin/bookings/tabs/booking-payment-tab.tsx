@@ -338,6 +338,44 @@ export default function BookingPaymentTab({ booking, onUpdate }: BookingPaymentT
           </ul>
         </CardContent>
       </Card>
+
+      {/* Cancellation Policy */}
+      <Card className="border-amber-200 bg-amber-50">
+        <CardHeader>
+          <CardTitle className="text-amber-800 text-sm flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            מדיניות ביטול הזמנות
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-amber-700 text-sm">
+          <div className="space-y-3">
+            <div className="p-3 bg-amber-100 rounded-lg border border-amber-200">
+              <h4 className="font-semibold text-amber-800 mb-2">דמי ביטול לפי זמן:</h4>
+              <ul className="space-y-2">
+                <li className="flex justify-between">
+                  <span>ביטול מרגע ביצוע ההזמנה:</span>
+                  <span className="font-semibold">5% מסכום ההזמנה</span>
+                </li>
+                <li className="flex justify-between">
+                  <span>ביטול פחות מ-24 שעות מהטיפול:</span>
+                  <span className="font-semibold">50% מסכום ההזמנה</span>
+                </li>
+                <li className="flex justify-between">
+                  <span>ביטול פחות מ-4 שעות מהטיפול:</span>
+                  <span className="font-semibold text-red-600">100% מסכום ההזמנה</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="text-xs text-amber-600">
+              <p>
+                <strong>הערה:</strong> דמי הביטול יחושבו על בסיס סכום ההזמנה הכולל ({formatCurrency(booking.totalPrice)})
+                ויופיעו כניכוי מהסכום המוחזר ללקוח.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 } 

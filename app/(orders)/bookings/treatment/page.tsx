@@ -18,7 +18,16 @@ export default async function UniversalBookTreatmentPage({
 }) {
   try {
     const session = await getServerSession(authOptions)
-    const resolvedSearchParams = await searchParams
+    
+    // ✅ תיקון: טיפול בטוח ב-searchParams
+    let resolvedSearchParams: { voucherCode?: string; subscriptionId?: string; category?: string } = {}
+    try {
+      resolvedSearchParams = searchParams ? await searchParams : {}
+    } catch (error) {
+      console.error("Error resolving searchParams:", error)
+      resolvedSearchParams = {}
+    }
+    
     const voucherCode = resolvedSearchParams?.voucherCode
     const subscriptionId = resolvedSearchParams?.subscriptionId
     const category = resolvedSearchParams?.category

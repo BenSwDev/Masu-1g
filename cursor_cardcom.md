@@ -1,5 +1,5 @@
 # מדריך ליישום תקשורת עם CARDCOM
-_Exported on 6/18/2025 at 12:55:28 GMT+3 from Cursor (1.0.0)_
+_Exported on 6/16/2025 at 12:55:28 GMT+3 from Cursor (1.0.0)_
 
 ---
 

@@ -60,11 +60,13 @@ interface PopulatedUserSubscription extends IUserSubscription {
 interface UserSubscriptionAdminCardProps {
   userSubscription: PopulatedUserSubscription
   onSubscriptionUpdate: () => void
+  onEdit: (subscription: PopulatedUserSubscription) => void
 }
 
 export default function UserSubscriptionAdminCard({
   userSubscription,
   onSubscriptionUpdate,
+  onEdit,
 }: UserSubscriptionAdminCardProps) {
   const { t } = useTranslation()
   const [showCancelDialog, setShowCancelDialog] = useState(false)
@@ -110,7 +112,7 @@ export default function UserSubscriptionAdminCard({
   }
 
   const handleEdit = () => {
-    toast.info(t("common.featureComingSoon"))
+    onEdit(userSubscription)
   }
 
   const getStatusInfo = (status: string) => {

@@ -8,17 +8,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button" // Corrected path
 import { Badge } from "@/components/common/ui/badge"
 import { useState, useEffect } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
 import UserSubscriptionRow from "./user-subscription-row"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { User } from "next-auth"
-import { getAllUserSubscriptions } from "@/app/dashboard/(user)/(roles)/admin/user-subscriptions/actions"
+import { getAllUserSubscriptions, updateUserSubscription } from "@/app/dashboard/(user)/(roles)/admin/user-subscriptions/actions"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { useIsMobile } from "@/components/common/ui/use-mobile" // Corrected import
 import UserSubscriptionAdminCard from "./user-subscription-admin-card"
 import UserSubscriptionAdminCardSkeleton from "./user-subscription-admin-card-skeleton"
+import UserSubscriptionForm from "./user-subscription-form"
 
 interface PopulatedUserSubscription extends IUserSubscription {
   userId: Pick<User, "name" | "email"> & { _id: string }
@@ -51,6 +53,10 @@ const AdminUserSubscriptionsClient = ({
   const [limit, setLimit] = useState(initialPagination?.limit || 10)
   const [isLoading, setIsLoading] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [currentSubscription, setCurrentSubscription] = useState<PopulatedUserSubscription | null>(null)
 
   const [userSubscriptions, setUserSubscriptions] = useState<PopulatedUserSubscription[]>(initialUserSubscriptions)
   const [pagination, setPagination] = useState(initialPagination)
@@ -128,6 +134,25 @@ const AdminUserSubscriptionsClient = ({
 
   const handleExport = () => {
     toast.info(t("common.featureComingSoon"))
+  }
+
+  const handleEdit = (sub: PopulatedUserSubscription) => {
+    setCurrentSubscription(sub)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleUpdate = async (data: FormData) => {
+    if (!currentSubscription) return
+    setIsSaving(true)
+    const result = await updateUserSubscription(String(currentSubscription._id), data)
+    if (result.success) {
+      toast.success(t("userSubscriptions.updateSuccess"))
+      setIsEditDialogOpen(false)
+      await fetchData(currentPage, limit, searchTerm, statusFilter)
+    } else {
+      toast.error(result.error || t("userSubscriptions.updateError"))
+    }
+    setIsSaving(false)
   }
 
   const TableSkeleton = () => (
@@ -351,6 +376,7 @@ const AdminUserSubscriptionsClient = ({
               key={String(subscription._id)}
               userSubscription={subscription}
               onSubscriptionUpdate={() => fetchData(currentPage, limit, searchTerm, statusFilter)}
+              onEdit={handleEdit}
             />
           ))}
         </div>
@@ -395,6 +421,7 @@ const AdminUserSubscriptionsClient = ({
                       key={String(subscription._id)}
                       userSubscription={subscription}
                       onSubscriptionUpdate={() => fetchData(currentPage, limit, searchTerm, statusFilter)}
+                      onEdit={handleEdit}
                     />
                   ))}
                 </tbody>
@@ -459,6 +486,26 @@ const AdminUserSubscriptionsClient = ({
           </div>
         </div>
       )}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("common.edit")}</DialogTitle>
+          </DialogHeader>
+          {currentSubscription && (
+            <UserSubscriptionForm
+              initialData={{
+                _id: String(currentSubscription._id),
+                remainingQuantity: currentSubscription.remainingQuantity,
+                expiryDate: String(currentSubscription.expiryDate),
+                totalQuantity: currentSubscription.totalQuantity,
+              }}
+              onSubmit={handleUpdate}
+              isLoading={isSaving}
+              onCancel={() => setIsEditDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

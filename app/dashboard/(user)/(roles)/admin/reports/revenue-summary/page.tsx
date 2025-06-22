@@ -25,8 +25,8 @@ export default async function RevenueSummaryPage() {
         <div className="flex items-center gap-2">
           <PieChart className="h-6 w-6" />
           <Heading
-            title="Revenue Summary"
-            description="Overall revenue breakdown"
+            titleKey="reports.revenueSummary.title"
+            descriptionKey="reports.revenueSummary.description"
           />
         </div>
         <Separator />

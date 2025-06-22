@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
@@ -39,6 +40,7 @@ export default function RevenueSummaryClient() {
   const [totals, setTotals] = useState<RevenueTotals | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   const fetchData = async () => {
     setLoading(true)
@@ -50,7 +52,7 @@ export default function RevenueSummaryClient() {
       const json = await res.json()
       setTotals(json.totals)
     } catch (e) {
-      setError("Failed to load data")
+      setError("reports.revenueSummary.errorLoading")
     } finally {
       setLoading(false)
     }
@@ -64,48 +66,48 @@ export default function RevenueSummaryClient() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Revenue Summary
+          {t("reports.revenueSummary.title")}
           <Select value={timeframe} onValueChange={setTimeframe}>
             <SelectTrigger className="w-28">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="day">Day</SelectItem>
-              <SelectItem value="week">Week</SelectItem>
-              <SelectItem value="month">Month</SelectItem>
-              <SelectItem value="year">Year</SelectItem>
+              <SelectItem value="day">{t("reports.timeframes.day")}</SelectItem>
+              <SelectItem value="week">{t("reports.timeframes.week")}</SelectItem>
+              <SelectItem value="month">{t("reports.timeframes.month")}</SelectItem>
+              <SelectItem value="year">{t("reports.timeframes.year")}</SelectItem>
             </SelectContent>
           </Select>
         </CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div>Loading...</div>
+          <div>{t("reports.revenueSummary.loading")}</div>
         ) : error ? (
-          <div className="text-red-600">{error}</div>
+          <div className="text-red-600">{t(error)}</div>
         ) : totals ? (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-center">Amount</TableHead>
+                <TableHead>{t("reports.revenueSummary.table.type")}</TableHead>
+                <TableHead className="text-center">{t("reports.revenueSummary.table.amount")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow>
-                <TableCell>Bookings</TableCell>
+                <TableCell>{t("reports.revenueSummary.table.bookings")}</TableCell>
                 <TableCell className="text-center">{totals.bookings}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell>Voucher Purchases</TableCell>
+                <TableCell>{t("reports.revenueSummary.table.voucherPurchases")}</TableCell>
                 <TableCell className="text-center">{totals.voucherPurchases}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell>Subscription Purchases</TableCell>
+                <TableCell>{t("reports.revenueSummary.table.subscriptionPurchases")}</TableCell>
                 <TableCell className="text-center">{totals.subscriptionPurchases}</TableCell>
               </TableRow>
               <TableRow>
-                <TableCell className="font-semibold">Total Revenue</TableCell>
+                <TableCell className="font-semibold">{t("reports.revenueSummary.table.totalRevenue")}</TableCell>
                 <TableCell className="text-center font-semibold">{totals.totalRevenue}</TableCell>
               </TableRow>
             </TableBody>

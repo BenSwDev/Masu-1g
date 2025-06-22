@@ -4502,5 +4502,47 @@
       "recipientDetailsRequired": "יש למלא את פרטי המקבל"
     },
     "yourDetails": "הפרטים שלך"
+  },
+  "reports": {
+    "timeframes": {
+      "day": "יום",
+      "week": "שבוע",
+      "month": "חודש",
+      "year": "שנה"
+    },
+    "bookingsByProfessional": {
+      "title": "הזמנות לפי מטפל",
+      "description": "מספר ההזמנות לכל מטפל",
+      "table": {
+        "professional": "מטפל",
+        "bookings": "הזמנות"
+      },
+      "errorLoading": "שגיאה בטעינת הנתונים",
+      "loading": "טוען..."
+    },
+    "bookingsByCity": {
+      "title": "הזמנות לפי עיר",
+      "description": "מספר ההזמנות לפי עיר",
+      "table": {
+        "city": "עיר",
+        "bookings": "הזמנות"
+      },
+      "errorLoading": "שגיאה בטעינת הנתונים",
+      "loading": "טוען..."
+    },
+    "revenueSummary": {
+      "title": "סיכום הכנסות",
+      "description": "סיכום ההכנסות מהזמנות, שוברים ומנויים",
+      "table": {
+        "type": "סוג",
+        "amount": "סכום",
+        "bookings": "הזמנות",
+        "voucherPurchases": "רכישות שוברים",
+        "subscriptionPurchases": "רכישות מנויים",
+        "totalRevenue": "סה\"כ הכנסות"
+      },
+      "errorLoading": "שגיאה בטעינת הנתונים",
+      "loading": "טוען..."
+    }
   }
-}  
+}

@@ -10,6 +10,9 @@ export interface IFixedHours {
     amount: number
     type: "fixed" | "percentage" // 'fixed' for ₪, 'percentage' for %
     description?: string // Optional description for the surcharge
+    // New fields for time-range based price addition
+    priceAdditionStartTime?: string | null // "HH:mm" - start time for surcharge (null = from start of working hours)
+    priceAdditionEndTime?: string | null   // "HH:mm" - end time for surcharge (null = until end of working hours)
   }
   notes?: string
   // New fields for advanced booking control
@@ -36,6 +39,9 @@ export interface ISpecialDateEvent {
     amount: number
     type: "fixed" | "percentage"
     description?: string
+    // New fields for time-range based price addition
+    priceAdditionStartTime?: string | null // "HH:mm" - start time for surcharge (null = from start of working hours)
+    priceAdditionEndTime?: string | null   // "HH:mm" - end time for surcharge (null = until end of working hours)
   }
   notes?: string
   // New fields for advanced booking control
@@ -59,6 +65,9 @@ export interface ISpecialDate {
     amount: number
     type: "fixed" | "percentage" // 'fixed' for ₪, 'percentage' for %
     description?: string // Optional description for the surcharge
+    // New fields for time-range based price addition
+    priceAdditionStartTime?: string | null // "HH:mm" - start time for surcharge (null = from start of working hours)
+    priceAdditionEndTime?: string | null   // "HH:mm" - end time for surcharge (null = until end of working hours)
   }
   notes?: string
 }
@@ -89,6 +98,23 @@ const PriceAdditionSchema = new Schema(
       // Added description to schema
       type: String,
       maxlength: 100,
+    },
+    // New fields for time-range based price addition
+    priceAdditionStartTime: {
+      type: String,
+      validate: {
+        validator: (v: string) => !v || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v),
+        message: "Price addition start time must be in HH:mm format",
+      },
+      default: null,
+    },
+    priceAdditionEndTime: {
+      type: String,
+      validate: {
+        validator: (v: string) => !v || /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(v),
+        message: "Price addition end time must be in HH:mm format",
+      },
+      default: null,
     },
   },
   { _id: false },

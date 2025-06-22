@@ -30,7 +30,13 @@ export async function getWorkingHoursSettings() {
           startTime: "09:00",
           endTime: "17:00",
           hasPriceAddition: false,
-          priceAddition: { amount: 0, type: "fixed" },
+          priceAddition: { 
+            amount: 0, 
+            type: "fixed",
+            description: "",
+            priceAdditionStartTime: null,
+            priceAdditionEndTime: null,
+          },
           notes: "",
           minimumBookingAdvanceHours: 2,
           cutoffTime: null,
@@ -77,6 +83,19 @@ export async function getWorkingHoursSettings() {
   }
 }
 
+// Helper function to sanitize price addition data
+function sanitizePriceAddition(priceAddition: any) {
+  if (!priceAddition) return { amount: 0, type: "fixed", description: "", priceAdditionStartTime: null, priceAdditionEndTime: null }
+  
+  return {
+    amount: Number(priceAddition.amount) || 0,
+    type: priceAddition.type || "fixed",
+    description: priceAddition.description || "",
+    priceAdditionStartTime: priceAddition.priceAdditionStartTime || null,
+    priceAdditionEndTime: priceAddition.priceAdditionEndTime || null,
+  }
+}
+
 /**
  * Updates the fixed hours settings
  */
@@ -87,31 +106,31 @@ export async function updateFixedHours(fixedHours: IFixedHours[]) {
     logger.info(`[${requestId}] Updating fixed hours`)
     await dbConnect()
 
-    // Validate fixedHours
-    if (!fixedHours || fixedHours.length !== 7) {
-      logger.error(`[${requestId}] Invalid fixedHours length: ${fixedHours?.length}`)
-      return { success: false, error: "Fixed hours must contain exactly 7 days" }
-    }
+    // Sanitize and validate the data
+    const sanitizedFixedHours = fixedHours.map((day) => ({
+      ...day,
+      priceAddition: sanitizePriceAddition(day.priceAddition),
+      professionalShare: {
+        amount: Number(day.professionalShare?.amount) || 70,
+        type: day.professionalShare?.type || "percentage",
+      },
+    }))
 
-    // Ensure all days 0-6 are present
-    for (let i = 0; i < 7; i++) {
-      const dayExists = fixedHours.some((day) => day.dayOfWeek === i)
-      if (!dayExists) {
-        logger.error(`[${requestId}] Missing day ${i} in fixedHours`)
-        return { success: false, error: `Missing day ${i} in fixed hours` }
-      }
-    }
-
-    const settings = await WorkingHoursSettings.findOne()
+    // Find existing settings or create new one
+    let settings = await WorkingHoursSettings.findOne()
     if (!settings) {
-      logger.error(`[${requestId}] No settings found`)
-      return { success: false, error: "Working hours settings not found" }
+      settings = new WorkingHoursSettings({
+        fixedHours: sanitizedFixedHours,
+        specialDates: [],
+        specialDateEvents: [],
+      })
+    } else {
+      settings.fixedHours = sanitizedFixedHours
     }
 
-    settings.fixedHours = fixedHours
     await settings.save()
-
     revalidatePath("/dashboard/admin/working-hours")
+
     logger.info(`[${requestId}] Successfully updated fixed hours`)
     return { success: true }
   } catch (error) {
@@ -136,7 +155,13 @@ export async function updateSpecialDates(specialDates: ISpecialDate[]) {
       return { success: false, error: "Working hours settings not found" }
     }
 
-    settings.specialDates = specialDates
+    // Sanitize the special dates data
+    const sanitizedSpecialDates = specialDates.map((date) => ({
+      ...date,
+      priceAddition: sanitizePriceAddition(date.priceAddition),
+    }))
+
+    settings.specialDates = sanitizedSpecialDates
     await settings.save()
 
     revalidatePath("/dashboard/admin/working-hours")
@@ -164,7 +189,17 @@ export async function updateSpecialDateEvents(specialDateEvents: ISpecialDateEve
       return { success: false, error: "Working hours settings not found" }
     }
 
-    settings.specialDateEvents = specialDateEvents
+    // Sanitize the special date events data
+    const sanitizedSpecialDateEvents = specialDateEvents.map((event) => ({
+      ...event,
+      priceAddition: sanitizePriceAddition(event.priceAddition),
+      professionalShare: {
+        amount: Number(event.professionalShare?.amount) || 70,
+        type: event.professionalShare?.type || "percentage",
+      },
+    }))
+
+    settings.specialDateEvents = sanitizedSpecialDateEvents
     await settings.save()
 
     revalidatePath("/dashboard/admin/working-hours")

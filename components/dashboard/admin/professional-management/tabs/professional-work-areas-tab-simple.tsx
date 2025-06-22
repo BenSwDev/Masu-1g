@@ -12,40 +12,7 @@ import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
 import { MapPin, Plus, Trash2, Save, Loader2, AlertTriangle, Check, Navigation } from "lucide-react"
 import { updateProfessionalWorkAreas } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
-import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
+import type { Professional } from "@/lib/types/professional"
 
 interface City {
   _id: string

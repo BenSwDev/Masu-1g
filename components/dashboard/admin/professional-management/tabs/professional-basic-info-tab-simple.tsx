@@ -14,50 +14,9 @@ import { Separator } from "@/components/common/ui/separator"
 import { useToast } from "@/components/common/ui/use-toast"
 import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX } from "lucide-react"
 import { updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
-import type { IUser } from "@/lib/db/models/user"
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
-  profileImage?: string
-  treatments: Array<{
-    treatmentId: string
-    durationId?: string
-    professionalPrice: number
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface ProfessionalBasicInfoTabProps {
-  professional: Professional
-  onUpdate: (professional: Partial<Professional>) => void
-  loading: boolean
-  isCreatingNew?: boolean
-  onCreated?: (professional: Professional) => void
-}
+interface ProfessionalBasicInfoTabProps extends ProfessionalTabProps {}
 
 export default function ProfessionalBasicInfoTab({
   professional,

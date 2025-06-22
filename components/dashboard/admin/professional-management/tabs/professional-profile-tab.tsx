@@ -11,49 +11,10 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Switch } from "@/components/common/ui/switch"
 import { useToast } from "@/components/common/ui/use-toast"
 import { User, Save, Loader2, AlertTriangle, CheckCircle } from "lucide-react"
-import { updateProfessionalProfile } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
+import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
-import type { IUser } from "@/lib/db/models/user"
 
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface ProfessionalProfileTabProps {
-  professional: Professional
-  onUpdate: (professional: Partial<Professional>) => void
-  loading: boolean
-  isCreatingNew?: boolean
-  onCreated?: (professional: Professional) => void
-}
+interface ProfessionalProfileTabProps extends ProfessionalTabProps {}
 
 export default function ProfessionalProfileTab({
   professional,
@@ -70,7 +31,7 @@ export default function ProfessionalProfileTab({
     email: professional.userId.email || "",
     phone: professional.userId.phone || "",
     gender: professional.userId.gender || "",
-    birthDate: professional.userId.birthDate ? new Date(professional.userId.birthDate).toISOString().split('T')[0] : ""
+    birthDate: professional.userId.dateOfBirth ? new Date(professional.userId.dateOfBirth).toISOString().split('T')[0] : ""
   })
   
   const [professionalDetails, setProfessionalDetails] = useState({
@@ -115,19 +76,14 @@ export default function ProfessionalProfileTab({
 
       // Here you would typically make an API call to update the professional profile
       // For now, we'll update the local state
-      const updatedUser = {
-        ...professional.userId,
-        ...userDetails,
-        birthDate: userDetails.birthDate ? new Date(userDetails.birthDate) : professional.userId.birthDate
-      }
-      
-      const updatedProfessional = {
-        ...professional,
-        userId: updatedUser,
-        ...professionalDetails
-      }
-      
-      onUpdate(updatedProfessional)
+      onUpdate({
+        ...professionalDetails,
+        userId: {
+          ...professional.userId,
+          ...userDetails,
+          dateOfBirth: userDetails.birthDate ? new Date(userDetails.birthDate) : professional.userId.dateOfBirth
+        }
+      })
       setHasChanges(false)
       
       toast({

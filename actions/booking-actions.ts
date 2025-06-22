@@ -221,6 +221,9 @@ export async function getAvailableTimeSlots(
     // Pre-calculate surcharge details for better performance
     let surchargeAmount = 0
     let surchargeDescription = ""
+    let surchargeStartTimeMinutes: number | null = null
+    let surchargeEndTimeMinutes: number | null = null
+    
     if (daySettings.hasPriceAddition && daySettings.priceAddition && daySettings.priceAddition.amount > 0) {
       const basePriceForSurchargeCalc =
         treatment.pricingType === "fixed"
@@ -233,6 +236,21 @@ export async function getAvailableTimeSlots(
           : basePriceForSurchargeCalc * (daySettings.priceAddition.amount / 100)
 
       surchargeDescription = daySettings.priceAddition.description || daySettings.notes || "bookings.surcharges.specialTime"
+      
+      // Calculate surcharge time range
+      if (daySettings.priceAddition.priceAdditionStartTime) {
+        const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime.split(":").map(Number)
+        surchargeStartTimeMinutes = (startHour * 60) + startMinute
+      } else {
+        surchargeStartTimeMinutes = startTimeMinutes // Default to start of working hours
+      }
+      
+      if (daySettings.priceAddition.priceAdditionEndTime) {
+        const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime.split(":").map(Number)
+        surchargeEndTimeMinutes = (endHour * 60) + endMinute
+      } else {
+        surchargeEndTimeMinutes = endTimeMinutes // Default to end of working hours
+      }
     }
 
     // Generate slots with optimized loop
@@ -253,8 +271,15 @@ export async function getAvailableTimeSlots(
           isAvailable: true,
         }
 
-        // Add price surcharge if applicable
-        if (surchargeAmount > 0) {
+        // Check if current slot is within surcharge time range
+        const isInSurchargeRange = surchargeAmount > 0 && 
+          surchargeStartTimeMinutes !== null && 
+          surchargeEndTimeMinutes !== null &&
+          currentMinutes >= surchargeStartTimeMinutes && 
+          currentMinutes <= surchargeEndTimeMinutes
+
+        // Add price surcharge if applicable and within time range
+        if (isInSurchargeRange) {
           slot.surcharge = {
             description: surchargeDescription,
             amount: surchargeAmount,
@@ -350,21 +375,44 @@ export async function calculateBookingPrice(
         daySettings.priceAddition?.amount &&
         daySettings.priceAddition.amount > 0
       ) {
-        const surchargeBase = basePrice
-        const surchargeAmount =
-          daySettings.priceAddition.type === "fixed"
-            ? daySettings.priceAddition.amount
-            : surchargeBase * (daySettings.priceAddition.amount / 100)
+        // Check if booking time is within surcharge time range
+        const bookingTimeMinutes = bookingDateTime.getHours() * 60 + bookingDateTime.getMinutes()
+        let isInSurchargeRange = true // Default to true if no time range specified
+        
+        if (daySettings.priceAddition.priceAdditionStartTime || daySettings.priceAddition.priceAdditionEndTime) {
+          let surchargeStartMinutes = 0
+          let surchargeEndMinutes = 24 * 60 // Default to full day
+          
+          if (daySettings.priceAddition.priceAdditionStartTime) {
+            const [startHour, startMinute] = daySettings.priceAddition.priceAdditionStartTime.split(":").map(Number)
+            surchargeStartMinutes = (startHour * 60) + startMinute
+          }
+          
+          if (daySettings.priceAddition.priceAdditionEndTime) {
+            const [endHour, endMinute] = daySettings.priceAddition.priceAdditionEndTime.split(":").map(Number)
+            surchargeEndMinutes = (endHour * 60) + endMinute
+          }
+          
+          isInSurchargeRange = bookingTimeMinutes >= surchargeStartMinutes && bookingTimeMinutes <= surchargeEndMinutes
+        }
+        
+        if (isInSurchargeRange) {
+          const surchargeBase = basePrice
+          const surchargeAmount =
+            daySettings.priceAddition.type === "fixed"
+              ? daySettings.priceAddition.amount
+              : surchargeBase * (daySettings.priceAddition.amount / 100)
 
-        if (surchargeAmount > 0) {
-          priceDetails.surcharges.push({
-            description:
-              daySettings.priceAddition.description ||
-              daySettings.notes ||
-              `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
-            amount: surchargeAmount,
-          })
-          priceDetails.totalSurchargesAmount += surchargeAmount
+          if (surchargeAmount > 0) {
+            priceDetails.surcharges.push({
+              description:
+                daySettings.priceAddition.description ||
+                daySettings.notes ||
+                `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
+              amount: surchargeAmount,
+            })
+            priceDetails.totalSurchargesAmount += surchargeAmount
+          }
         }
       }
     }

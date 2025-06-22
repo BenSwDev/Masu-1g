@@ -7,56 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Badge } from "@/components/common/ui/badge"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { FileText, Upload, Download, Eye, Trash2, AlertTriangle, Check, Clock } from "lucide-react"
-import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
-import type { IUser } from "@/lib/db/models/user"
-
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
-  profileImage?: string
-  treatments: Array<{
-    treatmentId: string
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  bankDetails?: {
-    bankName: string
-    branchNumber: string
-    accountNumber: string
-  }
-  documents?: Array<{
-    id: string
-    type: string
-    name: string
-    status: "pending" | "approved" | "rejected"
-    uploadDate: Date
-    approvedDate?: Date
-    rejectedDate?: Date
-    rejectionReason?: string
-    fileUrl?: string
-  }>
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
+import type { Professional } from "@/lib/types/professional"
 
 interface ProfessionalDocumentsTabProps {
   professional: Professional

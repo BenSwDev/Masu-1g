@@ -15,62 +15,7 @@ import { Search, Filter, Users, UserCheck, UserX, Clock, AlertTriangle, Plus, Re
 import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { ProfessionalStatus, IProfessionalProfile } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
-
-// תיקון הInterface להתאמה מושלמת למודל
-interface Professional {
-  _id: string
-  userId: IUser
-  status: ProfessionalStatus
-  isActive: boolean
-  specialization?: string
-  experience?: string
-  certifications?: string[]
-  bio?: string
-  profileImage?: string
-  treatments: Array<{
-    treatmentId: string
-    durationId?: string
-    professionalPrice: number
-    treatmentName?: string
-  }>
-  workAreas: Array<{
-    cityId: string
-    cityName: string
-    distanceRadius: "20km" | "40km" | "60km" | "80km" | "unlimited"
-    coveredCities: string[]
-  }>
-  totalEarnings: number
-  pendingPayments: number
-  adminNotes?: string
-  rejectionReason?: string
-  appliedAt: Date
-  approvedAt?: Date
-  rejectedAt?: Date
-  lastActiveAt?: Date
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface PaginationInfo {
-  page: number
-  limit: number
-  total: number
-  pages: number
-}
-
-interface StatsInfo {
-  total: number
-  active: number
-  byStatus: Record<string, number>
-}
-
-interface ProfessionalManagementProps {
-  initialProfessionals: Professional[]
-  totalPages: number
-  currentPage: number
-  initialSearch?: string
-  initialStats?: StatsInfo
-}
+import type { Professional, ProfessionalManagementProps, PaginationInfo, ProfessionalStats } from "@/lib/types/professional"
 
 // פונקציה לטרנספורמציה של נתונים מהשרת
 function transformProfessionalData(rawProfessional: IProfessionalProfile & { userId: IUser }): Professional {
@@ -127,7 +72,7 @@ export function ProfessionalManagement({
     total: 0,
     pages: initialTotalPages
   })
-  const [stats, setStats] = useState<StatsInfo>(initialStats)
+  const [stats, setStats] = useState<ProfessionalStats>(initialStats)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState(initialSearch)

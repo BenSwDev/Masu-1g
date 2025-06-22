@@ -58,8 +58,32 @@ const priceAdditionSchema = z
   .object({
     amount: z.number().min(0, "Amount must be positive"),
     type: z.enum(["fixed", "percentage"]),
+    description: z.string().optional(),
+    // New fields for time-range based price addition
+    priceAdditionStartTime: z.string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
+      .optional()
+      .nullable(),
+    priceAdditionEndTime: z.string()
+      .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format HH:MM")
+      .optional()
+      .nullable(),
   })
   .optional()
+  .refine((data) => {
+    // Validate that start time is before end time if both are provided
+    if (data?.priceAdditionStartTime && data?.priceAdditionEndTime) {
+      const startTime = data.priceAdditionStartTime.split(':').map(Number)
+      const endTime = data.priceAdditionEndTime.split(':').map(Number)
+      const startMinutes = startTime[0] * 60 + startTime[1]
+      const endMinutes = endTime[0] * 60 + endTime[1]
+      return startMinutes < endMinutes
+    }
+    return true
+  }, {
+    message: "Start time must be before end time",
+    path: ["priceAdditionEndTime"]
+  })
 
 const fixedHoursSchema = z.object({
   dayOfWeek: z.number().min(0).max(6),
@@ -136,7 +160,13 @@ const getDefaultFixedHours = (): IFixedHours[] => {
       startTime: "09:00",
       endTime: "17:00",
       hasPriceAddition: false,
-      priceAddition: { amount: 0, type: "fixed" as const },
+      priceAddition: { 
+        amount: 0, 
+        type: "fixed" as const,
+        description: "",
+        priceAdditionStartTime: null,
+        priceAdditionEndTime: null,
+      },
       notes: "",
       minimumBookingAdvanceHours: 2,
       cutoffTime: null,
@@ -184,7 +214,13 @@ export default function WorkingHoursClient() {
       endTime: "17:00",
       hasPriceAddition: false,
       notes: "",
-      priceAddition: { amount: 0, type: "fixed" },
+      priceAddition: { 
+        amount: 0, 
+        type: "fixed",
+        description: "",
+        priceAdditionStartTime: null,
+        priceAdditionEndTime: null,
+      },
       minimumBookingAdvanceHours: 2,
       cutoffTime: undefined,
       professionalShare: { amount: 0, type: "fixed" },
@@ -207,7 +243,13 @@ export default function WorkingHoursClient() {
       minimumBookingAdvanceHours: 2,
       cutoffTime: undefined,
       professionalShare: { amount: 0, type: "fixed" },
-      priceAddition: { amount: 0, type: "fixed" },
+      priceAddition: { 
+        amount: 0, 
+        type: "fixed",
+        description: "",
+        priceAdditionStartTime: null,
+        priceAdditionEndTime: null,
+      },
     },
   })
 
@@ -747,56 +789,103 @@ export default function WorkingHoursClient() {
                                       )}
                                     />
                                     {hasPriceAddition && (
-                                      <div className="flex gap-2">
-                                        <FormField
-                                          control={fixedHoursForm.control}
-                                          name={`fixedHours.${index}.priceAddition.amount`}
-                                          render={({ field }) => (
-                                            <FormItem>
-                                              <FormControl>
-                                                <Input
-                                                  type="number"
-                                                  min="0"
-                                                  step="0.01"
-                                                  placeholder="0"
-                                                  {...field}
-                                                  onChange={(e) =>
-                                                    field.onChange(Number.parseFloat(e.target.value) || 0)
-                                                  }
-                                                  className="w-20"
-                                                  aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
-                                                />
-                                              </FormControl>
-                                              <FormMessage />
-                                            </FormItem>
-                                          )}
-                                        />
-                                        <FormField
-                                          control={fixedHoursForm.control}
-                                          name={`fixedHours.${index}.priceAddition.type`}
-                                          render={({ field }) => (
-                                            <FormItem>
-                                              <Select
-                                                onValueChange={field.onChange}
-                                                defaultValue={field.value || "fixed"}
-                                              >
+                                      <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                          <FormField
+                                            control={fixedHoursForm.control}
+                                            name={`fixedHours.${index}.priceAddition.amount`}
+                                            render={({ field }) => (
+                                              <FormItem>
                                                 <FormControl>
-                                                  <SelectTrigger
-                                                    className="w-[90px]"
-                                                    aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
-                                                  >
-                                                    <SelectValue />
-                                                  </SelectTrigger>
+                                                  <Input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    placeholder="0"
+                                                    {...field}
+                                                    onChange={(e) =>
+                                                      field.onChange(Number.parseFloat(e.target.value) || 0)
+                                                    }
+                                                    className="w-20"
+                                                    aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
+                                                  />
                                                 </FormControl>
-                                                <SelectContent>
-                                                  <SelectItem value="fixed">₪</SelectItem>
-                                                  <SelectItem value="percentage">%</SelectItem>
-                                                </SelectContent>
-                                              </Select>
-                                              <FormMessage />
-                                            </FormItem>
-                                          )}
-                                        />
+                                                <FormMessage />
+                                              </FormItem>
+                                            )}
+                                          />
+                                          <FormField
+                                            control={fixedHoursForm.control}
+                                            name={`fixedHours.${index}.priceAddition.type`}
+                                            render={({ field }) => (
+                                              <FormItem>
+                                                <Select
+                                                  onValueChange={field.onChange}
+                                                  defaultValue={field.value || "fixed"}
+                                                >
+                                                  <FormControl>
+                                                    <SelectTrigger
+                                                      className="w-[90px]"
+                                                      aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
+                                                    >
+                                                      <SelectValue />
+                                                    </SelectTrigger>
+                                                  </FormControl>
+                                                  <SelectContent>
+                                                    <SelectItem value="fixed">₪</SelectItem>
+                                                    <SelectItem value="percentage">%</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                              </FormItem>
+                                            )}
+                                          />
+                                        </div>
+                                        
+                                        {/* Time Range Fields */}
+                                        <div className="text-xs text-muted-foreground mb-1">
+                                          {t("workingHours.priceAdditionTimeRangeHelp")}
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <FormField
+                                            control={fixedHoursForm.control}
+                                            name={`fixedHours.${index}.priceAddition.priceAdditionStartTime`}
+                                            render={({ field }) => (
+                                              <FormItem>
+                                                <FormControl>
+                                                  <Input
+                                                    type="time"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
+                                                    className="w-[120px]"
+                                                    aria-label={`${t("workingHours.priceAdditionStartTime")} for ${dayNames[dayOfWeek]}`}
+                                                  />
+                                                </FormControl>
+                                                <FormMessage />
+                                              </FormItem>
+                                            )}
+                                          />
+                                          <FormField
+                                            control={fixedHoursForm.control}
+                                            name={`fixedHours.${index}.priceAddition.priceAdditionEndTime`}
+                                            render={({ field }) => (
+                                              <FormItem>
+                                                <FormControl>
+                                                  <Input
+                                                    type="time"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
+                                                    className="w-[120px]"
+                                                    aria-label={`${t("workingHours.priceAdditionEndTime")} for ${dayNames[dayOfWeek]}`}
+                                                  />
+                                                </FormControl>
+                                                <FormMessage />
+                                              </FormItem>
+                                            )}
+                                          />
+                                        </div>
                                       </div>
                                     )}
                                   </div>
@@ -921,53 +1010,104 @@ export default function WorkingHoursClient() {
                                 />
 
                                 {hasPriceAddition && (
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                      control={fixedHoursForm.control}
-                                      name={`fixedHours.${index}.priceAddition.amount`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>{t("workingHours.amount")}</FormLabel>
-                                          <FormControl>
-                                            <Input
-                                              type="number"
-                                              min="0"
-                                              step="0.01"
-                                              placeholder="0"
-                                              {...field}
-                                              onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
-                                              className="w-full"
-                                              aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
-                                            />
-                                          </FormControl>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
-                                    <FormField
-                                      control={fixedHoursForm.control}
-                                      name={`fixedHours.${index}.priceAddition.type`}
-                                      render={({ field }) => (
-                                        <FormItem>
-                                          <FormLabel>{t("workingHours.type")}</FormLabel>
-                                          <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                  <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <FormField
+                                        control={fixedHoursForm.control}
+                                        name={`fixedHours.${index}.priceAddition.amount`}
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>{t("workingHours.amount")}</FormLabel>
                                             <FormControl>
-                                              <SelectTrigger
+                                              <Input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="0"
+                                                {...field}
+                                                onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
                                                 className="w-full"
-                                                aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
-                                              >
-                                                <SelectValue />
-                                              </SelectTrigger>
+                                                aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
+                                              />
                                             </FormControl>
-                                            <SelectContent>
-                                              <SelectItem value="fixed">₪</SelectItem>
-                                              <SelectItem value="percentage">%</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                          <FormMessage />
-                                        </FormItem>
-                                      )}
-                                    />
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                      <FormField
+                                        control={fixedHoursForm.control}
+                                        name={`fixedHours.${index}.priceAddition.type`}
+                                        render={({ field }) => (
+                                          <FormItem>
+                                            <FormLabel>{t("workingHours.type")}</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                              <FormControl>
+                                                <SelectTrigger
+                                                  className="w-full"
+                                                  aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
+                                                >
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                              </FormControl>
+                                              <SelectContent>
+                                                <SelectItem value="fixed">₪</SelectItem>
+                                                <SelectItem value="percentage">%</SelectItem>
+                                              </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                          </FormItem>
+                                        )}
+                                      />
+                                    </div>
+                                    
+                                    {/* Time Range Fields for Mobile */}
+                                    <div>
+                                      <div className="text-xs text-muted-foreground mb-2">
+                                        {t("workingHours.priceAdditionTimeRangeDescription")}
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                          control={fixedHoursForm.control}
+                                          name={`fixedHours.${index}.priceAddition.priceAdditionStartTime`}
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>{t("workingHours.priceAdditionStartTime")}</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  type="time"
+                                                  {...field}
+                                                  value={field.value || ""}
+                                                  placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
+                                                  className="w-full"
+                                                  aria-label={`${t("workingHours.priceAdditionStartTime")} for ${dayNames[dayOfWeek]}`}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={fixedHoursForm.control}
+                                          name={`fixedHours.${index}.priceAddition.priceAdditionEndTime`}
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel>{t("workingHours.priceAdditionEndTime")}</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  type="time"
+                                                  {...field}
+                                                  value={field.value || ""}
+                                                  placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
+                                                  className="w-full"
+                                                  aria-label={`${t("workingHours.priceAdditionEndTime")} for ${dayNames[dayOfWeek]}`}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+                                    </div>
                                   </div>
                                 )}
 
@@ -1183,49 +1323,96 @@ export default function WorkingHoursClient() {
                           />
 
                           {specialDateForm.watch("hasPriceAddition") && (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <FormField
-                                control={specialDateForm.control}
-                                name="priceAddition.amount"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>{t("workingHours.amount")}</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="0"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-
-                              <FormField
-                                control={specialDateForm.control}
-                                name="priceAddition.type"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>{t("workingHours.type")}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField
+                                  control={specialDateForm.control}
+                                  name="priceAddition.amount"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>{t("workingHours.amount")}</FormLabel>
                                       <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue />
-                                        </SelectTrigger>
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          placeholder="0"
+                                          {...field}
+                                          onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                                        />
                                       </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="fixed">₪</SelectItem>
-                                        <SelectItem value="percentage">%</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={specialDateForm.control}
+                                  name="priceAddition.type"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>{t("workingHours.type")}</FormLabel>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                        <FormControl>
+                                          <SelectTrigger>
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          <SelectItem value="fixed">₪</SelectItem>
+                                          <SelectItem value="percentage">%</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              
+                              {/* Time Range Fields for Special Date */}
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-2">
+                                  {t("workingHours.priceAdditionTimeRangeDescription")}
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <FormField
+                                    control={specialDateForm.control}
+                                    name="priceAddition.priceAdditionStartTime"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>{t("workingHours.priceAdditionStartTime")}</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            type="time"
+                                            {...field}
+                                            value={field.value || ""}
+                                            placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={specialDateForm.control}
+                                    name="priceAddition.priceAdditionEndTime"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>{t("workingHours.priceAdditionEndTime")}</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            type="time"
+                                            {...field}
+                                            value={field.value || ""}
+                                            placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
+                              </div>
                             </div>
                           )}
 
@@ -1730,48 +1917,95 @@ export default function WorkingHoursClient() {
                           />
 
                           {specialEventForm.watch("hasPriceAddition") && (
-                            <div className="flex gap-2">
-                              <FormField
-                                control={specialEventForm.control}
-                                name="priceAddition.amount"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>{t("workingHours.amount")}</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        placeholder="0"
-                                        {...field}
-                                        onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={specialEventForm.control}
-                                name="priceAddition.type"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>{t("workingHours.type")}</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                            <div className="space-y-4">
+                              <div className="flex gap-2">
+                                <FormField
+                                  control={specialEventForm.control}
+                                  name="priceAddition.amount"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>{t("workingHours.amount")}</FormLabel>
                                       <FormControl>
-                                        <SelectTrigger className="w-24">
-                                          <SelectValue />
-                                        </SelectTrigger>
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          placeholder="0"
+                                          {...field}
+                                          onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
+                                        />
                                       </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="fixed">₪</SelectItem>
-                                        <SelectItem value="percentage">%</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={specialEventForm.control}
+                                  name="priceAddition.type"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>{t("workingHours.type")}</FormLabel>
+                                      <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
+                                        <FormControl>
+                                          <SelectTrigger className="w-24">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                          <SelectItem value="fixed">₪</SelectItem>
+                                          <SelectItem value="percentage">%</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                              
+                              {/* Time Range Fields for Special Event */}
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-2">
+                                  {t("workingHours.priceAdditionTimeRangeDescription")}
+                                </div>
+                                <div className="flex gap-2">
+                                  <FormField
+                                    control={specialEventForm.control}
+                                    name="priceAddition.priceAdditionStartTime"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>{t("workingHours.priceAdditionStartTime")}</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            type="time"
+                                            {...field}
+                                            value={field.value || ""}
+                                            placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  <FormField
+                                    control={specialEventForm.control}
+                                    name="priceAddition.priceAdditionEndTime"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>{t("workingHours.priceAdditionEndTime")}</FormLabel>
+                                        <FormControl>
+                                          <Input
+                                            type="time"
+                                            {...field}
+                                            value={field.value || ""}
+                                            placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
+                                          />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
+                              </div>
                             </div>
                           )}
 

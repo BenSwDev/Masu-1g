@@ -1349,13 +1349,17 @@ export async function professionalAcceptBooking(
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
 
+          const baseUrl =
+            process.env.NEXT_PUBLIC_APP_URL ||
+            process.env.NEXTAUTH_URL ||
+            ""
           const notificationData = {
             type: "BOOKING_CONFIRMED_CLIENT",
             userName: clientUser.name || "לקוח/ה",
             professionalName: professional.name || "מטפל/ת",
             bookingDateTime: acceptedBooking.bookingDateTime,
             treatmentName: treatment.name,
-            bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${acceptedBooking._id.toString()}`,
+            bookingDetailsLink: `${baseUrl}/dashboard/member/bookings?bookingId=${acceptedBooking._id.toString()}`,
           }
 
           const recipients = []
@@ -1766,13 +1770,17 @@ export async function assignProfessionalToBooking(
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
           const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
 
+          const baseUrl =
+            process.env.NEXT_PUBLIC_APP_URL ||
+            process.env.NEXTAUTH_URL ||
+            ""
           const clientNotificationData = {
             type: "BOOKING_CONFIRMED_CLIENT",
             userName: clientUser.name || "לקוח/ה",
             professionalName: professional.name || "מטפל/ת",
             bookingDateTime: assignedBooking.bookingDateTime,
             treatmentName: treatment.name,
-            bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${assignedBooking._id.toString()}`,
+            bookingDetailsLink: `${baseUrl}/dashboard/member/bookings?bookingId=${assignedBooking._id.toString()}`,
           }
 
           const clientRecipients = []

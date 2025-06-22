@@ -56,9 +56,10 @@ export default function ReviewDetailModal({
 
     setIsUpdating(true)
     try {
-      await updateReviewResponse(review._id, {
-        professionalResponse: professionalResponse.trim()
-      })
+      await updateReviewResponse(
+        review._id,
+        professionalResponse.trim()
+      )
       
       toast.success(t("adminReviews.responseUpdated"))
       onUpdate()

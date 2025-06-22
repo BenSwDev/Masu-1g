@@ -459,7 +459,11 @@ export async function sendReviewReminder(
     const lang =
       (booking.userId as any)?.notificationPreferences?.language || "he"
     const recipientName = booking.recipientName || (booking.userId as any)?.name || ""
-    const reviewLink = `${process.env.NEXTAUTH_URL || ""}/dashboard/member/bookings?bookingId=${booking._id.toString()}`
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXTAUTH_URL ||
+      ""
+    const reviewLink = `${baseUrl}/dashboard/member/bookings?bookingId=${booking._id.toString()}`
 
     const recipients: NotificationRecipient[] = []
 

@@ -5,9 +5,36 @@ import { MasuLogo } from "@/components/common/masu-logo"
 import { useTranslation } from "@/lib/translations/i18n"
 import Link from "next/link"
 import { ArrowLeft, Sparkles } from "lucide-react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/common/ui/dialog"
+import { Input } from "@/components/common/ui/input"
 
 export function LandingHero() {
   const { t, dir } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [code, setCode] = useState("")
+  const router = useRouter()
+
+  const handleCodeSubmit = () => {
+    try {
+      if (code.trim()) {
+        router.push(`/bookings/treatment?voucherCode=${encodeURIComponent(code.trim())}`)
+      } else {
+        router.push("/bookings/treatment")
+      }
+    } catch (e) {
+      router.push("/bookings/treatment")
+    } finally {
+      setOpen(false)
+    }
+  }
 
   return (
     <section className="relative min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-start justify-center overflow-hidden">
@@ -87,8 +114,33 @@ export function LandingHero() {
               <div className="text-gray-600">{dir === "rtl" ? "שביעות רצון" : "Customer Satisfaction"}</div>
             </div>
           </div>
+
+          {/* Have Code Button */}
+          <div className="mt-8 flex justify-center">
+            <Button size="lg" onClick={() => setOpen(true)}>
+              {t("landing.haveCode")}
+            </Button>
+          </div>
         </div>
       </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{dir === "rtl" ? "הזן קוד" : "Enter Code"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder={t("landing.codePlaceholder")}
+            />
+            <DialogFooter>
+              <Button onClick={handleCodeSubmit}>{t("common.submit")}</Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <style jsx>{`
         @keyframes blob {

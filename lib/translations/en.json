@@ -1559,6 +1559,8 @@
     "bookSubscription": "Book Subscription",
     "bookGiftVoucher": "Book Gift Voucher",
     "useVoucher": "I have a voucher/coupon",
+    "haveCode": "I have a code",
+    "codePlaceholder": "Enter code",
     "professionalInterface": "Professional Interface",
     "partnerInterface": "Partner Interface",
     "adminInterface": "Admin Interface"

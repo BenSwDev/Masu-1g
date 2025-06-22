@@ -41,22 +41,49 @@ interface GuestAddressStepProps {
   onPrev: () => void
 }
 
+// ✅ תיקון: Validation מקיף לכתובות
 const addressSchema = z.object({
-  city: z.string().min(2, { message: "יש להזין עיר" }),
-  street: z.string().min(2, { message: "יש להזין רחוב" }),
-  houseNumber: z.string().min(1, { message: "יש להזין מספר בית" }),
+  city: z.string()
+    .min(2, { message: "יש להזין עיר" })
+    .max(50, { message: "שם העיר ארוך מדי" })
+    .regex(/^[\u0590-\u05FF\u0020a-zA-Z\-]+$/, { message: "העיר מכילה תווים לא תקינים" }),
+  street: z.string()
+    .min(2, { message: "יש להזין רחוב" })
+    .max(100, { message: "שם הרחוב ארוך מדי" })
+    .regex(/^[\u0590-\u05FF\u0020a-zA-Z0-9\-\'\"]+$/, { message: "הרחוב מכיל תווים לא תקינים" }),
+  houseNumber: z.string()
+    .min(1, { message: "יש להזין מספר בית" })
+    .max(10, { message: "מספר הבית ארוך מדי" })
+    .regex(/^[0-9א-ת\-\/]+$/, { message: "מספר בית לא תקין" }),
   addressType: z.enum(["apartment", "house", "office", "hotel", "other"], { message: "יש לבחור סוג כתובת" }),
-  floor: z.string().optional(),
-  apartmentNumber: z.string().optional(),
-  entrance: z.string().optional(),
+  floor: z.string().max(5, { message: "מספר קומה ארוך מדי" }).optional(),
+  apartmentNumber: z.string().max(10, { message: "מספר דירה ארוך מדי" }).optional(),
+  entrance: z.string().max(10, { message: "כניסה ארוכה מדי" }).optional(),
   parking: z.boolean().optional(),
-  notes: z.string().optional(),
-  // Type-specific fields
-  doorName: z.string().optional(),
-  buildingName: z.string().optional(),
-  hotelName: z.string().optional(),
-  roomNumber: z.string().optional(),
-  instructions: z.string().optional(),
+  notes: z.string().max(500, { message: "הערה ארוכה מדי" }).optional(),
+  // Type-specific fields with validation
+  doorName: z.string().max(50, { message: "שם הדלת ארוך מדי" }).optional(),
+  buildingName: z.string().max(100, { message: "שם הבניין ארוך מדי" }).optional(),
+  hotelName: z.string().max(100, { message: "שם המלון ארוך מדי" }).optional(),
+  roomNumber: z.string().max(20, { message: "מספר חדר ארוך מדי" }).optional(),
+  instructions: z.string().max(300, { message: "הוראות ארוכות מדי" }).optional(),
+}).refine((data) => {
+  // Apartment-specific validation
+  if (data.addressType === "apartment") {
+    return data.apartmentNumber && data.apartmentNumber.trim().length > 0
+  }
+  // Hotel-specific validation
+  if (data.addressType === "hotel") {
+    return data.hotelName && data.hotelName.trim().length > 0
+  }
+  // Office-specific validation
+  if (data.addressType === "office") {
+    return data.buildingName && data.buildingName.trim().length > 0
+  }
+  return true
+}, {
+  message: "יש למלא שדות חובה לפי סוג הכתובת",
+  path: ["addressType"]
 })
 
 type GuestAddressFormData = z.infer<typeof addressSchema>

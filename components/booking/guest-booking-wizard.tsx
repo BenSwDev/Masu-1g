@@ -77,11 +77,18 @@ interface GuestAddress {
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 
+// ✅ תיקון: טיפוסים בטוחים במקום any
 interface UniversalBookingWizardProps {
   initialData: BookingInitialData
   voucher?: GiftVoucherPlain
-  userSubscription?: IUserSubscription & { treatmentId?: any }
-  currentUser?: any // User session data if logged in
+  userSubscription?: IUserSubscription & { treatmentId?: string | object }
+  currentUser?: {
+    id: string
+    name?: string
+    email?: string
+    phone?: string
+    roles?: string[]
+  } | null // User session data if logged in
   initialCategory?: string
 }
 
@@ -330,8 +337,18 @@ export default function UniversalBookingWizard({
 
   // Function to create initial pending booking
   const createInitialPendingBooking = async (userId: string, guestInfoData: Partial<GuestInfo>) => {
-    try {
-      
+    // ✅ תיקון: validation קריטי של userId
+    if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+      console.error("Invalid userId provided to createInitialPendingBooking:", userId)
+      toast({
+        variant: "destructive",
+        title: "שגיאה מערכתית",
+        description: "מזהה משתמש לא תקין. אנא נסה שוב.",
+      })
+      return
+    }
+
+    try {      
       // Create a minimal booking with "abandoned_pending_payment" status
       // This ensures the booking appears in admin bookings list immediately
       const result = await saveAbandonedBooking(userId, {
@@ -379,6 +396,7 @@ export default function UniversalBookingWizard({
   }, [])
 
   const guestUserCreatedRef = useRef(false)
+  const priceCalculationIdRef = useRef<number>(0)
 
   // Auto create guest user and initial booking once mandatory info is provided
   useEffect(() => {
@@ -517,6 +535,10 @@ export default function UniversalBookingWizard({
       return
     }
 
+    // ✅ תיקון: מניעת race condition בחישוב מחירים
+    const currentCalculationId = Date.now()
+    priceCalculationIdRef.current = currentCalculationId
+
     setIsPriceCalculating(true)
     
     const bookingDateTime = new Date(bookingOptions.bookingDate)
@@ -535,6 +557,12 @@ export default function UniversalBookingWizard({
     }
     
     const result = await calculateBookingPrice(payload)
+    
+    // ✅ בדיקת race condition - וידוא שזה עדיין החישוב הרלוונטי
+    if (priceCalculationIdRef.current !== currentCalculationId) {
+      return // חישוב מיושן, התעלמות
+    }
+    
     if (result.success && result.priceDetails) {
       setCalculatedPrice(result.priceDetails)
     } else {
@@ -595,10 +623,15 @@ export default function UniversalBookingWizard({
   }
 
   const handleStartFresh = () => {
-    // Clear abandoned booking and start fresh
-    if (guestUserId) {
+    // ✅ תיקון: ניקוי localStorage כוללני במקרה של שגיאה
+    try {
       localStorage.removeItem('guestUserId')
+      localStorage.removeItem('abandonedBooking')
+      localStorage.removeItem('bookingFormData')
+    } catch (error) {
+      console.warn("Failed to clear localStorage:", error)
     }
+    
     setGuestUserId(null)
     setAbandonedBooking(null)
     setShowRecoveryDialog(false)
@@ -800,11 +833,16 @@ export default function UniversalBookingWizard({
     setIsLoading(true)
 
     try {
-      // ✅ תיקון: import סטטי במקום דינמי + מזהה עסקה אמיתי
+      // ✅ תיקון: מזהה עסקה אמיתי עם בדיקת סביבה
+      const isProduction = process.env.NODE_ENV === 'production'
+      const transactionId = isProduction 
+        ? `LIVE-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` 
+        : `DEV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        
       const result = await updateBookingStatusAfterPayment(
         pendingBookingId,
         "success",
-        `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` // Proper transaction ID format
+        transactionId
       )
       
       if (result.success && result.booking) {

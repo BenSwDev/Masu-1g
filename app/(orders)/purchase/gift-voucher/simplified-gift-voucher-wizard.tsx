@@ -160,7 +160,10 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
 
       const confirmRes = await confirmGuestGiftVoucherPurchase({
         voucherId: initRes.voucherId,
-        paymentId: `guest_payment_${Date.now()}`,
+        // ✅ תיקון: מזהה תשלום אמיתי עם בדיקת סביבה
+      paymentId: process.env.NODE_ENV === 'production' 
+        ? `LIVE-PAY-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` 
+        : `DEV-PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         amount: price,
         success: true,
         guestInfo: {

@@ -258,6 +258,32 @@ export async function getAvailableTimeSlots(
       }
     }
 
+    // ✅ תיקון: בדיקת הזמנות קיימות למניעת דאבל בוקינג
+    const startOfDay = new Date(selectedDateUTC)
+    startOfDay.setHours(0, 0, 0, 0)
+    
+    const endOfDay = new Date(selectedDateUTC)
+    endOfDay.setHours(23, 59, 59, 999)
+    
+    const existingBookings = await Booking.find({
+      bookingDateTime: {
+        $gte: startOfDay,
+        $lte: endOfDay
+      },
+      status: { $in: ["pending_professional", "confirmed", "professional_en_route", "in_progress"] },
+      treatmentId: treatmentId
+    }).select('bookingDateTime').lean()
+    
+    // יצירת סט של שעות תפוסות לביצועים מיטביים
+    const bookedTimeSlots = new Set(
+      existingBookings.map(booking => {
+        const bookingTime = new Date(booking.bookingDateTime)
+        const hours = String(bookingTime.getHours()).padStart(2, '0')
+        const minutes = String(bookingTime.getMinutes()).padStart(2, '0')
+        return `${hours}:${minutes}`
+      })
+    )
+
     // Generate slots with optimized loop
     for (let currentMinutes = startTimeMinutes; currentMinutes <= endTimeMinutes; currentMinutes += slotInterval) {
       // Convert back to hours and minutes
@@ -267,8 +293,10 @@ export async function getAvailableTimeSlots(
       // Format the time as HH:MM
       const timeStr = `${String(slotHour).padStart(2, '0')}:${String(slotMinute).padStart(2, '0')}`
       
-      // Check availability
-      const isSlotAvailable = !isToday || currentMinutes >= minimumBookingTimeMinutes
+      // Check availability - both time-based and booking conflicts
+      const isTimeAvailable = !isToday || currentMinutes >= minimumBookingTimeMinutes
+      const isSlotNotBooked = !bookedTimeSlots.has(timeStr)
+      const isSlotAvailable = isTimeAvailable && isSlotNotBooked
 
       if (isSlotAvailable) {
         const slot: TimeSlot = {

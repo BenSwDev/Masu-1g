@@ -267,9 +267,13 @@ export async function getProfessionalById(id: string): Promise<CreateProfessiona
 }
 
 export async function createProfessional(formData: FormData): Promise<CreateProfessionalResult> {
+  console.log('createProfessional called with formData keys:', Array.from(formData.keys()))
+  
   try {
     // Authorize user
+    console.log('Checking admin authorization...')
     await requireAdminAuth()
+    console.log('Admin authorization successful')
 
     // Extract and validate form data
     const rawData = {
@@ -280,12 +284,18 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
       birthDate: formData.get("birthDate") as string
     }
 
+    console.log('Raw data extracted:', rawData)
+
     const validatedData = CreateProfessionalSchema.parse(rawData)
+    console.log('Data validation successful')
 
     // Connect to database
+    console.log('Connecting to database...')
     await dbConnect()
+    console.log('Database connection successful')
 
     // Check if user already exists
+    console.log('Checking for existing user...')
     const existingUser = await User.findOne({ 
       $or: [
         { email: validatedData.email },
@@ -294,52 +304,67 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
     })
     
     if (existingUser) {
+      console.log('User already exists:', existingUser.email)
       return { 
         success: false, 
         error: "משתמש עם אימייל או טלפון זה כבר קיים במערכת" 
       }
     }
 
+    console.log('No existing user found, proceeding with creation...')
+
     // Create user with transaction
     const session = await User.startSession()
+    console.log('Database session started')
     
     try {
       await session.withTransaction(async () => {
-    // Create user
-    const hashedPassword = await hash("123456", 12) // Default password
+        console.log('Starting transaction...')
+        
+        // Create user
+        const hashedPassword = await hash("123456", 12) // Default password
+        console.log('Password hashed successfully')
+        
         const user = await User.create([{
           name: validatedData.name,
           email: validatedData.email,
           phone: validatedData.phone,
           gender: validatedData.gender,
           birthDate: validatedData.birthDate ? new Date(validatedData.birthDate) : undefined,
-      password: hashedPassword,
-      roles: ["professional"],
+          password: hashedPassword,
+          roles: ["professional"],
           activeRole: "professional",
           isEmailVerified: false,
           isPhoneVerified: false
         }], { session })
 
-    // Create professional profile
-        await ProfessionalProfile.create([{
+        console.log('User created successfully with ID:', user[0]._id)
+
+        // Create professional profile
+        const professionalProfile = await ProfessionalProfile.create([{
           userId: user[0]._id,
-      status: "pending_admin_approval" as ProfessionalStatus,
+          status: "pending_admin_approval" as ProfessionalStatus,
           isActive: true,
           treatments: [],
           workAreas: [],
           totalEarnings: 0,
           pendingPayments: 0,
           financialTransactions: [],
-      appliedAt: new Date()
+          appliedAt: new Date()
         }], { session })
+        
+        console.log('Professional profile created successfully with ID:', professionalProfile[0]._id)
       })
     } finally {
       await session.endSession()
+      console.log('Database session ended')
     }
 
     // Fetch the created professional with populated user data
+    console.log('Fetching created professional...')
     const createdUser = await User.findOne({ email: validatedData.email }).select("_id")
     if (!createdUser) {
+      console.error('Created user not found!')
       throw new Error("שגיאה ביצירת המשתמש")
     }
 
@@ -350,25 +375,35 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
       .lean()
 
     if (!createdProfessionalQuery) {
+      console.error('Created professional profile not found!')
       throw new Error("שגיאה ביצירת המטפל")
     }
 
+    console.log('Professional created successfully:', {
+      professionalId: createdProfessionalQuery._id,
+      userName: (createdProfessionalQuery.userId as any).name,
+      userEmail: (createdProfessionalQuery.userId as any).email
+    })
+
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
+    console.log('Page revalidated')
 
     return { 
       success: true, 
-      professional: createdProfessionalQuery as any as ProfessionalWithUser 
+      professional: createdProfessionalQuery as unknown as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error creating professional:", error)
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack available')
     
     if (error instanceof Error && error.message.includes("Unauthorized")) {
       return { success: false, error: "אין לך הרשאה ליצור מטפל" }
     }
     
     if (error instanceof z.ZodError) {
-      const fieldErrors = error.errors.map(err => err.message).join(", ")
+      const fieldErrors = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(", ")
+      console.error('Validation errors:', fieldErrors)
       return { success: false, error: `שגיאות בנתונים: ${fieldErrors}` }
     }
     
@@ -454,7 +489,7 @@ export async function updateProfessionalStatus(
 
     return { 
       success: true, 
-      professional: updatedProfessional as any as ProfessionalWithUser 
+      professional: updatedProfessional as unknown as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error updating professional status:", error)

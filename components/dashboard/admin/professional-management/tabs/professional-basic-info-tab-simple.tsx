@@ -15,6 +15,7 @@ import { useToast } from "@/components/common/ui/use-toast"
 import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX } from "lucide-react"
 import { updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
+import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 
 interface ProfessionalBasicInfoTabProps extends ProfessionalTabProps {}
 
@@ -69,10 +70,14 @@ export default function ProfessionalBasicInfoTab({
   }
 
   const handleCreateProfessional = async () => {
+    console.log('handleCreateProfessional started')
+    console.log('Form data:', formData)
+    
     const errors = validateForm()
     setValidationErrors(errors)
     
     if (Object.keys(errors).length > 0) {
+      console.log('Validation errors found:', errors)
       toast({
         variant: "destructive",
         title: "שגיאות בטופס",
@@ -81,6 +86,7 @@ export default function ProfessionalBasicInfoTab({
       return
     }
 
+    console.log('Validation passed, starting creation process...')
     setCreationLoading(true)
     
     try {
@@ -93,10 +99,21 @@ export default function ProfessionalBasicInfoTab({
         formDataToSend.append("birthDate", formData.birthDate)
       }
 
+      console.log('FormData prepared, calling createProfessional...')
+      console.log('FormData entries:', Array.from(formDataToSend.entries()))
+
       const { createProfessional } = await import("@/app/dashboard/(user)/(roles)/admin/professional-management/actions")
+      console.log('createProfessional imported successfully')
+      
       const result = await createProfessional(formDataToSend)
+      console.log('createProfessional result:', { 
+        success: result.success, 
+        hasProfessional: !!result.professional,
+        error: result.error 
+      })
       
       if (result.success && result.professional) {
+        console.log('Professional created successfully')
         toast({
           title: "הצלחה",
           description: "המטפל נוצר בהצלחה"
@@ -137,11 +154,13 @@ export default function ProfessionalBasicInfoTab({
           updatedAt: result.professional.updatedAt
         }
         
+        console.log('Professional transformed, calling onUpdate and onCreated...')
         onUpdate(transformedProfessional)
         if (onCreated) {
           onCreated(transformedProfessional)
         }
       } else {
+        console.error('Professional creation failed:', result.error)
         toast({
           variant: "destructive",
           title: "שגיאה",
@@ -150,6 +169,7 @@ export default function ProfessionalBasicInfoTab({
       }
     } catch (error) {
       console.error("Error creating professional:", error)
+      console.error("Error stack:", error instanceof Error ? error.stack : 'No stack available')
       toast({
         variant: "destructive",
         title: "שגיאה",
@@ -157,6 +177,7 @@ export default function ProfessionalBasicInfoTab({
       })
     } finally {
       setCreationLoading(false)
+      console.log('handleCreateProfessional completed')
     }
   }
 

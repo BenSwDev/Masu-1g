@@ -61,6 +61,14 @@ export function ProfessionalManagement({
   initialSearch = "",
   initialStats = { total: 0, active: 0, byStatus: {} }
 }: ProfessionalManagementProps) {
+  console.log('ProfessionalManagement component rendered with props:', {
+    initialProfessionalsCount: initialProfessionals.length,
+    initialTotalPages,
+    initialPage,
+    initialSearch,
+    initialStats
+  })
+
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const router = useRouter()
@@ -81,12 +89,35 @@ export function ProfessionalManagement({
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [error, setError] = useState<string | null>(null)
 
+  console.log('Component state initialized:', {
+    professionalsCount: professionals.length,
+    pagination,
+    stats,
+    loading,
+    searchTerm,
+    statusFilter,
+    sortBy,
+    sortOrder,
+    error
+  })
+
   // Fetch professionals with improved error handling
   const fetchProfessionals = useCallback(async (page = 1, showLoadingState = true) => {
+    console.log('fetchProfessionals called with:', { page, showLoadingState, searchTerm, statusFilter, sortBy, sortOrder })
+    
     if (showLoadingState) setLoading(true)
     setError(null)
     
     try {
+      console.log('Calling getProfessionals with options:', {
+        page,
+        limit: pagination.limit,
+        search: searchTerm,
+        status: statusFilter === "all" ? undefined : statusFilter,
+        sortBy,
+        sortOrder
+      })
+
       const result = await getProfessionals({
         page,
         limit: pagination.limit,
@@ -96,23 +127,41 @@ export function ProfessionalManagement({
         sortOrder
       })
 
+      console.log('getProfessionals result:', { 
+        success: result.success, 
+        hasData: !!result.data,
+        professionalsCount: result.data?.professionals?.length || 0,
+        error: result.error 
+      })
+
       if (result.success && result.data) {
         const transformedProfessionals = (result.data.professionals || []).map(transformProfessionalData)
+        console.log('Transformed professionals:', transformedProfessionals.length, 'items')
+        
         setProfessionals(transformedProfessionals)
         setPagination(result.data.pagination)
         setStats(result.data.stats)
+        
+        console.log('State updated successfully:', {
+          professionalsCount: transformedProfessionals.length,
+          pagination: result.data.pagination,
+          stats: result.data.stats
+        })
       } else {
-        setError(result.error || "שגיאה בטעינת המטפלים")
+        const errorMessage = result.error || "שגיאה בטעינת המטפלים"
+        console.error('Failed to fetch professionals:', errorMessage)
+        setError(errorMessage)
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בטעינת המטפלים"
+          description: errorMessage
         })
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "שגיאה בטעינת המטפלים"
+      console.error("Error in fetchProfessionals:", error)
+      console.error("Error stack:", error instanceof Error ? error.stack : 'No stack available')
       setError(errorMessage)
-      console.error("Error fetching professionals:", error)
       toast({
         variant: "destructive",
         title: "שגיאה",

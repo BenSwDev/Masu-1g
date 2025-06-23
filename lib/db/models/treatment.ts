@@ -10,6 +10,7 @@ export interface ITreatmentDuration extends Document {
 }
 
 export interface ITreatment extends Document {
+  _id: mongoose.Types.ObjectId
   name: string
   category: "massages" | "facial_treatments"
   description?: string

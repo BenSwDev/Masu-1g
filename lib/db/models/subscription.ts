@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document } from "mongoose"
 
 export interface ISubscription extends Document {
+  _id: mongoose.Types.ObjectId
   name: string
   description: string
   quantity: number

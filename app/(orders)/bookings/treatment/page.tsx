@@ -1,4 +1,4 @@
-import { getGuestBookingInitialData, getBookingInitialData } from "@/actions/booking-actions"
+import { getGuestBookingInitialData, getBookingInitialData } from "@/actions/unified-booking-actions"
 import { getGiftVoucherByCode } from "@/actions/gift-voucher-actions"
 import { getUserSubscriptionById } from "@/actions/user-subscription-actions"
 import UniversalBookingWizard from "@/components/booking/guest-booking-wizard"
@@ -74,7 +74,13 @@ export default async function UniversalBookTreatmentPage({
         {/* Universal booking wizard for both logged-in users and guests */}
         <UniversalBookingWizard
           initialData={initialDataResult.data}
-          currentUser={session?.user}
+          currentUser={session?.user ? {
+            id: session.user.id,
+            name: session.user.name || undefined,
+            email: session.user.email || undefined,
+            phone: (session.user as any).phone || undefined,
+            roles: session.user.roles || undefined
+          } : null}
           voucher={voucher}
           userSubscription={subscription}
           initialCategory={category}

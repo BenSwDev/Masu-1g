@@ -9,7 +9,7 @@ import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bo
 import EnhancedBookingModal from "./enhanced-booking-modal"
 import type { PopulatedBooking } from "@/types/booking"
 import { Heading } from "@/components/common/ui/heading"
-import { getAllBookings } from "@/actions/booking-actions"
+import { getAllBookings } from "@/actions/unified-booking-actions"
 import { Input } from "@/components/common/ui/input"
 import { Button } from "@/components/common/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"

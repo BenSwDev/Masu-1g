@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
 
 export interface IPartnerCouponBatch extends Document {
+  _id: mongoose.Types.ObjectId
   name: string
   description?: string
   assignedPartnerId?: Types.ObjectId // Partner User ID

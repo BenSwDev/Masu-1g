@@ -73,6 +73,7 @@ export interface ISpecialDate {
 }
 
 export interface IWorkingHoursSettings extends Document {
+  _id: mongoose.Types.ObjectId
   fixedHours: IFixedHours[]
   specialDates: ISpecialDate[] // Legacy field - will be migrated to specialDateEvents
   specialDateEvents?: ISpecialDateEvent[] // New field for grouped events

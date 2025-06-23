@@ -1,9 +1,12 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
 export interface IPasswordResetToken extends Document {
+  _id: mongoose.Types.ObjectId
   userId: mongoose.Schema.Types.ObjectId
   token: string
   expiresAt: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
 const PasswordResetTokenSchema: Schema = new Schema(

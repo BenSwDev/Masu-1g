@@ -33,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { getAvailableProfessionals, assignProfessionalToBooking, updateBookingByAdmin } from "@/actions/booking-actions"
+import { getAvailableProfessionals, assignProfessionalToBooking, updateBookingByAdmin } from "@/actions/unified-booking-actions"
 
 type TFunction = (key: string, options?: any) => string
 

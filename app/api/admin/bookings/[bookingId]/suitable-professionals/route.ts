@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { getSuitableProfessionalsForBooking } from "@/actions/booking-actions"
+import { getSuitableProfessionalsForBooking } from "@/actions/unified-booking-actions"
 
 export async function GET(
   request: NextRequest,

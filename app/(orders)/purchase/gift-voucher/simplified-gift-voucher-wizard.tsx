@@ -13,7 +13,7 @@ import type { ITreatment } from "@/lib/db/models/treatment"
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
 import { initiateGuestPurchaseGiftVoucher, confirmGuestGiftVoucherPurchase, saveAbandonedGiftVoucherPurchase, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
-import { createGuestUser } from "@/actions/booking-actions"
+import { createGuestUser } from "@/actions/unified-booking-actions"
 import type { CalculatedPriceDetails } from "@/types/booking"
 import GuestGiftVoucherConfirmation from "@/components/gift-vouchers/guest-gift-voucher-confirmation"
 
@@ -100,7 +100,7 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
     surcharges: [],
     totalSurchargesAmount: 0,
     treatmentPriceAfterSubscriptionOrTreatmentVoucher: price,
-    couponDiscount: 0,
+                  discountAmount: 0,
     voucherAppliedAmount: 0,
     finalAmount: price,
     isBaseTreatmentCoveredBySubscription: false,

@@ -65,12 +65,12 @@ async function getSuitableProfessionalsForBooking(bookingId: string): Promise<{
 }
 
 async function assignProfessionalToBooking(bookingId: string, professionalId: string) {
-  const { assignProfessionalToBooking } = await import("@/actions/booking-actions")
+  const { assignProfessionalToBooking } = await import("@/actions/unified-booking-actions")
   return await assignProfessionalToBooking(bookingId, professionalId)
 }
 
 async function sendNotificationsToSuitableProfessionals(bookingId: string) {
-  const { sendNotificationToSuitableProfessionals } = await import("@/actions/booking-actions")
+  const { sendNotificationToSuitableProfessionals } = await import("@/actions/unified-booking-actions")
   return await sendNotificationToSuitableProfessionals(bookingId)
 }
 
@@ -136,7 +136,7 @@ export function SuitableProfessionalsModal({
     
     setIsRemoving(true)
     try {
-      const { updateBookingByAdmin } = await import("@/actions/booking-actions")
+      const { updateBookingByAdmin } = await import("@/actions/unified-booking-actions")
       const result = await updateBookingByAdmin(booking._id.toString(), { 
         professionalId: "" // This will set it to null
       })

@@ -8,7 +8,7 @@ import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { ArrowLeft, UserPlus, Save } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
-import ProfessionalBasicInfoTabSimple from "./tabs/professional-basic-info-tab-simple"
+import ProfessionalProfileTab from "./tabs/professional-profile-tab"
 import type { Professional } from "@/lib/types/professional"
 import type { IUser } from "@/lib/db/models/user"
 
@@ -99,7 +99,7 @@ export function ProfessionalCreatePage() {
           <CardTitle>פרטים בסיסיים</CardTitle>
         </CardHeader>
         <CardContent>
-          <ProfessionalBasicInfoTabSimple
+          <ProfessionalProfileTab
             professional={newProfessional}
             onUpdate={() => {}} // לא נדרש עדכון במצב יצירה
             loading={isCreating}

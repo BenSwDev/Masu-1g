@@ -251,7 +251,7 @@ export async function getProfessionalById(id: string): Promise<CreateProfessiona
       return { success: false, error: "המשתמש אינו מטפל" }
     }
 
-    return { success: true, professional: professional as ProfessionalWithUser }
+    return { success: true, professional: professional as any }
   } catch (error) {
     console.error("Error getting professional:", error)
     
@@ -391,7 +391,7 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
 
     return { 
       success: true, 
-      professional: createdProfessionalQuery as unknown as ProfessionalWithUser 
+      professional: createdProfessionalQuery as any 
     }
   } catch (error) {
     console.error("Error creating professional:", error)
@@ -489,7 +489,7 @@ export async function updateProfessionalStatus(
 
     return { 
       success: true, 
-      professional: updatedProfessional as unknown as ProfessionalWithUser 
+      professional: updatedProfessional as any 
     }
   } catch (error) {
     console.error("Error updating professional status:", error)
@@ -589,7 +589,7 @@ export async function updateProfessionalTreatments(
 
     return {
       success: true,
-      professional: updatedProfessional as unknown as ProfessionalWithUser
+      professional: updatedProfessional as any
     }
 
   } catch (error) {

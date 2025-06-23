@@ -42,7 +42,7 @@ import {
 } from "@/components/common/ui/select"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
-import { assignProfessionalToBooking, getAvailableProfessionals } from "@/actions/booking-actions"
+import { assignProfessionalToBooking, getAvailableProfessionals } from "@/actions/unified-booking-actions"
 import { sendProfessionalBookingNotifications } from "@/actions/notification-service"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ProfessionalResponsesDialog } from "./professional-responses-dialog"

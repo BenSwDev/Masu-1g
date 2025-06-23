@@ -166,8 +166,8 @@ export default function ProfessionalTreatmentsTabNew({
   // Update selected treatments when professional data changes
   useEffect(() => {
     const newSelected = professional.treatments?.map(t => ({
-      treatmentId: t.treatmentId,
-      durationId: t.durationId,
+      treatmentId: String(t.treatmentId),
+      durationId: t.durationId ? String(t.durationId) : undefined,
       professionalPrice: t.professionalPrice
     })) || []
     setSelectedTreatments(newSelected)
@@ -344,8 +344,13 @@ export default function ProfessionalTreatmentsTabNew({
           description: "הטיפולים של המטפל עודכנו"
         })
         
-        // Update parent component
-        const updatedTreatments = result.professional.treatments || []
+        // Update parent component - convert ObjectId to string
+        const updatedTreatments = (result.professional.treatments || []).map((t: any) => ({
+          treatmentId: String(t.treatmentId),
+          durationId: t.durationId ? String(t.durationId) : undefined,
+          professionalPrice: t.professionalPrice,
+          treatmentName: t.treatmentName
+        }))
         onUpdate({ treatments: updatedTreatments })
         setHasChanges(false)
       } else {

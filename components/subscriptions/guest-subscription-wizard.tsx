@@ -17,7 +17,7 @@ import { Progress } from "@/components/common/ui/progress"
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
 import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
 import GuestSubscriptionConfirmation from "./guest-subscription-confirmation"
-import { createGuestUser } from "@/actions/booking-actions"
+import { createGuestUser } from "@/actions/unified-booking-actions"
 
 // Define serialized types that match the data we receive from the server
 interface SerializedSubscription {

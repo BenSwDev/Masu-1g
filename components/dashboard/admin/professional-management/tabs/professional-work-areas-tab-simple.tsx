@@ -139,7 +139,12 @@ export default function ProfessionalWorkAreasTab({
     setSaving(true)
     
     try {
-      const result = await updateProfessionalWorkAreas(professional._id, validWorkAreas)
+      // Convert string cityId to ObjectId format for server
+      const formattedWorkAreas = validWorkAreas.map(w => ({
+        ...w,
+        cityId: w.cityId // Keep as string, server will handle ObjectId conversion
+      }))
+      const result = await updateProfessionalWorkAreas(professional._id, formattedWorkAreas as any)
 
       if (result.success && result.professional) {
         toast({

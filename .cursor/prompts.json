@@ -1,0 +1,69 @@
+{
+  "testingMode": {
+    "name": "מוד בדיקה מקיפה",
+    "description": "הפעלת מוד בדיקה מקיפה עם כל הכלים",
+    "prompt": "אני עובד במוד בדיקה מקיפה של מערכת Masu. עליך לפעול על פי הכללים הבאים:\n1. בדוק באמת את הקוד - אל תסתפק בסריקה שטחית\n2. דווח בעברית פשוטה וברורה עם מיקומים מדויקים\n3. תן לי 3 אפשרויות תיקון לכל בעיה\n4. תמיד בדוק את עצמך ותודה אם משהו לא ברור\n5. השתמש בכלים מרובים במקביל (codebase_search, grep_search, read_file)\n6. אל תעבור לנושא הבא לפני שאני מאשר\nהמטרה: מערכת יציבה ב-100%",
+    "shortcut": "Ctrl+Shift+T"
+  },
+  
+  "quickPrompts": {
+    "p0": {
+      "name": "PROMPT 0 - הכנות",
+      "file": "cursor-testing/CURSOR_TESTING_PROMPTS_COMPLETE.md",
+      "section": "PROMPT 0",
+      "shortcut": "Ctrl+0"
+    },
+    "p1": {
+      "name": "PROMPT 1 - מיפוי מערכת",
+      "file": "cursor-testing/CURSOR_TESTING_PROMPTS_COMPLETE.md", 
+      "section": "PROMPT 1",
+      "shortcut": "Ctrl+1"
+    },
+    "p2": {
+      "name": "PROMPT 2 - זרימות אורחים",
+      "file": "cursor-testing/CURSOR_TESTING_PROMPTS_COMPLETE.md",
+      "section": "PROMPT 2", 
+      "shortcut": "Ctrl+2"
+    },
+    "p15": {
+      "name": "PROMPT 15 - אישור סופי",
+      "file": "cursor-testing/CURSOR_TESTING_PROMPTS_COMPLETE.md",
+      "section": "PROMPT 15",
+      "shortcut": "Ctrl+Shift+F"
+    }
+  },
+  
+  "environment": {
+    "setup": {
+      "name": "בדיקת Environment",
+      "command": "npm run test:env",
+      "description": "בדוק שכל משתני הסביבה תקינים",
+      "shortcut": "Ctrl+Shift+E"
+    },
+    "createEnv": {
+      "name": "יצירת .env.local",
+      "template": ".env.example",
+      "description": "צור קובץ .env.local מהתבנית"
+    }
+  },
+  
+  "scripts": {
+    "testFull": {
+      "name": "בדיקה מלאה",
+      "command": "npm run test:full",
+      "description": "הרץ build + lint + type-check",
+      "shortcut": "Ctrl+Shift+B"
+    },
+    "testQuick": {
+      "name": "בדיקה מהירה", 
+      "command": "npm run test:quick",
+      "description": "הרץ lint + type-check בלבד",
+      "shortcut": "Ctrl+Alt+T"
+    },
+    "devDebug": {
+      "name": "Development עם Debug",
+      "command": "npm run dev:debug",
+      "description": "הפעל שרת עם debug מלא"
+    }
+  }
+} 

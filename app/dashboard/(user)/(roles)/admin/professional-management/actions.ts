@@ -338,8 +338,13 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
     }
 
     // Fetch the created professional with populated user data
+    const createdUser = await User.findOne({ email: validatedData.email }).select("_id")
+    if (!createdUser) {
+      throw new Error("שגיאה ביצירת המשתמש")
+    }
+
     const createdProfessionalQuery = await ProfessionalProfile.findOne({ 
-      "userId": { $in: await User.find({ email: validatedData.email }).select("_id") }
+      userId: createdUser._id
     })
       .populate("userId", "name email phone gender birthDate roles")
       .lean()
@@ -353,7 +358,7 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
 
     return { 
       success: true, 
-      professional: createdProfessionalQuery as ProfessionalWithUser 
+      professional: createdProfessionalQuery as any as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error creating professional:", error)
@@ -449,7 +454,7 @@ export async function updateProfessionalStatus(
 
     return { 
       success: true, 
-      professional: updatedProfessional as ProfessionalWithUser 
+      professional: updatedProfessional as any as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error updating professional status:", error)

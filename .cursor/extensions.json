@@ -1,0 +1,40 @@
+{
+  "recommendations": [
+    "dsznajder.es7-react-js-snippets",
+    "formulahendry.auto-rename-tag", 
+    "coenraads.bracket-pair-colorizer-2",
+    "eamodio.gitlens",
+    "usernamehw.errorlens",
+    "pmneo.tsimporter",
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-eslint",
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-markdown",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.vscode-npm",
+    "formulahendry.auto-close-tag",
+    "gruntfuggly.todo-tree"
+  ],
+  
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-extension-usage-data-headers"
+  ],
+  
+  "settings": {
+    "emmet.includeLanguages": {
+      "javascript": "javascriptreact",
+      "typescript": "typescriptreact"
+    },
+    "emmet.triggerExpansionOnTab": true,
+    "typescript.preferences.quoteStyle": "double",
+    "javascript.preferences.quoteStyle": "double",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true,
+      "source.organizeImports": true
+    }
+  }
+} 

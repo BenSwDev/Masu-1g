@@ -151,29 +151,31 @@ export const PasswordResetQueries = {
   async findValidToken(token: string) {
     return PasswordResetToken.findOne({
       token,
-      expiresAt: { $gt: new Date() },
+      expiryDate: { $gt: new Date() },
+      used: false,
     })
-      .select("email expiresAt")
+      .select("userId expiryDate used")
       .lean()
       .exec()
   },
 
   // Create token with automatic cleanup
-  async createToken(email: string, token: string, expiresInMinutes = 60) {
-    // Delete any existing tokens for this email
-    await PasswordResetToken.deleteMany({ email }).exec()
+  async createToken(userId: string, token: string, expiresInMinutes = 60) {
+    // Delete any existing tokens for this user
+    await PasswordResetToken.deleteMany({ userId }).exec()
 
     return PasswordResetToken.create({
-      email,
+      userId,
       token,
-      expiresAt: new Date(Date.now() + expiresInMinutes * 60 * 1000),
+      expiryDate: new Date(Date.now() + expiresInMinutes * 60 * 1000),
+      used: false,
     })
   },
 
   // Cleanup expired tokens (run periodically)
   async cleanupExpired() {
     return PasswordResetToken.deleteMany({
-      expiresAt: { $lt: new Date() },
+      expiryDate: { $lt: new Date() },
     }).exec()
   },
 }

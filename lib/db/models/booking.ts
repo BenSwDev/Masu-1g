@@ -1,5 +1,10 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
 
+const CoordinatesSchema = new Schema({
+  lat: Number,
+  lng: Number,
+}, { _id: false })
+
 export type BookingStatus =
   | "pending_payment" // ממתין לתשלום - הזמנות לא שולמו
   | "in_process" // בטיפול - שולם אבל לא שויך מטפל (מה שהמנהל רואה)
@@ -46,6 +51,12 @@ export interface IBookingAddressSnapshot {
   city: string
   street: string
   streetNumber?: string
+  buildingNumber?: string
+  postalCode?: string
+  coordinates?: {
+    lat: number
+    lng: number
+  }
   apartment?: string
   entrance?: string
   floor?: string
@@ -218,7 +229,9 @@ const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
     fullAddress: { type: String, required: true },
     city: { type: String, required: true },
     street: { type: String, required: true },
-    streetNumber: { type: String },
+    streetNumber: { type: String, alias: "buildingNumber" },
+    postalCode: { type: String },
+    coordinates: { type: CoordinatesSchema },
     apartment: { type: String },
     entrance: { type: String },
     floor: { type: String },

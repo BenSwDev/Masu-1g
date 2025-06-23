@@ -7,6 +7,12 @@ export interface IAddress {
   city: string
   street: string
   streetNumber: string
+  buildingNumber?: string
+  postalCode?: string
+  coordinates?: {
+    lat: number
+    lng: number
+  }
   fullAddress: string
   addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other"
   

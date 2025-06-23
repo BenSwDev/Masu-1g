@@ -148,7 +148,44 @@ export interface PopulatedBooking
   consents: IBookingConsents
   enhancedPaymentDetails?: IEnhancedPaymentDetails
   review?: IBookingReview
-}
+  // Convenience computed fields used throughout the app
+  scheduledDate?: Date
+  scheduledTime?: string
+  startTime?: string
+  endTime?: string
+  paymentStatus?: string
+  totalPrice?: number
+  basePrice?: number
+  transportFee?: number
+  serviceFee?: number
+  discountAmount?: number
+  paidAmount?: number
+  couponId?: string
+  paymentMethod?: string
+  paymentMethodId?: string
+  paymentTransactionId?: string
+  professionalPaymentStatus?: string
+  professionalPaymentDate?: Date
+  paymentDate?: Date
+  professionalCommission?: number
+  paymentHistory?: any[]
+  // Additional admin and review fields
+  professionalGenderPreference?: "male" | "female" | "any"
+  statusHistory?: Array<{ status: BookingStatus; changedAt: Date }>
+  adminNotes?: string
+  customerReview?: IBookingReview & {
+    status?: string
+    reviewerName?: string
+    createdAt?: Date
+  }
+  professionalReview?: {
+    customerRating: number
+    comment?: string
+    experienceRating?: "positive" | "negative" | "neutral"
+    status?: string
+    createdAt?: Date
+  }
+  }
 
 // Ensure ITreatmentDuration is also available if not already globally typed or re-exported
 export type { ITreatmentDuration }

@@ -1,11 +1,22 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
+const CoordinatesSchema = new Schema({
+  lat: Number,
+  lng: Number,
+}, { _id: false })
+
 export interface IAddress extends Document {
   userId: mongoose.Types.ObjectId
   country: string
   city: string
   street: string
   streetNumber: string
+  buildingNumber?: string
+  postalCode?: string
+  coordinates?: {
+    lat: number
+    lng: number
+  }
   fullAddress: string // Added fullAddress field
   addressType: "apartment" | "house" | "private" | "office" | "hotel" | "other"
 
@@ -36,6 +47,7 @@ export interface IAddress extends Document {
   additionalNotes?: string
   // isDefault is not relevant for guest bookings, only for registered users
   isDefault: boolean
+  isArchived?: boolean
 
   createdAt: Date
   updatedAt: Date
@@ -65,7 +77,12 @@ const AddressSchema: Schema = new Schema(
     streetNumber: {
       type: String,
       required: true,
+      alias: "buildingNumber",
     },
+    postalCode: {
+      type: String,
+    },
+    coordinates: { type: CoordinatesSchema },
     fullAddress: {
       // Added fullAddress field definition
       type: String,
@@ -109,6 +126,10 @@ const AddressSchema: Schema = new Schema(
     },
     // isDefault is not relevant for guest bookings, only for registered users
     isDefault: {
+      type: Boolean,
+      default: false,
+    },
+    isArchived: {
       type: Boolean,
       default: false,
     },
@@ -174,6 +195,7 @@ AddressSchema.pre<IAddress>("save", function (next: () => void) {
 
 // Create indexes
 AddressSchema.index({ userId: 1, isDefault: 1 })
+AddressSchema.index({ userId: 1, isArchived: 1 })
 AddressSchema.index({ createdAt: -1 })
 AddressSchema.index({ fullAddress: "text" }) // Optional: for text search on fullAddress
 

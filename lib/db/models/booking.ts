@@ -79,6 +79,7 @@ export interface IBookingReview {
 }
 
 export interface IBooking extends Document {
+  _id: mongoose.Types.ObjectId
   bookingNumber: string // New: Unique 6-digit booking number
   userId?: Types.ObjectId // Made optional for guest bookings
   bookedByUserName?: string // New: Name of the user who made the booking

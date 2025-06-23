@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
 export interface IUserSubscription extends Document {
+  _id: mongoose.Types.ObjectId
   code: string // Unique redemption code for the subscription
   userId?: mongoose.Types.ObjectId // Made optional for guest purchases
   subscriptionId: mongoose.Types.ObjectId // Ref to Subscription model

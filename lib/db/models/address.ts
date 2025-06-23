@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
 export interface IAddress extends Document {
+  _id: mongoose.Types.ObjectId
   userId: mongoose.Types.ObjectId
   country: string
   city: string

@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
 
 export interface IReview extends Document {
+  _id: mongoose.Types.ObjectId
   bookingId: Types.ObjectId
   userId: Types.ObjectId // מי שמילא את חוות הדעת
   professionalId: Types.ObjectId // המטפל שעליו חוות הדעת

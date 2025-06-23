@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
 
 export interface ICouponUsage extends Document {
+  _id: mongoose.Types.ObjectId
   couponId: Types.ObjectId
   userId: Types.ObjectId
   orderId: Types.ObjectId // Will be used when 'regular orders' are implemented

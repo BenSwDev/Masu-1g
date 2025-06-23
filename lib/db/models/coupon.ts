@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
 
 export interface ICoupon extends Document {
+  _id: mongoose.Types.ObjectId
   code: string
   description?: string
   discountType: "percentage" | "fixedAmount"

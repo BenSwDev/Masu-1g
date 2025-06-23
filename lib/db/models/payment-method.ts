@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document } from "mongoose"
 
 export interface IPaymentMethod extends Document {
+  _id: mongoose.Types.ObjectId
   userId: string
   cardNumber: string
   expiryMonth: string

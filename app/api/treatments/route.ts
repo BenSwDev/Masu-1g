@@ -4,8 +4,6 @@ import Treatment from "@/lib/db/models/treatment"
 
 export async function GET() {
   try {
-    console.log('Treatments API: Starting request...')
-    
     // Check if MongoDB URI is configured
     if (!process.env.MONGODB_URI) {
       console.error('Treatments API: MONGODB_URI not configured')
@@ -19,19 +17,14 @@ export async function GET() {
       )
     }
 
-    console.log('Treatments API: MongoDB URI found, attempting connection...')
-    
     // Connect to database
     await dbConnect()
-    console.log('Treatments API: Database connected successfully')
     
     // Get all active treatments with complete data
     const treatments = await Treatment.find({ isActive: true })
       .select("name description category isActive pricingType fixedPrice fixedProfessionalPrice defaultDurationMinutes durations allowTherapistGenderSelection createdAt updatedAt")
       .sort({ category: 1, name: 1 })
       .lean()
-
-    console.log(`Treatments API: Found ${treatments.length} treatments`)
 
     const transformedTreatments = treatments.map(treatment => ({
       _id: treatment._id.toString(),
@@ -56,8 +49,6 @@ export async function GET() {
       createdAt: treatment.createdAt,
       updatedAt: treatment.updatedAt
     }))
-
-    console.log('Treatments API: Data transformed successfully')
 
     return NextResponse.json({
       success: true,

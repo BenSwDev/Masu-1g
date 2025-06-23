@@ -70,6 +70,8 @@ export interface CalculatedPriceDetails {
   appliedCouponId?: string // Will be ObjectId string
   appliedGiftVoucherId?: string // Will be ObjectId string
   redeemedUserSubscriptionId?: string // Will be ObjectId string
+  // Keep backward compatibility for existing code
+  couponDiscount?: number // Deprecated, use discountAmount instead
 }
 
 export interface PopulatedPriceDetails
@@ -151,6 +153,15 @@ export interface PopulatedBooking
 // Ensure ITreatmentDuration is also available if not already globally typed or re-exported
 export type { ITreatmentDuration }
 
+// PopulatedUserSubscription - Unified definition for consistency
+export interface PopulatedUserSubscription extends Omit<IUserSubscription, "userId"> {
+  userId?: Pick<IUser, "_id" | "name" | "email"> | null
+  subscriptionId: ISubscription
+  treatmentId: ITreatment
+  selectedDurationDetails?: ITreatmentDuration
+  paymentMethodId?: { _id: string; cardName?: string; cardNumber: string } | null
+}
+
 // Additional types for booking workflow
 export interface BookingInitialData {
   activeUserSubscriptions: any[]
@@ -196,4 +207,8 @@ export interface SelectedBookingOptions {
   // New unified redemption field
   redemptionCode?: string
   redemptionData?: RedemptionCode
+  // Additional fields found in the codebase
+  isFlexibleTime?: boolean
+  flexibilityRangeHours?: number
+  notes?: string
 }

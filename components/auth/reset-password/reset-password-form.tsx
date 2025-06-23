@@ -1,7 +1,6 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils/utils"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -70,9 +69,9 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
     if (password !== confirmPassword) {
       setError(
         language === "he"
-          ? "הסיסמאות אינן תואמות"
+          ? "×”×¡×™×¡×ž××•×ª ××™× ×Ÿ ×ª×•××ž×•×ª"
           : language === "ru"
-            ? "Пароли не совпадают"
+            ? "ÐŸÐ°Ñ€Ð¾Ð»Ð¸ Ð½Ðµ ÑÐ¾Ð²Ð¿Ð°Ð´Ð°ÑŽÑ‚"
             : "Passwords do not match",
       )
       return
@@ -108,9 +107,9 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-turquoise-500 border-t-transparent mx-auto mb-4"></div>
               <p className="text-sm text-muted-foreground">
                 {language === "he"
-                  ? "מאמת קישור איפוס..."
+                  ? "×ž××ž×ª ×§×™×©×•×¨ ××™×¤×•×¡..."
                   : language === "ru"
-                    ? "Проверка ссылки для сброса..."
+                    ? "ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° ÑÑÑ‹Ð»ÐºÐ¸ Ð´Ð»Ñ ÑÐ±Ñ€Ð¾ÑÐ°..."
                     : "Verifying reset link..."}
               </p>
             </div>
@@ -127,13 +126,13 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
           <CardHeader className="text-center">
             <AlertCircle className="h-16 w-16 mx-auto mb-4 text-red-500" />
             <CardTitle className="text-2xl font-bold text-red-700">
-              {language === "he" ? "קישור לא תקין" : language === "ru" ? "Недействительная ссылка" : "Invalid Link"}
+              {language === "he" ? "×§×™×©×•×¨ ×œ× ×ª×§×™×Ÿ" : language === "ru" ? "ÐÐµÐ´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ð°Ñ ÑÑÑ‹Ð»ÐºÐ°" : "Invalid Link"}
             </CardTitle>
             <CardDescription className="text-red-600">
               {language === "he"
-                ? "קישור איפוס הסיסמה לא תקין או פג תוקף"
+                ? "×§×™×©×•×¨ ××™×¤×•×¡ ×”×¡×™×¡×ž×” ×œ× ×ª×§×™×Ÿ ××• ×¤×’ ×ª×•×§×£"
                 : language === "ru"
-                  ? "Ссылка для сброса пароля недействительна или истекла"
+                  ? "Ð¡ÑÑ‹Ð»ÐºÐ° Ð´Ð»Ñ ÑÐ±Ñ€Ð¾ÑÐ° Ð¿Ð°Ñ€Ð¾Ð»Ñ Ð½ÐµÐ´ÐµÐ¹ÑÑ‚Ð²Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ð° Ð¸Ð»Ð¸ Ð¸ÑÑ‚ÐµÐºÐ»Ð°"
                   : "The password reset link is invalid or has expired"}
             </CardDescription>
           </CardHeader>
@@ -144,9 +143,9 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
                 className="inline-block px-6 py-2 bg-turquoise-500 text-white rounded-md hover:bg-turquoise-600 transition-colors"
               >
                 {language === "he"
-                  ? "בקש קישור חדש"
+                  ? "×‘×§×© ×§×™×©×•×¨ ×—×“×©"
                   : language === "ru"
-                    ? "Запросить новую ссылку"
+                    ? "Ð—Ð°Ð¿Ñ€Ð¾ÑÐ¸Ñ‚ÑŒ Ð½Ð¾Ð²ÑƒÑŽ ÑÑÑ‹Ð»ÐºÑƒ"
                     : "Request New Link"}
               </a>
             </div>
@@ -163,13 +162,13 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
           <CardHeader className="text-center">
             <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-500" />
             <CardTitle className="text-2xl font-bold text-green-700">
-              {language === "he" ? "הסיסמה אופסה!" : language === "ru" ? "Пароль сброшен!" : "Password Reset!"}
+              {language === "he" ? "×”×¡×™×¡×ž×” ××•×¤×¡×”!" : language === "ru" ? "ÐŸÐ°Ñ€Ð¾Ð»ÑŒ ÑÐ±Ñ€Ð¾ÑˆÐµÐ½!" : "Password Reset!"}
             </CardTitle>
             <CardDescription className="text-green-600">
               {language === "he"
-                ? "הסיסמה שלך אופסה בהצלחה. מעביר אותך לדף ההתחברות..."
+                ? "×”×¡×™×¡×ž×” ×©×œ×š ××•×¤×¡×” ×‘×”×¦×œ×—×”. ×ž×¢×‘×™×¨ ××•×ª×š ×œ×“×£ ×”×”×ª×—×‘×¨×•×ª..."
                 : language === "ru"
-                  ? "Ваш пароль был успешно сброшен. Перенаправление на страницу входа..."
+                  ? "Ð’Ð°Ñˆ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ Ð±Ñ‹Ð» ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ ÑÐ±Ñ€Ð¾ÑˆÐµÐ½. ÐŸÐµÑ€ÐµÐ½Ð°Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ Ð½Ð° ÑÑ‚Ñ€Ð°Ð½Ð¸Ñ†Ñƒ Ð²Ñ…Ð¾Ð´Ð°..."
                   : "Your password has been reset successfully. Redirecting to login..."}
             </CardDescription>
           </CardHeader>
@@ -186,13 +185,13 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
             <LanguageSelector />
           </div>
           <CardTitle className="text-2xl font-bold text-turquoise-700">
-            {language === "he" ? "איפוס סיסמה" : language === "ru" ? "Сброс пароля" : "Reset Password"}
+            {language === "he" ? "××™×¤×•×¡ ×¡×™×¡×ž×”" : language === "ru" ? "Ð¡Ð±Ñ€Ð¾Ñ Ð¿Ð°Ñ€Ð¾Ð»Ñ" : "Reset Password"}
           </CardTitle>
           <CardDescription>
             {language === "he"
-              ? "הכנס סיסמה חדשה לחשבון שלך"
+              ? "×”×›× ×¡ ×¡×™×¡×ž×” ×—×“×©×” ×œ×—×©×‘×•×Ÿ ×©×œ×š"
               : language === "ru"
-                ? "Введите новый пароль для вашей учетной записи"
+                ? "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ð½Ð¾Ð²Ñ‹Ð¹ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ Ð´Ð»Ñ Ð²Ð°ÑˆÐµÐ¹ ÑƒÑ‡ÐµÑ‚Ð½Ð¾Ð¹ Ð·Ð°Ð¿Ð¸ÑÐ¸"
                 : "Enter a new password for your account"}
           </CardDescription>
         </CardHeader>
@@ -201,7 +200,7 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
             {/* New Password */}
             <div className="space-y-2">
               <Label htmlFor="password">
-                {language === "he" ? "סיסמה חדשה" : language === "ru" ? "Новый пароль" : "New Password"}
+                {language === "he" ? "×¡×™×¡×ž×” ×—×“×©×”" : language === "ru" ? "ÐÐ¾Ð²Ñ‹Ð¹ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ" : "New Password"}
               </Label>
               <div className="relative">
                 <Input
@@ -250,9 +249,9 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
               </div>
               <p className="text-xs text-muted-foreground">
                 {language === "he"
-                  ? "חייב להיות לפחות 8 תווים עם לפחות 3 מתוך 4: אותיות גדולות, קטנות, מספרים או תווים מיוחדים"
+                  ? "×—×™×™×‘ ×œ×”×™×•×ª ×œ×¤×—×•×ª 8 ×ª×•×•×™× ×¢× ×œ×¤×—×•×ª 3 ×ž×ª×•×š 4: ××•×ª×™×•×ª ×’×“×•×œ×•×ª, ×§×˜× ×•×ª, ×ž×¡×¤×¨×™× ××• ×ª×•×•×™× ×ž×™×•×—×“×™×"
                   : language === "ru"
-                    ? "Должно быть не менее 8 символов с минимум 3 из 4: заглавные, строчные буквы, цифры или спецсимволы"
+                    ? "Ð”Ð¾Ð»Ð¶Ð½Ð¾ Ð±Ñ‹Ñ‚ÑŒ Ð½Ðµ Ð¼ÐµÐ½ÐµÐµ 8 ÑÐ¸Ð¼Ð²Ð¾Ð»Ð¾Ð² Ñ Ð¼Ð¸Ð½Ð¸Ð¼ÑƒÐ¼ 3 Ð¸Ð· 4: Ð·Ð°Ð³Ð»Ð°Ð²Ð½Ñ‹Ðµ, ÑÑ‚Ñ€Ð¾Ñ‡Ð½Ñ‹Ðµ Ð±ÑƒÐºÐ²Ñ‹, Ñ†Ð¸Ñ„Ñ€Ñ‹ Ð¸Ð»Ð¸ ÑÐ¿ÐµÑ†ÑÐ¸Ð¼Ð²Ð¾Ð»Ñ‹"
                     : "Must be at least 8 characters with at least 3 of 4: uppercase, lowercase, numbers or special characters"}
               </p>
             </div>
@@ -260,7 +259,7 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
             {/* Confirm Password */}
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">
-                {language === "he" ? "אימות סיסמה" : language === "ru" ? "Подтвердите пароль" : "Confirm Password"}
+                {language === "he" ? "××™×ž×•×ª ×¡×™×¡×ž×”" : language === "ru" ? "ÐŸÐ¾Ð´Ñ‚Ð²ÐµÑ€Ð´Ð¸Ñ‚Ðµ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ" : "Confirm Password"}
               </Label>
               <div className="relative">
                 <Input
@@ -313,9 +312,9 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
               {confirmPassword && !passwordMatch && (
                 <p className="text-xs text-red-500">
                   {language === "he"
-                    ? "הסיסמאות אינן תואמות"
+                    ? "×”×¡×™×¡×ž××•×ª ××™× ×Ÿ ×ª×•××ž×•×ª"
                     : language === "ru"
-                      ? "Пароли не совпадают"
+                      ? "ÐŸÐ°Ñ€Ð¾Ð»Ð¸ Ð½Ðµ ÑÐ¾Ð²Ð¿Ð°Ð´Ð°ÑŽÑ‚"
                       : "Passwords do not match"}
                 </p>
               )}
@@ -331,9 +330,9 @@ export function ResetPasswordForm({ token, className, ...props }: ResetPasswordF
               {isLoading
                 ? t("common.loading")
                 : language === "he"
-                  ? "איפוס סיסמה"
+                  ? "××™×¤×•×¡ ×¡×™×¡×ž×”"
                   : language === "ru"
-                    ? "Сбросить пароль"
+                    ? "Ð¡Ð±Ñ€Ð¾ÑÐ¸Ñ‚ÑŒ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ"
                     : "Reset Password"}
             </Button>
           </form>

@@ -1,8 +1,7 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
 
-import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
@@ -38,9 +37,9 @@ export function PasswordChangeForm() {
       if (result.success) {
         setSuccess(
           language === "he"
-            ? "הסיסמה שונתה בהצלחה"
+            ? "×”×¡×™×¡×ž×” ×©×•× ×ª×” ×‘×”×¦×œ×—×”"
             : language === "ru"
-              ? "Пароль успешно изменен"
+              ? "ÐŸÐ°Ñ€Ð¾Ð»ÑŒ ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½"
               : "Password changed successfully",
         )
         // Reset form
@@ -49,25 +48,25 @@ export function PasswordChangeForm() {
         if (result.message === "passwordMismatch") {
           setError(
             language === "he"
-              ? "הסיסמאות החדשות אינן תואמות"
+              ? "×”×¡×™×¡×ž××•×ª ×”×—×“×©×•×ª ××™× ×Ÿ ×ª×•××ž×•×ª"
               : language === "ru"
-                ? "Новые пароли не совпадают"
+                ? "ÐÐ¾Ð²Ñ‹Ðµ Ð¿Ð°Ñ€Ð¾Ð»Ð¸ Ð½Ðµ ÑÐ¾Ð²Ð¿Ð°Ð´Ð°ÑŽÑ‚"
                 : "New passwords do not match",
           )
         } else if (result.message === "invalidCurrentPassword") {
           setError(
             language === "he"
-              ? "הסיסמה הנוכחית שגויה"
+              ? "×”×¡×™×¡×ž×” ×”× ×•×›×—×™×ª ×©×’×•×™×”"
               : language === "ru"
-                ? "Текущий пароль неверен"
+                ? "Ð¢ÐµÐºÑƒÑ‰Ð¸Ð¹ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ Ð½ÐµÐ²ÐµÑ€ÐµÐ½"
                 : "Current password is incorrect",
           )
         } else if (result.message === "weakPassword") {
           setError(
             language === "he"
-              ? "הסיסמה החדשה חלשה מדי"
+              ? "×”×¡×™×¡×ž×” ×”×—×“×©×” ×—×œ×©×” ×ž×“×™"
               : language === "ru"
-                ? "Новый пароль слишком слабый"
+                ? "ÐÐ¾Ð²Ñ‹Ð¹ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ ÑÐ»Ð¸ÑˆÐºÐ¾Ð¼ ÑÐ»Ð°Ð±Ñ‹Ð¹"
                 : "New password is too weak",
           )
         } else {
@@ -93,7 +92,7 @@ export function PasswordChangeForm() {
       {/* Current Password */}
       <div className="space-y-2">
         <Label htmlFor="currentPassword">
-          {language === "he" ? "סיסמה נוכחית" : language === "ru" ? "Текущий пароль" : "Current Password"}
+          {language === "he" ? "×¡×™×¡×ž×” × ×•×›×—×™×ª" : language === "ru" ? "Ð¢ÐµÐºÑƒÑ‰Ð¸Ð¹ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ" : "Current Password"}
         </Label>
         <div className="relative">
           <Input
@@ -120,7 +119,7 @@ export function PasswordChangeForm() {
       {/* New Password */}
       <div className="space-y-2">
         <Label htmlFor="newPassword">
-          {language === "he" ? "סיסמה חדשה" : language === "ru" ? "Новый пароль" : "New Password"}
+          {language === "he" ? "×¡×™×¡×ž×” ×—×“×©×”" : language === "ru" ? "ÐÐ¾Ð²Ñ‹Ð¹ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ" : "New Password"}
         </Label>
         <div className="relative">
           <Input
@@ -144,9 +143,9 @@ export function PasswordChangeForm() {
         </div>
         <p className="text-xs text-muted-foreground">
           {language === "he"
-            ? "חייב להיות לפחות 8 תווים עם לפחות 3 מתוך 4: אותיות גדולות, קטנות, מספרים או תווים מיוחדים"
+            ? "×—×™×™×‘ ×œ×”×™×•×ª ×œ×¤×—×•×ª 8 ×ª×•×•×™× ×¢× ×œ×¤×—×•×ª 3 ×ž×ª×•×š 4: ××•×ª×™×•×ª ×’×“×•×œ×•×ª, ×§×˜× ×•×ª, ×ž×¡×¤×¨×™× ××• ×ª×•×•×™× ×ž×™×•×—×“×™×"
             : language === "ru"
-              ? "Должно быть не менее 8 символов с минимум 3 из 4: заглавные, строчные буквы, цифры или спецсимволы"
+              ? "Ð”Ð¾Ð»Ð¶Ð½Ð¾ Ð±Ñ‹Ñ‚ÑŒ Ð½Ðµ Ð¼ÐµÐ½ÐµÐµ 8 ÑÐ¸Ð¼Ð²Ð¾Ð»Ð¾Ð² Ñ Ð¼Ð¸Ð½Ð¸Ð¼ÑƒÐ¼ 3 Ð¸Ð· 4: Ð·Ð°Ð³Ð»Ð°Ð²Ð½Ñ‹Ðµ, ÑÑ‚Ñ€Ð¾Ñ‡Ð½Ñ‹Ðµ Ð±ÑƒÐºÐ²Ñ‹, Ñ†Ð¸Ñ„Ñ€Ñ‹ Ð¸Ð»Ð¸ ÑÐ¿ÐµÑ†ÑÐ¸Ð¼Ð²Ð¾Ð»Ñ‹"
               : "Must be at least 8 characters with at least 3 of 4: uppercase, lowercase, numbers or special characters"}
         </p>
       </div>
@@ -155,9 +154,9 @@ export function PasswordChangeForm() {
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">
           {language === "he"
-            ? "אימות סיסמה חדשה"
+            ? "××™×ž×•×ª ×¡×™×¡×ž×” ×—×“×©×”"
             : language === "ru"
-              ? "Подтвердите новый пароль"
+              ? "ÐŸÐ¾Ð´Ñ‚Ð²ÐµÑ€Ð´Ð¸Ñ‚Ðµ Ð½Ð¾Ð²Ñ‹Ð¹ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ"
               : "Confirm New Password"}
         </Label>
         <div className="relative">
@@ -189,9 +188,9 @@ export function PasswordChangeForm() {
         {isLoading
           ? t("common.loading")
           : language === "he"
-            ? "שנה סיסמה"
+            ? "×©× ×” ×¡×™×¡×ž×”"
             : language === "ru"
-              ? "Изменить пароль"
+              ? "Ð˜Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ"
               : "Change Password"}
       </Button>
     </form>

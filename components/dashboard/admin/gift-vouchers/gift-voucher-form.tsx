@@ -194,13 +194,13 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
         status: values.status,
       }
 
-      console.log("Submitting gift voucher data:", formData)
+      // was console log"Submitting gift voucher data:", formData)
 
       const result = initialData
         ? await updateGiftVoucherByAdmin(initialData._id, formData)
         : await createGiftVoucherByAdmin(formData)
 
-      console.log("Gift voucher operation result:", result)
+      // was console log"Gift voucher operation result:", result)
 
       if (!result.success) {
         throw new Error(result.error || t("common.unknownError"))

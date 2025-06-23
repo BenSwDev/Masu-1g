@@ -1,13 +1,12 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { 
-  Calendar, Clock, User, Phone, Mail, MapPin, CreditCard, FileText, Star, 
+  Calendar, Clock, User, Phone, Mail, FileText, 
   AlertTriangle, Stethoscope, CheckCircle, XCircle, DollarSign, 
-  UserCheck, Building, Truck, Gift, Ticket, Target, Eye, Edit3,
-  BadgeCheck, Shield, Activity, TrendingUp, Calculator,
-  Home, Hotel, Car
+  UserCheck, Target, Eye, Edit3,
+  BadgeCheck, Activity, TrendingUp, Calculator
 } from "lucide-react"
 import { 
   Dialog, 

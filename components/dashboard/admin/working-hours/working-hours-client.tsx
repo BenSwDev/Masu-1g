@@ -1,7 +1,6 @@
-"use client"
+﻿"use client"
 
-import React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useForm, Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -51,8 +50,7 @@ import {
   deleteSpecialDate,
   deleteSpecialDateEvent,
 } from "@/app/dashboard/(user)/(roles)/admin/working-hours/actions"
-import type { IWorkingHoursSettings, IFixedHours, ISpecialDateEvent } from "@/lib/db/models/working-hours"
-import { ISpecialDate } from "@/lib/db/models/working-hours"
+import type { IWorkingHoursSettings, IFixedHours, ISpecialDateEvent, ISpecialDate } from "@/lib/db/models/working-hours"
 
 const priceAdditionSchema = z
   .object({
@@ -393,7 +391,7 @@ export default function WorkingHoursClient() {
       let updatedDates: ISpecialDate[]
 
     if (editingSpecialDateIndex !== null) {
-        // עדכון תאריך מיוחד קיים
+        // ×¢×“×›×•×Ÿ ×ª××¨×™×š ×ž×™×•×—×“ ×§×™×™×
         updatedDates = [...currentDates]
         updatedDates[editingSpecialDateIndex] = {
           ...data,
@@ -401,7 +399,7 @@ export default function WorkingHoursClient() {
         }
         await updateSpecialDateMutation.mutateAsync(updatedDates)
     } else {
-        // הוספת תאריך מיוחד חדש
+        // ×”×•×¡×¤×ª ×ª××¨×™×š ×ž×™×•×—×“ ×—×“×©
         updatedDates = [
           ...currentDates,
           {
@@ -473,7 +471,7 @@ export default function WorkingHoursClient() {
       let updatedEvents: ISpecialDateEvent[]
 
       if (editingSpecialEventIndex !== null) {
-        // עדכון אירוע קיים
+        // ×¢×“×›×•×Ÿ ××™×¨×•×¢ ×§×™×™×
         updatedEvents = [...currentEvents]
         updatedEvents[editingSpecialEventIndex] = {
           ...data,
@@ -481,7 +479,7 @@ export default function WorkingHoursClient() {
           cutoffTime: data.cutoffTime || undefined,
         } as ISpecialDateEvent
       } else {
-        // הוספת אירוע חדש
+        // ×”×•×¡×¤×ª ××™×¨×•×¢ ×—×“×©
         updatedEvents = [
           ...currentEvents,
           {
@@ -748,7 +746,7 @@ export default function WorkingHoursClient() {
                                                           </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                          <SelectItem value="fixed">₪</SelectItem>
+                                                          <SelectItem value="fixed">â‚ª</SelectItem>
                                                           <SelectItem value="percentage">%</SelectItem>
                                                         </SelectContent>
                                                       </Select>
@@ -832,7 +830,7 @@ export default function WorkingHoursClient() {
                                                     </SelectTrigger>
                                                   </FormControl>
                                                   <SelectContent>
-                                                    <SelectItem value="fixed">₪</SelectItem>
+                                                    <SelectItem value="fixed">â‚ª</SelectItem>
                                                     <SelectItem value="percentage">%</SelectItem>
                                                   </SelectContent>
                                                 </Select>
@@ -1050,7 +1048,7 @@ export default function WorkingHoursClient() {
                                                 </SelectTrigger>
                                               </FormControl>
                                               <SelectContent>
-                                                <SelectItem value="fixed">₪</SelectItem>
+                                                <SelectItem value="fixed">â‚ª</SelectItem>
                                                 <SelectItem value="percentage">%</SelectItem>
                                               </SelectContent>
                                             </Select>
@@ -1359,7 +1357,7 @@ export default function WorkingHoursClient() {
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                          <SelectItem value="fixed">₪</SelectItem>
+                                          <SelectItem value="fixed">â‚ª</SelectItem>
                                           <SelectItem value="percentage">%</SelectItem>
                                         </SelectContent>
                                       </Select>
@@ -1510,7 +1508,7 @@ export default function WorkingHoursClient() {
                             </TableCell>
                             <TableCell>
                               {specialDate.isActive && specialDate.hasPriceAddition && specialDate.priceAddition
-                                ? `${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`
+                                ? `${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "â‚ª"}`
                                 : "-"}
                             </TableCell>
                             <TableCell className="max-w-[150px] truncate" title={specialDate.notes}>
@@ -1591,7 +1589,7 @@ export default function WorkingHoursClient() {
                             )}
                             {specialDate.isActive && specialDate.hasPriceAddition && specialDate.priceAddition && (
                               <Badge variant="outline">
-                                {`+${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "₪"}`}
+                                {`+${specialDate.priceAddition.amount}${specialDate.priceAddition.type === "percentage" ? "%" : "â‚ª"}`}
                               </Badge>
                             )}
                           </div>
@@ -1881,7 +1879,7 @@ export default function WorkingHoursClient() {
                                                   </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                  <SelectItem value="fixed">₪</SelectItem>
+                                                  <SelectItem value="fixed">â‚ª</SelectItem>
                                                   <SelectItem value="percentage">%</SelectItem>
                                                 </SelectContent>
                                               </Select>
@@ -1952,7 +1950,7 @@ export default function WorkingHoursClient() {
                                           </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                          <SelectItem value="fixed">₪</SelectItem>
+                                          <SelectItem value="fixed">â‚ª</SelectItem>
                                           <SelectItem value="percentage">%</SelectItem>
                                         </SelectContent>
                                       </Select>
@@ -2143,7 +2141,7 @@ export default function WorkingHoursClient() {
                               <span className="font-medium">{t("workingHours.professionalSharePercentage")}: </span>
                               <span>
                                 {event.professionalShare?.amount || 0}
-                                {event.professionalShare?.type === "percentage" ? "%" : "₪"}
+                                {event.professionalShare?.type === "percentage" ? "%" : "â‚ª"}
                               </span>
                             </div>
                           </div>
@@ -2152,7 +2150,7 @@ export default function WorkingHoursClient() {
                         {event.hasPriceAddition && event.priceAddition && event.priceAddition.amount > 0 && (
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-                              +{event.priceAddition.amount}{event.priceAddition.type === "percentage" ? "%" : "₪"} {t("workingHours.priceAddition")}
+                              +{event.priceAddition.amount}{event.priceAddition.type === "percentage" ? "%" : "â‚ª"} {t("workingHours.priceAddition")}
                             </Badge>
                           </div>
                         )}

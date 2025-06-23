@@ -1,12 +1,11 @@
-import { compare, hash } from "bcryptjs"
+﻿import { compare, hash } from "bcryptjs"
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "@/lib/db/mongodb"
 import dbConnect from "@/lib/db/mongoose"
-import User from "@/lib/db/models/user"
+import User, { type ITreatmentPreferences, type INotificationPreferences } from "@/lib/db/models/user"
 import { logger } from "@/lib/logs/logger"
-import type { ITreatmentPreferences, INotificationPreferences } from "@/lib/db/models/user" // Import preference types
 
 // Add interface for our custom user type
 interface CustomUser {
@@ -34,7 +33,7 @@ export function validatePassword(password: string): { isValid: boolean; errors: 
   
   // Length check
   if (password.length < 8) {
-    errors.push("הסיסמה חייבת להיות לפחות 8 תווים")
+    errors.push("×”×¡×™×¡×ž×” ×—×™×™×‘×ª ×œ×”×™×•×ª ×œ×¤×—×•×ª 8 ×ª×•×•×™×")
   }
   
   // Check character types (need at least 3 out of 4)
@@ -46,7 +45,7 @@ export function validatePassword(password: string): { isValid: boolean; errors: 
   const typesCount = [hasUppercase, hasLowercase, hasNumber, hasSpecialChar].filter(Boolean).length
   
   if (typesCount < 3) {
-    errors.push("הסיסמה חייבת להכיל לפחות 3 מתוך 4 הקטגוריות הבאות: אות גדולה (A-Z), אות קטנה (a-z), מספר (0-9), או תו מיוחד (!@#$%^&*...)")
+    errors.push("×”×¡×™×¡×ž×” ×—×™×™×‘×ª ×œ×”×›×™×œ ×œ×¤×—×•×ª 3 ×ž×ª×•×š 4 ×”×§×˜×’×•×¨×™×•×ª ×”×‘××•×ª: ××•×ª ×’×“×•×œ×” (A-Z), ××•×ª ×§×˜× ×” (a-z), ×ž×¡×¤×¨ (0-9), ××• ×ª×• ×ž×™×•×—×“ (!@#$%^&*...)")
   }
   
   return {

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import mongoose from "mongoose"
 import { logger } from "@/lib/logs/logger"
 import AddressQueries from "@/lib/db/queries/address-queries"
 import { type IAddress, constructFullAddress } from "@/lib/db/models/address" // Import model and helper
@@ -23,7 +24,7 @@ const addressBaseSchema = z.object({
 const apartmentSchema = addressBaseSchema.extend({
   addressType: z.literal("apartment"),
   apartmentDetails: z.object({
-    floor: z.number().min(0, "Floor cannot be negative").optional(), // Made optional to align with typical UI
+    floor: z.number().min(0, "Floor cannot be negative").default(0), // Default to 0 to match required schema
     apartmentNumber: z.string().min(1, "Apartment number is required"),
     entrance: z.string().optional(),
   }),
@@ -138,7 +139,7 @@ export async function createAddress(data: z.infer<typeof addressSchema>) {
 
     const addressDataWithUserAndFullAddress = {
       ...validatedData,
-      userId: session.user.id,
+      userId: new mongoose.Types.ObjectId(session.user.id),
       country: "ישראל", // Default country from schema is fine, but can be explicit
       fullAddress: fullAddress, // Add the constructed fullAddress
     }

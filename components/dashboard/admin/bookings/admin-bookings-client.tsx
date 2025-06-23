@@ -61,18 +61,6 @@ export default function AdminBookingsClient() {
     queryKey: ["adminBookings", language, debouncedSearchTerm, statusFilter, professionalFilter, treatmentFilter, dateRangeFilter, priceRangeFilter, addressFilter, currentPage],
     queryFn: async () => {
       try {
-        console.log("Fetching bookings with filters:", {
-          search: debouncedSearchTerm || undefined,
-          status: statusFilter === "all" ? undefined : statusFilter,
-          professional: professionalFilter === "all" ? undefined : professionalFilter,
-          treatment: treatmentFilter === "all" ? undefined : treatmentFilter,
-          dateRange: dateRangeFilter === "all" ? undefined : dateRangeFilter,
-          priceRange: priceRangeFilter === "all" ? undefined : priceRangeFilter,
-          address: addressFilter === "all" ? undefined : addressFilter,
-          page: currentPage,
-          limit: 20,
-        })
-
         const result = await getAllBookings({
           search: debouncedSearchTerm || undefined,
           status: statusFilter === "all" ? undefined : statusFilter,
@@ -86,8 +74,6 @@ export default function AdminBookingsClient() {
           sortBy: "createdAt",
           sortDirection: "desc",
         })
-
-        console.log("Bookings fetched successfully:", result)
         return result
       } catch (error) {
         console.error("Error in getAllBookings query:", error)

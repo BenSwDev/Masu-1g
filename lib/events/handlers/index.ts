@@ -5,5 +5,5 @@
 
 export function initializeEventHandlers() {
   // Future event handler initialization
-  console.log("Event handlers initialized")
+  // was console log"Event handlers initialized")
 } 

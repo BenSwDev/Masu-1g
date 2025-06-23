@@ -1,4 +1,4 @@
-"use server"
+﻿"use server"
 
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
@@ -12,10 +12,9 @@ import { revalidatePath } from "next/cache"
 import type { NotificationLanguage, NotificationData } from "@/lib/notifications/notification-types"
 import VerificationQueries from "@/lib/db/queries/verification-queries"
 import { obscureEmail, obscurePhone, getDevOTP, clearDevOTP } from "@/lib/notifications/notification-utils"
-import { validateEmail, validatePhone } from "@/lib/auth/auth"
 
 /**
- * 🚀 Unified Notification Service - Single Point of Entry
+ * ðŸš€ Unified Notification Service - Single Point of Entry
  * 
  * This service handles ALL notification needs across the entire project:
  * - OTP sending and verification
@@ -355,7 +354,7 @@ export async function sendProfessionalBookingNotifications(
     }
     
     // Find suitable professionals
-    const { findSuitableProfessionals } = await import("@/actions/booking-actions")
+    const { findSuitableProfessionals } = await import("@/actions/unified-booking-actions")
     const suitableResult = await findSuitableProfessionals(bookingId)
     
     if (!suitableResult.success || !suitableResult.professionals) {
@@ -366,7 +365,7 @@ export async function sendProfessionalBookingNotifications(
     let sentCount = 0
     
     // Prepare notification data
-    const treatmentName = booking.treatmentId?.name || "טיפול"
+    const treatmentName = booking.treatmentId?.name || "×˜×™×¤×•×œ"
     const bookingDateTime = booking.bookingDateTime
     const address = `${booking.bookingAddressSnapshot?.street || ""} ${booking.bookingAddressSnapshot?.streetNumber || ""}, ${booking.bookingAddressSnapshot?.city || ""}`
     const price = booking.priceDetails?.finalAmount || 0
@@ -375,7 +374,6 @@ export async function sendProfessionalBookingNotifications(
     for (const professional of professionals) {
       try {
         if (!professional.userId?.phone) {
-          console.log(`Professional ${professional.userId?.name} has no phone number`)
           continue
         }
         
@@ -417,9 +415,8 @@ export async function sendProfessionalBookingNotifications(
           response.smsMessageId = smsResult.messageId
           await response.save()
           sentCount++
-          console.log(`✅ SMS sent to professional ${professional.userId.name}`)
         } else {
-          console.error(`❌ Failed to send SMS to ${professional.userId.name}:`, smsResult.error)
+          console.error(`âŒ Failed to send SMS to ${professional.userId.name}:`, smsResult.error)
           response.status = "expired"
           await response.save()
         }
@@ -442,7 +439,6 @@ export async function sendProfessionalBookingNotifications(
       }
     }
     
-    console.log(`📱 Sent ${sentCount} notifications for booking ${bookingId}`)
     return { success: true, sentCount }
     
   } catch (error) {
@@ -496,7 +492,7 @@ export async function handleProfessionalResponse(
       await response.accept(responseMethod)
       
       // Assign professional
-      const { assignProfessionalToBooking } = await import("@/actions/booking-actions")
+      const { assignProfessionalToBooking } = await import("@/actions/unified-booking-actions")
       const assignResult = await assignProfessionalToBooking(
         booking._id.toString(),
         response.professionalId._id.toString()
@@ -516,7 +512,7 @@ export async function handleProfessionalResponse(
         revalidatePath("/dashboard/admin/bookings")
         revalidatePath("/dashboard/professional/booking-management")
         
-        return { success: true, message: "ההזמנה נקבלה בהצלחה! תוכל לראות את הפרטים באפליקציה." }
+        return { success: true, message: "×”×”×–×ž× ×” × ×§×‘×œ×” ×‘×”×¦×œ×—×”! ×ª×•×›×œ ×œ×¨××•×ª ××ª ×”×¤×¨×˜×™× ×‘××¤×œ×™×§×¦×™×”." }
       } else {
         response.status = "pending"
         await response.save()
@@ -525,7 +521,7 @@ export async function handleProfessionalResponse(
       
     } else if (action === "decline") {
       await response.decline(responseMethod)
-      return { success: true, message: "ההזמנה נדחתה. תודה על המענה המהיר." }
+      return { success: true, message: "×”×”×–×ž× ×” × ×“×—×ª×”. ×ª×•×“×” ×¢×œ ×”×ž×¢× ×” ×”×ž×”×™×¨." }
     }
     
     return { success: false, error: "Invalid action" }
@@ -753,7 +749,6 @@ export async function expireOldResponses(): Promise<{ success: boolean; expiredC
       { status: "expired" }
     )
     
-    console.log(`⏰ Expired ${result.modifiedCount} old professional responses`)
     return { success: true, expiredCount: result.modifiedCount }
     
   } catch (error) {

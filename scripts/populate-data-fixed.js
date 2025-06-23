@@ -84,9 +84,9 @@ async function populateDatabase() {
   const client = new MongoClient(uri);
 
   try {
-    console.log("🚀 מתחבר למסד הנתונים...");
+    // was console log"🚀 מתחבר למסד הנתונים...");
     await client.connect();
-    console.log("✅ התחברות הצליחה!");
+    // was console log"✅ התחברות הצליחה!");
 
     const db = client.db('test');
     
@@ -97,7 +97,7 @@ async function populateDatabase() {
     const professionalProfilesCollection = db.collection('professionalprofiles');
     const treatmentsCollection = db.collection('treatments');
 
-    console.log("📍 מוסיף ערים חסרות...");
+    // was console log"📍 מוסיף ערים חסרות...");
     
     // הוספת ערים שחסרות
     const existingCities = await citiesCollection.find({}).toArray();
@@ -118,13 +118,13 @@ async function populateDatabase() {
       }));
 
       const insertedCities = await citiesCollection.insertMany(cityDocs);
-      console.log(`✅ נוספו ${insertedCities.insertedCount} ערים חדשות`);
+      // was console log`✅ נוספו ${insertedCities.insertedCount} ערים חדשות`);
     } else {
-      console.log("📍 כל הערים כבר קיימות");
+      // was console log"📍 כל הערים כבר קיימות");
     }
 
     // חישוב מרחקים בין כל הערים
-    console.log("📏 מחשב מרחקים בין ערים...");
+    // was console log"📏 מחשב מרחקים בין ערים...");
     const allCities = await citiesCollection.find({}).toArray();
     
     // מחיקת מרחקים קיימים כדי לחשב מחדש
@@ -169,14 +169,14 @@ async function populateDatabase() {
     
     if (distanceDocs.length > 0) {
       await cityDistancesCollection.insertMany(distanceDocs);
-      console.log(`✅ נוצרו ${distanceDocs.length} קשרי מרחק`);
+      // was console log`✅ נוצרו ${distanceDocs.length} קשרי מרחק`);
     }
 
     // יצירת מטפלים (גם אם יש כבר מטפלים)
-    console.log("👨‍⚕️ יוצר מטפלים...");
+    // was console log"👨‍⚕️ יוצר מטפלים...");
     
     const treatments = await treatmentsCollection.find({ isActive: true }).toArray();
-    console.log(`נמצאו ${treatments.length} טיפולים זמינים`);
+    // was console log`נמצאו ${treatments.length} טיפולים זמינים`);
     
     for (const prof of SAMPLE_PROFESSIONALS) {
       // בדיקה אם המשתמש כבר קיים
@@ -188,7 +188,7 @@ async function populateDatabase() {
       });
       
       if (existingUser) {
-        console.log(`⚠️ משתמש ${prof.name} כבר קיים, מדלג...`);
+        // was console log`⚠️ משתמש ${prof.name} כבר קיים, מדלג...`);
         continue;
       }
       
@@ -209,7 +209,7 @@ async function populateDatabase() {
       };
       
       const insertedUser = await usersCollection.insertOne(userDoc);
-      console.log(`✅ נוצר משתמש: ${prof.name}`);
+      // was console log`✅ נוצר משתמש: ${prof.name}`);
       
       // מציאת העיר
       const city = allCities.find(c => c.name === prof.cityName);
@@ -249,13 +249,13 @@ async function populateDatabase() {
         };
         
         await professionalProfilesCollection.insertOne(professionalDoc);
-        console.log(`✅ נוצר מטפל: ${prof.name} בעיר ${prof.cityName}`);
+        // was console log`✅ נוצר מטפל: ${prof.name} בעיר ${prof.cityName}`);
       } else {
-        console.log(`❌ לא נמצאה עיר: ${prof.cityName}`);
+        // was console log`❌ לא נמצאה עיר: ${prof.cityName}`);
       }
     }
 
-    console.log("🎉 האתחול הושלם בהצלחה!");
+    // was console log"🎉 האתחול הושלם בהצלחה!");
     
     // סיכום סופי
     const finalCitiesCount = await citiesCollection.countDocuments();
@@ -264,18 +264,18 @@ async function populateDatabase() {
     const finalUsersCount = await usersCollection.countDocuments();
     const finalTreatmentsCount = await treatmentsCollection.countDocuments();
     
-    console.log("\n📊 סיכום:");
-    console.log(`  - ערים: ${finalCitiesCount}`);
-    console.log(`  - מרחקים: ${finalDistancesCount}`);
-    console.log(`  - משתמשים: ${finalUsersCount}`);
-    console.log(`  - מטפלים: ${finalProfessionalsCount}`);
-    console.log(`  - טיפולים: ${finalTreatmentsCount}`);
+    // was console log"\n📊 סיכום:");
+    // was console log`  - ערים: ${finalCitiesCount}`);
+    // was console log`  - מרחקים: ${finalDistancesCount}`);
+    // was console log`  - משתמשים: ${finalUsersCount}`);
+    // was console log`  - מטפלים: ${finalProfessionalsCount}`);
+    // was console log`  - טיפולים: ${finalTreatmentsCount}`);
 
   } catch (error) {
     console.error("❌ שגיאה באתחול:", error);
   } finally {
     await client.close();
-    console.log("🔒 החיבור למסד הנתונים נסגר");
+    // was console log"🔒 החיבור למסד הנתונים נסגר");
   }
 }
 

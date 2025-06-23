@@ -59,13 +59,13 @@ export async function initializeData() {
     const ProfessionalProfile = (await import("@/lib/db/models/professional-profile")).default
     const Treatment = (await import("@/lib/db/models/treatment")).default
     
-    console.log("🚀 Starting data initialization...")
+    // was console log"🚀 Starting data initialization...")
     
     // Check if cities already exist
     const existingCitiesCount = await City.countDocuments()
     
     if (existingCitiesCount === 0) {
-      console.log("📍 Creating cities...")
+      // was console log"📍 Creating cities...")
       
       // Create cities
       const createdCities = []
@@ -82,10 +82,10 @@ export async function initializeData() {
         createdCities.push(city)
       }
       
-      console.log(`✅ Created ${createdCities.length} cities`)
+      // was console log`✅ Created ${createdCities.length} cities`)
       
       // Calculate distances between all cities
-      console.log("📏 Calculating distances between cities...")
+      // was console log"📏 Calculating distances between cities...")
       let distanceCount = 0
       
       for (let i = 0; i < createdCities.length; i++) {
@@ -129,16 +129,16 @@ export async function initializeData() {
         }
       }
       
-      console.log(`✅ Created ${distanceCount} distance relationships`)
+      // was console log`✅ Created ${distanceCount} distance relationships`)
     } else {
-      console.log("📍 Cities already exist, skipping city creation")
+      // was console log"📍 Cities already exist, skipping city creation")
     }
     
     // Check if professionals already exist
     const existingProfessionalsCount = await ProfessionalProfile.countDocuments()
     
     if (existingProfessionalsCount === 0) {
-      console.log("👨‍⚕️ Creating sample professional...")
+      // was console log"👨‍⚕️ Creating sample professional...")
       
       // Get available treatments (we know they exist from the production DB)
       const treatments = await Treatment.find({ isActive: true }).limit(3)
@@ -146,8 +146,8 @@ export async function initializeData() {
       // Get a sample city (Tel Aviv)
       const telAvivCity = await City.findOne({ name: "תל אביב" })
       
-      console.log(`Found ${treatments.length} treatments and city: ${telAvivCity?.name || 'not found'}`)
-      console.log("Treatment details:", treatments.map(t => ({ name: t.name, id: t._id })))
+      // was console log`Found ${treatments.length} treatments and city: ${telAvivCity?.name || 'not found'}`)
+      // was console log"Treatment details:", treatments.map(t => ({ name: t.name, id: t._id })))
       
       if (telAvivCity && treatments.length > 0) {
         // Create sample user for professional
@@ -166,7 +166,7 @@ export async function initializeData() {
         })
         
         await sampleUser.save()
-        console.log("✅ Sample user created successfully")
+        // was console log"✅ Sample user created successfully")
         
         // Create professional profile
         const professionalProfile = new ProfessionalProfile({
@@ -202,20 +202,20 @@ export async function initializeData() {
         
         await professionalProfile.save()
         
-        console.log(`✅ Created sample professional: ${sampleUser.name}`)
+        // was console log`✅ Created sample professional: ${sampleUser.name}`)
       } else {
-        console.log("⚠️ Could not create sample professional - missing cities or treatments")
-        console.log(`Cities found: ${await City.countDocuments()}`)
-        console.log(`Treatments found: ${treatments.length}`)
+        // was console log"⚠️ Could not create sample professional - missing cities or treatments")
+        // was console log`Cities found: ${await City.countDocuments()}`)
+        // was console log`Treatments found: ${treatments.length}`)
         if (treatments.length > 0) {
-          console.log("Available treatments:", treatments.map(t => t.name))
+          // was console log"Available treatments:", treatments.map(t => t.name))
         }
       }
     } else {
-      console.log("👨‍⚕️ Professionals already exist, skipping professional creation")
+      // was console log"👨‍⚕️ Professionals already exist, skipping professional creation")
     }
     
-    console.log("🎉 Data initialization completed successfully!")
+    // was console log"🎉 Data initialization completed successfully!")
     
   } catch (error) {
     console.error("❌ Error initializing data:", error)
@@ -227,7 +227,7 @@ export async function initializeData() {
 if (require.main === module) {
   initializeData()
     .then(() => {
-      console.log("✅ Initialization complete")
+      // was console log"✅ Initialization complete")
       process.exit(0)
     })
     .catch((error) => {

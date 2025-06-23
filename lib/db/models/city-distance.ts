@@ -147,7 +147,7 @@ CitySchema.statics.populateDistances = async function() {
   const cities = await this.find({ isActive: true })
   const CityDistance = mongoose.models.CityDistance
   
-  console.log(`Calculating distances for ${cities.length} cities...`)
+  // was console log`Calculating distances for ${cities.length} cities...`)
   
   for (let i = 0; i < cities.length; i++) {
     for (let j = i + 1; j < cities.length; j++) {
@@ -188,7 +188,7 @@ CitySchema.statics.populateDistances = async function() {
     }
   }
   
-  console.log("Distance calculations completed")
+  // was console log"Distance calculations completed")
 }
 
 // Static method to recalculate distances when a new city is added

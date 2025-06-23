@@ -154,7 +154,7 @@ export async function createUserByAdmin(formData: FormData) {
 
     const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined
     const dateOfBirth = dateOfBirthStr ? new Date(dateOfBirthStr) : undefined
-    if (dateOfBirthStr && isNaN(dateOfBirth?.getTime())) {
+    if (dateOfBirthStr && dateOfBirth && isNaN(dateOfBirth.getTime())) {
       return { success: false, message: "errors.invalidDateOfBirth" }
     }
 
@@ -234,7 +234,9 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
       userToUpdate.activeRole = roles[0]
     }
 
-    userToUpdate.gender = gender as "male" | "female" | "other"
+    if (gender) {
+      userToUpdate.gender = gender as "male" | "female" | "other"
+    }
 
     const dateOfBirth = dateOfBirthStr ? new Date(dateOfBirthStr) : null // Allow clearing date
     if (dateOfBirthStr && dateOfBirth && isNaN(dateOfBirth.getTime())) {
@@ -312,16 +314,11 @@ export async function initiatePasswordResetByAdmin(userId: string) {
 
     const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${token}&userId=${user._id.toString()}`
 
-    const notificationData: NotificationData = {
-      type: "passwordReset", // Ensure this type is handled in getEmailTemplate
-      userName: user.name || user.email,
-      resetLink: resetUrl,
-      // language: user.language || 'en' // If user language preference is stored
-    }
+
 
     // Using the generic sendNotification method
     const emailResult = await emailService.sendNotification(
-      { value: user.email, name: user.name || user.email, language: "en" /* TODO: Get user lang */ },
+      { type: "email", value: user.email, name: user.name || user.email, language: "en" /* TODO: Get user lang */ },
       notificationData,
     )
 

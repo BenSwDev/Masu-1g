@@ -1,11 +1,10 @@
-"use client"
+﻿"use client"
 
-import { useQuery } from "@tanstack/react-query"
+import { useState, useEffect } from "react"
 import { Badge } from "@/components/common/ui/badge"
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"

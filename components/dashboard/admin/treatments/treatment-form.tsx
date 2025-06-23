@@ -124,8 +124,8 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
 
   const onSubmit = async (values: TreatmentFormValues) => {
     try {
-      console.log("Treatment form submission started")
-      console.log("Form values:", values)
+      // was console log"Treatment form submission started")
+      // was console log"Form values:", values)
       
       setIsSubmitting(true)
 
@@ -135,18 +135,18 @@ export function TreatmentForm({ treatment, onSuccess, onCancel }: TreatmentFormP
         durations: pricingType === "duration_based" ? durations : undefined,
       }
 
-      console.log("Treatment data prepared:", treatmentData)
+      // was console log"Treatment data prepared:", treatmentData)
 
       let result
       if (treatment) {
-        console.log("Updating existing treatment:", treatment._id)
+        // was console log"Updating existing treatment:", treatment._id)
         result = await updateTreatment(treatment._id, treatmentData)
       } else {
-        console.log("Creating new treatment")
+        // was console log"Creating new treatment")
         result = await createTreatment(treatmentData)
       }
 
-      console.log("Treatment operation result:", result)
+      // was console log"Treatment operation result:", result)
 
       if (result.success) {
         toast({

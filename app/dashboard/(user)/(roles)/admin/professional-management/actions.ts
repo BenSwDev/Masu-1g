@@ -1,4 +1,4 @@
-"use server"
+﻿"use server"
 
 import dbConnect from "@/lib/db/mongoose"
 import ProfessionalProfile, { IProfessionalProfile, ProfessionalStatus } from "@/lib/db/models/professional-profile"
@@ -267,13 +267,9 @@ export async function getProfessionalById(id: string): Promise<CreateProfessiona
 }
 
 export async function createProfessional(formData: FormData): Promise<CreateProfessionalResult> {
-  console.log('createProfessional called with formData keys:', Array.from(formData.keys()))
-  
   try {
     // Authorize user
-    console.log('Checking admin authorization...')
     await requireAdminAuth()
-    console.log('Admin authorization successful')
 
     // Extract and validate form data
     const rawData = {
@@ -284,18 +280,13 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
       birthDate: formData.get("birthDate") as string
     }
 
-    console.log('Raw data extracted:', rawData)
 
     const validatedData = CreateProfessionalSchema.parse(rawData)
-    console.log('Data validation successful')
 
     // Connect to database
-    console.log('Connecting to database...')
     await dbConnect()
-    console.log('Database connection successful')
 
     // Check if user already exists
-    console.log('Checking for existing user...')
     const existingUser = await User.findOne({ 
       $or: [
         { email: validatedData.email },
@@ -304,26 +295,21 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
     })
     
     if (existingUser) {
-      console.log('User already exists:', existingUser.email)
       return { 
         success: false, 
         error: "משתמש עם אימייל או טלפון זה כבר קיים במערכת" 
       }
     }
 
-    console.log('No existing user found, proceeding with creation...')
 
     // Create user with transaction
     const session = await User.startSession()
-    console.log('Database session started')
     
     try {
       await session.withTransaction(async () => {
-        console.log('Starting transaction...')
         
         // Create user
         const hashedPassword = await hash("123456", 12) // Default password
-        console.log('Password hashed successfully')
         
         const user = await User.create([{
           name: validatedData.name,
@@ -338,7 +324,6 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
           isPhoneVerified: false
         }], { session })
 
-        console.log('User created successfully with ID:', user[0]._id)
 
         // Create professional profile
         const professionalProfile = await ProfessionalProfile.create([{
@@ -353,15 +338,14 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
           appliedAt: new Date()
         }], { session })
         
-        console.log('Professional profile created successfully with ID:', professionalProfile[0]._id)
       })
     } finally {
       await session.endSession()
-      console.log('Database session ended')
+      
     }
 
     // Fetch the created professional with populated user data
-    console.log('Fetching created professional...')
+    
     const createdUser = await User.findOne({ email: validatedData.email }).select("_id")
     if (!createdUser) {
       console.error('Created user not found!')
@@ -379,15 +363,10 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
       throw new Error("שגיאה ביצירת המטפל")
     }
 
-    console.log('Professional created successfully:', {
-      professionalId: createdProfessionalQuery._id,
-      userName: (createdProfessionalQuery.userId as any).name,
-      userEmail: (createdProfessionalQuery.userId as any).email
-    })
 
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
-    console.log('Page revalidated')
+    
 
     return { 
       success: true, 
@@ -482,7 +461,7 @@ export async function updateProfessionalStatus(
     }
 
     // Log the status change for audit
-    console.log(`Professional ${id} status changed to ${status} by admin ${session.user.id}`)
+    // was console log`Professional ${id} status changed to ${status} by admin ${session.user.id}`)
 
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
@@ -514,7 +493,7 @@ export async function updateProfessionalTreatments(
   }>
 ): Promise<UpdateProfessionalResult> {
   try {
-    console.log('updateProfessionalTreatments called with:', { professionalId, treatmentsCount: treatments.length })
+    
     
     // Validate input
     if (!professionalId || !Array.isArray(treatments)) {
@@ -525,17 +504,17 @@ export async function updateProfessionalTreatments(
       ProfessionalTreatmentPricingSchema.parse(treatment)
     )
     
-    console.log('Treatments validated successfully:', validatedTreatments.length)
+    
 
     // Authorization check
-    console.log('Checking admin authorization...')
+    
     await requireAdminAuth()
-    console.log('Admin authorization passed')
+    
 
     // Connect to database
-    console.log('Connecting to database...')
+    
     await dbConnect()
-    console.log('Database connected')
+    
 
     // Verify professional exists
     const professional = await ProfessionalProfile.findById(professionalId)
@@ -543,25 +522,25 @@ export async function updateProfessionalTreatments(
       return { success: false, error: "מטפל לא נמצא" }
     }
 
-    console.log('Professional found:', professional._id)
+    
 
     // Validate treatments exist and are active
     const treatmentIds = [...new Set(validatedTreatments.map(t => t.treatmentId))]
-    console.log('Validating treatments:', treatmentIds)
+    
     
     const existingTreatments = await Treatment.find({
       _id: { $in: treatmentIds },
       isActive: true
     })
 
-    console.log('Found treatments:', existingTreatments.length, 'expected:', treatmentIds.length)
+    
 
     if (existingTreatments.length !== treatmentIds.length) {
       return { success: false, error: "חלק מהטיפולים לא נמצאו או לא פעילים" }
     }
 
     // Update professional treatments
-    console.log('Updating professional treatments...')
+    
     const updatedProfessional = await ProfessionalProfile.findByIdAndUpdate(
       professionalId,
       {
@@ -582,7 +561,7 @@ export async function updateProfessionalTreatments(
       return { success: false, error: "שגיאה בעדכון הטיפולים" }
     }
 
-    console.log('Professional treatments updated successfully')
+    
 
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")

@@ -3,8 +3,6 @@ import { initializeData } from "@/scripts/init-data"
 
 export async function POST() {
   try {
-    console.log("🚀 Starting data initialization via API...")
-    
     await initializeData()
     
     return NextResponse.json({

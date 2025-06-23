@@ -1,7 +1,6 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
-import { useState, type ReactNode, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils/utils"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -16,7 +15,6 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { OTPForm } from "./otp-form"
 import { useToast } from "@/components/common/ui/use-toast"
-import { useSession } from "next-auth/react"
 interface LoginMethodProps {
   children: ReactNode
   className?: string
@@ -61,7 +59,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       return
     }
 
-    console.log("Attempting login with:", identifier)
+    // was console log"Attempting login with:", identifier)
 
     try {
       // Show loading toast
@@ -77,10 +75,10 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         password,
       })
 
-      console.log("SignIn result:", result)
+      // was console log"SignIn result:", result)
 
       if (result?.error) {
-        console.log("Login error:", result.error)
+        // was console log"Login error:", result.error)
         if (result.error === "No user found") {
           setError(t("errors.noUserFound"))
         } else if (result.error === "Invalid password") {
@@ -102,7 +100,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           duration: 5000,
         })
       } else if (result?.ok) {
-        console.log("Login successful, redirecting...")
+        // was console log"Login successful, redirecting...")
 
         // Show success toast
         toast({
@@ -112,7 +110,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           variant: "default"
         })
 
-        // הפניה אוטומטית לעמוד התפקיד
+        // ×”×¤× ×™×” ××•×˜×•×ž×˜×™×ª ×œ×¢×ž×•×“ ×”×ª×¤×§×™×“
         setTimeout(() => {
           const role = session?.user?.activeRole || "member"
           router.push(`/dashboard/${role}`)

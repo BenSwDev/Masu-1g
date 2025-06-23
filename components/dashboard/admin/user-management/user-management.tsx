@@ -1,10 +1,9 @@
-"use client"
+﻿"use client"
 
-import { DropdownMenuItem } from "@/components/common/ui/dropdown-menu"
 
-import type React from "react"
 
 import { useState, useEffect, useCallback } from "react"
+
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Button } from "@/components/common/ui/button"
@@ -56,12 +55,11 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/common/ui/dropdown-menu"
-
-import { useQuery } from "@tanstack/react-query"
 
 // Define UserData interface locally as requested
 export interface UserData {

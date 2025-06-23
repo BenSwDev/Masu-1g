@@ -1,8 +1,7 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
 
-import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
@@ -46,9 +45,9 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
         if (result.message === "emailExists") {
           setError(
             language === "he"
-              ? "כתובת האימייל הזו כבר בשימוש"
+              ? "×›×ª×•×‘×ª ×”××™×ž×™×™×œ ×”×–×• ×›×‘×¨ ×‘×©×™×ž×•×©"
               : language === "ru"
-                ? "Этот адрес электронной почты уже используется"
+                ? "Ð­Ñ‚Ð¾Ñ‚ Ð°Ð´Ñ€ÐµÑ ÑÐ»ÐµÐºÑ‚Ñ€Ð¾Ð½Ð½Ð¾Ð¹ Ð¿Ð¾Ñ‡Ñ‚Ñ‹ ÑƒÐ¶Ðµ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÑ‚ÑÑ"
                 : "This email address is already in use",
           )
         } else {
@@ -80,9 +79,9 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
       if (result.success) {
         setSuccess(
           language === "he"
-            ? "כתובת האימייל שונתה בהצלחה"
+            ? "×›×ª×•×‘×ª ×”××™×ž×™×™×œ ×©×•× ×ª×” ×‘×”×¦×œ×—×”"
             : language === "ru"
-              ? "Адрес электронной почты успешно изменен"
+              ? "ÐÐ´Ñ€ÐµÑ ÑÐ»ÐµÐºÑ‚Ñ€Ð¾Ð½Ð½Ð¾Ð¹ Ð¿Ð¾Ñ‡Ñ‚Ñ‹ ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½"
               : "Email address changed successfully",
         )
         setStep("email")
@@ -92,7 +91,7 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
           onEmailChanged(newEmail)
         }
         toast({
-          title: language === "he" ? "כתובת האימייל שונתה בהצלחה" : language === "ru" ? "Адрес электронной почты успешно изменен" : "Email address changed successfully",
+          title: language === "he" ? "×›×ª×•×‘×ª ×”××™×ž×™×™×œ ×©×•× ×ª×” ×‘×”×¦×œ×—×”" : language === "ru" ? "ÐÐ´Ñ€ÐµÑ ÑÐ»ÐµÐºÑ‚Ñ€Ð¾Ð½Ð½Ð¾Ð¹ Ð¿Ð¾Ñ‡Ñ‚Ñ‹ ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½" : "Email address changed successfully",
           variant: "default"
         })
       } else {
@@ -131,16 +130,16 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
           <Mail className="h-12 w-12 mx-auto mb-4 text-turquoise-500" />
           <h3 className="text-lg font-medium mb-2">
             {language === "he"
-              ? "אמת את האימייל החדש"
+              ? "××ž×ª ××ª ×”××™×ž×™×™×œ ×”×—×“×©"
               : language === "ru"
-                ? "Подтвердите новый email"
+                ? "ÐŸÐ¾Ð´Ñ‚Ð²ÐµÑ€Ð´Ð¸Ñ‚Ðµ Ð½Ð¾Ð²Ñ‹Ð¹ email"
                 : "Verify New Email"}
           </h3>
           <p className="text-sm text-muted-foreground">
             {language === "he"
-              ? `שלחנו קוד אימות ל-${obscuredEmail}`
+              ? `×©×œ×—× ×• ×§×•×“ ××™×ž×•×ª ×œ-${obscuredEmail}`
               : language === "ru"
-                ? `Мы отправили код подтверждения на ${obscuredEmail}`
+                ? `ÐœÑ‹ Ð¾Ñ‚Ð¿Ñ€Ð°Ð²Ð¸Ð»Ð¸ ÐºÐ¾Ð´ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ Ð½Ð° ${obscuredEmail}`
                 : `We sent a verification code to ${obscuredEmail}`}
           </p>
         </div>
@@ -149,9 +148,9 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
           <div className="grid gap-2">
             <Label className="text-center">
               {language === "he"
-                ? "הכנס קוד אימות"
+                ? "×”×›× ×¡ ×§×•×“ ××™×ž×•×ª"
                 : language === "ru"
-                  ? "Введите код подтверждения"
+                  ? "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ ÐºÐ¾Ð´ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ"
                   : "Enter verification code"}
             </Label>
             <div className="flex justify-center gap-2">
@@ -174,7 +173,7 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
 
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setStep("email")} className="flex-1">
-              {language === "he" ? "חזור" : language === "ru" ? "Назад" : "Back"}
+              {language === "he" ? "×—×–×•×¨" : language === "ru" ? "ÐÐ°Ð·Ð°Ð´" : "Back"}
             </Button>
             <Button
               type="submit"
@@ -184,9 +183,9 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
               {isLoading
                 ? t("common.loading")
                 : language === "he"
-                  ? "אמת ושנה"
+                  ? "××ž×ª ×•×©× ×”"
                   : language === "ru"
-                    ? "Подтвердить и изменить"
+                    ? "ÐŸÐ¾Ð´Ñ‚Ð²ÐµÑ€Ð´Ð¸Ñ‚ÑŒ Ð¸ Ð¸Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ"
                     : "Verify & Change"}
             </Button>
           </div>
@@ -199,21 +198,21 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
     <form onSubmit={handleEmailSubmit} className="space-y-6">
       {/* Current Email */}
       <div className="space-y-2">
-        <Label>{language === "he" ? "אימייל נוכחי" : language === "ru" ? "Текущий email" : "Current Email"}</Label>
+        <Label>{language === "he" ? "××™×ž×™×™×œ × ×•×›×—×™" : language === "ru" ? "Ð¢ÐµÐºÑƒÑ‰Ð¸Ð¹ email" : "Current Email"}</Label>
         <Input value={currentEmail} disabled className="bg-gray-50 border-gray-200" />
       </div>
 
       {/* New Email */}
       <div className="space-y-2">
         <Label htmlFor="newEmail">
-          {language === "he" ? "אימייל חדש" : language === "ru" ? "Новый email" : "New Email"}
+          {language === "he" ? "××™×ž×™×™×œ ×—×“×©" : language === "ru" ? "ÐÐ¾Ð²Ñ‹Ð¹ email" : "New Email"}
         </Label>
         <Input
           id="newEmail"
           name="newEmail"
           type="email"
           placeholder={
-            language === "he" ? "הכנס אימייל חדש" : language === "ru" ? "Введите новый email" : "Enter new email"
+            language === "he" ? "×”×›× ×¡ ××™×ž×™×™×œ ×—×“×©" : language === "ru" ? "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ð½Ð¾Ð²Ñ‹Ð¹ email" : "Enter new email"
           }
           className="border-turquoise-200 focus-visible:ring-turquoise-500"
           required
@@ -227,9 +226,9 @@ export function EmailChangeForm({ currentEmail, onEmailChanged }: EmailChangeFor
         {isLoading
           ? t("common.loading")
           : language === "he"
-            ? "שלח קוד אימות"
+            ? "×©×œ×— ×§×•×“ ××™×ž×•×ª"
             : language === "ru"
-              ? "Отправить код подтверждения"
+              ? "ÐžÑ‚Ð¿Ñ€Ð°Ð²Ð¸Ñ‚ÑŒ ÐºÐ¾Ð´ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ"
               : "Send Verification Code"}
       </Button>
     </form>

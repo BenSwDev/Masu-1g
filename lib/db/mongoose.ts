@@ -94,7 +94,7 @@ if (process.env.NODE_ENV === "development") {
     const start = Date.now()
     const result = JSON.stringify(query)
     const duration = Date.now() - start
-    console.log(`[Mongoose][${collectionName}.${method}] query:`, result, "duration:", duration, "ms")
+    // was console log`[Mongoose][${collectionName}.${method}] query:`, result, "duration:", duration, "ms")
   })
 }
 

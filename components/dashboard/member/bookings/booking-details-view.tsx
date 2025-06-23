@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
 import { useMemo } from "react"
@@ -126,7 +126,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
         }
       case "abandoned_pending_payment":
         return {
-          label: t("memberBookings.status.abandoned_pending_payment") || "ננטש - ממתין לתשלום",
+          label: t("memberBookings.status.abandoned_pending_payment") || "× × ×˜×© - ×ž×ž×ª×™×Ÿ ×œ×ª×©×œ×•×",
           icon: <Hourglass className="mr-1.5 h-4 w-4 text-gray-600" />,
           badgeClass: "bg-gray-100 text-gray-700 border-gray-300",
           textColor: "text-gray-700",
@@ -436,7 +436,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                     ? 'bg-green-50 border-green-200 text-green-800' 
                     : 'bg-red-50 border-red-200 text-red-800'
                 }`}>
-                  <strong>חנייה פרטית:</strong> {(addressDisplay as any).hasPrivateParking ? 'זמינה' : 'לא זמינה'}
+                  <strong>×—× ×™×™×” ×¤×¨×˜×™×ª:</strong> {(addressDisplay as any).hasPrivateParking ? '×–×ž×™× ×”' : '×œ× ×–×ž×™× ×”'}
                 </div>
               )}
 
@@ -447,7 +447,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                     ? 'bg-green-50 border-green-200 text-green-800' 
                     : 'bg-red-50 border-red-200 text-red-800'
                 }`}>
-                  <strong>נגישות:</strong> {(addressDisplay as any).isAccessible ? 'נגיש' : 'לא נגיש'}
+                  <strong>× ×’×™×©×•×ª:</strong> {(addressDisplay as any).isAccessible ? '× ×’×™×©' : '×œ× × ×’×™×©'}
                 </div>
               )}
 
@@ -458,21 +458,21 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                     ? 'bg-green-50 border-green-200 text-green-800' 
                     : 'bg-orange-50 border-orange-200 text-orange-800'
                 }`}>
-                  <strong>מעלית:</strong> {(addressDisplay as any).hasElevator ? 'יש מעלית' : 'אין מעלית'}
+                  <strong>×ž×¢×œ×™×ª:</strong> {(addressDisplay as any).hasElevator ? '×™×© ×ž×¢×œ×™×ª' : '××™×Ÿ ×ž×¢×œ×™×ª'}
                 </div>
               )}
 
               {/* Security information */}
               {(addressDisplay as any)?.hasSecurityCode && (
                 <div className="bg-amber-50 p-2 rounded border border-amber-200 text-amber-800">
-                  <strong>קוד אבטחה:</strong> נדרש קוד כניסה
+                  <strong>×§×•×“ ××‘×˜×—×”:</strong> × ×“×¨×© ×§×•×“ ×›× ×™×¡×”
                 </div>
               )}
 
               {/* Intercom information */}
               {(addressDisplay as any)?.intercomCode && (
                 <div className="bg-cyan-50 p-2 rounded border border-cyan-200 text-cyan-800">
-                  <strong>אינטרקום:</strong> {(addressDisplay as any).intercomCode}
+                  <strong>××™× ×˜×¨×§×•×:</strong> {(addressDisplay as any).intercomCode}
                 </div>
               )}
               
@@ -653,7 +653,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
                 <div key={index} className="text-xs text-muted-foreground">
                   <span>{formatDateTimeIsraeli(entry.date)}: </span>
                   <span>
-                    {entry.description ? t(entry.description) || entry.description : "שימוש"} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
+                    {entry.description ? t(entry.description) || entry.description : "×©×™×ž×•×©"} - {entry.amountUsed.toFixed(2)} {t("common.currency")}
                   </span>
                 </div>
               ))}

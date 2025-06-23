@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
+import { Button } from "@/components/common/ui/button"
+import { Badge } from "@/components/common/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Separator } from "@/components/common/ui/separator"
+import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { 
   MessageSquare, 
   Clock, 

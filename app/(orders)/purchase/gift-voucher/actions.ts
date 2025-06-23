@@ -1,7 +1,5 @@
-"use server"
+﻿"use server"
 
-import { revalidatePath } from "next/cache"
-import type { ITreatment } from "@/lib/db/models/treatment"
 import Treatment from "@/lib/db/models/treatment"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
@@ -18,7 +16,7 @@ export interface SerializedTreatmentDuration {
 export interface SerializedTreatment {
   _id: string
   name: string
-  description: string
+  description: string | undefined
   category: string
   pricingType: "fixed" | "duration_based"
   fixedPrice?: number

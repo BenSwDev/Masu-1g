@@ -61,7 +61,7 @@ import {
   UserX,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
 
 export default function CustomersClient() {
   const { t, dir } = useTranslation()

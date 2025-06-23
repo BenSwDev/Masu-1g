@@ -43,9 +43,9 @@ class ProductionLogger {
     const logLine = `[${logEvent.timestamp}] [${level.toUpperCase()}] [${logEvent.route || 'unknown'}] ${message}`
     
     if (context) {
-      console.log(logLine, JSON.stringify(context, null, 2))
+      // was console loglogLine, JSON.stringify(context, null, 2))
     } else {
-      console.log(logLine)
+      // was console loglogLine)
     }
 
     // In production, also send to external logging service if needed

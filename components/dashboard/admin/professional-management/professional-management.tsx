@@ -61,13 +61,6 @@ export function ProfessionalManagement({
   initialSearch = "",
   initialStats = { total: 0, active: 0, byStatus: {} }
 }: ProfessionalManagementProps) {
-  console.log('ProfessionalManagement component rendered with props:', {
-    initialProfessionalsCount: initialProfessionals.length,
-    initialTotalPages,
-    initialPage,
-    initialSearch,
-    initialStats
-  })
 
   const { t, dir } = useTranslation()
   const { toast } = useToast()
@@ -103,41 +96,16 @@ export function ProfessionalManagement({
   useEffect(() => { sortOrderRef.current = sortOrder }, [sortOrder])
   useEffect(() => { paginationRef.current = pagination }, [pagination])
 
-  console.log('Component state initialized:', {
-    professionalsCount: professionals.length,
-    pagination,
-    stats,
-    loading,
-    searchTerm,
-    statusFilter,
-    sortBy,
-    sortOrder,
-    error
-  })
 
   // Fetch professionals with improved error handling
   const fetchProfessionals = useCallback(async (page = 1, showLoadingState = true) => {
-    console.log('fetchProfessionals called with:', { 
-      page, 
-      showLoadingState, 
-      searchTerm: searchTermRef.current, 
-      statusFilter: statusFilterRef.current, 
-      sortBy: sortByRef.current, 
-      sortOrder: sortOrderRef.current 
-    })
+
     
     if (showLoadingState) setLoading(true)
     setError(null)
     
     try {
-      console.log('Calling getProfessionals with options:', {
-        page,
-        limit: paginationRef.current.limit,
-        search: searchTermRef.current,
-        status: statusFilterRef.current === "all" ? undefined : statusFilterRef.current,
-        sortBy: sortByRef.current,
-        sortOrder: sortOrderRef.current
-      })
+
 
       const result = await getProfessionals({
         page,
@@ -148,26 +116,14 @@ export function ProfessionalManagement({
         sortOrder: sortOrderRef.current
       })
 
-      console.log('getProfessionals result:', { 
-        success: result.success, 
-        hasData: !!result.data,
-        professionalsCount: result.data?.professionals?.length || 0,
-        error: result.error 
-      })
-
       if (result.success && result.data) {
         const transformedProfessionals = (result.data.professionals || []).map(transformProfessionalData)
-        console.log('Transformed professionals:', transformedProfessionals.length, 'items')
+        
         
         setProfessionals(transformedProfessionals)
         setPagination(result.data.pagination)
         setStats(result.data.stats)
-        
-        console.log('State updated successfully:', {
-          professionalsCount: transformedProfessionals.length,
-          pagination: result.data.pagination,
-          stats: result.data.stats
-        })
+
       } else {
         const errorMessage = result.error || "שגיאה בטעינת המטפלים"
         console.error('Failed to fetch professionals:', errorMessage)

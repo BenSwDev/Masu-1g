@@ -1,6 +1,5 @@
-"use client"
+﻿"use client"
 
-import type React from "react"
 import { useState } from "react"
 import { cn } from "@/lib/utils/utils"
 import { Button } from "@/components/common/ui/button"
@@ -49,13 +48,13 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
               <LanguageSelector />
             </div>
             <CardTitle className="text-2xl font-bold text-turquoise-700">
-              {language === "he" ? "אימייל נשלח" : language === "ru" ? "Письмо отправлено" : "Email Sent"}
+              {language === "he" ? "××™×ž×™×™×œ × ×©×œ×—" : language === "ru" ? "ÐŸÐ¸ÑÑŒÐ¼Ð¾ Ð¾Ñ‚Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¾" : "Email Sent"}
             </CardTitle>
             <CardDescription>
               {language === "he"
-                ? "אם קיים חשבון עם כתובת האימייל הזו, תקבל קישור לאיפוס סיסמה"
+                ? "×× ×§×™×™× ×—×©×‘×•×Ÿ ×¢× ×›×ª×•×‘×ª ×”××™×ž×™×™×œ ×”×–×•, ×ª×§×‘×œ ×§×™×©×•×¨ ×œ××™×¤×•×¡ ×¡×™×¡×ž×”"
                 : language === "ru"
-                  ? "Если учетная запись с этим адресом электронной почты существует, вы получите ссылку для сброса пароля"
+                  ? "Ð•ÑÐ»Ð¸ ÑƒÑ‡ÐµÑ‚Ð½Ð°Ñ Ð·Ð°Ð¿Ð¸ÑÑŒ Ñ ÑÑ‚Ð¸Ð¼ Ð°Ð´Ñ€ÐµÑÐ¾Ð¼ ÑÐ»ÐµÐºÑ‚Ñ€Ð¾Ð½Ð½Ð¾Ð¹ Ð¿Ð¾Ñ‡Ñ‚Ñ‹ ÑÑƒÑ‰ÐµÑÑ‚Ð²ÑƒÐµÑ‚, Ð²Ñ‹ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚Ðµ ÑÑÑ‹Ð»ÐºÑƒ Ð´Ð»Ñ ÑÐ±Ñ€Ð¾ÑÐ° Ð¿Ð°Ñ€Ð¾Ð»Ñ"
                   : "If an account with this email exists, you will receive a password reset link"}
             </CardDescription>
           </CardHeader>
@@ -64,15 +63,15 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
               <Mail className="h-16 w-16 mx-auto mb-4 text-turquoise-500" />
               <p className="text-sm text-muted-foreground mb-6">
                 {language === "he"
-                  ? "בדוק את תיבת הדואר שלך ולחץ על הקישור לאיפוס הסיסמה"
+                  ? "×‘×“×•×§ ××ª ×ª×™×‘×ª ×”×“×•××¨ ×©×œ×š ×•×œ×—×¥ ×¢×œ ×”×§×™×©×•×¨ ×œ××™×¤×•×¡ ×”×¡×™×¡×ž×”"
                   : language === "ru"
-                    ? "Проверьте свою электронную почту и нажмите на ссылку для сброса пароля"
+                    ? "ÐŸÑ€Ð¾Ð²ÐµÑ€ÑŒÑ‚Ðµ ÑÐ²Ð¾ÑŽ ÑÐ»ÐµÐºÑ‚Ñ€Ð¾Ð½Ð½ÑƒÑŽ Ð¿Ð¾Ñ‡Ñ‚Ñƒ Ð¸ Ð½Ð°Ð¶Ð¼Ð¸Ñ‚Ðµ Ð½Ð° ÑÑÑ‹Ð»ÐºÑƒ Ð´Ð»Ñ ÑÐ±Ñ€Ð¾ÑÐ° Ð¿Ð°Ñ€Ð¾Ð»Ñ"
                     : "Check your email and click the password reset link"}
               </p>
               <Link href="/auth/login">
                 <Button variant="outline" className="w-full">
                   <ArrowLeft className="h-4 w-4 mx-2" />
-                  {language === "he" ? "חזרה להתחברות" : language === "ru" ? "Вернуться к входу" : "Back to Login"}
+                  {language === "he" ? "×—×–×¨×” ×œ×”×ª×—×‘×¨×•×ª" : language === "ru" ? "Ð’ÐµÑ€Ð½ÑƒÑ‚ÑŒÑÑ Ðº Ð²Ñ…Ð¾Ð´Ñƒ" : "Back to Login"}
                 </Button>
               </Link>
             </div>
@@ -90,13 +89,13 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
             <LanguageSelector />
           </div>
           <CardTitle className="text-2xl font-bold text-turquoise-700">
-            {language === "he" ? "שכחת סיסמה?" : language === "ru" ? "Забыли пароль?" : "Forgot Password?"}
+            {language === "he" ? "×©×›×—×ª ×¡×™×¡×ž×”?" : language === "ru" ? "Ð—Ð°Ð±Ñ‹Ð»Ð¸ Ð¿Ð°Ñ€Ð¾Ð»ÑŒ?" : "Forgot Password?"}
           </CardTitle>
           <CardDescription>
             {language === "he"
-              ? "הכנס את כתובת האימייל שלך ונשלח לך קישור לאיפוס הסיסמה"
+              ? "×”×›× ×¡ ××ª ×›×ª×•×‘×ª ×”××™×ž×™×™×œ ×©×œ×š ×•× ×©×œ×— ×œ×š ×§×™×©×•×¨ ×œ××™×¤×•×¡ ×”×¡×™×¡×ž×”"
               : language === "ru"
-                ? "Введите свой адрес электронной почты, и мы отправим вам ссылку для сброса пароля"
+                ? "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ ÑÐ²Ð¾Ð¹ Ð°Ð´Ñ€ÐµÑ ÑÐ»ÐµÐºÑ‚Ñ€Ð¾Ð½Ð½Ð¾Ð¹ Ð¿Ð¾Ñ‡Ñ‚Ñ‹, Ð¸ Ð¼Ñ‹ Ð¾Ñ‚Ð¿Ñ€Ð°Ð²Ð¸Ð¼ Ð²Ð°Ð¼ ÑÑÑ‹Ð»ÐºÑƒ Ð´Ð»Ñ ÑÐ±Ñ€Ð¾ÑÐ° Ð¿Ð°Ñ€Ð¾Ð»Ñ"
                 : "Enter your email address and we'll send you a password reset link"}
           </CardDescription>
         </CardHeader>
@@ -104,16 +103,16 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">
-                {language === "he" ? "כתובת אימייל" : language === "ru" ? "Адрес электронной почты" : "Email Address"}
+                {language === "he" ? "×›×ª×•×‘×ª ××™×ž×™×™×œ" : language === "ru" ? "ÐÐ´Ñ€ÐµÑ ÑÐ»ÐµÐºÑ‚Ñ€Ð¾Ð½Ð½Ð¾Ð¹ Ð¿Ð¾Ñ‡Ñ‚Ñ‹" : "Email Address"}
               </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder={
                   language === "he"
-                    ? "הכנס את האימייל שלך"
+                    ? "×”×›× ×¡ ××ª ×”××™×ž×™×™×œ ×©×œ×š"
                     : language === "ru"
-                      ? "Введите вашу электронную почту"
+                      ? "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ð²Ð°ÑˆÑƒ ÑÐ»ÐµÐºÑ‚Ñ€Ð¾Ð½Ð½ÑƒÑŽ Ð¿Ð¾Ñ‡Ñ‚Ñƒ"
                       : "Enter your email"
                 }
                 className="border-turquoise-200 focus-visible:ring-turquoise-500 text-center placeholder:text-center"
@@ -129,16 +128,16 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
               {isLoading
                 ? t("common.loading")
                 : language === "he"
-                  ? "שלח קישור לאיפוס"
+                  ? "×©×œ×— ×§×™×©×•×¨ ×œ××™×¤×•×¡"
                   : language === "ru"
-                    ? "Отправить ссылку для сброса"
+                    ? "ÐžÑ‚Ð¿Ñ€Ð°Ð²Ð¸Ñ‚ÑŒ ÑÑÑ‹Ð»ÐºÑƒ Ð´Ð»Ñ ÑÐ±Ñ€Ð¾ÑÐ°"
                     : "Send Reset Link"}
             </Button>
 
             <div className="text-center">
               <Link href="/auth/login" className="text-sm text-turquoise-600 hover:text-turquoise-700 underline">
                 <ArrowLeft className="h-4 w-4 inline mx-1" />
-                {language === "he" ? "חזרה להתחברות" : language === "ru" ? "Вернуться к входу" : "Back to Login"}
+                {language === "he" ? "×—×–×¨×” ×œ×”×ª×—×‘×¨×•×ª" : language === "ru" ? "Ð’ÐµÑ€Ð½ÑƒÑ‚ÑŒÑÑ Ðº Ð²Ñ…Ð¾Ð´Ñƒ" : "Back to Login"}
               </Link>
             </div>
           </form>

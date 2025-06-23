@@ -555,4 +555,37 @@ export async function sendNotificationToSuitableProfessionals(
       error: "Failed to send notifications" 
     }
   }
-} 
+}
+
+// ============================================================================
+// REDEMPTION CODE VALIDATION
+// ============================================================================
+
+export async function validateRedemptionCode(
+  code: string,
+  userId?: string
+): Promise<{ 
+  success: boolean
+  redemption?: {
+    type: "subscription" | "gift_voucher" | "coupon"
+    data: any
+  }
+  error?: string 
+}> {
+  try {
+    const response = await fetch('/api/bookings/validate-redemption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, userId }),
+    })
+    
+    const result = await response.json()
+    return result
+  } catch (error) {
+    console.error('Error validating redemption code:', error)
+    return { 
+      success: false, 
+      error: "Failed to validate redemption code" 
+    }
+  }
+}

@@ -70,7 +70,8 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
     surcharges: [],
     totalSurchargesAmount: 0,
     treatmentPriceAfterSubscriptionOrTreatmentVoucher: price,
-    couponDiscount: 0,
+    discountAmount: 0, // Updated to match new type
+    couponDiscount: 0, // Keep for backward compatibility
     voucherAppliedAmount: 0,
     finalAmount: price,
     isBaseTreatmentCoveredBySubscription: false,

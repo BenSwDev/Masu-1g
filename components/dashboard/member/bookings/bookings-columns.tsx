@@ -178,7 +178,7 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
     
     setIsCancelling(true)
     try {
-      console.log("Cancelling booking:", booking._id)
+      // was console log"Cancelling booking:", booking._id)
       toast.success(t("memberBookings.cancelSuccess"))
     } catch (error) {
       toast.error(t("common.errors.cancellationFailed"))

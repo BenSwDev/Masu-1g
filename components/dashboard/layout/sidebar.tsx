@@ -1,8 +1,8 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useState } from "react" // Added useCallback
 import { usePathname, useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { useTranslation } from "@/lib/translations/i18n"
 import { cn } from "@/lib/utils/utils"
@@ -36,7 +36,6 @@ import {
   Star,
 } from "lucide-react"
 import { Sheet, SheetContent } from "@/components/common/ui/sheet"
-import { signOut } from "next-auth/react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -275,7 +274,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
 
     const roleMenus: Record<string, Array<{ titleKey: string; icon: any; hrefSuffix: string; section?: string }>> = {
       admin: [
-        // רכישות ומימושים (Purchases & Redemptions)
+        // ×¨×›×™×©×•×ª ×•×ž×™×ž×•×©×™× (Purchases & Redemptions)
         { titleKey: "transactions", icon: BarChart3, hrefSuffix: "transactions" },
         { titleKey: "bookings", icon: Calendar, hrefSuffix: "bookings", section: "purchases" },
         { titleKey: "reviews", icon: Star, hrefSuffix: "reviews", section: "purchases" },
@@ -284,19 +283,19 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         { titleKey: "coupons", icon: Gift, hrefSuffix: "coupons", section: "purchases" },
         { titleKey: "partnerCouponBatches", icon: Handshake, hrefSuffix: "partner-coupon-batches", section: "purchases" },
         
-        // משתמשים (Users)
+        // ×ž×©×ª×ž×©×™× (Users)
         { titleKey: "customers", icon: Users, hrefSuffix: "customers", section: "users" },
         { titleKey: "professional-management", icon: Users, hrefSuffix: "professional-management", section: "users" },
         { titleKey: "partners", icon: Handshake, hrefSuffix: "partners", section: "users" },
         { titleKey: "users", icon: User, hrefSuffix: "users", section: "users" },
         
-        // הגדרות (Settings)
+        // ×”×’×“×¨×•×ª (Settings)
         { titleKey: "treatments", icon: Shield, hrefSuffix: "treatments", section: "settings" },
         { titleKey: "cities", icon: MapPin, hrefSuffix: "cities", section: "settings" },
         { titleKey: "workingHours", icon: Clock, hrefSuffix: "working-hours", section: "settings" },
         { titleKey: "subscriptions", icon: CreditCard, hrefSuffix: "subscriptions", section: "settings" },
 
-        // דוחות (Reports)
+        // ×“×•×—×•×ª (Reports)
         { titleKey: "revenueSummary", icon: PieChart, hrefSuffix: "reports/revenue-summary", section: "reports" },
         { titleKey: "bookingsPerProfessional", icon: Users, hrefSuffix: "reports/bookings-per-professional", section: "reports" },
         { titleKey: "bookingsPerCity", icon: MapPin, hrefSuffix: "reports/bookings-per-city", section: "reports" },

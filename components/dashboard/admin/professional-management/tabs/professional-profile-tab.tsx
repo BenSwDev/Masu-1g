@@ -45,14 +45,9 @@ export default function ProfessionalProfileTab({
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
-  console.log('ProfessionalProfileTab rendered with:', {
-    professionalId: professional._id,
-    status: professional.status,
-    isActive: professional.isActive
-  })
+
 
   const handleUserDetailChange = (field: keyof typeof userDetails, value: string) => {
-    console.log('User detail changed:', field, value)
     setUserDetails(prev => ({
       ...prev,
       [field]: value
@@ -61,7 +56,6 @@ export default function ProfessionalProfileTab({
   }
 
   const handleProfessionalDetailChange = (field: keyof typeof professionalDetails, value: any) => {
-    console.log('Professional detail changed:', field, value)
     setProfessionalDetails(prev => ({
       ...prev,
       [field]: value
@@ -70,7 +64,6 @@ export default function ProfessionalProfileTab({
   }
 
   const handleSave = async () => {
-    console.log('handleSave called with changes:', { userDetails, professionalDetails })
     setSaving(true)
     
     try {
@@ -84,7 +77,6 @@ export default function ProfessionalProfileTab({
         return
       }
 
-      console.log('Calling updateProfessionalStatus...')
       // Update professional status and details
       const result = await updateProfessionalStatus(
         professional._id,
@@ -93,7 +85,6 @@ export default function ProfessionalProfileTab({
         professionalDetails.rejectionReason
       )
 
-      console.log('updateProfessionalStatus result:', result)
 
       if (result.success && result.professional) {
         // Update the local state with the server response
@@ -104,7 +95,6 @@ export default function ProfessionalProfileTab({
           title: "הצלחה",
           description: "פרופיל המטפל עודכן בהצלחה"
         })
-        console.log('Professional updated successfully')
       } else {
         console.error('Update failed:', result.error)
         toast({

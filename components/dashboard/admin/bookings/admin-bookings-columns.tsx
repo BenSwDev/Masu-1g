@@ -651,7 +651,43 @@ const TreatmentInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
       )}
       {durationInfo && (
         <div className="text-xs text-blue-600">
-          {durationInfo}
+          ⏱️ {durationInfo}
+        </div>
+      )}
+      {booking.professionalGenderPreference && (
+        <div className="text-xs text-purple-600">
+          🚻 {booking.professionalGenderPreference === "male" ? "זכר" : "נקבה"}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Add new component for scheduled date and time
+const ScheduledDateTimeInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  const scheduledDate = booking.scheduledDate ? formatDateSafe(booking.scheduledDate) : null
+  const scheduledTime = booking.scheduledTime ? formatTimeSafe(booking.scheduledTime) : null
+
+  if (!scheduledDate && !scheduledTime) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
+
+  return (
+    <div className="space-y-1 max-w-[120px]">
+      {scheduledDate && (
+        <div className="text-sm font-medium">
+          📅 {scheduledDate}
+        </div>
+      )}
+      {scheduledTime && (
+        <div className="text-sm text-green-600">
+          ⏰ {scheduledTime}
+        </div>
+      )}
+      {/* Show any working hours surcharges indicators */}
+      {booking.priceDetails?.surcharges && booking.priceDetails.surcharges.length > 0 && (
+        <div className="text-xs text-orange-600">
+          💰 תוספות זמן
         </div>
       )}
     </div>
@@ -660,7 +696,7 @@ const TreatmentInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
 
 // Fix AddressDetailsInfo to properly handle parking information
 const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  // First try bookingAddressSnapshot, then addressId, then customAddressDetails
+  // First try bookingAddressSnapshot, then customAddressDetails, then addressId
   const address = booking.bookingAddressSnapshot || booking.customAddressDetails || (booking as any).addressId
   
   if (!address) {
@@ -668,27 +704,45 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
   }
 
   // Handle different address structure formats
-  const streetNumber = address.streetNumber || address.houseNumber
+  const streetNumber = address.streetNumber || address.houseNumber || address.number
   const hasParking = address.hasPrivateParking
+  const entranceCode = address.entranceCode || address.accessCode
+
+  // Build address display string
+  let addressDisplay = ""
+  if (address.street && streetNumber) {
+    addressDisplay = `${address.street} ${streetNumber}`
+  } else if (address.fullAddress) {
+    addressDisplay = address.fullAddress
+  } else if (address.street) {
+    addressDisplay = address.street
+  }
+  
+  if (address.city) {
+    addressDisplay = addressDisplay ? `${addressDisplay}, ${address.city}` : address.city
+  }
 
   return (
     <div className="space-y-1 max-w-[200px]">
       <div className="font-medium text-sm">
-        {address.street && streetNumber 
-          ? `${address.street} ${streetNumber}, ${address.city}`
-          : address.fullAddress || `${address.city}`
-        }
+        🏠 {addressDisplay || "כתובת לא מצוינת"}
       </div>
       
       {address.floor && (
         <div className="text-xs text-muted-foreground">
-          {t("adminBookings.floor")}: {address.floor}
+          🏢 קומה: {address.floor}
         </div>
       )}
       
       {address.apartment && (
         <div className="text-xs text-muted-foreground">
-          {t("adminBookings.apartment")}: {address.apartment}
+          🚪 דירה: {address.apartment}
+        </div>
+      )}
+
+      {entranceCode && (
+        <div className="text-xs text-blue-600">
+          🔑 קוד כניסה: {entranceCode}
         </div>
       )}
       
@@ -700,8 +754,8 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
               : "text-red-700 bg-red-100"
           }`}>
             {hasParking 
-              ? t("adminBookings.hasParking") 
-              : t("adminBookings.noParking")
+              ? "🅿️ יש חניה" 
+              : "🚫 אין חניה"
             }
           </span>
         </div>
@@ -709,7 +763,14 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
       
       {address.additionalNotes && (
         <div className="text-xs text-muted-foreground">
-          {address.additionalNotes}
+          📝 הערות: {address.additionalNotes}
+        </div>
+      )}
+
+      {/* Show coordinates if available for debugging */}
+      {(address.latitude && address.longitude) && (
+        <div className="text-xs text-gray-500">
+          📍 {address.latitude.toFixed(6)}, {address.longitude.toFixed(6)}
         </div>
       )}
     </div>
@@ -964,19 +1025,39 @@ export const getAdminBookingColumns = (
     header: t("adminBookings.columns.treatment"),
     cell: ({ row }) => <TreatmentInfo booking={row.original} t={t} />,
   },
-  // 6. Recipient with Age
+  // 6. Scheduled Date and Time
+  {
+    accessorKey: "scheduledDateTime",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        className="h-auto p-0 font-semibold hover:bg-transparent"
+      >
+        תאריך ושעה
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
+    cell: ({ row }) => <ScheduledDateTimeInfo booking={row.original} t={t} />,
+    sortingFn: (rowA, rowB) => {
+      const dateA = new Date(rowA.original.scheduledDate || 0).getTime()
+      const dateB = new Date(rowB.original.scheduledDate || 0).getTime()
+      return dateA - dateB
+    },
+  },
+  // 7. Recipient with Age
   {
     accessorKey: "recipientInfo",
     header: t("adminBookings.columns.recipient"),
     cell: ({ row }) => <RecipientInfo booking={row.original} t={t} />,
   },
-  // 7. Professional
+  // 8. Professional
   {
     accessorKey: "professionalId",
     header: t("adminBookings.columns.professional"),
     cell: ({ row }) => <ProfessionalInfo booking={row.original} t={t} />,
   },
-  // 8. Price Details
+  // 9. Price Details
   {
     accessorKey: "priceDetails.finalAmount",
     header: ({ column }) => (
@@ -991,19 +1072,19 @@ export const getAdminBookingColumns = (
     ),
     cell: ({ row }) => <PriceDetailsInfo booking={row.original} t={t} />,
   },
-  // 9. NEW: Redemption Details (מימוש)
+  // 10. NEW: Redemption Details (מימוש)
   {
     accessorKey: "redemption",
     header: t("adminBookings.columns.redemption"),
     cell: ({ row }) => <RedemptionInfo booking={row.original} t={t} />,
   },
-  // 10. NEW: Financial Summary (סיכום כספי)
+  // 11. NEW: Financial Summary (סיכום כספי)
   {
     accessorKey: "financialSummary",
     header: t("adminBookings.columns.financialSummary"),
     cell: ({ row }) => <FinancialSummaryInfo booking={row.original} t={t} />,
   },
-  // 11. Actions
+  // 12. Actions
   {
     id: "actions",
     header: t("common.actions"),

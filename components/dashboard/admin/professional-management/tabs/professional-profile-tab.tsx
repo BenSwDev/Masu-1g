@@ -11,6 +11,7 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Switch } from "@/components/common/ui/switch"
 import { useToast } from "@/components/common/ui/use-toast"
 import { User, Save, Loader2, AlertTriangle, CheckCircle } from "lucide-react"
+import { updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 
@@ -31,7 +32,7 @@ export default function ProfessionalProfileTab({
     email: professional.userId.email || "",
     phone: professional.userId.phone || "",
     gender: professional.userId.gender || "",
-    birthDate: professional.userId.dateOfBirth ? new Date(professional.userId.dateOfBirth).toISOString().split('T')[0] : ""
+    birthDate: professional.userId.birthDate ? new Date(professional.userId.birthDate).toISOString().split('T')[0] : ""
   })
   
   const [professionalDetails, setProfessionalDetails] = useState({
@@ -44,7 +45,14 @@ export default function ProfessionalProfileTab({
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
 
+  console.log('ProfessionalProfileTab rendered with:', {
+    professionalId: professional._id,
+    status: professional.status,
+    isActive: professional.isActive
+  })
+
   const handleUserDetailChange = (field: keyof typeof userDetails, value: string) => {
+    console.log('User detail changed:', field, value)
     setUserDetails(prev => ({
       ...prev,
       [field]: value
@@ -53,6 +61,7 @@ export default function ProfessionalProfileTab({
   }
 
   const handleProfessionalDetailChange = (field: keyof typeof professionalDetails, value: any) => {
+    console.log('Professional detail changed:', field, value)
     setProfessionalDetails(prev => ({
       ...prev,
       [field]: value
@@ -61,6 +70,7 @@ export default function ProfessionalProfileTab({
   }
 
   const handleSave = async () => {
+    console.log('handleSave called with changes:', { userDetails, professionalDetails })
     setSaving(true)
     
     try {
@@ -74,22 +84,35 @@ export default function ProfessionalProfileTab({
         return
       }
 
-      // Here you would typically make an API call to update the professional profile
-      // For now, we'll update the local state
-      onUpdate({
-        ...professionalDetails,
-        userId: {
-          ...professional.userId,
-          ...userDetails,
-          dateOfBirth: userDetails.birthDate ? new Date(userDetails.birthDate) : professional.userId.dateOfBirth
-        }
-      })
-      setHasChanges(false)
-      
-      toast({
-        title: "הצלחה",
-        description: "פרופיל המטפל עודכן בהצלחה"
-      })
+      console.log('Calling updateProfessionalStatus...')
+      // Update professional status and details
+      const result = await updateProfessionalStatus(
+        professional._id,
+        professionalDetails.status,
+        professionalDetails.adminNotes,
+        professionalDetails.rejectionReason
+      )
+
+      console.log('updateProfessionalStatus result:', result)
+
+      if (result.success && result.professional) {
+        // Update the local state with the server response
+        onUpdate(result.professional as unknown as Partial<Professional>)
+        setHasChanges(false)
+        
+        toast({
+          title: "הצלחה",
+          description: "פרופיל המטפל עודכן בהצלחה"
+        })
+        console.log('Professional updated successfully')
+      } else {
+        console.error('Update failed:', result.error)
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה בעדכון פרופיל המטפל"
+        })
+      }
     } catch (error) {
       console.error("Error saving profile:", error)
       toast({

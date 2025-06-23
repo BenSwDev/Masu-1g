@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
 export interface ICity extends Document {
+  _id: mongoose.Types.ObjectId
   name: string
   isActive: boolean
   coordinates: {

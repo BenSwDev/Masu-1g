@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose"
 
 export interface IPartnerProfile extends Document {
+  _id: mongoose.Types.ObjectId
   userId: mongoose.Types.ObjectId
   businessNumber: string
   contactName: string

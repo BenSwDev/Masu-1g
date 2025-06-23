@@ -1,6 +1,7 @@
 import mongoose, { Schema, type Document, type Model } from "mongoose"
 
 export interface ISubscriptionPurchase extends Document {
+  _id: mongoose.Types.ObjectId
   userId: mongoose.Types.ObjectId
   status: "abandoned_pending_payment" | "completed"
   formState: {

@@ -329,7 +329,7 @@ export const CreateBookingPayloadSchema = z.object({
   customAddressDetails: z // New: for one-time address
     .object({
       fullAddress: z.string(),
-      city: z.string(),
+      city: citySchema,
       street: z.string(),
       streetNumber: z.string().optional(),
       apartment: z.string().optional(),
@@ -400,7 +400,7 @@ export const CreateGuestBookingPayloadSchema = z.object({
   customAddressDetails: z // New: for one-time address
     .object({
       fullAddress: z.string().min(1, "Full address is required"),
-      city: z.string().min(1, "City is required"),
+      city: citySchema,
       street: z.string().min(1, "Street is required"),
       streetNumber: z.string().optional(),
       apartment: z.string().optional(),

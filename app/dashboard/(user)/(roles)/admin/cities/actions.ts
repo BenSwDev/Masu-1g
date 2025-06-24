@@ -2,7 +2,7 @@
 
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { dbConnect } from "@/lib/db/mongodb"
+import { connectDB } from "@/lib/db/mongoose"
 import { City, CityDistance } from "@/lib/db/models/city-distance"
 import { revalidatePath } from "next/cache"
 import { clearCitiesCache } from "@/lib/validation/city-validation"
@@ -65,7 +65,7 @@ export async function getCities(page = 1, limit = 10, searchTerm = ""): Promise<
       return { success: false, cities: [], totalPages: 0 }
     }
 
-    await dbConnect()
+    await connectDB()
 
     const query: any = {}
     if (searchTerm) {
@@ -108,7 +108,7 @@ export async function createCity(formData: FormData): Promise<CityActionResponse
     await requireAdminAuth()
 
     // Connect to database
-    await dbConnect()
+    await connectDB()
 
     // Get form data
     const name = formData.get("name")?.toString()?.trim()
@@ -183,7 +183,7 @@ export async function updateCity(cityId: string, formData: FormData): Promise<Ci
     await requireAdminAuth()
 
     // Connect to database
-    await dbConnect()
+    await connectDB()
 
     // Validate cityId
     if (!cityId) {
@@ -282,7 +282,7 @@ export async function deleteCity(cityId: string): Promise<CityActionResponse> {
     await requireAdminAuth()
 
     // Connect to database
-    await dbConnect()
+    await connectDB()
 
     // Validate cityId
     if (!cityId) {
@@ -331,7 +331,7 @@ export async function toggleCityStatus(cityId: string): Promise<CityActionRespon
     await requireAdminAuth()
 
     // Connect to database
-    await dbConnect()
+    await connectDB()
 
     // Validate cityId
     if (!cityId) {

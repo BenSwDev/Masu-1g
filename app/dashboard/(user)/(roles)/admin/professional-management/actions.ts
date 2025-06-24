@@ -237,7 +237,7 @@ export async function getProfessionalById(id: string): Promise<CreateProfessiona
     await dbConnect()
 
     const professional = await ProfessionalProfile.findById(id)
-      .populate("userId", "name email phone gender birthDate roles")
+      .populate("userId", "name email phone gender dateOfBirth roles")
       .lean()
 
     if (!professional) {
@@ -311,7 +311,7 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
           email: validatedData.email,
           phone: validatedData.phone,
           gender: validatedData.gender,
-          birthDate: validatedData.birthDate ? new Date(validatedData.birthDate) : undefined,
+          dateOfBirth: validatedData.birthDate ? new Date(validatedData.birthDate) : undefined,
       password: hashedPassword,
       roles: ["professional"],
           activeRole: "professional",
@@ -340,7 +340,7 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
     const createdProfessionalQuery = await ProfessionalProfile.findOne({ 
       "userId": { $in: await User.find({ email: validatedData.email }).select("_id") }
     })
-      .populate("userId", "name email phone gender birthDate roles")
+      .populate("userId", "name email phone gender dateOfBirth roles")
       .lean()
 
     if (!createdProfessionalQuery) {
@@ -433,7 +433,7 @@ export async function updateProfessionalStatus(
       updateData,
       { new: true, runValidators: true }
     )
-      .populate("userId", "name email phone gender birthDate roles")
+      .populate("userId", "name email phone gender dateOfBirth roles")
       .lean()
 
     if (!updatedProfessional) {
@@ -534,7 +534,7 @@ export async function updateProfessionalTreatments(
         runValidators: true
       }
     )
-      .populate("userId", "name email phone gender birthDate roles")
+      .populate("userId", "name email phone gender dateOfBirth roles")
       .lean()
 
     if (!updatedProfessional) {
@@ -602,7 +602,7 @@ export async function updateProfessionalBankDetails(
       },
       { new: true, runValidators: true }
     )
-      .populate("userId", "name email phone gender birthDate roles")
+      .populate("userId", "name email phone gender dateOfBirth roles")
       .lean()
 
     if (!professional) {
@@ -626,6 +626,157 @@ export async function updateProfessionalBankDetails(
     return { 
       success: false, 
       error: error instanceof Error ? error.message : "שגיאה בעדכון פרטי חשבון הבנק" 
+    }
+  }
+}
+
+// Update professional basic info (user details + professional details)
+export async function updateProfessionalBasicInfo(
+  id: string,
+  userDetails: {
+    name?: string
+    email?: string
+    phone?: string
+    gender?: "male" | "female"
+    birthDate?: string
+  },
+  professionalDetails: {
+    status?: ProfessionalStatus
+    isActive?: boolean
+    adminNotes?: string
+    rejectionReason?: string
+  }
+): Promise<UpdateProfessionalResult> {
+  try {
+    // Validate input
+    if (!id || !Types.ObjectId.isValid(id)) {
+      return { success: false, error: "מזהה מטפל לא תקין" }
+    }
+
+    // Authorize user
+    await requireAdminAuth()
+
+    // Connect to database
+    await dbConnect()
+
+    const professional = await ProfessionalProfile.findById(id).populate("userId")
+    if (!professional) {
+      return { success: false, error: "מטפל לא נמצא" }
+    }
+
+    const user = professional.userId as IUser
+    if (!user) {
+      return { success: false, error: "משתמש לא נמצא" }
+    }
+
+    // Use transaction for safe update of both user and professional
+    const session = await ProfessionalProfile.startSession()
+    
+    try {
+      await session.withTransaction(async () => {
+        // Update user details if provided
+        if (userDetails && Object.keys(userDetails).length > 0) {
+          const userUpdateData: any = {}
+          
+          if (userDetails.name) userUpdateData.name = userDetails.name.trim()
+          if (userDetails.email) {
+            // Check if email is unique
+            const existingUser = await User.findOne({ 
+              email: userDetails.email,
+              _id: { $ne: user._id }
+            })
+            if (existingUser) {
+              throw new Error("אימייל כבר קיים במערכת")
+            }
+            userUpdateData.email = userDetails.email.trim()
+          }
+          if (userDetails.phone) {
+            // Check if phone is unique
+            const existingUser = await User.findOne({ 
+              phone: userDetails.phone,
+              _id: { $ne: user._id }
+            })
+            if (existingUser) {
+              throw new Error("מספר טלפון כבר קיים במערכת")
+            }
+            userUpdateData.phone = userDetails.phone.trim()
+          }
+          if (userDetails.gender) userUpdateData.gender = userDetails.gender
+          if (userDetails.birthDate) userUpdateData.dateOfBirth = new Date(userDetails.birthDate)
+          
+          if (Object.keys(userUpdateData).length > 0) {
+            await User.findByIdAndUpdate(user._id, userUpdateData, { session })
+          }
+        }
+
+        // Update professional details if provided
+        if (professionalDetails && Object.keys(professionalDetails).length > 0) {
+          const professionalUpdateData: any = { lastActiveAt: new Date() }
+          
+          if (professionalDetails.status) {
+            professionalUpdateData.status = professionalDetails.status
+            
+            // Add status-specific fields
+            if (professionalDetails.status === "active") {
+              professionalUpdateData.approvedAt = new Date()
+              professionalUpdateData.rejectedAt = undefined
+              professionalUpdateData.rejectionReason = undefined
+            } else if (professionalDetails.status === "rejected") {
+              professionalUpdateData.rejectedAt = new Date()
+              professionalUpdateData.approvedAt = undefined
+              if (professionalDetails.rejectionReason) {
+                professionalUpdateData.rejectionReason = professionalDetails.rejectionReason
+              }
+            } else if (professionalDetails.status === "pending_admin_approval" || professionalDetails.status === "pending_user_action") {
+              professionalUpdateData.approvedAt = undefined
+              professionalUpdateData.rejectedAt = undefined
+              professionalUpdateData.rejectionReason = undefined
+            }
+          }
+          
+          if (professionalDetails.isActive !== undefined) {
+            professionalUpdateData.isActive = professionalDetails.isActive
+          }
+          if (professionalDetails.adminNotes !== undefined) {
+            professionalUpdateData.adminNotes = professionalDetails.adminNotes
+          }
+          if (professionalDetails.rejectionReason !== undefined && professionalDetails.status !== "rejected") {
+            professionalUpdateData.rejectionReason = professionalDetails.rejectionReason
+          }
+          
+          await ProfessionalProfile.findByIdAndUpdate(id, professionalUpdateData, { session })
+        }
+      })
+    } finally {
+      await session.endSession()
+    }
+
+    // Fetch updated professional with populated user data
+    const updatedProfessional = await ProfessionalProfile.findById(id)
+      .populate("userId", "name email phone gender dateOfBirth roles")
+      .lean()
+
+    if (!updatedProfessional) {
+      return { success: false, error: "שגיאה בעדכון המטפל" }
+    }
+
+    // Revalidate the professional management page
+    revalidatePath("/dashboard/admin/professional-management")
+
+    return { 
+      success: true, 
+      professional: updatedProfessional as ProfessionalWithUser 
+    }
+  } catch (error) {
+    console.error("Error updating professional basic info:", error)
+    
+    if (error instanceof Error && error.message.includes("Unauthorized")) {
+      return { success: false, error: "אין לך הרשאה לעדכן פרטי המטפל" }
+    }
+    
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "שגיאה בעדכון פרטי המטפל" 
     }
   }
 }
@@ -677,7 +828,7 @@ export async function updateProfessionalWorkAreas(
       },
       { new: true, runValidators: true }
     )
-      .populate("userId", "name email phone gender birthDate roles")
+      .populate("userId", "name email phone gender dateOfBirth roles")
       .lean()
 
     if (!professional) {

@@ -74,16 +74,28 @@ export default function ProfessionalProfileTab({
         return
       }
 
-      // Here you would typically make an API call to update the professional profile
-      // For now, we'll update the local state
-      onUpdate({
-        ...professionalDetails,
-        userId: {
-          ...professional.userId,
-          ...userDetails,
-          dateOfBirth: userDetails.birthDate ? new Date(userDetails.birthDate) : professional.userId.dateOfBirth
-        }
-      })
+      // Import and call the update function
+      const { updateProfessionalBasicInfo } = await import("@/app/dashboard/(user)/(roles)/admin/professional-management/actions")
+      
+      const result = await updateProfessionalBasicInfo(
+        professional._id,
+        userDetails,
+        professionalDetails
+      )
+
+      if (!result.success) {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: result.error || "שגיאה בעדכון פרופיל המטפל"
+        })
+        return
+      }
+
+      // Update local state with the new data
+      if (result.professional) {
+        onUpdate(result.professional)
+      }
       setHasChanges(false)
       
       toast({

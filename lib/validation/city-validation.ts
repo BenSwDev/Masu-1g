@@ -1,5 +1,11 @@
 import { z } from "zod"
-import { City } from "@/lib/db/models/city-distance"
+
+// Only import City model on server side
+let City: any = null
+if (typeof window === 'undefined') {
+  // Dynamic import only on server side to prevent client-side loading
+  City = require("@/lib/db/models/city-distance").City
+}
 
 // Cache for active cities
 let activeCitiesCache: Set<string> | null = null
@@ -10,6 +16,11 @@ const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
  * Get active cities from database with caching
  */
 async function getActiveCities(): Promise<Set<string>> {
+  // Return empty set on client side
+  if (typeof window !== 'undefined') {
+    return new Set()
+  }
+
   const now = Date.now()
   
   // Use cache if it's still valid
@@ -18,6 +29,9 @@ async function getActiveCities(): Promise<Set<string>> {
   }
   
   try {
+    if (!City) {
+      return new Set()
+    }
     const cities = await City.find({ isActive: true }).select('name').lean()
     activeCitiesCache = new Set(cities.map(city => city.name))
     cacheTimestamp = now

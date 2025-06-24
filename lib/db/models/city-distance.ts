@@ -117,7 +117,7 @@ CityDistanceSchema.statics.getCoveredCities = function(
   
   if (maxDistance === Infinity) {
     // Return all active cities except the source city
-    const CityModel = mongoose.models.City || mongoose.model<ICity>("City", CitySchema)
+    const CityModel = mongoose.models?.City || mongoose.model<ICity>("City", CitySchema)
     return CityModel.find({ 
       isActive: true,
       name: { $ne: cityName }
@@ -146,7 +146,7 @@ CitySchema.statics.calculateDistance = function(
 // Method to populate distance relationships
 CitySchema.statics.populateDistances = async function() {
   const cities = await this.find({ isActive: true })
-  const CityDistance = mongoose.models.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
+  const CityDistance = mongoose.models?.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
   
   // TODO: Remove debug log
 
@@ -204,7 +204,7 @@ CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: stri
     _id: { $ne: newCityId } 
   })
   
-  const CityDistance = mongoose.models.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
+  const CityDistance = mongoose.models?.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
   
   for (const existingCity of existingCities) {
     const distance = (this as any).calculateDistance(
@@ -241,7 +241,19 @@ CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: stri
   }
 }
 
-export const City = (mongoose.models.City || mongoose.model<ICity>("City", CitySchema)) as CityModel
-export const CityDistance = (mongoose.models.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)) as CityDistanceModel
+// Only create models on server side
+let City: CityModel
+let CityDistance: CityDistanceModel
 
+if (typeof window === 'undefined') {
+  // Server side
+  City = (mongoose.models?.City || mongoose.model<ICity>("City", CitySchema)) as CityModel
+  CityDistance = (mongoose.models?.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)) as CityDistanceModel
+} else {
+  // Client side - create dummy objects to prevent errors
+  City = {} as CityModel
+  CityDistance = {} as CityDistanceModel
+}
+
+export { City, CityDistance }
 export default City 

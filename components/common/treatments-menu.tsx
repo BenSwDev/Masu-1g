@@ -31,7 +31,7 @@ export function TreatmentsMenu({ mobile = false, onNavigate }: TreatmentsMenuPro
         const res = await fetch('/api/treatments')
         const _data = await res.json()
         const map: Record<string, { _id: string; name: string }[]> = {}
-        ;(data.treatments || []).forEach((tr: any) => {
+        ;(_data.treatments || []).forEach((tr: any) => {
           const c = tr.category || 'other'
           if (!map[c]) map[c] = []
           map[c].push({ _id: tr._id, name: tr.name })

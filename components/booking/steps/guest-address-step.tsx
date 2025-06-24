@@ -13,7 +13,6 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { CitySelectForm } from "@/components/common/ui/city-select-form"
-import { citySchema } from "@/lib/validation/city-validation"
 
 interface GuestAddress {
   city: string
@@ -42,9 +41,9 @@ interface GuestAddressStepProps {
   onPrev: () => void
 }
 
-// ✅ Updated validation using city validation schema
+// ✅ Updated validation using simple city validation for client side
 const addressSchema = z.object({
-  city: citySchema, // Use the city validation schema
+  city: z.string().min(1, { message: "יש לבחור עיר" }), // Simple client-side validation
   street: z.string()
     .min(2, { message: "יש להזין רחוב" })
     .max(100, { message: "שם הרחוב ארוך מדי" })
@@ -112,7 +111,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
     },
   })
 
-  const onSubmit = (_data: GuestAddressFormData) => {
+  const onSubmit = (data: GuestAddressFormData) => {
     setAddress(data)
     onNext()
   }

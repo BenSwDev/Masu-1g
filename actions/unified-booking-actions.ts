@@ -11,6 +11,13 @@ import type { z } from "zod"
 
 export type { IGiftVoucherUsageHistory } from "@/types/booking"
 
+const appBaseUrl =
+  process.env.NEXTAUTH_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  "http://localhost:3000"
+
+const apiUrl = (path: string) => `${appBaseUrl}${path}`
+
 // ============================================================================
 // USER BOOKINGS
 // ============================================================================
@@ -36,7 +43,7 @@ export async function getUserBookings(
       )
     })
     
-    const response = await fetch(`/api/bookings?${params}`)
+    const response = await fetch(apiUrl(`/api/bookings?${params}`))
     const result = await response.json()
     
     if (!result.success) {
@@ -77,7 +84,7 @@ export async function getAllBookings(
       )
     )
     
-    const response = await fetch(`/api/admin/bookings?${params}`)
+    const response = await fetch(apiUrl(`/api/admin/bookings?${params}`))
     const result = await response.json()
     
     if (!result.success) {
@@ -94,7 +101,7 @@ export async function getAllBookings(
 
 export async function getBookingById(bookingId: string): Promise<{ success: boolean; booking?: PopulatedBooking; error?: string }> {
   try {
-    const response = await fetch(`/api/admin/bookings/${bookingId}`)
+    const response = await fetch(apiUrl(`/api/admin/bookings/${bookingId}`))
     const result = await response.json()
     
     return result
@@ -118,7 +125,7 @@ export async function updateBookingByAdmin(
   }
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   try {
-    const response = await fetch(`/api/admin/bookings/${bookingId}`, {
+    const response = await fetch(apiUrl(`/api/admin/bookings/${bookingId}`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
@@ -138,11 +145,11 @@ export async function updateBookingByAdmin(
 
 export async function getBookingInitialData(userId?: string): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const url = userId 
+    const url = userId
       ? `/api/bookings/initial-data?userId=${userId}`
       : '/api/bookings/initial-data'
-    
-    const response = await fetch(url)
+
+    const response = await fetch(apiUrl(url))
     const result = await response.json()
     
     return result
@@ -157,7 +164,7 @@ export async function getBookingInitialData(userId?: string): Promise<{ success:
 
 export async function getGuestBookingInitialData(): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
-    const response = await fetch('/api/bookings/guest/initial-data')
+    const response = await fetch(apiUrl('/api/bookings/guest/initial-data'))
     const result = await response.json()
     
     return result
@@ -186,7 +193,7 @@ export async function getAvailableTimeSlots(
       ...(selectedDurationId && { selectedDurationId })
     })
     
-    const response = await fetch(`/api/bookings/time-slots?${params}`)
+    const response = await fetch(apiUrl(`/api/bookings/time-slots?${params}`))
     const result = await response.json()
     
     return result
@@ -207,7 +214,7 @@ export async function calculateBookingPrice(
   payload: unknown,
 ): Promise<{ success: boolean; priceDetails?: CalculatedPriceDetails; error?: string; issues?: z.ZodIssue[] }> {
   try {
-    const response = await fetch('/api/bookings/price', {
+    const response = await fetch(apiUrl('/api/bookings/price'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -232,7 +239,7 @@ export async function createBooking(
   payload: unknown,
 ): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
   try {
-    const response = await fetch('/api/bookings/create', {
+    const response = await fetch(apiUrl('/api/bookings/create'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -253,7 +260,7 @@ export async function createGuestBooking(
   payload: unknown,
 ): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
   try {
-    const response = await fetch('/api/bookings/guest', {
+    const response = await fetch(apiUrl('/api/bookings/guest'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -281,7 +288,7 @@ export async function cancelBooking(
   reason?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch(`/api/bookings/${bookingId}/cancel`, {
+    const response = await fetch(apiUrl(`/api/bookings/${bookingId}/cancel`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, cancelledByRole, reason }),
@@ -306,7 +313,7 @@ export async function professionalAcceptBooking(
   bookingId: string,
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   try {
-    const response = await fetch(`/api/bookings/${bookingId}/accept`, {
+    const response = await fetch(apiUrl(`/api/bookings/${bookingId}/accept`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -326,7 +333,7 @@ export async function professionalMarkEnRoute(
   bookingId: string,
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   try {
-    const response = await fetch(`/api/bookings/${bookingId}/en-route`, {
+    const response = await fetch(apiUrl(`/api/bookings/${bookingId}/en-route`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -346,7 +353,7 @@ export async function professionalMarkCompleted(
   bookingId: string,
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   try {
-    const response = await fetch(`/api/bookings/${bookingId}/complete`, {
+    const response = await fetch(apiUrl(`/api/bookings/${bookingId}/complete`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -371,7 +378,7 @@ export async function assignProfessionalToBooking(
   professionalId: string,
 ): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
   try {
-    const response = await fetch(`/api/bookings/${bookingId}/assign`, {
+    const response = await fetch(apiUrl(`/api/bookings/${bookingId}/assign`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ professionalId }),
@@ -390,7 +397,7 @@ export async function assignProfessionalToBooking(
 
 export async function getAvailableProfessionals(): Promise<{ success: boolean; professionals?: any[]; error?: string }> {
   try {
-    const response = await fetch('/api/bookings/professionals')
+    const response = await fetch(apiUrl('/api/bookings/professionals'))
     const result = await response.json()
     
     return result
@@ -416,7 +423,7 @@ export async function createGuestUser(guestInfo: {
   gender?: "male" | "female" | "other"
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
   try {
-    const response = await fetch('/api/bookings/guest/user', {
+    const response = await fetch(apiUrl('/api/bookings/guest/user'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(guestInfo),
@@ -444,7 +451,7 @@ export async function saveAbandonedBooking(
   }
 ): Promise<{ success: boolean; bookingId?: string; error?: string }> {
   try {
-    const response = await fetch('/api/bookings/abandoned', {
+    const response = await fetch(apiUrl('/api/bookings/abandoned'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, formData }),
@@ -467,7 +474,7 @@ export async function getAbandonedBooking(userId: string): Promise<{
   error?: string 
 }> {
   try {
-    const response = await fetch(`/api/bookings/abandoned?userId=${userId}`)
+    const response = await fetch(apiUrl(`/api/bookings/abandoned?userId=${userId}`))
     const result = await response.json()
     
     return result
@@ -486,7 +493,7 @@ export async function updateBookingStatusAfterPayment(
   transactionId?: string
 ): Promise<{ success: boolean; booking?: IBooking; error?: string }> {
   try {
-    const response = await fetch(`/api/bookings/${bookingId}/payment-status`, {
+    const response = await fetch(apiUrl(`/api/bookings/${bookingId}/payment-status`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ paymentStatus, transactionId }),
@@ -507,7 +514,7 @@ export async function findSuitableProfessionals(
   bookingId: string
 ): Promise<{ success: boolean; professionals?: any[]; error?: string }> {
   try {
-    const response = await fetch(`/api/bookings/${bookingId}/suitable-professionals`)
+    const response = await fetch(apiUrl(`/api/bookings/${bookingId}/suitable-professionals`))
     const result = await response.json()
     
     return result
@@ -524,7 +531,7 @@ export async function getSuitableProfessionalsForBooking(
   bookingId: string
 ): Promise<{ success: boolean; professionals?: any[]; error?: string }> {
   try {
-    const response = await fetch(`/api/admin/bookings/${bookingId}/suitable-professionals`)
+    const response = await fetch(apiUrl(`/api/admin/bookings/${bookingId}/suitable-professionals`))
     const result = await response.json()
     
     return result
@@ -541,7 +548,7 @@ export async function sendNotificationToSuitableProfessionals(
   bookingId: string
 ): Promise<{ success: boolean; sentCount?: number; error?: string }> {
   try {
-    const response = await fetch(`/api/bookings/${bookingId}/notify-professionals`, {
+    const response = await fetch(apiUrl(`/api/bookings/${bookingId}/notify-professionals`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
@@ -573,7 +580,7 @@ export async function validateRedemptionCode(
   error?: string 
 }> {
   try {
-    const response = await fetch('/api/bookings/validate-redemption', {
+    const response = await fetch(apiUrl('/api/bookings/validate-redemption'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, userId }),

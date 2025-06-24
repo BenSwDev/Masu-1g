@@ -267,6 +267,7 @@ export default function UniversalBookingWizard({
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
   const [abandonedBooking, setAbandonedBooking] = useState<any>(null)
   const [pendingBookingId, setPendingBookingId] = useState<string | null>(null) // Track pending booking ID
+ // Track price calculation requests
 
   const { toast } = useToast()
 
@@ -277,7 +278,7 @@ export default function UniversalBookingWizard({
       const updatedState = { ...prevState, ...newInfo }
       return updatedState
     })
-  }, [guestInfo])
+  }, [])
 
   // Function to handle guest info submission and proceed to next step
   const handleGuestInfoSubmit = useCallback(async (newInfo: Partial<GuestInfo>) => {
@@ -735,7 +736,7 @@ export default function UniversalBookingWizard({
 
     try {
       const bookingDateTime = new Date(bookingOptions.bookingDate)
-      const [hours, minutes] = bookingOptions.bookingTime.split(":").map(Number)
+      const [hours, minutes] = bookingOptions.bookingTime!.split(":").map(Number)
       bookingDateTime.setHours(hours, minutes, 0, 0)
 
       const payload = {

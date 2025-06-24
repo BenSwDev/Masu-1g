@@ -163,6 +163,8 @@ export interface SelectedBookingOptions {
   selectedTreatmentId: string
   selectedDurationId?: string
   selectedDateTime: Date | null
+  bookingDate?: Date | string
+  bookingTime?: string
   selectedAddressId?: string
   customAddressDetails?: Partial<IAddress>
   therapistGenderPreference: "male" | "female" | "any"
@@ -171,6 +173,7 @@ export interface SelectedBookingOptions {
   selectedUserSubscriptionId?: string
   selectedGiftVoucherId?: string
   appliedCouponCode?: string
+  isFlexibleTime?: boolean
   // New unified redemption field
   redemptionCode?: string
   redemptionData?: RedemptionCode

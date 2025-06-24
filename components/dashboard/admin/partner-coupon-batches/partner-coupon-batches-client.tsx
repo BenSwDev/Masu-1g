@@ -141,7 +141,7 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
     }
   }
 
-  const handleFormSubmit = async (values: PartnerCouponBatchFormValues) => {
+  const handleFormSubmit = async (_values: PartnerCouponBatchFormValues) => {
     try {
       let result
       if (editingBatch) {

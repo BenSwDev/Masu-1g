@@ -109,7 +109,7 @@ const ProfessionalAssignmentDialog = ({
   const [isAssigning, setIsAssigning] = useState(false)
   const queryClient = useQueryClient()
 
-  const { data: professionalsData, refetch } = useQuery({
+  const { _data: professionalsData, refetch } = useQuery({
     queryKey: ["availableProfessionals"],
     queryFn: getAvailableProfessionals,
     enabled: isOpen,
@@ -217,7 +217,7 @@ const AdminBookingActions = ({
   const [showSuitableProfessionalsModal, setShowSuitableProfessionalsModal] = useState(false)
   const queryClient = useQueryClient()
 
-  const { data: existingReview, isLoading: loadingReview, refetch: refetchReview } = useQuery({
+  const { _data: existingReview, isLoading: loadingReview, refetch: refetchReview } = useQuery({
     queryKey: ["bookingReview", booking._id],
     queryFn: () => getReviewByBookingId(booking._id.toString()),
     enabled: booking.status === "completed",

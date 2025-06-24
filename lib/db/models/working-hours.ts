@@ -353,7 +353,7 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
     for (let i = 0; i < 7; i++) {
       this.fixedHours.push({
         dayOfWeek: i,
-        isActive: false, // Default to inactive
+        isActive: false,
         startTime: "09:00",
         endTime: "17:00",
         hasPriceAddition: false,
@@ -362,9 +362,9 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
         minimumBookingAdvanceHours: 2,
         cutoffTime: null,
         professionalShare: { amount: 70, type: "percentage" }, // Default but will only be used when hasPriceAddition is true
-      } as IFixedHours) // Cast to IFixedHours
+      } as IFixedHours)
     }
-  }
+  } else {
     // Ensure all days 0-6 exist if not new or not empty
     for (let i = 0; i < 7; i++) {
       const existingDay = this.fixedHours.find((day) => day.dayOfWeek === i)
@@ -377,10 +377,11 @@ WorkingHoursSettingsSchema.pre("save", function (next) {
           hasPriceAddition: false,
           priceAddition: { amount: 0, type: "fixed" },
           notes: "",
-        minimumBookingAdvanceHours: 2,
-        cutoffTime: null,
-        professionalShare: { amount: 70, type: "percentage" }, // Default but will only be used when hasPriceAddition is true
+          minimumBookingAdvanceHours: 2,
+          cutoffTime: null,
+          professionalShare: { amount: 70, type: "percentage" }, // Default but will only be used when hasPriceAddition is true
         } as IFixedHours)
+      }
     }
   }
 

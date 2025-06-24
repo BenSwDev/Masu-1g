@@ -143,7 +143,7 @@ const AdminUserSubscriptionsClient = ({
     setIsEditDialogOpen(true)
   }
 
-  const handleUpdate = async (data: FormData) => {
+  const handleUpdate = async (_data: FormData) => {
     if (!currentSubscription) return
     setIsSaving(true)
     const result = await updateUserSubscription(String(currentSubscription._id), data)
@@ -157,7 +157,7 @@ const AdminUserSubscriptionsClient = ({
     setIsSaving(false)
   }
 
-  const handleCreate = async (data: FormData) => {
+  const handleCreate = async (_data: FormData) => {
     setIsSaving(true)
     const result = await createUserSubscription(data)
     if (result.success) {

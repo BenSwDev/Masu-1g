@@ -1,6 +1,5 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import Treatment from "@/lib/db/models/treatment"
 import dbConnect from "@/lib/db/mongoose"

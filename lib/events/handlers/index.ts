@@ -5,5 +5,6 @@
 
 export function initializeEventHandlers() {
   // Future event handler initialization
-  console.log("Event handlers initialized")
+  // TODO: Remove debug log
+
 } 

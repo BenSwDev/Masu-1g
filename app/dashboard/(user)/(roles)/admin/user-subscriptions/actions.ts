@@ -44,11 +44,16 @@ export interface GetAllUserSubscriptionsOptions {
 export interface GetAllUserSubscriptionsResult {
   success: boolean
   userSubscriptions?: (IUserSubscription & {
-    userId: Pick<User, "name" | "email"> & { _id: string }
+    userId?: { name?: string; email?: string; phone?: string; _id: string } | null
     subscriptionId: ISubscription
     treatmentId: ITreatment
-    selectedDurationDetails?: ITreatment["durations"][0]
-    paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+    selectedDurationDetails?: { _id: string; minutes: number; price: number }
+    paymentMethodId?: { _id: string; cardName?: string; cardNumber: string }
+    guestInfo?: {
+      name: string
+      email: string
+      phone: string
+    }
   })[]
   pagination?: {
     total: number
@@ -83,35 +88,138 @@ export async function getAllUserSubscriptions(
     if (subscriptionId) query.subscriptionId = subscriptionId
     if (treatmentId) query.treatmentId = treatmentId
     if (status) query.status = status
+    
+    // Fix search to work for both users and guests
     if (search) {
+      const searchRegex = new RegExp(search, 'i')
+      
+      // For searching, we need to use aggregate pipeline because we need to search in both populated fields and guest info
+      // However, for simplicity, we'll handle this in the client-side filtering or use a simpler approach
+      // We'll search in both guest info and subscription/treatment names
       query.$or = [
-        { "userId.name": { $regex: search, $options: "i" } },
-        { "userId.email": { $regex: search, $options: "i" } },
-        { "subscriptionId.name": { $regex: search, $options: "i" } },
-        { "treatmentId.name": { $regex: search, $options: "i" } },
+        // Search in guest info for guest subscriptions
+        { 'guestInfo.name': searchRegex },
+        { 'guestInfo.email': searchRegex },
+        { 'guestInfo.phone': searchRegex },
       ]
     }
 
-    // Get total count for pagination
-    const total = await UserSubscription.countDocuments(query)
+    let userSubscriptions: any[]
+    let total: number
 
-    // Get paginated results with populated fields
-    const userSubscriptions = await UserSubscription.find(query)
-      .populate("userId", "name email")
-      .populate("subscriptionId")
-      .populate("treatmentId")
-      .populate("paymentMethodId", "cardName cardNumber")
-      .sort({ purchaseDate: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean()
+    if (search) {
+      // Use aggregation pipeline for complex search across populated fields and guest info
+      const searchRegex = new RegExp(search, 'i')
+      
+      const pipeline: any[] = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "user"
+          }
+        },
+        {
+          $lookup: {
+            from: "subscriptions",
+            localField: "subscriptionId",
+            foreignField: "_id",
+            as: "subscription"
+          }
+        },
+        {
+          $lookup: {
+            from: "treatments",
+            localField: "treatmentId",
+            foreignField: "_id",
+            as: "treatment"
+          }
+        },
+        {
+          $lookup: {
+            from: "paymentmethods",
+            localField: "paymentMethodId",
+            foreignField: "_id",
+            as: "paymentMethod"
+          }
+        },
+        {
+          $match: {
+            $or: [
+              { "user.name": searchRegex },
+              { "user.email": searchRegex },
+              { "user.phone": searchRegex },
+              { "guestInfo.name": searchRegex },
+              { "guestInfo.email": searchRegex },
+              { "guestInfo.phone": searchRegex },
+              { "subscription.name": searchRegex },
+              { "treatment.name": searchRegex }
+            ]
+          }
+        },
+        {
+          $addFields: {
+            userId: { $arrayElemAt: ["$user", 0] },
+            subscriptionId: { $arrayElemAt: ["$subscription", 0] },
+            treatmentId: { $arrayElemAt: ["$treatment", 0] },
+            paymentMethodId: { $arrayElemAt: ["$paymentMethod", 0] }
+          }
+        },
+        {
+          $unset: ["user", "subscription", "treatment", "paymentMethod"]
+        },
+        { $sort: { purchaseDate: -1 } }
+      ]
+
+      // Get total count
+      const countPipeline = [...pipeline, { $count: "total" }]
+      const countResult = await UserSubscription.aggregate(countPipeline)
+      total = countResult[0]?.total || 0
+
+      // Get paginated results
+      const dataPipeline = [...pipeline, { $skip: (page - 1) * limit }, { $limit: limit }]
+      userSubscriptions = await UserSubscription.aggregate(dataPipeline)
+    } else {
+      // Use regular query when no search term
+      total = await UserSubscription.countDocuments(query)
+      
+      userSubscriptions = await UserSubscription.find(query)
+        .populate("userId", "name email phone")
+        .populate("subscriptionId")
+        .populate("treatmentId")
+        .populate("paymentMethodId", "cardName cardNumber")
+        .sort({ purchaseDate: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+    }
+
+    // Process results to handle duration details for duration-based treatments
+    const processedSubscriptions = userSubscriptions.map((sub: any) => {
+      // Handle duration details for duration-based treatments
+      if (
+        sub.treatmentId &&
+        sub.treatmentId.pricingType === "duration_based" &&
+        sub.selectedDurationId
+      ) {
+        const treatmentDoc = sub.treatmentId
+        if (treatmentDoc.durations) {
+          const selectedDuration = treatmentDoc.durations.find(
+            (d: any) => d._id.toString() === sub.selectedDurationId.toString(),
+          )
+          return { ...sub, selectedDurationDetails: selectedDuration }
+        }
+      }
+      return sub
+    })
 
     // Calculate total pages
     const totalPages = Math.ceil(total / limit)
 
     return {
       success: true,
-      userSubscriptions: JSON.parse(JSON.stringify(userSubscriptions)),
+      userSubscriptions: JSON.parse(JSON.stringify(processedSubscriptions)),
       pagination: {
         total,
         page,
@@ -123,7 +231,8 @@ export async function getAllUserSubscriptions(
     logger.error("Error fetching user subscriptions:", error)
     return { success: false, error: "Failed to fetch user subscriptions" }
   }
-} 
+}
+
 export interface CreateUserSubscriptionResult {
   success: boolean
   userSubscription?: any

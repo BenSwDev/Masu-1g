@@ -27,7 +27,7 @@ export class BookingsErrorBoundary extends React.Component<
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(_error: Error, errorInfo: React.ErrorInfo) {
     console.error('BookingsErrorBoundary caught an error:', error, errorInfo)
   }
 

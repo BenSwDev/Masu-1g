@@ -114,7 +114,7 @@ export function GuestAddressStep({ address, setAddress, onNext, onPrev }: GuestA
     },
   })
 
-  const onSubmit = (data: GuestAddressFormData) => {
+  const onSubmit = (_data: GuestAddressFormData) => {
     setAddress(data)
     onNext()
   }

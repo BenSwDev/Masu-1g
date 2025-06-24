@@ -20,7 +20,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (cachedUser) {
         // We could potentially pre-render UI elements based on cached data
         // while the actual session is being fetched
-        console.log("Pre-loaded cached user data")
+        // TODO: Remove debug log
+
       }
     }
   }, [])

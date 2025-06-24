@@ -39,7 +39,7 @@ const formatDateTime = (dateString: string | Date | undefined, locale = "he-IL")
 export default function ProfessionalBookingManagementPage() {
   const params = useParams()
   const router = useRouter()
-  const { data: session, status: sessionStatus } = useSession()
+  const { _data: session, status: sessionStatus } = useSession()
   const { toast } = useToast()
   const { t, language } = useTranslation()
 

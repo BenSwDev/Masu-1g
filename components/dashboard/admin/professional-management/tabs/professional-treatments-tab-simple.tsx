@@ -58,7 +58,7 @@ export default function ProfessionalTreatmentsTab({
       try {
         const response = await fetch('/api/treatments')
         if (response.ok) {
-        const data = await response.json()
+        const _data = await response.json()
           const treatmentList = data.treatments || []
           setAvailableTreatments(treatmentList)
           

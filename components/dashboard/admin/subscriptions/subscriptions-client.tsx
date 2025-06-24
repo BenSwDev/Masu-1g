@@ -117,7 +117,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
     fetchSubscriptions(1, "", undefined)
   }
 
-  const handleCreate = async (data: FormData) => {
+  const handleCreate = async (_data: FormData) => {
     setIsLoading(true)
     try {
       const result = await createSubscription(data)
@@ -141,7 +141,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
     }
   }
 
-  const handleUpdate = async (data: FormData) => {
+  const handleUpdate = async (_data: FormData) => {
     if (!currentSubscription) return
     setIsLoading(true)
     try {

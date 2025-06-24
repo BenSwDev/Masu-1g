@@ -23,10 +23,15 @@ export interface GiftVoucherPlain {
   monetaryValue?: number
   originalAmount?: number
   remainingAmount?: number
-  purchaserUserId: string
+  purchaserUserId?: string | null
   purchaserName?: string
-  ownerUserId: string
+  ownerUserId?: string | null
   ownerName?: string
+  guestInfo?: {
+    name: string
+    email: string
+    phone: string
+  }
   isGift: boolean
   recipientName?: string
   recipientPhone?: string
@@ -157,51 +162,180 @@ export async function getGiftVouchers(
 
     await dbConnect()
 
-    const query: any = {}
+    let giftVoucherDocs: any[]
+    let total: number
 
-    // Search by user name or email
     if (search) {
-      const users = await mongoose.model("User").find({
-        $or: [
-          { name: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } },
-        ],
-      }).select("_id")
-      const userIds = users.map((user: any) => user._id)
-      query.$or = [
-        { purchaserUserId: { $in: userIds } },
-        { ownerUserId: { $in: userIds } },
-        { code: { $regex: search, $options: "i" } },
+      // Use aggregation pipeline for complex search across populated fields and guest info
+      const searchRegex = new RegExp(search, 'i')
+      
+      const pipeline: any[] = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "purchaserUserId",
+            foreignField: "_id",
+            as: "purchaser"
+          }
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "ownerUserId",
+            foreignField: "_id",
+            as: "owner"
+          }
+        },
+        {
+          $lookup: {
+            from: "treatments",
+            localField: "treatmentId",
+            foreignField: "_id",
+            as: "treatment"
+          }
+        },
+        {
+          $match: {
+            $or: [
+              { "purchaser.name": searchRegex },
+              { "purchaser.email": searchRegex },
+              { "owner.name": searchRegex },
+              { "owner.email": searchRegex },
+              { "guestInfo.name": searchRegex },
+              { "guestInfo.email": searchRegex },
+              { "guestInfo.phone": searchRegex },
+              { "treatment.name": searchRegex },
+              { "code": searchRegex },
+              { "recipientName": searchRegex }
+            ]
+          }
+        },
+        {
+          $addFields: {
+            purchaserUserId: { $arrayElemAt: ["$purchaser", 0] },
+            ownerUserId: { $arrayElemAt: ["$owner", 0] },
+            treatmentId: { $arrayElemAt: ["$treatment", 0] }
+          }
+        },
+        {
+          $unset: ["purchaser", "owner", "treatment"]
+        },
+        { $sort: { purchaseDate: -1 } }
       ]
+
+      // Apply filters to the pipeline
+      const matchStage: any = {}
+      if (filters?.voucherType) {
+        matchStage.voucherType = filters.voucherType
+      }
+      if (filters?.status) {
+        matchStage.status = filters.status
+      }
+      if (filters?.dateRange) {
+        if (filters.dateRange.from) {
+          matchStage.purchaseDate = { ...matchStage.purchaseDate, $gte: new Date(filters.dateRange.from) }
+        }
+        if (filters.dateRange.to) {
+          matchStage.purchaseDate = { ...matchStage.purchaseDate, $lte: new Date(filters.dateRange.to) }
+        }
+      }
+      
+      if (Object.keys(matchStage).length > 0) {
+        pipeline.splice(pipeline.length - 1, 0, { $match: matchStage })
+      }
+
+      // Get total count
+      const countPipeline = [...pipeline, { $count: "total" }]
+      const countResult = await mongoose.model("GiftVoucher").aggregate(countPipeline)
+      total = countResult[0]?.total || 0
+
+      // Get paginated results
+      const dataPipeline = [...pipeline, { $skip: (page - 1) * limit }, { $limit: limit }]
+      giftVoucherDocs = await mongoose.model("GiftVoucher").aggregate(dataPipeline)
+    } else {
+      // Use regular query when no search term
+      const query: any = {}
+
+      // Apply filters
+      if (filters?.voucherType) {
+        query.voucherType = filters.voucherType
+      }
+      if (filters?.status) {
+        query.status = filters.status
+      }
+      if (filters?.dateRange) {
+        if (filters.dateRange.from) {
+          query.purchaseDate = { ...query.purchaseDate, $gte: new Date(filters.dateRange.from) }
+        }
+        if (filters.dateRange.to) {
+          query.purchaseDate = { ...query.purchaseDate, $lte: new Date(filters.dateRange.to) }
+        }
+      }
+
+      total = await mongoose.model("GiftVoucher").countDocuments(query)
+      const skip = (page - 1) * limit
+
+      giftVoucherDocs = await mongoose.model("GiftVoucher").find(query)
+        .sort({ purchaseDate: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
     }
 
-    // Apply filters
-    if (filters?.voucherType) {
-      query.voucherType = filters.voucherType
-    }
-    if (filters?.status) {
-      query.status = filters.status
-    }
-    if (filters?.dateRange) {
-      if (filters.dateRange.from) {
-        query.purchaseDate = { ...query.purchaseDate, $gte: new Date(filters.dateRange.from) }
-      }
-      if (filters.dateRange.to) {
-        query.purchaseDate = { ...query.purchaseDate, $lte: new Date(filters.dateRange.to) }
-      }
-    }
+    // Transform documents to plain objects
+    const giftVouchers = await Promise.all(
+      giftVoucherDocs.map(async (doc: any) => {
+        try {
+          // Enhanced transformation with guest info support
+          let purchaserName, ownerName, treatmentName, selectedDurationName
 
-    const total = await mongoose.model("GiftVoucher").countDocuments(query)
+          // Handle purchaser name (user or guest)
+          if (doc.purchaserUserId) {
+            const purchaser = await mongoose.model("User").findById(doc.purchaserUserId).select("name").lean() as any
+            purchaserName = purchaser?.name
+          } else if (doc.guestInfo) {
+            purchaserName = doc.guestInfo.name
+          }
+
+          // Handle owner name (user or guest)
+          if (doc.ownerUserId) {
+            const owner = await mongoose.model("User").findById(doc.ownerUserId).select("name").lean() as any
+            ownerName = owner?.name
+          } else if (doc.guestInfo) {
+            ownerName = doc.guestInfo.name
+          }
+
+          // Handle treatment details
+          if (doc.voucherType === "treatment" && doc.treatmentId) {
+            const treatment = await mongoose.model("Treatment").findById(doc.treatmentId)
+              .select("name durations")
+              .lean() as any
+            treatmentName = treatment?.name
+            
+            if (doc.selectedDurationId && treatment?.durations) {
+              const duration = treatment.durations.find((d: any) => 
+                d._id.toString() === doc.selectedDurationId.toString()
+              )
+              selectedDurationName = duration?.minutes ? `${duration.minutes} min` : undefined
+            }
+          }
+
+          return {
+            ...toGiftVoucherPlain(doc),
+            purchaserName,
+            ownerName,
+            treatmentName,
+            selectedDurationName,
+            guestInfo: doc.guestInfo // Include guest info in response
+          }
+        } catch (error) {
+          logger.warn("Error transforming gift voucher", { voucherId: doc._id, error })
+          return toGiftVoucherPlain(doc)
+        }
+      })
+    )
+
     const totalPages = Math.ceil(total / limit)
-    const skip = (page - 1) * limit
-
-    const giftVoucherDocs = await mongoose.model("GiftVoucher").find(query)
-      .sort({ purchaseDate: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
-
-    const giftVouchers = giftVoucherDocs.map((doc: any) => toGiftVoucherPlain(doc))
 
     return {
       success: true,

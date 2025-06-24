@@ -29,7 +29,7 @@ export function TreatmentsMenu({ mobile = false, onNavigate }: TreatmentsMenuPro
     const load = async () => {
       try {
         const res = await fetch('/api/treatments')
-        const data = await res.json()
+        const _data = await res.json()
         const map: Record<string, { _id: string; name: string }[]> = {}
         ;(data.treatments || []).forEach((tr: any) => {
           const c = tr.category || 'other'

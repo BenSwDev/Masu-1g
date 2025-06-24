@@ -9,7 +9,7 @@ import { logger } from "@/lib/logs/logger"
  * Handles SMS notifications with proper configuration validation and error handling
  */
 export class SMSService {
-  private client: any
+  private client: ReturnType<typeof twilio> | null
   private fromNumber: string | undefined
   private messagingServiceSid: string | undefined
   private isDevelopment: boolean
@@ -18,6 +18,7 @@ export class SMSService {
   constructor() {
     this.isDevelopment = process.env.NODE_ENV === "development"
     this.isConfigured = false
+    this.client = null
     
     // Initialize Twilio client with proper validation
     this.initializeTwilio()
@@ -110,7 +111,12 @@ export class SMSService {
       }
 
       // Prepare message options
-      const messageOptions: any = {
+      const messageOptions: {
+        body: string
+        to: string
+        from?: string
+        messagingServiceSid?: string
+      } = {
         body: messageBody,
         to: phoneNumber,
       }

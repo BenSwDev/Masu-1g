@@ -89,7 +89,7 @@ export function PaymentMethodForm({
     }
   }, [paymentMethod, isEditing, form, open]) // Added 'open' to reset form when dialog reopens for new entry
 
-  const onSubmit = async (data: PaymentMethodFormValues) => {
+  const onSubmit = async (_data: PaymentMethodFormValues) => {
     setIsLoading(true)
     try {
       const formData: PaymentMethodFormData = {

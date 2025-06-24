@@ -59,7 +59,7 @@ export default function ProfessionalWorkAreasTab({
       try {
         const response = await fetch('/api/cities')
         if (response.ok) {
-        const data = await response.json()
+        const _data = await response.json()
           setAvailableCities(data.cities || [])
         } else {
           throw new Error('Failed to fetch cities')

@@ -84,9 +84,11 @@ async function populateDatabase() {
   const client = new MongoClient(uri);
 
   try {
-    console.log("🚀 מתחבר למסד הנתונים...");
+    // TODO: Remove debug log
+
     await client.connect();
-    console.log("✅ התחברות הצליחה!");
+    // TODO: Remove debug log
+
 
     const db = client.db('test');
     
@@ -97,7 +99,8 @@ async function populateDatabase() {
     const professionalProfilesCollection = db.collection('professionalprofiles');
     const treatmentsCollection = db.collection('treatments');
 
-    console.log("📍 מוסיף ערים חסרות...");
+    // TODO: Remove debug log
+
     
     // הוספת ערים שחסרות
     const existingCities = await citiesCollection.find({}).toArray();
@@ -118,13 +121,16 @@ async function populateDatabase() {
       }));
 
       const insertedCities = await citiesCollection.insertMany(cityDocs);
-      console.log(`✅ נוספו ${insertedCities.insertedCount} ערים חדשות`);
+      // TODO: Remove debug log
+
     } else {
-      console.log("📍 כל הערים כבר קיימות");
+      // TODO: Remove debug log
+
     }
 
     // חישוב מרחקים בין כל הערים
-    console.log("📏 מחשב מרחקים בין ערים...");
+    // TODO: Remove debug log
+
     const allCities = await citiesCollection.find({}).toArray();
     
     // מחיקת מרחקים קיימים כדי לחשב מחדש
@@ -169,14 +175,17 @@ async function populateDatabase() {
     
     if (distanceDocs.length > 0) {
       await cityDistancesCollection.insertMany(distanceDocs);
-      console.log(`✅ נוצרו ${distanceDocs.length} קשרי מרחק`);
+      // TODO: Remove debug log
+
     }
 
     // יצירת מטפלים (גם אם יש כבר מטפלים)
-    console.log("👨‍⚕️ יוצר מטפלים...");
+    // TODO: Remove debug log
+
     
     const treatments = await treatmentsCollection.find({ isActive: true }).toArray();
-    console.log(`נמצאו ${treatments.length} טיפולים זמינים`);
+    // TODO: Remove debug log
+
     
     for (const prof of SAMPLE_PROFESSIONALS) {
       // בדיקה אם המשתמש כבר קיים
@@ -188,7 +197,8 @@ async function populateDatabase() {
       });
       
       if (existingUser) {
-        console.log(`⚠️ משתמש ${prof.name} כבר קיים, מדלג...`);
+        // TODO: Remove debug log
+
         continue;
       }
       
@@ -209,7 +219,8 @@ async function populateDatabase() {
       };
       
       const insertedUser = await usersCollection.insertOne(userDoc);
-      console.log(`✅ נוצר משתמש: ${prof.name}`);
+      // TODO: Remove debug log
+
       
       // מציאת העיר
       const city = allCities.find(c => c.name === prof.cityName);
@@ -249,13 +260,16 @@ async function populateDatabase() {
         };
         
         await professionalProfilesCollection.insertOne(professionalDoc);
-        console.log(`✅ נוצר מטפל: ${prof.name} בעיר ${prof.cityName}`);
+        // TODO: Remove debug log
+
       } else {
-        console.log(`❌ לא נמצאה עיר: ${prof.cityName}`);
+        // TODO: Remove debug log
+
       }
     }
 
-    console.log("🎉 האתחול הושלם בהצלחה!");
+    // TODO: Remove debug log
+
     
     // סיכום סופי
     const finalCitiesCount = await citiesCollection.countDocuments();
@@ -264,18 +278,25 @@ async function populateDatabase() {
     const finalUsersCount = await usersCollection.countDocuments();
     const finalTreatmentsCount = await treatmentsCollection.countDocuments();
     
-    console.log("\n📊 סיכום:");
-    console.log(`  - ערים: ${finalCitiesCount}`);
-    console.log(`  - מרחקים: ${finalDistancesCount}`);
-    console.log(`  - משתמשים: ${finalUsersCount}`);
-    console.log(`  - מטפלים: ${finalProfessionalsCount}`);
-    console.log(`  - טיפולים: ${finalTreatmentsCount}`);
+    // TODO: Remove debug log
+
+    // TODO: Remove debug log
+
+    // TODO: Remove debug log
+
+    // TODO: Remove debug log
+
+    // TODO: Remove debug log
+
+    // TODO: Remove debug log
+
 
   } catch (error) {
     console.error("❌ שגיאה באתחול:", error);
   } finally {
     await client.close();
-    console.log("🔒 החיבור למסד הנתונים נסגר");
+    // TODO: Remove debug log
+
   }
 }
 

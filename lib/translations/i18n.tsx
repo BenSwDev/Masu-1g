@@ -82,19 +82,24 @@ export const I18nProvider = ({ children, defaultLanguage = "he" }: I18nProviderP
   useEffect(() => {
        window.getMissingTranslations = () => {
         if (missingKeys.size === 0) {
-          console.log("[i18n] No missing translation keys found.")
+          // TODO: Remove debug log
+
           return
         }
 
         const keys = Array.from(missingKeys).join("\n")
-        console.log("----- Missing Translation Keys -----")
-        console.log(keys)
-        console.log("------------------------------------")
+        // TODO: Remove debug log
+
+        // TODO: Remove debug log
+
+        // TODO: Remove debug log
+
 
         navigator.clipboard
           .writeText(keys)
           .then(() => {
-            console.log("[i18n] Missing keys copied to clipboard!")
+            // TODO: Remove debug log
+
           })
           .catch((err) => {
             console.error("[i18n] Failed to copy missing keys: ", err)

@@ -293,7 +293,7 @@ export async function purchaseSubscription({
         const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
         const messageHe = `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`
         const messageEn = `Thank you for your purchase. View your receipt here: ${summaryLink}`
-        const data = { type: "purchase-success" as const, message: lang === "he" ? messageHe : messageEn }
+        const _data = { type: "purchase-success" as const, message: lang === "he" ? messageHe : messageEn }
         const recipients = []
         if (methods.includes("email") && purchaser.email) {
           recipients.push({ type: "email" as const, value: purchaser.email, name: purchaser.name, language: lang as any })

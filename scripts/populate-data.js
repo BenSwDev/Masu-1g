@@ -121,9 +121,11 @@ async function populateDatabase() {
   const client = new MongoClient(uri);
 
   try {
-    console.log("🚀 מתחבר למסד הנתונים...");
+    // TODO: Remove debug log
+
     await client.connect();
-    console.log("✅ התחברות הצליחה!");
+    // TODO: Remove debug log
+
 
     const db = client.db('test'); // או שם מסד הנתונים שלך
     
@@ -134,7 +136,8 @@ async function populateDatabase() {
     const professionalProfilesCollection = db.collection('professionalprofiles');
     const treatmentsCollection = db.collection('treatments');
 
-    console.log("📍 יוצר ערים...");
+    // TODO: Remove debug log
+
     
     // בדיקה אם ערים כבר קיימות
     const existingCitiesCount = await citiesCollection.countDocuments();
@@ -153,10 +156,12 @@ async function populateDatabase() {
       }));
 
       const insertedCities = await citiesCollection.insertMany(cityDocs);
-      console.log(`✅ נוצרו ${insertedCities.insertedCount} ערים`);
+      // TODO: Remove debug log
+
 
       // חישוב מרחקים בין ערים
-      console.log("📏 מחשב מרחקים בין ערים...");
+      // TODO: Remove debug log
+
       const cities = await citiesCollection.find({}).toArray();
       
       const distanceDocs = [];
@@ -198,14 +203,17 @@ async function populateDatabase() {
       
       if (distanceDocs.length > 0) {
         await cityDistancesCollection.insertMany(distanceDocs);
-        console.log(`✅ נוצרו ${distanceDocs.length} קשרי מרחק`);
+        // TODO: Remove debug log
+
       }
     } else {
-      console.log("📍 ערים כבר קיימות, מדלג...");
+      // TODO: Remove debug log
+
     }
 
     // יצירת טיפולים
-    console.log("💆‍♀️ יוצר טיפולים...");
+    // TODO: Remove debug log
+
     const existingTreatmentsCount = await treatmentsCollection.countDocuments();
     
     if (existingTreatmentsCount === 0) {
@@ -216,13 +224,16 @@ async function populateDatabase() {
       }));
 
       const insertedTreatments = await treatmentsCollection.insertMany(treatmentDocs);
-      console.log(`✅ נוצרו ${insertedTreatments.insertedCount} טיפולים`);
+      // TODO: Remove debug log
+
     } else {
-      console.log("💆‍♀️ טיפולים כבר קיימים, מדלג...");
+      // TODO: Remove debug log
+
     }
 
     // יצירת מטפלים
-    console.log("👨‍⚕️ יוצר מטפלים...");
+    // TODO: Remove debug log
+
     const existingProfessionalsCount = await professionalProfilesCollection.countDocuments();
     
     if (existingProfessionalsCount === 0) {
@@ -239,7 +250,8 @@ async function populateDatabase() {
         });
         
         if (existingUser) {
-          console.log(`⚠️ משתמש ${prof.name} כבר קיים, מדלג...`);
+          // TODO: Remove debug log
+
           continue;
         }
         
@@ -299,20 +311,24 @@ async function populateDatabase() {
           };
           
           await professionalProfilesCollection.insertOne(professionalDoc);
-          console.log(`✅ נוצר מטפל: ${prof.name} בעיר ${prof.cityName}`);
+          // TODO: Remove debug log
+
         }
       }
     } else {
-      console.log("👨‍⚕️ מטפלים כבר קיימים, מדלג...");
+      // TODO: Remove debug log
+
     }
 
-    console.log("🎉 האתחול הושלם בהצלחה!");
+    // TODO: Remove debug log
+
 
   } catch (error) {
     console.error("❌ שגיאה באתחול:", error);
   } finally {
     await client.close();
-    console.log("🔒 החיבור למסד הנתונים נסגר");
+    // TODO: Remove debug log
+
   }
 }
 

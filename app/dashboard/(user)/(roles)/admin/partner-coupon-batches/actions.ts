@@ -253,7 +253,7 @@ export async function createPartnerCouponBatch(payload: CreatePartnerCouponBatch
       batch: JSON.parse(JSON.stringify(newBatch)),
       couponsCreated: savedCoupons.length
     }
-  } catch (error: any) {
+  } catch (_error: any) {
     logger.error("Error creating partner coupon batch:", error)
     return { success: false, error: error.message || "Failed to create partner coupon batch" }
   }
@@ -324,7 +324,7 @@ export async function updatePartnerCouponBatch(payload: UpdatePartnerCouponBatch
       message: "Partner coupon batch updated successfully", 
       batch: JSON.parse(JSON.stringify(batch))
     }
-  } catch (error: any) {
+  } catch (_error: any) {
     logger.error("Error updating partner coupon batch:", error)
     return { success: false, error: error.message || "Failed to update partner coupon batch" }
   }
@@ -357,7 +357,7 @@ export async function deletePartnerCouponBatch(batchId: string) {
 
     revalidatePath("/dashboard/admin/partner-coupon-batches")
     return { success: true, message: "Partner coupon batch deleted successfully" }
-  } catch (error: any) {
+  } catch (_error: any) {
     logger.error("Error deleting partner coupon batch:", error)
     return { success: false, error: error.message || "Failed to delete partner coupon batch" }
   }
@@ -435,7 +435,7 @@ export async function updateCouponsInBatch(payload: UpdateCouponsInBatchPayload)
 
     revalidatePath("/dashboard/admin/partner-coupon-batches")
     return { success: true, message: "Coupons updated successfully" }
-  } catch (error: any) {
+  } catch (_error: any) {
     logger.error("Error updating coupons in batch:", error)
     return { success: false, error: error.message || "Failed to update coupons" }
   }

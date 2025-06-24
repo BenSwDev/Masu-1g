@@ -87,7 +87,8 @@ export default function AdminBookingsClient() {
           sortDirection: "desc",
         })
 
-        console.log("Bookings fetched successfully:", result)
+        // TODO: Remove debug log
+
         return result
       } catch (error) {
         console.error("Error in getAllBookings query:", error)

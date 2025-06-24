@@ -90,7 +90,7 @@ export async function createTreatment(data: Omit<ITreatment, "_id" | "createdAt"
     revalidatePath("/dashboard/admin/treatments")
     logger.info(`[${requestId}] Successfully created treatment with ID: ${newTreatment._id}`)
     return { success: true, treatment: serializedTreatment }
-  } catch (error: any) {
+  } catch (_error: any) {
     logger.error(`[${requestId}] Error creating treatment:`, error)
     return { success: false, error: error.message || "Failed to create treatment" }
   }
@@ -126,7 +126,7 @@ export async function updateTreatment(id: string, data: Partial<ITreatment>) {
     revalidatePath("/dashboard/admin/treatments")
     logger.info(`[${requestId}] Successfully updated treatment ${id}`)
     return { success: true, treatment: serializedTreatment }
-  } catch (error: any) {
+  } catch (_error: any) {
     logger.error(`[${requestId}] Error updating treatment:`, error)
     return { success: false, error: error.message || "Failed to update treatment" }
   }

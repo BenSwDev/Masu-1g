@@ -33,7 +33,7 @@ export interface EmailNotificationData {
   price?: number
 }
 
-export const getEmailTemplate = (data: EmailNotificationData, language = "en", userName?: string) => {
+export const getEmailTemplate = (_data: EmailNotificationData, language = "en", userName?: string) => {
   let subject = ""
   let text = ""
   let html = ""

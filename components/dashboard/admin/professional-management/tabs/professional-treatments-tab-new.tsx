@@ -114,7 +114,7 @@ export default function ProfessionalTreatmentsTabNew({
           throw new Error('Failed to fetch treatments')
         }
         
-        const data = await response.json()
+        const _data = await response.json()
         const treatmentList = data.treatments || []
         
         if (!Array.isArray(treatmentList)) {
@@ -328,7 +328,8 @@ export default function ProfessionalTreatmentsTabNew({
       let result
       try {
         result = await updateProfessionalTreatments(professional._id, selectedTreatments)
-        console.log('Server response:', result)
+        // TODO: Remove debug log
+
       } catch (networkError) {
         console.error('Network error calling server action:', networkError)
         throw new Error(`שגיאת רשת: ${networkError instanceof Error ? networkError.message : 'שגיאה לא ידועה'}`)

@@ -4,7 +4,7 @@ import type { IUser } from "@/lib/db/models/user"
 // Professional interface for frontend use - matches the database model exactly
 export interface Professional {
   _id: string
-  userId: IUser | any // Allow flexibility for updates
+  userId: IUser | string // Allow flexibility for updates
   status: ProfessionalStatus
   isActive: boolean
   

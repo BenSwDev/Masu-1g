@@ -222,7 +222,8 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     setError("")
 
     try {
-      console.log(`Sending OTP to ${loginType}: ${identifierValue}`)
+      // TODO: Remove debug log
+
 
       toast({
         title: t("login.sendingOTP"),
@@ -230,7 +231,8 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
       })
 
       const result = await sendOTP(identifierValue, loginType, language)
-      console.log("OTP send result:", result)
+      // TODO: Remove debug log
+
 
       if (result.success) {
         setOtpSent(true)
@@ -284,7 +286,8 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     setError("")
 
     try {
-      console.log(`Verifying OTP for ${loginType}: ${identifierValue}, code: ${code}`)
+      // TODO: Remove debug log
+
 
       toast({
         title: t("login.verifyingOTP"),
@@ -292,7 +295,8 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
       })
 
       const result = await verifyOTP(identifierValue, loginType, code)
-      console.log("OTP verification result:", result)
+      // TODO: Remove debug log
+
 
       if (result.success && result.userId) {
         // Sign in the user

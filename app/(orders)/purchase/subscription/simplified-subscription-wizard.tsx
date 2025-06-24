@@ -51,37 +51,32 @@ function convertToTreatment(treatment: SerializedTreatment): ITreatment {
 
 export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscriptions, treatments: propTreatments }: Props = {}) {
   const router = useRouter()
-  const { toast } = useToast()
   const { t, language, dir } = useTranslation()
-  
-  const [currentStep, setCurrentStep] = useState(1)
-  const [dataLoading, setDataLoading] = useState(true)
-  const [subscriptions, setSubscriptions] = useState<SerializedSubscription[]>([])
-  const [treatments, setTreatments] = useState<SerializedTreatment[]>([])
-  
+  const { toast } = useToast()
+
+  // Data state
+  const [dataLoading, setDataLoading] = useState(!propSubscriptions || !propTreatments)
+  const [subscriptions, setSubscriptions] = useState<ISubscription[]>(propSubscriptions?.map(convertToSubscription) || [])
+  const [treatments, setTreatments] = useState<ITreatment[]>(propTreatments?.map(convertToTreatment) || [])
+
   // Selection state
-  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState<string>("")
-  const [selectedTreatmentId, setSelectedTreatmentId] = useState<string>("")
-  const [selectedDurationId, setSelectedDurationId] = useState<string>("")
-  
-  // User state
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState("")
+  const [selectedTreatmentId, setSelectedTreatmentId] = useState("")
+  const [selectedDurationId, setSelectedDurationId] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("")
+
+  // Form state - removing currentStep as we're making it one unified form
   const [guestInfo, setGuestInfo] = useState<any>({})
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
-  
-  // Purchase state
   const [isLoading, setIsLoading] = useState(false)
-  const [purchaseComplete, setPurchaseComplete] = useState(false)
-  const [purchasedSubscription, setPurchasedSubscription] = useState<any>(null)
-  
-  // Category selection state
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
+  const [showPaymentSection, setShowPaymentSection] = useState(false)
 
   // Load data on mount if not provided via props
   useEffect(() => {
     const loadData = async () => {
       if (propSubscriptions && propTreatments) {
-        setSubscriptions(propSubscriptions)
-        setTreatments(propTreatments)
+        setSubscriptions(propSubscriptions.map(convertToSubscription))
+        setTreatments(propTreatments.map(convertToTreatment))
         setDataLoading(false)
         return
       }
@@ -93,11 +88,11 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
         ])
 
         if (subscriptionsResult.success) {
-          setSubscriptions(subscriptionsResult.subscriptions || [])
+          setSubscriptions(subscriptionsResult.subscriptions?.map(convertToSubscription) || [])
         }
         
         if (treatmentsResult.success) {
-          setTreatments(treatmentsResult.treatments || [])
+          setTreatments(treatmentsResult.treatments?.map(convertToTreatment) || [])
         }
       } catch (error) {
         console.error("Error loading data:", error)
@@ -120,10 +115,9 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
           selectedTreatmentId,
           selectedDurationId,
         },
-        currentStep,
       })
     }
-  }, [guestUserId, guestInfo, selectedSubscriptionId, selectedTreatmentId, selectedDurationId, currentStep])
+  }, [guestUserId, guestInfo, selectedSubscriptionId, selectedTreatmentId, selectedDurationId])
 
   // Get selected data
   const selectedSubscription = subscriptions.find(s => s._id === selectedSubscriptionId)
@@ -156,7 +150,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     }
     acc[treatment.category].push(treatment)
     return acc
-  }, {} as Record<string, SerializedTreatment[]>)
+  }, {} as Record<string, ITreatment[]>)
 
   const handleGuestInfoSubmit = async (info: any) => {
     setGuestInfo(info)
@@ -192,9 +186,9 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
         },
       })
       
-      if (result.success) {
-        setPurchasedSubscription(result.userSubscription)
-        setPurchaseComplete(true)
+      if (result.success && result.userSubscription) {
+        // Navigate to confirmation page with the purchased subscription ID
+        router.push(`/purchase/subscription/confirmation?subscriptionId=${result.userSubscription._id}&status=success`)
       } else {
         toast({ variant: "destructive", title: "שגיאה", description: result.error || "שגיאה ברכישת המנוי" })
       }
@@ -220,9 +214,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     )
   }
 
-  if (purchaseComplete) {
-    return <GuestSubscriptionConfirmation userSubscription={purchasedSubscription} />
-  }
+  // No longer needed as we redirect to confirmation page
 
   const treatmentCategories = [...new Set(treatments.map(t => t.category))]
   const categoryTreatments = selectedCategory ? 
@@ -357,46 +349,9 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
         </Card>
       )}
 
-      {/* סיכום מחיר */}
+      {/* פרטים אישיים ותשלום - מיד אחרי בחירת המנוי והטיפול */}
       {canProceedToStep2 && (
-        <Card className="border-green-200 bg-green-50 shadow-sm">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-800 mb-2">
-                ₪{totalPrice.toFixed(2)}
-              </div>
-              <div className="text-green-700">
-                {selectedSubscription?.quantity} טיפולים × ₪{pricePerSession}
-              </div>
-              {selectedSubscription?.bonusQuantity > 0 && (
-                <div className="text-green-700 mt-1 font-medium">
-                  + {selectedSubscription.bonusQuantity} טיפולים בונוס!
-                </div>
-              )}
-              <Button 
-                onClick={() => setCurrentStep(2)} 
-                size="lg"
-                className="mt-4 w-full"
-              >
-                המשך לתשלום
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
-
-  const renderStep2 = () => (
-    <div className="max-w-4xl mx-auto space-y-6" dir={dir} lang={language}>
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">השלמת הרכישה</h2>
-        <p className="text-gray-600">מלא פרטים אישיים ובצע תשלום</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* פרטים אישיים ותשלום */}
-        <div className="lg:col-span-2 space-y-6">
+        <>
           <Card className="shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">פרטים אישיים</CardTitle>
@@ -405,23 +360,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
               <GuestInfoStep
                 guestInfo={guestInfo}
                 setGuestInfo={setGuestInfo}
-                onNext={(info) => {
-                  setGuestInfo(info)
-                  if (!guestUserId) {
-                    createGuestUser({
-                      firstName: info.firstName,
-                      lastName: info.lastName,
-                      email: info.email,
-                      phone: info.phone,
-                      birthDate: info.birthDate,
-                      gender: info.gender,
-                    }).then((result) => {
-                      if (result.success && result.userId) {
-                        setGuestUserId(result.userId)
-                      }
-                    })
-                  }
-                }}
+                onNext={handleGuestInfoSubmit}
                 hideBookingForSomeoneElse={true}
               />
             </CardContent>
@@ -437,15 +376,14 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
                 guestInfo={guestInfo}
                 setGuestInfo={setGuestInfo}
                 onConfirm={handlePurchase}
+                onPrev={() => {}} // No back needed in single form
                 isLoading={isLoading}
               />
             </CardContent>
           </Card>
-        </div>
 
-        {/* סיכום הזמנה */}
-        <div>
-          <Card className="border-blue-200 bg-blue-50 shadow-sm sticky top-6">
+          {/* סיכום מחיר */}
+          <Card className="border-green-200 bg-green-50 shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">סיכום הזמנה</CardTitle>
             </CardHeader>
@@ -476,25 +414,25 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
                   </div>
                 )}
                 <div className="border-t pt-3 mt-3">
-                  <div className="flex justify-between items-center text-xl font-bold text-blue-800">
-                    <span>סה"כ</span>
+                  <div className="flex justify-between items-center text-xl font-bold text-green-800">
+                    <span>סה"כ לתשלום</span>
                     <span>₪{totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   )
 
-  const progress = (currentStep / 2) * 100
+  const progress = (selectedSubscription ? 1 : 0) * 100
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8" dir={dir} lang={language}>
       <Progress value={progress} className="mb-8" />
-      {currentStep === 1 ? renderStep1() : renderStep2()}
+      {renderStep1()}
     </div>
   )
 }

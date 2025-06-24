@@ -11,7 +11,7 @@ interface AuthRedirectProps {
 }
 
 export function AuthRedirect({ children, redirectTo = "/" }: AuthRedirectProps) {
-  const { data: session, status } = useSession()
+  const { _data: session, status } = useSession()
   const router = useRouter()
 
   useEffect(() => {

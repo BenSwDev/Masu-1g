@@ -175,7 +175,7 @@ export interface AdminGiftVoucherFormData {
   status: GiftVoucherPlain["status"]
 }
 
-export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
+export async function createGiftVoucherByAdmin(_data: AdminGiftVoucherFormData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles.includes("admin")) {
@@ -639,7 +639,7 @@ export interface PaymentResultData {
   amount: number
 }
 
-export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) {
+export async function initiatePurchaseGiftVoucher(_data: PurchaseInitiationData) {
   const requestId = `voucher_init_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
   const startTime = Date.now()
   
@@ -873,7 +873,7 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
   }
 }
 
-export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
+export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user) {

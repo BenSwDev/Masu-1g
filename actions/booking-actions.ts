@@ -1343,7 +1343,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       }
     })
 
-    const data = {
+    const _data = {
       activeUserSubscriptions: populatedUserSubscriptions,
       usableGiftVouchers: enhancedUsableGiftVouchers,
       userPreferences: {

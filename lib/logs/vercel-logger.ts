@@ -43,7 +43,7 @@ class ProductionLogger {
     const logLine = `[${logEvent.timestamp}] [${level.toUpperCase()}] [${logEvent.route || 'unknown'}] ${message}`
     
     if (context) {
-      console.log(logLine, JSON.stringify(context, null, 2))
+      console.log(logLine, context)
     } else {
       console.log(logLine)
     }

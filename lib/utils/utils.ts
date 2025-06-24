@@ -17,7 +17,6 @@ export function formatDate(date: Date | string, language = "en-US"): string {
   const d = typeof date === "string" ? new Date(date) : date
 
   if (isNaN(d.getTime())) {
-    console.warn(`[Utils] Invalid date provided to formatDate: ${date}`)
     return ""
   }
 
@@ -54,7 +53,6 @@ export function formatCurrency(amount: number | undefined | null, currency = "IL
   // Ensure amount is a number
   const numericAmount = typeof amount === 'number' ? amount : parseFloat(String(amount))
   if (isNaN(numericAmount)) {
-    console.warn(`[Utils] Invalid amount provided to formatCurrency: ${amount}`)
     return `0.00 ${currency}`
   }
 

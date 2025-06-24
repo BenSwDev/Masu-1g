@@ -47,7 +47,6 @@ async function addProfessionalProfiles() {
         userId: user._id,
         status: "active",
         isActive: true,
-        professionalNumber: `P${Date.now()}${Math.floor(Math.random() * 1000)}`,
         specialization: "עיסוי רפואי ועיסוי רילקסציה",
         experience: `מטפל מוסמך עם ניסיון רב בתחום העיסוי הרפואי`,
         certifications: [

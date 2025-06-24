@@ -51,7 +51,7 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
   const canReview = booking.status === "completed"
 
   // Fetch existing review if any
-  const { data: existingReview, refetch, isLoading, error } = useQuery({
+  const { _data: existingReview, refetch, isLoading, error } = useQuery({
     queryKey: ["review", booking._id],
     queryFn: () => getReviewByBookingId(booking._id.toString()),
     enabled: canReview,
@@ -178,7 +178,8 @@ const BookingActions = ({ booking, t }: { booking: PopulatedBooking; t: TFunctio
     
     setIsCancelling(true)
     try {
-      console.log("Cancelling booking:", booking._id)
+      // TODO: Remove debug log
+
       toast.success(t("memberBookings.cancelSuccess"))
     } catch (error) {
       toast.error(t("common.errors.cancellationFailed"))

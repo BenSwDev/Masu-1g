@@ -132,7 +132,7 @@ export function clearDevOTP(identifier: string, type: "email" | "phone"): void {
 }
 
 // Enhanced logging for development
-export function logNotification(type: "email" | "sms", recipient: string, content: any): void {
+export function logNotification(type: "email" | "sms", recipient: string, content: Record<string, unknown>): void {
   if (process.env.NODE_ENV === "development") {
     console.log("\n=== Development Mode Notification ===");
     console.log(`Type: ${type.toUpperCase()}`);

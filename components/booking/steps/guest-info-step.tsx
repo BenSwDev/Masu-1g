@@ -172,7 +172,7 @@ export function GuestInfoStep({
     return opts
   }, [])
 
-  const onSubmit = (data: GuestInfoFormData) => {
+  const onSubmit = (_data: GuestInfoFormData) => {
     setGuestInfo(data)
     onNext(data)
   }

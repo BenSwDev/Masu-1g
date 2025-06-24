@@ -20,7 +20,8 @@ export async function sendPasswordResetEmail(
   error?: string
 }> {
   try {
-    console.log(`Sending password reset email to: ${email}, language: ${language}`)
+    // TODO: Remove debug log
+
 
     // Validate email
     if (!validateEmail(email)) {
@@ -45,7 +46,8 @@ export async function sendPasswordResetEmail(
       }
     }
 
-    console.log("User found for password reset:", user.name, user.email)
+    // TODO: Remove debug log
+
 
     // Delete any existing reset tokens for this user
     await PasswordResetToken.deleteMany({ userId: user._id })
@@ -64,7 +66,8 @@ export async function sendPasswordResetEmail(
     })
 
     await passwordResetToken.save()
-    console.log("Password reset token saved to database")
+    // TODO: Remove debug log
+
 
     // Create reset URL
     const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`
@@ -78,9 +81,11 @@ export async function sendPasswordResetEmail(
     }
 
     // Send password reset email
-    console.log("Sending password reset email to recipient:", recipient)
+    // TODO: Remove debug log
+
     const result = await unifiedNotificationService.sendPasswordReset(recipient, resetUrl, 60)
-    console.log("Password reset email send result:", result)
+    // TODO: Remove debug log
+
 
     if (!result.success) {
       console.error("Failed to send password reset email:", result.error)
@@ -91,7 +96,8 @@ export async function sendPasswordResetEmail(
       }
     }
 
-    console.log("Password reset email sent successfully")
+    // TODO: Remove debug log
+
 
     return {
       success: true,
@@ -117,7 +123,8 @@ export async function verifyResetToken(token: string): Promise<{
   error?: string
 }> {
   try {
-    console.log(`Verifying reset token: ${token}`)
+    // TODO: Remove debug log
+
 
     // Connect to database
     await dbConnect()
@@ -126,7 +133,8 @@ export async function verifyResetToken(token: string): Promise<{
     const tokenData = await PasswordResetToken.findOne({ token })
 
     if (!tokenData) {
-      console.log("Token not found in database")
+      // TODO: Remove debug log
+
       return {
         success: false,
         message: "Invalid or expired reset token",
@@ -144,7 +152,8 @@ export async function verifyResetToken(token: string): Promise<{
     // Check if token has expired
     const now = new Date()
     if (now > tokenData.expiryDate) {
-      console.log("Token has expired")
+      // TODO: Remove debug log
+
       await PasswordResetToken.deleteOne({ _id: tokenData._id })
       return {
         success: false,
@@ -155,7 +164,8 @@ export async function verifyResetToken(token: string): Promise<{
 
     // Check if token was already used
     if (tokenData.used) {
-      console.log("Token has already been used")
+      // TODO: Remove debug log
+
       return {
         success: false,
         message: "Reset token has already been used",
@@ -166,7 +176,8 @@ export async function verifyResetToken(token: string): Promise<{
     // Verify user still exists
     const user = await User.findById(tokenData.userId)
     if (!user) {
-      console.log("User not found")
+      // TODO: Remove debug log
+
       await PasswordResetToken.deleteOne({ _id: tokenData._id })
       return {
         success: false,
@@ -175,7 +186,8 @@ export async function verifyResetToken(token: string): Promise<{
       }
     }
 
-    console.log("Token verification successful")
+    // TODO: Remove debug log
+
     return {
       success: true,
       message: "Token is valid",
@@ -203,7 +215,8 @@ export async function resetPasswordWithToken(
   error?: string
 }> {
   try {
-    console.log(`Resetting password with token: ${token}`)
+    // TODO: Remove debug log
+
 
     // Verify token first
     const tokenVerification = await verifyResetToken(token)
@@ -215,7 +228,8 @@ export async function resetPasswordWithToken(
       }
     }
 
-    console.log("Token verified, userId:", tokenVerification.userId)
+    // TODO: Remove debug log
+
 
     // Validate password
     const { validatePassword, hashPassword } = await import("@/lib/auth/auth")
@@ -240,7 +254,8 @@ export async function resetPasswordWithToken(
     })
 
     if (!updateResult) {
-      console.log("Failed to update user password")
+      // TODO: Remove debug log
+
       return {
         success: false,
         message: "Failed to update password",
@@ -248,12 +263,14 @@ export async function resetPasswordWithToken(
       }
     }
 
-    console.log("Password updated successfully")
+    // TODO: Remove debug log
+
 
     // Mark token as used
     await PasswordResetToken.findOneAndUpdate({ token }, { used: true })
 
-    console.log("Password reset completed successfully")
+    // TODO: Remove debug log
+
 
     return {
       success: true,
@@ -279,7 +296,8 @@ export async function cleanupExpiredTokens(): Promise<void> {
     const result = await PasswordResetToken.deleteMany({
       expiryDate: { $lt: now },
     })
-    console.log(`Cleaned up ${result.deletedCount} expired password reset tokens`)
+    // TODO: Remove debug log
+
   } catch (error) {
     console.error("Error cleaning up expired tokens:", error)
   }

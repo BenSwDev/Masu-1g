@@ -14,7 +14,7 @@ interface RoleProtectedRouteProps {
 }
 
 export function RoleProtectedRoute({ children, requiredRole, redirectTo = "/dashboard" }: RoleProtectedRouteProps) {
-  const { data: session, status } = useSession()
+  const { _data: session, status } = useSession()
   const router = useRouter()
   const { t } = useTranslation()
 

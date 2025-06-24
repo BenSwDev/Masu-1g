@@ -27,7 +27,7 @@ export function TreatmentPreferencesModal({ isOpen, onClose, currentPreferences 
   )
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
-  const { data: session, update: updateSession } = useSession()
+  const { _data: session, update: updateSession } = useSession()
   const { t, dir } = useTranslation() // Correctly destructure dir
 
   useEffect(() => {

@@ -10,7 +10,6 @@ import { Types } from "mongoose"
 import { hash } from "bcryptjs"
 import Booking, { IBooking } from "@/lib/db/models/booking"
 import { z } from "zod"
-import mongoose from "mongoose"
 import Treatment from "@/lib/db/models/treatment"
 
 // Validation schemas
@@ -94,7 +93,7 @@ async function requireAdminAuth() {
 }
 
 // Helper function to build search query
-function buildSearchQuery(search: string, status?: ProfessionalStatus) {
+function _buildSearchQuery(search: string, status?: ProfessionalStatus) {
   const query: any = {}
   
   // Add search conditions if search term provided

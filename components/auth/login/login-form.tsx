@@ -61,7 +61,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
       return
     }
 
-    console.log("Attempting login with:", identifier)
+    // TODO: Remove debug log
+
 
     try {
       // Show loading toast
@@ -77,10 +78,12 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
         password,
       })
 
-      console.log("SignIn result:", result)
+      // TODO: Remove debug log
+
 
       if (result?.error) {
-        console.log("Login error:", result.error)
+        // TODO: Remove debug log
+
         if (result.error === "No user found") {
           setError(t("errors.noUserFound"))
         } else if (result.error === "Invalid password") {
@@ -102,7 +105,8 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           duration: 5000,
         })
       } else if (result?.ok) {
-        console.log("Login successful, redirecting...")
+        // TODO: Remove debug log
+
 
         // Show success toast
         toast({

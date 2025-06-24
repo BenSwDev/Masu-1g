@@ -262,7 +262,7 @@ export async function sendUserNotification(
       return { success: true, message: "Notification sent via preferred method(s)", sentVia }
     } else {
       const errorMessage = results[0]?.error || "Failed to send notification"
-      return { success: false, message: errorMessage, error: "SEND_FAILED" }
+      return { success: false, _message: errorMessage, error: "SEND_FAILED" }
     }
   } catch (error) {
     logger.error(`Error sending notification to user ${userId}:`, error)
@@ -294,7 +294,7 @@ export async function sendUserOTP(
       return { success: true, message: "OTP sent via preferred method(s)", code, expiryDate, sentVia }
     } else {
       const errorMessage = results[0]?.error || "Failed to send OTP"
-      return { success: false, message: errorMessage, error: "SEND_FAILED" }
+      return { success: false, _message: errorMessage, error: "SEND_FAILED" }
     }
   } catch (error) {
     logger.error(`Error sending OTP to user ${userId}:`, error)
@@ -375,7 +375,8 @@ export async function sendProfessionalBookingNotifications(
     for (const professional of professionals) {
       try {
         if (!professional.userId?.phone) {
-          console.log(`Professional ${professional.userId?.name} has no phone number`)
+          // TODO: Remove debug log
+
           continue
         }
         
@@ -417,7 +418,8 @@ export async function sendProfessionalBookingNotifications(
           response.smsMessageId = smsResult.messageId
           await response.save()
           sentCount++
-          console.log(`✅ SMS sent to professional ${professional.userId.name}`)
+          // TODO: Remove debug log
+
         } else {
           console.error(`❌ Failed to send SMS to ${professional.userId.name}:`, smsResult.error)
           response.status = "expired"
@@ -442,7 +444,8 @@ export async function sendProfessionalBookingNotifications(
       }
     }
     
-    console.log(`📱 Sent ${sentCount} notifications for booking ${bookingId}`)
+    // TODO: Remove debug log
+
     return { success: true, sentCount }
     
   } catch (error) {
@@ -559,7 +562,7 @@ export async function sendGuestNotification(
       return { success: true, message: "Notification sent successfully", sentVia }
     } else {
       const errorMessage = results[0]?.error || "Failed to send notification"
-      return { success: false, message: errorMessage, error: "SEND_FAILED" }
+      return { success: false, _message: errorMessage, error: "SEND_FAILED" }
     }
   } catch (error) {
     logger.error("Error sending guest notification:", error)
@@ -595,7 +598,7 @@ export async function sendBulkUserNotifications(
         const sentVia = userResults.map((_, index) => index === 0 ? 'email' : 'sms').filter((_, index) => userResults[index].success)
         processedResults[userId] = { success: true, sentVia }
       } else {
-        const error = userResults[0]?.error || "Failed to send notification"
+        const _error = userResults[0]?.error || "Failed to send notification"
         processedResults[userId] = { success: false, error }
       }
     })
@@ -753,7 +756,8 @@ export async function expireOldResponses(): Promise<{ success: boolean; expiredC
       { status: "expired" }
     )
     
-    console.log(`⏰ Expired ${result.modifiedCount} old professional responses`)
+    // TODO: Remove debug log
+
     return { success: true, expiredCount: result.modifiedCount }
     
   } catch (error) {

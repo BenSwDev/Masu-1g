@@ -173,7 +173,7 @@ export async function createUserByAdmin(formData: FormData) {
 
     await newUserDoc.save()
     return { success: true, message: "admin.users.userCreatedToast", user: sanitizeUser(newUserDoc) }
-  } catch (error: any) {
+  } catch (_error: any) {
     console.error("Error creating user by admin:", error)
     if (error.code === 11000) {
       // MongoDB duplicate key error
@@ -244,7 +244,7 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
 
     await userToUpdate.save()
     return { success: true, message: "admin.users.userUpdatedToast", user: sanitizeUser(userToUpdate) }
-  } catch (error: any) {
+  } catch (_error: any) {
     console.error("Error updating user by admin:", error)
     if (error.code === 11000) {
       if (error.message.includes("email")) return { success: false, message: "errors.emailExists" }

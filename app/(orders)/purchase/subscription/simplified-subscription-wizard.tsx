@@ -115,6 +115,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
           selectedTreatmentId,
           selectedDurationId,
         },
+        currentStep: 1,
       })
     }
   }, [guestUserId, guestInfo, selectedSubscriptionId, selectedTreatmentId, selectedDurationId])
@@ -188,7 +189,12 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
       
       if (result.success && result.userSubscription) {
         // Navigate to confirmation page with the purchased subscription ID
-        router.push(`/purchase/subscription/confirmation?subscriptionId=${result.userSubscription._id}&status=success`)
+        const subscriptionId = result.userSubscription._id || result.userSubscription.id
+        if (subscriptionId) {
+          router.push(`/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`)
+        } else {
+          toast({ variant: "destructive", title: "שגיאה", description: "לא ניתן למצוא מזהה המנוי. אנא פנה לתמיכה." })
+        }
       } else {
         toast({ variant: "destructive", title: "שגיאה", description: result.error || "שגיאה ברכישת המנוי" })
       }

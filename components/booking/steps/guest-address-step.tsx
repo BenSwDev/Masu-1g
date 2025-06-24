@@ -13,6 +13,7 @@ import { Textarea } from "@/components/common/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { CitySelectForm } from "@/components/common/ui/city-select-form"
+import { citySchema } from "@/lib/validation/city-validation"
 
 interface GuestAddress {
   city: string
@@ -41,12 +42,9 @@ interface GuestAddressStepProps {
   onPrev: () => void
 }
 
-// ✅ תיקון: Validation מקיף לכתובות
+// ✅ Updated validation using city validation schema
 const addressSchema = z.object({
-  city: z.string()
-    .min(2, { message: "יש להזין עיר" })
-    .max(50, { message: "שם העיר ארוך מדי" })
-    .regex(/^[\u0590-\u05FF\u0020a-zA-Z\-]+$/, { message: "העיר מכילה תווים לא תקינים" }),
+  city: citySchema, // Use the city validation schema
   street: z.string()
     .min(2, { message: "יש להזין רחוב" })
     .max(100, { message: "שם הרחוב ארוך מדי" })

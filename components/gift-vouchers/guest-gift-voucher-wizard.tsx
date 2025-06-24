@@ -162,10 +162,17 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
     })
 
     setIsLoading(false)
-    if (confirmRes.success) {
-      setPurchasedVoucher(confirmRes.voucher || null)
-      setPurchaseComplete(true)
-      setCurrentStep(6)
+    if (confirmRes.success && confirmRes.voucher) {
+      // Immediately redirect to confirmation page
+      const voucherId = confirmRes.voucher._id || confirmRes.voucher.id
+      if (voucherId) {
+        router.push(`/purchase/gift-voucher/confirmation?voucherId=${voucherId}&status=success`)
+      } else {
+        // Fallback to showing confirmation step
+        setPurchasedVoucher(confirmRes.voucher)
+        setPurchaseComplete(true)
+        setCurrentStep(6)
+      }
     } else {
       toast({ variant: "destructive", title: "שגיאה", description: confirmRes.error || "" })
     }

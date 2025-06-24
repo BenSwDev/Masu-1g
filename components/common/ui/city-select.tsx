@@ -49,7 +49,7 @@ export function CitySelect({
       try {
         const response = await fetch('/api/cities')
         if (response.ok) {
-          const _data = await response.json()
+          const data = await response.json()
           const sorted = (data.cities || []).sort((a: City, b: City) =>
             a.name.localeCompare(b.name)
           )

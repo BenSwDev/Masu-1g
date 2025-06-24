@@ -34,10 +34,11 @@ export function usePaymentModal({ onSuccess }: UsePaymentModalProps) {
 
   const handlePaymentSuccess = async () => {
     setPaymentStatus("success");
+    // Immediately execute success callback for automatic redirect
     setTimeout(async () => {
       setShowPaymentModal(false);
       await onSuccess();
-    }, 1500);
+    }, 500);
   };
 
   const handlePaymentFailure = () => {

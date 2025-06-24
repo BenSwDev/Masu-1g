@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/common/ui/checkbox"
 import { Textarea } from "@/components/common/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { MapPin, ArrowLeft, Home } from "lucide-react"
+import { CitySelectForm } from "@/components/common/ui/city-select-form"
 
 interface BookingCreateAddressStepProps {
   formData: any
@@ -63,11 +64,6 @@ export default function BookingCreateAddressStep({
       }
     })
   }
-
-  const cities = [
-    "תל אביב", "ירושלים", "חיפה", "באר שבע", "רמת גן", "פתח תקווה", 
-    "נתניה", "אשדוד", "אשקלון", "חולון", "בת ים", "רמת השרון"
-  ]
 
   return (
     <div className="space-y-6">
@@ -127,21 +123,12 @@ export default function BookingCreateAddressStep({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="city">עיר *</Label>
-                  <Select
+                  <CitySelectForm
                     value={formData.customAddress?.city || ""}
                     onValueChange={(value) => updateCustomAddress("city", value)}
-                  >
-                    <SelectTrigger className={errors.city ? "border-red-500" : ""}>
-                      <SelectValue placeholder="בחר עיר..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    placeholder="בחר עיר..."
+                    className={errors.city ? "border-red-500" : ""}
+                  />
                   {errors.city && (
                     <p className="text-sm text-red-500">{errors.city}</p>
                   )}

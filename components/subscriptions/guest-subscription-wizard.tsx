@@ -208,13 +208,15 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
         setPurchasedSubscription(result.userSubscription)
         setPurchaseComplete(true)
         setCurrentStep(5) // Move to confirmation step
-        // Redirect to confirmation page
+        // Redirect to confirmation page immediately without showing step 5
         const subscriptionId = result.userSubscription?._id || result.userSubscription?.id
         if (subscriptionId) {
           router.push(`/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`)
         } else {
-          console.error("No subscription ID returned from purchase")
-          alert("שגיאה: לא ניתן למצוא מזהה המנוי. אנא פנה לתמיכה.")
+          // Fallback to showing confirmation step
+          setPurchasedSubscription(result.userSubscription)
+          setPurchaseComplete(true)
+          setCurrentStep(5)
         }
       } else {
         // Show error message to user

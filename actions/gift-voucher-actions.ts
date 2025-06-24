@@ -175,7 +175,7 @@ export interface AdminGiftVoucherFormData {
   status: GiftVoucherPlain["status"]
 }
 
-export async function createGiftVoucherByAdmin(_data: AdminGiftVoucherFormData) {
+export async function createGiftVoucherByAdmin(data: AdminGiftVoucherFormData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.roles.includes("admin")) {
@@ -1764,6 +1764,24 @@ export async function getAbandonedGiftVoucherPurchase(
     return { success: true, purchase }
   } catch (error) {
     return { success: false, error: "Failed to get abandoned purchase" }
+  }
+}
+
+export async function getGiftVoucherById(id: string) {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return { success: false, error: "Invalid voucher ID format" }
+    }
+    await dbConnect()
+    const voucherDoc = await GiftVoucher.findById(id).lean()
+    if (!voucherDoc) {
+      return { success: false, error: "Voucher not found" }
+    }
+    const voucher = await toGiftVoucherPlain(voucherDoc as IGiftVoucher)
+    return { success: true, voucher }
+  } catch (error) {
+    logger.error("Error fetching gift voucher by ID:", { id, error })
+    return { success: false, error: "Failed to fetch voucher" }
   }
 }
 

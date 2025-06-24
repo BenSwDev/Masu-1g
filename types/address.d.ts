@@ -4,7 +4,7 @@ export interface IAddress {
   _id: Types.ObjectId
   userId: Types.ObjectId
   country: string
-  city: string
+  city: string // Note: Must be from active cities in database only
   street: string
   streetNumber: string
   fullAddress: string

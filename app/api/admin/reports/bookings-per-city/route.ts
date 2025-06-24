@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       { $sort: { count: -1 } }
     ]).toArray()
 
-    const _data = results.map(r => ({ city: r._id, count: r.count }))
+    const data = results.map(r => ({ city: r._id, count: r.count }))
 
     return NextResponse.json({ success: true, data })
   } catch (error) {

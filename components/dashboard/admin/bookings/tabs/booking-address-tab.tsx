@@ -19,6 +19,7 @@ import {
   AlertTriangle
 } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
+import { CitySelectForm } from "@/components/common/ui/city-select-form"
 
 interface BookingAddressTabProps {
   booking: PopulatedBooking
@@ -132,10 +133,10 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">עיר</Label>
                   {isEditing ? (
-                    <Input
+                    <CitySelectForm
                       value={tempAddress.city || ""}
-                      onChange={(e) => setTempAddress({...tempAddress, city: e.target.value})}
-                      placeholder="שם העיר"
+                      onValueChange={(value) => setTempAddress({...tempAddress, city: value})}
+                      placeholder="בחר עיר"
                     />
                   ) : (
                     <p className="text-sm">{address.city || "לא צוין"}</p>

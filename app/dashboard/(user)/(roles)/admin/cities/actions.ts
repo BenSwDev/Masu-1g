@@ -1,10 +1,19 @@
 "use server"
 
-import { getServerSession } from "next-auth/next"
+import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import dbConnect from "@/lib/db/mongoose"
+import { dbConnect } from "@/lib/db/mongodb"
 import { City, CityDistance } from "@/lib/db/models/city-distance"
 import { revalidatePath } from "next/cache"
+import { clearCitiesCache } from "@/lib/validation/city-validation"
+
+// Helper function to require admin authentication
+async function requireAdminAuth() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id || !session.user.roles?.includes("admin")) {
+    throw new Error("Unauthorized: Admin access required")
+  }
+}
 
 /**
  * Interface for city coordinates
@@ -95,55 +104,69 @@ export async function getCities(page = 1, limit = 10, searchTerm = ""): Promise<
  */
 export async function createCity(formData: FormData): Promise<CityActionResponse> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
+    // Authorize admin
+    await requireAdminAuth()
 
+    // Connect to database
     await dbConnect()
 
-    const name = formData.get("name") as string
-    const lat = parseFloat(formData.get("lat") as string)
-    const lng = parseFloat(formData.get("lng") as string)
+    // Get form data
+    const name = formData.get("name")?.toString()?.trim()
+    const lat = formData.get("lat")?.toString()
+    const lng = formData.get("lng")?.toString()
     const isActive = formData.get("isActive") === "true"
 
-    if (!name || isNaN(lat) || isNaN(lng)) {
+    // Validate required fields
+    if (!name || !lat || !lng) {
       return { success: false, message: "missingFields" }
     }
 
-    // Validate coordinates are within Israel bounds (approximately)
-    if (lat < 29.0 || lat > 33.5 || lng < 34.0 || lng > 36.0) {
+    // Parse coordinates
+    const latitude = parseFloat(lat)
+    const longitude = parseFloat(lng)
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return { success: false, message: "invalidCoordinates" }
+    }
+
+    // Validate coordinates are within Israel bounds (rough approximation)
+    if (latitude < 29.0 || latitude > 33.5 || longitude < 34.0 || longitude > 36.0) {
       return { success: false, message: "coordinatesOutOfBounds" }
     }
 
-    const existing = await City.findOne({ name }).lean()
-    if (existing) {
+    // Check if city already exists
+    const existingCity = await City.findOne({ 
+      name: { $regex: new RegExp(`^${name}$`, "i") }
+    })
+
+    if (existingCity) {
       return { success: false, message: "cityExists" }
     }
 
-    const city = new City({ 
-      name, 
-      coordinates: { lat, lng }, 
-      isActive 
+    // Create new city
+    const city = new City({
+      name,
+      coordinates: {
+        lat: latitude,
+        lng: longitude
+      },
+      isActive
     })
+
     await city.save()
 
-    // Calculate distances to all existing cities
-    // TODO: Remove debug log
+    // Calculate distances to all other cities
+    await City.calculateDistancesForNewCity(city._id.toString())
 
-    try {
-      await City.calculateDistancesForNewCity(city._id.toString())
-    } catch (error) {
-      console.error("Error calculating distances for new city:", error)
-      // Return success but log the issue
-      console.warn("City created but distance calculation failed")
-    }
+    // Clear cities cache since we added a new city
+    clearCitiesCache()
 
+    // Revalidate the cities page
     revalidatePath("/dashboard/admin/cities")
 
     return { success: true, cityId: city._id.toString() }
-  } catch (err) {
-    console.error("Error in createCity:", err)
+  } catch (error) {
+    console.error("Error creating city:", error)
     return { success: false, message: "creationFailed" }
   }
 }
@@ -156,67 +179,94 @@ export async function createCity(formData: FormData): Promise<CityActionResponse
  */
 export async function updateCity(cityId: string, formData: FormData): Promise<CityActionResponse> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
+    // Authorize admin
+    await requireAdminAuth()
 
+    // Connect to database
     await dbConnect()
 
-    const name = formData.get("name") as string
-    const lat = parseFloat(formData.get("lat") as string)
-    const lng = parseFloat(formData.get("lng") as string)
+    // Validate cityId
+    if (!cityId) {
+      return { success: false, message: "invalidCityId" }
+    }
+
+    // Get form data
+    const name = formData.get("name")?.toString()?.trim()
+    const lat = formData.get("lat")?.toString()
+    const lng = formData.get("lng")?.toString()
     const isActive = formData.get("isActive") === "true"
 
-    if (!name || isNaN(lat) || isNaN(lng)) {
+    // Validate required fields
+    if (!name || !lat || !lng) {
       return { success: false, message: "missingFields" }
     }
 
-    // Validate coordinates are within Israel bounds (approximately)
-    if (lat < 29.0 || lat > 33.5 || lng < 34.0 || lng > 36.0) {
+    // Parse coordinates
+    const latitude = parseFloat(lat)
+    const longitude = parseFloat(lng)
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return { success: false, message: "invalidCoordinates" }
+    }
+
+    // Validate coordinates are within Israel bounds
+    if (latitude < 29.0 || latitude > 33.5 || longitude < 34.0 || longitude > 36.0) {
       return { success: false, message: "coordinatesOutOfBounds" }
     }
 
-    const city = await City.findById(cityId)
-    if (!city) {
-      return { success: false, message: "cityNotFound" }
-    }
+    // Check if another city with the same name exists (excluding current city)
+    const existingCity = await City.findOne({
+      _id: { $ne: cityId },
+      name: { $regex: new RegExp(`^${name}$`, "i") }
+    })
 
-    // Check if another city with the same name exists (excluding current)
-    const existing = await City.findOne({ 
-      name, 
-      _id: { $ne: cityId } 
-    }).lean()
-    if (existing) {
+    if (existingCity) {
       return { success: false, message: "cityExists" }
     }
 
-    // Check if coordinates changed to decide if we need to recalculate distances
-    const coordsChanged = city.coordinates.lat !== lat || city.coordinates.lng !== lng
+    // Update city
+    const updatedCity = await City.findByIdAndUpdate(
+      cityId,
+      {
+        name,
+        coordinates: {
+          lat: latitude,
+          lng: longitude
+        },
+        isActive
+      },
+      { new: true, runValidators: true }
+    )
 
-    city.name = name
-    city.coordinates = { lat, lng }
-    city.isActive = isActive
-    await city.save()
-
-    // Recalculate distances if coordinates changed
-    if (coordsChanged) {
-      // TODO: Remove debug log
-
-      try {
-        await City.calculateDistancesForNewCity(cityId)
-      } catch (error) {
-        console.error("Error recalculating distances for updated city:", error)
-        // Return success but log the issue
-        console.warn("City updated but distance calculation failed")
-      }
+    if (!updatedCity) {
+      return { success: false, message: "cityNotFound" }
     }
 
+    // If coordinates changed, recalculate distances
+    const originalCity = await City.findById(cityId)
+    if (originalCity && 
+        (originalCity.coordinates.lat !== latitude || originalCity.coordinates.lng !== longitude)) {
+      // Remove old distances
+      await CityDistance.deleteMany({
+        $or: [
+          { fromCityId: cityId },
+          { toCityId: cityId }
+        ]
+      })
+      
+      // Recalculate distances
+      await City.calculateDistancesForNewCity(cityId)
+    }
+
+    // Clear cities cache since we updated a city
+    clearCitiesCache()
+
+    // Revalidate the cities page
     revalidatePath("/dashboard/admin/cities")
 
     return { success: true }
-  } catch (err) {
-    console.error("Error in updateCity:", err)
+  } catch (error) {
+    console.error("Error updating city:", error)
     return { success: false, message: "updateFailed" }
   }
 }
@@ -228,22 +278,27 @@ export async function updateCity(cityId: string, formData: FormData): Promise<Ci
  */
 export async function deleteCity(cityId: string): Promise<CityActionResponse> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
+    // Authorize admin
+    await requireAdminAuth()
 
+    // Connect to database
     await dbConnect()
 
+    // Validate cityId
+    if (!cityId) {
+      return { success: false, message: "invalidCityId" }
+    }
+
+    // Check if city exists
     const city = await City.findById(cityId)
     if (!city) {
       return { success: false, message: "cityNotFound" }
     }
 
-    // Delete the city
-    await City.findByIdAndDelete(cityId)
+    // TODO: Check if city is being used in any bookings, addresses, or professional work areas
+    // For now, we'll allow deletion but this should be implemented
 
-    // Clean up distance records
+    // Delete all distance relationships for this city
     await CityDistance.deleteMany({
       $or: [
         { fromCityId: cityId },
@@ -251,11 +306,18 @@ export async function deleteCity(cityId: string): Promise<CityActionResponse> {
       ]
     })
 
+    // Delete the city
+    await City.findByIdAndDelete(cityId)
+
+    // Clear cities cache since we deleted a city
+    clearCitiesCache()
+
+    // Revalidate the cities page
     revalidatePath("/dashboard/admin/cities")
 
     return { success: true }
-  } catch (err) {
-    console.error("Error in deleteCity:", err)
+  } catch (error) {
+    console.error("Error deleting city:", error)
     return { success: false, message: "deleteFailed" }
   }
 }
@@ -265,13 +327,18 @@ export async function deleteCity(cityId: string): Promise<CityActionResponse> {
  */
 export async function toggleCityStatus(cityId: string): Promise<CityActionResponse> {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles?.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
+    // Authorize admin
+    await requireAdminAuth()
 
+    // Connect to database
     await dbConnect()
 
+    // Validate cityId
+    if (!cityId) {
+      return { success: false, message: "invalidCityId" }
+    }
+
+    // Find city and toggle status
     const city = await City.findById(cityId)
     if (!city) {
       return { success: false, message: "cityNotFound" }
@@ -280,12 +347,15 @@ export async function toggleCityStatus(cityId: string): Promise<CityActionRespon
     city.isActive = !city.isActive
     await city.save()
 
+    // Clear cities cache since we changed status
+    clearCitiesCache()
+
+    // Revalidate the cities page
     revalidatePath("/dashboard/admin/cities")
-    revalidatePath("/api/cities")
 
     return { success: true }
-  } catch (err) {
-    console.error("Error in toggleCityStatus:", err)
-    return { success: false, message: "updateFailed" }
+  } catch (error) {
+    console.error("Error toggling city status:", error)
+    return { success: false, message: "statusToggleFailed" }
   }
 }

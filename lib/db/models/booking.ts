@@ -37,7 +37,7 @@ export interface IPaymentDetails {
 
 export interface IBookingAddressSnapshot {
   fullAddress: string
-  city: string
+  city: string // Note: Must be from active cities in database only
   street: string
   streetNumber?: string
   apartment?: string
@@ -210,7 +210,7 @@ const PaymentDetailsSchema = new Schema<IPaymentDetails>(
 const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
   {
     fullAddress: { type: String, required: true },
-    city: { type: String, required: true },
+    city: { type: String, required: true }, // Note: Must be from active cities in database only
     street: { type: String, required: true },
     streetNumber: { type: String },
     apartment: { type: String },

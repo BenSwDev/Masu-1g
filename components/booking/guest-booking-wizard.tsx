@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/translations/i18n"
 import { format } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
@@ -104,6 +105,7 @@ export default function UniversalBookingWizard({
   currentUser,
   initialCategory
 }: UniversalBookingWizardProps) {
+  const router = useRouter()
   const { t, language, dir } = useTranslation()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -846,12 +848,19 @@ export default function UniversalBookingWizard({
       )
       
       if (result.success && result.booking) {
-        setBookingResult(result.booking)
-        setCurrentStep(CONFIRMATION_STEP_NUMBER)
-        
         // Clear saved form state on successful booking
         if (guestUserId) {
           localStorage.removeItem('guestUserId')
+        }
+        
+        // Immediately redirect to confirmation page without showing step 7
+        const bookingId = result.booking._id || result.booking.id
+        if (bookingId) {
+          router.push(`/bookings/confirmation?bookingId=${bookingId}&status=success`)
+        } else {
+          // Fallback to showing confirmation step if no booking ID
+          setBookingResult(result.booking)
+          setCurrentStep(CONFIRMATION_STEP_NUMBER)
         }
         
         toast({

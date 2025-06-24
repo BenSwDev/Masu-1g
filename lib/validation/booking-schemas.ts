@@ -1,6 +1,7 @@
 import { z } from "zod"
 import { startOfDay } from "date-fns"
 import { formatInTimeZone, toZonedTime } from "date-fns-tz"
+import { citySchema } from "@/lib/validation/city-validation"
 
 // Define timezone constant
 const TIMEZONE = "Asia/Jerusalem" // Israel timezone
@@ -93,7 +94,7 @@ export const SchedulingDetailsSchema = z
     customAddressDetails: z // New: for one-time address
       .object({
         fullAddress: z.string({ required_error: "bookings.validation.address.fullAddressRequired" }),
-        city: z.string({ required_error: "bookings.validation.address.cityRequired" }),
+        city: citySchema, // Use the city validation schema
         street: z.string({ required_error: "bookings.validation.address.streetRequired" }),
         streetNumber: z.string().optional(),
         apartment: z.string().optional(),
@@ -222,7 +223,7 @@ const BaseBookingWizardSchema = z.object({
   customAddressDetails: z
     .object({
       fullAddress: z.string({ required_error: "bookings.validation.address.fullAddressRequired" }),
-      city: z.string({ required_error: "bookings.validation.address.cityRequired" }),
+      city: citySchema, // Use the city validation schema
       street: z.string({ required_error: "bookings.validation.address.streetRequired" }),
       streetNumber: z.string().optional(),
       apartment: z.string().optional(),

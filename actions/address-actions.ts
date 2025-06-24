@@ -7,12 +7,13 @@ import { z } from "zod"
 import { logger } from "@/lib/logs/logger"
 import AddressQueries from "@/lib/db/queries/address-queries"
 import { type IAddress, constructFullAddress } from "@/lib/db/models/address" // Import model and helper
+import { citySchema } from "@/lib/validation/city-validation"
 
 // Validation schemas (ensure they align with IAddress, especially for details objects)
 const addressBaseSchema = z.object({
   street: z.string().min(1, "Street is required"),
   streetNumber: z.string().min(1, "Street number is required"),
-  city: z.string().min(1, "City is required"),
+  city: citySchema, // Use the city validation schema
   addressType: z.enum(["apartment", "house", "private", "office", "hotel", "other"]),
   hasPrivateParking: z.boolean().default(false),
   additionalNotes: z.string().optional(),

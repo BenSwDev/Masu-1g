@@ -13,7 +13,6 @@ export const metadata = {
 }
 
 import AdminBookingsClient from "@/components/dashboard/admin/bookings/admin-bookings-client";
-import RobustAdminBookingsClient from "@/components/dashboard/admin/bookings/robust-bookings-client";
 import { BookingsTableSkeleton } from "@/components/dashboard/member/bookings/bookings-table-skeleton";
 import { BookingsErrorBoundary } from "@/components/dashboard/admin/bookings/bookings-error-boundary";
 

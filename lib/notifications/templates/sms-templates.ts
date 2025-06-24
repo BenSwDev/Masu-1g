@@ -24,7 +24,7 @@ https://www.spaplus.co.il/club/?src=masu
  * @param language Language code
  * @returns SMS text content
  */
-export function getSMSTemplate(_data: NotificationData, language: SMSLanguage = "en"): string {
+export function getSMSTemplate(data: NotificationData, language: SMSLanguage = "en"): string {
   // Switch based on notification type
   switch (data.type) {
     case "otp":
@@ -59,7 +59,7 @@ export function getSMSTemplate(_data: NotificationData, language: SMSLanguage = 
 }
 
 // Professional Booking Notification SMS Template
-function getProfessionalBookingNotificationSmsTemplate(_data: any, language: SMSLanguage): string {
+function getProfessionalBookingNotificationSmsTemplate(data: any, language: SMSLanguage): string {
   const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
     { 
@@ -182,7 +182,7 @@ function getPasswordResetSmsTemplate(resetUrl: string, language: SMSLanguage): s
 }
 
 // Treatment Booking Success SMS Template
-function getTreatmentBookingSuccessSmsTemplate(_data: any, language: SMSLanguage): string {
+function getTreatmentBookingSuccessSmsTemplate(data: any, language: SMSLanguage): string {
   const bookingDate = new Date(data.bookingDateTime).toLocaleDateString(
     language === "he" ? "he-IL" : language === "ru" ? "ru-RU" : "en-US",
     { 
@@ -250,7 +250,7 @@ function getTreatmentBookingSuccessSmsTemplate(_data: any, language: SMSLanguage
   }
 }
 
-function getReviewReminderSmsTemplate(_data: any, language: SMSLanguage): string {
+function getReviewReminderSmsTemplate(data: any, language: SMSLanguage): string {
   const reviewLink = data.reviewLink
   let message: string
   switch (language) {

@@ -870,14 +870,14 @@ export async function createBooking(
         if (treatment) {
           // Prepare booking data for the booker (who is the logged-in user)
           const bookerBookingData = {
-            recipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : bookingUser.name,
+            recipientName: bookingUser.name, // Always the booker's name for their own notification
             bookerName: isBookingForSomeoneElse ? bookingUser.name : undefined,
             treatmentName: treatment.name,
             bookingDateTime: finalBookingObject.bookingDateTime,
             bookingNumber: finalBookingObject.bookingNumber,
             bookingAddress: bookingAddress,
-            isForSomeoneElse: isBookingForSomeoneElse,
-            isBookerForSomeoneElse: false, // Always false for booker's own notification
+            isForSomeoneElse: false, // Always false for booker's own notification - they get "your booking" message
+            isBookerForSomeoneElse: isBookingForSomeoneElse, // True if they booked for someone else
             actualRecipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : undefined,
           }
 
@@ -2324,8 +2324,8 @@ export async function createGuestBooking(
             bookingDateTime: finalBookingObject.bookingDateTime,
             bookingNumber: finalBookingObject.bookingNumber,
             bookingAddress: bookingAddress,
-            isForSomeoneElse: isBookingForSomeoneElse,
-            isBookerForSomeoneElse: isBookingForSomeoneElse, // Special flag for booker
+            isForSomeoneElse: false, // Always false for booker's own notification - they get "your booking" message
+            isBookerForSomeoneElse: isBookingForSomeoneElse, // True if they booked for someone else
             actualRecipientName: isBookingForSomeoneElse ? validatedPayload.recipientName! : undefined,
           }
 

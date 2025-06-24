@@ -1582,6 +1582,57 @@ export async function professionalMarkCompleted(
   }
 }
 
+export async function getBookingById(bookingId: string): Promise<{
+  success: boolean
+  booking?: PopulatedBooking
+  error?: string
+}> {
+  try {
+    await dbConnect()
+
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return { success: false, error: "Invalid booking ID" }
+    }
+
+    const booking = await Booking.findById(bookingId)
+      .populate<{ treatmentId: ITreatment | null }>({
+        path: "treatmentId",
+        select: "name durations defaultDurationMinutes pricingType fixedPrice isActive",
+      })
+      .populate<{ addressId: IAddress | null }>({
+        path: "addressId",
+        select: "fullAddress city street streetNumber apartmentDetails houseDetails officeDetails hotelDetails otherDetails additionalNotes addressType",
+      })
+      .populate<{ professionalId: Pick<IUser, "_id" | "name"> | null }>({
+        path: "professionalId",
+        select: "name email phone",
+      })
+      .populate<{ userId: Pick<IUser, "_id" | "name" | "email" | "phone"> | null }>({
+        path: "userId",
+        select: "name email phone",
+      })
+      .lean()
+
+    if (!booking) {
+      return { success: false, error: "Booking not found" }
+    }
+
+    const populatedBooking: PopulatedBooking = {
+      ...booking,
+      _id: booking._id.toString(),
+      userId: booking.userId,
+      treatmentId: booking.treatmentId,
+      professionalId: booking.professionalId || null,
+      addressId: booking.addressId || null,
+    }
+
+    return { success: true, booking: populatedBooking }
+  } catch (error) {
+    logger.error("Error fetching booking by ID:", error)
+    return { success: false, error: "Failed to fetch booking" }
+  }
+}
+
 export async function getAllBookings(
   filters: {
     status?: string

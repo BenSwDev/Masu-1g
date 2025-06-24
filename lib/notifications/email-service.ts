@@ -28,17 +28,15 @@ export class EmailService {
     this.isConfigured = false
     this.fromEmail = process.env.EMAIL_FROM || "noreply@masu.co.il"
     
-    // Log environment detection with more details
-    logger.info("EmailService constructor - Environment Detection", {
-      nodeEnv: process.env.NODE_ENV,
-      vercelEnv: process.env.VERCEL_ENV,
-      nextPublicVercelEnv: process.env.NEXT_PUBLIC_VERCEL_ENV,
-      hasVercel: !!process.env.VERCEL,
-      hasVercelUrl: !!process.env.VERCEL_URL,
-      isDevelopment: this.isDevelopment,
-      fromEmail: this.fromEmail,
-      finalDecision: this.isDevelopment ? "DEVELOPMENT - emails will be logged only" : "PRODUCTION - emails will be sent"
-    })
+    // Only log in development or if there are issues
+    if (this.isDevelopment) {
+      logger.info("EmailService constructor - Environment Detection", {
+        nodeEnv: process.env.NODE_ENV,
+        isDevelopment: this.isDevelopment,
+        fromEmail: this.fromEmail,
+        finalDecision: "DEVELOPMENT - emails will be logged only"
+      })
+    }
     
     // Initialize email transporter with proper validation
     this.initializeTransporter()
@@ -53,22 +51,16 @@ export class EmailService {
     const user = process.env.EMAIL_SERVER_USER
     const password = process.env.EMAIL_SERVER_PASSWORD
 
-    // Debug logging for environment variables
-    logger.info("Email service initialization debug", {
-      hasHost: !!host,
-      hasPort: !!port,
-      hasUser: !!user,
-      hasPassword: !!password,
-      hostValue: host ? `${host.substring(0, 10)}***` : "undefined",
-      portValue: port,
-      userValue: user ? `${user.substring(0, 5)}***` : "undefined",
-      environment: this.isDevelopment ? "development" : "production",
-      nodeEnv: process.env.NODE_ENV,
-      vercelEnv: process.env.VERCEL_ENV,
-      allEnvKeys: Object.keys(process.env).filter(key => key.includes('EMAIL')).join(', '),
-      totalEnvVars: Object.keys(process.env).length,
-      sampleEnvKeys: Object.keys(process.env).slice(0, 10).join(', ')
-    })
+    // Only log debug info in development or if configuration is missing
+    if (this.isDevelopment || !host || !port || !user || !password) {
+      logger.info("Email service initialization debug", {
+        hasHost: !!host,
+        hasPort: !!port,
+        hasUser: !!user,
+        hasPassword: !!password,
+        environment: this.isDevelopment ? "development" : "production"
+      })
+    }
 
     // Check if we have the minimum required configuration
     if (!host || !port || !user || !password) {
@@ -119,13 +111,16 @@ export class EmailService {
 
       this.isConfigured = true
       
-      logger.info("Email service initialized successfully", {
-        host,
-        port: Number(port),
-        secure: Number(port) === 465,
-        fromEmail: this.fromEmail,
-        environment: this.isDevelopment ? "development" : "production"
-      })
+      // Only log success in development
+      if (this.isDevelopment) {
+        logger.info("Email service initialized successfully", {
+          host,
+          port: Number(port),
+          secure: Number(port) === 465,
+          fromEmail: this.fromEmail,
+          environment: "development"
+        })
+      }
     } catch (error) {
       logger.error("Failed to initialize email service:", {
         error: error instanceof Error ? error.message : String(error),

@@ -17,7 +17,7 @@ interface GuestBookingConfirmationProps {
   initialData: BookingInitialData
 }
 
-export function GuestBookingConfirmation({
+function GuestBookingConfirmation({
   bookingResult,
   initialData,
 }: GuestBookingConfirmationProps) {
@@ -296,4 +296,7 @@ export function GuestBookingConfirmation({
       </div>
     </div>
   )
-} 
+}
+
+export default GuestBookingConfirmation
+export { GuestBookingConfirmation } 

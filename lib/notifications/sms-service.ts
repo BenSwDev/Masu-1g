@@ -50,9 +50,11 @@ export class SMSService {
       return
     }
 
-    // Validate Account SID format
+    // Validate Account SID format (only show error if not in build phase)
     if (!accountSid.startsWith("AC")) {
-      logger.error("Invalid Twilio Account SID format - must start with 'AC'")
+      if (process.env.NEXT_PHASE !== "phase-production-build") {
+        logger.error("Invalid Twilio Account SID format - must start with 'AC'")
+      }
       return
     }
 

@@ -9,6 +9,7 @@ interface LogEntry {
 
 class Logger {
   private isDevelopment = process.env.NODE_ENV === "development"
+  private isBuild = process.env.NEXT_PHASE === "phase-production-build"
 
   private formatMessage(level: LogLevel, message: string, data?: any): LogEntry {
     return {
@@ -21,6 +22,11 @@ class Logger {
 
   private log(level: LogLevel, message: string, data?: any) {
     const logEntry = this.formatMessage(level, message, data)
+
+    // During build, only show errors and warnings
+    if (this.isBuild && level !== "error" && level !== "warn") {
+      return
+    }
 
     if (this.isDevelopment) {
       // In development, use console methods
@@ -43,8 +49,21 @@ class Logger {
           break
       }
     } else {
-      // In production, use structured logging
-      console.log(JSON.stringify(logEntry))
+      // In production, use structured logging but hide timestamps during build
+      if (this.isBuild) {
+        // During build, simplified logging
+        switch (level) {
+          case "warn":
+            console.warn(`WARN: ${message}`)
+            break
+          case "error":
+            console.error(`ERROR: ${message}`)
+            break
+        }
+      } else {
+        // Runtime production logging with full structure
+        console.log(JSON.stringify(logEntry))
+      }
     }
   }
 

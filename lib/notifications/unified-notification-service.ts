@@ -38,11 +38,14 @@ class UnifiedNotificationService {
     this.isEmailConfigured = status.email.configured
     this.isSMSConfigured = status.sms.configured
 
-    logger.info("Unified notification service initialized", {
-      emailConfigured: this.isEmailConfigured,
-      smsConfigured: this.isSMSConfigured,
-      environment: status.environment
-    })
+    // Only log initialization in development or if there are configuration issues
+    if (status.environment === "development" || !this.isEmailConfigured || !this.isSMSConfigured) {
+      logger.info("Unified notification service initialized", {
+        emailConfigured: this.isEmailConfigured,
+        smsConfigured: this.isSMSConfigured,
+        environment: status.environment
+      })
+    }
   }
 
   private logConfigurationWarning(type: 'email' | 'sms'): void {

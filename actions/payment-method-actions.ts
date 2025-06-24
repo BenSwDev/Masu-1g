@@ -35,7 +35,7 @@ export async function getPaymentMethods() {
   }
 }
 
-export async function createPaymentMethod(_data: PaymentMethodFormData) {
+export async function createPaymentMethod(data: PaymentMethodFormData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -80,7 +80,7 @@ export async function createPaymentMethod(_data: PaymentMethodFormData) {
   }
 }
 
-export async function updatePaymentMethod(id: string, _data: PaymentMethodFormData) {
+export async function updatePaymentMethod(id: string, data: PaymentMethodFormData) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

@@ -1231,12 +1231,19 @@ export async function cancelBooking(
 
 export async function getBookingInitialData(userId: string): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    logger.info("Starting getBookingInitialData", { userId })
+    
     const authSession = await getServerSession(authOptions)
     if (!authSession || authSession.user.id !== userId) {
+      logger.error("Unauthorized access attempt", { userId, sessionUserId: authSession?.user?.id })
       return { success: false, error: "common.unauthorized" }
     }
+    
+    logger.info("Connecting to database")
     await dbConnect()
+    logger.info("Database connected successfully")
 
+    logger.info("Starting parallel data fetch")
     const [
       userSubscriptionsResult,
       giftVouchersResult,
@@ -1262,6 +1269,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       Treatment.find({ isActive: true }).populate("durations").lean(),
       WorkingHoursSettings.findOne().lean(),
     ])
+    logger.info("Parallel data fetch completed")
 
     const getFulfilledValue = (result: PromiseSettledResult<any>, defaultValue: any = null) =>
       result.status === "fulfilled" ? result.value : defaultValue
@@ -2458,7 +2466,9 @@ export async function createGuestBooking(
 
 export async function getGuestBookingInitialData(): Promise<{ success: boolean; data?: any; error?: string }> {
   try {
+    logger.info("Starting getGuestBookingInitialData")
     await dbConnect()
+    logger.info("Database connected for guest booking")
 
     const [
       treatmentsResult,
@@ -2467,6 +2477,7 @@ export async function getGuestBookingInitialData(): Promise<{ success: boolean; 
       Treatment.find({ isActive: true }).populate("durations").lean(),
       WorkingHoursSettings.findOne().lean(),
     ])
+    logger.info("Guest booking data fetch completed")
 
     const getFulfilledValue = (result: PromiseSettledResult<any>, defaultValue: any = null) =>
       result.status === "fulfilled" ? result.value : defaultValue

@@ -117,7 +117,8 @@ CityDistanceSchema.statics.getCoveredCities = function(
   
   if (maxDistance === Infinity) {
     // Return all active cities except the source city
-    return mongoose.models.City.find({ 
+    const CityModel = mongoose.models.City || mongoose.model<ICity>("City", CitySchema)
+    return CityModel.find({ 
       isActive: true,
       name: { $ne: cityName }
     }).select('name').sort({ name: 1 })
@@ -145,7 +146,7 @@ CitySchema.statics.calculateDistance = function(
 // Method to populate distance relationships
 CitySchema.statics.populateDistances = async function() {
   const cities = await this.find({ isActive: true })
-  const CityDistance = mongoose.models.CityDistance
+  const CityDistance = mongoose.models.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
   
   // TODO: Remove debug log
 
@@ -203,7 +204,7 @@ CitySchema.statics.calculateDistancesForNewCity = async function(newCityId: stri
     _id: { $ne: newCityId } 
   })
   
-  const CityDistance = mongoose.models.CityDistance
+  const CityDistance = mongoose.models.CityDistance || mongoose.model<ICityDistance>("CityDistance", CityDistanceSchema)
   
   for (const existingCity of existingCities) {
     const distance = (this as any).calculateDistance(

@@ -942,22 +942,23 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
         if (purchaser) {
           const lang = purchaser.notificationPreferences?.language || "he"
           const methods = purchaser.notificationPreferences?.methods || ["email", "sms"]
-          const userNameForNotification = purchaser.name || (lang === "he" ? "לקוח" : "Customer")
           const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
 
-
-
-          const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
-          const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
-          const messageHe =
-            `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}. ` +
-            `למימוש השובר לחץ כאן: ${redeemLink}`
-          const messageEn =
-            `Thank you for your purchase. View your receipt here: ${summaryLink}. ` +
-            `Redeem your voucher at: ${redeemLink}`
-          const notificationData = {
-            type: "purchase-success" as const,
-            message: lang === "he" ? messageHe : messageEn,
+          let messageContent: string
+          
+          if (!voucher.isGift) {
+            // Regular purchase for self - include redemption link
+            const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
+            const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
+            messageContent = lang === "he" 
+              ? `תודה על רכישתך! ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}. למימוש השובר לחץ כאן: ${redeemLink}`
+              : `Thank you for your purchase! View your receipt here: ${summaryLink}. Redeem your voucher at: ${redeemLink}`
+          } else {
+            // Gift purchase - different message, no redemption link yet
+            const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
+            messageContent = lang === "he" 
+              ? `תודה על רכישת שובר המתנה! השובר נוצר בהצלחה. ניתן לצפות בפרטים ולשלוח את המתנה מהלינק הבא: ${summaryLink}`
+              : `Thank you for purchasing a gift voucher! The voucher has been created successfully. You can view details and send the gift from: ${summaryLink}`
           }
 
           const recipients = []
@@ -969,7 +970,7 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
           }
           
           if (recipients.length > 0) {
-            await unifiedNotificationService.sendPurchaseSuccess(recipients, notificationData.message)
+            await unifiedNotificationService.sendPurchaseSuccess(recipients, messageContent)
           }
         } else {
           logger.warn(
@@ -1597,7 +1598,7 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
             await unifiedNotificationService.sendPurchaseSuccess(recipientRecipients, giftMessage)
           }
 
-          // Send confirmation to purchaser
+          // Send confirmation to purchaser about gift being sent
           const purchaserMessage = `✅ השובר נשלח בהצלחה ל${voucher.recipientName}!\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
           
           const purchaserRecipients = []
@@ -1611,9 +1612,24 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
           if (purchaserRecipients.length > 0) {
             await unifiedNotificationService.sendPurchaseSuccess(purchaserRecipients, purchaserMessage)
           }
+        } else if (voucher.isGift && (!voucher.recipientName || !voucher.recipientPhone)) {
+          // Gift voucher but recipient details not yet set - notify purchaser they need to set recipient details
+          const message = `תודה על רכישת שובר המתנה! השובר נוצר בהצלחה. יש להגדיר פרטי נמען כדי לשלוח את המתנה.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
+
+          const recipients = []
+          if (guestInfo.email) {
+            recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
+          }
+          if (guestInfo.phone) {
+            recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
+          }
+          
+          if (recipients.length > 0) {
+            await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
+          }
         } else {
-          // Regular voucher (not a gift) - send to purchaser
-          const message = `תודה על רכישתך. למימוש השובר לחץ כאן: ${redeemLink}`
+          // Regular voucher (not a gift) - send to purchaser with redemption link
+          const message = `תודה על רכישתך! למימוש השובר לחץ כאן: ${redeemLink}\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
 
           const recipients = []
           if (guestInfo.email) {

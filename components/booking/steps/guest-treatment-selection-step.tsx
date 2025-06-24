@@ -429,13 +429,16 @@ export function GuestTreatmentSelectionStep({
               className="space-y-4"
             >
               {(showCategorySelection ? filteredTreatmentsByCategory : availableTreatmentsForStep).map((treatment) => {
-                const isSelected = bookingOptions.selectedTreatmentId === treatment.id.toString()
+                const treatmentId = (treatment._id || treatment.id)?.toString()
+                const isSelected = bookingOptions.selectedTreatmentId === treatmentId
                 const isLocked = isTreatmentLockedBySource && !isSelected
+                
+                if (!treatmentId) return null // Skip treatments without valid ID
                 
                 return (
                   <Label
-                    key={treatment.id.toString()}
-                    htmlFor={treatment.id.toString()}
+                    key={treatmentId}
+                    htmlFor={treatmentId}
                     className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${
                       dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""
                     } ${isLocked ? "opacity-50 cursor-not-allowed" : ""} ${
@@ -443,8 +446,8 @@ export function GuestTreatmentSelectionStep({
                     }`}
                   >
                     <RadioGroupItem 
-                      value={treatment.id.toString()} 
-                      id={treatment.id.toString()}
+                      value={treatmentId} 
+                      id={treatmentId}
                       disabled={isLocked}
                     />
                     <div className="flex-1 flex justify-between items-center">
@@ -487,13 +490,18 @@ export function GuestTreatmentSelectionStep({
               onValueChange={handleDurationSelect}
               className="space-y-4"
             >
-              {availableDurations.map((duration: any) => (
-                <Label
-                  key={duration._id.toString()}
-                  htmlFor={duration._id.toString()}
-                  className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}
-                >
-                  <RadioGroupItem value={duration._id.toString()} id={duration._id.toString()} />
+              {availableDurations.map((duration: any) => {
+                const durationId = (duration._id || duration.id)?.toString()
+                
+                if (!durationId) return null // Skip durations without valid ID
+                
+                return (
+                  <Label
+                    key={durationId}
+                    htmlFor={durationId}
+                    className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}
+                  >
+                    <RadioGroupItem value={durationId} id={durationId} />
                   <div className="flex-1 flex justify-between items-center">
                     <div>
                       <h4 className="font-medium">{duration.name || formatDurationString(duration.minutes || 0)}</h4>
@@ -508,7 +516,8 @@ export function GuestTreatmentSelectionStep({
                     )}
                   </div>
                 </Label>
-              ))}
+                )
+              })}
             </RadioGroup>
           </CardContent>
         </Card>

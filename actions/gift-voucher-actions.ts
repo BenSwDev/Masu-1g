@@ -879,12 +879,12 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
     if (!session?.user) {
       return { success: false, error: "Unauthorized" }
     }
-    if (!mongoose.Types.ObjectId.isValid(data.voucherId)) {
+    if (!mongoose.Types.ObjectId.isValid(_data.voucherId)) {
       return { success: false, error: "Invalid Voucher ID format." }
     }
 
     await dbConnect()
-    const { voucherId, paymentId, success: paymentSuccess } = data
+    const { voucherId, paymentId, success: paymentSuccess } = _data
 
     const voucher = await GiftVoucher.findById(voucherId)
     if (!voucher) {
@@ -1332,7 +1332,7 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
   }
 }
 
-export async function initiateGuestPurchaseGiftVoucher(data: PurchaseInitiationData & {
+export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiationData & {
   guestInfo: {
     name: string
     email: string
@@ -1344,12 +1344,12 @@ export async function initiateGuestPurchaseGiftVoucher(data: PurchaseInitiationD
   
   try {
     logger.info(`[${requestId}] Starting guest gift voucher purchase initiation`, {
-      voucherType: data.voucherType,
-      treatmentId: data.treatmentId,
-      hasSelectedDuration: !!data.selectedDurationId,
-      monetaryValue: data.monetaryValue,
-      isGift: data.isGift,
-      guestEmail: data.guestInfo.email
+      voucherType: _data.voucherType,
+      treatmentId: _data.treatmentId,
+      hasSelectedDuration: !!_data.selectedDurationId,
+      monetaryValue: _data.monetaryValue,
+      isGift: _data.isGift,
+      guestEmail: _data.guestInfo.email
     })
 
     const dbConnectStart = Date.now()
@@ -1358,18 +1358,18 @@ export async function initiateGuestPurchaseGiftVoucher(data: PurchaseInitiationD
     
     logger.info(`[${requestId}] Database connected`, { 
       dbConnectTime: `${dbConnectTime}ms`,
-      guestEmail: data.guestInfo.email
+      guestEmail: _data.guestInfo.email
     })
 
-    const { voucherType, treatmentId, selectedDurationId, monetaryValue: inputMonetaryValue, isGift, guestInfo } = data
+    const { voucherType, treatmentId, selectedDurationId, monetaryValue: inputMonetaryValue, isGift, guestInfo } = _data
 
     // Validate guest info
-    if (!guestInfo || !guestInfo.name || !guestInfo.email || !guestInfo.phone) {
+    if (!_guestInfo || !_guestInfo.name || !_guestInfo.email || !_guestInfo.phone) {
       logger.warn(`[${requestId}] Invalid guest info provided`, { 
-        hasGuestInfo: !!guestInfo,
-        hasName: !!guestInfo?.name,
-        hasEmail: !!guestInfo?.email,
-        hasPhone: !!guestInfo?.phone
+        hasGuestInfo: !!_guestInfo,
+        hasName: !!_guestInfo?.name,
+        sEmail: !!_g_uestInfo?.email,
+        hasPhone: !!__guestInfo?.phone
       })
       return { success: false, error: "Guest information (name, email, phone) is required." }
     }
@@ -1476,10 +1476,10 @@ export async function initiateGuestPurchaseGiftVoucher(data: PurchaseInitiationD
     }
 
     if (isGift) {
-      if (data.recipientName) giftVoucherData.recipientName = data.recipientName
-      if (data.recipientPhone) giftVoucherData.recipientPhone = data.recipientPhone
-      if (data.greetingMessage) giftVoucherData.greetingMessage = data.greetingMessage
-      if (data.sendDate) giftVoucherData.sendDate = data.sendDate === "immediate" ? new Date() : new Date(data.sendDate)
+      if (_data.recipientName) giftVoucherData.recipientName =  _data.recipientName
+      if (_data.recipientPhone) giftVoucherData.recipientPhone = _data.recipientPhone
+      if (_data.greetingMessage) giftVoucherData.greetingMessage = _data.greetingMessage
+      if (_data.sendDate) giftVoucherData.sendDate = _data.sendDate === "immediate" ? new Date() : new Date(_data.sendDate)
     }
 
     if (voucherType === "treatment") {
@@ -1518,9 +1518,9 @@ export async function initiateGuestPurchaseGiftVoucher(data: PurchaseInitiationD
         message: error.message,
         stack: error.stack?.split('\n').slice(0, 5)
       } : String(error),
-      voucherType: data.voucherType,
-      treatmentId: data.treatmentId,
-      guestEmail: data.guestInfo.email
+      voucherType: _data.voucherType,
+      treatmentId: _data.treatmentId,
+      guestEmail: _data.guestInfo.email
     })
     
     if (error instanceof mongoose.Error.ValidationError) {

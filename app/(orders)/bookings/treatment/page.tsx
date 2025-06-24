@@ -14,23 +14,14 @@ export const dynamic = 'force-dynamic'
 export default async function UniversalBookTreatmentPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ voucherCode?: string; subscriptionId?: string; category?: string }>
+  searchParams?: { voucherCode?: string; subscriptionId?: string; category?: string }
 }) {
   try {
     const session = await getServerSession(authOptions)
-    
-    // ✅ תיקון: טיפול בטוח ב-searchParams
-    let resolvedSearchParams: { voucherCode?: string; subscriptionId?: string; category?: string } = {}
-    try {
-      resolvedSearchParams = searchParams ? await searchParams : {}
-    } catch (error) {
-      console.error("Error resolving searchParams:", error)
-      resolvedSearchParams = {}
-    }
-    
-    const voucherCode = resolvedSearchParams?.voucherCode
-    const subscriptionId = resolvedSearchParams?.subscriptionId
-    const category = resolvedSearchParams?.category
+
+    const voucherCode = searchParams?.voucherCode
+    const subscriptionId = searchParams?.subscriptionId
+    const category = searchParams?.category
 
     // Always use getBookingInitialData to get full data regardless of user status
     const initialDataResult = session?.user?.id 

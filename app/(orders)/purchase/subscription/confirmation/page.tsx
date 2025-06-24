@@ -13,7 +13,7 @@ interface SearchParams {
 }
 
 interface Props {
-  searchParams: Promise<SearchParams>
+  searchParams: SearchParams
 }
 
 // Get actual subscription data from database
@@ -74,8 +74,7 @@ async function getSubscriptionPurchaseData(subscriptionId: string) {
 }
 
 export default async function SubscriptionConfirmationPage({ searchParams }: Props) {
-  const resolvedSearchParams = await searchParams
-  const { subscriptionId, status } = resolvedSearchParams
+  const { subscriptionId, status } = searchParams
 
   if (!subscriptionId || status !== "success") {
     notFound()

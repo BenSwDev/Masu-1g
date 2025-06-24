@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Search, Filter, Download, RefreshCw, Users, TrendingUp, CalendarIcon, CreditCard, List, Plus } from "lucide-react" // Renamed Calendar to CalendarIcon
 import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Button } from "@/components/ui/button" // Corrected path
+import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
@@ -23,12 +23,12 @@ import UserSubscriptionAdminCardSkeleton from "./user-subscription-admin-card-sk
 import UserSubscriptionForm from "./user-subscription-form"
 import CreateUserSubscriptionForm from "./create-user-subscription-form"
 
-interface PopulatedUserSubscription extends IUserSubscription {
-  userId: Pick<User, "name" | "email"> & { _id: string }
+interface PopulatedUserSubscription extends Omit<IUserSubscription, "userId"> {
+  userId?: Pick<User, "name" | "email"> & { _id: string } | null
   subscriptionId: ISubscription
   treatmentId: ITreatment
   selectedDurationDetails?: ITreatmentDuration
-  paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+  paymentMethodId?: { _id: string; cardName?: string; cardNumber: string } | null
 }
 
 interface AdminUserSubscriptionsClientProps {

@@ -1,17 +1,174 @@
 "use client"
 
-// This file now serves as an API client for backward compatibility
-// All actual logic has been moved to API routes
-
 import type { 
   TimeSlot, 
   CalculatedPriceDetails,
-  PopulatedBooking 
+  PopulatedBooking,
+  BookingStatus
 } from "@/types/booking"
 import type { IBooking } from "@/lib/db/models/booking"
 import type { z } from "zod"
 
 export type { IGiftVoucherUsageHistory } from "@/types/booking"
+
+// ============================================================================
+// USER BOOKINGS
+// ============================================================================
+
+export async function getUserBookings(
+  userId: string,
+  filters: {
+    status?: string
+    treatment?: string
+    dateRange?: string
+    search?: string
+    page?: number
+    limit?: number
+    sortBy?: string
+    sortDirection?: "asc" | "desc"
+  },
+): Promise<{ bookings: PopulatedBooking[]; totalPages: number; totalBookings: number }> {
+  try {
+    const params = new URLSearchParams({ 
+      userId, 
+      ...Object.fromEntries(
+        Object.entries(filters).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])
+      )
+    })
+    
+    const response = await fetch(`/api/bookings?${params}`)
+    const result = await response.json()
+    
+    if (!result.success) {
+      console.error('Failed to fetch user bookings:', result.error)
+      return { bookings: [], totalPages: 0, totalBookings: 0 }
+    }
+    
+    return result
+  } catch (error) {
+    console.error('Error fetching user bookings:', error)
+    return { bookings: [], totalPages: 0, totalBookings: 0 }
+  }
+}
+
+// ============================================================================
+// ADMIN BOOKINGS
+// ============================================================================
+
+export async function getAllBookings(
+  filters: {
+    status?: string
+    professional?: string
+    treatment?: string
+    dateRange?: string
+    priceRange?: string
+    address?: string
+    page?: number
+    limit?: number
+    sortBy?: string
+    sortDirection?: "asc" | "desc"
+    search?: string
+  } = {},
+): Promise<{ bookings: PopulatedBooking[]; totalPages: number; totalBookings: number }> {
+  try {
+    const params = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(filters).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])
+      )
+    )
+    
+    const response = await fetch(`/api/admin/bookings?${params}`)
+    const result = await response.json()
+    
+    if (!result.success) {
+      console.error('Failed to fetch admin bookings:', result.error)
+      return { bookings: [], totalPages: 0, totalBookings: 0 }
+    }
+    
+    return result
+  } catch (error) {
+    console.error('Error fetching admin bookings:', error)
+    return { bookings: [], totalPages: 0, totalBookings: 0 }
+  }
+}
+
+export async function getBookingById(bookingId: string): Promise<{ success: boolean; booking?: PopulatedBooking; error?: string }> {
+  try {
+    const response = await fetch(`/api/admin/bookings/${bookingId}`)
+    const result = await response.json()
+    
+    return result
+  } catch (error) {
+    console.error('Error fetching booking by ID:', error)
+    return { success: false, error: 'Failed to fetch booking' }
+  }
+}
+
+export async function updateBookingByAdmin(
+  bookingId: string,
+  updates: {
+    status?: BookingStatus
+    bookingDateTime?: Date
+    recipientName?: string
+    recipientPhone?: string
+    recipientEmail?: string
+    notes?: string
+    professionalId?: string
+    paymentStatus?: "pending" | "paid" | "failed" | "not_required"
+  }
+): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+  try {
+    const response = await fetch(`/api/admin/bookings/${bookingId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    })
+    
+    const result = await response.json()
+    return result
+  } catch (error) {
+    console.error('Error updating booking:', error)
+    return { success: false, error: 'Failed to update booking' }
+  }
+}
+
+// ============================================================================
+// INITIAL DATA
+// ============================================================================
+
+export async function getBookingInitialData(userId?: string): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const url = userId 
+      ? `/api/bookings/initial-data?userId=${userId}`
+      : '/api/bookings/initial-data'
+    
+    const response = await fetch(url)
+    const result = await response.json()
+    
+    return result
+  } catch (error) {
+    console.error('Error fetching initial booking data:', error)
+    return { 
+      success: false, 
+      error: "bookings.errors.initialDataFetchFailed" 
+    }
+  }
+}
+
+export async function getGuestBookingInitialData(): Promise<{ success: boolean; data?: any; error?: string }> {
+  try {
+    const response = await fetch('/api/bookings/guest/initial-data')
+    const result = await response.json()
+    
+    return result
+  } catch (error) {
+    console.error('Error fetching guest booking data:', error)
+    return { 
+      success: false, 
+      error: "Failed to load booking data" 
+    }
+  }
+}
 
 // ============================================================================
 // TIME SLOTS
@@ -30,8 +187,11 @@ export async function getAvailableTimeSlots(
     })
     
     const response = await fetch(`/api/bookings/time-slots?${params}`)
-    return await response.json()
+    const result = await response.json()
+    
+    return result
   } catch (error) {
+    console.error('Error fetching time slots:', error)
     return { 
       success: false, 
       error: "bookings.errors.fetchTimeSlotsFailed" 
@@ -53,8 +213,10 @@ export async function calculateBookingPrice(
       body: JSON.stringify(payload),
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error calculating price:', error)
     return { 
       success: false, 
       error: "bookings.errors.calculatePriceFailed" 
@@ -76,8 +238,10 @@ export async function createBooking(
       body: JSON.stringify(payload),
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error creating booking:', error)
     return { 
       success: false, 
       error: "bookings.errors.createBookingFailed" 
@@ -95,8 +259,10 @@ export async function createGuestBooking(
       body: JSON.stringify(payload),
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error creating guest booking:', error)
     return { 
       success: false, 
       error: "bookings.errors.createBookingFailed" 
@@ -107,75 +273,6 @@ export async function createGuestBooking(
 // ============================================================================
 // BOOKING MANAGEMENT
 // ============================================================================
-
-export async function getUserBookings(
-  userId: string,
-  filters: {
-    status?: string
-    treatment?: string
-    dateRange?: string
-    search?: string
-    page?: number
-    limit?: number
-    sortBy?: string
-    sortDirection?: "asc" | "desc"
-  },
-): Promise<{ bookings: PopulatedBooking[]; totalPages: number; totalBookings: number }> {
-  try {
-    const params = new URLSearchParams({ 
-      userId, 
-      ...Object.fromEntries(
-        Object.entries(filters).filter(([_, v]) => v !== undefined)
-      )
-    })
-    
-    const response = await fetch(`/api/bookings?${params}`)
-    const result = await response.json()
-    
-    if (!result.success) {
-      return { bookings: [], totalPages: 0, totalBookings: 0 }
-    }
-    
-    return result
-  } catch (error) {
-    return { bookings: [], totalPages: 0, totalBookings: 0 }
-  }
-}
-
-export async function getAllBookings(
-  filters: {
-    status?: string
-    professional?: string
-    treatment?: string
-    dateRange?: string
-    priceRange?: string
-    address?: string
-    page?: number
-    limit?: number
-    sortBy?: string
-    sortDirection?: "asc" | "desc"
-    search?: string
-  } = {},
-): Promise<{ bookings: PopulatedBooking[]; totalPages: number; totalBookings: number }> {
-  try {
-    const params = new URLSearchParams(
-      Object.fromEntries(
-        Object.entries(filters).filter(([_, v]) => v !== undefined)
-      )
-    )
-    
-    const response = await fetch(`/api/admin/bookings?${params}`)
-    const result = await response.json()
-    
-    if (!result.success) {
-      return { bookings: [], totalPages: 0, totalBookings: 0 }
-    }
-    
-    return result
-  } catch (error) {
-    return { bookings: [], totalPages: 0, totalBookings: 0 }
-  }
-}
 
 export async function cancelBooking(
   bookingId: string,
@@ -190,39 +287,13 @@ export async function cancelBooking(
       body: JSON.stringify({ userId, cancelledByRole, reason }),
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error cancelling booking:', error)
     return { 
       success: false, 
       error: "bookings.errors.cancelBookingFailed" 
-    }
-  }
-}
-
-// ============================================================================
-// INITIAL DATA
-// ============================================================================
-
-export async function getBookingInitialData(userId: string): Promise<{ success: boolean; data?: any; error?: string }> {
-  try {
-    const response = await fetch(`/api/bookings/initial-data?userId=${userId}`)
-    return await response.json()
-  } catch (error) {
-    return { 
-      success: false, 
-      error: "bookings.errors.initialDataFetchFailed" 
-    }
-  }
-}
-
-export async function getGuestBookingInitialData(): Promise<{ success: boolean; data?: any; error?: string }> {
-  try {
-    const response = await fetch('/api/bookings/guest/initial-data')
-    return await response.json()
-  } catch (error) {
-    return { 
-      success: false, 
-      error: "Failed to load booking data" 
     }
   }
 }
@@ -240,8 +311,10 @@ export async function professionalAcceptBooking(
       headers: { 'Content-Type': 'application/json' },
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error accepting booking:', error)
     return { 
       success: false, 
       error: "bookings.errors.assignProfessionalFailed" 
@@ -258,8 +331,10 @@ export async function professionalMarkEnRoute(
       headers: { 'Content-Type': 'application/json' },
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error marking en route:', error)
     return { 
       success: false, 
       error: "bookings.errors.markEnRouteFailed" 
@@ -276,8 +351,10 @@ export async function professionalMarkCompleted(
       headers: { 'Content-Type': 'application/json' },
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error marking completed:', error)
     return { 
       success: false, 
       error: "bookings.errors.markCompletedFailed" 
@@ -286,7 +363,7 @@ export async function professionalMarkCompleted(
 }
 
 // ============================================================================
-// ADMIN FUNCTIONS
+// ADMIN ASSIGNMENT FUNCTIONS
 // ============================================================================
 
 export async function assignProfessionalToBooking(
@@ -300,8 +377,10 @@ export async function assignProfessionalToBooking(
       body: JSON.stringify({ professionalId }),
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error assigning professional:', error)
     return { 
       success: false, 
       error: "bookings.errors.assignProfessionalFailed" 
@@ -312,40 +391,14 @@ export async function assignProfessionalToBooking(
 export async function getAvailableProfessionals(): Promise<{ success: boolean; professionals?: any[]; error?: string }> {
   try {
     const response = await fetch('/api/bookings/professionals')
-    return await response.json()
+    const result = await response.json()
+    
+    return result
   } catch (error) {
+    console.error('Error fetching professionals:', error)
     return { 
       success: false, 
       error: "bookings.errors.fetchProfessionalsFailed" 
-    }
-  }
-}
-
-export async function updateBookingByAdmin(
-  bookingId: string,
-  updates: {
-    status?: string
-    bookingDateTime?: Date
-    recipientName?: string
-    recipientPhone?: string
-    recipientEmail?: string
-    notes?: string
-    professionalId?: string
-    paymentStatus?: "pending" | "paid" | "failed" | "not_required"
-  }
-): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
-  try {
-    const response = await fetch(`/api/admin/bookings/${bookingId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    })
-    
-    return await response.json()
-  } catch (error) {
-    return { 
-      success: false, 
-      error: "common.unknown" 
     }
   }
 }
@@ -369,8 +422,10 @@ export async function createGuestUser(guestInfo: {
       body: JSON.stringify(guestInfo),
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error creating guest user:', error)
     return { 
       success: false, 
       error: "Failed to create guest user" 
@@ -395,8 +450,10 @@ export async function saveAbandonedBooking(
       body: JSON.stringify({ userId, formData }),
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error saving abandoned booking:', error)
     return { 
       success: false, 
       error: "Failed to save abandoned booking" 
@@ -411,8 +468,11 @@ export async function getAbandonedBooking(userId: string): Promise<{
 }> {
   try {
     const response = await fetch(`/api/bookings/abandoned?userId=${userId}`)
-    return await response.json()
+    const result = await response.json()
+    
+    return result
   } catch (error) {
+    console.error('Error getting abandoned booking:', error)
     return { 
       success: false, 
       error: "Failed to get abandoned booking" 
@@ -432,8 +492,10 @@ export async function updateBookingStatusAfterPayment(
       body: JSON.stringify({ paymentStatus, transactionId }),
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error updating payment status:', error)
     return { 
       success: false, 
       error: "Failed to update booking status" 
@@ -446,8 +508,11 @@ export async function findSuitableProfessionals(
 ): Promise<{ success: boolean; professionals?: any[]; error?: string }> {
   try {
     const response = await fetch(`/api/bookings/${bookingId}/suitable-professionals`)
-    return await response.json()
+    const result = await response.json()
+    
+    return result
   } catch (error) {
+    console.error('Error finding suitable professionals:', error)
     return { 
       success: false, 
       error: "Failed to find suitable professionals" 
@@ -460,8 +525,11 @@ export async function getSuitableProfessionalsForBooking(
 ): Promise<{ success: boolean; professionals?: any[]; error?: string }> {
   try {
     const response = await fetch(`/api/admin/bookings/${bookingId}/suitable-professionals`)
-    return await response.json()
+    const result = await response.json()
+    
+    return result
   } catch (error) {
+    console.error('Error getting suitable professionals:', error)
     return { 
       success: false, 
       error: "Failed to get suitable professionals" 
@@ -478,11 +546,46 @@ export async function sendNotificationToSuitableProfessionals(
       headers: { 'Content-Type': 'application/json' },
     })
     
-    return await response.json()
+    const result = await response.json()
+    return result
   } catch (error) {
+    console.error('Error sending notifications:', error)
     return { 
       success: false, 
       error: "Failed to send notifications" 
     }
   }
-} 
+}
+
+// ============================================================================
+// REDEMPTION CODE VALIDATION
+// ============================================================================
+
+export async function validateRedemptionCode(
+  code: string,
+  userId?: string
+): Promise<{ 
+  success: boolean
+  redemption?: {
+    type: "subscription" | "gift_voucher" | "coupon"
+    data: any
+  }
+  error?: string 
+}> {
+  try {
+    const response = await fetch('/api/bookings/validate-redemption', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, userId }),
+    })
+    
+    const result = await response.json()
+    return result
+  } catch (error) {
+    console.error('Error validating redemption code:', error)
+    return { 
+      success: false, 
+      error: "Failed to validate redemption code" 
+    }
+  }
+}

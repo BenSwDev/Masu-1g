@@ -17,7 +17,7 @@ import { getActiveSubscriptionsForPurchase, getTreatments, type SerializedSubscr
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
 import { purchaseGuestSubscription, saveAbandonedSubscriptionPurchase } from "@/actions/user-subscription-actions"
-import { createGuestUser } from "@/actions/booking-actions"
+import { createGuestUser } from "@/actions/unified-booking-actions"
 import type { CalculatedPriceDetails } from "@/types/booking"
 import GuestSubscriptionConfirmation from "@/components/subscriptions/guest-subscription-confirmation"
 
@@ -141,7 +141,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     surcharges: [],
     totalSurchargesAmount: 0,
     treatmentPriceAfterSubscriptionOrTreatmentVoucher: totalPrice,
-    couponDiscount: 0,
+                  discountAmount: 0,
     voucherAppliedAmount: 0,
     finalAmount: totalPrice,
     isBaseTreatmentCoveredBySubscription: false,

@@ -26,6 +26,7 @@ async function loadModels() {
   await import("@/lib/db/models/gift-voucher")
   await import("@/lib/db/models/password-reset-token")
   await import("@/lib/db/models/payment-method")
+  await import("@/lib/db/models/professional-profile")
   await import("@/lib/db/models/subscription")
   await import("@/lib/db/models/treatment")
   await import("@/lib/db/models/user-subscription")
@@ -93,7 +94,7 @@ if (process.env.NODE_ENV === "development") {
     const start = Date.now()
     const result = JSON.stringify(query)
     const duration = Date.now() - start
-    console.log(`[Mongoose][${collectionName}.${method}] query:`, result, "duration:", duration, "ms")
+    // was console log`[Mongoose][${collectionName}.${method}] query:`, result, "duration:", duration, "ms")
   })
 }
 

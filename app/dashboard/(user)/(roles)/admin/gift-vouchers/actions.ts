@@ -3,53 +3,15 @@
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
+import { type IGiftVoucher, type GiftVoucherPlain } from "@/lib/db/models/gift-voucher"
 import { type IUser } from "@/lib/db/models/user"
 import { type ITreatment } from "@/lib/db/models/treatment"
 import { dbConnect } from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
 
-// Types
-export interface GiftVoucherPlain {
-  _id: string
-  code: string
-  voucherType: "treatment" | "monetary"
-  amount: number
-  treatmentId?: string
-  treatmentName?: string
-  selectedDurationId?: string
-  selectedDurationName?: string
-  monetaryValue?: number
-  originalAmount?: number
-  remainingAmount?: number
-  purchaserUserId: string
-  purchaserName?: string
-  ownerUserId: string
-  ownerName?: string
-  isGift: boolean
-  recipientName?: string
-  recipientPhone?: string
-  greetingMessage?: string
-  sendDate?: Date | string
-  status:
-    | "pending_payment"
-    | "active"
-    | "partially_used"
-    | "fully_used"
-    | "expired"
-    | "pending_send"
-    | "sent"
-    | "cancelled"
-  purchaseDate: Date | string
-  validFrom: Date | string
-  validUntil: Date | string
-  paymentId?: string
-  usageHistory?: { date: Date | string; amountUsed: number; orderId?: string; description?: string }[]
-  isActive: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-}
+// Use the centralized GiftVoucherPlain type for consistency
+export type { GiftVoucherPlain } from "@/lib/db/models/gift-voucher"
 
 export interface GetGiftVouchersOptions {
   page?: number

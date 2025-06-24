@@ -1,4 +1,4 @@
-"use server"
+﻿"use server"
 
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
@@ -6,7 +6,6 @@ import { revalidatePath } from "next/cache"
 import dbConnect from "@/lib/db/mongoose"
 import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
 import { logger } from "@/lib/logs/logger"
-import type { IWorkingHoursSettings, IFixedHours, ISpecialDate, ISpecialDateEvent } from "@/lib/db/models/working-hours"
 
 /**
  * Fetches the working hours settings from the database

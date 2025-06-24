@@ -1,18 +1,17 @@
-"use server"
+﻿"use server"
 
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
 import mongoose, { type FilterQuery } from "mongoose"
 
 import { authOptions } from "@/lib/auth/auth"
-import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
+import GiftVoucher, { type IGiftVoucher, type GiftVoucherPlain } from "@/lib/db/models/gift-voucher"
 import GiftVoucherPurchase from "@/lib/db/models/gift-voucher-purchase"
 import User from "@/lib/db/models/user"
 import Treatment from "@/lib/db/models/treatment"
 import dbConnect from "@/lib/db/mongoose"
 import { logger } from "@/lib/logs/logger"
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
-import type { GiftVoucherPlain as IGiftVoucherPlainFile } from "@/lib/db/models/gift-voucher"
 import type {
   EmailRecipient,
   PhoneRecipient,
@@ -32,15 +31,7 @@ async function generateUniqueVoucherCode(): Promise<string> {
   throw new Error("Failed to generate unique voucher code")
 }
 
-// Extended GiftVoucherPlain for client-side use
-export interface GiftVoucherPlain extends IGiftVoucherPlainFile {
-  _id: string
-  amount: number // Ensure this is always present as it's the primary value
-  treatmentName?: string
-  selectedDurationName?: string
-  purchaserName?: string
-  ownerName?: string
-}
+// GiftVoucherPlain is imported above for consistency
 
 async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<string, any>): Promise<GiftVoucherPlain> {
   if (!voucherDocOrPlain) {
@@ -891,7 +882,7 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
       return { success: false, error: "Voucher not found" }
     }
     // Allow confirmation if user is the purchaser OR an admin (admin might confirm manually)
-    if (voucher.purchaserUserId.toString() !== session.user.id && !session.user.roles.includes("admin")) {
+    if (voucher.purchaserUserId?.toString() !== session.user.id && !session.user.roles.includes("admin")) {
       logger.warn("Voucher purchaser mismatch during confirmation by non-admin.", {
         voucherId,
         userId: session.user.id,
@@ -942,7 +933,7 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
         if (purchaser) {
           const lang = purchaser.notificationPreferences?.language || "he"
           const methods = purchaser.notificationPreferences?.methods || ["email", "sms"]
-          const userNameForNotification = purchaser.name || (lang === "he" ? "לקוח" : "Customer")
+          const userNameForNotification = purchaser.name || (lang === "he" ? "×œ×§×•×—" : "Customer")
           const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
 
 
@@ -950,8 +941,8 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
           const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
           const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
           const messageHe =
-            `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}. ` +
-            `למימוש השובר לחץ כאן: ${redeemLink}`
+            `×ª×•×"×" ×¢×œ ×¨×›×™×©×ª×š, ××™×ª×Ÿ ×œ×¦×¤×•×ª ×'××™×©×•×¨ ×"×"×–×ž× ×"×'×œ×™× ×§ ×"'×: ${summaryLink}. ` +
+            `×œ×ž×™×ž×•×© ×"×©×•×'×¨ ×œ×—×¥ ×›××Ÿ: ${redeemLink}`
           const messageEn =
             `Thank you for your purchase. View your receipt here: ${summaryLink}. ` +
             `Redeem your voucher at: ${redeemLink}`
@@ -973,12 +964,12 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
           }
         } else {
           logger.warn(
-            `Purchaser not found for notification after gift voucher purchase confirmation: ${voucher.purchaserUserId.toString()}`,
+            `Purchaser not found for notification after gift voucher purchase confirmation: ${voucher.purchaserUserId?.toString()}`,
           )
         }
       } catch (notificationError) {
         logger.error("Failed to send purchase success notification for gift voucher (purchaser):", {
-          userId: voucher.purchaserUserId.toString(),
+          userId: voucher.purchaserUserId?.toString(),
           voucherId: voucher._id.toString(),
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
         })
@@ -986,8 +977,8 @@ export async function confirmGiftVoucherPurchase(data: PaymentResultData) {
       // --- End notification sending to purchaser ---
 
       revalidatePath("/dashboard/member/gift-vouchers")
-      if (voucher.purchaserUserId.toString() !== voucher.ownerUserId.toString()) {
-        revalidatePath(`/dashboard/user/${voucher.ownerUserId.toString()}/gift-vouchers`) // This path might not exist
+      if (voucher.purchaserUserId?.toString() !== voucher.ownerUserId?.toString()) {
+        revalidatePath(`/dashboard/user/${voucher.ownerUserId?.toString()}/gift-vouchers`) // This path might not exist
       }
       return {
         success: true,
@@ -1087,7 +1078,7 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
         
         // Get purchaser name for the gift message
         const purchaser = await User.findById(voucher.purchaserUserId).select("name").lean()
-        const purchaserName = purchaser?.name || "מישהו"
+        const purchaserName = purchaser?.name || "מתנה"
         
         // Send gift voucher to recipient
         const giftMessage = voucher.greetingMessage 
@@ -1598,7 +1589,7 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
           }
 
           // Send confirmation to purchaser
-          const purchaserMessage = `✅ השובר נשלח בהצלחה ל${voucher.recipientName}!\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
+          const purchaserMessage = `✅ ×"×©×•×'×¨ × ×©×œ×— ×'×"×¦×œ×—×" ×œ${voucher.recipientName}!\n\n×§×•×" ×"×©×•×'×¨: ${voucher.code}\n×¡×›×•×: ₪${voucher.amount}`
           
           const purchaserRecipients = []
           if (guestInfo.email) {
@@ -1613,7 +1604,7 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
           }
         } else {
           // Regular voucher (not a gift) - send to purchaser
-          const message = `תודה על רכישתך. למימוש השובר לחץ כאן: ${redeemLink}`
+          const message = `×ª×•×"×" ×¢×œ ×¨×›×™×©×ª×š. ×œ×ž×™×ž×•×© ×"×©×•×'×¨ ×œ×—×¥ ×›××Ÿ: ${redeemLink}`
 
           const recipients = []
           if (guestInfo.email) {

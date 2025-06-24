@@ -82,7 +82,7 @@ export function BookingEditPage({ booking }: BookingEditPageProps) {
       }
 
       // Import the update function dynamically to avoid circular imports
-      const { updateBookingByAdmin } = await import("@/app/dashboard/(user)/(roles)/admin/bookings/actions")
+      const { updateBookingByAdmin } = await import("@/actions/unified-booking-actions")
       const result = await updateBookingByAdmin(updatedBooking._id.toString(), cleanUpdates)
       
       if (result.success) {

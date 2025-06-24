@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
@@ -61,6 +61,7 @@ export function ProfessionalManagement({
   initialSearch = "",
   initialStats = { total: 0, active: 0, byStatus: {} }
 }: ProfessionalManagementProps) {
+
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   const router = useRouter()
@@ -72,47 +73,72 @@ export function ProfessionalManagement({
     total: 0,
     pages: initialTotalPages
   })
-  const [stats, setStats] = useState<ProfessionalStats>(initialStats)
+  const [stats, setStats] = useState<{ total: number; active: number; byStatus: Record<string, number> }>(initialStats)
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState(initialSearch)
-  const [statusFilter, setStatusFilter] = useState<ProfessionalStatus | "all">("all")
-  const [sortBy, setSortBy] = useState("createdAt")
+  const [statusFilter, setStatusFilter] = useState<"all" | ProfessionalStatus>("all")
+  const [sortBy, setSortBy] = useState<"name" | "email" | "createdAt" | "status">("createdAt")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
   const [error, setError] = useState<string | null>(null)
 
+  // ייצור refs כדי למנוע dependency cycles
+  const searchTermRef = useRef(searchTerm)
+  const statusFilterRef = useRef(statusFilter)
+  const sortByRef = useRef(sortBy)
+  const sortOrderRef = useRef(sortOrder)
+  const paginationRef = useRef(pagination)
+
+  // עדכון refs כשהערכים משתנים
+  useEffect(() => { searchTermRef.current = searchTerm }, [searchTerm])
+  useEffect(() => { statusFilterRef.current = statusFilter }, [statusFilter])
+  useEffect(() => { sortByRef.current = sortBy }, [sortBy])
+  useEffect(() => { sortOrderRef.current = sortOrder }, [sortOrder])
+  useEffect(() => { paginationRef.current = pagination }, [pagination])
+
+
   // Fetch professionals with improved error handling
   const fetchProfessionals = useCallback(async (page = 1, showLoadingState = true) => {
+
+    
     if (showLoadingState) setLoading(true)
     setError(null)
     
     try {
+
+
       const result = await getProfessionals({
         page,
-        limit: pagination.limit,
-        search: searchTerm,
-        status: statusFilter === "all" ? undefined : statusFilter,
-        sortBy,
-        sortOrder
+        limit: paginationRef.current.limit,
+        search: searchTermRef.current,
+        status: statusFilterRef.current === "all" ? undefined : statusFilterRef.current,
+        sortBy: sortByRef.current,
+        sortOrder: sortOrderRef.current
       })
 
       if (result.success && result.data) {
         const transformedProfessionals = (result.data.professionals || []).map(transformProfessionalData)
+        
+        
         setProfessionals(transformedProfessionals)
         setPagination(result.data.pagination)
         setStats(result.data.stats)
+
       } else {
-        setError(result.error || "שגיאה בטעינת המטפלים")
+        const errorMessage = result.error || "שגיאה בטעינת המטפלים"
+        console.error('Failed to fetch professionals:', errorMessage)
+        setError(errorMessage)
         toast({
           variant: "destructive",
           title: "שגיאה",
-          description: result.error || "שגיאה בטעינת המטפלים"
+          description: errorMessage
         })
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "שגיאה בטעינת המטפלים"
+      console.error("Error in fetchProfessionals:", error)
+      console.error("Error stack:", error instanceof Error ? error.stack : 'No stack available')
       setError(errorMessage)
-      console.error("Error fetching professionals:", error)
       toast({
         variant: "destructive",
         title: "שגיאה",
@@ -121,48 +147,46 @@ export function ProfessionalManagement({
     } finally {
       if (showLoadingState) setLoading(false)
     }
-  }, [pagination.limit, searchTerm, statusFilter, sortBy, sortOrder, toast])
+  }, [toast])
 
   // Refresh data
   const refreshData = useCallback(async () => {
     setRefreshing(true)
-    await fetchProfessionals(pagination.page, false)
+    await fetchProfessionals(paginationRef.current.page, false)
     setRefreshing(false)
     toast({
       title: "הצלחה",
       description: "הנתונים עודכנו בהצלחה"
     })
-  }, [fetchProfessionals, pagination.page, toast])
+  }, [fetchProfessionals, toast])
 
   // Debounced search effect
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (pagination.page !== 1) {
+      if (paginationRef.current.page !== 1) {
         setPagination(prev => ({ ...prev, page: 1 }))
       }
       fetchProfessionals(1)
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [searchTerm])
+  }, [searchTerm, fetchProfessionals])
 
   // Filter and sort effects
   useEffect(() => {
     fetchProfessionals(1)
-  }, [statusFilter, sortBy, sortOrder])
+  }, [statusFilter, sortBy, sortOrder, fetchProfessionals])
 
   // Initial load effect
   useEffect(() => {
     if (initialProfessionals.length === 0) {
       fetchProfessionals()
     }
-  }, [])
+  }, [initialProfessionals.length, fetchProfessionals])
 
   const handleRowClick = useCallback((professional: Professional) => {
     router.push(`/dashboard/admin/professional-management/${professional._id}`)
   }, [router])
-
-
 
   const handleCreateNew = useCallback(() => {
     router.push("/dashboard/admin/professional-management/new")
@@ -349,7 +373,7 @@ export function ProfessionalManagement({
 
             <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => {
               const [field, order] = value.split('-')
-              setSortBy(field)
+              setSortBy(field as "name" | "email" | "createdAt" | "status")
               setSortOrder(order as "asc" | "desc")
             }}>
               <SelectTrigger className="w-full md:w-48">

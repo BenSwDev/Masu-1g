@@ -3,7 +3,8 @@ import mongoose, { Schema, type Document, type Model } from "mongoose"
 export interface IPasswordResetToken extends Document {
   userId: mongoose.Schema.Types.ObjectId
   token: string
-  expiresAt: Date
+  expiryDate: Date
+  used: boolean
 }
 
 const PasswordResetTokenSchema: Schema = new Schema(
@@ -18,16 +19,18 @@ const PasswordResetTokenSchema: Schema = new Schema(
       required: true,
       unique: true, // Tokens should be unique
     },
-    expiresAt: {
+    expiryDate: {
       type: Date,
       required: true,
-      // Example: Create an index that automatically deletes expired tokens
-      // expires: "1h", // TTL index, Mongoose will delete after 1 hour from expiresAt time
-      // OR rely on a cron job to clean up. For now, just store expiry.
+      index: true,
+      expires: 0, // TTL index to remove document once expiryDate passes
     },
+    used: { type: Boolean, default: false },
   },
   { timestamps: true },
 ) // Add timestamps for createdAt/updatedAt
+
+PasswordResetTokenSchema.index({ expiryDate: 1 }, { expireAfterSeconds: 0 })
 
 // Optional: TTL index for automatic deletion by MongoDB after the 'expiresAt' time has passed.
 // Note: 'expires' option on a field makes it a TTL index *if* it's a Date field.

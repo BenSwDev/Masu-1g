@@ -1,10 +1,9 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface ProtectedRouteProps {

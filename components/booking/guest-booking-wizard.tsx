@@ -25,7 +25,7 @@ import {
   saveAbandonedBooking,
   getAbandonedBooking,
   updateBookingStatusAfterPayment
-} from "@/actions/booking-actions"
+} from "@/actions/unified-booking-actions"
 import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress"
 import { AlertCircle, RotateCcw } from "lucide-react"

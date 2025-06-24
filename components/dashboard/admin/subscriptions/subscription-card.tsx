@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
 import { Edit, Trash, Package, Calendar, Tag } from "lucide-react"
@@ -8,7 +8,6 @@ import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
 import { Switch } from "@/components/common/ui/switch"
 import { AlertModal } from "@/components/common/modals/alert-modal"
-import { useState } from "react"
 import { toast } from "sonner"
 import { deleteSubscription, toggleSubscriptionStatus } from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
 
@@ -68,7 +67,7 @@ export default function SubscriptionCard({ subscription, onEdit, onDelete }: Sub
           <div className="flex items-center text-sm">
             <Tag className="mr-2 h-4 w-4 text-gray-500" />
             <span className="font-medium">{t("subscriptions.price")}:</span>
-            <span className="ml-1">₪{typeof subscription.price === "number" ? subscription.price.toLocaleString() : "0"}</span>
+            <span className="ml-1">â‚ª{typeof subscription.price === "number" ? subscription.price.toLocaleString() : "0"}</span>
           </div>
         </div>
 

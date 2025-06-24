@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React from "react"
 import { type ColumnDef } from "@tanstack/react-table"
@@ -8,7 +8,6 @@ import { Star, MessageCircle, AlertTriangle, Eye } from "lucide-react"
 import type { PopulatedReview } from "@/types/review"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
-import { ArrowUpDown } from "lucide-react"
 
 type TFunction = (key: string, options?: any) => string
 

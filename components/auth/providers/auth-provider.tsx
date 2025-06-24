@@ -1,8 +1,7 @@
-"use client"
+﻿"use client"
 
 import { SessionProvider } from "next-auth/react"
-import type { ReactNode } from "react"
-import { useEffect } from "react"
+import { useEffect, type ReactNode } from "react"
 import { getCacheItem, CACHE_KEYS } from "@/lib/cache/client-cache"
 
 interface AuthProviderProps {
@@ -20,7 +19,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (cachedUser) {
         // We could potentially pre-render UI elements based on cached data
         // while the actual session is being fetched
-        console.log("Pre-loaded cached user data")
+        // was console log"Pre-loaded cached user data")
       }
     }
   }, [])

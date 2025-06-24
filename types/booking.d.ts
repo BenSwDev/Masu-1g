@@ -29,8 +29,13 @@ export interface IGiftVoucherUsageHistory {
   userId?: Types.ObjectId
 }
 
-// ➕ טיפוסים חדשים מהמודל
-export type { IBookingConsents, IEnhancedPaymentDetails, IBookingReview }
+// ➕ Export types from model for consistency
+export type { 
+  IBookingConsents, 
+  IEnhancedPaymentDetails, 
+  IBookingReview,
+  BookingStatus 
+} from "@/lib/db/models/booking"
 
 // ➕ טיפוסים חדשים למידע מתנות
 export interface BookingGiftInfo {
@@ -40,7 +45,7 @@ export interface BookingGiftInfo {
   giftHidePrice?: boolean
 }
 
-// ➕ טיפוס לנתוני מחירים סטטיים
+// ➕ טיפוס לנתוני מחירים סטטיים - עקבי עם המודל
 export interface StaticPricingData {
   staticTreatmentPrice: number
   staticTherapistPay: number
@@ -50,12 +55,13 @@ export interface StaticPricingData {
   staticTherapistPayExtra?: number
 }
 
+// ✅ טיפוס מחירים מחושבים - עודכן להתאמה למודל
 export interface CalculatedPriceDetails {
   basePrice: number
   surcharges: { description: string; amount: number; professionalShare?: { amount: number; type: "fixed" | "percentage" } }[]
   totalSurchargesAmount: number
   treatmentPriceAfterSubscriptionOrTreatmentVoucher: number
-  couponDiscount: number
+  discountAmount: number // Updated name to match model (was: couponDiscount)
   voucherAppliedAmount: number
   finalAmount: number
   isBaseTreatmentCoveredBySubscription: boolean
@@ -64,6 +70,8 @@ export interface CalculatedPriceDetails {
   appliedCouponId?: string // Will be ObjectId string
   appliedGiftVoucherId?: string // Will be ObjectId string
   redeemedUserSubscriptionId?: string // Will be ObjectId string
+  // Keep backward compatibility for existing code
+  couponDiscount?: number // Deprecated, use discountAmount instead
 }
 
 export interface PopulatedPriceDetails
@@ -87,6 +95,7 @@ export interface PopulatedBookingTreatment
   durations?: ITreatmentDuration[]
 }
 
+// ✅ PopulatedBooking מעודכן להיות עקבי עם IBooking במודל
 export interface PopulatedBooking
   extends Omit<
     IBooking,
@@ -94,7 +103,7 @@ export interface PopulatedBooking
   > {
   _id: Types.ObjectId
   treatmentId?: PopulatedBookingTreatment | null
-  selectedDurationId?: Types.ObjectId // Add this back to interface
+  selectedDurationId?: Types.ObjectId
   // addressId is the original DB ref, bookingAddressSnapshot is used for display details
   addressId?: Pick<
     IAddress,
@@ -123,11 +132,72 @@ export interface PopulatedBooking
     profileId: Types.ObjectId
     calculatedAt: Date
   }>
-  // selectedDurationId is still present from IBooking for logic, but display components might use treatmentId.durations
-}
+  // ➕ שדות חדשים מהמודל שהיו חסרים
+  step: 1 | 2 | 3 | 4 | 5 | 6 | 7
+  treatmentCategory: Types.ObjectId
+  staticTreatmentPrice: number
+  staticTherapistPay: number
+  companyFee: number
+  staticTimeSurcharge?: number
+  staticTimeSurchargeReason?: string
+  staticTherapistPayExtra?: number
+  isGift: boolean
+  giftGreeting?: string
+  giftSendWhen?: "now" | Date
+  giftHidePrice?: boolean
+  consents: IBookingConsents
+  enhancedPaymentDetails?: IEnhancedPaymentDetails
+  review?: IBookingReview
+  // Convenience computed fields used throughout the app
+  scheduledDate?: Date
+  scheduledTime?: string
+  startTime?: string
+  endTime?: string
+  paymentStatus?: string
+  totalPrice?: number
+  basePrice?: number
+  transportFee?: number
+  serviceFee?: number
+  discountAmount?: number
+  paidAmount?: number
+  couponId?: string
+  paymentMethod?: string
+  paymentMethodId?: string
+  paymentTransactionId?: string
+  professionalPaymentStatus?: string
+  professionalPaymentDate?: Date
+  paymentDate?: Date
+  professionalCommission?: number
+  paymentHistory?: any[]
+  // Additional admin and review fields
+  professionalGenderPreference?: "male" | "female" | "any"
+  statusHistory?: Array<{ status: BookingStatus; changedAt: Date }>
+  adminNotes?: string
+  customerReview?: IBookingReview & {
+    status?: string
+    reviewerName?: string
+    createdAt?: Date
+  }
+  professionalReview?: {
+    customerRating: number
+    comment?: string
+    experienceRating?: "positive" | "negative" | "neutral"
+    status?: string
+    createdAt?: Date
+  }
+  }
 
 // Ensure ITreatmentDuration is also available if not already globally typed or re-exported
 export type { ITreatmentDuration }
+
+// PopulatedUserSubscription - Unified definition for consistency
+export interface PopulatedUserSubscription extends Omit<IUserSubscription, "userId"> {
+  userId?: Pick<IUser, "_id" | "name" | "email"> | null
+  subscriptionId: ISubscription
+  treatmentId: ITreatment
+  selectedDurationDetails?: ITreatmentDuration
+  paymentMethodId?: { _id: string; cardName?: string; cardNumber: string } | null
+}
 
 // Additional types for booking workflow
 export interface BookingInitialData {
@@ -174,4 +244,8 @@ export interface SelectedBookingOptions {
   // New unified redemption field
   redemptionCode?: string
   redemptionData?: RedemptionCode
+  // Additional fields found in the codebase
+  isFlexibleTime?: boolean
+  flexibilityRangeHours?: number
+  notes?: string
 }

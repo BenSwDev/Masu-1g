@@ -5,9 +5,9 @@ async function addProfessionalProfiles() {
   const client = new MongoClient(uri);
 
   try {
-    console.log("🚀 מתחבר למסד הנתונים...");
+    // was // was console loge logle logle log"🚀 מתחבר למסד הנתונים...");
     await client.connect();
-    console.log("✅ התחברות הצליחה!");
+    // was // was console loge logle logle log"✅ התחברות הצליחה!");
 
     const db = client.db('test');
     
@@ -21,12 +21,12 @@ async function addProfessionalProfiles() {
       roles: "professional" 
     }).toArray();
     
-    console.log(`נמצאו ${professionalUsers.length} משתמשים עם תפקיד professional`);
+    // was // was console loge logle logle log`נמצאו ${professionalUsers.length} משתמשים עם תפקיד professional`);
     
     const treatments = await treatmentsCollection.find({ isActive: true }).toArray();
     const cities = await citiesCollection.find({}).toArray();
     
-    console.log(`נמצאו ${treatments.length} טיפולים ו-${cities.length} ערים`);
+    // was // was console loge logle logle log`נמצאו ${treatments.length} טיפולים ו-${cities.length} ערים`);
 
     for (const user of professionalUsers) {
       // בדיקה אם כבר יש פרופיל מטפל
@@ -35,7 +35,7 @@ async function addProfessionalProfiles() {
       });
       
       if (existingProfile) {
-        console.log(`⚠️ למשתמש ${user.name} כבר יש פרופיל מטפל`);
+        // was // was console loge logle logle log`⚠️ למשתמש ${user.name} כבר יש פרופיל מטפל`);
         continue;
       }
       
@@ -77,18 +77,18 @@ async function addProfessionalProfiles() {
       };
       
       await professionalProfilesCollection.insertOne(professionalDoc);
-      console.log(`✅ נוצר פרופיל מטפל עבור: ${user.name} בעיר ${randomCity.name}`);
+      // was // was console loge logle logle log`✅ נוצר פרופיל מטפל עבור: ${user.name} בעיר ${randomCity.name}`);
     }
 
     // סיכום סופי
     const finalProfessionalsCount = await professionalProfilesCollection.countDocuments();
-    console.log(`\n🎉 סיום! כעת יש ${finalProfessionalsCount} מטפלים במערכת`);
+    // was // was console loge logle logle log`\n🎉 סיום! כעת יש ${finalProfessionalsCount} מטפלים במערכת`);
 
   } catch (error) {
     console.error("❌ שגיאה:", error);
   } finally {
     await client.close();
-    console.log("🔒 החיבור נסגר");
+    // was // was console loge logle logle log"🔒 החיבור נסגר");
   }
 }
 

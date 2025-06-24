@@ -12,7 +12,7 @@ import { Sparkles, Clock, Users, GiftIcon, Ticket, Tag, Loader2 } from "lucide-r
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
 import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { ITreatment } from "@/lib/db/models"
-import { validateRedemptionCode } from "@/actions/booking-actions"
+import { validateRedemptionCode } from "@/actions/unified-booking-actions"
 import { Input } from "@/components/common/ui/input"
 
 interface GuestTreatmentSelectionStepProps {

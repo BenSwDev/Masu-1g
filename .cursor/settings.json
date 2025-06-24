@@ -1,0 +1,52 @@
+{
+  "cursor.general.enableAutoImports": true,
+  "cursor.general.enableInlineCompletion": true,
+  "cursor.models.defaultModel": "claude-3.5-sonnet",
+  "cursor.chat.alwaysSearchWeb": false,
+  "cursor.composer.enableAutoFileContext": true,
+  "cursor.general.maxTokensPerRequest": 8000,
+  "cursor.general.enableFileTree": true,
+  "cursor.general.enableSymbolSearch": true,
+  "cursor.general.enableDetailedErrorReporting": true,
+  "cursor.general.enableContextAwareSearch": true,
+  "cursor.general.enableDeepFileAnalysis": true,
+  
+  "cursor.indexing.enabled": true,
+  "cursor.indexing.includeAllFiles": true,
+  "cursor.indexing.ignorePatterns": ["node_modules", ".git", "dist", "build"],
+  "cursor.indexing.autoRefresh": true,
+  "cursor.indexing.maxFileSize": "10MB",
+  
+  "cursor.codebase.enableFullContextSearch": true,
+  "cursor.codebase.maxSearchResults": 100,
+  "cursor.codebase.enableSemanticSearch": true,
+  "cursor.codebase.enableRegexSearch": true,
+  
+  "cursor.ai.roles.enabled": true,
+  "cursor.ai.roles.testingMode": {
+    "systemPrompt": "You are a comprehensive testing assistant for a Next.js application. Always provide detailed analysis with file locations, line numbers, and multiple solution options. Report in Hebrew when requested.",
+    "temperature": 0.1,
+    "maxTokens": 8000
+  },
+  
+  "cursor.nextjs.enableAppRouter": true,
+  "cursor.nextjs.version": "15",
+  "cursor.nextjs.enableServerComponents": true,
+  "cursor.nextjs.enableMiddleware": true,
+  
+  "cursor.typescript.enableStrictMode": true,
+  "cursor.typescript.enableIncrementalChecking": true,
+  "cursor.eslint.enableAutoFix": true,
+  "cursor.prettier.enableFormatOnSave": true,
+  
+  "cursor.git.enableAutoStaging": false,
+  "cursor.git.enableDiffView": true,
+  "cursor.git.warnBeforePush": true,
+  
+  "cursor.performance.enableFastMode": true,
+  "cursor.performance.maxConcurrentRequests": 5,
+  "cursor.performance.cacheResults": true,
+  
+  "cursor.debugging.enableVerboseLogs": true,
+  "cursor.debugging.logLevel": "info"
+} 

@@ -1,8 +1,7 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
 
-import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
@@ -55,9 +54,9 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
         if (result.message === "phoneExists") {
           setError(
             language === "he"
-              ? "מספר הטלפון הזה כבר בשימוש"
+              ? "×ž×¡×¤×¨ ×”×˜×œ×¤×•×Ÿ ×”×–×” ×›×‘×¨ ×‘×©×™×ž×•×©"
               : language === "ru"
-                ? "Этот номер телефона уже используется"
+                ? "Ð­Ñ‚Ð¾Ñ‚ Ð½Ð¾Ð¼ÐµÑ€ Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½Ð° ÑƒÐ¶Ðµ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÑ‚ÑÑ"
                 : "This phone number is already in use",
           )
         } else {
@@ -89,9 +88,9 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
       if (result.success) {
         setSuccess(
           language === "he"
-            ? "מספר הטלפון שונה בהצלחה"
+            ? "×ž×¡×¤×¨ ×”×˜×œ×¤×•×Ÿ ×©×•× ×” ×‘×”×¦×œ×—×”"
             : language === "ru"
-              ? "Номер телефона успешно изменен"
+              ? "ÐÐ¾Ð¼ÐµÑ€ Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½Ð° ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½"
               : "Phone number changed successfully",
         )
         setStep("phone")
@@ -101,7 +100,7 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
           onPhoneChanged(newPhone)
         }
         toast({
-          title: language === "he" ? "מספר הטלפון שונה בהצלחה" : language === "ru" ? "Номер телефона успешно изменен" : "Phone number changed successfully",
+          title: language === "he" ? "×ž×¡×¤×¨ ×”×˜×œ×¤×•×Ÿ ×©×•× ×” ×‘×”×¦×œ×—×”" : language === "ru" ? "ÐÐ¾Ð¼ÐµÑ€ Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½Ð° ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½" : "Phone number changed successfully",
           variant: "default"
         })
       } else {
@@ -140,16 +139,16 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
           <Phone className="h-12 w-12 mx-auto mb-4 text-turquoise-500" />
           <h3 className="text-lg font-medium mb-2">
             {language === "he"
-              ? "אמת את הטלפון החדש"
+              ? "××ž×ª ××ª ×”×˜×œ×¤×•×Ÿ ×”×—×“×©"
               : language === "ru"
-                ? "Подтвердите новый телефон"
+                ? "ÐŸÐ¾Ð´Ñ‚Ð²ÐµÑ€Ð´Ð¸Ñ‚Ðµ Ð½Ð¾Ð²Ñ‹Ð¹ Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½"
                 : "Verify New Phone"}
           </h3>
           <p className="text-sm text-muted-foreground">
             {language === "he"
-              ? `שלחנו קוד אימות ל-${obscuredPhone}`
+              ? `×©×œ×—× ×• ×§×•×“ ××™×ž×•×ª ×œ-${obscuredPhone}`
               : language === "ru"
-                ? `Мы отправили код подтверждения на ${obscuredPhone}`
+                ? `ÐœÑ‹ Ð¾Ñ‚Ð¿Ñ€Ð°Ð²Ð¸Ð»Ð¸ ÐºÐ¾Ð´ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ Ð½Ð° ${obscuredPhone}`
                 : `We sent a verification code to ${obscuredPhone}`}
           </p>
         </div>
@@ -158,9 +157,9 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
           <div className="grid gap-2">
             <Label className="text-center">
               {language === "he"
-                ? "הכנס קוד אימות"
+                ? "×”×›× ×¡ ×§×•×“ ××™×ž×•×ª"
                 : language === "ru"
-                  ? "Введите код подтверждения"
+                  ? "Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ ÐºÐ¾Ð´ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ"
                   : "Enter verification code"}
             </Label>
             <div className="flex justify-center gap-2">
@@ -183,7 +182,7 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
 
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setStep("phone")} className="flex-1">
-              {language === "he" ? "חזור" : language === "ru" ? "Назад" : "Back"}
+              {language === "he" ? "×—×–×•×¨" : language === "ru" ? "ÐÐ°Ð·Ð°Ð´" : "Back"}
             </Button>
             <Button
               type="submit"
@@ -193,9 +192,9 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
               {isLoading
                 ? t("common.loading")
                 : language === "he"
-                  ? "אמת ושנה"
+                  ? "××ž×ª ×•×©× ×”"
                   : language === "ru"
-                    ? "Подтвердить и изменить"
+                    ? "ÐŸÐ¾Ð´Ñ‚Ð²ÐµÑ€Ð´Ð¸Ñ‚ÑŒ Ð¸ Ð¸Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ"
                     : "Verify & Change"}
             </Button>
           </div>
@@ -208,9 +207,9 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
     <form onSubmit={handlePhoneSubmit} className="space-y-6">
       {/* Current Phone */}
       <div className="space-y-2">
-        <Label>{language === "he" ? "טלפון נוכחי" : language === "ru" ? "Текущий телефон" : "Current Phone"}</Label>
+        <Label>{language === "he" ? "×˜×œ×¤×•×Ÿ × ×•×›×—×™" : language === "ru" ? "Ð¢ÐµÐºÑƒÑ‰Ð¸Ð¹ Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½" : "Current Phone"}</Label>
         <Input
-          value={currentPhone || (language === "he" ? "לא הוגדר" : language === "ru" ? "Не установлен" : "Not set")}
+          value={currentPhone || (language === "he" ? "×œ× ×”×•×’×“×¨" : language === "ru" ? "ÐÐµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½" : "Not set")}
           disabled
           className="bg-gray-50 border-gray-200"
         />
@@ -219,7 +218,7 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
       {/* New Phone */}
       <div className="space-y-2">
         <Label htmlFor="newPhone">
-          {language === "he" ? "טלפון חדש" : language === "ru" ? "Новый телефон" : "New Phone"}
+          {language === "he" ? "×˜×œ×¤×•×Ÿ ×—×“×©" : language === "ru" ? "ÐÐ¾Ð²Ñ‹Ð¹ Ñ‚ÐµÐ»ÐµÑ„Ð¾Ð½" : "New Phone"}
         </Label>
         <FormControl>
           <PhoneInput
@@ -237,9 +236,9 @@ export function PhoneChangeForm({ currentPhone, onPhoneChanged }: PhoneChangeFor
         {isLoading
           ? t("common.loading")
           : language === "he"
-            ? "שלח קוד אימות"
+            ? "×©×œ×— ×§×•×“ ××™×ž×•×ª"
             : language === "ru"
-              ? "Отправить код подтверждения"
+              ? "ÐžÑ‚Ð¿Ñ€Ð°Ð²Ð¸Ñ‚ÑŒ ÐºÐ¾Ð´ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ"
               : "Send Verification Code"}
       </Button>
     </form>

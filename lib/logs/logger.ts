@@ -40,7 +40,7 @@ class Logger {
       }
     } else {
       // In production, use structured logging
-      console.log(JSON.stringify(logEntry))
+      // was console logJSON.stringify(logEntry))
     }
   }
 

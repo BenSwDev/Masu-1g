@@ -9,7 +9,15 @@
     "lint": "next lint",
     "update-translations": "node scripts/update-translations.js",
     "cities": "node scripts/seed-cities-temp.js",
-    "init-data": "ts-node --project tsconfig.json scripts/init-data.ts"
+    "init-data": "ts-node --project tsconfig.json scripts/init-data.ts",
+    "test:full": "npm run build && npm run lint && npm run type-check",
+    "test:quick": "npm run lint && npm run type-check",
+    "type-check": "tsc --noEmit",
+    "cursor:index": "echo 'Indexing codebase for Cursor...'",
+    "cursor:reset": "echo 'Resetting Cursor index...'",
+    "test:env": "node -e \"console.log('Environment check:', process.env.NODE_ENV)\"",
+    "dev:debug": "NODE_ENV=development DEBUG=* npm run dev",
+    "analyze": "ANALYZE=true npm run build"
   },
   "dependencies": {
     "@auth/core": "^0.34.2",

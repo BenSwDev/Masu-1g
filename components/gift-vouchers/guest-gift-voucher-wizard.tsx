@@ -13,7 +13,7 @@ import { Progress } from "@/components/common/ui/progress"
 import { useTranslation } from "@/lib/translations/i18n"
 import { initiateGuestPurchaseGiftVoucher, confirmGuestGiftVoucherPurchase, saveAbandonedGiftVoucherPurchase, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import GuestGiftVoucherConfirmation from "./guest-gift-voucher-confirmation"
-import { createGuestUser } from "@/actions/booking-actions"
+import { createGuestUser } from "@/actions/unified-booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { CalculatedPriceDetails } from "@/types/booking"
 
@@ -70,7 +70,8 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
     surcharges: [],
     totalSurchargesAmount: 0,
     treatmentPriceAfterSubscriptionOrTreatmentVoucher: price,
-    couponDiscount: 0,
+    discountAmount: 0, // Updated to match new type
+    couponDiscount: 0, // Keep for backward compatibility
     voucherAppliedAmount: 0,
     finalAmount: price,
     isBaseTreatmentCoveredBySubscription: false,

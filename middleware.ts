@@ -13,7 +13,6 @@ async function initializeDataIfNeeded(origin: string) {
   isInitializing = true
 
   try {
-    console.log("🚀 Starting automatic data initialization via API...")
 
     const res = await fetch(`${origin}/api/init`, { method: "POST" })
 
@@ -36,7 +35,6 @@ async function initializeDataIfNeeded(origin: string) {
       );
     } else {
       isInitialized = true
-      console.log("✅ Automatic data initialization completed")
     }
   } catch (error) {
     console.error("❌ Automatic data initialization failed:", error)

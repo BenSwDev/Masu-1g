@@ -1,0 +1,78 @@
+{
+  "version": "1.0.0",
+  "name": "Masu Testing Workspace",
+  "description": "Workspace optimized for comprehensive testing of Masu application",
+  
+  "folders": [
+    {
+      "name": "📁 Main App",
+      "path": "./app",
+      "priority": "high"
+    },
+    {
+      "name": "🧩 Components", 
+      "path": "./components",
+      "priority": "high"
+    },
+    {
+      "name": "⚡ Actions",
+      "path": "./actions", 
+      "priority": "high"
+    },
+    {
+      "name": "🗄️ Database",
+      "path": "./lib/db",
+      "priority": "high"
+    },
+    {
+      "name": "🔧 Lib Utils",
+      "path": "./lib",
+      "priority": "medium"
+    },
+    {
+      "name": "🎯 Testing",
+      "path": "./cursor-testing",
+      "priority": "high"
+    }
+  ],
+  
+  "indexing": {
+    "include": [
+      "**/*.{ts,tsx,js,jsx,json,md}",
+      "**/*.{css,scss,sass}",
+      "package.json",
+      "tsconfig.json",
+      "next.config.mjs"
+    ],
+    "exclude": [
+      "node_modules/**",
+      ".git/**",
+      "dist/**",
+      "build/**",
+      ".next/**",
+      "coverage/**"
+    ],
+    "maxFileSize": "10MB",
+    "deepAnalysis": true
+  },
+  
+  "shortcuts": {
+    "testMode": "Ctrl+Shift+T",
+    "prompt0": "Ctrl+0",
+    "prompt1": "Ctrl+1", 
+    "prompt2": "Ctrl+2",
+    "promptFinal": "Ctrl+Shift+F",
+    "environmentCheck": "Ctrl+Shift+E",
+    "buildTest": "Ctrl+Shift+B",
+    "quickTest": "Ctrl+Alt+T"
+  },
+  
+  "autoCommands": {
+    "onOpen": [
+      "npm run test:env"
+    ],
+    "onSave": [
+      "eslint --fix"
+    ]
+  }
+} 

@@ -6,6 +6,46 @@ import { ProfessionalManagement } from "@/components/dashboard/admin/professiona
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { getProfessionals } from "./actions"
+import type { Professional } from "@/lib/types/professional"
+
+// Transform function to convert from MongoDB format to frontend format
+function transformProfessionalData(rawProfessional: any): Professional {
+  return {
+    _id: rawProfessional._id.toString(),
+    userId: rawProfessional.userId,
+    status: rawProfessional.status,
+    isActive: rawProfessional.isActive,
+    specialization: rawProfessional.specialization,
+    experience: rawProfessional.experience,
+    certifications: rawProfessional.certifications,
+    bio: rawProfessional.bio,
+    profileImage: rawProfessional.profileImage,
+    treatments: (rawProfessional.treatments || []).map((t: any) => ({
+      treatmentId: t.treatmentId?.toString() || '',
+      durationId: t.durationId?.toString(),
+      professionalPrice: t.professionalPrice || 0,
+      treatmentName: t.treatmentName
+    })),
+    workAreas: (rawProfessional.workAreas || []).map((w: any) => ({
+      cityId: w.cityId?.toString() || '',
+      cityName: w.cityName || '',
+      distanceRadius: w.distanceRadius,
+      coveredCities: w.coveredCities || []
+    })),
+    totalEarnings: rawProfessional.totalEarnings || 0,
+    pendingPayments: rawProfessional.pendingPayments || 0,
+    bankDetails: rawProfessional.bankDetails,
+    documents: rawProfessional.documents,
+    adminNotes: rawProfessional.adminNotes,
+    rejectionReason: rawProfessional.rejectionReason,
+    appliedAt: rawProfessional.appliedAt,
+    approvedAt: rawProfessional.approvedAt,
+    rejectedAt: rawProfessional.rejectedAt,
+    lastActiveAt: rawProfessional.lastActiveAt,
+    createdAt: rawProfessional.createdAt,
+    updatedAt: rawProfessional.updatedAt
+  }
+}
 
 // Force dynamic rendering to prevent build-time database connections
 export const dynamic = 'force-dynamic'
@@ -101,9 +141,12 @@ async function ProfessionalsPageContent() {
       throw new Error(initialData.error || "Failed to load professionals")
     }
 
+    // Transform professionals data
+    const transformedProfessionals = (initialData.data?.professionals || []).map(transformProfessionalData)
+    
     return (
       <ProfessionalManagement 
-        initialProfessionals={initialData.data?.professionals || []}
+        initialProfessionals={transformedProfessionals}
         totalPages={initialData.data?.pagination.pages || 1}
         currentPage={initialData.data?.pagination.page || 1}
         initialSearch=""

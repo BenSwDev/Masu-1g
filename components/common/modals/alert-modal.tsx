@@ -1,8 +1,7 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
 import { Modal } from "@/components/common/ui/modal"
 import { Button } from "@/components/common/ui/button"
 

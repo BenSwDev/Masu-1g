@@ -1,12 +1,23 @@
 import mongoose, { Schema, type Document, type Model, type Types } from "mongoose"
 
+const CoordinatesSchema = new Schema({
+  lat: Number,
+  lng: Number,
+}, { _id: false })
+
 export type BookingStatus =
   | "pending_payment" // ממתין לתשלום - הזמנות לא שולמו
   | "in_process" // בטיפול - שולם אבל לא שויך מטפל (מה שהמנהל רואה)
   | "confirmed" // מאושר - מה שהלקוח רואה במקום "in_process"
+  | "pending_professional_assignment" // ממתין לשיוך מטפל
+  | "professional_en_route" // מטפל בדרך
   | "completed" // הושלם - שויך מטפל והושלם
   | "cancelled" // בוטל - בוטל ללא החזר
+  | "cancelled_by_user" // בוטל על ידי המשתמש
+  | "cancelled_by_admin" // בוטל על ידי המנהל
   | "refunded" // הוחזר - בוטל עם החזר
+  | "no_show" // לא הגיע
+  | "abandoned_pending_payment" // נטוש - ממתין לתשלום
 
 export interface IProfessionalShare {
   amount: number
@@ -40,6 +51,12 @@ export interface IBookingAddressSnapshot {
   city: string
   street: string
   streetNumber?: string
+  buildingNumber?: string
+  postalCode?: string
+  coordinates?: {
+    lat: number
+    lng: number
+  }
   apartment?: string
   entrance?: string
   floor?: string
@@ -212,7 +229,9 @@ const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
     fullAddress: { type: String, required: true },
     city: { type: String, required: true },
     street: { type: String, required: true },
-    streetNumber: { type: String },
+    streetNumber: { type: String, alias: "buildingNumber" },
+    postalCode: { type: String },
+    coordinates: { type: CoordinatesSchema },
     apartment: { type: String },
     entrance: { type: String },
     floor: { type: String },
@@ -248,9 +267,15 @@ const BookingSchema: Schema<IBooking> = new Schema(
         "pending_payment",
         "in_process",
         "confirmed",
+        "pending_professional_assignment",
+        "professional_en_route",
         "completed",
         "cancelled",
+        "cancelled_by_user",
+        "cancelled_by_admin",
         "refunded",
+        "no_show",
+        "abandoned_pending_payment",
       ],
       default: "pending_payment",
       required: true,

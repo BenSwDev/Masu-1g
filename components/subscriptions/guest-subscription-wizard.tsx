@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -11,13 +11,12 @@ import { saveAbandonedSubscriptionPurchase, purchaseGuestSubscription } from "@/
 import type { CalculatedPriceDetails, SelectedBookingOptions } from "@/types/booking"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
-import type { BookingInitialData } from "@/types/booking"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Progress } from "@/components/common/ui/progress"
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
 import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
 import GuestSubscriptionConfirmation from "./guest-subscription-confirmation"
-import { createGuestUser } from "@/actions/booking-actions"
+import { createGuestUser } from "@/actions/unified-booking-actions"
 
 // Define serialized types that match the data we receive from the server
 interface SerializedSubscription {
@@ -142,7 +141,8 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
     surcharges: [],
     totalSurchargesAmount: 0,
     treatmentPriceAfterSubscriptionOrTreatmentVoucher: (subscriptions.find(s=>s._id===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
-    couponDiscount: 0,
+    discountAmount: 0, // Updated to match new type
+    couponDiscount: 0, // Keep for backward compatibility
     voucherAppliedAmount: 0,
     finalAmount: (subscriptions.find(s=>s._id===selectedSubscriptionId)?.quantity || 0) * pricePerSession,
     isBaseTreatmentCoveredBySubscription: false,
@@ -214,18 +214,18 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
           router.push(`/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`)
         } else {
           console.error("No subscription ID returned from purchase")
-          alert("שגיאה: לא ניתן למצוא מזהה המנוי. אנא פנה לתמיכה.")
+          alert("×©×’×™××”: ×œ× × ×™×ª×Ÿ ×œ×ž×¦×•× ×ž×–×”×” ×”×ž× ×•×™. ×× × ×¤× ×” ×œ×ª×ž×™×›×”.")
         }
       } else {
         // Show error message to user
         console.error("Subscription purchase failed:", result.error)
         // TODO: Add toast notification or error display
-        alert("שגיאה ברכישת המנוי: " + (result.error || "נסה שוב מאוחר יותר"))
+        alert("×©×’×™××” ×‘×¨×›×™×©×ª ×”×ž× ×•×™: " + (result.error || "× ×¡×” ×©×•×‘ ×ž××•×—×¨ ×™×•×ª×¨"))
       }
     } catch (error) {
       setIsLoading(false)
       console.error("Unexpected error during subscription purchase:", error)
-      alert("אירעה שגיאה בלתי צפויה. נסה שוב מאוחר יותר.")
+      alert("××™×¨×¢×” ×©×’×™××” ×‘×œ×ª×™ ×¦×¤×•×™×”. × ×¡×” ×©×•×‘ ×ž××•×—×¨ ×™×•×ª×¨.")
     }
   }
 
@@ -245,6 +245,7 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
         const bookingOptions: SelectedBookingOptions = {
           selectedTreatmentId: (selectedTreatmentId ?? ""),
           selectedDurationId: (selectedDurationId ?? ""),
+          selectedDateTime: null, // Required property
           therapistGenderPreference: "any",
           isFlexibleTime: false,
           source: "new_purchase",
@@ -334,7 +335,7 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
   if (dataLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center py-8" dir={dir} lang={language}>
-        <div>טוען נתונים...</div>
+        <div>×˜×•×¢×Ÿ × ×ª×•× ×™×...</div>
       </div>
     )
   }

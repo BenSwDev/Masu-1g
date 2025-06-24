@@ -1,7 +1,6 @@
-"use client"
+﻿"use client"
 
 import type React from "react"
-import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils/utils"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
@@ -11,7 +10,6 @@ import { sendOTP, verifyOTP } from "@/actions/notification-service"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useToast } from "@/components/common/ui/use-toast"
-import { useSession } from "next-auth/react"
 
 interface OTPFormProps {
   className?: string
@@ -202,7 +200,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     // Get the current identifier value
     const identifierValue = getCurrentIdentifier()
 
-    // הסרת הוולידציה המיידית - בדיקה רק בעת לחיצה על הכפתור
+    // ×”×¡×¨×ª ×”×•×•×œ×™×“×¦×™×” ×”×ž×™×™×“×™×ª - ×‘×“×™×§×” ×¨×§ ×‘×¢×ª ×œ×—×™×¦×” ×¢×œ ×”×›×¤×ª×•×¨
     if (!identifierValue) {
       setError(loginType === "email" ? t("errors.invalidEmail") : t("errors.invalidPhone"))
       toast({
@@ -222,7 +220,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     setError("")
 
     try {
-      console.log(`Sending OTP to ${loginType}: ${identifierValue}`)
+      // was console log`Sending OTP to ${loginType}: ${identifierValue}`)
 
       toast({
         title: t("login.sendingOTP"),
@@ -230,7 +228,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
       })
 
       const result = await sendOTP(identifierValue, loginType, language)
-      console.log("OTP send result:", result)
+      // was console log"OTP send result:", result)
 
       if (result.success) {
         setOtpSent(true)
@@ -284,7 +282,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     setError("")
 
     try {
-      console.log(`Verifying OTP for ${loginType}: ${identifierValue}, code: ${code}`)
+      // was console log`Verifying OTP for ${loginType}: ${identifierValue}, code: ${code}`)
 
       toast({
         title: t("login.verifyingOTP"),
@@ -292,7 +290,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
       })
 
       const result = await verifyOTP(identifierValue, loginType, code)
-      console.log("OTP verification result:", result)
+      // was console log"OTP verification result:", result)
 
       if (result.success && result.userId) {
         // Sign in the user
@@ -320,7 +318,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
             description: t("login.redirecting"),
             variant: "default"
           })
-          // הפניה אוטומטית לעמוד התפקיד
+          // ×”×¤× ×™×” ××•×˜×•×ž×˜×™×ª ×œ×¢×ž×•×“ ×”×ª×¤×§×™×“
           setTimeout(() => {
             const role = session?.user?.activeRole || "member"
             router.push(`/dashboard/${role}`)

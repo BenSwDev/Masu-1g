@@ -166,8 +166,8 @@ export default function ProfessionalTreatmentsTabNew({
   // Update selected treatments when professional data changes
   useEffect(() => {
     const newSelected = professional.treatments?.map(t => ({
-      treatmentId: t.treatmentId,
-      durationId: t.durationId,
+      treatmentId: String(t.treatmentId),
+      durationId: t.durationId ? String(t.durationId) : undefined,
       professionalPrice: t.professionalPrice
     })) || []
     setSelectedTreatments(newSelected)
@@ -319,16 +319,11 @@ export default function ProfessionalTreatmentsTabNew({
     setSaving(true)
     
     try {
-      console.log('Sending treatments to server:', { 
-        professionalId: professional._id, 
-        selectedTreatments,
-        treatmentsCount: selectedTreatments.length 
-      })
+
       
       let result
       try {
         result = await updateProfessionalTreatments(professional._id, selectedTreatments)
-        console.log('Server response:', result)
       } catch (networkError) {
         console.error('Network error calling server action:', networkError)
         throw new Error(`שגיאת רשת: ${networkError instanceof Error ? networkError.message : 'שגיאה לא ידועה'}`)
@@ -344,8 +339,13 @@ export default function ProfessionalTreatmentsTabNew({
           description: "הטיפולים של המטפל עודכנו"
         })
         
-        // Update parent component
-        const updatedTreatments = result.professional.treatments || []
+        // Update parent component - convert ObjectId to string
+        const updatedTreatments = (result.professional.treatments || []).map((t: any) => ({
+          treatmentId: String(t.treatmentId),
+          durationId: t.durationId ? String(t.durationId) : undefined,
+          professionalPrice: t.professionalPrice,
+          treatmentName: t.treatmentName
+        }))
         onUpdate({ treatments: updatedTreatments })
         setHasChanges(false)
       } else {

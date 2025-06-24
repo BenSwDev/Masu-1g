@@ -6,6 +6,46 @@ import { ProfessionalEditPage } from "@/components/dashboard/admin/professional-
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
 import { getProfessionalById } from "../actions"
+import type { Professional } from "@/lib/types/professional"
+
+// Transform function to convert from MongoDB format to frontend format
+function transformProfessionalData(rawProfessional: any): Professional {
+  return {
+    _id: rawProfessional._id.toString(),
+    userId: rawProfessional.userId,
+    status: rawProfessional.status,
+    isActive: rawProfessional.isActive,
+    specialization: rawProfessional.specialization,
+    experience: rawProfessional.experience,
+    certifications: rawProfessional.certifications,
+    bio: rawProfessional.bio,
+    profileImage: rawProfessional.profileImage,
+    treatments: (rawProfessional.treatments || []).map((t: any) => ({
+      treatmentId: t.treatmentId?.toString() || '',
+      durationId: t.durationId?.toString(),
+      professionalPrice: t.professionalPrice || 0,
+      treatmentName: t.treatmentName
+    })),
+    workAreas: (rawProfessional.workAreas || []).map((w: any) => ({
+      cityId: w.cityId?.toString() || '',
+      cityName: w.cityName || '',
+      distanceRadius: w.distanceRadius,
+      coveredCities: w.coveredCities || []
+    })),
+    totalEarnings: rawProfessional.totalEarnings || 0,
+    pendingPayments: rawProfessional.pendingPayments || 0,
+    bankDetails: rawProfessional.bankDetails,
+    documents: rawProfessional.documents,
+    adminNotes: rawProfessional.adminNotes,
+    rejectionReason: rawProfessional.rejectionReason,
+    appliedAt: rawProfessional.appliedAt,
+    approvedAt: rawProfessional.approvedAt,
+    rejectedAt: rawProfessional.rejectedAt,
+    lastActiveAt: rawProfessional.lastActiveAt,
+    createdAt: rawProfessional.createdAt,
+    updatedAt: rawProfessional.updatedAt
+  }
+}
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -84,9 +124,11 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
       notFound()
     }
 
+    const transformedProfessional = transformProfessionalData(result.professional)
+    
     return (
       <ProfessionalEditPage 
-        professional={result.professional}
+        professional={transformedProfessional}
       />
     )
   } catch (error) {

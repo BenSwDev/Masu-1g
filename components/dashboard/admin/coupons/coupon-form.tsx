@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import { useForm, Controller } from "react-hook-form"
@@ -14,7 +14,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/
 import { Calendar } from "@/components/common/ui/calendar"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils/utils" // Assuming cn utility
-import { formatDate } from "@/lib/utils/utils" // Assuming formatDate utility
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { useTranslation } from "@/lib/translations/i18n"
 

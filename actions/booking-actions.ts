@@ -1363,7 +1363,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
       },
     }
 
-    return { success: true, data: JSON.parse(JSON.stringify(data)) }
+    return { success: true, data: JSON.parse(JSON.stringify(_data)) }
   } catch (error) {
     logger.error("Error fetching initial booking data (enhanced):", { error, userId })
     return { success: false, error: "bookings.errors.initialDataFetchFailed" }

@@ -639,7 +639,7 @@ export interface PaymentResultData {
   amount: number
 }
 
-export async function initiatePurchaseGiftVoucher(_data: PurchaseInitiationData) {
+export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) {
   const requestId = `voucher_init_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
   const startTime = Date.now()
   
@@ -947,18 +947,23 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
           let messageContent: string
           
           if (!voucher.isGift) {
-            // Regular purchase for self - include redemption link
+            // Regular purchase for self - include voucher code only
             const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
-            const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
             messageContent = lang === "he" 
-              ? `תודה על רכישתך! ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}. למימוש השובר לחץ כאן: ${redeemLink}`
-              : `Thank you for your purchase! View your receipt here: ${summaryLink}. Redeem your voucher at: ${redeemLink}`
+              ? `תודה על רכישתך! קוד השובר שלך: ${voucher.code}\nלמימוש השובר השתמש בקוד זה.\n\nניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`
+              : `Thank you for your purchase! Your voucher code: ${voucher.code}\nUse this code to redeem your voucher.\n\nView your receipt here: ${summaryLink}`
           } else {
-            // Gift purchase - different message, no redemption link yet
+            // Gift purchase - message about gift being sent
             const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
-            messageContent = lang === "he" 
-              ? `תודה על רכישת שובר המתנה! השובר נוצר בהצלחה. ניתן לצפות בפרטים ולשלוח את המתנה מהלינק הבא: ${summaryLink}`
-              : `Thank you for purchasing a gift voucher! The voucher has been created successfully. You can view details and send the gift from: ${summaryLink}`
+            if (voucher.recipientName && voucher.recipientPhone) {
+              messageContent = lang === "he" 
+                ? `תודה על רכישת שובר המתנה! המתנה נשלחה ל${voucher.recipientName}.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}\n\nניתן לצפות בפרטים בלינק הבא: ${summaryLink}`
+                : `Thank you for purchasing a gift voucher! The gift has been sent to ${voucher.recipientName}.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}\n\nView details at: ${summaryLink}`
+            } else {
+              messageContent = lang === "he" 
+                ? `תודה על רכישת שובר המתנה! השובר נוצר בהצלחה.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}\n\nניתן לצפות בפרטים בלינק הבא: ${summaryLink}`
+                : `Thank you for purchasing a gift voucher! The voucher has been created successfully.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}\n\nView details at: ${summaryLink}`
+            }
           }
 
           const recipients = []
@@ -1612,24 +1617,46 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
           if (purchaserRecipients.length > 0) {
             await unifiedNotificationService.sendPurchaseSuccess(purchaserRecipients, purchaserMessage)
           }
-        } else if (voucher.isGift && (!voucher.recipientName || !voucher.recipientPhone)) {
-          // Gift voucher but recipient details not yet set - notify purchaser they need to set recipient details
-          const message = `תודה על רכישת שובר המתנה! השובר נוצר בהצלחה. יש להגדיר פרטי נמען כדי לשלוח את המתנה.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
-
-          const recipients = []
-          if (guestInfo.email) {
-            recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
-          }
-          if (guestInfo.phone) {
-            recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
+        } else if (voucher.isGift && voucher.recipientName && voucher.recipientPhone) {
+          // Send gift voucher to recipient with voucher code only
+          const voucherTypeText = voucher.voucherType === "monetary" ? 
+            `שובר כספי בסכום ₪${voucher.amount}` :
+            `שובר טיפול: ${voucher.treatmentName || "טיפול"}${voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""}`
+          
+          const giftMessage = voucher.greetingMessage 
+            ? `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\n"${voucher.greetingMessage}"\n\nקוד השובר: ${voucher.code}\n${voucherTypeText}\n\nלמימוש השובר השתמש בקוד זה.`
+            : `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\nקוד השובר: ${voucher.code}\n${voucherTypeText}\n\nלמימוש השובר השתמש בקוד זה.`
+          
+          const recipientRecipients = []
+          if (voucher.recipientPhone) {
+            recipientRecipients.push({ type: "phone" as const, value: voucher.recipientPhone, language: lang as any })
           }
           
-          if (recipients.length > 0) {
-            await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
+          if (recipientRecipients.length > 0) {
+            await unifiedNotificationService.sendPurchaseSuccess(recipientRecipients, giftMessage)
+          }
+
+          // Send confirmation to purchaser with voucher code only
+          const purchaserMessage = `✅ השובר נשלח בהצלחה ל${voucher.recipientName}!\n\nקוד השובר: ${voucher.code}\n${voucherTypeText}`
+          
+          const purchaserRecipients = []
+          if (guestInfo.email) {
+            purchaserRecipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
+          }
+          if (guestInfo.phone) {
+            purchaserRecipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
+          }
+          
+          if (purchaserRecipients.length > 0) {
+            await unifiedNotificationService.sendPurchaseSuccess(purchaserRecipients, purchaserMessage)
           }
         } else {
-          // Regular voucher (not a gift) - send to purchaser with redemption link
-          const message = `תודה על רכישתך! למימוש השובר לחץ כאן: ${redeemLink}\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
+          // Regular voucher (not a gift) - send to purchaser with voucher code only
+          const voucherTypeText = voucher.voucherType === "monetary" ? 
+            `שובר כספי בסכום ₪${voucher.amount}` :
+            `שובר טיפול: ${voucher.treatmentName || "טיפול"}${voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""}`
+          
+          const message = `תודה על רכישתך!\n\nקוד השובר: ${voucher.code}\n${voucherTypeText}\n\nלמימוש השובר השתמש בקוד זה.`
 
           const recipients = []
           if (guestInfo.email) {

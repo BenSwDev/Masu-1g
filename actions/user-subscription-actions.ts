@@ -291,9 +291,9 @@ export async function purchaseSubscription({
         const methods = purchaser.notificationPreferences?.methods || ["email", "sms"]
         const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
         const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
-        const messageHe = `תודה על רכישתך, ניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`
-        const messageEn = `Thank you for your purchase. View your receipt here: ${summaryLink}`
-        const _data = { type: "purchase-success" as const, message: lang === "he" ? messageHe : messageEn }
+        const messageHe = `תודה על רכישתך! קוד המנוי שלך: ${newUserSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד.\n\nניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`
+        const messageEn = `Thank you for your purchase! Your subscription code: ${newUserSubscription.code}\nUse this code to book treatments.\n\nView your receipt here: ${summaryLink}`
+        const data = { type: "purchase-success" as const, message: lang === "he" ? messageHe : messageEn }
         const recipients = []
         if (methods.includes("email") && purchaser.email) {
           recipients.push({ type: "email" as const, value: purchaser.email, name: purchaser.name, language: lang as any })
@@ -790,9 +790,7 @@ export async function purchaseGuestSubscription({
 
     try {
       const lang = "he"
-      const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-      const bookingLink = `${appBaseUrl}/bookings/treatment`
-      const message = `תודה על רכישתך! קוד המנוי שלך: ${code}. להזמנת טיפול עם המנוי היכנס לאתר ובשלב בחירת הטיפול הזן את הקוד. לינק להזמנה: ${bookingLink}`
+      const message = `תודה על רכישתך! קוד המנוי שלך: ${code}\nלהזמנת טיפול עם המנוי הזן את הקוד בשלב בחירת הטיפול.`
       const recipients = []
       if (guestInfo.email) {
         recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })

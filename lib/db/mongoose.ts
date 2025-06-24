@@ -31,6 +31,9 @@ async function loadModels() {
   await import("@/lib/db/models/user-subscription")
   await import("@/lib/db/models/verification-token")
   await import("@/lib/db/models/working-hours")
+  await import("@/lib/db/models/city-distance")
+  await import("@/lib/db/models/review")
+  await import("@/lib/db/models/professional-profile")
 }
 
 async function dbConnect() {

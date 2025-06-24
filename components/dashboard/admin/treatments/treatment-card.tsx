@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/common/ui/alert-dialog"
-import { updateTreatment, deleteTreatment } from "@/app/dashboard/(user)/(roles)/admin/treatments/actions"
+import { updateTreatment, deleteTreatment, toggleTreatmentStatus, createTreatment } from "@/app/dashboard/(user)/(roles)/admin/treatments/actions"
 import { useToast } from "@/components/common/ui/use-toast"
 import { MoreVertical, Edit, Copy, Trash, Power } from "lucide-react"
 
@@ -60,7 +60,15 @@ export function TreatmentCard({ treatment, onEdit, onRefresh }: TreatmentCardPro
   const handleDuplicate = async () => {
     try {
       setIsLoading(true)
-      await duplicateTreatment(treatment._id)
+      // Create a duplicate treatment with modified name
+      const duplicateData = {
+        ...treatment,
+        name: `${treatment.name} (Copy)`,
+        _id: undefined, // Remove _id to create new
+        createdAt: undefined,
+        updatedAt: undefined,
+      }
+      await createTreatment(duplicateData)
       toast({
         title: t("treatments.duplicateSuccess"),
         variant: "default",

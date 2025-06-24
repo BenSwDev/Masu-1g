@@ -11,7 +11,7 @@ import { Badge } from "@/components/common/ui/badge"
 import { Sparkles, Clock, Users, GiftIcon, Ticket, Tag, Loader2 } from "lucide-react"
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
 import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
-import type { ITreatment } from "@/lib/db/models"
+import type { ITreatment } from "@/lib/db/models/treatment"
 import { validateRedemptionCode } from "@/actions/booking-actions"
 import { Input } from "@/components/common/ui/input"
 
@@ -73,7 +73,7 @@ export function GuestTreatmentSelectionStep({
 
   const selectedTreatment = useMemo(() => {
     return availableTreatmentsForStep.find(
-      (t) => t._id.toString() === bookingOptions.selectedTreatmentId
+      (t) => (t._id || t.id)?.toString() === bookingOptions.selectedTreatmentId
     )
   }, [availableTreatmentsForStep, bookingOptions.selectedTreatmentId])
 
@@ -92,14 +92,14 @@ export function GuestTreatmentSelectionStep({
       
       if (redemption.type === "treatment_voucher" && (redemption.data as any)?.treatmentId) {
         const treatmentFromVoucher = (initialData.activeTreatments || []).find(
-          (t) => t._id.toString() === (redemption.data as any).treatmentId?.toString(),
+          (t) => (t._id || t.id)?.toString() === (redemption.data as any).treatmentId?.toString(),
         )
         if (treatmentFromVoucher) {
           setAvailableTreatmentsForStep([treatmentFromVoucher])
           setSelectedCategory(treatmentFromVoucher.category || "Uncategorized")
           setBookingOptions((prev) => ({
             ...prev,
-            selectedTreatmentId: treatmentFromVoucher._id.toString(),
+            selectedTreatmentId: (treatmentFromVoucher._id || treatmentFromVoucher.id)?.toString(),
             selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
           }))
           setIsTreatmentLockedBySource(true)
@@ -110,7 +110,7 @@ export function GuestTreatmentSelectionStep({
         setSelectedCategory(treatmentFromSub.category || "Uncategorized")
         setBookingOptions((prev) => ({
           ...prev,
-          selectedTreatmentId: treatmentFromSub._id.toString(),
+          selectedTreatmentId: (treatmentFromSub._id || treatmentFromSub.id)?.toString(),
           selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
         }))
         setIsTreatmentLockedBySource(true)
@@ -183,22 +183,23 @@ export function GuestTreatmentSelectionStep({
       
       if (result.success && result.redemption) {
         // Update booking options with redemption data
+        const redemption = result.redemption
         setBookingOptions(prev => ({
           ...prev,
           redemptionCode: redemptionCode.trim(),
-          redemptionData: result.redemption,
-          source: result.redemption.type === "subscription" 
+          redemptionData: redemption,
+          source: redemption.type === "subscription" 
             ? "subscription_redemption" 
-            : result.redemption.type.includes("voucher") 
+            : redemption.type.includes("voucher") 
               ? "gift_voucher_redemption"
               : "new_purchase",
-          selectedGiftVoucherId: result.redemption.type.includes("voucher") 
-            ? (result.redemption.data as any)?._id?.toString()
+          selectedGiftVoucherId: redemption.type.includes("voucher") 
+            ? (redemption.data as any)?._id?.toString()
             : undefined,
-          selectedUserSubscriptionId: result.redemption.type === "subscription"
-            ? (result.redemption.data as any)?._id?.toString()
+          selectedUserSubscriptionId: redemption.type === "subscription"
+            ? (redemption.data as any)?._id?.toString()
             : undefined,
-          appliedCouponCode: result.redemption.type.includes("coupon")
+          appliedCouponCode: redemption.type.includes("coupon")
             ? redemptionCode.trim()
             : undefined
         }))
@@ -428,13 +429,13 @@ export function GuestTreatmentSelectionStep({
               className="space-y-4"
             >
               {(showCategorySelection ? filteredTreatmentsByCategory : availableTreatmentsForStep).map((treatment) => {
-                const isSelected = bookingOptions.selectedTreatmentId === treatment._id.toString()
+                const isSelected = bookingOptions.selectedTreatmentId === treatment.id.toString()
                 const isLocked = isTreatmentLockedBySource && !isSelected
                 
                 return (
                   <Label
-                    key={treatment._id.toString()}
-                    htmlFor={treatment._id.toString()}
+                    key={treatment.id.toString()}
+                    htmlFor={treatment.id.toString()}
                     className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${
                       dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""
                     } ${isLocked ? "opacity-50 cursor-not-allowed" : ""} ${
@@ -442,8 +443,8 @@ export function GuestTreatmentSelectionStep({
                     }`}
                   >
                     <RadioGroupItem 
-                      value={treatment._id.toString()} 
-                      id={treatment._id.toString()}
+                      value={treatment.id.toString()} 
+                      id={treatment.id.toString()}
                       disabled={isLocked}
                     />
                     <div className="flex-1 flex justify-between items-center">

@@ -160,7 +160,7 @@ export async function getAllBookings(
   try {
     const params = new URLSearchParams(
       Object.fromEntries(
-        Object.entries(filters).filter(([_, v]) => v !== undefined)
+        Object.entries(filters).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])
       )
     )
     

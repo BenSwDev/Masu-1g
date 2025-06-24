@@ -51,6 +51,7 @@ import type {
   PhoneRecipient,
   NotificationLanguage,
   NotificationData,
+  ProfessionalBookingNotificationData,
 } from "@/lib/notifications/notification-types"
 
 import type { ICoupon } from "@/lib/db/models/coupon"
@@ -818,7 +819,7 @@ export async function createBooking(
         voucher.usageHistory = voucher.usageHistory || []
         voucher.usageHistory.push({
           date: new Date(),
-          amount: validatedPayload.priceDetails.voucherAppliedAmount,
+          amountUsed: validatedPayload.priceDetails.voucherAppliedAmount,
           orderId: newBooking._id as any,
           description: `Booking ${bookingNumber}`,
         })
@@ -1142,7 +1143,7 @@ export async function cancelBooking(
     await mongooseDbSession.withTransaction(async () => {
       const booking = (await Booking.findById(bookingId).session(mongooseDbSession)) as IBooking | null
       if (!booking) throw new Error("bookings.errors.bookingNotFound")
-      if (booking.userId.toString() !== userId && cancelledByRole !== "admin") throw new Error("common.unauthorized")
+      if (booking.userId?.toString() !== userId && cancelledByRole !== "admin") throw new Error("common.unauthorized")
       if (["completed", "cancelled", "refunded"].includes(booking.status)) {
         throw new Error("bookings.errors.cannotCancelAlreadyProcessed")
       }
@@ -1190,7 +1191,7 @@ export async function cancelBooking(
 
           if (voucher.usageHistory) {
             voucher.usageHistory = voucher.usageHistory.filter(
-              (entry) => entry.orderId?.toString() !== booking._id.toString(),
+              (entry) => entry.orderId?.toString() !== (booking._id as any).toString(),
             )
           }
           await voucher.save({ session: mongooseDbSession })
@@ -1330,13 +1331,13 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
 
       if (voucher.voucherType === "treatment" && voucher.treatmentId) {
         const treatmentDetails = activeTreatments.find(
-          (t: ITreatment) => t._id.toString() === voucher.treatmentId?.toString(),
+          (t: ITreatment) => (t._id as any).toString() === voucher.treatmentId?.toString(),
         )
         if (treatmentDetails) {
           treatmentName = treatmentDetails.name
           if (treatmentDetails.pricingType === "duration_based" && voucher.selectedDurationId) {
             const durationDetails = treatmentDetails.durations?.find(
-              (d) => d._id.toString() === voucher.selectedDurationId?.toString(),
+              (d: any) => d._id.toString() === voucher.selectedDurationId?.toString(),
             )
             if (durationDetails) selectedDurationName = `${durationDetails.minutes} ${"min"}`
           } else {
@@ -1390,7 +1391,7 @@ export async function professionalAcceptBooking(
   const mongooseDbSession = await mongoose.startSession()
   try {
     await dbConnect()
-    let acceptedBooking: IBooking | null = null
+    let acceptedBooking: any = null
 
     await mongooseDbSession.withTransaction(async () => {
       const booking = await Booking.findById(bookingId).session(mongooseDbSession)
@@ -1425,12 +1426,13 @@ export async function professionalAcceptBooking(
             process.env.NEXT_PUBLIC_APP_URL ||
             process.env.NEXTAUTH_URL ||
             ""
-          const notificationData = {
-            type: "BOOKING_CONFIRMED_CLIENT",
-            userName: clientUser.name || "לקוח/ה",
-            professionalName: professional.name || "מטפל/ת",
-            bookingDateTime: acceptedBooking.bookingDateTime,
+          const notificationData: ProfessionalBookingNotificationData = {
+            type: "BOOKING_ASSIGNED_PROFESSIONAL",
             treatmentName: treatment.name,
+            bookingDateTime: acceptedBooking.bookingDateTime,
+            professionalName: professional.name || "מטפל/ת",
+            clientName: clientUser.name || "לקוח/ה",
+            userName: clientUser.name || "לקוח/ה",
             bookingDetailsLink: `${baseUrl}/dashboard/member/bookings?bookingId=${acceptedBooking._id.toString()}`,
           }
 
@@ -1627,12 +1629,12 @@ export async function getBookingById(bookingId: string): Promise<{
 
     const populatedBooking: PopulatedBooking = {
       ...booking,
-      _id: booking._id.toString(),
-      userId: booking.userId,
+      _id: (booking._id as any).toString(),
+      userId: booking.userId || null,
       treatmentId: booking.treatmentId,
       professionalId: booking.professionalId || null,
       addressId: booking.addressId || null,
-    }
+    } as PopulatedBooking
 
     return { success: true, booking: populatedBooking }
   } catch (error) {
@@ -1816,12 +1818,12 @@ export async function getAllBookings(
 
     const populatedBookings: PopulatedBooking[] = bookings.map((booking) => ({
       ...booking,
-      _id: booking._id.toString(),
-      userId: booking.userId,
-      treatmentId: booking.treatmentId,
+      _id: (booking._id as any).toString(),
+      userId: booking.userId || null,
+      treatmentId: booking.treatmentId as any,
       professionalId: booking.professionalId || null,
       addressId: booking.addressId || null,
-    }))
+    } as PopulatedBooking))
 
     return {
       bookings: populatedBookings,
@@ -1844,7 +1846,7 @@ export async function assignProfessionalToBooking(
   }
 
   const mongooseDbSession = await mongoose.startSession()
-  let assignedBooking: IBooking | null = null
+  let assignedBooking: any = null
 
   try {
     await mongooseDbSession.withTransaction(async () => {
@@ -1897,12 +1899,13 @@ export async function assignProfessionalToBooking(
             process.env.NEXT_PUBLIC_APP_URL ||
             process.env.NEXTAUTH_URL ||
             ""
-          const clientNotificationData = {
-            type: "BOOKING_CONFIRMED_CLIENT",
-            userName: clientUser.name || "לקוח/ה",
-            professionalName: professional.name || "מטפל/ת",
-            bookingDateTime: assignedBooking.bookingDateTime,
+          const clientNotificationData: ProfessionalBookingNotificationData = {
+            type: "BOOKING_ASSIGNED_PROFESSIONAL",
             treatmentName: treatment.name,
+            bookingDateTime: assignedBooking.bookingDateTime,
+            professionalName: professional.name || "מטפל/ת",
+            clientName: clientUser.name || "לקוח/ה",
+            userName: clientUser.name || "לקוח/ה",
             bookingDetailsLink: `${baseUrl}/dashboard/member/bookings?bookingId=${assignedBooking._id.toString()}`,
           }
 
@@ -1922,12 +1925,12 @@ export async function assignProfessionalToBooking(
           const professionalLang = (professional.notificationPreferences?.language as NotificationLanguage) || "he"
           const professionalNotificationMethods = professional.notificationPreferences?.methods || ["email"]
 
-          const professionalNotificationData = {
+          const professionalNotificationData: ProfessionalBookingNotificationData = {
             type: "BOOKING_ASSIGNED_PROFESSIONAL",
+            treatmentName: treatment.name,
+            bookingDateTime: assignedBooking.bookingDateTime,
             professionalName: professional.name || "מטפל/ת",
             clientName: clientUser.name || "לקוח/ה",
-            bookingDateTime: assignedBooking.bookingDateTime,
-            treatmentName: treatment.name,
             bookingDetailsLink: `${process.env.NEXTAUTH_URL || ""}/dashboard/professional/booking-management/${assignedBooking._id.toString()}`,
           }
 
@@ -2073,7 +2076,7 @@ export async function updateBookingByAdmin(
         }
         booking.professionalId = new mongoose.Types.ObjectId(updates.professionalId)
       } else {
-        booking.professionalId = null
+        booking.professionalId = undefined
       }
     }
     
@@ -2081,26 +2084,50 @@ export async function updateBookingByAdmin(
       booking.paymentDetails.paymentStatus = updates.paymentStatus
     }
 
-    // Ensure required fields have valid values for backward compatibility
-    if (!booking.treatmentCategory) {
-      booking.treatmentCategory = new mongoose.Types.ObjectId()
+    // Calculate and set pricing fields if missing (backward compatibility)
+    if (!booking.staticTreatmentPrice || !booking.staticTherapistPay || !booking.companyFee) {
+      const treatment = await Treatment.findById(booking.treatmentId).lean()
+      if (treatment) {
+        let staticTreatmentPrice = 0
+        let staticTherapistPay = 0
+        
+        if (treatment.pricingType === "fixed") {
+          staticTreatmentPrice = treatment.fixedPrice || 0
+          staticTherapistPay = treatment.fixedProfessionalPrice || 0
+        } else if (treatment.pricingType === "duration_based" && booking.selectedDurationId) {
+          const selectedDuration = treatment.durations?.find(
+            (d: any) => d._id.toString() === booking.selectedDurationId?.toString()
+          )
+          if (selectedDuration) {
+            staticTreatmentPrice = selectedDuration.price || 0
+            staticTherapistPay = selectedDuration.professionalPrice || 0
+          }
+        }
+        
+        booking.staticTreatmentPrice = staticTreatmentPrice
+        booking.staticTherapistPay = staticTherapistPay
+        booking.companyFee = Math.max(0, staticTreatmentPrice - staticTherapistPay)
+        
+        // ➕ הוספת שדות חדשים אם חסרים
+        if (!booking.treatmentCategory) {
+          booking.treatmentCategory = treatment.category ? new mongoose.Types.ObjectId(treatment.category) : new mongoose.Types.ObjectId()
+        }
+      }
     }
-    if (typeof booking.staticTreatmentPrice !== 'number') {
-      booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
-    }
-    if (typeof booking.staticTherapistPay !== 'number') {
-      booking.staticTherapistPay = 0
-    }
-    if (typeof booking.companyFee !== 'number') {
-      booking.companyFee = 0
-    }
+    
+    // ➕ וידוא שדות consents
     if (!booking.consents) {
       booking.consents = {
         customerAlerts: "email",
         patientAlerts: "email",
         marketingOptIn: false,
-        termsAccepted: false
+        termsAccepted: true // ברירת מחדל לאישור תנאים
       }
+    }
+    
+    // ➕ וידוא שדה step
+    if (!booking.step) {
+      booking.step = 7 // הזמנה מושלמת
     }
 
     await booking.save()
@@ -2198,6 +2225,32 @@ export async function createGuestBooking(
       const nextBookingNum = await getNextSequenceValue("bookingNumber")
       const bookingNumber = nextBookingNum.toString().padStart(6, "0")
 
+      // Get treatment details for proper pricing calculation
+      const treatment = await Treatment.findById(validatedPayload.treatmentId).lean()
+      if (!treatment) {
+        throw new Error("Treatment not found")
+      }
+
+      // Calculate pricing based on treatment model logic
+      let staticTreatmentPrice = 0
+      let staticTherapistPay = 0
+      
+      if (treatment.pricingType === "fixed") {
+        staticTreatmentPrice = treatment.fixedPrice || 0
+        staticTherapistPay = treatment.fixedProfessionalPrice || 0
+      } else if (treatment.pricingType === "duration_based" && validatedPayload.selectedDurationId) {
+        const selectedDuration = treatment.durations?.find(
+          (d: any) => d._id.toString() === validatedPayload.selectedDurationId
+        )
+        if (selectedDuration) {
+          staticTreatmentPrice = selectedDuration.price || 0
+          staticTherapistPay = selectedDuration.professionalPrice || 0
+        }
+      }
+
+      // Company fee is the difference
+      const companyFee = Math.max(0, staticTreatmentPrice - staticTherapistPay)
+
       const newBooking = new Booking({
         ...validatedPayload,
         userId: null, // Guest booking - no user association initially
@@ -2212,16 +2265,16 @@ export async function createGuestBooking(
         recipientGender: validatedPayload.recipientGender,
         bookingAddressSnapshot,
         status: "pending_payment",
-        // Required fields with defaults for backward compatibility
-        treatmentCategory: validatedPayload.treatmentCategory || new mongoose.Types.ObjectId(),
-        staticTreatmentPrice: validatedPayload.staticPricingData?.staticTreatmentPrice || validatedPayload.priceDetails.basePrice || 0,
-        staticTherapistPay: validatedPayload.staticPricingData?.staticTherapistPay || 0,
-        companyFee: validatedPayload.staticPricingData?.companyFee || 0,
+        // Calculated fields based on treatment
+        treatmentCategory: treatment.category || undefined,
+        staticTreatmentPrice,
+        staticTherapistPay,
+        companyFee,
         consents: validatedPayload.consents || {
           customerAlerts: "email",
           patientAlerts: "email",
           marketingOptIn: false,
-          termsAccepted: false
+          termsAccepted: true // Default to true for guest bookings
         },
         priceDetails: {
           basePrice: validatedPayload.priceDetails.basePrice,
@@ -2295,8 +2348,8 @@ export async function createGuestBooking(
         voucher.usageHistory = voucher.usageHistory || []
         voucher.usageHistory.push({
           date: new Date(),
-          amount: validatedPayload.priceDetails.voucherAppliedAmount,
-          orderId: newBooking._id,
+          amountUsed: validatedPayload.priceDetails.voucherAppliedAmount,
+          orderId: newBooking.id,
           description: `Booking ${bookingNumber}`,
         })
         
@@ -2350,7 +2403,7 @@ export async function createGuestBooking(
       // Revalidate relevant paths
       revalidatePath("/dashboard/admin/bookings")
 
-      const finalBookingObject = bookingResult.toObject() as IBooking
+      const finalBookingObject = (bookingResult as any).toObject() as IBooking
       if (updatedVoucherDetails) {
         ;(finalBookingObject as any).updatedVoucherDetails = updatedVoucherDetails
       }
@@ -2413,7 +2466,7 @@ export async function createGuestBooking(
             
             await sendGuestNotification(
               validatedPayload.recipientEmail,
-              recipientNotificationMethods.includes("sms") ? validatedPayload.recipientPhone : null,
+              recipientNotificationMethods.includes("sms") ? (validatedPayload.recipientPhone || null) : null,
               recipientBookingData,
               notificationLanguage,
               recipientName
@@ -2429,14 +2482,14 @@ export async function createGuestBooking(
         }
       } catch (notificationError) {
         logger.error("Failed to send notification for guest booking:", {
-          bookingId: finalBookingObject._id.toString(),
+          bookingId: finalBookingObject.id.toString(),
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
         })
         // Don't fail the booking if notifications fail
       }
 
       logger.info("Guest booking created successfully", {
-        bookingId: finalBookingObject._id.toString(),
+        bookingId: finalBookingObject.id.toString(),
         bookingNumber: finalBookingObject.bookingNumber,
         guestEmail: guestInfo.email,
       })
@@ -2630,7 +2683,7 @@ export async function createGuestUser(guestInfo: {
     
     // Return appropriate error messages based on error type
     if (error instanceof Error) {
-      if (error.message.includes('duplicate key') || error.code === 11000) {
+      if (error.message.includes('duplicate key') || (error as any).code === 11000) {
         return { success: false, error: "User with this email or phone already exists" }
       }
       if (error.message.includes('validation') || error.name === 'ValidationError') {
@@ -2755,10 +2808,10 @@ export async function saveAbandonedBooking(
       await existingAbandoned.save()
       
       logger.info("Updated existing abandoned booking", { 
-        bookingId: existingAbandoned._id.toString(),
+        bookingId: existingAbandoned.id.toString(),
         currentStep: formData.currentStep 
       })
-      return { success: true, bookingId: existingAbandoned._id.toString() }
+      return { success: true, bookingId: existingAbandoned.id.toString() }
     }
 
     // Create new abandoned booking record with safe defaults
@@ -2904,10 +2957,10 @@ export async function saveAbandonedBooking(
     await abandonedBooking.save()
     
     logger.info("Created new abandoned booking", { 
-      bookingId: abandonedBooking._id.toString(),
+      bookingId: abandonedBooking.id.toString(),
       currentStep: formData.currentStep 
     })
-    return { success: true, bookingId: abandonedBooking._id.toString() }
+    return { success: true, bookingId: abandonedBooking.id.toString() }
   } catch (error) {
     logger.error("Error saving abandoned booking:", { 
       error: error instanceof Error ? error.message : String(error),
@@ -3152,9 +3205,10 @@ export async function findSuitableProfessionals(
     
     // Filter by gender preference if specified
     if (genderPreference && genderPreference !== 'any') {
-      professionals = professionals.filter(prof => 
-        prof.userId && prof.userId.gender === genderPreference
-      )
+      professionals = professionals.filter(prof => {
+        const user = prof.userId as any
+        return user && user.gender === genderPreference
+      })
     }
     
     // Filter by duration if specified - professional must support this duration

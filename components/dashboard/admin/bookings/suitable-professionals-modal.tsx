@@ -85,7 +85,7 @@ export function SuitableProfessionalsModal({
   const [isRemoving, setIsRemoving] = useState(false)
   const queryClient = useQueryClient()
 
-  const { _data: professionalsData, isLoading, error } = useQuery({
+  const { data: professionalsData, isLoading, error } = useQuery({
     queryKey: ["suitableProfessionals", booking._id],
     queryFn: () => getSuitableProfessionalsForBooking(booking._id.toString()),
     enabled: open,

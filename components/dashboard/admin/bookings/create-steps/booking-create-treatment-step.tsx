@@ -135,9 +135,9 @@ export default function BookingCreateTreatmentStep({
                     <div className="px-2 py-1 text-sm font-medium text-muted-foreground">
                       {getCategoryDisplayName(category)}
                     </div>
-                    {categoryTreatments
-                      .filter(treatment => treatment.isActive)
-                      .map((treatment) => (
+                    {(categoryTreatments as any[])
+                      .filter((treatment: any) => treatment.isActive)
+                      .map((treatment: any) => (
                         <SelectItem key={treatment._id} value={treatment._id}>
                           <div className="flex items-center justify-between w-full">
                             <span>{treatment.name}</span>

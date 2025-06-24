@@ -314,15 +314,15 @@ export default function AdminBookingsClient() {
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage(currentPage + 1)}
-              disabled={currentPage === data.totalPages}
+              disabled={currentPage === data?.totalPages}
             >
               {t("common.pagination.next")}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(data.totalPages)}
-              disabled={currentPage === data.totalPages}
+              onClick={() => setCurrentPage(data?.totalPages || 1)}
+              disabled={currentPage === data?.totalPages}
             >
               {t("common.pagination.last")}
             </Button>

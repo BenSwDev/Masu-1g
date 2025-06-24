@@ -12,6 +12,7 @@ import PaymentMethod, { type IPaymentMethod } from "@/lib/db/models/payment-meth
 import { WorkingHoursSettings } from "@/lib/db/models/working-hours"
 import Coupon from "@/lib/db/models/coupon"
 import GiftVoucher from "@/lib/db/models/gift-voucher"
+import { getNextSequenceValue } from "@/lib/db/models/counter"
 import { logger } from "@/lib/logs/logger"
 import type { PopulatedBooking } from "@/types/booking"
 import { Types } from "mongoose"
@@ -195,7 +196,7 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
     return {
       bookings: bookings.map(booking => ({
         ...booking,
-        _id: new Types.ObjectId(booking._id.toString()),
+        _id: booking._id.toString(),
         treatmentId: booking.treatmentId ? {
           ...booking.treatmentId,
           _id: new Types.ObjectId(booking.treatmentId._id.toString()),
@@ -691,32 +692,56 @@ export async function createNewBooking(bookingData: {
 
     await dbConnect()
 
-    // Generate booking number
-    const bookingNumber = `BK${Date.now().toString().slice(-8)}`
+    // Generate proper booking number using sequence
+    const nextBookingNum = await getNextSequenceValue("bookingNumber")
+    const bookingNumber = nextBookingNum.toString().padStart(6, "0")
     
-    // Create the booking
+    // Get treatment details for proper pricing
+    const treatment = await Treatment.findById(bookingData.treatmentId).lean()
+    if (!treatment) {
+      return { success: false, error: "Treatment not found" }
+    }
+
+    // Calculate proper pricing data
+    const staticTreatmentPrice = bookingData.basePrice || treatment.fixedPrice || 0
+    const staticTherapistPay = Math.round(staticTreatmentPrice * 0.7) // 70% to therapist
+    const companyFee = staticTreatmentPrice - staticTherapistPay
+    
+    // Create the booking with proper required fields
     const newBooking = new Booking({
       ...bookingData,
       bookingNumber,
       status: "pending_payment",
       bookingDateTime: bookingData.startTime,
-      treatmentCategory: new Types.ObjectId(), // Required field for backward compatibility
-      staticTreatmentPrice: bookingData.basePrice || 0,
-      staticTherapistPay: 0,
-      companyFee: 0,
+      step: 1,
+              treatmentCategory: treatment.category || new Types.ObjectId(),
+      staticTreatmentPrice,
+      staticTherapistPay,
+      companyFee,
+      isGift: bookingData.isGift || false,
       consents: {
         customerAlerts: "email",
         patientAlerts: "email", 
         marketingOptIn: false,
-        termsAccepted: false
+        termsAccepted: true
       },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      statusHistory: [{
-        status: "pending_payment",
-        changedAt: new Date(),
-        reason: "Booking created by admin"
-      }]
+      priceDetails: {
+        basePrice: staticTreatmentPrice,
+        surcharges: [],
+        totalSurchargesAmount: 0,
+        treatmentPriceAfterSubscriptionOrTreatmentVoucher: staticTreatmentPrice,
+        discountAmount: bookingData.discountAmount || 0,
+        voucherAppliedAmount: 0,
+        finalAmount: (staticTreatmentPrice - (bookingData.discountAmount || 0)),
+        isBaseTreatmentCoveredBySubscription: false,
+        isBaseTreatmentCoveredByTreatmentVoucher: false,
+        isFullyCoveredByVoucherOrSubscription: false,
+      },
+      paymentDetails: {
+        paymentStatus: bookingData.paymentStatus === "paid" ? "paid" : "pending",
+      },
+      source: (bookingData.source as any) || "new_purchase",
+      therapistGenderPreference: "any",
     })
 
     await newBooking.save()
@@ -735,7 +760,10 @@ export async function createNewBooking(bookingData: {
 
     return {
       success: true,
-      booking: populatedBooking as PopulatedBooking
+      booking: {
+        ...populatedBooking,
+        _id: populatedBooking?._id?.toString() || "",
+      } as PopulatedBooking
     }
   } catch (error) {
     logger.error("Error creating new booking:", error)

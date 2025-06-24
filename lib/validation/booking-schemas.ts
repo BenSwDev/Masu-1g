@@ -367,7 +367,7 @@ export const CreateBookingPayloadSchema = z.object({
     phone: z.string(),
   }).optional(), // Optional for regular bookings, required for guest bookings
   
-  // ➕ שדות חדשים - אופציונליים לתאימות לאחור
+  // ➕ שדות חדשים - optional לתאימות לאחור
   step: z.number().int().min(1).max(7).default(1).optional(),
   treatmentCategory: z.string().optional(), // ObjectId as string
   staticPricingData: StaticPricingDataSchema.optional(),
@@ -400,7 +400,7 @@ export const CreateGuestBookingPayloadSchema = z.object({
   customAddressDetails: z // New: for one-time address
     .object({
       fullAddress: z.string().min(1, "Full address is required"),
-      city: citySchema,
+      city: z.string().min(1, "City is required"),
       street: z.string().min(1, "Street is required"),
       streetNumber: z.string().optional(),
       apartment: z.string().optional(),
@@ -455,7 +455,7 @@ export const CreateGuestBookingPayloadSchema = z.object({
       }),
   }).required(), // Required for guest bookings
   
-  // ➕ שדות חדשים לאורחים - אופציונליים לתאימות לאחור
+  // ➕ שדות חדשים לאורחים - optional לתאימות לאחור
   step: z.number().int().min(1).max(7).default(1).optional(),
   treatmentCategory: z.string().optional(), // ObjectId as string
   staticPricingData: StaticPricingDataSchema.optional(),

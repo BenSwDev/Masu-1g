@@ -103,7 +103,7 @@ export default function BookingCreateSchedulingStep({
                   mode="single"
                   selected={formData.bookingDateTime}
                   onSelect={(date) => {
-                    if (date) {
+                    if (date && date instanceof Date) {
                       const newDate = new Date(date)
                       if (formData.bookingDateTime) {
                         newDate.setHours(formData.bookingDateTime.getHours())

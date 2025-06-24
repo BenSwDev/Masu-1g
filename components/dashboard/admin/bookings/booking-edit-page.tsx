@@ -58,14 +58,13 @@ export function BookingEditPage({ booking }: BookingEditPageProps) {
       // Call the update booking API with the changed fields
       const updates = {
         status: updatedBooking.status !== booking.status ? updatedBooking.status : undefined,
-        bookingDateTime: updatedBooking.startTime !== booking.startTime ? updatedBooking.startTime : undefined,
+        bookingDateTime: updatedBooking.bookingDateTime !== booking.bookingDateTime ? updatedBooking.bookingDateTime : undefined,
         recipientName: updatedBooking.recipientName !== booking.recipientName ? updatedBooking.recipientName : undefined,
         recipientPhone: updatedBooking.recipientPhone !== booking.recipientPhone ? updatedBooking.recipientPhone : undefined,
         recipientEmail: updatedBooking.recipientEmail !== booking.recipientEmail ? updatedBooking.recipientEmail : undefined,
         notes: updatedBooking.notes !== booking.notes ? updatedBooking.notes : undefined,
         professionalId: updatedBooking.professionalId !== booking.professionalId ? 
-          (typeof updatedBooking.professionalId === 'object' ? updatedBooking.professionalId._id.toString() : updatedBooking.professionalId) : undefined,
-        paymentStatus: updatedBooking.paymentStatus !== booking.paymentStatus ? updatedBooking.paymentStatus : undefined,
+          (updatedBooking.professionalId && typeof updatedBooking.professionalId === 'object' ? updatedBooking.professionalId._id.toString() : updatedBooking.professionalId) : undefined,
       }
 
       // Remove undefined values

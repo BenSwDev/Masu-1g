@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { format } from "date-fns"
-import { Calendar, Clock, User, Phone, Mail, MapPin, CreditCard, FileText, Star, AlertTriangle, Stethoscope } from "lucide-react"
+import { Calendar, User, Phone, Mail, MapPin, CreditCard, FileText, Star, AlertTriangle, Stethoscope } from "lucide-react"
 import { 
   Dialog, 
   DialogContent, 
@@ -165,7 +165,7 @@ export default function ComprehensiveBookingEditModal({
       const result = await assignProfessionalToBooking(booking._id, professionalId)
       if (result.success) {
         toast.success(t("adminBookings.assignSuccess"))
-        setEditedBooking(prev => ({ ...prev, professionalId }))
+        setEditedBooking(prev => ({ ...prev, professionalId: { _id: professionalId, name: "" } as any }))
         queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
       } else {
         const errorMessage = result.error && result.error.startsWith("bookings.errors.") 
@@ -178,7 +178,6 @@ export default function ComprehensiveBookingEditModal({
     }
   }
 
-  const dateTime = formatDateTime(booking.bookingDateTime)
   
   // Client data - directly from booking fields or populated userId
   const client = booking.userId as any || {}
@@ -975,8 +974,8 @@ export default function ComprehensiveBookingEditModal({
                 <div className="space-y-2">
                   <Label>{t("adminBookings.adminNotes")}</Label>
                   <Textarea 
-                    value={editedBooking.adminNotes || booking.adminNotes || ""}
-                    onChange={(e) => setEditedBooking(prev => ({ ...prev, adminNotes: e.target.value }))}
+                    value={(editedBooking as any).adminNotes || (booking as any).adminNotes || ""}
+                    onChange={(e) => setEditedBooking(prev => ({ ...prev, adminNotes: e.target.value } as any))}
                     rows={4}
                     placeholder={t("adminBookings.adminNotesPlaceholder")}
                   />

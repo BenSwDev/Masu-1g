@@ -710,7 +710,7 @@ export default function UniversalBookingWizard({
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1))
 
   // Create booking before payment
-  const createPendingBooking = async () => {
+  const createPendingBooking = useCallback(async () => {
     
     if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.phone) {
       toast({
@@ -738,6 +738,10 @@ export default function UniversalBookingWizard({
       const bookingDateTime = new Date(bookingOptions.bookingDate)
       const [hours, minutes] = bookingOptions.bookingTime!.split(":").map(Number)
       bookingDateTime.setHours(hours, minutes, 0, 0)
+
+      const selectedTreatment = initialData.activeTreatments.find(
+        (t) => t._id.toString() === bookingOptions.selectedTreatmentId
+      )
 
       const payload = {
         userId: guestUserId || "guest",
@@ -791,6 +795,16 @@ export default function UniversalBookingWizard({
           (guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
            guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"]) : undefined,
         notificationLanguage: guestInfo.bookerNotificationLanguage || "he",
+        // Add required fields for schema compatibility
+        treatmentCategory: selectedTreatment?.category || "general",
+        consents: {
+          customerAlerts: guestInfo.bookerNotificationMethod === "sms" ? "sms" : "email",
+          patientAlerts: guestInfo.isBookingForSomeoneElse 
+            ? (guestInfo.recipientNotificationMethod === "sms" ? "sms" : "email")
+            : (guestInfo.bookerNotificationMethod === "sms" ? "sms" : "email"),
+          marketingOptIn: true,
+          termsAccepted: true
+        },
       } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
 
 
@@ -819,7 +833,9 @@ export default function UniversalBookingWizard({
       })
       return null
     }
-  }
+  }, [guestInfo, guestAddress, bookingOptions, calculatedPrice, guestUserId, toast, t, initialData.activeTreatments])
+
+  // createPendingBooking function
 
   // Handle final confirmation after successful payment
   const handleFinalSubmit = async () => {

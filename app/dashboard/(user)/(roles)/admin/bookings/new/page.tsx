@@ -68,7 +68,7 @@ async function BookingCreatePageContent() {
     }
 
     return (
-      <BookingCreatePage initialData={initialData.data} />
+      <BookingCreatePage initialData={initialData.data!} />
     )
   } catch (error) {
     console.error("Error loading booking initial data:", error)

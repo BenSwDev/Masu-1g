@@ -136,7 +136,7 @@ export function GuestInfoStep({
 
   type GuestInfoFormData = z.infer<typeof guestInfoSchema>
 
-  const form = useForm<GuestInfoFormData>({
+  const form = useForm({
     resolver: zodResolver(guestInfoSchema),
     values: {
       firstName: guestInfo.firstName || "",

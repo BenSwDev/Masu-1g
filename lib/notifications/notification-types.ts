@@ -49,12 +49,17 @@ export interface ReviewReminderNotificationData extends BaseNotificationData {
 }
 
 export interface ProfessionalBookingNotificationData extends BaseNotificationData {
-  type: "professional-booking-notification"
+  type: "professional-booking-notification" | "BOOKING_ASSIGNED_PROFESSIONAL"
   treatmentName: string
   bookingDateTime: Date
-  address: string
-  price: number
-  responseLink: string
+  address?: string
+  price?: number
+  responseLink?: string
+  // Additional fields for professional notifications
+  professionalName?: string
+  clientName?: string
+  userName?: string
+  bookingDetailsLink?: string
 }
 
 // Union type for all notification data

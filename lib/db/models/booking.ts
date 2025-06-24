@@ -229,7 +229,7 @@ const BookingAddressSnapshotSchema = new Schema<IBookingAddressSnapshot>(
 
 const BookingSchema: Schema<IBooking> = new Schema(
   {
-    bookingNumber: { type: String, required: true, unique: true }, // unique: true already creates an index
+    bookingNumber: { type: String, required: true, unique: true },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: false }, // Made optional for guest bookings
     bookedByUserName: { type: String },
     bookedByUserEmail: { type: String },
@@ -299,29 +299,34 @@ const BookingSchema: Schema<IBooking> = new Schema(
         calculatedAt: { type: Date },
       },
     ],
-    // ➕ שדות חדשים
-    step: { type: Number, enum: [1, 2, 3, 4, 5, 6, 7], required: true, default: 1 },
-    treatmentCategory: { type: Schema.Types.ObjectId, ref: "TreatmentCategory", required: true },
-    staticTreatmentPrice: { type: Number, required: true, min: 0 },
-    staticTherapistPay: { type: Number, required: true, min: 0 },
+    // ➕ שדות חדשים - optional לתאימות לאחור
+    step: { type: Number, enum: [1, 2, 3, 4, 5, 6, 7], default: 1 },
+    treatmentCategory: { type: Schema.Types.ObjectId, ref: "TreatmentCategory" },
+    staticTreatmentPrice: { type: Number, min: 0 },
+    staticTherapistPay: { type: Number, min: 0 },
     staticTimeSurcharge: { type: Number, min: 0 },
     staticTimeSurchargeReason: { type: String, trim: true },
     staticTherapistPayExtra: { type: Number, min: 0 },
-    companyFee: { type: Number, required: true, min: 0 },
-    isGift: { type: Boolean, required: true, default: false },
+    companyFee: { type: Number, min: 0 },
+    isGift: { type: Boolean, default: false },
     giftGreeting: { type: String, trim: true },
     giftSendWhen: { type: Schema.Types.Mixed }, // תומך ב"now" או Date
     giftHidePrice: { type: Boolean, default: false },
-    consents: { type: BookingConsentsSchema, required: true },
+    consents: { type: BookingConsentsSchema },
     enhancedPaymentDetails: { type: EnhancedPaymentDetailsSchema },
     review: { type: BookingReviewSchema },
   },
   { timestamps: true },
 )
 
+// Indexes for performance (bookingNumber unique index is automatically created by unique: true)
 BookingSchema.index({ userId: 1, bookingDateTime: -1 })
 BookingSchema.index({ status: 1, bookingDateTime: 1 })
 BookingSchema.index({ professionalId: 1, bookingDateTime: 1, status: 1 })
+BookingSchema.index({ bookedByUserEmail: 1 }) // For guest booking searches
+BookingSchema.index({ recipientEmail: 1 }) // For recipient searches
+BookingSchema.index({ treatmentId: 1, bookingDateTime: 1 }) // For treatment-based queries
+BookingSchema.index({ step: 1 }) // For wizard step tracking
 
 const Booking: Model<IBooking> = mongoose.models.Booking || mongoose.model<IBooking>("Booking", BookingSchema)
 

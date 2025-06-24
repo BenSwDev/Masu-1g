@@ -109,7 +109,7 @@ const ProfessionalAssignmentDialog = ({
   const [isAssigning, setIsAssigning] = useState(false)
   const queryClient = useQueryClient()
 
-  const { _data: professionalsData, refetch } = useQuery({
+  const { data: professionalsData, refetch } = useQuery({
     queryKey: ["availableProfessionals"],
     queryFn: getAvailableProfessionals,
     enabled: isOpen,
@@ -217,7 +217,7 @@ const AdminBookingActions = ({
   const [showSuitableProfessionalsModal, setShowSuitableProfessionalsModal] = useState(false)
   const queryClient = useQueryClient()
 
-  const { _data: existingReview, isLoading: loadingReview, refetch: refetchReview } = useQuery({
+  const { data: existingReview, isLoading: loadingReview, refetch: refetchReview } = useQuery({
     queryKey: ["bookingReview", booking._id],
     queryFn: () => getReviewByBookingId(booking._id.toString()),
     enabled: booking.status === "completed",
@@ -579,6 +579,78 @@ const PriceDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
   )
 }
 
+// Add missing RedemptionInfo component
+const RedemptionInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  if (!booking) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
+
+  const { priceDetails, source } = booking
+  const hasRedemption = priceDetails?.appliedCouponId || 
+                       priceDetails?.appliedGiftVoucherId || 
+                       priceDetails?.redeemedUserSubscriptionId
+
+  if (!hasRedemption) {
+    return <div className="text-sm text-muted-foreground">ללא מימוש</div>
+  }
+
+  return (
+    <div className="space-y-1 max-w-[150px]">
+      {priceDetails.redeemedUserSubscriptionId && (
+        <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+          מנוי
+        </div>
+      )}
+      {priceDetails.appliedGiftVoucherId && (
+        <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+          שובר מתנה
+        </div>
+      )}
+      {priceDetails.appliedCouponId && (
+        <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+          קופון
+        </div>
+      )}
+      {priceDetails.voucherAppliedAmount > 0 && (
+        <div className="text-xs text-green-600">
+          נוצל: ₪{priceDetails.voucherAppliedAmount.toFixed(0)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Add missing FinancialSummaryInfo component
+const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
+  if (!booking?.priceDetails) {
+    return <div className="text-sm text-muted-foreground">-</div>
+  }
+
+  const { priceDetails, staticTreatmentPrice, staticTherapistPay, companyFee } = booking
+  const finalAmount = priceDetails.finalAmount || 0
+  const therapistPay = staticTherapistPay || 0
+  const companyRevenue = companyFee || (staticTreatmentPrice || 0) - therapistPay
+
+  return (
+    <div className="space-y-1 max-w-[150px]">
+      <div className="text-sm font-medium">
+        סה"כ: ₪{finalAmount.toFixed(0)}
+      </div>
+      <div className="text-xs text-gray-600">
+        למטפל: ₪{therapistPay.toFixed(0)}
+      </div>
+      <div className="text-xs text-gray-600">
+        לחברה: ₪{companyRevenue.toFixed(0)}
+      </div>
+      {priceDetails.isFullyCoveredByVoucherOrSubscription && (
+        <div className="text-xs bg-green-100 text-green-800 px-1 py-0.5 rounded">
+          מכוסה במלואו
+        </div>
+      )}
+    </div>
+  )
+}
+
 const RecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   if (!booking?.recipientName) {
     return <div className="text-sm text-muted-foreground">-</div>
@@ -716,135 +788,7 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
   )
 }
 
-// Add new component for redemption details (מימוש)
-const RedemptionInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  const priceDetails = booking.priceDetails
-  
-  if (!priceDetails) {
-    return <div className="text-sm text-muted-foreground">-</div>
-  }
 
-  const hasRedemption = priceDetails.isBaseTreatmentCoveredBySubscription || 
-                       priceDetails.isBaseTreatmentCoveredByTreatmentVoucher ||
-                       priceDetails.discountAmount > 0 ||
-                       priceDetails.voucherAppliedAmount > 0
-
-  if (!hasRedemption) {
-    return <div className="text-sm text-muted-foreground">-</div>
-  }
-
-  return (
-    <div className="space-y-1 max-w-[180px]">
-      {priceDetails.isBaseTreatmentCoveredBySubscription && (
-        <div className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
-          {t("adminBookings.subscriptionRedemption")}
-        </div>
-      )}
-      {priceDetails.isBaseTreatmentCoveredByTreatmentVoucher && (
-        <div className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-          {t("adminBookings.treatmentVoucherRedemption")}
-        </div>
-      )}
-      {priceDetails.voucherAppliedAmount > 0 && !priceDetails.isBaseTreatmentCoveredByTreatmentVoucher && (
-        <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">
-          {t("adminBookings.monetaryVoucherRedemption")}: ₪{priceDetails.voucherAppliedAmount.toFixed(2)}
-        </div>
-      )}
-      {priceDetails.discountAmount > 0 && (
-        <div className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">
-          {t("adminBookings.couponDiscount")}: ₪{priceDetails.discountAmount.toFixed(2)}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// Add new component for financial summary (סיכום כספי)
-const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  const priceDetails = booking.priceDetails
-  const treatment = booking.treatmentId as any
-  
-  if (!priceDetails) {
-    return <div className="text-sm text-muted-foreground">-</div>
-  }
-
-  // Calculate base professional fee from treatment
-  let baseProfessionalFee = 0
-  if (treatment) {
-    if (treatment.pricingType === "fixed") {
-      baseProfessionalFee = treatment.fixedProfessionalPrice || 0
-    } else if (treatment.pricingType === "duration_based" && booking.selectedDurationId && treatment.durations) {
-      const selectedDuration = treatment.durations.find(
-        (d: any) => d._id?.toString() === booking.selectedDurationId?.toString()
-      )
-      if (selectedDuration) {
-        baseProfessionalFee = selectedDuration.professionalPrice || 0
-      }
-    }
-  }
-
-  // Calculate professional share from surcharges based on stored professionalShare data
-  let surchargeProfessionalShare = 0
-  
-  if (priceDetails.surcharges && Array.isArray(priceDetails.surcharges)) {
-    for (const surcharge of priceDetails.surcharges as any[]) {
-      if (surcharge && typeof surcharge.amount === 'number' && surcharge.amount > 0) {
-        // Check if this surcharge has professional share information stored from working hours
-        if (surcharge.professionalShare) {
-          if (surcharge.professionalShare.type === 'percentage') {
-            surchargeProfessionalShare += (surcharge.amount * (surcharge.professionalShare.amount / 100))
-          } else if (surcharge.professionalShare.type === 'fixed') {
-            surchargeProfessionalShare += surcharge.professionalShare.amount
-          }
-        }
-        // If no professionalShare data, the professional gets 0 from this surcharge
-      }
-    }
-  }
-
-  // Total professional payment = base fee + surcharge share
-  const totalProfessionalPayment = baseProfessionalFee + surchargeProfessionalShare
-  
-  // Final amount is what customer actually paid
-  const actualPaid = priceDetails.finalAmount
-  
-  // Office commission = customer paid - professional payment (cannot be negative)
-  const officeCommission = Math.max(0, actualPaid - totalProfessionalPayment)
-
-  // Calculate total surcharges amount
-  let totalSurcharges = 0
-  if (priceDetails.surcharges && Array.isArray(priceDetails.surcharges)) {
-    for (const surcharge of priceDetails.surcharges as any[]) {
-      if (surcharge && typeof surcharge.amount === 'number' && surcharge.amount > 0) {
-        totalSurcharges += surcharge.amount
-      }
-    }
-  }
-  
-  // Calculate total price including surcharges (before any discounts)
-  const basePrice = priceDetails.basePrice || 0
-  const totalPriceBeforeDiscounts = basePrice + totalSurcharges
-  
-  // Display discounts/redemptions
-  const totalDiscounts = (priceDetails.discountAmount || 0) + (priceDetails.voucherAppliedAmount || 0)
-
-  return (
-    <div className="space-y-1 max-w-[180px]">
-      <div className="text-sm">
-        עלות סופית: ₪{actualPaid.toFixed(2)}
-      </div>
-      <div className="text-sm">
-        שולם בפועל: ₪{actualPaid.toFixed(2)}
-      </div>
-      <div className="text-sm text-green-600">
-        רווח מטפל: ₪{totalProfessionalPayment.toFixed(2)}
-      </div>
-      <div className="text-sm text-blue-600">
-        עמלת משרד: ₪{officeCommission.toFixed(2)}
-      </div>
-    </div>
-  )
-}
 
 // Update RecipientInfo to show more details including age
 const EnhancedRecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {

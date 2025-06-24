@@ -64,6 +64,7 @@ export interface CalculatedPriceDetails {
   appliedCouponId?: string // Will be ObjectId string
   appliedGiftVoucherId?: string // Will be ObjectId string
   redeemedUserSubscriptionId?: string // Will be ObjectId string
+  discountAmount?: number
 }
 
 export interface PopulatedPriceDetails
@@ -90,9 +91,10 @@ export interface PopulatedBookingTreatment
 export interface PopulatedBooking
   extends Omit<
     IBooking,
-    "treatmentId" | "addressId" | "professionalId" | "selectedDurationId" | "priceDetails" | "paymentDetails"
+    "treatmentId" | "addressId" | "professionalId" | "selectedDurationId" | "priceDetails" | "paymentDetails" | "_id" | "userId"
   > {
-  _id: Types.ObjectId
+  _id: string
+  userId?: Types.ObjectId | null
   treatmentId?: PopulatedBookingTreatment | null
   selectedDurationId?: Types.ObjectId // Add this back to interface
   // addressId is the original DB ref, bookingAddressSnapshot is used for display details
@@ -123,6 +125,22 @@ export interface PopulatedBooking
     profileId: Types.ObjectId
     calculatedAt: Date
   }>
+  // ➕ שדות חדשים מהמודל - הוספה מלאה
+  step?: number
+  treatmentCategory?: Types.ObjectId
+  staticTreatmentPrice?: number
+  staticTherapistPay?: number
+  staticTimeSurcharge?: number
+  staticTimeSurchargeReason?: string
+  staticTherapistPayExtra?: number
+  companyFee?: number
+  isGift?: boolean
+  giftGreeting?: string
+  giftSendWhen?: "now" | Date
+  giftHidePrice?: boolean
+  consents?: IBookingConsents
+  enhancedPaymentDetails?: IEnhancedPaymentDetails
+  review?: IBookingReview
   // selectedDurationId is still present from IBooking for logic, but display components might use treatmentId.durations
 }
 

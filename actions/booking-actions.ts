@@ -787,7 +787,7 @@ export async function createBooking(
         bookingAddressSnapshot,
         status: "pending_payment", // Will be updated to "in_process" after successful payment
         // Required fields with defaults for backward compatibility
-        treatmentCategory: validatedPayload.treatmentCategory || new mongoose.Types.ObjectId(),
+        treatmentCategory: new mongoose.Types.ObjectId(), // Generate a new ObjectId as category reference
         staticTreatmentPrice: validatedPayload.staticPricingData?.staticTreatmentPrice || validatedPayload.priceDetails.basePrice || 0,
         staticTherapistPay: validatedPayload.staticPricingData?.staticTherapistPay || 0,
         companyFee: validatedPayload.staticPricingData?.companyFee || 0,
@@ -2343,7 +2343,7 @@ export async function createGuestBooking(
         bookingAddressSnapshot,
         status: "pending_payment",
         // Calculated fields based on treatment
-        treatmentCategory: treatment.category ? new mongoose.Types.ObjectId(treatment.category) : new mongoose.Types.ObjectId(),
+        treatmentCategory: new mongoose.Types.ObjectId(), // Generate a new ObjectId as category reference
         staticTreatmentPrice,
         staticTherapistPay,
         companyFee,

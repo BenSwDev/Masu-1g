@@ -57,10 +57,10 @@ export default function BookingLogsViewer() {
   const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({
     type: 'booking',
-    level: '',
+    level: 'all',
     bookingId: '',
     sessionId: '',
-    phase: '',
+    phase: 'all',
     limit: '100'
   })
   const [selectedLog, setSelectedLog] = useState<BookingLog | null>(null)
@@ -70,7 +70,9 @@ export default function BookingLogsViewer() {
     try {
       const params = new URLSearchParams()
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value)
+        // Convert "all" values to empty strings for the API call
+        const apiValue = value === 'all' ? '' : value
+        if (apiValue) params.append(key, apiValue)
       })
 
       const response = await fetch(`/api/logs?${params}`)
@@ -94,7 +96,9 @@ export default function BookingLogsViewer() {
     try {
       const params = new URLSearchParams()
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) params.append(key, value)
+        // Convert "all" values to empty strings for the API call
+        const apiValue = value === 'all' ? '' : value
+        if (apiValue) params.append(key, apiValue)
       })
       params.append('format', format)
 
@@ -206,7 +210,7 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
                   <SelectValue placeholder="כל הרמות" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">כל הרמות</SelectItem>
+                  <SelectItem value="all">כל הרמות</SelectItem>
                   <SelectItem value="error">שגיאות</SelectItem>
                   <SelectItem value="warn">אזהרות</SelectItem>
                   <SelectItem value="info">מידע</SelectItem>
@@ -222,7 +226,7 @@ ${log.metadata ? `Metadata: ${JSON.stringify(log.metadata, null, 2)}` : ''}`
                   <SelectValue placeholder="כל השלבים" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">כל השלבים</SelectItem>
+                  <SelectItem value="all">כל השלבים</SelectItem>
                   <SelectItem value="initiation">התחלה</SelectItem>
                   <SelectItem value="validation">ולידציה</SelectItem>
                   <SelectItem value="calculation">חישוב מחיר</SelectItem>

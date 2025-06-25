@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
           ...validatedPayload,
           bookingNumber,
           bookedByUserName: bookingUser.name,
-          bookedByUserEmail: bookingUser.email,
+          bookedByUserEmail: bookingUser.email || undefined,
           bookedByUserPhone: bookingUser.phone,
           bookingAddressSnapshot,
           status: "pending_payment",
@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
         } catch (notificationError) {
           logger.error("Failed to send booking notifications:", {
             error: notificationError,
-            bookingId: finalBookingObject._id.toString(),
+            bookingId: finalBookingObject.id.toString(),
           })
         }
 

@@ -39,9 +39,10 @@ export default function BookingCreateCustomerStep({
       if (!formData.guestInfo?.lastName) {
         newErrors.lastName = "שם משפחה נדרש"
       }
-      if (!formData.guestInfo?.email) {
-        newErrors.email = "אימייל נדרש"
-      }
+      // Email is now optional in the phone-auth system
+      // if (!formData.guestInfo?.email) {
+      //   newErrors.email = "אימייל נדרש"
+      // }
       if (!formData.guestInfo?.phone) {
         newErrors.phone = "טלפון נדרש"
       }
@@ -152,7 +153,7 @@ export default function BookingCreateCustomerStep({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">אימייל *</Label>
+                  <Label htmlFor="email">אימייל</Label>
                   <Input
                     id="email"
                     type="email"

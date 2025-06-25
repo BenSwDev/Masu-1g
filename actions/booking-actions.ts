@@ -772,12 +772,12 @@ export async function createBooking(
         ...validatedPayload,
         bookingNumber,
         bookedByUserName: bookingUser.name,
-        bookedByUserEmail: bookingUser.email,
+        bookedByUserEmail: bookingUser.email || undefined,
         bookedByUserPhone: bookingUser.phone,
         // Add recipient fields for "booking for someone else" logic
         recipientName: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientName : bookingUser.name,
         recipientPhone: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientPhone : bookingUser.phone,
-        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : bookingUser.email,
+        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : (bookingUser.email || undefined),
         recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
@@ -1325,7 +1325,10 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         .populate({ path: "treatmentId", model: Treatment, populate: { path: "durations" } })
         .lean(),
       GiftVoucher.find({
-        $or: [{ ownerUserId: userId }, { recipientEmail: authSession.user.email }],
+        $or: [
+          { ownerUserId: userId },
+          ...(authSession.user.email ? [{ recipientEmail: authSession.user.email }] : [])
+        ],
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() },
         isActive: true,
@@ -2328,12 +2331,12 @@ export async function createGuestBooking(
         userId: null, // Guest booking - no user association initially
         bookingNumber,
         bookedByUserName: guestInfo.name,
-        bookedByUserEmail: validatedPayload.guestInfo.email, // Store original email, not modified one
+        bookedByUserEmail: validatedPayload.guestInfo.email || undefined, // Store original email, not modified one
         bookedByUserPhone: guestInfo.phone,
         // Only set recipient fields if explicitly booking for someone else
         recipientName: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientName : guestInfo.name,
         recipientPhone: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientPhone : guestInfo.phone,
-        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : validatedPayload.guestInfo.email,
+        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : (validatedPayload.guestInfo.email || undefined),
         recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
@@ -2749,7 +2752,7 @@ export async function saveAbandonedBooking(
       // Update other fields if they exist with safe defaults
       if (formData.guestInfo?.firstName && formData.guestInfo?.lastName) {
         updateData.bookedByUserName = `${formData.guestInfo.firstName.trim()} ${formData.guestInfo.lastName.trim()}`
-        updateData.bookedByUserEmail = formData.guestInfo.email?.trim() || ""
+        updateData.bookedByUserEmail = formData.guestInfo.email?.trim() || undefined
         updateData.bookedByUserPhone = formData.guestInfo.phone?.replace(/[-\s]/g, "") || ""
       }
       
@@ -2813,16 +2816,16 @@ export async function saveAbandonedBooking(
       bookedByUserName: formData.guestInfo?.firstName && formData.guestInfo?.lastName 
         ? `${formData.guestInfo.firstName.trim()} ${formData.guestInfo.lastName.trim()}` 
         : "Guest User",
-      bookedByUserEmail: formData.guestInfo?.email?.trim() || "",
+              bookedByUserEmail: formData.guestInfo?.email?.trim() || undefined,
       bookedByUserPhone: formData.guestInfo?.phone?.replace(/[-\s]/g, "") || "",
       recipientName: formData.guestInfo?.isBookingForSomeoneElse && formData.guestInfo.recipientFirstName && formData.guestInfo.recipientLastName
         ? `${formData.guestInfo.recipientFirstName.trim()} ${formData.guestInfo.recipientLastName.trim()}`
         : formData.guestInfo?.firstName && formData.guestInfo?.lastName 
           ? `${formData.guestInfo.firstName.trim()} ${formData.guestInfo.lastName.trim()}` 
           : "Guest User",
-      recipientEmail: formData.guestInfo?.isBookingForSomeoneElse 
-        ? formData.guestInfo.recipientEmail?.trim()
-        : formData.guestInfo?.email?.trim(),
+              recipientEmail: formData.guestInfo?.isBookingForSomeoneElse
+          ? formData.guestInfo.recipientEmail?.trim()
+          : (formData.guestInfo?.email?.trim() || undefined),
       recipientPhone: formData.guestInfo?.isBookingForSomeoneElse 
         ? formData.guestInfo.recipientPhone?.replace(/[-\s]/g, "")
         : formData.guestInfo?.phone?.replace(/[-\s]/g, ""),

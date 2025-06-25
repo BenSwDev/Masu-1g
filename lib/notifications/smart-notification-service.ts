@@ -237,21 +237,26 @@ export class SmartNotificationService {
       return [{ success: false, error: "Professional not found or has no contact information" }]
     }
 
-    const recipients: NotificationRecipient[] = [
-      {
+    const recipients: NotificationRecipient[] = []
+    
+    // Add email recipient if available
+    if (profile.email) {
+      recipients.push({
         type: "email",
         value: profile.email,
         name: profile.name,
         language: profile.preferences.language
-      },
-      {
-        type: "phone",
-        value: profile.phone,
-        language: profile.preferences.language
-      }
-    ]
+      })
+    }
+    
+    // Always add phone recipient for professionals
+    recipients.push({
+      type: "phone",
+      value: profile.phone,
+      language: profile.preferences.language
+    })
 
-    logger.info(`Sending professional notification to ${professionalId} via email and SMS`)
+    logger.info(`Sending professional notification to ${professionalId} via ${recipients.map(r => r.type).join(' and ')}`)
     return await unifiedNotificationService.sendNotificationToMultiple(recipients, data)
   }
 

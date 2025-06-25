@@ -97,30 +97,41 @@ export async function sendOTP(
     await dbConnect()
     
     let user
-    if (identifierType === "email") {
-      user = await (await import("@/lib/db/models/user")).default.findOne({ email: identifier.toLowerCase() }).lean()
-    } else {
-      // Handle phone numbers with/without leading zero
+    if (identifierType === "phone") {
+      // Handle phone numbers with/without leading zero using the same logic as phoneExists
       const User = (await import("@/lib/db/models/user")).default
-      if (identifier.startsWith("+")) {
-        const countryCodeMatch = identifier.match(/^(\+\d+)(.+)/)
-        if (countryCodeMatch) {
-          const [, countryCode, nationalNumber] = countryCodeMatch
-          const cleanNumber = nationalNumber.replace(/\D/g, "")
-          const withZero = countryCode + "0" + cleanNumber
-          const withoutZero = countryCode + cleanNumber
-          
-          user = await User.findOne({
-            $or: [
-              { phone: withZero },
-              { phone: withoutZero },
-              { phone: identifier }
-            ]
-          }).lean()
+      let cleaned = identifier.replace(/[^\d+]/g, "")
+      if (!cleaned.startsWith("+")) {
+        if (cleaned.startsWith("0")) {
+          cleaned = "+972" + cleaned.substring(1)
+        } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
+          cleaned = "+972" + cleaned
+        } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
+          cleaned = "+" + cleaned
+        } else {
+          cleaned = "+972" + cleaned
         }
       } else {
-        user = await User.findOne({ phone: identifier }).lean()
+        if (cleaned.startsWith("+9720")) {
+          cleaned = "+972" + cleaned.substring(5)
+        }
       }
+      
+      const countryCode = cleaned.substring(0, cleaned.indexOf("+") + 4)
+      const nationalNumber = cleaned.substring(cleaned.indexOf("+") + 4).replace(/\D/g, "")
+      const withZero = `${countryCode}0${nationalNumber}`
+      const withoutZero = `${countryCode}${nationalNumber}`
+      
+      user = await User.findOne({
+        $or: [
+          { phone: withZero },
+          { phone: withoutZero },
+          { phone: cleaned }
+        ]
+      }).lean()
+    } else {
+      // For email (legacy support if needed)
+      user = await (await import("@/lib/db/models/user")).default.findOne({ email: identifier.toLowerCase() }).lean()
     }
 
     if (!user) {
@@ -225,8 +236,42 @@ export async function verifyOTP(
       return { success: false, message: "Invalid or expired code", error: "INVALID_OTP" }
     }
 
-    // Find user
-    const user = await User.findOne({ [identifierType]: identifier }).select('_id').lean()
+    // Find user with proper phone normalization
+    let user
+    if (identifierType === "phone") {
+      let cleaned = identifier.replace(/[^\d+]/g, "")
+      if (!cleaned.startsWith("+")) {
+        if (cleaned.startsWith("0")) {
+          cleaned = "+972" + cleaned.substring(1)
+        } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
+          cleaned = "+972" + cleaned
+        } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
+          cleaned = "+" + cleaned
+        } else {
+          cleaned = "+972" + cleaned
+        }
+      } else {
+        if (cleaned.startsWith("+9720")) {
+          cleaned = "+972" + cleaned.substring(5)
+        }
+      }
+      
+      const countryCode = cleaned.substring(0, cleaned.indexOf("+") + 4)
+      const nationalNumber = cleaned.substring(cleaned.indexOf("+") + 4).replace(/\D/g, "")
+      const withZero = `${countryCode}0${nationalNumber}`
+      const withoutZero = `${countryCode}${nationalNumber}`
+      
+      user = await User.findOne({
+        $or: [
+          { phone: withZero },
+          { phone: withoutZero },
+          { phone: cleaned }
+        ]
+      }).select('_id').lean()
+    } else {
+      user = await User.findOne({ [identifierType]: identifier }).select('_id').lean()
+    }
+    
     if (!user) {
       return { success: false, message: "User not found", error: "USER_NOT_FOUND" }
     }

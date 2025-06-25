@@ -8,9 +8,39 @@ import VerificationToken from "./models/verification-token"
 
 // User queries
 export const UserQueries = {
-  // Find user by email for login (only required fields)
-  async findForLogin(email: string) {
-    return User.findOne({ email: email.toLowerCase() }).select("+password email name image roles").lean().exec()
+  // Find user by phone for login (only required fields)
+  async findForLogin(phone: string) {
+    // Normalize phone number
+    let cleaned = phone.replace(/[^\d+]/g, "")
+    if (!cleaned.startsWith("+")) {
+      if (cleaned.startsWith("0")) {
+        cleaned = "+972" + cleaned.substring(1)
+      } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
+        cleaned = "+972" + cleaned
+      } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
+        cleaned = "+" + cleaned
+      } else {
+        cleaned = "+972" + cleaned
+      }
+    } else {
+      if (cleaned.startsWith("+9720")) {
+        cleaned = "+972" + cleaned.substring(5)
+      }
+    }
+    
+    // Create variations for search
+    const countryCode = cleaned.substring(0, cleaned.indexOf("+") + 4)
+    const nationalNumber = cleaned.substring(cleaned.indexOf("+") + 4).replace(/\D/g, "")
+    const withZero = `${countryCode}0${nationalNumber}`
+    const withoutZero = `${countryCode}${nationalNumber}`
+    
+    return User.findOne({
+      $or: [
+        { phone: withZero },
+        { phone: withoutZero },
+        { phone: cleaned }
+      ]
+    }).select("+password email name image roles phone").lean().exec()
   },
 
   // Find user by ID (no password)

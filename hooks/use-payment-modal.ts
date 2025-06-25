@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export type PaymentStatus = "pending" | "success" | "failed";
 
 export interface UsePaymentModalProps {
   onSuccess: () => void | Promise<void>;
+  onFailure?: (reason?: string) => void | Promise<void>;
+  pendingBookingId?: string | null;
 }
 
-export function usePaymentModal({ onSuccess }: UsePaymentModalProps) {
+export function usePaymentModal({ onSuccess, onFailure, pendingBookingId }: UsePaymentModalProps) {
+  const router = useRouter();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending");
   const [countdown, setCountdown] = useState(0);
@@ -41,8 +45,25 @@ export function usePaymentModal({ onSuccess }: UsePaymentModalProps) {
     }, 500);
   };
 
-  const handlePaymentFailure = () => {
+  const handlePaymentFailure = async (reason?: string) => {
     setPaymentStatus("failed");
+    
+    // If custom failure handler provided, use it
+    if (onFailure) {
+      setTimeout(async () => {
+        setShowPaymentModal(false);
+        await onFailure(reason);
+      }, 1000);
+    } else {
+      // Default behavior - redirect to failure page
+      setTimeout(() => {
+        setShowPaymentModal(false);
+        const failureUrl = pendingBookingId 
+          ? `/bookings/confirmation?bookingId=${pendingBookingId}&status=failed${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`
+          : `/bookings/confirmation?status=failed${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`;
+        router.push(failureUrl);
+      }, 1000);
+    }
   };
 
   const handleTryAgain = () => {

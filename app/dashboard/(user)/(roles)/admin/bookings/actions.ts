@@ -714,7 +714,7 @@ export async function createNewBooking(bookingData: {
       status: "pending_payment",
       bookingDateTime: bookingData.startTime,
       step: 1,
-              treatmentCategory: treatment.category || new Types.ObjectId(),
+              treatmentCategory: treatment.category ? new Types.ObjectId(treatment.category) : new Types.ObjectId(),
       staticTreatmentPrice,
       staticTherapistPay,
       companyFee,

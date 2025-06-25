@@ -821,7 +821,7 @@ export default function UniversalBookingWizard({
            guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"]) : undefined,
         notificationLanguage: guestInfo.bookerNotificationLanguage || "he",
         // Add required fields for schema compatibility
-        treatmentCategory: selectedTreatment?.category || "general",
+        // treatmentCategory will be handled in the backend to convert to ObjectId
         consents: {
           customerAlerts: guestInfo.bookerNotificationMethod === "sms" ? "sms" : "email",
           patientAlerts: guestInfo.isBookingForSomeoneElse 

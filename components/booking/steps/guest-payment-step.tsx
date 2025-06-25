@@ -117,7 +117,8 @@ export function GuestPaymentStep({
       }
       // Execute the actual booking confirmation
       onConfirm();
-    }
+    },
+    pendingBookingId
   });
   const [marketingConsent, setMarketingConsent] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(true);
@@ -626,7 +627,7 @@ export function GuestPaymentStep({
                     <CheckCircle className="mr-2 h-4 w-4" />
                     דימוי הצלחה
                   </Button>
-                  <Button onClick={handlePaymentFailure} variant="destructive">
+                  <Button onClick={() => handlePaymentFailure("תשלום נכשל עקב בעיה טכנית")} variant="destructive">
                     <XCircle className="mr-2 h-4 w-4" />
                     דימוי כישלון
                   </Button>

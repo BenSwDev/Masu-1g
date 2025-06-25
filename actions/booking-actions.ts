@@ -33,6 +33,7 @@ import {
 import { getNextSequenceValue } from "@/lib/db/models/counter"
 
 import { logger } from "@/lib/logs/logger"
+import bookingLogger from "@/lib/logs/booking-logger"
 import type {
   TimeSlot,
   CalculatedPriceDetails as ClientCalculatedPriceDetails,
@@ -2228,18 +2229,24 @@ export async function updateBookingByAdmin(
 export async function createGuestBooking(
   payload: unknown,
 ): Promise<{ success: boolean; booking?: IBooking; error?: string; issues?: z.ZodIssue[] }> {
-  // Remove debug console.log - only use logger for production logging
+  const sessionId = `guest_booking_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
   
   const validationResult = CreateGuestBookingPayloadSchema.safeParse(payload)
   if (!validationResult.success) {
+    bookingLogger.logValidation(
+      { metadata: { sessionId } }, 
+      "Guest booking payload validation failed", 
+      true
+    )
     logger.warn("Invalid payload for createGuestBooking:", { issues: validationResult.error.issues })
     return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
   }
   
-  logger.info("Guest booking creation initiated", { 
+  bookingLogger.logInitiation({
     treatmentId: validationResult.data.treatmentId,
-    source: validationResult.data.source 
-  })
+    guestEmail: validationResult.data.guestInfo?.email,
+    metadata: { sessionId, source: validationResult.data.source }
+  }, "Guest booking creation initiated")
   
   const validatedPayload = validationResult.data as CreateGuestBookingPayloadType & {
     priceDetails: ClientCalculatedPriceDetails
@@ -2336,7 +2343,7 @@ export async function createGuestBooking(
         bookingAddressSnapshot,
         status: "pending_payment",
         // Calculated fields based on treatment
-        treatmentCategory: treatment.category || undefined,
+        treatmentCategory: treatment.category ? new mongoose.Types.ObjectId(treatment.category) : new mongoose.Types.ObjectId(),
         staticTreatmentPrice,
         staticTherapistPay,
         companyFee,
@@ -2388,7 +2395,16 @@ export async function createGuestBooking(
       })
 
       await newBooking.save({ session: mongooseDbSession })
-      logger.info("Guest booking created successfully", { bookingId: newBooking._id, bookingNumber })
+      
+      bookingLogger.logCreation({
+        bookingId: String(newBooking.id),
+        guestEmail: guestInfo.email,
+        treatmentId: validatedPayload.treatmentId,
+        amount: validatedPayload.priceDetails.finalAmount,
+        metadata: { sessionId, bookingNumber }
+      }, "Guest booking created successfully")
+      
+      logger.info("Guest booking created successfully", { bookingId: newBooking.id, bookingNumber })
       bookingResult = newBooking
 
       // Handle gift voucher redemption for guest bookings
@@ -3100,8 +3116,15 @@ export async function updateBookingStatusAfterPayment(
   try {
     await dbConnect()
     
+    bookingLogger.logPayment({
+      bookingId,
+      paymentStatus,
+      metadata: { transactionId }
+    }, `Processing payment ${paymentStatus} for booking`)
+    
     const booking = await Booking.findById(bookingId)
     if (!booking) {
+      bookingLogger.logError({ bookingId }, "Booking not found", "Payment processing failed - booking not found")
       return { success: false, error: "Booking not found" }
     }
 

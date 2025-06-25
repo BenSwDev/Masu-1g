@@ -17,6 +17,7 @@ export interface TimeSlot {
   surcharge?: {
     description: string
     amount: number
+    professionalShare?: { amount: number; type: "fixed" | "percentage" }
   }
 }
 

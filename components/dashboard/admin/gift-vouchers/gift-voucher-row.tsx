@@ -177,7 +177,7 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
                     {t("common.email")}: {(voucher as any).guestInfo.email}
                   </p>
                   <p>
-                    {t("common.phone")}: {(voucher as any).guestInfo.phone}
+                    {t("common.phone")}: {formatPhoneForDisplay((voucher as any).guestInfo.phone || "")}
                   </p>
                 </>
               ) : (

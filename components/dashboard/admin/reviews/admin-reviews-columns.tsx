@@ -135,7 +135,7 @@ export function getAdminReviewColumns(
           <div className="space-y-1">
             <div className="font-medium">{user.name || t("common.unknown")}</div>
             <div className="text-xs text-muted-foreground">
-              {user.phone || "-"}
+              {formatPhoneForDisplay(user.phone || "")}
             </div>
             <div className="text-xs text-muted-foreground">
               {user.email || "-"}

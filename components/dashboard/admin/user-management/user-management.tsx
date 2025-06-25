@@ -152,17 +152,7 @@ const getRoleBadgeStyle = (role: string) => {
   return styles[role] || "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
 }
 
-// Fix role translation function
-const getRoleTranslation = (role: string) => {
-  const roleKey = `roles.${role.toLowerCase()}` as const
-  return t(roleKey)
-}
 
-// Fix gender translation function  
-const getGenderTranslation = (gender: string) => {
-  const genderKey = `gender.${gender.toLowerCase()}` as const
-  return t(genderKey)
-}
 
 // In the UserManagement function parameters, uncomment initialRoleFilter
 export function UserManagement({
@@ -200,6 +190,18 @@ export function UserManagement({
   const [userForPasswordChange, setUserForPasswordChange] = useState<UserData | null>(null)
 
   const [isLoading, setIsLoading] = useState(false) // General loading state for table actions
+
+  // Fix role translation function
+  const getRoleTranslation = (role: string) => {
+    const roleKey = `roles.${role.toLowerCase()}` as const
+    return t(roleKey)
+  }
+
+  // Fix gender translation function  
+  const getGenderTranslation = (gender: string) => {
+    const genderKey = `gender.${gender.toLowerCase()}` as const
+    return t(genderKey)
+  }
 
   // Update URL when filters, sort, or page change
   useEffect(() => {
@@ -720,7 +722,7 @@ export function UserManagement({
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                     <div>
-                      <span className="font-medium">{t("admin.users.phone")}:</span> {user.phone || t("common.notSet")}
+                                              <span className="font-medium">{t("admin.users.phone")}:</span> {user.phone || t("common.notSet")}
                     </div>
                     <div>
                       <span className="font-medium">{t("admin.users.gender")}:</span> {getGenderDisplay(user.gender)}
@@ -793,7 +795,7 @@ export function UserManagement({
                         </Avatar>
                       </TableCell>
                       <TableCell className="font-medium">{user.name || t("common.notSet")}</TableCell>
-                      <TableCell>{user.phone || t("common.notSet")}</TableCell>
+                                              <TableCell>{user.phone || t("common.notSet")}</TableCell>
                       <TableCell>{user.email || t("common.notSet")}</TableCell>
                       <TableCell>{getRolesDisplay(user.roles)}</TableCell>
                       <TableCell>

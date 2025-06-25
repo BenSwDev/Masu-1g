@@ -496,7 +496,7 @@ const ClientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction })
         <div className="font-medium">{user.name || t("common.unknown")}</div>
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Phone className="h-3 w-3" />
-          {user.phone || "-"}
+                        {formatPhoneForDisplay(user.phone || "")}
         </div>
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Mail className="h-3 w-3" />

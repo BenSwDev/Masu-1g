@@ -305,7 +305,7 @@ export default function AdminGiftVoucherDetailsModal({
                         <Phone className="h-3 w-3" />
                         {t("common.phone")}
                       </span>
-                      <span className="font-medium">{(voucher as any).guestInfo.phone}</span>
+                      <span className="font-medium">{formatPhoneForDisplay((voucher as any).guestInfo.phone || "")}</span>
                     </div>
                   </>
                 ) : (

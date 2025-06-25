@@ -274,7 +274,7 @@ export default function ProfessionalBookingManagementPage() {
                 <strong>{t("professionalBookingManagement.clientDetails.name")}:</strong> {clientName}
               </p>
               <p>
-                <strong>{t("professionalBookingManagement.clientDetails.phone")}:</strong> {clientPhone}
+                <strong>{t("professionalBookingManagement.clientDetails.phone")}:</strong> {formatPhoneForDisplay(clientPhone || "")}
               </p>
               <p>
                 <strong>{t("professionalBookingManagement.clientDetails.email")}:</strong> {clientEmail}

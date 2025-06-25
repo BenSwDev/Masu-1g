@@ -251,7 +251,7 @@ export function ProfessionalProfileDialog({
                   <Label className="text-sm font-medium text-muted-foreground">טלפון</Label>
                   <div className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-muted-foreground" />
-                    <p className="text-sm">{profile.userId.phone || "-"}</p>
+                    <p className="text-sm">{formatPhoneForDisplay(profile.userId.phone || "")}</p>
                   </div>
                 </div>
                 

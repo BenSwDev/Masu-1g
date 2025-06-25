@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Textarea } from "@/components/common/ui/textarea"
 import { Label } from "@/components/common/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
@@ -487,7 +488,7 @@ export default function ProfessionalBasicInfoTab({
               <Label className="text-sm font-medium text-muted-foreground">טלפון</Label>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm">{professional.userId.phone}</p>
+                <p className="text-sm">{formatPhoneForDisplay(professional.userId.phone || "")}</p>
               </div>
             </div>
             

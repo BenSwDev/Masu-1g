@@ -14,6 +14,7 @@ import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
@@ -162,7 +163,7 @@ export default function UserSubscriptionDetailsModal({
                     />
                     <DetailItem
                       label={t("common.phone")}
-                      value={userSubscription.guestInfo.phone}
+                      value={formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}
                     />
                   </>
                 ) : (

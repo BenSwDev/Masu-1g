@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/common/ui/table"
 import PurchaseStatsOverview from "@/components/common/purchase/purchase-stats-overview"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 
@@ -92,7 +93,7 @@ export default async function AdminDashboardPage() {
                       <TableRow key={p._id}>
                         <TableCell>{p.userId?.name ?? "-"}</TableCell>
                         <TableCell>{p.userId?.email ?? "-"}</TableCell>
-                        <TableCell>{p.userId?.phone ?? "-"}</TableCell>
+                        <TableCell>{formatPhoneForDisplay(p.userId?.phone || "")}</TableCell>
                         <TableCell>
                           {new Date(p.appliedAt).toLocaleDateString("he-IL")}
                         </TableCell>

@@ -432,7 +432,7 @@ export function ProfessionalManagement({
                     <TableCell>
                       <div className="space-y-1">
                         <div className="text-sm">{professional.userId.email}</div>
-                        <div className="text-sm text-muted-foreground">{professional.userId.phone}</div>
+                        <div className="text-sm text-muted-foreground">{formatPhoneForDisplay(professional.userId.phone || "")}</div>
                       </div>
                     </TableCell>
                     <TableCell>

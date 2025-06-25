@@ -199,7 +199,7 @@ export default function GiftVoucherAdminCard({
                     )}
                   </CardTitle>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{(voucher as any).guestInfo.email}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{(voucher as any).guestInfo.phone}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{formatPhoneForDisplay((voucher as any).guestInfo.phone || "")}</p>
                 </>
               ) : (
                 <CardTitle className="text-lg mb-1">{t("common.unknownUser")}</CardTitle>

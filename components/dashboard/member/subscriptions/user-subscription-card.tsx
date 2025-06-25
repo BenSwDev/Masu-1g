@@ -170,7 +170,7 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
               variant="outline"
               size="sm"
               className="w-full sm:w-auto text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-300 hover:border-red-500"
-              onClick={() => onCancel(userSubscription._id.toString())}
+              onClick={() => onCancel(String(userSubscription._id))}
             >
               <Ban className="mr-2 h-4 w-4" />
               {t("common.cancel")}

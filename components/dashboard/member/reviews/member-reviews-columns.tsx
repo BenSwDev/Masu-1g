@@ -146,7 +146,7 @@ export const getMemberReviewColumns = (
       return (
         <div className="flex items-center gap-1">
           {review.comment && (
-            <MessageCircle className="h-4 w-4 text-blue-500" title={t("memberReviews.hasComment")} />
+            <MessageCircle className="h-4 w-4 text-blue-500" />
           )}
           {review.professionalResponse && (
             <Badge variant="outline" className="text-xs">

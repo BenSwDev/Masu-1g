@@ -223,7 +223,7 @@ export default function MemberReviewsClient() {
       
       {data && data.totalReviews > 0 && (
         <div className="mt-4 text-sm text-muted-foreground text-center">
-          {t("memberReviews.totalReviews", { count: data.totalReviews })}
+          {t("memberReviews.totalReviews")}: {data.totalReviews}
         </div>
       )}
 

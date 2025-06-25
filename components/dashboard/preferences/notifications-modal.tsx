@@ -20,7 +20,7 @@ interface NotificationsModalProps {
   currentPreferences: INotificationPreferences | undefined
 }
 
-const defaultPrefs: INotificationPreferences = { methods: ["email", "sms"], language: "he" }
+const defaultPrefs: INotificationPreferences = { methods: ["sms", "email"], language: "he" }
 
 export function NotificationsModal({ isOpen, onClose, currentPreferences }: NotificationsModalProps) {
   const [selectedMethods, setSelectedMethods] = useState<INotificationPreferences["methods"]>(

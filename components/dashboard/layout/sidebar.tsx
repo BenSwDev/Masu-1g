@@ -327,8 +327,7 @@ export function DashboardSidebar({ isMobileOpen, onMobileOpenChange }: SidebarPr
         title: t(`dashboard.sidebar.${item.titleKey}`),
         icon: item.icon,
         href,
-        isActive: pathname === href,
-        section: item.section,
+        isActive: pathname === href || pathname.startsWith(href + "/"),
       })
     })
     return baseItems

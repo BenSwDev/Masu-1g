@@ -18,11 +18,11 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
   const searchParams = useSearchParams()
   const { t, dir } = useTranslation()
 
-  const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData.coupons)
+  const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData.coupons || [])
   const [pagination, setPagination] = React.useState({
-    totalPages: initialData.totalPages,
-    currentPage: initialData.currentPage,
-    totalCoupons: initialData.totalCoupons,
+    totalPages: 1,
+    currentPage: 1,
+    totalCoupons: 0,
   })
   const [loading, setLoading] = React.useState(false)
 
@@ -42,7 +42,10 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
       {/* Add Filters here if needed */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {coupons.map((coupon) => (
-          <AssignedCouponCard key={coupon._id.toString()} coupon={coupon} />
+          <AssignedCouponCard 
+            key={String(coupon._id)} 
+            coupon={coupon as any} 
+          />
         ))}
       </div>
       {/* Add Pagination controls here if totalPages > 1 */}
@@ -55,10 +58,7 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
             {t("partnerAssignedCoupons.pagination.previous")}
           </Button>
           <span className="p-2">
-            {t("partnerAssignedCoupons.pagination.pageInfo", {
-              currentPage: pagination.currentPage,
-              totalPages: pagination.totalPages,
-            })}
+            {t("partnerAssignedCoupons.pagination.pageInfo")} - {t("common.page")}: {pagination.currentPage}, {t("common.totalPages")}: {pagination.totalPages}
           </span>
           <Button
             onClick={() => router.push(`/dashboard/partner/assigned-coupons?page=${pagination.currentPage + 1}`)}
@@ -69,7 +69,7 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
         </div>
       )}
       <p className="text-sm text-muted-foreground mt-4 text-center">
-        {t("partnerAssignedCoupons.totalAssigned", { count: pagination.totalCoupons })}
+        {t("partnerAssignedCoupons.totalAssigned")}: {pagination.totalCoupons}
       </p>
     </div>
   )

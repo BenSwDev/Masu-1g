@@ -263,11 +263,7 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
       {data && data.totalPages > 1 && (
         <div className="flex-shrink-0 flex items-center justify-between border-t pt-4 bg-white">
           <div className="text-sm text-muted-foreground">
-            {t("memberBookings.showingPage", { 
-              current: currentPage, 
-              total: data.totalPages,
-              totalBookings: data.totalBookings
-            })}
+            {t("memberBookings.showingPage")} - {t("common.page")}: {currentPage}, {t("common.totalPages")}: {data.totalPages}, {t("common.totalBookings")}: {data.totalBookings}
           </div>
           
           <div className="flex items-center space-x-2">
@@ -329,7 +325,7 @@ export default function MemberBookingsClient({ userId }: { userId: string }) {
 
       {data && data.totalBookings > 0 && (
         <div className="mt-4 text-sm text-muted-foreground text-center">
-          {t("memberBookings.totalBookings", { count: data.totalBookings })}
+          {t("memberBookings.totalBookings")}: {data.totalBookings}
         </div>
       )}
     </div>

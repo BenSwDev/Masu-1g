@@ -241,7 +241,7 @@ export async function POST(request: NextRequest) {
           if (userForNotification && treatment) {
             const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
             const lang = userForNotification.notificationPreferences?.language || "he"
-            const methods = userForNotification.notificationPreferences?.methods || ["email"]
+            const methods = userForNotification.notificationPreferences?.methods || ["sms"]
             const recipients: any[] = []
 
             if (methods.includes("email") && userForNotification.email) {

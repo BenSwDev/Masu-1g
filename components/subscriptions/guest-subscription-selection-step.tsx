@@ -35,9 +35,9 @@ export default function GuestSubscriptionSelectionStep({
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {subscriptions.map((sub) => (
           <Card
-            key={sub._id.toString()}
-            className={`cursor-pointer border-2 transition-all ${selectedId === sub._id.toString() ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"}`}
-            onClick={() => onSelect(sub._id.toString())}
+            key={String(sub._id)}
+            className={`cursor-pointer border-2 transition-all ${selectedId === String(sub._id) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"}`}
+            onClick={() => onSelect(String(sub._id))}
           >
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

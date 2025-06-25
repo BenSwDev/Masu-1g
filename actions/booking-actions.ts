@@ -788,8 +788,8 @@ export async function createBooking(
         staticTherapistPay: validatedPayload.staticPricingData?.staticTherapistPay || 0,
         companyFee: validatedPayload.staticPricingData?.companyFee || 0,
         consents: validatedPayload.consents || {
-          customerAlerts: "email",
-          patientAlerts: "email",
+          customerAlerts: "sms",
+          patientAlerts: "sms",
           marketingOptIn: false,
           termsAccepted: false
         },
@@ -1489,7 +1489,7 @@ export async function professionalAcceptBooking(
 
         if (clientUser && treatment && professional) {
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
-          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
+          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["sms"]
 
           const baseUrl =
             process.env.NEXT_PUBLIC_APP_URL ||
@@ -1962,7 +1962,7 @@ export async function assignProfessionalToBooking(
         if (clientUser && professional && treatment) {
           // Client notification
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
-          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
+          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["sms"]
 
           const baseUrl =
             process.env.NEXT_PUBLIC_APP_URL ||
@@ -1992,7 +1992,7 @@ export async function assignProfessionalToBooking(
 
           // Professional notification
           const professionalLang = (professional.notificationPreferences?.language as NotificationLanguage) || "he"
-          const professionalNotificationMethods = professional.notificationPreferences?.methods || ["email"]
+          const professionalNotificationMethods = professional.notificationPreferences?.methods || ["sms"]
 
           const professionalNotificationData: ProfessionalBookingNotificationData = {
             type: "BOOKING_ASSIGNED_PROFESSIONAL",
@@ -2347,8 +2347,8 @@ export async function createGuestBooking(
         staticTherapistPay,
         companyFee,
         consents: validatedPayload.consents || {
-          customerAlerts: "email",
-          patientAlerts: "email",
+          customerAlerts: "sms",
+          patientAlerts: "sms",
           marketingOptIn: false,
           termsAccepted: true // Default to true for guest bookings
         },

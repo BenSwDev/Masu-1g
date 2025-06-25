@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/common/ui/dialog"
@@ -14,6 +14,7 @@ import { PhoneInput } from "@/components/common/phone-input"
 import { useToast } from "@/components/common/ui/use-toast"
 import { createUserByAdmin, updateUserByAdmin } from "@/actions/admin-actions"
 import { useTranslation } from "@/lib/translations/i18n"
+import { format } from "date-fns"
 
 export interface UserData {
   id: string
@@ -32,49 +33,49 @@ interface UserFormDialogProps {
   onSuccess: () => void
 }
 
-const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
-  email: z.string().email({ message: "Invalid email address" }).optional().or(z.literal("")),
-  phone: z.string().min(10, { message: "Phone must be at least 10 characters" }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters" }).optional(),
+const userFormSchema = z.object({
+  name: z.string().min(2, { message: "שם חייב להיות לפחות 2 תווים" }),
+  phone: z.string().min(10, { message: "מספר טלפון לא תקין" }),
+  email: z.string().email({ message: "כתובת אימייל לא תקינה" }).optional().or(z.literal("")),
+  password: z.string().min(8, { message: "סיסמה חייבת להיות לפחות 8 תווים" }).optional(),
   gender: z.enum(["male", "female", "other"]),
+  roles: z.array(z.enum(["admin", "professional", "member", "partner"])).min(1, { message: "חובה לבחור לפחות תפקיד אחד" }),
   dateOfBirth: z.string().optional(),
-  roles: z.array(z.enum(["admin", "member", "professional", "partner"])).min(1),
 })
 
-type FormValues = z.infer<typeof formSchema>
+type UserFormData = z.infer<typeof userFormSchema>
 
 export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }: UserFormDialogProps) {
   const { t } = useTranslation()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<UserFormData>({
+    resolver: zodResolver(userFormSchema),
     defaultValues: {
       name: initialData?.name || "",
-      email: initialData?.email || "",
       phone: initialData?.phone || "",
+      email: initialData?.email || "",
       password: "",
       gender: (initialData?.gender as "male" | "female" | "other") || "male",
-      dateOfBirth: initialData?.dateOfBirth || "",
       roles: initialData?.roles || ["member"],
+      dateOfBirth: initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "yyyy-MM-dd") : "",
     },
   })
 
   useEffect(() => {
     form.reset({
       name: initialData?.name || "",
-      email: initialData?.email || "",
       phone: initialData?.phone || "",
+      email: initialData?.email || "",
       password: "",
       gender: (initialData?.gender as "male" | "female" | "other") || "male",
-      dateOfBirth: initialData?.dateOfBirth || "",
       roles: initialData?.roles || ["member"],
+      dateOfBirth: initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "yyyy-MM-dd") : "",
     })
   }, [initialData, form])
 
-  async function onSubmit(values: FormValues) {
+  async function onSubmit(values: UserFormData) {
     try {
       setLoading(true)
       const data = new FormData()
@@ -197,64 +198,73 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
                 )}
               />
             )}
-            <FormField
+            <Controller
               control={form.control}
               name="gender"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("admin.users.form.gender")}</FormLabel>
-                  <FormControl>
-                    <Select value={field.value} onValueChange={field.onChange} disabled={loading}>
-                      <SelectTrigger>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger disabled={loading}>
                         <SelectValue placeholder={t("admin.users.form.genderPlaceholder") || ""} />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="male">{t("gender.male", "Male")}</SelectItem>
-                        <SelectItem value="female">{t("gender.female", "Female")}</SelectItem>
-                        <SelectItem value="other">{t("gender.other", "Other")}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="male">{t("admin.users.form.male")}</SelectItem>
+                      <SelectItem value="female">{t("admin.users.form.female")}</SelectItem>
+                      <SelectItem value="other">{t("admin.users.form.other")}</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
+            <Controller
+              control={form.control}
+              name="roles"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t("admin.users.form.roles")}</FormLabel>
+                  <div className="flex flex-col space-y-2">
+                    {["admin", "professional", "member", "partner"].map((role) => (
+                      <div key={role} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={role}
+                          checked={field.value.includes(role as any)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              field.onChange([...field.value, role])
+                            } else {
+                              field.onChange(field.value.filter((r: string) => r !== role))
+                            }
+                          }}
+                          disabled={loading}
+                        />
+                        <label htmlFor={role} className="text-sm font-medium">
+                          {t(`admin.users.form.${role}`)}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Controller
               control={form.control}
               name="dateOfBirth"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("admin.users.form.dateOfBirth")}</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} disabled={loading} placeholder={t("admin.users.form.dateOfBirthPlaceholder") || ""} />
+                    <Input
+                      type="date"
+                      {...field}
+                      disabled={loading}
+                      placeholder={t("admin.users.form.dateOfBirthPlaceholder") || ""}
+                    />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="roles"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("admin.users.form.roles")}</FormLabel>
-                  <div className="space-y-2">
-                    {(["admin", "member", "professional", "partner"] as const).map((role) => (
-                      <label key={role} className="flex items-center gap-2">
-                        <Checkbox
-                          checked={field.value.includes(role)}
-                          onCheckedChange={(checked) => {
-                            const checkedBool = checked === true
-                            const newRoles = checkedBool
-                              ? [...field.value, role]
-                              : field.value.filter((r) => r !== role)
-                            field.onChange(newRoles)
-                          }}
-                        />
-                        {t(`roles.${role}`)}
-                      </label>
-                    ))}
-                  </div>
                   <FormMessage />
                 </FormItem>
               )}

@@ -22,21 +22,26 @@ import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { Separator } from "@/components/common/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
 
-interface PopulatedUserSubscription extends IUserSubscription {
-  userId?: Pick<NextAuthUser, "name" | "email"> & { _id: string } | null
-  subscriptionId: ISubscription
-  treatmentId: ITreatment
-  selectedDurationDetails?: ITreatmentDuration
-  paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId'> {
+  userId?: {
+    _id: string
+    name: string
+    email?: string
+  } | null
+  subscriptionId?: {
+    _id: string
+    name: string
+    description?: string
+    price: number
+    duration: number
+    treatments: string[]
+    isActive: boolean
+  }
   guestInfo?: {
     name: string
-    email: string
+    email?: string
     phone: string
   }
-  cancellationDate?: Date | string | null
-  paymentDate?: Date | string | null
-  transactionId?: string | null
-  usedQuantity?: number
 }
 
 interface UserSubscriptionDetailsModalProps {
@@ -175,7 +180,7 @@ export default function UserSubscriptionDetailsModal({
               </h3>
               <dl className="divide-y divide-gray-200 dark:divide-gray-700">
                 <DetailItem label={t("common.name")} value={userSubscription.subscriptionId?.name} />
-                <DetailItem label={t("common.id")} value={userSubscription.subscriptionId?._id.toString()} />
+                <DetailItem label={t("common.id")} value={userSubscription.subscriptionId?._id ? String(userSubscription.subscriptionId._id) : undefined} />
                 <DetailItem
                   label={t("common.status")}
                   value={<Badge className={statusInfo.className}>{statusInfo.label}</Badge>}

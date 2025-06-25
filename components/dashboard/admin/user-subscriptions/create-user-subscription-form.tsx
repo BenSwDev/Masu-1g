@@ -211,9 +211,9 @@ export default function CreateUserSubscriptionForm({ onSubmit, isLoading = false
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {selectedTreatment.durations.map((duration) => (
-                      <SelectItem key={duration._id} value={duration._id}>
-                        {duration.name} - {duration.price} {t("common.currency")}
+                    {selectedTreatment && selectedTreatment.durations && selectedTreatment.durations.map((duration) => (
+                      <SelectItem key={duration._id.toString()} value={duration._id.toString()}>
+                        {duration.minutes} דקות - ₪{duration.price}
                       </SelectItem>
                     ))}
                   </SelectContent>

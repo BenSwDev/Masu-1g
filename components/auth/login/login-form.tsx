@@ -62,7 +62,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
 
       const result = await signIn("credentials", {
         redirect: false,
-        email: identifier, // זה יהיה טלפון
+        phone: identifier,
         password,
       })
 

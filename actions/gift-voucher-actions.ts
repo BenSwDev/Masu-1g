@@ -941,7 +941,7 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
 
         if (purchaser) {
           const lang = purchaser.notificationPreferences?.language || "he"
-          const methods = purchaser.notificationPreferences?.methods || ["email", "sms"]
+          const methods = purchaser.notificationPreferences?.methods || ["sms", "email"]
           const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
 
           let messageContent: string

@@ -137,13 +137,13 @@ UserSchema.pre("save", function (next) {
     this.treatmentPreferences = { therapistGender: "any" }
   }
   if (this.isNew || !this.notificationPreferences) {
-    this.notificationPreferences = { methods: ["email", "sms"], language: "he" }
+    this.notificationPreferences = { methods: ["sms", "email"], language: "he" }
   }
   if (this.treatmentPreferences && (this.treatmentPreferences as any).therapistGender === undefined) {
     (this.treatmentPreferences as any).therapistGender = "any"
   }
   if (this.notificationPreferences && (this.notificationPreferences as any).methods === undefined) {
-    (this.notificationPreferences as any).methods = ["email", "sms"]
+    (this.notificationPreferences as any).methods = ["sms", "email"]
   }
   if (this.notificationPreferences && (this.notificationPreferences as any).language === undefined) {
     (this.notificationPreferences as any).language = "he"

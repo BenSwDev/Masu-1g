@@ -124,19 +124,19 @@ export function GuestPaymentStep({
   const [termsAccepted, setTermsAccepted] = useState(true);
   
   // ➕ שדות הסכמות חדשים
-  const [customerAlerts, setCustomerAlerts] = useState<"sms" | "email" | "none">("email");
-  const [patientAlerts, setPatientAlerts] = useState<"sms" | "email" | "none">("email");
+  const [customerAlerts, setCustomerAlerts] = useState<"sms" | "email" | "none">("sms");
+  const [patientAlerts, setPatientAlerts] = useState<"sms" | "email" | "none">("sms");
 
   // Notification preferences state
   const [bookerNotificationMethod, setBookerNotificationMethod] = useState<
     "email" | "sms" | "both"
-  >(guestInfo.bookerNotificationMethod || "email");
+  >(guestInfo.bookerNotificationMethod || "sms");
   const [bookerNotificationLanguage, setBookerNotificationLanguage] = useState<
     "he" | "en" | "ru"
   >(guestInfo.bookerNotificationLanguage || "he");
   const [recipientNotificationMethod, setRecipientNotificationMethod] =
     useState<"email" | "sms" | "both">(
-      guestInfo.recipientNotificationMethod || "email",
+      guestInfo.recipientNotificationMethod || "sms",
     );
   const [recipientNotificationLanguage, setRecipientNotificationLanguage] =
     useState<"he" | "en" | "ru">(

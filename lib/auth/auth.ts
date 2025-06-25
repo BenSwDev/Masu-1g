@@ -99,7 +99,7 @@ function getDefaultActiveRole(roles: string[]): string {
 }
 
 const defaultTreatmentPreferences: ITreatmentPreferences = { therapistGender: "any" }
-const defaultNotificationPreferences: INotificationPreferences = { methods: ["email", "sms"], language: "he" }
+const defaultNotificationPreferences: INotificationPreferences = { methods: ["sms", "email"], language: "he" }
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise) as any,
@@ -107,15 +107,15 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        phone: { label: "Phone", type: "tel" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing email or password")
+        if (!credentials?.phone || !credentials?.password) {
+          throw new Error("Missing phone or password")
         }
         await dbConnect()
-        const identifier = credentials.email.toLowerCase().trim()
+        const identifier = credentials.phone.toLowerCase().trim()
         let query: any = {}
         
         if (validatePhone(identifier)) {

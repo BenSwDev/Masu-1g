@@ -286,7 +286,7 @@ export async function purchaseSubscription({
         .lean()
       if (purchaser) {
         const lang = purchaser.notificationPreferences?.language || "he"
-        const methods = purchaser.notificationPreferences?.methods || ["email", "sms"]
+        const methods = purchaser.notificationPreferences?.methods || ["sms", "email"]
         const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
         const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
         const messageHe = `תודה על רכישתך! קוד המנוי שלך: ${newUserSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד.\n\nניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`

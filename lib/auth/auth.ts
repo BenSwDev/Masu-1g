@@ -61,31 +61,16 @@ export function validateEmail(email: string): boolean {
 }
 
 export function validatePhone(phone: string): boolean {
-  let cleaned = phone.replace(/[^\d+]/g, "")
-  if (!cleaned.startsWith("+")) {
-    if (cleaned.startsWith("0")) {
-      cleaned = "+972" + cleaned.substring(1)
-    } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-      cleaned = "+972" + cleaned
-    } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-      cleaned = "+" + cleaned
-    } else if (cleaned.length === 10 && /^[5-9]/.test(cleaned)) {
-      cleaned = "+972" + cleaned
-    } else {
-      cleaned = "+972" + cleaned
-    }
-  } else {
-    if (cleaned.startsWith("+9720")) {
-      cleaned = "+972" + cleaned.substring(5)
-    }
+  // Use the centralized phone validation
+  try {
+    const { validatePhoneNumber } = require("@/lib/utils/phone-utils")
+    return validatePhoneNumber(phone)
+  } catch {
+    // Fallback validation if import fails
+    if (!phone) return false
+    const cleaned = phone.replace(/[^\d+]/g, "")
+    return cleaned.startsWith("+") && cleaned.length >= 9 && cleaned.length <= 15
   }
-  if (cleaned.startsWith("+972")) {
-    const nationalNumber = cleaned.substring(4)
-    if (!nationalNumber.startsWith("5") || nationalNumber.length !== 9) {
-      return false
-    }
-  }
-  return true
 }
 
 // Helper function to determine the default active role based on priority
@@ -119,21 +104,8 @@ export const authOptions: NextAuthOptions = {
         let query: any = {}
         
         if (validatePhone(identifier)) {
-          let cleaned = identifier.replace(/[^\d+]/g, "")
-          if (!cleaned.startsWith("+")) {
-            if (cleaned.startsWith("0")) {
-              cleaned = "+972" + cleaned.substring(1)
-            } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-              cleaned = "+972" + cleaned
-            } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-              cleaned = "+" + cleaned
-            } else {
-              cleaned = "+972" + cleaned
-            }
-          }
-          if (cleaned.startsWith("+9720")) {
-            cleaned = "+972" + cleaned.substring(5)
-          }
+          const { normalizePhoneNumber } = await import("@/lib/utils/phone-utils")
+          const cleaned = normalizePhoneNumber(identifier)
           query = { phone: cleaned }
         } else {
           throw new Error("Invalid phone format - only phone login is supported")

@@ -254,7 +254,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               {recipientPhone &&
                 renderDetailItem(
                   t("bookings.confirmation.recipientPhone"),
-                  recipientPhone,
+                  formatPhoneForDisplay(recipientPhone || ""),
                   <Phone className="h-4 w-4" />,
                 )}
               <Separator className="my-2" />

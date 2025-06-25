@@ -34,6 +34,7 @@ import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getAvailableProfessionals, assignProfessionalToBooking, updateBookingByAdmin } from "@/actions/booking-actions"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 type TFunction = (key: string, options?: any) => string
 
@@ -238,7 +239,7 @@ export default function EnhancedBookingModal({
                   {bookedByInfo.phone && (
                     <div className="flex items-center gap-2 text-sm">
                       <Phone className="h-4 w-4 text-gray-400" />
-                      <span>{bookedByInfo.phone}</span>
+                      <span>{formatPhoneForDisplay(bookedByInfo.phone || "")}</span>
                     </div>
                   )}
                   
@@ -302,7 +303,7 @@ export default function EnhancedBookingModal({
                       </div>
                       {booking.recipientPhone && (
                         <div className="text-sm text-orange-600 mt-1">
-                          טלפון: {booking.recipientPhone}
+                          טלפון: {formatPhoneForDisplay(booking.recipientPhone || "")}
                         </div>
                       )}
                     </div>
@@ -599,7 +600,7 @@ export default function EnhancedBookingModal({
                       {professional.phone && (
                         <div className="flex items-center gap-2 text-sm text-green-700">
                           <Phone className="h-4 w-4" />
-                          <span>{professional.phone}</span>
+                          <span>{formatPhoneForDisplay(professional.phone || "")}</span>
                         </div>
                       )}
                     </div>

@@ -27,6 +27,7 @@ import type { User as NextAuthUser } from "next-auth"
 import { useTranslation } from "@/lib/translations/i18n"
 import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 import { useRouter } from "next/navigation"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId'> {
   userId?: {
@@ -182,7 +183,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                     </Badge>
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.email}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.phone}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}</span>
                 </>
               ) : (
                 <span className="font-medium text-gray-900 dark:text-gray-100">

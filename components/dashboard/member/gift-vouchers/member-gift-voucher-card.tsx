@@ -9,6 +9,7 @@ import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { Gift, CreditCard, Calendar, User, MessageCircle, Phone, Clock, Eye, ShoppingBag } from "lucide-react"
 import { format, parseISO } from "date-fns"
 import { cn } from "@/lib/utils/utils"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface MemberGiftVoucherCardProps {
   voucher: GiftVoucherPlain
@@ -141,7 +142,7 @@ export default function MemberGiftVoucherCard({ voucher, onUse, onViewDetails }:
               {voucher.recipientPhone && voucher.purchaserUserId === voucher.ownerUserId && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Phone className="h-3 w-3" />
-                  <span className="font-medium">{voucher.recipientPhone}</span>
+                  <span className="font-medium">{formatPhoneForDisplay(voucher.recipientPhone || "")}</span>
                 </div>
               )}
 

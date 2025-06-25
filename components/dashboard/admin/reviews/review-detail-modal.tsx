@@ -187,7 +187,7 @@ export default function ReviewDetailModal({
                       <div className="flex items-center space-x-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{t("adminReviews.recipientPhone")}:</span>
-                        <span>{bookingInfo.recipientPhone}</span>
+                        <span>{formatPhoneForDisplay(bookingInfo.recipientPhone || "")}</span>
                       </div>
                     )}
                     {bookingInfo.recipientEmail && (

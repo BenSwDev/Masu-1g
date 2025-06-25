@@ -9,6 +9,7 @@ import type { PopulatedReview } from "@/types/review"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { ArrowUpDown } from "lucide-react"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 type TFunction = (key: string, options?: any) => string
 
@@ -111,7 +112,7 @@ export function getAdminReviewColumns(
           <div className="space-y-1">
             <div className="font-medium">{professional.name || t("common.unknown")}</div>
             <div className="text-xs text-muted-foreground">
-              {professional.phone || "-"}
+              {formatPhoneForDisplay(professional.phone || "")}
             </div>
             <div className="text-xs text-muted-foreground">
               {professional.email || "-"}
@@ -164,7 +165,7 @@ export function getAdminReviewColumns(
             <div className="font-medium">{recipient}</div>
             {booking.recipientPhone && (
               <div className="text-xs text-muted-foreground">
-                {booking.recipientPhone}
+                {formatPhoneForDisplay(booking.recipientPhone || "")}
               </div>
             )}
             {booking.recipientEmail && (

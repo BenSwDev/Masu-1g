@@ -2326,9 +2326,20 @@ export async function createGuestBooking(
       // Company fee is the difference
       const companyFee = Math.max(0, staticTreatmentPrice - staticTherapistPay)
 
+      // Find or create user by phone to ensure all bookings are associated with a user
+      const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+      const userResult = await findOrCreateUserByPhone(guestInfo.phone, {
+        name: guestInfo.name,
+        email: guestInfo.email,
+      })
+
+      if (!userResult.success || !userResult.userId) {
+        throw new Error("Failed to create or find user for guest booking")
+      }
+
       const newBooking = new Booking({
         ...validatedPayload,
-        userId: null, // Guest booking - no user association initially
+        userId: new mongoose.Types.ObjectId(userResult.userId), // Associate booking with user
         bookingNumber,
         bookedByUserName: guestInfo.name,
         bookedByUserEmail: validatedPayload.guestInfo.email || undefined, // Store original email, not modified one

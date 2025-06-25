@@ -50,6 +50,7 @@ import { SuitableProfessionalsModal } from "./suitable-professionals-modal"
 import ReviewDetailModal from "../reviews/review-detail-modal"
 import SendReviewDialog from "./send-review-dialog"
 import { getReviewByBookingId } from "@/actions/review-actions"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 type TFunction = (key: string, options?: any) => string
 
@@ -514,7 +515,7 @@ const ClientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction })
       {booking.bookedByUserPhone || booking.recipientPhone ? (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Phone className="h-3 w-3" />
-          {booking.bookedByUserPhone || booking.recipientPhone}
+          {formatPhoneForDisplay(booking.bookedByUserPhone || booking.recipientPhone || "")}
         </div>
       ) : null}
       {booking.bookedByUserEmail || booking.recipientEmail ? (
@@ -542,7 +543,7 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
       <div className="font-medium">{professional.name || t("common.unknown")}</div>
       <div className="text-xs text-muted-foreground flex items-center gap-1">
         <Phone className="h-3 w-3" />
-        {professional.phone || "-"}
+                        {formatPhoneForDisplay(professional.phone || "")}
       </div>
       <div className="text-xs text-muted-foreground flex items-center gap-1">
         <Mail className="h-3 w-3" />
@@ -674,7 +675,7 @@ const RecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction
       {booking.recipientPhone && (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Phone className="h-3 w-3" />
-          {booking.recipientPhone}
+          {formatPhoneForDisplay(booking.recipientPhone || "")}
         </div>
       )}
       {booking.recipientEmail && (
@@ -814,7 +815,7 @@ const EnhancedRecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: T
       {booking.recipientPhone && (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Phone className="h-3 w-3" />
-          {booking.recipientPhone}
+          {formatPhoneForDisplay(booking.recipientPhone || "")}
         </div>
       )}
       {booking.recipientEmail && (

@@ -40,6 +40,7 @@ import type { User as NextAuthUser } from "next-auth"
 import { useTranslation } from "@/lib/translations/i18n"
 import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 import { useRouter } from "next/navigation"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> {
   userId?: {
@@ -189,7 +190,7 @@ export default function UserSubscriptionAdminCard({
                     </Badge>
                   </CardTitle>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.email}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.phone}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}</p>
                 </>
               ) : (
                 <CardTitle className="text-lg mb-1">{t("common.unknownUser")}</CardTitle>

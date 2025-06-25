@@ -119,7 +119,11 @@ export function RegisterForm({ className, ...props }: React.ComponentPropsWithou
         }
       } else {
         setSuccess(true)
-        toast({ title: t("success.registrationComplete"), variant: "default" })
+        if (result.message === "userUpgraded") {
+          toast({ title: t("errors.userUpgraded"), variant: "default" })
+        } else {
+          toast({ title: t("success.registrationComplete"), variant: "default" })
+        }
 
         const signInResult = await signIn("credentials", {
           redirect: false,

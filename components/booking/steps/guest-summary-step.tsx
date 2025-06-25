@@ -12,6 +12,7 @@ import { CheckCircle, Calendar, Clock, User, Mail, Phone, FileText, CreditCard, 
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails } from "@/types/booking"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface GuestInfo {
   firstName: string
@@ -159,7 +160,7 @@ export function GuestSummaryStep({
                   <Phone className="h-4 w-4" />
                   טלפון:
                 </span>
-                <span className="font-medium">{guestInfo.phone}</span>
+                <span className="font-medium">{formatPhoneForDisplay(guestInfo.phone || "")}</span>
               </div>
               {!guestInfo.isBookingForSomeoneElse && (
                 <>
@@ -219,7 +220,7 @@ export function GuestSummaryStep({
                     <Phone className="h-4 w-4" />
                     טלפון:
                   </span>
-                  <span className="font-medium">{guestInfo.recipientPhone}</span>
+                  <span className="font-medium">{formatPhoneForDisplay(guestInfo.recipientPhone || "")}</span>
                 </div>
                 {guestInfo.recipientBirthDate && (
                   <div className="flex justify-between">

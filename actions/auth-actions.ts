@@ -5,6 +5,7 @@ import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
 import { UserQueries } from "@/lib/db/query-builders"
 import { logger } from "@/lib/logs/logger"
+import { normalizePhoneNumber, createPhoneVariations } from "@/lib/utils/phone-utils"
 
 export async function registerUser(formData: FormData) {
   const requestId = `reg_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
@@ -30,43 +31,13 @@ export async function registerUser(formData: FormData) {
     // Format phone number if provided
     let formattedPhone: string | undefined
     if (phone) {
-      // Remove all non-digit characters except the plus sign
-      let cleaned = phone.replace(/[^\d+]/g, "")
+      formattedPhone = normalizePhoneNumber(phone)
 
-      // If there's no plus sign, assume it's a local number
-      if (!cleaned.startsWith("+")) {
-        // Handle Israeli numbers specifically
-        if (cleaned.startsWith("0")) {
-          // Israeli number starting with 0 (e.g., 0525131777)
-          cleaned = "+972" + cleaned.substring(1)
-        } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-          // Israeli mobile number without 0 (e.g., 525131777)
-          cleaned = "+972" + cleaned
-        } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-          // Number with 972 but no plus (e.g., 972525131777)
-          cleaned = "+" + cleaned
-        } else {
-          // Default: assume Israeli number and add +972
-          cleaned = "+972" + cleaned
-        }
-      } else {
-        // Handle +972 numbers that might have 0 after country code
-        if (cleaned.startsWith("+9720")) {
-          // Remove the 0 after +972 (e.g., +9720525131777 -> +972525131777)
-          cleaned = "+972" + cleaned.substring(5)
-        }
+      // Validate phone number format
+      if (formattedPhone && !validatePhone(formattedPhone)) {
+        logger.warn(`[${requestId}] Invalid phone format: ${formattedPhone}`)
+        return { success: false, message: "invalidPhone" }
       }
-
-      // Validate Israeli mobile number format
-      if (cleaned.startsWith("+972")) {
-        const nationalNumber = cleaned.substring(4)
-        if (nationalNumber.length !== 9 || !/^[5-9]/.test(nationalNumber)) {
-          logger.warn(`[${requestId}] Invalid Israeli mobile format: ${cleaned}`)
-          return { success: false, message: "invalidPhone" }
-        }
-      }
-
-      formattedPhone = cleaned
     }
 
     // Parse date of birth with validation
@@ -121,12 +92,35 @@ export async function registerUser(formData: FormData) {
 
     // Check if user already exists using optimized queries
     logger.info(`[${requestId}] Checking if user already exists`)
-    const phoneExists = formattedPhone ? await UserQueries.phoneExists(formattedPhone) : false
+    const existingUser = formattedPhone ? await User.findOne({ phone: formattedPhone }) : null
 
-    if (phoneExists) {
-      logger.warn(`[${requestId}] Registration failed: Phone already exists`)
+    if (existingUser && !existingUser.roles.includes("guest")) {
+      logger.warn(`[${requestId}] Registration failed: Phone already exists for registered user`)
       return { success: false, message: "phoneExists" }
     }
+    
+    // If existing user is a guest, upgrade them to registered user
+    if (existingUser && existingUser.roles.includes("guest")) {
+      logger.info(`[${requestId}] Upgrading guest user to registered user`)
+      
+      // Hash password
+      const hashedPassword = await hashPassword(password)
+      
+      // Update existing guest user
+      existingUser.name = name
+      existingUser.email = email ? email.toLowerCase() : existingUser.email
+      existingUser.password = hashedPassword
+      existingUser.gender = gender as any
+      existingUser.dateOfBirth = dateOfBirth
+      existingUser.roles = role === "professional" ? ["professional"] : ["member"]
+      existingUser.activeRole = undefined
+      
+      await existingUser.save()
+      logger.info(`[${requestId}] Guest user successfully upgraded to registered user with ID: ${existingUser._id}`)
+      
+      return { success: true, message: "userUpgraded" }
+    }
+    
     logger.info(`[${requestId}] User does not exist, proceeding with registration`)
 
     // Hash password
@@ -184,21 +178,7 @@ export async function findOrCreateUserByPhone(phone: string, guestInfo?: {
     await dbConnect()
 
     // נרמול טלפון
-    let cleaned = phone.replace(/[^\d+]/g, "")
-    if (!cleaned.startsWith("+")) {
-      if (cleaned.startsWith("0")) {
-        cleaned = "+972" + cleaned.substring(1)
-      } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-        cleaned = "+972" + cleaned
-      } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-        cleaned = "+" + cleaned
-      } else {
-        cleaned = "+972" + cleaned
-      }
-    }
-    if (cleaned.startsWith("+9720")) {
-      cleaned = "+972" + cleaned.substring(5)
-    }
+    const cleaned = normalizePhoneNumber(phone)
 
     // בדיקה אם משתמש קיים
     const existingUser = await User.findOne({ phone: cleaned })

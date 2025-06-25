@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, Home, AlertCircle } from "lucide-react"
 import { format, isValid } from "date-fns"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { he } from "date-fns/locale"
 import Link from "next/link"
 import type { BookingInitialData } from "@/types/booking"
@@ -147,7 +148,7 @@ function GuestBookingConfirmation({
                   <Phone className="h-4 w-4" />
                   {t("confirmation.recipientPhone")}:
                 </span>
-                <span className="font-medium">{bookingResult.recipientPhone || bookingResult.bookedByUserPhone}</span>
+                <span className="font-medium">{formatPhoneForDisplay(bookingResult.recipientPhone || bookingResult.bookedByUserPhone || "")}</span>
               </div>
               {bookingResult.recipientBirthDate && (
                 <div className="flex justify-between">

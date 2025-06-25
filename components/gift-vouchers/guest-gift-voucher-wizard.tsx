@@ -16,6 +16,7 @@ import GuestGiftVoucherConfirmation from "./guest-gift-voucher-confirmation"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { CalculatedPriceDetails } from "@/types/booking"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface Props {
   treatments: ITreatment[]
@@ -310,7 +311,7 @@ export default function GuestGiftVoucherWizard({ treatments, currentUser }: Prop
             <CardContent className="space-y-2">
               <div className="flex justify-between"><span>{t("common.name")}</span><span>{guestInfo.firstName} {guestInfo.lastName}</span></div>
               <div className="flex justify-between"><span>{t("common.email")}</span><span>{guestInfo.email}</span></div>
-              <div className="flex justify-between"><span>{t("common.phone")}</span><span>{guestInfo.phone}</span></div>
+              <div className="flex justify-between"><span>{t("common.phone")}</span><span>{formatPhoneForDisplay(guestInfo.phone || "")}</span></div>
             </CardContent>
           </Card>
         </div>

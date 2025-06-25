@@ -262,7 +262,7 @@ export async function sendUserNotification(
       return { success: true, message: "Notification sent via preferred method(s)", sentVia }
     } else {
       const errorMessage = results[0]?.error || "Failed to send notification"
-      return { success: false, _message: errorMessage, error: "SEND_FAILED" }
+      return { success: false, message: errorMessage, error: "SEND_FAILED" }
     }
   } catch (error) {
     logger.error(`Error sending notification to user ${userId}:`, error)
@@ -294,7 +294,7 @@ export async function sendUserOTP(
       return { success: true, message: "OTP sent via preferred method(s)", code, expiryDate, sentVia }
     } else {
       const errorMessage = results[0]?.error || "Failed to send OTP"
-      return { success: false, _message: errorMessage, error: "SEND_FAILED" }
+      return { success: false, message: errorMessage, error: "SEND_FAILED" }
     }
   } catch (error) {
     logger.error(`Error sending OTP to user ${userId}:`, error)
@@ -562,7 +562,7 @@ export async function sendGuestNotification(
       return { success: true, message: "Notification sent successfully", sentVia }
     } else {
       const errorMessage = results[0]?.error || "Failed to send notification"
-      return { success: false, _message: errorMessage, error: "SEND_FAILED" }
+      return { success: false, message: errorMessage, error: "SEND_FAILED" }
     }
   } catch (error) {
     logger.error("Error sending guest notification:", error)
@@ -598,7 +598,7 @@ export async function sendBulkUserNotifications(
         const sentVia = userResults.map((_, index) => index === 0 ? 'email' : 'sms').filter((_, index) => userResults[index].success)
         processedResults[userId] = { success: true, sentVia }
       } else {
-        const _error = userResults[0]?.error || "Failed to send notification"
+        const error = userResults[0]?.error || "Failed to send notification"
         processedResults[userId] = { success: false, error }
       }
     })

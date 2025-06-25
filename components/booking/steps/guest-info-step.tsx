@@ -111,8 +111,7 @@ export function GuestInfoStep({
         data.recipientLastName &&
         data.recipientEmail &&
         data.recipientPhone &&
-        (hideRecipientBirthGender ? true : data.recipientBirthDate) &&
-        (hideRecipientBirthGender ? true : data.recipientGender)
+        (hideRecipientBirthGender ? true : data.recipientBirthDate && data.recipientGender)
       )
     }
     return true
@@ -120,11 +119,11 @@ export function GuestInfoStep({
     message: t("guestInfo.validation.recipientDetailsRequired"),
     path: ["recipientFirstName"]
   }).refine((data) => {
-    // Check age requirement for recipient
+    // Check age requirement for recipient when booking for someone else
     if (!hideRecipientBirthGender && data.isBookingForSomeoneElse && data.recipientBirthDate) {
       return isAtLeast16YearsOld(data.recipientBirthDate)
     }
-    // Check age requirement for booker when not booking for someone else
+    // Check age requirement for booker when not booking for someone else (only if provided)
     if (!data.isBookingForSomeoneElse && data.birthDate) {
       return isAtLeast16YearsOld(data.birthDate)
     }
@@ -189,6 +188,24 @@ export function GuestInfoStep({
       form.setValue("recipientPhone", "")
       form.setValue("recipientBirthDate", undefined)
       form.setValue("recipientGender", undefined)
+      
+      // Also clear from parent state to prevent stale data
+      setGuestInfo({
+        ...guestInfo,
+        isBookingForSomeoneElse: checked,
+        recipientFirstName: "",
+        recipientLastName: "",
+        recipientEmail: "",
+        recipientPhone: "",
+        recipientBirthDate: undefined,
+        recipientGender: undefined,
+      })
+    } else {
+      // When enabling booking for someone else, update parent state
+      setGuestInfo({
+        ...guestInfo,
+        isBookingForSomeoneElse: checked,
+      })
     }
   }
 

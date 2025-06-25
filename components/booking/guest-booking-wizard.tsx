@@ -21,6 +21,7 @@ import NotificationPreferencesSelector from "./notification-preferences-selector
 import { 
   calculateBookingPrice, 
   createGuestBooking, 
+  createBooking,
   getAvailableTimeSlots,
   createGuestUser,
   saveAbandonedBooking,
@@ -773,6 +774,7 @@ export default function UniversalBookingWizard({
           email: guestInfo.email!,
           phone: guestInfo.phone!,
         },
+        isBookingForSomeoneElse: Boolean(guestInfo.isBookingForSomeoneElse),
         recipientName: guestInfo.isBookingForSomeoneElse 
           ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
           : `${guestInfo.firstName} ${guestInfo.lastName}`,
@@ -807,9 +809,15 @@ export default function UniversalBookingWizard({
         },
       } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
 
-
-      const result = await createGuestBooking(payload)
-      
+      // Choose the correct function based on user type
+      const result = currentUser 
+        ? await createBooking({
+            ...payload,
+            userId: currentUser.id, // Use actual user ID for registered users
+            // Remove guestInfo for registered users as it's not needed
+            guestInfo: undefined
+          })
+        : await createGuestBooking(payload)
       
       if (result.success && result.booking) {
         setPendingBookingId(String(result.booking._id))

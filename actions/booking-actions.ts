@@ -719,6 +719,12 @@ export async function createBooking(
         bookedByUserName: bookingUser.name,
         bookedByUserEmail: bookingUser.email,
         bookedByUserPhone: bookingUser.phone,
+        // Add recipient fields for "booking for someone else" logic
+        recipientName: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientName : bookingUser.name,
+        recipientPhone: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientPhone : bookingUser.phone,
+        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : bookingUser.email,
+        recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
+        recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
         status: "pending_payment", // Will be updated to "in_process" after successful payment
         // Required fields with defaults for backward compatibility

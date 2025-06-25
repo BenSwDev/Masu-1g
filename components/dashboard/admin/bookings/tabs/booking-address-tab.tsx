@@ -19,6 +19,7 @@ import {
   AlertTriangle
 } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
+import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
 import { CitySelectForm } from "@/components/common/ui/city-select-form"
 
 interface BookingAddressTabProps {
@@ -29,11 +30,30 @@ interface BookingAddressTabProps {
 export default function BookingAddressTab({ booking, onUpdate }: BookingAddressTabProps) {
   const { t } = useTranslation()
   const [isEditing, setIsEditing] = useState(false)
-  const [tempAddress, setTempAddress] = useState(booking.bookingAddressSnapshot || {})
+  const [tempAddress, setTempAddress] = useState<Partial<IBookingAddressSnapshot>>(booking.bookingAddressSnapshot || {})
 
   const handleSave = () => {
-    onUpdate({ bookingAddressSnapshot: tempAddress })
-    setIsEditing(false)
+    if (tempAddress.city && tempAddress.street) {
+      // Ensure required fields are present and construct fullAddress if needed
+      const updatedAddress: IBookingAddressSnapshot = {
+        fullAddress: tempAddress.fullAddress || `${tempAddress.street} ${tempAddress.streetNumber || ''} ${tempAddress.city}`.trim(),
+        city: tempAddress.city,
+        street: tempAddress.street,
+        streetNumber: tempAddress.streetNumber,
+        apartment: tempAddress.apartment,
+        entrance: tempAddress.entrance,
+        floor: tempAddress.floor,
+        notes: tempAddress.notes,
+        doorName: tempAddress.doorName,
+        buildingName: tempAddress.buildingName,
+        hotelName: tempAddress.hotelName,
+        roomNumber: tempAddress.roomNumber,
+        otherInstructions: tempAddress.otherInstructions,
+        hasPrivateParking: tempAddress.hasPrivateParking
+      }
+      onUpdate({ bookingAddressSnapshot: updatedAddress })
+      setIsEditing(false)
+    }
   }
 
   const handleCancel = () => {
@@ -206,6 +226,70 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                     </Badge>
                   )}
                 </div>
+
+                {/* Door Name (for house/private) */}
+                {(address.doorName || isEditing) && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">שם על הדלת</Label>
+                    {isEditing ? (
+                      <Input
+                        value={tempAddress.doorName || ""}
+                        onChange={(e) => setTempAddress({...tempAddress, doorName: e.target.value})}
+                        placeholder="שם דלת (עבור בית פרטי)"
+                      />
+                    ) : (
+                      <p className="text-sm">{address.doorName || "לא צוין"}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Building Name (for office) */}
+                {(address.buildingName || isEditing) && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">שם בניין</Label>
+                    {isEditing ? (
+                      <Input
+                        value={tempAddress.buildingName || ""}
+                        onChange={(e) => setTempAddress({...tempAddress, buildingName: e.target.value})}
+                        placeholder="שם בניין (עבור משרד)"
+                      />
+                    ) : (
+                      <p className="text-sm">{address.buildingName || "לא צוין"}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Hotel Name (for hotel) */}
+                {(address.hotelName || isEditing) && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">שם מלון</Label>
+                    {isEditing ? (
+                      <Input
+                        value={tempAddress.hotelName || ""}
+                        onChange={(e) => setTempAddress({...tempAddress, hotelName: e.target.value})}
+                        placeholder="שם מלון"
+                      />
+                    ) : (
+                      <p className="text-sm">{address.hotelName || "לא צוין"}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Room Number (for hotel) */}
+                {(address.roomNumber || isEditing) && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">מספר חדר</Label>
+                    {isEditing ? (
+                      <Input
+                        value={tempAddress.roomNumber || ""}
+                        onChange={(e) => setTempAddress({...tempAddress, roomNumber: e.target.value})}
+                        placeholder="מספר חדר במלון"
+                      />
+                    ) : (
+                      <p className="text-sm">{address.roomNumber || "לא צוין"}</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Full Address Display */}
@@ -300,29 +384,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
         </CardContent>
       </Card>
 
-      {/* Location Coordinates */}
-      {address?.coordinates && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Navigation className="w-5 h-5" />
-              קואורדינטות מיקום
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">קו רוחב (Latitude)</Label>
-                <p className="text-sm font-mono">{address.coordinates.lat}</p>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">קו אורך (Longitude)</Label>
-                <p className="text-sm font-mono">{address.coordinates.lng}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
 
       {/* Guidelines */}
       <Card className="border-blue-200 bg-blue-50">

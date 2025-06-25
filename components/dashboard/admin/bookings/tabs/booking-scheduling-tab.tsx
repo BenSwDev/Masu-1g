@@ -1,9 +1,7 @@
 "use client"
 
-import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { Label } from "@/components/common/ui/label"
 import { format } from "date-fns"
@@ -61,17 +59,16 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
   }
 
   const getDuration = () => {
-    if (!booking.startTime || !booking.endTime) return "לא צוין"
-    const start = new Date(booking.startTime)
-    const end = new Date(booking.endTime)
-    const durationMs = end.getTime() - start.getTime()
-    const durationHours = Math.floor(durationMs / (1000 * 60 * 60))
-    const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60))
-    
-    if (durationHours > 0) {
-      return `${durationHours} שעות ו-${durationMinutes} דקות`
+    // Use treatment duration info since startTime/endTime don't exist
+    if (booking.treatmentId?.defaultDurationMinutes) {
+      const minutes = booking.treatmentId.defaultDurationMinutes
+      const hours = Math.floor(minutes / 60)
+      const remainingMinutes = minutes % 60
+      
+
+      return `${minutes} דקות`
     }
-    return `${durationMinutes} דקות`
+    return "לא צוין"
   }
 
   return (
@@ -89,21 +86,7 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
             <Label className="text-sm font-medium">סטטוס נוכחי</Label>
             {getStatusBadge(booking.status)}
           </div>
-          {booking.statusHistory && booking.statusHistory.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">היסטוריית סטטוס</Label>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {booking.statusHistory.map((history, index) => (
-                  <div key={index} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                    <span>{history.status}</span>
-                    <span className="text-muted-foreground">
-                      {formatDateTime(history.changedAt)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+
         </CardContent>
       </Card>
 
@@ -121,7 +104,7 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
               <Label className="text-sm font-medium">תאריך הטיפול</Label>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span>{formatDate(booking.startTime)}</span>
+                <span>{formatDate(booking.bookingDateTime)}</span>
               </div>
             </div>
 
@@ -129,15 +112,15 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
               <Label className="text-sm font-medium">שעת התחלה</Label>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-muted-foreground" />
-                <span>{formatTime(booking.startTime)}</span>
+                <span>{formatTime(booking.bookingDateTime)}</span>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">שעת סיום</Label>
+              <Label className="text-sm font-medium">משך הטיפול</Label>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-muted-foreground" />
-                <span>{formatTime(booking.endTime)}</span>
+                <span>{getDuration()}</span>
               </div>
             </div>
 
@@ -180,32 +163,7 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
                 </Badge>
               </div>
 
-              {typeof booking.professionalId === 'object' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-green-50 rounded-lg">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">טלפון</Label>
-                    <p className="text-sm">{booking.professionalId.phone || "לא צוין"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">אימייל</Label>
-                    <p className="text-sm">{booking.professionalId.email || "לא צוין"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">התמחות</Label>
-                    <p className="text-sm">
-                      {booking.professionalId.specializations?.join(", ") || "לא צוין"}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">דירוג</Label>
-                    <p className="text-sm">
-                      {booking.professionalId.averageRating 
-                        ? `${booking.professionalId.averageRating.toFixed(1)}/5`
-                        : "אין דירוג"}
-                    </p>
-                  </div>
-                </div>
-              )}
+
             </div>
           ) : (
             <div className="flex items-center justify-between">

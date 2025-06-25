@@ -2257,7 +2257,7 @@ export async function createGuestBooking(
 
     // For guest bookings, use provided guest info instead of fetching user
     const guestInfo = validatedPayload.guestInfo
-    if (!guestInfo || !guestInfo.name || !guestInfo.email || !guestInfo.phone) {
+    if (!guestInfo || !guestInfo.name || !guestInfo.phone) {
       logger.warn("Missing or invalid guest info in createGuestBooking", { guestInfo })
       return { success: false, error: "bookings.errors.guestInfoRequired" }
     }
@@ -2673,7 +2673,7 @@ export async function getGuestBookingInitialData(): Promise<{ success: boolean; 
 export async function createGuestUser(guestInfo: {
   firstName: string
   lastName: string
-  email: string
+  email?: string
   phone: string
   birthDate?: Date
   gender?: "male" | "female" | "other"

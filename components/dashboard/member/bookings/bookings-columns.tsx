@@ -51,7 +51,7 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
   const canReview = booking.status === "completed"
 
   // Fetch existing review if any
-  const { _data: existingReview, refetch, isLoading, error } = useQuery({
+  const { data: existingReview, refetch, isLoading, error } = useQuery({
     queryKey: ["review", booking._id],
     queryFn: () => getReviewByBookingId(booking._id.toString()),
     enabled: canReview,

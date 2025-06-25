@@ -16,7 +16,7 @@ export interface IUserSubscription extends Document {
   pricePerSession?: number // Price of a single session at the time of purchase
   guestInfo?: { // Guest information for non-user purchases
     name: string
-    email: string
+    email?: string
     phone: string
   }
   createdAt: Date
@@ -100,7 +100,7 @@ const UserSubscriptionSchema = new Schema<IUserSubscription>(
       // Guest information for non-user purchases
       type: {
         name: { type: String, required: true },
-        email: { type: String, required: true },
+        email: { type: String, required: false },
         phone: { type: String, required: true },
       },
       required: false,

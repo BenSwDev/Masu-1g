@@ -39,7 +39,7 @@ import type { IBooking } from "@/lib/db/models/booking"
 interface GuestInfo {
   firstName: string
   lastName: string
-  email: string
+  email?: string
   phone: string
   birthDate?: Date
   gender?: "male" | "female" | "other"
@@ -294,7 +294,7 @@ export default function UniversalBookingWizard({
         // Create guest user after step 3 (Personal Info step) for guests only 
         if (currentStep === 3 && !currentUser && !guestUserId) {
           
-          if (updatedState.firstName && updatedState.lastName && updatedState.email && updatedState.phone) {
+          if (updatedState.firstName && updatedState.lastName && updatedState.phone) {
             const guestUserData = {
               firstName: updatedState.firstName,
               lastName: updatedState.lastName,
@@ -736,7 +736,7 @@ export default function UniversalBookingWizard({
   // Create booking before payment
   const createPendingBooking = useCallback(async () => {
     
-    if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.phone) {
+    if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.phone) {
       toast({
         variant: "destructive",
         title: t("bookings.errors.missingGuestInfo"),
@@ -802,8 +802,8 @@ export default function UniversalBookingWizard({
           ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
           : `${guestInfo.firstName} ${guestInfo.lastName}`,
         recipientEmail: guestInfo.isBookingForSomeoneElse 
-          ? guestInfo.recipientEmail!
-          : guestInfo.email!,
+          ? guestInfo.recipientEmail
+          : guestInfo.email,
         recipientPhone: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientPhone!
           : guestInfo.phone!,
@@ -830,7 +830,7 @@ export default function UniversalBookingWizard({
           marketingOptIn: true,
           termsAccepted: true
         },
-      } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
+      } as CreateBookingPayloadType & { guestInfo: { name: string; email?: string; phone: string } }
 
       // Choose the correct function based on user type
       const result = currentUser 

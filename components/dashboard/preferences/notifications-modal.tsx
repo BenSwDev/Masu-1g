@@ -31,7 +31,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
   )
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
-  const { _data: session, update: updateSession } = useSession()
+  const { data: session, update: updateSession } = useSession()
   const { t, dir } = useTranslation() // Correctly destructure dir
 
   useEffect(() => {

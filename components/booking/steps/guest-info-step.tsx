@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils/utils"
 interface GuestInfo {
   firstName: string
   lastName: string
-  email: string
+  email?: string
   phone: string
   birthDate?: Date
   gender?: "male" | "female" | "other"
@@ -87,7 +87,7 @@ export function GuestInfoStep({
   const guestInfoSchema = z.object({
     firstName: z.string().min(2, { message: t("guestInfo.validation.firstNameMin") }),
     lastName: z.string().min(2, { message: t("guestInfo.validation.lastNameMin") }),
-    email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }),
+    email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }).optional(),
     phone: z.string().min(10, { message: t("guestInfo.validation.phoneMin") }),
     birthDate: z.date().optional(),
     gender: z.enum(["male", "female", "other"]).optional(),
@@ -109,7 +109,6 @@ export function GuestInfoStep({
       return (
         data.recipientFirstName &&
         data.recipientLastName &&
-        data.recipientEmail &&
         data.recipientPhone &&
         (hideRecipientBirthGender ? true : data.recipientBirthDate && data.recipientGender)
       )
@@ -309,7 +308,7 @@ export function GuestInfoStep({
                   <FormItem>
                     <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                       <Mail className="h-4 w-4" />
-                      {t("guestInfo.email")} *
+                      {t("guestInfo.email")}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -494,7 +493,7 @@ export function GuestInfoStep({
                     <FormItem>
                       <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                         <Mail className="h-4 w-4" />
-                        {t("guestInfo.recipientEmail")} *
+                        {t("guestInfo.recipientEmail")}
                       </FormLabel>
                       <FormControl>
                       <Input

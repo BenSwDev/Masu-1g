@@ -6,7 +6,7 @@ import dbConnect from "@/lib/db/mongoose"
 
 interface UserNotificationProfile {
   userId: string
-  email: string
+  email?: string
   phone?: string
   preferences: INotificationPreferences
   name?: string
@@ -57,7 +57,7 @@ export class SmartNotificationService {
     const recipients: NotificationRecipient[] = []
 
     profile.preferences.methods.forEach(method => {
-      if (method === "email") {
+      if (method === "email" && profile.email) {
         recipients.push({
           type: "email",
           value: profile.email,
@@ -194,7 +194,7 @@ export class SmartNotificationService {
    * Send to guest user (no preferences, use defaults)
    */
   async sendToGuest(
-    email: string, 
+    email: string | null, 
     phone: string | null, 
     data: NotificationData,
     language: "he" | "en" | "ru" = "he",
@@ -202,13 +202,15 @@ export class SmartNotificationService {
   ): Promise<NotificationResult[]> {
     const recipients: NotificationRecipient[] = []
     
-    // Always send to email for guests
-    recipients.push({
-      type: "email",
-      value: email,
-      name,
-      language
-    })
+    // Always send to email for guests if email provided
+    if (email) {
+      recipients.push({
+        type: "email",
+        value: email,
+        name,
+        language
+      })
+    }
 
     // Send to phone if provided
     if (phone) {

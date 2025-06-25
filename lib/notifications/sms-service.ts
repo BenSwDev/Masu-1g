@@ -92,7 +92,7 @@ export class SMSService {
     
     try {
       // Check if service is configured
-      if (!this.isConfigured) {
+      if (!this.isConfigured || !this.client) {
         const error = "SMS service not configured"
         logger.error(`[${logId}] ${error}`)
         return { success: false, error }
@@ -163,7 +163,7 @@ export class SMSService {
       return {
         success: false,
         error: errorMessage,
-        details: error
+        details: error instanceof Error ? { message: error.message, stack: error.stack } : { error }
       }
     }
   }
@@ -255,13 +255,18 @@ export class SMSService {
    * Test the SMS service configuration
    */
   async testConfiguration(): Promise<{ success: boolean; error?: string }> {
-    if (!this.isConfigured) {
+    if (!this.isConfigured || !this.client) {
       return { success: false, error: "SMS service not configured" }
+    }
+
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    if (!accountSid) {
+      return { success: false, error: "TWILIO_ACCOUNT_SID not configured" }
     }
 
     try {
       // Try to fetch account information to verify credentials
-      const account = await this.client.api.accounts(process.env.TWILIO_ACCOUNT_SID).fetch()
+      const account = await this.client.api.accounts(accountSid).fetch()
       logger.info("SMS service configuration test successful", { 
         accountSid: account.sid,
         status: account.status 

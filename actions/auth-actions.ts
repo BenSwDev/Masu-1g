@@ -91,14 +91,14 @@ export async function registerUser(formData: FormData) {
       }
     }
 
-    // Validate input
-    if (!name || !email || !password || !formattedPhone) {
+    // Validate input - email is now optional
+    if (!name || !password || !formattedPhone) {
       logger.warn(`[${requestId}] Registration failed: Missing required fields`)
       return { success: false, message: "missingFields" }
     }
 
-    // Validate email format
-    if (!validateEmail(email)) {
+    // Validate email format only if provided
+    if (email && !validateEmail(email)) {
       logger.warn(`[${requestId}] Registration failed: Invalid email format`)
       return { success: false, message: "invalidEmail" }
     }
@@ -173,7 +173,7 @@ export async function checkUserExists(phone: string) {
 // פונקציה חדשה לניהול משתמשים לפי טלפון
 export async function findOrCreateUserByPhone(phone: string, guestInfo?: {
   name: string
-  email: string
+  email?: string
   gender?: "male" | "female" | "other"
   dateOfBirth?: Date
 }) {

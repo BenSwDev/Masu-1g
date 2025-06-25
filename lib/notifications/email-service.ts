@@ -147,13 +147,13 @@ export class EmailService {
     try {
       // Check if service is configured
       if (!this.isConfigured) {
-        const _error = "❌ Email service not configured - missing environment variables in Vercel"
-        logger.error(`[${logId}] ${error}`, {
+        const errorMessage = "❌ Email service not configured - missing environment variables in Vercel"
+        logger.error(`[${logId}] ${errorMessage}`, {
           recipient: this.obscureEmail(recipient.value),
           notificationType: data.type,
           instructions: "Go to Vercel Dashboard → Project Settings → Environment Variables and add EMAIL_* variables"
         })
-        return { success: false, error }
+        return { success: false, error: errorMessage }
       }
 
       logger.info(`[${logId}] Sending email to: ${this.obscureEmail(recipient.value)}`)
@@ -220,7 +220,7 @@ export class EmailService {
       return {
         success: false,
         error: errorMessage,
-        details: error
+        details: error instanceof Error ? { message: error.message, stack: error.stack } : { error }
       }
     }
   }

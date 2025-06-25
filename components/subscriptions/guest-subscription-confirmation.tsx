@@ -1,8 +1,9 @@
 "use client"
 
-import { CheckCircle, Calendar, Clock, Gift } from "lucide-react"
+import { CheckCircle, Calendar, Clock, Gift, Copy } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/common/ui/card"
 import { Button } from "@/components/common/ui/button"
+import { useToast } from "@/components/common/ui/use-toast"
 import Link from "next/link"
 import { useTranslation } from "@/lib/translations/i18n"
 
@@ -37,6 +38,23 @@ export default function GuestSubscriptionConfirmation({
   userSubscription 
 }: Props) {
   const { t, language, dir } = useTranslation()
+  const { toast } = useToast()
+  
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast({
+        title: "הועתק!",
+        description: "קוד המנוי הועתק ללוח",
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "לא ניתן להעתיק את הקוד",
+      })
+    }
+  }
   
   if (!userSubscription) {
     return (
@@ -52,6 +70,7 @@ export default function GuestSubscriptionConfirmation({
   const totalAmount = userSubscription.totalAmount
   const purchaseDate = userSubscription.purchaseDate
   const expiryDate = userSubscription.expiryDate
+  const subscriptionCode = userSubscription.subscriptionCode
   const redeemLink = userSubscription.redeemLink
 
   const totalSessions = subscription.quantity + subscription.bonusQuantity
@@ -167,23 +186,36 @@ export default function GuestSubscriptionConfirmation({
         </CardContent>
       </Card>
 
-      {/* Redeem Link (if available) */}
-      {redeemLink && (
-        <Card className="bg-blue-50 border-blue-200">
+      {/* Subscription Code */}
+      {subscriptionCode && (
+        <Card className="bg-green-50 border-green-200">
           <CardContent className="pt-6">
-            <div className="text-center space-y-3">
-              <h3 className="font-semibold text-blue-900">קישור למימוש המנוי</h3>
-              <p className="text-sm text-blue-700">
-                שמור את הקישור הזה כדי למש את המנוי בעתיד
+            <div className="text-center space-y-4">
+              <h3 className="font-semibold text-green-900">קוד המנוי שלך</h3>
+              <p className="text-sm text-green-700">
+                השתמש בקוד הזה כדי למממש את המנוי בעת הזמנת טיפול
               </p>
-              <div className="bg-white p-3 rounded border border-blue-300 font-mono text-sm break-all">
-                {redeemLink}
+              <div className="bg-white p-4 rounded border border-green-300 shadow-sm">
+                <div className="font-mono text-2xl font-bold text-green-800 tracking-wider">
+                  {subscriptionCode}
+                </div>
               </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href={redeemLink} target="_blank">
-                  מימוש המנוי כעת
-                </Link>
-              </Button>
+              <div className="flex gap-2 justify-center">
+                <Button 
+                  onClick={() => copyToClipboard(subscriptionCode)}
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Copy className="w-4 h-4" />
+                  העתק קוד
+                </Button>
+                <Button asChild size="sm">
+                  <Link href="/bookings/treatment">
+                    הזמן טיפול כעת
+                  </Link>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

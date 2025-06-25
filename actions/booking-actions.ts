@@ -2718,16 +2718,18 @@ export async function createGuestUser(guestInfo: {
     // Generate secure random password for guest user
     const crypto = require('crypto')
     const randomPassword = crypto.randomBytes(16).toString('hex')
-    
-    // Create unique email for guest to avoid conflicts with registered users
+    const uniqueId = crypto.randomBytes(8).toString('hex')
     const timestamp = Date.now()
-    const guestEmail = `guest_${timestamp}_${guestInfo.email.replace('@', '_at_')}`
+    
+    // Create unique email and phone for guest to avoid conflicts
+    const guestEmail = `guest_${timestamp}_${uniqueId}_${guestInfo.email.replace('@', '_at_')}`
+    const guestPhone = `${guestInfo.phone.replace(/[-\s]/g, "")}_guest_${uniqueId}`
 
     // Create new guest user with validated data
     const guestUser = new User({
       name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
       email: guestEmail, // Use unique guest email to avoid conflicts
-      phone: guestInfo.phone.replace(/[-\s]/g, ""), // Multiple guests can have same phone
+      phone: guestPhone, // Use unique guest phone to avoid conflicts
       gender: guestInfo.gender && ["male", "female", "other"].includes(guestInfo.gender) ? guestInfo.gender : "other", // Ensure valid gender
       dateOfBirth: guestInfo.birthDate,
       password: randomPassword, // Secure random password
@@ -2735,8 +2737,9 @@ export async function createGuestUser(guestInfo: {
       activeRole: UserRole.GUEST,
       emailVerified: null,
       phoneVerified: null,
-      // Store original email for reference
+      // Store original email and phone for reference
       originalGuestEmail: guestInfo.email.trim().toLowerCase(),
+      originalGuestPhone: guestInfo.phone.replace(/[-\s]/g, ""),
     })
 
     await guestUser.save()
@@ -2744,7 +2747,9 @@ export async function createGuestUser(guestInfo: {
     logger.info("Guest user created successfully", {
       userId: guestUser._id.toString(),
       originalEmail: guestInfo.email,
+      originalPhone: guestInfo.phone,
       guestEmail: guestEmail,
+      guestPhone: guestPhone,
     })
 
     return { success: true, userId: guestUser._id.toString() }
@@ -2763,10 +2768,15 @@ export async function createGuestUser(guestInfo: {
         const timestamp = Date.now()
         const guestEmail = `guest_${timestamp}_${uniqueId}_${guestInfo.email.replace('@', '_at_')}`
         
+        const retryUniqueId = crypto.randomBytes(8).toString('hex')
+        const retryTimestamp = Date.now()
+        const retryGuestEmail = `guest_${retryTimestamp}_${retryUniqueId}_${guestInfo.email.replace('@', '_at_')}`
+        const retryGuestPhone = `${guestInfo.phone.replace(/[-\s]/g, "")}_guest_${retryUniqueId}`
+        
         const guestUser = new User({
           name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
-          email: guestEmail,
-          phone: guestInfo.phone.replace(/[-\s]/g, ""),
+          email: retryGuestEmail,
+          phone: retryGuestPhone,
           gender: guestInfo.gender && ["male", "female", "other"].includes(guestInfo.gender) ? guestInfo.gender : "other", // Ensure valid gender
           dateOfBirth: guestInfo.birthDate,
           password: crypto.randomBytes(16).toString('hex'),
@@ -2775,6 +2785,7 @@ export async function createGuestUser(guestInfo: {
           emailVerified: null,
           phoneVerified: null,
           originalGuestEmail: guestInfo.email.trim().toLowerCase(),
+          originalGuestPhone: guestInfo.phone.replace(/[-\s]/g, ""),
         })
         
         await guestUser.save()
@@ -2782,7 +2793,9 @@ export async function createGuestUser(guestInfo: {
         logger.info("Guest user created successfully on retry", {
           userId: guestUser._id.toString(),
           originalEmail: guestInfo.email,
-          guestEmail: guestEmail,
+          originalPhone: guestInfo.phone,
+          guestEmail: retryGuestEmail,
+          guestPhone: retryGuestPhone,
         })
         
         return { success: true, userId: guestUser._id.toString() }

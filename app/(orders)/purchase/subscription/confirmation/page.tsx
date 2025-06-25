@@ -66,6 +66,7 @@ async function getSubscriptionPurchaseData(subscriptionId: string) {
       totalAmount: userSubscription.paymentAmount || 0,
       purchaseDate: userSubscription.purchaseDate,
       expiryDate: userSubscription.expiryDate,
+      subscriptionCode: userSubscription.code, // Add subscription code
       redeemLink,
     }
   } catch (error) {

@@ -34,6 +34,7 @@ export interface IUser extends Document {
   treatmentPreferences?: ITreatmentPreferences // New field
   notificationPreferences?: INotificationPreferences // New field
   originalGuestEmail?: string // Store original email for guest users
+  originalGuestPhone?: string // Store original phone for guest users
   createdAt: Date
   updatedAt: Date
 }
@@ -117,6 +118,10 @@ const UserSchema: Schema = new Schema(
       },
     },
     originalGuestEmail: {
+      type: String,
+      required: false,
+    },
+    originalGuestPhone: {
       type: String,
       required: false,
     },

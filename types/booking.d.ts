@@ -65,6 +65,11 @@ export interface CalculatedPriceDetails {
   appliedGiftVoucherId?: string // Will be ObjectId string
   redeemedUserSubscriptionId?: string // Will be ObjectId string
   discountAmount?: number
+  // Financial breakdown
+  totalProfessionalPayment: number // Total amount to be paid to professional
+  totalOfficeCommission: number // Total office commission
+  baseProfessionalPayment: number // Professional payment from base treatment
+  surchargesProfessionalPayment: number // Professional payment from surcharges
 }
 
 export interface PopulatedPriceDetails

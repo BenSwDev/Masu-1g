@@ -626,10 +626,10 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
     return <div className="text-sm text-muted-foreground">-</div>
   }
 
-  const { priceDetails, staticTreatmentPrice, staticTherapistPay, companyFee } = booking
+  const { priceDetails } = booking
   const finalAmount = priceDetails.finalAmount || 0
-  const therapistPay = staticTherapistPay || 0
-  const companyRevenue = companyFee || (staticTreatmentPrice || 0) - therapistPay
+  const professionalPayment = priceDetails.totalProfessionalPayment || 0
+  const officeCommission = priceDetails.totalOfficeCommission || 0
 
   return (
     <div className="space-y-1 max-w-[150px]">
@@ -637,10 +637,10 @@ const FinancialSummaryInfo = ({ booking, t }: { booking: PopulatedBooking; t: TF
         סה"כ: ₪{finalAmount.toFixed(0)}
       </div>
       <div className="text-xs text-gray-600">
-        למטפל: ₪{therapistPay.toFixed(0)}
+        למטפל: ₪{professionalPayment.toFixed(0)}
       </div>
-      <div className="text-xs text-gray-600">
-        לחברה: ₪{companyRevenue.toFixed(0)}
+      <div className={`text-xs ${officeCommission >= 0 ? 'text-gray-600' : 'text-red-600'}`}>
+        לחברה: {officeCommission >= 0 ? '₪' : '-₪'}{Math.abs(officeCommission).toFixed(0)}
       </div>
       {priceDetails.isFullyCoveredByVoucherOrSubscription && (
         <div className="text-xs bg-green-100 text-green-800 px-1 py-0.5 rounded">

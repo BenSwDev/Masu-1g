@@ -27,6 +27,11 @@ export interface IPriceDetails {
   appliedCouponId?: Types.ObjectId
   appliedGiftVoucherId?: Types.ObjectId
   redeemedUserSubscriptionId?: Types.ObjectId
+  // Financial breakdown
+  totalProfessionalPayment?: number // Total amount to be paid to professional
+  totalOfficeCommission?: number // Total office commission
+  baseProfessionalPayment?: number // Professional payment from base treatment
+  surchargesProfessionalPayment?: number // Professional payment from surcharges
 }
 
 export interface IPaymentDetails {
@@ -190,6 +195,10 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
     appliedCouponId: { type: Schema.Types.ObjectId, ref: "Coupon" },
     appliedGiftVoucherId: { type: Schema.Types.ObjectId, ref: "GiftVoucher" },
     redeemedUserSubscriptionId: { type: Schema.Types.ObjectId, ref: "UserSubscription" },
+    totalProfessionalPayment: { type: Number, min: 0 },
+    totalOfficeCommission: { type: Number, min: 0 },
+    baseProfessionalPayment: { type: Number, min: 0 },
+    surchargesProfessionalPayment: { type: Number, min: 0 },
   },
   { _id: false },
 )

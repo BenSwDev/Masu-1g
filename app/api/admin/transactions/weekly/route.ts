@@ -35,9 +35,14 @@ function getHebrewDayName(date: Date): string {
   return days[date.getDay()]
 }
 
-// Helper function to calculate professional costs (example: 70% of booking amount)
-function calculateProfessionalCosts(bookingAmount: number): number {
-  return bookingAmount * 0.7
+// Helper function to calculate professional costs from actual booking data
+function calculateProfessionalCosts(booking: any): number {
+  // Use the actual professional payment from price details if available
+  if (booking.priceDetails?.totalProfessionalPayment) {
+    return booking.priceDetails.totalProfessionalPayment
+  }
+  // Fallback to static fields for backward compatibility
+  return booking.staticTherapistPay || 0
 }
 
 export async function GET(request: NextRequest) {
@@ -205,7 +210,8 @@ export async function GET(request: NextRequest) {
           dayData.redeemedCoupons.amount + 
           dayData.redeemedPartnerCoupons.amount
 
-        dayData.professionalCosts = calculateProfessionalCosts(dayData.bookings.amount)
+        // Calculate professional costs from actual bookings
+        dayData.professionalCosts = bookings.reduce((sum, booking) => sum + calculateProfessionalCosts(booking), 0)
         dayData.officeProfit = dayData.totalRevenue - dayData.professionalCosts - dayData.totalRedemptions
 
       } catch (error) {

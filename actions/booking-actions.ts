@@ -13,7 +13,8 @@ import Booking, {
   type BookingStatus,
   type IBookingConsents,
   type IEnhancedPaymentDetails,
-  type IBookingReview
+  type IBookingReview,
+  type IProfessionalShare
 } from "@/lib/db/models/booking"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
@@ -327,6 +328,7 @@ export async function getAvailableTimeSlots(
           slot.surcharge = slot.surcharge || {
             description: EVENING_SURCHARGE_DESCRIPTION,
             amount: EVENING_SURCHARGE_AMOUNT,
+            professionalShare: { amount: 70, type: "percentage" } // Default professional share for evening surcharge
           }
         }
         
@@ -408,6 +410,11 @@ export async function calculateBookingPrice(
       isBaseTreatmentCoveredBySubscription: false,
       isBaseTreatmentCoveredByTreatmentVoucher: false,
       isFullyCoveredByVoucherOrSubscription: false,
+      // Initialize financial breakdown
+      totalProfessionalPayment: 0,
+      totalOfficeCommission: 0,
+      baseProfessionalPayment: 0,
+      surchargesProfessionalPayment: 0,
     }
 
     const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
@@ -448,12 +455,23 @@ export async function calculateBookingPrice(
               : surchargeBase * (daySettings.priceAddition.amount / 100)
 
           if (surchargeAmount > 0) {
+            // Calculate professional share for this surcharge
+            let professionalShare: IProfessionalShare | undefined = undefined
+            // Check if this is a fixed hours or special date event (not legacy special date)
+            if ('professionalShare' in daySettings && daySettings.professionalShare && daySettings.professionalShare.amount > 0) {
+              professionalShare = {
+                amount: daySettings.professionalShare.amount,
+                type: daySettings.professionalShare.type
+              }
+            }
+
             priceDetails.surcharges.push({
               description:
                 daySettings.priceAddition.description ||
-                daySettings.notes ||
+                ('notes' in daySettings ? daySettings.notes : '') ||
                 `bookings.surcharges.specialTime (${format(bookingDateTime, "HH:mm")})`,
               amount: surchargeAmount,
+              ...(professionalShare && { professionalShare })
             })
             priceDetails.totalSurchargesAmount += surchargeAmount
           }
@@ -479,6 +497,7 @@ export async function calculateBookingPrice(
       priceDetails.surcharges.push({
         description: EVENING_SURCHARGE_DESCRIPTION,
         amount: EVENING_SURCHARGE_AMOUNT,
+        professionalShare: { amount: 70, type: "percentage" as const } // Default professional share for evening surcharge
       })
       priceDetails.totalSurchargesAmount += EVENING_SURCHARGE_AMOUNT
     }
@@ -603,6 +622,45 @@ export async function calculateBookingPrice(
     } else {
       priceDetails.treatmentPriceAfterSubscriptionOrTreatmentVoucher = basePrice
     }
+
+    // Calculate professional payment and office commission
+    // 1. Base treatment professional payment (המטפל מקבל את החלק שלו תמיד, גם אם הטיפול מכוסה)
+    let baseProfessionalPayment = 0
+    if (treatment.pricingType === "fixed" && treatment.fixedProfessionalPrice) {
+      baseProfessionalPayment = treatment.fixedProfessionalPrice
+    } else if (treatment.pricingType === "duration_based" && selectedDurationId) {
+      const duration = treatment.durations?.find(d => d._id.toString() === selectedDurationId)
+      if (duration) {
+        baseProfessionalPayment = duration.professionalPrice
+      }
+    }
+
+    // 2. Surcharges professional payment
+    let surchargesProfessionalPayment = 0
+    for (const surcharge of priceDetails.surcharges) {
+      if (surcharge.professionalShare) {
+        const surchargeAmount = surcharge.amount
+        if (surcharge.professionalShare.type === "fixed") {
+          surchargesProfessionalPayment += surcharge.professionalShare.amount
+        } else if (surcharge.professionalShare.type === "percentage") {
+          surchargesProfessionalPayment += surchargeAmount * (surcharge.professionalShare.amount / 100)
+        }
+      }
+    }
+
+    // 3. Total professional payment (המטפל מקבל את החלק שלו תמיד)
+    const totalProfessionalPayment = baseProfessionalPayment + surchargesProfessionalPayment
+
+    // 4. Office commission calculation:
+    // - אם הלקוח משלם הכל: עמלת משרד = מה שהלקוח משלם - מה שהמטפל מקבל
+    // - אם הטיפול מכוסה על ידי מנוי/שובר: המשרד משלם למטפל מהכיס שלו, ועמלת המשרד שלילית
+    const totalOfficeCommission = priceDetails.finalAmount - totalProfessionalPayment
+
+    // Update price details with financial breakdown
+    priceDetails.totalProfessionalPayment = totalProfessionalPayment
+    priceDetails.totalOfficeCommission = totalOfficeCommission // יכול להיות שלילי אם המשרד משלם מהכיס
+    priceDetails.baseProfessionalPayment = baseProfessionalPayment
+    priceDetails.surchargesProfessionalPayment = surchargesProfessionalPayment
 
     return { success: true, priceDetails }
   } catch (error) {
@@ -760,6 +818,11 @@ export async function createBooking(
           redeemedUserSubscriptionId: validatedPayload.priceDetails.redeemedUserSubscriptionId
             ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.redeemedUserSubscriptionId)
             : undefined,
+          // Financial breakdown
+          totalProfessionalPayment: validatedPayload.priceDetails.totalProfessionalPayment,
+          totalOfficeCommission: validatedPayload.priceDetails.totalOfficeCommission,
+          baseProfessionalPayment: validatedPayload.priceDetails.baseProfessionalPayment,
+          surchargesProfessionalPayment: validatedPayload.priceDetails.surchargesProfessionalPayment,
         } as IPriceDetails,
         paymentDetails: {
           paymentMethodId: validatedPayload.paymentDetails.paymentMethodId
@@ -2305,6 +2368,11 @@ export async function createGuestBooking(
           redeemedUserSubscriptionId: validatedPayload.priceDetails.redeemedUserSubscriptionId
             ? new mongoose.Types.ObjectId(validatedPayload.priceDetails.redeemedUserSubscriptionId)
             : undefined,
+          // Financial breakdown
+          totalProfessionalPayment: validatedPayload.priceDetails.totalProfessionalPayment,
+          totalOfficeCommission: validatedPayload.priceDetails.totalOfficeCommission,
+          baseProfessionalPayment: validatedPayload.priceDetails.baseProfessionalPayment,
+          surchargesProfessionalPayment: validatedPayload.priceDetails.surchargesProfessionalPayment,
         } as IPriceDetails,
         paymentDetails: {
           paymentMethodId: validatedPayload.paymentDetails.paymentMethodId

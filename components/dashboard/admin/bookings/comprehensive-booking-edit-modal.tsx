@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import { format } from "date-fns"
-import { Calendar, User, Phone, Mail, MapPin, CreditCard, FileText, Star, AlertTriangle, Stethoscope } from "lucide-react"
+import { Calendar, User, Phone, Mail, MapPin, CreditCard, FileText, Star, AlertTriangle, Stethoscope, DollarSign } from "lucide-react"
 import { 
   Dialog, 
   DialogContent, 
@@ -214,7 +214,7 @@ export default function ComprehensiveBookingEditModal({
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" dir="rtl">
-          <TabsList className={`grid w-full ${booking.recipientName || booking.recipientPhone ? 'grid-cols-7' : 'grid-cols-6'}`}>
+          <TabsList className={`grid w-full ${booking.recipientName || booking.recipientPhone ? 'grid-cols-8' : 'grid-cols-7'}`}>
             <TabsTrigger value="details">{t("adminBookings.tabs.details")}</TabsTrigger>
             <TabsTrigger value="treatment">{t("adminBookings.tabs.treatment")}</TabsTrigger>
             <TabsTrigger value="client">{t("adminBookings.tabs.client")}</TabsTrigger>
@@ -223,6 +223,7 @@ export default function ComprehensiveBookingEditModal({
             )}
             <TabsTrigger value="professional">{t("adminBookings.tabs.professional")}</TabsTrigger>
             <TabsTrigger value="payment">{t("adminBookings.tabs.payment")}</TabsTrigger>
+            <TabsTrigger value="financial">{t("adminBookings.tabs.financial")}</TabsTrigger>
             <TabsTrigger value="address">{t("adminBookings.tabs.address")}</TabsTrigger>
             <TabsTrigger value="notes">{t("adminBookings.tabs.notes")}</TabsTrigger>
           </TabsList>
@@ -726,9 +727,17 @@ export default function ComprehensiveBookingEditModal({
                       <Label>{t("adminBookings.surcharges")}</Label>
                       <div className="space-y-2">
                         {booking.priceDetails.surcharges.map((surcharge, index) => (
-                          <div key={index} className="flex justify-between items-center p-2 bg-yellow-50 rounded">
-                            <span className="text-sm">{surcharge.description}</span>
-                            <span className="font-medium">₪{surcharge.amount}</span>
+                          <div key={index} className="p-2 bg-yellow-50 rounded border border-yellow-200">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium">{surcharge.description}</span>
+                              <span className="font-medium">₪{surcharge.amount}</span>
+                            </div>
+                            {surcharge.professionalShare && (
+                              <div className="text-xs text-gray-600 mt-1">
+                                {t("adminBookings.professionalShare")}: {surcharge.professionalShare.amount}
+                                {surcharge.professionalShare.type === "percentage" ? "%" : "₪"}
+                              </div>
+                            )}
                           </div>
                         ))}
                         <div className="flex justify-between items-center p-2 bg-yellow-100 rounded font-medium">
@@ -766,6 +775,8 @@ export default function ComprehensiveBookingEditModal({
                       <span className="text-xl font-bold text-green-900">₪{booking.priceDetails?.finalAmount || 0}</span>
                     </div>
                   </div>
+
+
                 </div>
 
                 {/* Applied Discounts & Vouchers - Only show if they exist */}
@@ -865,6 +876,136 @@ export default function ComprehensiveBookingEditModal({
                       </div>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Financial Information */}
+          <TabsContent value="financial" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  {t("adminBookings.financialBreakdown")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Professional Payment Breakdown */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900">{t("adminBookings.professionalPaymentBreakdown")}</h4>
+                  
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+                    {(booking.priceDetails?.baseProfessionalPayment || 0) > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">{t("adminBookings.baseProfessionalPayment")}:</span>
+                        <span className="font-medium">₪{booking.priceDetails.baseProfessionalPayment || 0}</span>
+                      </div>
+                    )}
+                    
+                    {(booking.priceDetails?.surchargesProfessionalPayment || 0) > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">{t("adminBookings.surchargesProfessionalPayment")}:</span>
+                        <span className="font-medium">₪{booking.priceDetails.surchargesProfessionalPayment || 0}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex justify-between items-center font-bold border-t pt-2 text-lg">
+                      <span>{t("adminBookings.totalProfessionalPayment")}:</span>
+                      <span className="text-blue-700">₪{booking.priceDetails?.totalProfessionalPayment || 0}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Office Commission */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900">{t("adminBookings.officeCommission")}</h4>
+                  
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{t("adminBookings.totalOfficeCommission")}:</span>
+                      <div className="text-right">
+                        <span className={`font-bold text-lg ${
+                          (booking.priceDetails?.totalOfficeCommission || 0) >= 0 
+                            ? 'text-green-600' 
+                            : 'text-red-600'
+                        }`}>
+                          {(booking.priceDetails?.totalOfficeCommission || 0) >= 0 ? '₪' : '-₪'}
+                          {Math.abs(booking.priceDetails?.totalOfficeCommission || 0)}
+                        </span>
+                        {(booking.priceDetails?.totalOfficeCommission || 0) < 0 && (
+                          <div className="text-xs text-red-500 mt-1">המשרד משלם מהכיס</div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Explanation */}
+                    <div className="mt-3 pt-3 border-t border-gray-300 text-sm text-gray-600">
+                      <div className="space-y-1">
+                        <div>חישוב: מה שהלקוח משלם (₪{booking.priceDetails?.finalAmount || 0}) - מה שהמטפל מקבל (₪{booking.priceDetails?.totalProfessionalPayment || 0})</div>
+                        {(booking.priceDetails?.totalOfficeCommission || 0) < 0 && (
+                          <div className="text-red-600 font-medium">
+                            הטיפול מכוסה על ידי מנוי/שובר, המשרד משלם למטפל מהכיס
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Status for Professional */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900">{t("adminBookings.professionalPaymentStatus")}</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                         <div className="space-y-2">
+                       <Label>{t("adminBookings.professionalPaid")}</Label>
+                       <Select 
+                         value="pending"
+                         onValueChange={(value) => {
+                           // TODO: Add professional payment status to booking model and update logic
+                         }}
+                       >
+                         <SelectTrigger>
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="pending">{t("adminBookings.paymentStatuses.pending")}</SelectItem>
+                           <SelectItem value="paid">{t("adminBookings.paymentStatuses.paid")}</SelectItem>
+                           <SelectItem value="failed">{t("adminBookings.paymentStatuses.failed")}</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </div>
+                     
+                     <div className="space-y-2">
+                       <Label>{t("adminBookings.professionalPaymentDate")}</Label>
+                       <Input value={t("adminBookings.notSpecified")} disabled />
+                     </div>
+                  </div>
+                </div>
+
+                {/* Financial Summary */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-3">{t("adminBookings.financialSummary")}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                    <div className="p-3 bg-white rounded border">
+                      <div className="text-xs text-gray-500">{t("adminBookings.customerPaid")}</div>
+                      <div className="text-lg font-bold text-blue-600">₪{booking.priceDetails?.finalAmount || 0}</div>
+                    </div>
+                    <div className="p-3 bg-white rounded border">
+                      <div className="text-xs text-gray-500">{t("adminBookings.professionalReceives")}</div>
+                      <div className="text-lg font-bold text-green-600">₪{booking.priceDetails?.totalProfessionalPayment || 0}</div>
+                    </div>
+                    <div className="p-3 bg-white rounded border">
+                      <div className="text-xs text-gray-500">{t("adminBookings.officeProfit")}</div>
+                      <div className={`text-lg font-bold ${
+                        (booking.priceDetails?.totalOfficeCommission || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {(booking.priceDetails?.totalOfficeCommission || 0) >= 0 ? '₪' : '-₪'}
+                        {Math.abs(booking.priceDetails?.totalOfficeCommission || 0)}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -51,9 +51,14 @@ function getHebrewDayName(date: Date): string {
   return days[date.getDay()]
 }
 
-// Helper function to calculate professional costs
-function calculateProfessionalCosts(bookingAmount: number): number {
-  return bookingAmount * 0.7
+// Helper function to calculate professional costs from actual booking data
+function calculateProfessionalCosts(booking: any): number {
+  // Use the actual professional payment from price details if available
+  if (booking.priceDetails?.totalProfessionalPayment) {
+    return booking.priceDetails.totalProfessionalPayment
+  }
+  // Fallback to static fields for backward compatibility
+  return booking.staticTherapistPay || 0
 }
 
 export async function GET(request: NextRequest) {
@@ -127,7 +132,7 @@ export async function GET(request: NextRequest) {
         customerEmail: customer?.email || booking.guestInfo?.email,
         customerPhone: customer?.phone || booking.guestInfo?.phone,
         amount: booking.totalAmount || 0,
-        professionalCost: calculateProfessionalCosts(booking.totalAmount || 0),
+        professionalCost: calculateProfessionalCosts(booking),
         description: `הזמנת טיפול: ${booking.treatmentName || 'לא צוין'}`,
         status: booking.status,
         paymentMethod: booking.payment?.method,

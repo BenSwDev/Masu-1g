@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import GuestSubscriptionConfirmation from "@/components/subscriptions/guest-subscription-confirmation"
+import { GuestLayout } from "@/components/layout/guest-layout"
 import { getUserSubscriptionById } from "@/actions/user-subscription-actions"
 import dbConnect from "@/lib/db/mongoose"
 import UserSubscription from "@/lib/db/models/user-subscription"
@@ -88,12 +89,10 @@ export default async function SubscriptionConfirmationPage({ searchParams }: Pro
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8">
-        <Suspense fallback={<div>טוען...</div>}>
-          <GuestSubscriptionConfirmation userSubscription={userSubscription} />
-        </Suspense>
-      </div>
-    </div>
+    <GuestLayout>
+      <Suspense fallback={<div>טוען...</div>}>
+        <GuestSubscriptionConfirmation userSubscription={userSubscription} />
+      </Suspense>
+    </GuestLayout>
   )
 } 

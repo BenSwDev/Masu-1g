@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import GuestGiftVoucherConfirmation from "@/components/gift-vouchers/guest-gift-voucher-confirmation"
+import { GuestLayout } from "@/components/layout/guest-layout"
 import { getGiftVoucherById } from "@/actions/gift-voucher-actions"
 import dbConnect from "@/lib/db/mongoose"
 
@@ -45,12 +46,10 @@ export default async function GiftVoucherConfirmationPage({ searchParams }: Prop
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-8">
-        <Suspense fallback={<div>טוען...</div>}>
-          <GuestGiftVoucherConfirmation voucher={voucher} />
-        </Suspense>
-      </div>
-    </div>
+    <GuestLayout>
+      <Suspense fallback={<div>טוען...</div>}>
+        <GuestGiftVoucherConfirmation voucher={voucher} />
+      </Suspense>
+    </GuestLayout>
   )
 } 

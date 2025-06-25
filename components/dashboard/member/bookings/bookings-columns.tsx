@@ -490,7 +490,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
       header: () => <div className="text-right hidden sm:block">{t("memberBookings.columns.recipientDetails")}</div>,
       cell: ({ row }) => {
         const booking = row.original
-        const isForSomeoneElse = booking.recipientName && booking.recipientName !== booking.bookedByUserName
+        const isForSomeoneElse = booking.isBookingForSomeoneElse
 
         return (
           <div className="text-right hidden sm:block">

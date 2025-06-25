@@ -115,17 +115,17 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                   )}
                 </div>
 
-                {/* Building Number */}
+                {/* Street Number */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">מספר בית</Label>
                   {isEditing ? (
                     <Input
-                      value={tempAddress.buildingNumber || ""}
-                      onChange={(e) => setTempAddress({...tempAddress, buildingNumber: e.target.value})}
+                      value={tempAddress.streetNumber || ""}
+                      onChange={(e) => setTempAddress({...tempAddress, streetNumber: e.target.value})}
                       placeholder="מספר בית"
                     />
                   ) : (
-                    <p className="text-sm">{address.buildingNumber || "לא צוין"}</p>
+                    <p className="text-sm">{address.streetNumber || "לא צוין"}</p>
                   )}
                 </div>
 
@@ -143,19 +143,7 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                   )}
                 </div>
 
-                {/* Postal Code */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">מיקוד</Label>
-                  {isEditing ? (
-                    <Input
-                      value={tempAddress.postalCode || ""}
-                      onChange={(e) => setTempAddress({...tempAddress, postalCode: e.target.value})}
-                      placeholder="מיקוד"
-                    />
-                  ) : (
-                    <p className="text-sm">{address.postalCode || "לא צוין"}</p>
-                  )}
-                </div>
+
 
                 {/* Floor */}
                 <div className="space-y-2">
@@ -184,6 +172,40 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                     <p className="text-sm">{address.apartment || "לא צוין"}</p>
                   )}
                 </div>
+
+                {/* Entrance */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">כניסה</Label>
+                  {isEditing ? (
+                    <Input
+                      value={tempAddress.entrance || ""}
+                      onChange={(e) => setTempAddress({...tempAddress, entrance: e.target.value})}
+                      placeholder="מספר כניסה"
+                    />
+                  ) : (
+                    <p className="text-sm">{address.entrance || "לא צוין"}</p>
+                  )}
+                </div>
+
+                {/* Private Parking */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">חניה פרטית</Label>
+                  {isEditing ? (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={tempAddress.hasPrivateParking || false}
+                        onChange={(e) => setTempAddress({...tempAddress, hasPrivateParking: e.target.checked})}
+                        className="rounded"
+                      />
+                      <span className="text-sm">יש חניה פרטית</span>
+                    </div>
+                  ) : (
+                    <Badge variant={address.hasPrivateParking ? "default" : "secondary"}>
+                      {address.hasPrivateParking ? "יש חניה פרטית" : "אין חניה פרטית"}
+                    </Badge>
+                  )}
+                </div>
               </div>
 
               {/* Full Address Display */}
@@ -192,11 +214,11 @@ export default function BookingAddressTab({ booking, onUpdate }: BookingAddressT
                 <p className="text-sm mt-1">
                   {[
                     address.street,
-                    address.buildingNumber,
+                    address.streetNumber,
                     address.city,
-                    address.postalCode,
                     address.floor && `קומה ${address.floor}`,
-                    address.apartment && `דירה ${address.apartment}`
+                    address.apartment && `דירה ${address.apartment}`,
+                    address.entrance && `כניסה ${address.entrance}`
                   ].filter(Boolean).join(", ")}
                 </p>
               </div>

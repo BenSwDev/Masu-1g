@@ -139,7 +139,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
       </Card>
 
       {/* Recipient Info (מקבל הטיפול) */}
-      {(booking.isBookingForSomeoneElse || booking.recipientName) && (
+      {booking.isBookingForSomeoneElse && (
         <>
           <Separator />
           <Card>

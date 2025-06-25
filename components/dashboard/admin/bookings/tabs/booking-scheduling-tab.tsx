@@ -240,11 +240,11 @@ export default function BookingSchedulingTab({ booking, onUpdate }: BookingSched
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
                     <span className="font-medium">
-                      {booking.bookingAddressSnapshot.street} {booking.bookingAddressSnapshot.buildingNumber}
+                      {booking.bookingAddressSnapshot.street} {booking.bookingAddressSnapshot.streetNumber}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    {booking.bookingAddressSnapshot.city}, {booking.bookingAddressSnapshot.postalCode}
+                    {booking.bookingAddressSnapshot.city}
                   </p>
                   {booking.bookingAddressSnapshot.floor && (
                     <p className="text-sm">

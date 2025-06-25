@@ -2258,11 +2258,12 @@ export async function createGuestBooking(
         bookedByUserName: guestInfo.name,
         bookedByUserEmail: guestInfo.email,
         bookedByUserPhone: guestInfo.phone,
-        recipientName: validatedPayload.recipientName || guestInfo.name,
-        recipientPhone: validatedPayload.recipientPhone || guestInfo.phone,
-        recipientEmail: validatedPayload.recipientEmail || guestInfo.email,
-        recipientBirthDate: validatedPayload.recipientBirthDate,
-        recipientGender: validatedPayload.recipientGender,
+        // Only set recipient fields if explicitly booking for someone else
+        recipientName: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientName : guestInfo.name,
+        recipientPhone: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientPhone : guestInfo.phone,
+        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : guestInfo.email,
+        recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
+        recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
         status: "pending_payment",
         // Calculated fields based on treatment
@@ -2416,7 +2417,7 @@ export async function createGuestBooking(
           const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
           
           // Safely get notification preferences with fallbacks
-          const isBookingForSomeoneElse = Boolean(validatedPayload.recipientName && validatedPayload.recipientEmail)
+          const isBookingForSomeoneElse = Boolean(validatedPayload.isBookingForSomeoneElse)
           const bookerName = guestInfo.name
           const recipientName = isBookingForSomeoneElse ? validatedPayload.recipientName! : bookerName
           
@@ -2500,7 +2501,7 @@ export async function createGuestBooking(
     logger.error("No booking result returned from transaction")
     return { success: false, error: "bookings.errors.creationFailed" }
   } catch (error) {
-    await mongooseDbSession.abortTransaction()
+    // Don't manually abort transaction - withTransaction() handles this automatically
     logger.error("Error creating guest booking:", {
       error: error instanceof Error ? error.message : String(error),
       guestInfo: validatedPayload.guestInfo,

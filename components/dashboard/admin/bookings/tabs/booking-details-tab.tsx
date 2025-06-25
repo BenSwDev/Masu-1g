@@ -185,7 +185,7 @@ export default function BookingDetailsTab({ booking, onUpdate }: BookingDetailsT
               <Label className="text-sm font-medium">זמן הטיפול</Label>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span>{formatDate(booking.startTime)}</span>
+                <span>{formatDate(booking.bookingDateTime)}</span>
               </div>
             </div>
 
@@ -198,7 +198,7 @@ export default function BookingDetailsTab({ booking, onUpdate }: BookingDetailsT
                   <span>
                     {[
                       booking.bookingAddressSnapshot.street,
-                      booking.bookingAddressSnapshot.buildingNumber,
+                      booking.bookingAddressSnapshot.streetNumber,
                       booking.bookingAddressSnapshot.city
                     ].filter(Boolean).join(" ")}
                   </span>

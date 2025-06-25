@@ -379,6 +379,22 @@ export default function UniversalBookingWizard({
   // Check for abandoned booking on component mount
   useEffect(() => {
     const checkForAbandonedBooking = async () => {
+      // For registered users, check using their user ID
+      if (currentUser?.id) {
+        try {
+          const result = await getAbandonedBooking(currentUser.id)
+          
+          if (result.success && result.booking) {
+            setAbandonedBooking(result.booking)
+            setShowRecoveryDialog(true)
+          }
+        } catch (error) {
+          console.warn("Error checking for abandoned booking (registered user):", error)
+        }
+        return // Don't check for guest bookings if user is logged in
+      }
+      
+      // For guests, check using saved guest user ID
       const savedUserId = localStorage.getItem('guestUserId')
       
       if (savedUserId) {
@@ -391,13 +407,13 @@ export default function UniversalBookingWizard({
             setShowRecoveryDialog(true)
           }
         } catch (error) {
-          console.warn("Error checking for abandoned booking:", error)
+          console.warn("Error checking for abandoned booking (guest):", error)
         }
       }
     }
     
     checkForAbandonedBooking()
-  }, [])
+  }, [currentUser])
 
   const guestUserCreatedRef = useRef(false)
   const priceCalculationIdRef = useRef<number>(0)
@@ -443,10 +459,13 @@ export default function UniversalBookingWizard({
 
   // Save form state whenever it changes (after step 1)
   useEffect(() => {
-    if (guestUserId && currentStep > 1) {
+    // Determine which user ID to use
+    const userId = currentUser?.id || guestUserId
+    
+    if (userId && currentStep > 1) {
       const saveFormState = async () => {
         try {
-          const result = await saveAbandonedBooking(guestUserId, {
+          const result = await saveAbandonedBooking(userId, {
             guestInfo,
             guestAddress,
             bookingOptions,
@@ -466,7 +485,7 @@ export default function UniversalBookingWizard({
       const timeoutId = setTimeout(saveFormState, 1000)
       return () => clearTimeout(timeoutId)
     }
-  }, [guestUserId, guestInfo, guestAddress, bookingOptions, calculatedPrice, currentStep])
+  }, [currentUser?.id, guestUserId, guestInfo, guestAddress, bookingOptions, calculatedPrice, currentStep])
 
   // Effect to fetch time slots with debouncing for better performance
   useEffect(() => {
@@ -627,16 +646,20 @@ export default function UniversalBookingWizard({
   }
 
   const handleStartFresh = () => {
-    // ✅ תיקון: ניקוי localStorage כוללני במקרה של שגיאה
-    try {
-      localStorage.removeItem('guestUserId')
-      localStorage.removeItem('abandonedBooking')
-      localStorage.removeItem('bookingFormData')
-    } catch (error) {
-      console.warn("Failed to clear localStorage:", error)
+    // Only clear guest-specific data, don't affect registered users
+    if (!currentUser) {
+      // ✅ תיקון: ניקוי localStorage כוללני רק לאורחים
+      try {
+        localStorage.removeItem('guestUserId')
+        localStorage.removeItem('abandonedBooking')
+        localStorage.removeItem('bookingFormData')
+      } catch (error) {
+        console.warn("Failed to clear localStorage:", error)
+      }
+      
+      setGuestUserId(null)
     }
     
-    setGuestUserId(null)
     setAbandonedBooking(null)
     setShowRecoveryDialog(false)
     // Reset all form state

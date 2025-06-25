@@ -33,6 +33,7 @@ export interface IUser extends Document {
   activeRole?: string // Add activeRole
   treatmentPreferences?: ITreatmentPreferences // New field
   notificationPreferences?: INotificationPreferences // New field
+  originalGuestEmail?: string // Store original email for guest users
   createdAt: Date
   updatedAt: Date
 }
@@ -54,9 +55,7 @@ const UserSchema: Schema = new Schema(
     phone: {
       type: String,
       required: false,
-      unique: true,
       trim: true,
-      sparse: true,
     },
     password: {
       type: String,
@@ -116,6 +115,10 @@ const UserSchema: Schema = new Schema(
         enum: ["he", "en", "ru"],
         default: "he",
       },
+    },
+    originalGuestEmail: {
+      type: String,
+      required: false,
     },
   },
   {

@@ -2262,12 +2262,12 @@ export async function createGuestBooking(
         userId: null, // Guest booking - no user association initially
         bookingNumber,
         bookedByUserName: guestInfo.name,
-        bookedByUserEmail: guestInfo.email,
+        bookedByUserEmail: validatedPayload.guestInfo.email, // Store original email, not modified one
         bookedByUserPhone: guestInfo.phone,
         // Only set recipient fields if explicitly booking for someone else
         recipientName: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientName : guestInfo.name,
         recipientPhone: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientPhone : guestInfo.phone,
-        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : guestInfo.email,
+        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : validatedPayload.guestInfo.email,
         recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
@@ -2450,7 +2450,7 @@ export async function createGuestBooking(
 
           // Send notification to booker (guest) using smart system
           await sendGuestNotification(
-            guestInfo.email,
+            validatedPayload.guestInfo.email, // Use original email from payload, not the modified one
             notificationMethods.includes("sms") ? guestInfo.phone : null,
             bookerBookingData,
             notificationLanguage,
@@ -2627,58 +2627,40 @@ export async function createGuestUser(guestInfo: {
     
     await dbConnect()
 
-    // Check if user already exists with this email or phone
-    const existingUser = await User.findOne({
-      $or: [
-        { email: guestInfo.email.trim().toLowerCase() },
-        { phone: guestInfo.phone.replace(/[-\s]/g, "") }
-      ]
-    })
-
-    if (existingUser) {
-      logger.info("Found existing user for guest booking", { 
-        userId: existingUser._id.toString(),
-        existingRoles: existingUser.roles 
-      })
-      
-      // Safely ensure guest role is present without unsafe manipulation
-      if (!existingUser.roles.includes(UserRole.GUEST)) {
-        // Only add guest role if it's not already present
-        const updatedRoles = [...existingUser.roles, UserRole.GUEST]
-        existingUser.roles = updatedRoles
-        await existingUser.save()
-        logger.info("Added guest role to existing user", { 
-          userId: existingUser._id.toString(),
-          newRoles: updatedRoles 
-        })
-      }
-      
-      return { success: true, userId: existingUser._id.toString() }
-    }
-
+    // For guests, we ALWAYS create a new user record, even if there's a registered user 
+    // with the same email/phone. Guests are separate entities and can have duplicates.
+    // Only registered users need unique email/phone constraints.
+    
     // Generate secure random password for guest user
     const crypto = require('crypto')
     const randomPassword = crypto.randomBytes(16).toString('hex')
+    
+    // Create unique email for guest to avoid conflicts with registered users
+    const timestamp = Date.now()
+    const guestEmail = `guest_${timestamp}_${guestInfo.email.replace('@', '_at_')}`
 
     // Create new guest user with validated data
     const guestUser = new User({
       name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
-      email: guestInfo.email.trim().toLowerCase(),
-      phone: guestInfo.phone.replace(/[-\s]/g, ""),
-      gender: guestInfo.gender || "other",
+      email: guestEmail, // Use unique guest email to avoid conflicts
+      phone: guestInfo.phone.replace(/[-\s]/g, ""), // Multiple guests can have same phone
+      gender: guestInfo.gender && ["male", "female", "other"].includes(guestInfo.gender) ? guestInfo.gender : "other", // Ensure valid gender
       dateOfBirth: guestInfo.birthDate,
       password: randomPassword, // Secure random password
       roles: [UserRole.GUEST],
       activeRole: UserRole.GUEST,
       emailVerified: null,
       phoneVerified: null,
+      // Store original email for reference
+      originalGuestEmail: guestInfo.email.trim().toLowerCase(),
     })
 
     await guestUser.save()
     
     logger.info("Guest user created successfully", {
       userId: guestUser._id.toString(),
-      email: guestInfo.email,
+      originalEmail: guestInfo.email,
+      guestEmail: guestEmail,
     })
 
     return { success: true, userId: guestUser._id.toString() }
@@ -2688,11 +2670,46 @@ export async function createGuestUser(guestInfo: {
       email: guestInfo.email 
     })
     
+    // For guests, we should retry with a different unique identifier if there's a conflict
+    if (error instanceof Error && (error.message.includes('duplicate key') || (error as any).code === 11000)) {
+      // Try again with a more unique identifier
+      try {
+        const crypto = require('crypto')
+        const uniqueId = crypto.randomBytes(8).toString('hex')
+        const timestamp = Date.now()
+        const guestEmail = `guest_${timestamp}_${uniqueId}_${guestInfo.email.replace('@', '_at_')}`
+        
+        const guestUser = new User({
+          name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
+          email: guestEmail,
+          phone: guestInfo.phone.replace(/[-\s]/g, ""),
+          gender: guestInfo.gender && ["male", "female", "other"].includes(guestInfo.gender) ? guestInfo.gender : "other", // Ensure valid gender
+          dateOfBirth: guestInfo.birthDate,
+          password: crypto.randomBytes(16).toString('hex'),
+          roles: [UserRole.GUEST],
+          activeRole: UserRole.GUEST,
+          emailVerified: null,
+          phoneVerified: null,
+          originalGuestEmail: guestInfo.email.trim().toLowerCase(),
+        })
+        
+        await guestUser.save()
+        
+        logger.info("Guest user created successfully on retry", {
+          userId: guestUser._id.toString(),
+          originalEmail: guestInfo.email,
+          guestEmail: guestEmail,
+        })
+        
+        return { success: true, userId: guestUser._id.toString() }
+      } catch (retryError) {
+        logger.error("Failed to create guest user on retry:", retryError)
+        return { success: false, error: "Failed to create guest user" }
+      }
+    }
+    
     // Return appropriate error messages based on error type
     if (error instanceof Error) {
-      if (error.message.includes('duplicate key') || (error as any).code === 11000) {
-        return { success: false, error: "User with this email or phone already exists" }
-      }
       if (error.message.includes('validation') || error.name === 'ValidationError') {
         return { success: false, error: "Invalid user data provided" }
       }

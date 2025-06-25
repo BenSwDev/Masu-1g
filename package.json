@@ -12,8 +12,9 @@
     "init-data": "ts-node --project tsconfig.json scripts/init-data.ts"
   },
   "dependencies": {
+    "@alloc/quick-lru": "^5.2.0",
     "@auth/core": "^0.34.2",
-    "@auth/mongodb-adapter": "^3.7.0",
+    "@auth/mongodb-adapter": "^3.10.0",
     "@aws-sdk/credential-providers": "latest",
     "@hookform/resolvers": "latest",
     "@mongodb-js/zstd": "latest",

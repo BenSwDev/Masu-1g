@@ -117,9 +117,8 @@ export const authOptions: NextAuthOptions = {
         await dbConnect()
         const identifier = credentials.email.toLowerCase().trim()
         let query: any = {}
-        if (validateEmail(identifier)) {
-          query = { email: identifier }
-        } else if (validatePhone(identifier)) {
+        
+        if (validatePhone(identifier)) {
           let cleaned = identifier.replace(/[^\d+]/g, "")
           if (!cleaned.startsWith("+")) {
             if (cleaned.startsWith("0")) {
@@ -137,8 +136,9 @@ export const authOptions: NextAuthOptions = {
           }
           query = { phone: cleaned }
         } else {
-          throw new Error("Invalid email or phone format")
+          throw new Error("Invalid phone format - only phone login is supported")
         }
+        
         const user = (await User.findOne(query).select(
           "+password email name image roles activeRole treatmentPreferences notificationPreferences",
         )) as CustomUser // Include preferences and activeRole

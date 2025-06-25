@@ -168,19 +168,6 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
 
   const handleGuestInfoSubmit = async (info: any) => {
     setGuestInfo(info)
-    if (!guestUserId) {
-      const result = await createGuestUser({
-        firstName: info.firstName,
-        lastName: info.lastName,
-        email: info.email,
-        phone: info.phone,
-        birthDate: info.birthDate,
-        gender: info.gender,
-      })
-      if (result.success && result.userId) {
-        setGuestUserId(result.userId)
-      }
-    }
     nextStep()
   }
 

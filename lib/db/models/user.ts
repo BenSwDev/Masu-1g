@@ -21,8 +21,8 @@ export interface INotificationPreferences {
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId
   name: string
-  email: string
-  phone?: string
+  email?: string
+  phone: string
   password?: string
   gender?: "male" | "female" | "other"
   dateOfBirth?: Date
@@ -48,14 +48,14 @@ const UserSchema: Schema = new Schema(
     },
     email: {
       type: String,
-      required: [true, "Email is required"],
-      unique: true,
+      required: false,
       lowercase: true,
       trim: true,
     },
     phone: {
       type: String,
-      required: false,
+      required: true,
+      unique: true,
       trim: true,
     },
     password: {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -162,6 +162,14 @@ export function GuestInfoStep({
 
   const watchIsGift = form.watch("isGift")
   const watchSendOption = form.watch("sendOption")
+
+  // אם showGiftOptions=true, תמיד isGift=true
+  useEffect(() => {
+    if (showGiftOptions) {
+      form.setValue("isGift", true)
+    }
+  }, [showGiftOptions, form])
+
   const timeOptions = useMemo(() => {
     const opts = []
     for (let i = 8; i <= 23; i++) {
@@ -603,15 +611,11 @@ export function GuestInfoStep({
 
                 {showGiftOptions && (
                   <div className="space-y-4">
-                    <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
-                      <Checkbox
-                        id="isGift"
-                        checked={watchIsGift}
-                        onCheckedChange={(checked) => form.setValue("isGift", checked as boolean)}
-                      />
-                      <label htmlFor="isGift" className="flex items-center gap-2 cursor-pointer">
-                        {t("purchaseGiftVoucher.sendAsGift")}
-                      </label>
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-blue-800">
+                        <span className="font-medium">שובר מתנה</span>
+                        <span className="text-sm">(כל השוברים הם מתנות)</span>
+                      </div>
                     </div>
 
                     {watchIsGift && (

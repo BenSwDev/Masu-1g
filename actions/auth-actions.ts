@@ -92,7 +92,7 @@ export async function registerUser(formData: FormData) {
     }
 
     // Validate input
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !formattedPhone) {
       logger.warn(`[${requestId}] Registration failed: Missing required fields`)
       return { success: false, message: "missingFields" }
     }
@@ -121,15 +121,7 @@ export async function registerUser(formData: FormData) {
 
     // Check if user already exists using optimized queries
     logger.info(`[${requestId}] Checking if user already exists`)
-    const [emailExists, phoneExists] = await Promise.all([
-      UserQueries.emailExists(email),
-      formattedPhone ? UserQueries.phoneExists(formattedPhone) : Promise.resolve(false),
-    ])
-
-    if (emailExists) {
-      logger.warn(`[${requestId}] Registration failed: Email already exists`)
-      return { success: false, message: "emailExists" }
-    }
+    const phoneExists = formattedPhone ? await UserQueries.phoneExists(formattedPhone) : false
 
     if (phoneExists) {
       logger.warn(`[${requestId}] Registration failed: Phone already exists`)
@@ -163,17 +155,98 @@ export async function registerUser(formData: FormData) {
   }
 }
 
-export async function checkUserExists(email: string) {
+export async function checkUserExists(phone: string) {
   const requestId = `check_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
 
   try {
-    logger.info(`[${requestId}] Checking if user exists with email: ${email.substring(0, 3)}***${email.split("@")[1]}`)
+    logger.info(`[${requestId}] Checking if user exists with phone: ${phone.substring(0, 3)}***${phone.substring(phone.length - 3)}`)
     await dbConnect()
-    const exists = await UserQueries.emailExists(email)
+    const exists = await UserQueries.phoneExists(phone)
     logger.info(`[${requestId}] User exists check result: ${exists ? "User found" : "User not found"}`)
     return { exists: !!exists }
   } catch (error) {
     logger.error(`[${requestId}] Check user error:`, error)
     return { exists: false }
+  }
+}
+
+// פונקציה חדשה לניהול משתמשים לפי טלפון
+export async function findOrCreateUserByPhone(phone: string, guestInfo?: {
+  name: string
+  email: string
+  gender?: "male" | "female" | "other"
+  dateOfBirth?: Date
+}) {
+  const requestId = `find_create_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
+
+  try {
+    logger.info(`[${requestId}] Finding or creating user by phone: ${phone.substring(0, 3)}***${phone.substring(phone.length - 3)}`)
+    await dbConnect()
+
+    // נרמול טלפון
+    let cleaned = phone.replace(/[^\d+]/g, "")
+    if (!cleaned.startsWith("+")) {
+      if (cleaned.startsWith("0")) {
+        cleaned = "+972" + cleaned.substring(1)
+      } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
+        cleaned = "+972" + cleaned
+      } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
+        cleaned = "+" + cleaned
+      } else {
+        cleaned = "+972" + cleaned
+      }
+    }
+    if (cleaned.startsWith("+9720")) {
+      cleaned = "+972" + cleaned.substring(5)
+    }
+
+    // בדיקה אם משתמש קיים
+    const existingUser = await User.findOne({ phone: cleaned })
+    
+    if (existingUser) {
+      logger.info(`[${requestId}] User found with phone, returning existing user`)
+      return { 
+        success: true, 
+        userId: existingUser._id.toString(),
+        isNewUser: false,
+        userType: existingUser.roles.includes("guest") ? "guest" : "registered"
+      }
+    }
+
+    // אם לא קיים ויש guestInfo - צור אורח חדש
+    if (guestInfo) {
+      logger.info(`[${requestId}] Creating new guest user`)
+      const guestUser = new User({
+        name: guestInfo.name,
+        email: guestInfo.email,
+        phone: cleaned,
+        gender: guestInfo.gender || "other",
+        dateOfBirth: guestInfo.dateOfBirth,
+        roles: ["guest"],
+        activeRole: "guest",
+        emailVerified: null,
+        phoneVerified: null,
+      })
+
+      await guestUser.save()
+      logger.info(`[${requestId}] Guest user created successfully with ID: ${guestUser._id}`)
+
+      return { 
+        success: true, 
+        userId: guestUser._id.toString(),
+        isNewUser: true,
+        userType: "guest"
+      }
+    }
+
+    // אם אין guestInfo - החזר שאין משתמש
+    return { 
+      success: false, 
+      error: "User not found and no guest info provided" 
+    }
+
+  } catch (error) {
+    logger.error(`[${requestId}] Find or create user error:`, error)
+    return { success: false, error: "Failed to find or create user" }
   }
 }

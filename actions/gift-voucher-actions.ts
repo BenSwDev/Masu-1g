@@ -891,7 +891,7 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
       return { success: false, error: "Voucher not found" }
     }
     // Allow confirmation if user is the purchaser OR an admin (admin might confirm manually)
-    if (voucher.purchaserUserId.toString() !== session.user.id && !session.user.roles.includes("admin")) {
+    if (voucher.purchaserUserId?.toString() !== session.user.id && !session.user.roles.includes("admin")) {
       logger.warn("Voucher purchaser mismatch during confirmation by non-admin.", {
         voucherId,
         userId: session.user.id,
@@ -979,12 +979,12 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
           }
         } else {
           logger.warn(
-            `Purchaser not found for notification after gift voucher purchase confirmation: ${voucher.purchaserUserId.toString()}`,
+            `Purchaser not found for notification after gift voucher purchase confirmation: ${voucher.purchaserUserId?.toString()}`,
           )
         }
       } catch (notificationError) {
         logger.error("Failed to send purchase success notification for gift voucher (purchaser):", {
-          userId: voucher.purchaserUserId.toString(),
+          userId: voucher.purchaserUserId?.toString(),
           voucherId: voucher._id.toString(),
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
         })
@@ -992,8 +992,8 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
       // --- End notification sending to purchaser ---
 
       revalidatePath("/dashboard/member/gift-vouchers")
-      if (voucher.purchaserUserId.toString() !== voucher.ownerUserId.toString()) {
-        revalidatePath(`/dashboard/user/${voucher.ownerUserId.toString()}/gift-vouchers`) // This path might not exist
+      if (voucher.purchaserUserId?.toString() !== voucher.ownerUserId?.toString()) {
+        revalidatePath(`/dashboard/user/${voucher.ownerUserId?.toString()}/gift-vouchers`) // This path might not exist
       }
       return {
         success: true,
@@ -1031,7 +1031,7 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
     if (!voucher) {
       return { success: false, error: "Voucher not found" }
     }
-    if (voucher.purchaserUserId.toString() !== session.user.id) {
+    if (voucher.purchaserUserId?.toString() !== session.user.id) {
       return { success: false, error: "You are not authorized to modify this voucher." }
     }
     // Ensure voucher is in a state where gift details can be set (e.g., 'active' or 'pending_payment' if payment was confirmed)
@@ -1087,7 +1087,7 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
 
     if (sendNotificationToRecipientNow && voucher.recipientPhone && voucher.recipientName) {
       try {
-        const recipientLang = session.user.language || "he"
+        const recipientLang = session.user.notificationPreferences?.language || "he"
         const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
         const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
         
@@ -1214,18 +1214,53 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
       return { success: false, error: "Voucher not found." }
     }
 
-    // Check if the current user is the owner OR if the voucher was gifted to them (recipientName/Phone match)
-    // For simplicity, current logic assumes ownerUserId must match session.user.id
-    // A more complex scenario might allow redemption if recipient details match and voucher is 'sent'.
-    if (voucher.ownerUserId.toString() !== session.user.id) {
-      // If it's a gift sent to someone else, the owner (purchaser) cannot redeem it.
-      // If it was gifted TO this user, ownerUserId might still be the purchaser.
-      // This needs clarification: who can redeem? The owner or the designated recipient?
-      // Assuming for now: only the ownerUserId can redeem.
-      // If a voucher is gifted, ownerUserId should ideally be updated to the recipient if they have an account.
-      // Or, redemption logic needs to check recipientPhone if status is 'sent'.
-      // For now, sticking to ownerUserId check.
-      return { success: false, error: "This voucher does not belong to you or cannot be redeemed by you." }
+
+    // New logic for voucher redemption based on the new requirements:
+    // 1. If the voucher is NOT a gift: only the purchaser can redeem
+    // 2. If the voucher IS a gift: only the recipient can redeem (by matching phone number)
+    
+    const currentUser = await User.findById(session.user.id)
+    if (!currentUser) {
+      return { success: false, error: "User not found." }
+    }
+
+    if (!voucher.isGift) {
+      // Not a gift - only the purchaser can redeem
+      if (voucher.purchaserUserId?.toString() !== session.user.id) {
+        return { success: false, error: "רק הרוכש יכול לממש שובר זה." }
+      }
+    } else {
+      // It's a gift - only the recipient can redeem (by phone match)
+      if (!voucher.recipientPhone || !currentUser.phone) {
+        return { success: false, error: "לא ניתן לאמת זכאות למימוש השובר." }
+      }
+      
+      // Normalize both phone numbers for comparison
+      const normalizePhone = (phone: string) => {
+        let cleaned = phone.replace(/[^\d+]/g, "")
+        if (!cleaned.startsWith("+")) {
+          if (cleaned.startsWith("0")) {
+            cleaned = "+972" + cleaned.substring(1)
+          } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
+            cleaned = "+972" + cleaned
+          } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
+            cleaned = "+" + cleaned
+          } else {
+            cleaned = "+972" + cleaned
+          }
+        }
+        if (cleaned.startsWith("+9720")) {
+          cleaned = "+972" + cleaned.substring(5)
+        }
+        return cleaned
+      }
+
+      const normalizedRecipientPhone = normalizePhone(voucher.recipientPhone)
+      const normalizedUserPhone = normalizePhone(currentUser.phone)
+      
+      if (normalizedRecipientPhone !== normalizedUserPhone) {
+        return { success: false, error: "רק מי שהשובר נרכש עבורו יכול לממש אותו." }
+      }
     }
 
     const currentDate = new Date()
@@ -1303,11 +1338,13 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
     if (!voucher.usageHistory) voucher.usageHistory = []
     voucher.usageHistory.push(usageEntry)
     // Update isActive based on new status
-    voucher.isActive = voucher.status === "active" || voucher.status === "partially_used" || voucher.status === "sent"
-    // (A 'sent' voucher is active for the recipient until used or expired)
-    // If fully_used or expired, isActive becomes false.
-    if (voucher.status === "fully_used" || voucher.status === "expired") {
+    const activeStatuses = ["active", "partially_used", "sent"]
+    const inactiveStatuses = ["fully_used", "expired", "cancelled"]
+    
+    if (inactiveStatuses.includes(voucher.status)) {
       voucher.isActive = false
+    } else if (activeStatuses.includes(voucher.status)) {
+      voucher.isActive = true
     }
 
     await voucher.save()
@@ -1335,7 +1372,7 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
 export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiationData & {
   guestInfo: {
     name: string
-    email: string
+    email?: string
     phone: string
   }
 }) {
@@ -1364,21 +1401,23 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
     const { voucherType, treatmentId, selectedDurationId, monetaryValue: inputMonetaryValue, isGift, guestInfo } = _data
 
     // Validate guest info
-    if (!_guestInfo || !_guestInfo.name || !_guestInfo.email || !_guestInfo.phone) {
+    if (!guestInfo || !guestInfo.name || !guestInfo.phone) {
       logger.warn(`[${requestId}] Invalid guest info provided`, { 
-        hasGuestInfo: !!_guestInfo,
-        hasName: !!_guestInfo?.name,
-        sEmail: !!_g_uestInfo?.email,
-        hasPhone: !!__guestInfo?.phone
+        hasGuestInfo: !!guestInfo,
+        hasName: !!guestInfo?.name,
+        hasEmail: !!guestInfo?.email,
+        hasPhone: !!guestInfo?.phone
       })
-      return { success: false, error: "Guest information (name, email, phone) is required." }
+      return { success: false, error: "Guest information (name, phone) is required." }
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(guestInfo.email)) {
-      logger.warn(`[${requestId}] Invalid email format`, { email: guestInfo.email })
-      return { success: false, error: "Valid email address is required." }
+    // Validate email format if provided
+    if (guestInfo.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(guestInfo.email)) {
+        logger.warn(`[${requestId}] Invalid email format`, { email: guestInfo.email })
+        return { success: false, error: "Valid email address is required when provided." }
+      }
     }
 
     // Validate phone format (basic check for non-empty)
@@ -1449,6 +1488,24 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
       }
     }
 
+    // Find or create user by phone
+    const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+    const userResult = await findOrCreateUserByPhone(guestInfo.phone, {
+      name: guestInfo.name,
+      email: guestInfo.email,
+    })
+
+    if (!userResult.success || !userResult.userId) {
+      logger.error(`[${requestId}] Failed to find or create user`, { error: userResult.error })
+      return { success: false, error: userResult.error || "Failed to create user" }
+    }
+
+    const userId = userResult.userId
+    logger.info(`[${requestId}] User ${userResult.isNewUser ? 'created' : 'found'}`, { 
+      userId, 
+      userType: userResult.userType 
+    })
+
     const code = await generateUniqueVoucherCode()
 
     const voucherCreationStart = Date.now()
@@ -1459,20 +1516,14 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
       monetaryValue: determinedPrice,
       originalAmount: determinedPrice,
       remainingAmount: determinedPrice,
-      purchaserUserId: null, // Guest purchase - no user association
-      ownerUserId: null, // Guest purchase - no user association  
+      purchaserUserId: new mongoose.Types.ObjectId(userId),
+      ownerUserId: isGift ? undefined : new mongoose.Types.ObjectId(userId), // אם מתנה, הבעלים יהיה הנמען
       isGift,
       status: "pending_payment",
       purchaseDate: new Date(),
       validFrom: new Date(),
       validUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       isActive: false,
-      // Store guest info in the voucher for reference
-      guestInfo: {
-        name: guestInfo.name,
-        email: guestInfo.email,
-        phone: guestInfo.phone,
-      },
     }
 
     if (isGift) {
@@ -1536,7 +1587,7 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
 export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & {
   guestInfo: {
     name: string
-    email: string
+    email?: string
     phone: string
   }
 }) {
@@ -1724,7 +1775,7 @@ export async function saveAbandonedGiftVoucherPurchase(
         savedAt: new Date(),
       }
       await existing.save()
-      return { success: true, purchaseId: existing._id.toString() }
+      return { success: true, purchaseId: existing.id.toString() }
     }
 
     const purchase = new GiftVoucherPurchase({
@@ -1738,7 +1789,7 @@ export async function saveAbandonedGiftVoucherPurchase(
       },
     })
     await purchase.save()
-    return { success: true, purchaseId: purchase._id.toString() }
+    return { success: true, purchaseId: purchase.id.toString() }
   } catch (error) {
     return { success: false, error: "Failed to save abandoned purchase" }
   }

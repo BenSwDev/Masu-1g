@@ -43,19 +43,11 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
   const [isLoading, setIsLoading] = useState(false)
 
   // Add user detection (you might need to import useAuth or similar)
-  const currentUser: { name?: string; email?: string; phone?: string } | null = null // TODO: Add actual user detection
+  const currentUser = null // TODO: Add actual user detection
 
   // Pre-fill guest info for logged-in users
   const prefilledGuestInfo = useMemo(() => {
-    if (currentUser) {
-      const [first, ...rest] = (currentUser.name || "").split(" ")
-      return {
-        firstName: first || "",
-        lastName: rest.join(" ") || "",
-        email: currentUser.email || "",
-        phone: currentUser.phone || "",
-      }
-    }
+    // currentUser is null for now - will be implemented later
     return {}
   }, [currentUser])
 
@@ -85,6 +77,10 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
     isBaseTreatmentCoveredBySubscription: false,
     isBaseTreatmentCoveredByTreatmentVoucher: false,
     isFullyCoveredByVoucherOrSubscription: false,
+    totalProfessionalPayment: 0,
+    totalOfficeCommission: 0,
+    baseProfessionalPayment: 0,
+    surchargesProfessionalPayment: 0,
   }
 
   const treatmentCategories = [...new Set(treatments.map(t => t.category))]
@@ -178,7 +174,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
       setIsLoading(false)
       if (confirmRes.success && confirmRes.voucher) {
         // Immediately redirect to confirmation page
-        const voucherId = confirmRes.voucher._id || confirmRes.voucher.id
+        const voucherId = confirmRes.voucher._id
         if (voucherId) {
           router.push(`/purchase/gift-voucher/confirmation?voucherId=${voucherId}&status=success`)
         } else {
@@ -318,11 +314,11 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                 <div className="grid gap-2">
                   {categoryTreatments.map((treatment) => (
                     <div
-                      key={treatment._id}
+                      key={(treatment._id as any).toString()}
                       className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                        selectedTreatmentId === treatment._id.toString() ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                        selectedTreatmentId === (treatment._id as any).toString() ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
                       }`}
-                      onClick={() => setSelectedTreatmentId(treatment._id.toString())}
+                      onClick={() => setSelectedTreatmentId((treatment._id as any).toString())}
                     >
                       <div className="flex justify-between items-start">
                         <div>
@@ -334,7 +330,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                             <p className="text-sm text-blue-600 mt-1">₪{treatment.fixedPrice}</p>
                           )}
                         </div>
-                        {selectedTreatmentId === treatment._id.toString() && (
+                        {selectedTreatmentId === treatment.id.toString() && (
                           <CheckCircle className="w-5 h-5 text-blue-500" />
                         )}
                       </div>
@@ -353,19 +349,19 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                     .filter(d => d.isActive)
                     .map((duration) => (
                       <div
-                        key={duration._id}
+                        key={(duration._id as any).toString()}
                         className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedDurationId === duration._id.toString() ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                          selectedDurationId === (duration._id as any).toString() ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
                         }`}
-                        onClick={() => setSelectedDurationId(duration._id.toString())}
+                        onClick={() => setSelectedDurationId((duration._id as any).toString())}
                       >
                         <div className="flex justify-between items-center">
                           <span>{duration.minutes} דקות</span>
                           <div className="flex items-center gap-2">
                             <span className="text-blue-600 font-medium">₪{duration.price}</span>
-                            {selectedDurationId === duration._id.toString() && (
-                              <CheckCircle className="w-5 h-5 text-blue-500" />
-                            )}
+                                                      {selectedDurationId === (duration._id as any).toString() && (
+                            <CheckCircle className="w-5 h-5 text-blue-500" />
+                          )}
                           </div>
                         </div>
                       </div>
@@ -424,9 +420,10 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
             setGuestInfo={setGuestInfo}
             onNext={handleGuestInfoSubmit}
             onPrev={prevStep}
-            defaultBookingForSomeoneElse
-            hideRecipientBirthGender
-            showGiftOptions
+            defaultBookingForSomeoneElse={true}
+            hideRecipientBirthGender={true}
+            showGiftOptions={true}
+            hideBookingForSomeoneElse={false}
           />
         </CardContent>
       </Card>

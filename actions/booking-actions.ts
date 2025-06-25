@@ -513,12 +513,8 @@ export async function calculateBookingPrice(
         userSub &&
         userSub.status === "active" &&
         userSub.remainingQuantity > 0 &&
-        (
-          // For registered users
-          (userSub.userId && userId && userSub.userId.toString() === userId) ||
-          // For guest subscriptions (no owner)
-          userSub.userId == null
-        )
+        // Only the subscription owner can redeem it
+        userSub.userId && userId && userSub.userId.toString() === userId
       ) {
         const subTreatment = userSub.treatmentId as ITreatment
         const isTreatmentMatch = subTreatment && (subTreatment._id as any).toString() === treatmentId
@@ -2682,141 +2678,15 @@ export async function createGuestUser(guestInfo: {
   birthDate?: Date
   gender?: "male" | "female" | "other"
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
-  try {
-    // Validate input data
-    if (!guestInfo.firstName?.trim() || !guestInfo.lastName?.trim()) {
-      return { success: false, error: "First name and last name are required" }
-    }
-    
-    if (!guestInfo.email?.trim() || !guestInfo.phone?.trim()) {
-      return { success: false, error: "Email and phone are required" }
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(guestInfo.email.trim())) {
-      return { success: false, error: "Invalid email format" }
-    }
-
-    // Validate phone format (basic Israeli phone validation)
-    const phoneRegex = /^(\+972|0)?[5-9]\d{8}$/
-    if (!phoneRegex.test(guestInfo.phone.replace(/[-\s]/g, ""))) {
-      return { success: false, error: "Invalid phone format" }
-    }
-
-    logger.info("Creating guest user", { 
-      email: guestInfo.email,
-      phone: guestInfo.phone 
-    })
-    
-    await dbConnect()
-
-    // For guests, we ALWAYS create a new user record, even if there's a registered user 
-    // with the same email/phone. Guests are separate entities and can have duplicates.
-    // Only registered users need unique email/phone constraints.
-    
-    // Generate secure random password for guest user
-    const crypto = require('crypto')
-    const randomPassword = crypto.randomBytes(16).toString('hex')
-    const uniqueId = crypto.randomBytes(8).toString('hex')
-    const timestamp = Date.now()
-    
-    // Create unique email and phone for guest to avoid conflicts
-    const guestEmail = `guest_${timestamp}_${uniqueId}_${guestInfo.email.replace('@', '_at_')}`
-    const guestPhone = `${guestInfo.phone.replace(/[-\s]/g, "")}_guest_${uniqueId}`
-
-    // Create new guest user with validated data
-    const guestUser = new User({
-      name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
-      email: guestEmail, // Use unique guest email to avoid conflicts
-      phone: guestPhone, // Use unique guest phone to avoid conflicts
-      gender: guestInfo.gender && ["male", "female", "other"].includes(guestInfo.gender) ? guestInfo.gender : "other", // Ensure valid gender
-      dateOfBirth: guestInfo.birthDate,
-      password: randomPassword, // Secure random password
-      roles: [UserRole.GUEST],
-      activeRole: UserRole.GUEST,
-      emailVerified: null,
-      phoneVerified: null,
-      // Store original email and phone for reference
-      originalGuestEmail: guestInfo.email.trim().toLowerCase(),
-      originalGuestPhone: guestInfo.phone.replace(/[-\s]/g, ""),
-    })
-
-    await guestUser.save()
-    
-    logger.info("Guest user created successfully", {
-      userId: guestUser._id.toString(),
-      originalEmail: guestInfo.email,
-      originalPhone: guestInfo.phone,
-      guestEmail: guestEmail,
-      guestPhone: guestPhone,
-    })
-
-    return { success: true, userId: guestUser._id.toString() }
-  } catch (error) {
-    logger.error("Error creating guest user:", { 
-      error: error instanceof Error ? error.message : String(error),
-      email: guestInfo.email 
-    })
-    
-    // For guests, we should retry with a different unique identifier if there's a conflict
-    if (error instanceof Error && (error.message.includes('duplicate key') || (error as any).code === 11000)) {
-      // Try again with a more unique identifier
-      try {
-        const crypto = require('crypto')
-        const uniqueId = crypto.randomBytes(8).toString('hex')
-        const timestamp = Date.now()
-        const guestEmail = `guest_${timestamp}_${uniqueId}_${guestInfo.email.replace('@', '_at_')}`
-        
-        const retryUniqueId = crypto.randomBytes(8).toString('hex')
-        const retryTimestamp = Date.now()
-        const retryGuestEmail = `guest_${retryTimestamp}_${retryUniqueId}_${guestInfo.email.replace('@', '_at_')}`
-        const retryGuestPhone = `${guestInfo.phone.replace(/[-\s]/g, "")}_guest_${retryUniqueId}`
-        
-        const guestUser = new User({
-          name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
-          email: retryGuestEmail,
-          phone: retryGuestPhone,
-          gender: guestInfo.gender && ["male", "female", "other"].includes(guestInfo.gender) ? guestInfo.gender : "other", // Ensure valid gender
-          dateOfBirth: guestInfo.birthDate,
-          password: crypto.randomBytes(16).toString('hex'),
-          roles: [UserRole.GUEST],
-          activeRole: UserRole.GUEST,
-          emailVerified: null,
-          phoneVerified: null,
-          originalGuestEmail: guestInfo.email.trim().toLowerCase(),
-          originalGuestPhone: guestInfo.phone.replace(/[-\s]/g, ""),
-        })
-        
-        await guestUser.save()
-        
-        logger.info("Guest user created successfully on retry", {
-          userId: guestUser._id.toString(),
-          originalEmail: guestInfo.email,
-          originalPhone: guestInfo.phone,
-          guestEmail: retryGuestEmail,
-          guestPhone: retryGuestPhone,
-        })
-        
-        return { success: true, userId: guestUser._id.toString() }
-      } catch (retryError) {
-        logger.error("Failed to create guest user on retry:", retryError)
-        return { success: false, error: "Failed to create guest user" }
-      }
-    }
-    
-    // Return appropriate error messages based on error type
-    if (error instanceof Error) {
-      if (error.message.includes('validation') || error.name === 'ValidationError') {
-        return { success: false, error: "Invalid user data provided" }
-      }
-      if (error.message.includes('required')) {
-        return { success: false, error: "Required fields missing" }
-      }
-    }
-    
-    return { success: false, error: "Failed to create guest user" }
-  }
+  // שימוש בפונקציה החדשה
+  const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+  
+  return await findOrCreateUserByPhone(guestInfo.phone, {
+    name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+    email: guestInfo.email,
+    gender: guestInfo.gender,
+    dateOfBirth: guestInfo.birthDate,
+  })
 }
 
 export async function saveAbandonedBooking(

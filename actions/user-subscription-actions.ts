@@ -85,10 +85,8 @@ function validateGuestInfo(guestInfo: any): { valid: boolean; errors: string[] }
     errors.push('Name contains invalid characters')
   }
   
-  // Email validation
-  if (!guestInfo.email || typeof guestInfo.email !== 'string') {
-    errors.push('Email is required')
-  } else {
+  // Email validation (optional now)
+  if (guestInfo.email && typeof guestInfo.email === 'string') {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(guestInfo.email)) {
       errors.push('Invalid email format')
@@ -602,7 +600,7 @@ export async function purchaseGuestSubscription({
 }: PurchaseSubscriptionArgs & {
   guestInfo: {
     name: string
-    email: string
+    email?: string
     phone: string
   }
 }) {
@@ -638,7 +636,7 @@ export async function purchaseGuestSubscription({
     // Sanitize inputs
     const sanitizedGuestInfo = {
       name: sanitizeInput(guestInfo.name),
-      email: sanitizeInput(guestInfo.email).toLowerCase(),
+      email: guestInfo.email ? sanitizeInput(guestInfo.email).toLowerCase() : undefined,
       phone: sanitizeInput(guestInfo.phone),
     }
 
@@ -751,12 +749,30 @@ export async function purchaseGuestSubscription({
     const expiryDate = new Date(purchaseDate)
     expiryDate.setMonth(expiryDate.getMonth() + subscription.validityMonths)
 
+    // Find or create user by phone
+    const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+    const userResult = await findOrCreateUserByPhone(sanitizedGuestInfo.phone, {
+      name: sanitizedGuestInfo.name,
+      email: sanitizedGuestInfo.email,
+    })
+
+    if (!userResult.success || !userResult.userId) {
+      logger.error(`[${requestId}] Failed to find or create user`, { error: userResult.error })
+      return { success: false, error: userResult.error || "Failed to create user" }
+    }
+
+    const userId = userResult.userId
+    logger.info(`[${requestId}] User ${userResult.isNewUser ? 'created' : 'found'}`, { 
+      userId, 
+      userType: userResult.userType 
+    })
+
     const saveStart = Date.now()
     const code = await generateUniqueSubscriptionCode()
-    // For guest purchases, we create a special UserSubscription record without userId
+    // Create UserSubscription with actual userId
     const newUserSubscription = new UserSubscription({
       code,
-      userId: null, // Guest purchase - no user association
+      userId: new mongoose.Types.ObjectId(userId),
       subscriptionId: subscription._id,
       treatmentId: treatment._id,
       selectedDurationId:
@@ -771,12 +787,6 @@ export async function purchaseGuestSubscription({
       paymentMethodId: paymentMethodId && mongoose.Types.ObjectId.isValid(paymentMethodId) ? new mongoose.Types.ObjectId(paymentMethodId) : undefined,
       paymentAmount: totalPaymentAmount,
       pricePerSession: singleSessionPrice,
-      // Store guest info in the record for reference
-      guestInfo: {
-        name: guestInfo.name,
-        email: guestInfo.email,
-        phone: guestInfo.phone,
-      },
     })
 
     await newUserSubscription.save()

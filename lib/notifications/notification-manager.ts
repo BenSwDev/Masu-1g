@@ -47,7 +47,7 @@ export class NotificationManager {
     // Validate recipient type and service configuration
     if (recipient.type === "email") {
       if (!emailService.isServiceConfigured()) {
-        const _error = "Email service not configured"
+        const error = "Email service not configured"
         logger.error(`[${logId}] ${error}`)
         return { success: false, error }
       }
@@ -65,7 +65,7 @@ export class NotificationManager {
     
     if (recipient.type === "phone") {
       if (!smsService.isServiceConfigured()) {
-        const _error = "SMS service not configured"
+        const error = "SMS service not configured"
         logger.error(`[${logId}] ${error}`)
         return { success: false, error }
       }
@@ -81,7 +81,7 @@ export class NotificationManager {
       }
     }
 
-    const _error = `Invalid recipient type: ${(recipient as any).type}`
+    const error = `Invalid recipient type: ${(recipient as any).type}`
     logger.error(`[${logId}] ${error}`)
     return { success: false, error }
   }
@@ -307,7 +307,7 @@ export class NotificationManager {
     logger.info(`[${logId}] Sending purchase success notifications to ${recipients.length} recipients`)
 
     try {
-      const _data = { type: "purchase-success" as const, message }
+      const data = { type: "purchase-success" as const, message }
       const results = await this.sendNotificationToMultiple(recipients, data)
       
       const successCount = results.filter(r => r.success).length

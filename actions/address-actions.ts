@@ -7,6 +7,7 @@ import { z } from "zod"
 import { logger } from "@/lib/logs/logger"
 import AddressQueries from "@/lib/db/queries/address-queries"
 import { type IAddress, constructFullAddress } from "@/lib/db/models/address" // Import model and helper
+import mongoose from "mongoose"
 import { citySchema } from "@/lib/validation/city-validation"
 
 // Validation schemas (ensure they align with IAddress, especially for details objects)
@@ -139,7 +140,7 @@ export async function createAddress(data: z.infer<typeof addressSchema>) {
 
     const addressDataWithUserAndFullAddress = {
       ...validatedData,
-      userId: session.user.id,
+      userId: new mongoose.Types.ObjectId(session.user.id),
       country: "ישראל", // Default country from schema is fine, but can be explicit
       fullAddress: fullAddress, // Add the constructed fullAddress
     }

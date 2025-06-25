@@ -1411,12 +1411,12 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
       return { success: false, error: "Guest information (name, phone) is required." }
     }
 
-    // Validate email format if provided
-    if (guestInfo.email) {
+    // Validate email format if provided (email is now optional)
+    if (guestInfo.email && guestInfo.email.trim() !== "") {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
       if (!emailRegex.test(guestInfo.email)) {
         logger.warn(`[${requestId}] Invalid email format`, { email: guestInfo.email })
-        return { success: false, error: "Valid email address is required when provided." }
+        return { success: false, error: "Valid email address format is required when email is provided." }
       }
     }
 

@@ -1,11 +1,12 @@
 "use server"
 
-import { validateEmail } from "@/lib/auth/auth"
+import { validateEmail, validatePhone } from "@/lib/auth/auth"
 import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
-import type { EmailRecipient, NotificationLanguage } from "@/lib/notifications/notification-types"
+import type { EmailRecipient, PhoneRecipient, NotificationLanguage } from "@/lib/notifications/notification-types"
 import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
 import PasswordResetToken from "@/lib/db/models/password-reset-token"
+import { sendOTP, verifyOTP } from "@/actions/notification-service"
 import { randomBytes } from "crypto"
 
 /**
@@ -300,5 +301,137 @@ export async function cleanupExpiredTokens(): Promise<void> {
 
   } catch (error) {
     console.error("Error cleaning up expired tokens:", error)
+  }
+}
+
+/**
+ * Send password reset via phone (OTP) - NEW FUNCTION
+ */
+export async function sendPasswordResetOTP(
+  phone: string,
+  language: NotificationLanguage = "en",
+): Promise<{
+  success: boolean
+  message: string
+  obscuredIdentifier?: string
+  expiryMinutes?: number
+  error?: string
+}> {
+  try {
+    // Validate phone
+    if (!validatePhone(phone)) {
+      return {
+        success: false,
+        message: "Invalid phone number",
+        error: "INVALID_PHONE",
+      }
+    }
+
+    // Connect to database
+    await dbConnect()
+
+    // Check if user exists with this phone
+    const user = await User.findOne({ phone })
+
+    if (!user) {
+      // For security, don't reveal if phone exists or not
+      return {
+        success: true,
+        message: "If an account with this phone exists, you will receive an OTP",
+      }
+    }
+
+    // Send OTP for password reset
+    const otpResult = await sendOTP(phone, "phone", language)
+
+    if (!otpResult.success) {
+      return {
+        success: false,
+        message: "Failed to send OTP",
+        error: "SEND_FAILED",
+      }
+    }
+
+    return {
+      success: true,
+      message: "If an account with this phone exists, you will receive an OTP",
+      obscuredIdentifier: otpResult.obscuredIdentifier,
+      expiryMinutes: otpResult.expiryMinutes,
+    }
+  } catch (error) {
+    console.error("Error sending password reset OTP:", error)
+    return {
+      success: false,
+      message: "An unexpected error occurred",
+      error: "UNKNOWN_ERROR",
+    }
+  }
+}
+
+/**
+ * Reset password with phone OTP - NEW FUNCTION
+ */
+export async function resetPasswordWithOTP(
+  phone: string,
+  otpCode: string,
+  newPassword: string,
+): Promise<{
+  success: boolean
+  message: string
+  error?: string
+}> {
+  try {
+    // Verify OTP first
+    const otpVerification = await verifyOTP(phone, "phone", otpCode)
+    if (!otpVerification.success) {
+      return {
+        success: false,
+        message: otpVerification.message,
+        error: "OTP_VERIFICATION_FAILED",
+      }
+    }
+
+    // Validate password
+    const { validatePassword, hashPassword } = await import("@/lib/auth/auth")
+    const passwordValidation = validatePassword(newPassword)
+    if (!passwordValidation.isValid) {
+      return {
+        success: false,
+        message: "Password does not meet requirements",
+        error: "WEAK_PASSWORD",
+      }
+    }
+
+    // Hash new password
+    const hashedPassword = await hashPassword(newPassword)
+
+    // Connect to database
+    await dbConnect()
+
+    // Update user password
+    const updateResult = await User.findOneAndUpdate(
+      { phone },
+      { password: hashedPassword }
+    )
+
+    if (!updateResult) {
+      return {
+        success: false,
+        message: "Failed to update password",
+        error: "UPDATE_FAILED",
+      }
+    }
+
+    return {
+      success: true,
+      message: "Password has been reset successfully",
+    }
+  } catch (error) {
+    console.error("Error resetting password with OTP:", error)
+    return {
+      success: false,
+      message: "An unexpected error occurred",
+      error: "UNKNOWN_ERROR",
+    }
   }
 }

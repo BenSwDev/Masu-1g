@@ -33,18 +33,10 @@ interface UserFormDialogProps {
 }
 
 const formSchema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  phone: z
-    .preprocess(
-      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
-      z.string().min(5).optional(),
-    ),
-  password: z
-    .preprocess(
-      (v) => (typeof v === "string" && v === "" ? undefined : v),
-      z.string().min(6).optional(),
-    ),
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Invalid email address" }).optional().or(z.literal("")),
+  phone: z.string().min(10, { message: "Phone must be at least 10 characters" }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters" }).optional(),
   gender: z.enum(["male", "female", "other"]),
   dateOfBirth: z.string().optional(),
   roles: z.array(z.enum(["admin", "member", "professional", "partner"])).min(1),
@@ -82,12 +74,12 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
     })
   }, [initialData, form])
 
-  async function onSubmit(_values: FormValues) {
+  async function onSubmit(values: FormValues) {
     try {
       setLoading(true)
-      const _data = new FormData()
+      const data = new FormData()
       data.append("name", values.name)
-      data.append("email", values.email)
+      data.append("email", values.email || "")
       data.append("phone", values.phone ?? "")
       values.roles.forEach((r) => data.append("roles[]", r))
       data.append("gender", values.gender)

@@ -457,12 +457,13 @@ export default function UniversalBookingWizard({
     attemptAutoCreate()
   }, [guestInfo.firstName, guestInfo.lastName, guestInfo.email, guestInfo.phone, guestUserId])
 
-  // Save form state whenever it changes (after step 1)
+  // Save form state whenever it changes (after step 1, but NOT during payment or confirmation)
   useEffect(() => {
     // Determine which user ID to use
     const userId = currentUser?.id || guestUserId
     
-    if (userId && currentStep > 1) {
+    // Don't save during payment step (6) or confirmation step (7) to avoid interference
+    if (userId && currentStep > 1 && currentStep < 6) {
       const saveFormState = async () => {
         try {
           const result = await saveAbandonedBooking(userId, {
@@ -866,12 +867,12 @@ export default function UniversalBookingWizard({
     }
   }, [guestInfo, guestAddress, bookingOptions, calculatedPrice, guestUserId, toast, t, initialData.activeTreatments])
 
-  // createPendingBooking function
-
   // Handle final confirmation after successful payment
   const handleFinalSubmit = async () => {
+    console.log("🎯 handleFinalSubmit called", { pendingBookingId })
     
     if (!pendingBookingId) {
+      console.error("❌ No pending booking ID found")
       toast({
         variant: "destructive",
         title: "שגיאה",
@@ -881,6 +882,7 @@ export default function UniversalBookingWizard({
     }
 
     setIsLoading(true)
+    console.log("⏳ Starting payment confirmation process...")
 
     try {
       // ✅ תיקון: מזהה עסקה אמיתי עם בדיקת סביבה
@@ -888,6 +890,11 @@ export default function UniversalBookingWizard({
       const transactionId = isProduction 
         ? `LIVE-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` 
         : `DEV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      
+      console.log("💳 Calling updateBookingStatusAfterPayment with:", { 
+        pendingBookingId, 
+        transactionId 
+      })
         
       const result = await updateBookingStatusAfterPayment(
         pendingBookingId,
@@ -895,17 +902,27 @@ export default function UniversalBookingWizard({
         transactionId
       )
       
+      console.log("📋 Payment update result:", result)
+      
       if (result.success && result.booking) {
+        console.log("✅ Payment confirmed successfully!")
+        
         // Clear saved form state on successful booking
         if (guestUserId) {
           localStorage.removeItem('guestUserId')
+          console.log("🗑️ Cleared localStorage")
         }
         
         // Immediately redirect to confirmation page without showing step 7
         const bookingId = result.booking._id || result.booking.id
+        console.log("🔄 Attempting redirect with bookingId:", bookingId)
+        
         if (bookingId) {
-          router.push(`/bookings/confirmation?bookingId=${bookingId}&status=success`)
+          const confirmationUrl = `/bookings/confirmation?bookingId=${bookingId}&status=success`
+          console.log("🎯 Redirecting to:", confirmationUrl)
+          router.push(confirmationUrl)
         } else {
+          console.warn("⚠️ No booking ID found, showing confirmation step")
           // Fallback to showing confirmation step if no booking ID
           setBookingResult(result.booking)
           setCurrentStep(CONFIRMATION_STEP_NUMBER)
@@ -916,6 +933,7 @@ export default function UniversalBookingWizard({
           description: t("bookings.success.bookingCreatedDescription"),
         })
       } else {
+        console.error("❌ Payment update failed:", result.error)
         toast({
           variant: "destructive",
           title: "שגיאה בעדכון ההזמנה",
@@ -930,6 +948,7 @@ export default function UniversalBookingWizard({
         description: t("bookings.errors.tryAgain"),
       })
     } finally {
+      console.log("🏁 handleFinalSubmit completed, setting loading to false")
       setIsLoading(false)
     }
   }

@@ -37,11 +37,14 @@ export function usePaymentModal({ onSuccess, onFailure, pendingBookingId }: UseP
   };
 
   const handlePaymentSuccess = async () => {
+    console.log("💰 Payment simulation success triggered")
     setPaymentStatus("success");
     // Immediately execute success callback for automatic redirect
     setTimeout(async () => {
+      console.log("🎯 Executing onSuccess callback after delay")
       setShowPaymentModal(false);
       await onSuccess();
+      console.log("✅ onSuccess callback completed")
     }, 500);
   };
 

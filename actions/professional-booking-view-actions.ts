@@ -4,7 +4,7 @@ import mongoose, { type Types } from "mongoose"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import Booking, { type IBooking } from "@/lib/db/models/booking"
+import Booking, { BookingStatus, type IBooking } from "@/lib/db/models/booking"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { IUser } from "@/lib/db/models/user"
 import type { IAddress } from "@/lib/db/models/address"
@@ -12,7 +12,7 @@ import { logger } from "@/lib/logs/logger"
 
 // Define a more specific type for the booking details needed by the professional view
 export interface BookingDetailsForProfessional
-  extends Omit<IBooking, "treatmentId" | "userId" | "addressId" | "professionalId" | "selectedDurationId"> {
+  extends Omit<IBooking, "treatmentId" | "userId" | "addressId" | "professionalId" | "selectedDurationId" | "status"> {
   _id: Types.ObjectId
   treatmentId?: {
     _id: Types.ObjectId
@@ -23,16 +23,16 @@ export interface BookingDetailsForProfessional
   userId?: {
     // Client details - only show if professional is assigned or admin
     _id: Types.ObjectId
-    name?: string
-    email?: string
-    phone?: string
+    name?: string | null
+    email?: string | null
+    phone?: string | null
   } | null
   addressId?: Pick<IAddress, "_id" | "fullAddress" | "city" | "street" | "streetNumber"> | null
   professionalId?: {
     _id: Types.ObjectId
-    name?: string
+    name?: string | null  
   } | null
-  status: string // Ensure status is always a string
+  status: BookingStatus // Ensure status is always a string
 }
 
 export async function getBookingByIdForProfessional(bookingId: string): Promise<{

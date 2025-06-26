@@ -24,7 +24,7 @@ export default async function TreatmentPage({ params }: { params: { category: st
           <div className="space-y-2">
             <h2 className="text-xl font-semibold text-center">Durations</h2>
             <ul className="space-y-1">
-              {t.durations.map(d => (
+              {t.durations.map((d: { _id: string; minutes: number; price: number }) => (
                 <li key={d._id} className="flex justify-center gap-2">
                   <span>{d.minutes} min</span>
                   <span>- ₪{d.price}</span>

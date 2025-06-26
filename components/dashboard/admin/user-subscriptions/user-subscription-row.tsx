@@ -29,7 +29,7 @@ import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 import { useRouter } from "next/navigation"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
-interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId'> {
+interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId'> {
   userId?: {
     _id: string
     name: string

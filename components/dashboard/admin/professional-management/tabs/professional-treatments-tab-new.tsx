@@ -115,7 +115,7 @@ export default function ProfessionalTreatmentsTabNew({
         }
         
         const _data = await response.json()
-        const treatmentList = data.treatments || []
+        const treatmentList = _data.treatments || []
         
         if (!Array.isArray(treatmentList)) {
           throw new Error('Invalid treatments data format')
@@ -347,7 +347,7 @@ export default function ProfessionalTreatmentsTabNew({
         
         // Update parent component
         const updatedTreatments = result.professional.treatments || []
-        onUpdate({ treatments: updatedTreatments })
+        onUpdate({ treatments: updatedTreatments as unknown as ProfessionalTreatmentPricing[] })
         setHasChanges(false)
       } else {
         throw new Error(result.error || 'Failed to save treatments')

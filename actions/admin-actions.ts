@@ -173,7 +173,7 @@ export async function createUserByAdmin(formData: FormData) {
 
     await newUserDoc.save()
     return { success: true, message: "admin.users.userCreatedToast", user: sanitizeUser(newUserDoc) }
-  } catch (_error: any) {
+  } catch (error: any) {
     console.error("Error creating user by admin:", error)
     if (error.code === 11000) {
       // MongoDB duplicate key error

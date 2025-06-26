@@ -148,7 +148,7 @@ export function GiftVoucherForm({ initialData, onSuccess, onCancel }: GiftVouche
         })
       }
       if (usersRes.success && usersRes.users) {
-        setUsers(usersRes.users)
+        setUsers(usersRes.users as unknown as UserOption[]   as unknown as UserOption[])
       } else {
         toast({
           title: t("common.error"),

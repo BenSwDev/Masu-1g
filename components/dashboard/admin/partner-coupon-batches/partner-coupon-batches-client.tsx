@@ -145,9 +145,9 @@ export default function PartnerCouponBatchesClient({ initialData, partnersForSel
     try {
       let result
       if (editingBatch) {
-        result = await updatePartnerCouponBatch({ ...values, id: editingBatch._id.toString() })
+        result = await updatePartnerCouponBatch({ ..._values, id: editingBatch._id.toString() })
       } else {
-        result = await createPartnerCouponBatch(values)
+        result = await createPartnerCouponBatch(_values)
       }
 
       if (result.success) {

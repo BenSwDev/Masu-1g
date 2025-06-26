@@ -54,12 +54,12 @@ export function PaymentMethodSelector({
       <div className="space-y-3">
         {paymentMethods.map((pm) => (
           <PurchaseCard
-            key={pm._id.toString()}
+            key={pm.id.toString()}
             title={pm.cardName || `${t("paymentMethods.card")} **** ${pm.cardNumber.slice(-4)}`}
             description={`${t("paymentMethods.fields.expiry")}: ${pm.expiryMonth}/${pm.expiryYear}`}
             icon={<CreditCard className="w-5 h-5" />}
-            isSelected={selectedPaymentMethodId === pm._id.toString()}
-            onClick={() => onPaymentMethodSelect(pm._id.toString())}
+            isSelected={selectedPaymentMethodId === pm.id.toString()}
+            onClick={() => onPaymentMethodSelect(pm.id.toString())}
             badge={pm.isDefault ? t("paymentMethods.defaultCard") : undefined}
             badgeVariant="outline"
           />

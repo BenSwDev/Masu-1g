@@ -145,7 +145,7 @@ export async function createAddress(data: z.infer<typeof addressSchema>) {
       fullAddress: fullAddress, // Add the constructed fullAddress
     }
 
-    const address = await AddressQueries.createAddress(addressDataWithUserAndFullAddress)
+    const address = await AddressQueries.createAddress(addressDataWithUserAndFullAddress as Partial<IAddress>)
 
     revalidatePath("/dashboard/member/addresses")
     return { success: true, address: addressToPlain(address) }
@@ -175,7 +175,7 @@ export async function updateAddress(id: string, data: z.infer<typeof addressSche
       fullAddress: fullAddress, // Add the constructed fullAddress
     }
 
-    const address = await AddressQueries.updateAddress(id, session.user.id, addressDataWithFullAddress)
+    const address = await AddressQueries.updateAddress(id, session.user.id, addressDataWithFullAddress as Partial<IAddress>)
 
     revalidatePath("/dashboard/member/addresses")
     return { success: true, address: addressToPlain(address) }

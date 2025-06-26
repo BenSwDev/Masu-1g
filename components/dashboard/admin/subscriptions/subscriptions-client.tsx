@@ -145,7 +145,7 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
     if (!currentSubscription) return
     setIsLoading(true)
     try {
-      const result = await updateSubscription(currentSubscription._id as string, data)
+      const result = await updateSubscription(currentSubscription._id as string, _data)
       if (result.success && result.subscription) {
         setSubscriptions(subscriptions.map((s) => (s._id === currentSubscription._id ? result.subscription : s)))
         toast.success(t("subscriptions.updateSuccess"))
@@ -274,6 +274,8 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
                 id: String(subscription._id),
                 interval: "monthly",
                 features: [],
+                price: 0,
+                treatments: [],
               }}
               onEdit={() => handleEdit(subscription)}
               onDelete={() => handleDeleteClick(subscription)}

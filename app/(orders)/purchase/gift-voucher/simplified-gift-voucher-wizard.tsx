@@ -80,9 +80,22 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
   const [purchaseComplete, setPurchaseComplete] = useState<boolean>(false)
   const [purchasedVoucher, setPurchasedVoucher] = useState<GiftVoucherPlain | null>(null)
 
-  const treatmentCategories = [...new Set(treatments.map(t => t.category))]
+  // Filter out undefined categories and get unique categories
+  const treatmentCategories = [...new Set(treatments.map(t => t.category).filter(Boolean))]
   const categoryTreatments = selectedCategory ? 
     treatments.filter(t => t.category === selectedCategory) : []
+
+  // Function to translate category names
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case "massages":
+        return "עיסויים"
+      case "facial_treatments":
+        return "טיפולי פנים"
+      default:
+        return category
+    }
+  }
 
   // Selected data
   const selectedTreatment = treatments.find(t => t._id === selectedTreatmentId)
@@ -106,6 +119,10 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
     isBaseTreatmentCoveredBySubscription: false,
     isBaseTreatmentCoveredByTreatmentVoucher: false,
     isFullyCoveredByVoucherOrSubscription: false,
+    totalProfessionalPayment: 0,
+    totalOfficeCommission: price,
+    baseProfessionalPayment: 0,
+    surchargesProfessionalPayment: 0,
   }
 
   // Save abandoned purchase
@@ -297,7 +314,7 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
                   }}
                 >
                   <div className="font-medium">
-                    {category === "massages" ? "עיסויים" : category === "facial_treatments" ? "טיפולי פנים" : category}
+                    {getCategoryDisplayName(category)}
                   </div>
                 </div>
               ))}

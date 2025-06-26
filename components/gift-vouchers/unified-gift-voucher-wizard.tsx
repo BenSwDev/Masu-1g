@@ -55,9 +55,9 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
     setGuestInfo(prefilledGuestInfo)
   }, [prefilledGuestInfo])
 
-  const selectedTreatment = treatments.find(t => (t._id as any).toString() === selectedTreatmentId)
+  const selectedTreatment = treatments.find(t => (typeof t._id === 'string' ? t._id : t._id?.toString()) === selectedTreatmentId)
   const selectedDuration = selectedTreatment?.pricingType === "duration_based"
-    ? selectedTreatment.durations?.find(d => (d._id as any).toString() === selectedDurationId)
+    ? selectedTreatment.durations?.find(d => (typeof d._id === 'string' ? d._id : d._id?.toString()) === selectedDurationId)
     : undefined
 
   const price = voucherType === "monetary"
@@ -83,7 +83,20 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
     surchargesProfessionalPayment: 0,
   }
 
-  const treatmentCategories = [...new Set(treatments.map(t => t.category))]
+  // Filter out undefined categories and get unique categories
+  const treatmentCategories = [...new Set(treatments.map(t => t.category).filter(Boolean))]
+
+  // Function to translate category names
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case "massages":
+        return "עיסויים"
+      case "facial_treatments":
+        return "טיפולי פנים"
+      default:
+        return category
+    }
+  }
   const categoryTreatments = selectedCategory ? 
     treatments.filter(t => t.category === selectedCategory) : []
 
@@ -300,7 +313,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                 <SelectContent>
                   {treatmentCategories.map((category) => (
                     <SelectItem key={category} value={category}>
-                      {category}
+                      {getCategoryDisplayName(category)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -314,11 +327,11 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                 <div className="grid gap-2">
                   {categoryTreatments.map((treatment) => (
                     <div
-                      key={(treatment._id as any).toString()}
+                      key={typeof treatment._id === 'string' ? treatment._id : treatment._id?.toString()}
                       className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                        selectedTreatmentId === (treatment._id as any).toString() ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                        selectedTreatmentId === (typeof treatment._id === 'string' ? treatment._id : treatment._id?.toString()) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
                       }`}
-                      onClick={() => setSelectedTreatmentId((treatment._id as any).toString())}
+                      onClick={() => setSelectedTreatmentId(typeof treatment._id === 'string' ? treatment._id : treatment._id?.toString() || '')}
                     >
                       <div className="flex justify-between items-start">
                         <div>
@@ -330,7 +343,7 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                             <p className="text-sm text-blue-600 mt-1">₪{treatment.fixedPrice}</p>
                           )}
                         </div>
-                        {selectedTreatmentId === treatment.id.toString() && (
+                        {selectedTreatmentId === (typeof treatment._id === 'string' ? treatment._id : treatment._id?.toString()) && (
                           <CheckCircle className="w-5 h-5 text-blue-500" />
                         )}
                       </div>
@@ -349,19 +362,19 @@ export default function UnifiedGiftVoucherWizard({ treatments }: Props) {
                     .filter(d => d.isActive)
                     .map((duration) => (
                       <div
-                        key={(duration._id as any).toString()}
+                        key={typeof duration._id === 'string' ? duration._id : duration._id?.toString()}
                         className={`p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedDurationId === (duration._id as any).toString() ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
+                          selectedDurationId === (typeof duration._id === 'string' ? duration._id : duration._id?.toString()) ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
                         }`}
-                        onClick={() => setSelectedDurationId((duration._id as any).toString())}
+                        onClick={() => setSelectedDurationId(typeof duration._id === 'string' ? duration._id : duration._id?.toString() || '')}
                       >
                         <div className="flex justify-between items-center">
                           <span>{duration.minutes} דקות</span>
                           <div className="flex items-center gap-2">
                             <span className="text-blue-600 font-medium">₪{duration.price}</span>
-                                                      {selectedDurationId === (duration._id as any).toString() && (
-                            <CheckCircle className="w-5 h-5 text-blue-500" />
-                          )}
+                            {selectedDurationId === (typeof duration._id === 'string' ? duration._id : duration._id?.toString()) && (
+                              <CheckCircle className="w-5 h-5 text-blue-500" />
+                            )}
                           </div>
                         </div>
                       </div>

@@ -86,7 +86,7 @@ export default function AdminTransactionsClient() {
       }
       
       const _data = await response.json()
-      setWeeklyData(data)
+      setWeeklyData(_data as unknown as WeeklyTransactionData)
     } catch (err) {
       setError(t('transactions.errors.loadFailed'))
       console.error('Error loading weekly transactions:', err)

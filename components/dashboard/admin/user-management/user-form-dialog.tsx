@@ -58,7 +58,7 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       email: initialData?.email || "",
       password: "",
       gender: (initialData?.gender as "male" | "female" | "other") || "male",
-      roles: initialData?.roles || ["member"],
+      roles: initialData?.roles || ["member"] as any,
       dateOfBirth: initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "yyyy-MM-dd") : "",
     },
   })
@@ -70,7 +70,7 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       email: initialData?.email || "",
       password: "",
       gender: (initialData?.gender as "male" | "female" | "other") || "male",
-      roles: initialData?.roles || ["member"],
+      roles: initialData?.roles || ["member"] as any,
       dateOfBirth: initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "yyyy-MM-dd") : "",
     })
   }, [initialData, form])

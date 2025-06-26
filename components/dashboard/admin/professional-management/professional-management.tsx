@@ -16,6 +16,7 @@ import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professio
 import type { ProfessionalStatus, IProfessionalProfile } from "@/lib/db/models/professional-profile"
 import type { IUser } from "@/lib/db/models/user"
 import type { Professional, ProfessionalManagementProps, PaginationInfo, ProfessionalStats } from "@/lib/types/professional"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 // פונקציה לטרנספורמציה של נתונים מהשרת
 function transformProfessionalData(rawProfessional: IProfessionalProfile & { userId: IUser }): Professional {

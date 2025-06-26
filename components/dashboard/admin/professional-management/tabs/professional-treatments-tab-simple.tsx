@@ -59,11 +59,11 @@ export default function ProfessionalTreatmentsTab({
         const response = await fetch('/api/treatments')
         if (response.ok) {
         const _data = await response.json()
-          const treatmentList = data.treatments || []
+          const treatmentList = _data.treatments || []
           setAvailableTreatments(treatmentList)
           
           // Extract unique categories
-          const uniqueCategories = [...new Set(treatmentList.map((t: TreatmentOption) => t.category).filter(Boolean))]
+          const uniqueCategories = [...new Set(treatmentList.map((t: TreatmentOption) => t.category).filter(Boolean))] as string[]
           setCategories(uniqueCategories)
         } else {
           throw new Error('Failed to fetch treatments')
@@ -127,7 +127,7 @@ export default function ProfessionalTreatmentsTab({
     setSaving(true)
     
     try {
-      const result = await updateProfessionalTreatments(professional._id, validTreatments)
+      const result = await updateProfessionalTreatments(professional._id, validTreatments as any)
       
       if (result.success && result.professional) {
         toast({
@@ -142,7 +142,7 @@ export default function ProfessionalTreatmentsTab({
         }))
         
         setTreatments(updatedTreatments)
-        onUpdate({ treatments: updatedTreatments })
+        onUpdate({ treatments: updatedTreatments as any })
         setHasChanges(false)
       } else {
         toast({

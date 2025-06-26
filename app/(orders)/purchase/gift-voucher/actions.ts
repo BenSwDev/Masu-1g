@@ -46,10 +46,10 @@ export async function getTreatmentsForSelection(): Promise<GetTreatmentsResult> 
 
     return {
       success: true,
-      treatments: treatments.map(treatment => ({
-        _id: treatment._id.toString(),
+      treatments: treatments.map((treatment: ITreatment) => ({
+        _id: treatment.id.toString(),
         name: treatment.name,
-        description: treatment.description,
+        description: treatment.description || "",
         category: treatment.category,
         pricingType: treatment.pricingType,
         fixedPrice: treatment.fixedPrice,

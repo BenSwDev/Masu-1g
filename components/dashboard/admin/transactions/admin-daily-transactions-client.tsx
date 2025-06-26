@@ -146,7 +146,7 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
       }
       
       const _data = await response.json()
-      setDailyData(data)
+      setDailyData(_data as unknown as DailyTransactionData)
     } catch (err) {
       setError(t('transactions.errors.dayDetailsFailed'))
       console.error('Error loading daily transactions:', err)

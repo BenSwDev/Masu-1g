@@ -6,6 +6,8 @@ import { Button } from "@/components/common/ui/button"
 import Link from "next/link"
 import type { BookingInitialData } from "@/types/booking"
 import { useTranslation } from "@/lib/translations/i18n"
+import { IUserSubscription } from "@/lib/db/models/user-subscription"
+import { IGiftVoucher } from "@/lib/db/models/gift-voucher"
 
 interface MemberRedemptionModalProps {
   subscriptions: BookingInitialData["activeUserSubscriptions"]
@@ -32,10 +34,10 @@ export default function MemberRedemptionModal({ subscriptions, vouchers }: Membe
         </DialogHeader>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
           {subscriptions?.map((sub: IUserSubscription) => (
-            <div key={sub._id} className="border rounded p-3 space-y-1">
+            <div key={sub.id} className="border rounded p-3 space-y-1">
               <div className="font-medium">{(sub.subscriptionId as any)?.name}</div>
               {sub.treatmentId && (
-                <div className="text-sm text-muted-foreground">{sub.treatmentId.name}</div>
+                <div className="text-sm text-muted-foreground">{(sub.treatmentId as any)?.name}</div>
               )}
               <div className="mt-2 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg text-center">
                 <div className="font-mono text-lg font-bold text-blue-800">{sub.code}</div>
@@ -44,7 +46,7 @@ export default function MemberRedemptionModal({ subscriptions, vouchers }: Membe
             </div>
           ))}
           {vouchers?.map((v: IGiftVoucher) => (
-            <div key={v._id} className="border rounded p-3 space-y-1">
+            <div key={v.id} className="border rounded p-3 space-y-1">
               <div className="font-medium">{v.voucherType === "monetary" ? t("giftVouchers.types.monetary") || "שובר כספי" : t("giftVouchers.types.treatment") || "שובר טיפול"}</div>
               <div className="mt-2 p-3 bg-green-50 border-2 border-green-200 rounded-lg text-center">
                 <div className="font-mono text-lg font-bold text-green-800">{v.code}</div>

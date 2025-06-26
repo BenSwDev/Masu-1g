@@ -154,7 +154,7 @@ export async function createUserByAdmin(formData: FormData) {
 
     const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined
     const dateOfBirth = dateOfBirthStr ? new Date(dateOfBirthStr) : undefined
-    if (dateOfBirthStr && isNaN(dateOfBirth?.getTime())) {
+    if (dateOfBirthStr && dateOfBirth && isNaN(dateOfBirth.getTime())) {
       return { success: false, message: "errors.invalidDateOfBirth" }
     }
 
@@ -222,7 +222,7 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
         if (existingPhone) return { success: false, message: "errors.phoneExists" }
         userToUpdate.phone = phone
       } else {
-        userToUpdate.phone = undefined
+        userToUpdate.phone = ""
       }
     }
 
@@ -230,7 +230,7 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
     userToUpdate.roles = roles
 
     // Update activeRole if it's not in the roles array anymore
-    if (!roles.includes(userToUpdate.activeRole)) {
+    if (!roles.includes(userToUpdate.activeRole as string)) {
       userToUpdate.activeRole = roles[0]
     }
 
@@ -244,7 +244,7 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
 
     await userToUpdate.save()
     return { success: true, message: "admin.users.userUpdatedToast", user: sanitizeUser(userToUpdate) }
-  } catch (_error: any) {
+  } catch (error: any) {
     console.error("Error updating user by admin:", error)
     if (error.code === 11000) {
       if (error.message.includes("email")) return { success: false, message: "errors.emailExists" }
@@ -313,7 +313,7 @@ export async function initiatePasswordResetByAdmin(userId: string) {
     const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${token}&userId=${user._id.toString()}`
 
     const notificationData: NotificationData = {
-      type: "passwordReset", // Ensure this type is handled in getEmailTemplate
+      type: "password-reset", // Ensure this type is handled in getEmailTemplate
       userName: user.name || user.email,
       resetLink: resetUrl,
       // language: user.language || 'en' // If user language preference is stored

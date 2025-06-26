@@ -33,6 +33,7 @@ import {
 } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { toast } from "sonner"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 
 interface AdminGiftVoucherDetailsModalProps {

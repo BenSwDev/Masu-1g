@@ -86,7 +86,7 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
 
     return (
       <ProfessionalEditPage 
-        professional={result.professional}
+        professional={result.professional as any}
       />
     )
   } catch (error) {

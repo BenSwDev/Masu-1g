@@ -99,7 +99,7 @@ export async function getUserPurchaseHistory(
           amount: booking.priceDetails.basePrice || 0,
           finalAmount: booking.priceDetails.finalAmount || 0,
           status: booking.status === 'completed' ? 'completed' : 
-                 booking.status === 'cancelled_by_user' || booking.status === 'cancelled_by_admin' ? 'cancelled' : 'pending',
+                 booking.status === 'cancelled' ? 'cancelled' : 'pending',
           description: `הזמנת ${(booking.treatmentId as any)?.name || 'טיפול'}`,
           details: bookingDetails,
         })
@@ -274,9 +274,9 @@ export async function getCustomerSummary(customerId: string): Promise<{
     const bookings = await Booking.find({ userId }).lean()
     const completedBookings = bookings.filter(b => b.status === 'completed')
     const cancelledBookings = bookings.filter(b => 
-      b.status === 'cancelled_by_user' || b.status === 'cancelled_by_admin'
+      b.status === 'cancelled'
     )
-    const noShowBookings = bookings.filter(b => b.status === 'no_show')
+    const noShowBookings = bookings.filter(b => b.status === 'cancelled' && b.cancellationReason === 'no_show')
 
     // Get subscriptions
     const userSubscriptions = await UserSubscription.find({ userId }).lean()
@@ -296,7 +296,7 @@ export async function getCustomerSummary(customerId: string): Promise<{
     // Calculate totals
     const totalBookingSpent = bookings.reduce((sum, b) => sum + b.priceDetails.finalAmount, 0)
             const totalSubscriptionSpent = userSubscriptions.reduce((sum, s) => sum + (s.paymentAmount || 0), 0)
-    const totalVoucherSpent = vouchers.filter(v => v.purchaserUserId.equals(userId))
+    const totalVoucherSpent = vouchers.filter(v => v.purchaserUserId && v.purchaserUserId.equals(userId))
       .reduce((sum, v) => sum + v.amount, 0)
     const totalSpent = totalBookingSpent + totalSubscriptionSpent + totalVoucherSpent
 
@@ -319,7 +319,7 @@ export async function getCustomerSummary(customerId: string): Promise<{
     const customerSummary: CustomerSummary = {
       userId: customer._id.toString(),
       customerName: customer.name,
-      customerEmail: customer.email,
+      customerEmail: customer.email || '',
       customerPhone: customer.phone || '',
       joinDate: customer.createdAt,
       totalSpent,
@@ -331,7 +331,7 @@ export async function getCustomerSummary(customerId: string): Promise<{
         completedBookings: completedBookings.length,
         cancelledBookings: cancelledBookings.length,
         noShowBookings: noShowBookings.length,
-        totalVouchersPurchased: vouchers.filter(v => v.purchaserUserId.equals(userId)).length,
+        totalVouchersPurchased: vouchers.filter(v => v.purchaserUserId && v.purchaserUserId.equals(userId)).length,
         totalVouchersUsed: usedVouchers.length,
         totalSubscriptionsPurchased: userSubscriptions.length,
         averageBookingValue,
@@ -502,7 +502,7 @@ export async function getAllPurchaseTransactions(
           amount: booking.priceDetails.basePrice || 0,
           finalAmount: booking.priceDetails.finalAmount || 0,
           status: booking.status === 'completed' ? 'completed' : 
-                 booking.status === 'cancelled_by_user' || booking.status === 'cancelled_by_admin' ? 'cancelled' : 'pending',
+          booking.status === 'cancelled' ? 'cancelled' : 'pending',
           description: `הזמנת ${(booking.treatmentId as any)?.name || 'טיפול'}`,
           details: bookingDetails,
           customerName: (booking.userId as any)?.name || 'Unknown',
@@ -690,7 +690,7 @@ export async function getPurchaseStats(): Promise<{
     // Calculate booking stats
     const completedBookings = allBookings.filter(b => b.status === 'completed')
     const cancelledBookings = allBookings.filter(b => 
-      b.status === 'cancelled_by_user' || b.status === 'cancelled_by_admin'
+      b.status === 'cancelled'
     )
     const bookingRevenue = completedBookings.reduce((sum, b) => sum + b.priceDetails.finalAmount, 0)
 

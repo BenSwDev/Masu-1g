@@ -129,7 +129,7 @@ export async function getPartnersForSelection(): Promise<GetPartnersForSelection
 
     return {
       success: true,
-      partners: partners.map(partner => ({
+        partners: partners.map(partner => ({
         value: partner._id.toString(),
         label: partner.name || partner.email,
       })),

@@ -27,7 +27,7 @@ export async function getSubscriptions(): Promise<{
 
     const serializedSubscriptions = subscriptions.map((sub) => ({
       ...sub,
-      _id: sub._id.toString(),
+      _id: sub.id.toString(),
       treatmentId: sub.treatmentId ? {
         ...sub.treatmentId,
         _id: sub.treatmentId._id.toString(),

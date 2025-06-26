@@ -139,7 +139,7 @@ export default function ProfessionalWorkAreasTab({
     setSaving(true)
     
     try {
-      const result = await updateProfessionalWorkAreas(professional._id, validWorkAreas)
+      const result = await updateProfessionalWorkAreas(professional._id, validWorkAreas as any)
 
       if (result.success && result.professional) {
         toast({

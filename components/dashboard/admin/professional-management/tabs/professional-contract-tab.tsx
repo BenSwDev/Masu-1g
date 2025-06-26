@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { ScrollText, Clock, Info } from "lucide-react"
 import type { Professional } from "@/lib/types/professional"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface ProfessionalContractTabProps {
   professional: Professional

@@ -117,7 +117,7 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
             <h1 className="text-2xl font-bold">
               עריכת מטפל - {updatedProfessional.userId.name}
             </h1>
-            <div className="flex items-center gap-3 mt-1">
+            <div className="flex items-center gap-3 mt-1">  
               {getStatusBadge(updatedProfessional.status)}
               <span className="text-sm text-muted-foreground">
                 הצטרף ב-{formatDate(updatedProfessional.appliedAt)}

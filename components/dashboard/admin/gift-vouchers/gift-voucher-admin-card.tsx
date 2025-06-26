@@ -41,6 +41,7 @@ import {
 } from "lucide-react"
 import { deleteGiftVoucher, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
 
 interface GiftVoucherAdminCardProps {

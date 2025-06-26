@@ -191,7 +191,7 @@ export async function getActivePaymentMethods() {
     // Serialize the payment methods to plain objects and mask card numbers
     const serializedPaymentMethods = paymentMethods.map((pm) => ({
       ...pm,
-      id: pm.id.toString(),
+      id: pm._id.toString(),
       cardNumber: `****-****-****-${pm.cardNumber.slice(-4)}`, // Mask card number for security
     }))
 

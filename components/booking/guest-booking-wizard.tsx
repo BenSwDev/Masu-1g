@@ -111,6 +111,9 @@ export default function UniversalBookingWizard({
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isPriceCalculating, setIsPriceCalculating] = useState(false)
+  
+  // Track redemption data for locked fields logic
+  const [redemptionData, setRedemptionData] = useState<any>(null)
 
   const prefilledGuestInfo = useMemo<Partial<GuestInfo>>(() => {
     // Priority 1: Logged in user data
@@ -171,13 +174,62 @@ export default function UniversalBookingWizard({
       }
     }
     
+    // Priority 5: Redemption data from code input
+    if (redemptionData) {
+      const redemption = redemptionData
+      
+      // For vouchers with guest info
+      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.guestInfo) {
+        const guestInfo = redemption.data.guestInfo
+        const [first, ...rest] = guestInfo.name.split(" ")
+        return {
+          firstName: first,
+          lastName: rest.join(" "),
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+          isBookingForSomeoneElse: false,
+          bookerNotificationMethod: "email",
+          bookerNotificationLanguage: "he"
+        }
+      }
+      
+      // For gift vouchers with recipient info
+      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.isGift && redemption.data?.recipientName) {
+        const [first, ...rest] = redemption.data.recipientName.split(" ")
+        return {
+          firstName: first,
+          lastName: rest.join(" "),
+          phone: redemption.data.recipientPhone,
+          email: redemption.data.recipientEmail || "",
+          isBookingForSomeoneElse: false,
+          bookerNotificationMethod: "email",
+          bookerNotificationLanguage: "he"
+        }
+      }
+      
+      // For subscriptions with guest info
+      if (redemption.type === "subscription" && redemption.data?.guestInfo) {
+        const guestInfo = redemption.data.guestInfo
+        const [first, ...rest] = guestInfo.name.split(" ")
+        return {
+          firstName: first,
+          lastName: rest.join(" "),
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+          isBookingForSomeoneElse: false,
+          bookerNotificationMethod: "email",
+          bookerNotificationLanguage: "he"
+        }
+      }
+    }
+    
     // Default for guests
     return {
       isBookingForSomeoneElse: false,
       bookerNotificationMethod: "email",
       bookerNotificationLanguage: "he"
     }
-  }, [voucher, userSubscription, currentUser])
+  }, [voucher, userSubscription, currentUser, redemptionData])
 
   const lockedFields = useMemo(() => {
     // If user is logged in, lock their basic info
@@ -185,6 +237,35 @@ export default function UniversalBookingWizard({
       return ["firstName", "lastName", "email", "phone"] as const
     }
     
+    // Check redemption data from code input first
+    if (redemptionData) {
+      const redemption = redemptionData
+      
+      // For treatment vouchers, lock fields based on voucher data
+      if (redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") {
+        const voucherData = redemption.data as any
+        if (voucherData?.guestInfo) {
+          return ["firstName", "lastName", "phone", "email"] as const
+        }
+        if (voucherData?.isGift && voucherData?.recipientName) {
+          const fields = ["firstName", "lastName", "phone"] as const
+          if (voucherData?.recipientEmail) {
+            return [...fields, "email"] as const
+          }
+          return fields
+        }
+      }
+      
+      // For subscriptions, lock fields based on subscription data
+      if (redemption.type === "subscription") {
+        const subscriptionData = redemption.data as any
+        if (subscriptionData?.guestInfo) {
+          return ["firstName", "lastName", "email", "phone"] as const
+        }
+      }
+    }
+    
+    // Fallback to props-based logic (legacy flow)
     if (voucher?.isGift && voucher.recipientName) {
       // For gift vouchers - lock name and phone, but email might be empty so allow editing
       const fields = ["firstName", "lastName", "phone"] as const
@@ -201,14 +282,21 @@ export default function UniversalBookingWizard({
       return ["firstName", "lastName", "email", "phone"] as const
     }
     return [] as const
-  }, [voucher, userSubscription, currentUser])
+  }, [voucher, userSubscription, currentUser, redemptionData])
 
   // Hide "booking for someone else" option when redeeming voucher/subscription
   const hideBookingForSomeoneElse = useMemo(() => {
-    return Boolean(voucher || userSubscription)
-  }, [voucher, userSubscription])
+    return Boolean(voucher || userSubscription || redemptionData)
+  }, [voucher, userSubscription, redemptionData])
 
   const [guestInfo, setGuestInfoState] = useState<Partial<GuestInfo>>(prefilledGuestInfo)
+  
+  // Update guest info when redemption data changes
+  useEffect(() => {
+    if (redemptionData && Object.keys(prefilledGuestInfo).length > 0) {
+      setGuestInfoState(prefilledGuestInfo)
+    }
+  }, [redemptionData, prefilledGuestInfo])
   // Pre-fill address for logged-in users
   const prefilledAddress = useMemo<Partial<GuestAddress>>(() => {
     if (currentUser && initialData.userAddresses && initialData.userAddresses.length > 0) {
@@ -968,6 +1056,7 @@ export default function UniversalBookingWizard({
             voucher={voucher}
             userSubscription={userSubscription}
             currentUser={currentUser}
+            setRedemptionData={setRedemptionData}
           />
         )
       case 2:

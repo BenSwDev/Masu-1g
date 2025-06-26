@@ -175,46 +175,17 @@ export class SMSService {
    */
   private formatPhoneNumber(phoneNumber: string): string {
     try {
-      // Remove all non-digit characters except the plus sign
-      let cleaned = phoneNumber.replace(/[^\d+]/g, "")
-
-      // If there's no plus sign, assume it's a local number
-      if (!cleaned.startsWith("+")) {
-        // Handle Israeli numbers specifically
-        if (cleaned.startsWith("0")) {
-          // Israeli number starting with 0 (e.g., 0525131777)
-          cleaned = "+972" + cleaned.substring(1)
-        } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-          // Israeli mobile number without 0 (e.g., 525131777)
-          cleaned = "+972" + cleaned
-        } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-          // Number with 972 but no plus (e.g., 972525131777)
-          cleaned = "+" + cleaned
-        } else if (cleaned.length === 10 && /^[5-9]/.test(cleaned)) {
-          // Israeli mobile number without country code (e.g., 5251317777)
-          cleaned = "+972" + cleaned
-        } else {
-          // Default: assume Israeli number and add +972
-          cleaned = "+972" + cleaned
-        }
-      } else {
-        // Handle +972 numbers that might have 0 after country code
-        if (cleaned.startsWith("+9720")) {
-          // Remove the 0 after +972 (e.g., +9720525131777 -> +972525131777)
-          cleaned = "+972" + cleaned.substring(5)
-        }
+      // Use centralized phone normalization
+      const { normalizePhoneNumber, validatePhoneNumber } = require("@/lib/utils/phone-utils")
+      
+      const normalized = normalizePhoneNumber(phoneNumber)
+      
+      if (!validatePhoneNumber(normalized)) {
+        logger.warn(`Invalid phone format: ${normalized}`)
+        throw new Error(`Invalid phone number format: ${phoneNumber}`)
       }
 
-      // Validate Israeli mobile number format
-      if (cleaned.startsWith("+972")) {
-        const nationalNumber = cleaned.substring(4)
-        if (nationalNumber.length !== 9 || !/^[5-9]/.test(nationalNumber)) {
-          logger.warn(`Invalid Israeli mobile format: ${cleaned}`)
-          throw new Error(`Invalid Israeli mobile format: ${cleaned}`)
-        }
-      }
-
-      return cleaned
+      return normalized
     } catch (error) {
       logger.error("Phone number formatting error:", { phoneNumber, error })
       throw new Error(`Invalid phone number format: ${phoneNumber}`)

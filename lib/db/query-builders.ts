@@ -10,36 +10,12 @@ import VerificationToken from "./models/verification-token"
 export const UserQueries = {
   // Find user by phone for login (only required fields)
   async findForLogin(phone: string) {
-    // Normalize phone number
-    let cleaned = phone.replace(/[^\d+]/g, "")
-    if (!cleaned.startsWith("+")) {
-      if (cleaned.startsWith("0")) {
-        cleaned = "+972" + cleaned.substring(1)
-      } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-        cleaned = "+972" + cleaned
-      } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-        cleaned = "+" + cleaned
-      } else {
-        cleaned = "+972" + cleaned
-      }
-    } else {
-      if (cleaned.startsWith("+9720")) {
-        cleaned = "+972" + cleaned.substring(5)
-      }
-    }
-    
-    // Create variations for search
-    const countryCode = cleaned.substring(0, cleaned.indexOf("+") + 4)
-    const nationalNumber = cleaned.substring(cleaned.indexOf("+") + 4).replace(/\D/g, "")
-    const withZero = `${countryCode}0${nationalNumber}`
-    const withoutZero = `${countryCode}${nationalNumber}`
+    // Use centralized phone normalization
+    const { createPhoneVariations } = await import("@/lib/utils/phone-utils")
+    const variations = createPhoneVariations(phone)
     
     return User.findOne({
-      $or: [
-        { phone: withZero },
-        { phone: withoutZero },
-        { phone: cleaned }
-      ]
+      phone: { $in: variations }
     }).select("+password email name image roles phone").lean().exec()
   },
 

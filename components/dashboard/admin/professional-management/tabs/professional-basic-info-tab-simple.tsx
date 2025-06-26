@@ -11,9 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
-import { Separator } from "@/components/common/ui/separator"
 import { useToast } from "@/components/common/ui/use-toast"
-import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX } from "lucide-react"
+import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX, Pencil, X, MapPin, Briefcase, Shield, Eye, EyeOff } from "lucide-react"
 import { updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
@@ -360,7 +359,7 @@ export default function ProfessionalBasicInfoTab({
                 <Label htmlFor="gender" className="text-sm font-medium">
                   מגדר *
                 </Label>
-                <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
+                <Select value={formData.gender} onValueChange={(value: "male" | "female" | "other") => setFormData(prev => ({ ...prev, gender: value }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -468,19 +467,19 @@ export default function ProfessionalBasicInfoTab({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">שם מלא</Label>
-              <p className="text-sm font-medium">{professional.userId.name}</p>
+              <p className="text-sm font-medium">{typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}</p>
             </div>
             
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">מגדר</Label>
-              <p className="text-sm">{professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}</p>
+              <p className="text-sm">{typeof professional.userId === 'object' && professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}</p>
             </div>
             
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">אימייל</Label>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm">{professional.userId.email}</p>
+                <p className="text-sm">{typeof professional.userId === 'object' ? professional.userId.email : 'לא זמין'}</p>
               </div>
             </div>
             
@@ -488,7 +487,7 @@ export default function ProfessionalBasicInfoTab({
               <Label className="text-sm font-medium text-muted-foreground">טלפון</Label>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm">{formatPhoneForDisplay(professional.userId.phone || "")}</p>
+                <p className="text-sm">{formatPhoneForDisplay(typeof professional.userId === 'object' ? professional.userId.phone || "" : "")}</p>
               </div>
             </div>
             
@@ -497,7 +496,7 @@ export default function ProfessionalBasicInfoTab({
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <p className="text-sm">
-                  {professional.userId.dateOfBirth 
+                  {typeof professional.userId === 'object' && professional.userId.dateOfBirth 
                     ? formatDate(professional.userId.dateOfBirth)
                     : 'לא צוין'
                   }

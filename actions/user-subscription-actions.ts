@@ -99,10 +99,10 @@ function validateGuestInfo(guestInfo: any): { valid: boolean; errors: string[] }
   if (!guestInfo.phone || typeof guestInfo.phone !== 'string') {
     errors.push('Phone is required')
   } else {
-    const phoneRegex = /^(\+972|0)?[5-9]\d{8}$/
-    const cleanPhone = guestInfo.phone.replace(/[-\s]/g, "")
-    if (!phoneRegex.test(cleanPhone)) {
-      errors.push('Invalid Israeli phone number format')
+    // Use centralized phone validation
+    const { validatePhoneNumber } = require("@/lib/utils/phone-utils")
+    if (!validatePhoneNumber(guestInfo.phone)) {
+      errors.push('Invalid phone number format')
     }
   }
   
@@ -266,7 +266,7 @@ export async function purchaseSubscription({
       expiryDate,
       totalQuantity: subscription.quantity + subscription.bonusQuantity,
       remainingQuantity: subscription.quantity + subscription.bonusQuantity,
-      status: "active",
+      status: "pending_payment", // Wait for payment confirmation
       paymentMethodId: paymentMethod._id,
       paymentAmount: totalPaymentAmount,
       pricePerSession: singleSessionPrice,
@@ -591,6 +591,131 @@ export async function deleteUserSubscription(id: string) {
   }
 }
 
+// Add initiate function for guest subscription purchases
+export async function initiateGuestSubscriptionPurchase(data: {
+  subscriptionId: string
+  treatmentId: string
+  selectedDurationId?: string
+  guestInfo: {
+    name: string
+    email?: string
+    phone: string
+  }
+}): Promise<{ success: boolean; userSubscriptionId?: string; amount?: number; error?: string }> {
+  const requestId = `guest_sub_init_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+  
+  try {
+    logger.info(`[${requestId}] Starting guest subscription purchase initiation`, {
+      subscriptionId: data.subscriptionId,
+      treatmentId: data.treatmentId,
+      hasSelectedDuration: !!data.selectedDurationId,
+      guestEmail: data.guestInfo.email
+    })
+
+    await dbConnect()
+
+    const { subscriptionId, treatmentId, selectedDurationId, guestInfo } = data
+
+    // Validate guest info
+    if (!guestInfo || !guestInfo.name || !guestInfo.phone) {
+      return { success: false, error: "Guest information (name, phone) is required." }
+    }
+
+    // Validate email format if provided
+    if (guestInfo.email && guestInfo.email.trim() !== "") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(guestInfo.email)) {
+        return { success: false, error: "Valid email address format is required when email is provided." }
+      }
+    }
+
+    // Validate phone format
+    if (guestInfo.phone.trim().length < 10) {
+      return { success: false, error: "Valid phone number is required." }
+    }
+
+    // Load subscription and treatment
+    const subscription = await Subscription.findById(subscriptionId).lean() as any
+    if (!subscription || !subscription.isActive) {
+      return { success: false, error: "Subscription not found or inactive" }
+    }
+
+    const treatment = await Treatment.findById(treatmentId).lean() as ITreatment | null
+    if (!treatment || !treatment.isActive) {
+      return { success: false, error: "Treatment not found or inactive" }
+    }
+
+    // Calculate pricing
+    let treatmentPrice = 0
+    if (treatment.pricingType === "fixed") {
+      treatmentPrice = treatment.fixedPrice || 0
+    } else if (treatment.pricingType === "duration_based" && selectedDurationId) {
+      const selectedDuration = treatment.durations?.find(
+        (d: any) => d._id.toString() === selectedDurationId
+      )
+      if (!selectedDuration) {
+        return { success: false, error: "Selected duration not found" }
+      }
+      treatmentPrice = selectedDuration.price || 0
+    }
+
+    const totalPrice = subscription.price
+
+    // Find or create user by phone
+    const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+    const userResult = await findOrCreateUserByPhone(guestInfo.phone, {
+      name: guestInfo.name,
+      email: guestInfo.email,
+    })
+
+    if (!userResult.success) {
+      return { success: false, error: "Failed to create or find user" }
+    }
+
+    // Create subscription with pending_payment status
+    const newUserSubscription = new UserSubscription({
+      userId: new mongoose.Types.ObjectId(userResult.userId),
+      subscriptionId: new mongoose.Types.ObjectId(subscriptionId),
+      treatmentId: new mongoose.Types.ObjectId(treatmentId),
+      selectedDurationId: selectedDurationId ? new mongoose.Types.ObjectId(selectedDurationId) : undefined,
+      remainingQuantity: subscription.quantity + (subscription.bonusQuantity || 0),
+      totalQuantity: subscription.quantity + (subscription.bonusQuantity || 0),
+      status: "pending_payment", // Start with pending payment
+      validUntil: new Date(Date.now() + subscription.validityMonths * 30 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      // Payment will be set when confirmed
+    })
+
+    await newUserSubscription.save()
+
+    logger.info(`[${requestId}] Successfully initiated guest subscription purchase`, {
+      userSubscriptionId: newUserSubscription._id,
+      userId: userResult.userId,
+      totalPrice,
+      guestEmail: guestInfo.email
+    })
+
+    return {
+      success: true,
+      userSubscriptionId: (newUserSubscription._id as any).toString(),
+      amount: totalPrice,
+    }
+  } catch (error) {
+    logger.error(`[${requestId}] Error initiating guest subscription purchase`, {
+      error: error instanceof Error ? {
+        message: error.message,
+        stack: error.stack?.split('\n').slice(0, 5)
+      } : String(error),
+      subscriptionId: data.subscriptionId,
+      treatmentId: data.treatmentId,
+      guestEmail: data.guestInfo.email
+    })
+    
+    return { success: false, error: "Failed to initiate subscription purchase. Please try again." }
+  }
+}
+
 export async function purchaseGuestSubscription({
   subscriptionId,
   treatmentId,
@@ -769,7 +894,7 @@ export async function purchaseGuestSubscription({
 
     const saveStart = Date.now()
     const code = await generateUniqueSubscriptionCode()
-    // Create UserSubscription with actual userId
+    // Create UserSubscription with pending_payment status - waiting for payment confirmation
     const newUserSubscription = new UserSubscription({
       code,
       userId: new mongoose.Types.ObjectId(userId),
@@ -783,7 +908,7 @@ export async function purchaseGuestSubscription({
       expiryDate,
       totalQuantity: subscription.quantity + subscription.bonusQuantity,
       remainingQuantity: subscription.quantity + subscription.bonusQuantity,
-      status: "active",
+      status: "pending_payment", // Wait for payment confirmation
       paymentMethodId: paymentMethodId && mongoose.Types.ObjectId.isValid(paymentMethodId) ? new mongoose.Types.ObjectId(paymentMethodId) : undefined,
       paymentAmount: totalPaymentAmount,
       pricePerSession: singleSessionPrice,
@@ -792,34 +917,19 @@ export async function purchaseGuestSubscription({
     await newUserSubscription.save()
     const saveTime = Date.now() - saveStart
     
-    logger.info(`[${requestId}] Guest subscription created successfully`, {
+    logger.info(`[${requestId}] Guest subscription created with pending payment status`, {
       saveTime: `${saveTime}ms`,
       userSubscriptionId: newUserSubscription._id,
-      guestEmail: guestInfo.email
+      guestEmail: guestInfo.email,
+      status: "pending_payment"
     })
 
-    try {
-      const lang = "he"
-      const message = `תודה על רכישתך! קוד המנוי שלך: ${code}\nלהזמנת טיפול עם המנוי הזן את הקוד בשלב בחירת הטיפול.`
-      const recipients = []
-      if (guestInfo.email) {
-        recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
-      }
-      if (guestInfo.phone) {
-        recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
-      }
-      
-      if (recipients.length > 0) {
-        await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
-      }
-    } catch (notificationError) {
-      logger.error("Failed to send guest subscription purchase notification", { error: notificationError })
-    }
-
+    // DO NOT send notifications or mark as active until payment is confirmed
+    
     revalidatePath("/dashboard/admin/user-subscriptions")
 
     const totalTime = Date.now() - startTime
-    logger.info(`[${requestId}] Guest subscription purchase completed successfully`, {
+    logger.info(`[${requestId}] Guest subscription purchase initiated successfully`, {
       totalTime: `${totalTime}ms`,
       userSubscriptionId: newUserSubscription._id,
       guestEmail: guestInfo.email,
@@ -831,7 +941,11 @@ export async function purchaseGuestSubscription({
       }
     })
 
-    return { success: true, userSubscription: newUserSubscription.toObject() }
+    return { 
+      success: true, 
+      userSubscription: newUserSubscription.toObject(),
+      requiresPaymentConfirmation: true
+    }
   } catch (error) {
     const totalTime = Date.now() - startTime
     logger.error(`[${requestId}] Error purchasing guest subscription`, {
@@ -941,5 +1055,106 @@ export async function getUserSubscriptionById(id: string) {
   } catch (error) {
     logger.error("Failed to fetch user subscription", { error })
     return { success: false, error: "Failed to fetch subscription" }
+  }
+}
+
+// Add confirmation function for guest subscription purchases
+export async function confirmGuestSubscriptionPurchase(data: {
+  subscriptionId: string
+  paymentId: string
+  success: boolean
+  guestInfo: {
+    name: string
+    email?: string
+    phone: string
+  }
+}): Promise<{ success: boolean; subscription?: any; error?: string }> {
+  const requestId = `guest_sub_confirm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`
+  
+  try {
+    if (!mongoose.Types.ObjectId.isValid(data.subscriptionId)) {
+      return { success: false, error: "Invalid subscription ID format." }
+    }
+
+    await dbConnect()
+    const { subscriptionId, paymentId, success: paymentSuccess, guestInfo } = data
+
+    const userSubscription = await UserSubscription.findById(subscriptionId)
+    if (!userSubscription) {
+      return { success: false, error: "Subscription not found" }
+    }
+
+    if (userSubscription.status !== "pending_payment") {
+      // If already active, it might be a duplicate callback
+      if (userSubscription.status === "active") {
+        logger.info(`[${requestId}] Guest subscription ${subscriptionId} already processed. Status: ${userSubscription.status}`)
+        return { success: true, subscription: userSubscription.toObject() }
+      }
+      return {
+        success: false,
+        error: "Subscription not awaiting payment or already processed with a non-successful status.",
+      }
+    }
+
+    if (paymentSuccess) {
+      // Payment successful - activate subscription
+      userSubscription.status = "active"
+      userSubscription.paymentId = paymentId
+      await userSubscription.save()
+      
+      logger.info(`[${requestId}] Guest subscription activated successfully`, {
+        subscriptionId,
+        code: userSubscription.code,
+        guestEmail: guestInfo.email
+      })
+
+      // Send success notifications
+      try {
+        const lang = "he"
+        const message = `תודה על רכישתך! קוד המנוי שלך: ${userSubscription.code}\nלהזמנת טיפול עם המנוי הזן את הקוד בשלב בחירת הטיפול.`
+        const recipients = []
+        if (guestInfo.email) {
+          recipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
+        }
+        if (guestInfo.phone) {
+          recipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
+        }
+        
+        if (recipients.length > 0) {
+          await unifiedNotificationService.sendPurchaseSuccess(recipients, message)
+        }
+      } catch (notificationError) {
+        logger.error(`[${requestId}] Failed to send guest subscription purchase notification`, { 
+          error: notificationError,
+          subscriptionId 
+        })
+      }
+
+      revalidatePath("/dashboard/admin/user-subscriptions")
+      return {
+        success: true,
+        subscription: userSubscription.toObject(),
+      }
+    } else {
+      // Payment failed - cancel subscription
+      userSubscription.status = "cancelled"
+      userSubscription.paymentId = paymentId
+      await userSubscription.save()
+      
+      logger.info(`[${requestId}] Guest subscription cancelled due to payment failure`, {
+        subscriptionId,
+        guestEmail: guestInfo.email
+      })
+      
+      return { success: false, error: "Payment failed. Subscription not activated." }
+    }
+  } catch (error) {
+    logger.error(`[${requestId}] Error confirming guest subscription purchase:`, {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      details: error,
+      subscriptionId: data.subscriptionId
+    })
+    return { success: false, error: "Failed to confirm purchase. Please contact support." }
   }
 }

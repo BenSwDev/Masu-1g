@@ -98,36 +98,13 @@ export async function sendOTP(
     
     let user
     if (identifierType === "phone") {
-      // Handle phone numbers with/without leading zero using the same logic as phoneExists
+      // Use centralized phone normalization
+      const { createPhoneVariations } = await import("@/lib/utils/phone-utils")
+      const variations = createPhoneVariations(identifier)
+      
       const User = (await import("@/lib/db/models/user")).default
-      let cleaned = identifier.replace(/[^\d+]/g, "")
-      if (!cleaned.startsWith("+")) {
-        if (cleaned.startsWith("0")) {
-          cleaned = "+972" + cleaned.substring(1)
-        } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-          cleaned = "+972" + cleaned
-        } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-          cleaned = "+" + cleaned
-        } else {
-          cleaned = "+972" + cleaned
-        }
-      } else {
-        if (cleaned.startsWith("+9720")) {
-          cleaned = "+972" + cleaned.substring(5)
-        }
-      }
-      
-      const countryCode = cleaned.substring(0, cleaned.indexOf("+") + 4)
-      const nationalNumber = cleaned.substring(cleaned.indexOf("+") + 4).replace(/\D/g, "")
-      const withZero = `${countryCode}0${nationalNumber}`
-      const withoutZero = `${countryCode}${nationalNumber}`
-      
       user = await User.findOne({
-        $or: [
-          { phone: withZero },
-          { phone: withoutZero },
-          { phone: cleaned }
-        ]
+        phone: { $in: variations }
       }).lean()
     } else {
       // For email (legacy support if needed)
@@ -239,34 +216,12 @@ export async function verifyOTP(
     // Find user with proper phone normalization
     let user
     if (identifierType === "phone") {
-      let cleaned = identifier.replace(/[^\d+]/g, "")
-      if (!cleaned.startsWith("+")) {
-        if (cleaned.startsWith("0")) {
-          cleaned = "+972" + cleaned.substring(1)
-        } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-          cleaned = "+972" + cleaned
-        } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-          cleaned = "+" + cleaned
-        } else {
-          cleaned = "+972" + cleaned
-        }
-      } else {
-        if (cleaned.startsWith("+9720")) {
-          cleaned = "+972" + cleaned.substring(5)
-        }
-      }
-      
-      const countryCode = cleaned.substring(0, cleaned.indexOf("+") + 4)
-      const nationalNumber = cleaned.substring(cleaned.indexOf("+") + 4).replace(/\D/g, "")
-      const withZero = `${countryCode}0${nationalNumber}`
-      const withoutZero = `${countryCode}${nationalNumber}`
+      // Use centralized phone normalization  
+      const { createPhoneVariations } = await import("@/lib/utils/phone-utils")
+      const variations = createPhoneVariations(identifier)
       
       user = await User.findOne({
-        $or: [
-          { phone: withZero },
-          { phone: withoutZero },
-          { phone: cleaned }
-        ]
+        phone: { $in: variations }
       }).select('_id').lean()
     } else {
       user = await User.findOne({ [identifierType]: identifier }).select('_id').lean()
@@ -277,7 +232,7 @@ export async function verifyOTP(
     }
 
     // Delete used token
-    await VerificationToken.deleteOne({ _id: token._id })
+    await VerificationToken.deleteOne({ _id: (token as any)._id })
 
     return { success: true, message: "OTP verified successfully", userId: user._id.toString() }
 
@@ -388,7 +343,7 @@ export async function sendProfessionalBookingNotifications(
     
     // Get booking details
     const booking = await Booking.findById(bookingId)
-      .populate('treatmentId')
+      .populate('treatmentId', 'name')
       .populate('selectedDurationId')
     
     if (!booking) {
@@ -411,7 +366,7 @@ export async function sendProfessionalBookingNotifications(
     let sentCount = 0
     
     // Prepare notification data
-    const treatmentName = booking.treatmentId?.name || "טיפול"
+    const treatmentName = (booking.treatmentId as any)?.name || "טיפול"
     const bookingDateTime = booking.bookingDateTime
     const address = `${booking.bookingAddressSnapshot?.street || ""} ${booking.bookingAddressSnapshot?.streetNumber || ""}, ${booking.bookingAddressSnapshot?.city || ""}`
     const price = booking.priceDetails?.finalAmount || 0
@@ -720,7 +675,7 @@ export async function getProfessionalResponses(
 ): Promise<{ success: boolean; responses?: any[]; error?: string }> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || !session.user.roles.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
     
@@ -751,7 +706,7 @@ export async function resendProfessionalNotifications(
 ): Promise<{ success: boolean; sentCount?: number; error?: string }> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || !session.user.roles.includes("admin")) {
       return { success: false, error: "Unauthorized" }
     }
     

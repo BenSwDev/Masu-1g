@@ -225,8 +225,34 @@ export async function findOrCreateUserByPhone(phone: string, guestInfo?: {
       error: "User not found and no guest info provided" 
     }
 
-  } catch (error) {
+  } catch (error: any) {
     logger.error(`[${requestId}] Find or create user error:`, error)
+    
+    // Handle duplicate key error (race condition)
+    if (error.code === 11000 && error.message.includes("phone")) {
+      logger.info(`[${requestId}] Duplicate phone detected, attempting to find existing user`)
+      try {
+        const cleaned = normalizePhoneNumber(phone)
+        const existingUser = await User.findOne({ phone: cleaned })
+        
+        if (existingUser) {
+          logger.info(`[${requestId}] Found existing user after duplicate error`)
+          return { 
+            success: true, 
+            userId: existingUser._id.toString(),
+            isNewUser: false,
+            userType: existingUser.roles.includes("guest") ? "guest" : "registered"
+          }
+        } else {
+          logger.error(`[${requestId}] User not found after duplicate error - this should not happen`)
+          return { success: false, error: "User creation failed due to race condition" }
+        }
+      } catch (retryError) {
+        logger.error(`[${requestId}] Failed to find existing user on retry:`, retryError)
+        return { success: false, error: "Failed to find existing user after duplicate error" }
+      }
+    }
+    
     return { success: false, error: "Failed to find or create user" }
   }
 }

@@ -70,7 +70,7 @@ export function validatePhone(phone: string): boolean {
     if (!phone) return false
     const cleaned = phone.replace(/[^\d+]/g, "")
     return cleaned.startsWith("+") && cleaned.length >= 9 && cleaned.length <= 15
-  }
+    }
 }
 
 // Helper function to determine the default active role based on priority

@@ -81,6 +81,7 @@ interface GuestPaymentStepProps {
   createPendingBooking?: () => Promise<string | null>;
   pendingBookingId?: string | null;
   isRedeeming?: boolean;
+  customFailureHandler?: (reason?: string) => void | Promise<void>;
 }
 
 export function GuestPaymentStep({
@@ -93,6 +94,7 @@ export function GuestPaymentStep({
   createPendingBooking,
   pendingBookingId = null,
   isRedeeming = false,
+  customFailureHandler,
 }: GuestPaymentStepProps) {
   const { t, dir } = useTranslation();
   const {
@@ -118,6 +120,7 @@ export function GuestPaymentStep({
       // Execute the actual booking confirmation
       onConfirm();
     },
+    onFailure: customFailureHandler,
     pendingBookingId
   });
   const [marketingConsent, setMarketingConsent] = useState(true);

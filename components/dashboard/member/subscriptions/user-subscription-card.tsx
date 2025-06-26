@@ -155,6 +155,15 @@ export default function UserSubscriptionCard({ userSubscription, onCancel }: Use
           <Progress value={usagePercentage} className="h-2.5 w-full" />
         </div>
 
+        {/* Subscription Code */}
+        {userSubscription.code && (
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 text-center">
+            <div className="text-sm font-medium text-blue-900 mb-2">קוד המנוי למימוש</div>
+            <div className="font-mono text-xl font-bold text-blue-800 tracking-wider">{userSubscription.code}</div>
+            <div className="text-xs text-blue-600 mt-1">השתמש בקוד זה בעת הזמנת טיפול</div>
+          </div>
+        )}
+
         <div className="mt-6 flex flex-col sm:flex-row gap-2">
           <Button
             variant="default"

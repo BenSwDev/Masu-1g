@@ -950,19 +950,19 @@ export async function confirmGiftVoucherPurchase(_data: PaymentResultData) {
             // Regular purchase for self - include voucher code only
             const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
             messageContent = lang === "he" 
-              ? `תודה על רכישתך! קוד השובר שלך: ${voucher.code}\nלמימוש השובר השתמש בקוד זה.\n\nניתן לצפות באישור ההזמנה בלינק הבא: ${summaryLink}`
-              : `Thank you for your purchase! Your voucher code: ${voucher.code}\nUse this code to redeem your voucher.\n\nView your receipt here: ${summaryLink}`
+              ? `תודה על רכישתך! קוד השובר שלך: ${voucher.code}\nלמימוש השובר השתמש בקוד זה.`
+              : `Thank you for your purchase! Your voucher code: ${voucher.code}\nUse this code to redeem your voucher.`
           } else {
             // Gift purchase - message about gift being sent
             const summaryLink = `${appBaseUrl}/dashboard/member/purchase-history`
             if (voucher.recipientName && voucher.recipientPhone) {
               messageContent = lang === "he" 
-                ? `תודה על רכישת שובר המתנה! המתנה נשלחה ל${voucher.recipientName}.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}\n\nניתן לצפות בפרטים בלינק הבא: ${summaryLink}`
-                : `Thank you for purchasing a gift voucher! The gift has been sent to ${voucher.recipientName}.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}\n\nView details at: ${summaryLink}`
+                ? `תודה על רכישת שובר המתנה! המתנה נשלחה ל${voucher.recipientName}.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
+                : `Thank you for purchasing a gift voucher! The gift has been sent to ${voucher.recipientName}.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}`
             } else {
-              messageContent = lang === "he" 
-                ? `תודה על רכישת שובר המתנה! השובר נוצר בהצלחה.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}\n\nניתן לצפות בפרטים בלינק הבא: ${summaryLink}`
-                : `Thank you for purchasing a gift voucher! The voucher has been created successfully.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}\n\nView details at: ${summaryLink}`
+                              messageContent = lang === "he" 
+                  ? `תודה על רכישת שובר המתנה! השובר נוצר בהצלחה.\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
+                  : `Thank you for purchasing a gift voucher! The voucher has been created successfully.\n\nVoucher code: ${voucher.code}\nAmount: ₪${voucher.amount}`
             }
           }
 
@@ -1097,8 +1097,8 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
         
         // Send gift voucher to recipient
         const giftMessage = voucher.greetingMessage 
-          ? `🎁 קיבלת שובר מתנה מ${purchaserName}!\n\n"${voucher.greetingMessage}"\n\nלמימוש השובר לחץ כאן: ${redeemLink}`
-          : `🎁 קיבלת שובר מתנה מ${purchaserName}!\n\nלמימוש השובר לחץ כאן: ${redeemLink}`
+          ? `🎁 קיבלת שובר מתנה מ${purchaserName}!\n\n"${voucher.greetingMessage}"\n\nקוד השובר למימוש: ${voucher.code}`
+          : `🎁 קיבלת שובר מתנה מ${purchaserName}!\n\nקוד השובר למימוש: ${voucher.code}`
         
         const recipients = []
         if (voucher.recipientPhone) {
@@ -1642,8 +1642,8 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
         if (voucher.isGift && voucher.recipientName && voucher.recipientPhone) {
           // Send gift voucher to recipient
           const giftMessage = voucher.greetingMessage 
-            ? `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\n"${voucher.greetingMessage}"\n\nלמימוש השובר לחץ כאן: ${redeemLink}`
-            : `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\nלמימוש השובר לחץ כאן: ${redeemLink}`
+            ? `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\n"${voucher.greetingMessage}"\n\nקוד השובר למימוש: ${voucher.code}`
+            : `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\nקוד השובר למימוש: ${voucher.code}`
           
           const recipientRecipients = []
           if (voucher.recipientPhone) {

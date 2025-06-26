@@ -3410,11 +3410,23 @@ export async function validateRedemptionCode(
         code: { $regex: new RegExp(`^${trimmedCode}$`, 'i') },
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() }
-      }).lean()
+      }).populate('treatmentId', 'name pricingType fixedPrice durations').lean()
 
       if (voucher) {
-        const isValid = (voucher.isActive || voucher.status === "sent") && 
-                       (voucher.voucherType !== "monetary" || (voucher.remainingAmount && voucher.remainingAmount > 0))
+        // Comprehensive validation
+        const now = new Date()
+        const isNotExpired = voucher.validUntil >= now
+        const isValidStatus = ["active", "partially_used", "sent"].includes(voucher.status)
+        const isActiveOrSent = voucher.isActive || voucher.status === "sent"
+        
+                 let hasBalance = true
+         if (voucher.voucherType === "monetary") {
+           hasBalance = Boolean(voucher.remainingAmount && voucher.remainingAmount > 0)
+         } else if (voucher.voucherType === "treatment") {
+           hasBalance = voucher.status !== "fully_used"
+         }
+        
+        const isValid = isNotExpired && isValidStatus && isActiveOrSent && hasBalance
         
         if (isValid) {
           return {
@@ -3427,7 +3439,12 @@ export async function validateRedemptionCode(
             }
           }
         } else {
-          return { success: false, error: "השובר לא תקף או נוצל במלואו" }
+          let errorMsg = "השובר לא תקף"
+          if (!isNotExpired) errorMsg = "השובר פג תוקף"
+          else if (!hasBalance) errorMsg = "השובר נוצל במלואו"
+          else if (!isValidStatus || !isActiveOrSent) errorMsg = "השובר לא פעיל"
+          
+          return { success: false, error: errorMsg }
         }
       }
     }
@@ -3439,7 +3456,7 @@ export async function validateRedemptionCode(
         remainingQuantity: { $gt: 0 },
         status: "active",
         expiryDate: { $gte: new Date() }
-      }).populate('subscriptionId').populate('treatmentId').lean()
+      }).populate('subscriptionId').populate('treatmentId', 'name pricingType fixedPrice durations').lean()
 
       if (userSubscription) {
         // For logged-in users, verify ownership (unless it's a guest subscription)

@@ -178,21 +178,6 @@ export default function UniversalBookingWizard({
     if (redemptionData) {
       const redemption = redemptionData
       
-      // For vouchers with guest info
-      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.guestInfo) {
-        const guestInfo = redemption.data.guestInfo
-        const [first, ...rest] = guestInfo.name.split(" ")
-        return {
-          firstName: first,
-          lastName: rest.join(" "),
-          email: guestInfo.email,
-          phone: guestInfo.phone,
-          isBookingForSomeoneElse: false,
-          bookerNotificationMethod: "email",
-          bookerNotificationLanguage: "he"
-        }
-      }
-      
       // For gift vouchers with recipient info
       if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.isGift && redemption.data?.recipientName) {
         const [first, ...rest] = redemption.data.recipientName.split(" ")
@@ -201,6 +186,21 @@ export default function UniversalBookingWizard({
           lastName: rest.join(" "),
           phone: redemption.data.recipientPhone,
           email: redemption.data.recipientEmail || "",
+          isBookingForSomeoneElse: false,
+          bookerNotificationMethod: "email",
+          bookerNotificationLanguage: "he"
+        }
+      }
+      
+      // For non-gift vouchers purchased by guests
+      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.guestInfo && !redemption.data?.isGift) {
+        const guestInfo = redemption.data.guestInfo
+        const [first, ...rest] = guestInfo.name.split(" ")
+        return {
+          firstName: first,
+          lastName: rest.join(" "),
+          email: guestInfo.email,
+          phone: guestInfo.phone,
           isBookingForSomeoneElse: false,
           bookerNotificationMethod: "email",
           bookerNotificationLanguage: "he"
@@ -244,15 +244,19 @@ export default function UniversalBookingWizard({
       // For treatment vouchers, lock fields based on voucher data
       if (redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") {
         const voucherData = redemption.data as any
-        if (voucherData?.guestInfo) {
-          return ["firstName", "lastName", "phone", "email"] as const
-        }
+        
+        // If it's a gift voucher, lock recipient info
         if (voucherData?.isGift && voucherData?.recipientName) {
           const fields = ["firstName", "lastName", "phone"] as const
           if (voucherData?.recipientEmail) {
             return [...fields, "email"] as const
           }
           return fields
+        }
+        
+        // If it's a non-gift voucher purchased by a guest, lock purchaser info
+        if (voucherData?.guestInfo && !voucherData?.isGift) {
+          return ["firstName", "lastName", "phone", "email"] as const
         }
       }
       

@@ -93,8 +93,13 @@ export function GuestTreatmentSelectionStep({
       const redemption = bookingOptions.redemptionData
       
       if (redemption.type === "treatment_voucher" && (redemption.data as any)?.treatmentId) {
+        // Check if treatmentId is populated object or just ID
+        const treatmentIdToFind = typeof (redemption.data as any).treatmentId === 'string' 
+          ? (redemption.data as any).treatmentId 
+          : (redemption.data as any).treatmentId?._id || (redemption.data as any).treatmentId?.toString()
+        
         const treatmentFromVoucher = (initialData.activeTreatments || []).find(
-          (t) => (t._id || t.id)?.toString() === (redemption.data as any).treatmentId?.toString(),
+          (t) => (t._id || t.id)?.toString() === treatmentIdToFind?.toString(),
         )
         if (treatmentFromVoucher) {
           setAvailableTreatmentsForStep([treatmentFromVoucher])
@@ -105,17 +110,47 @@ export function GuestTreatmentSelectionStep({
             selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
           }))
           setIsTreatmentLockedBySource(true)
+        } else if (typeof (redemption.data as any).treatmentId === 'object' && (redemption.data as any).treatmentId?.name) {
+          // If treatment is populated object but not found in activeTreatments, use it directly
+          const populatedTreatment = (redemption.data as any).treatmentId
+          setAvailableTreatmentsForStep([populatedTreatment])
+          setSelectedCategory(populatedTreatment.category || "Uncategorized")
+          setBookingOptions((prev) => ({
+            ...prev,
+            selectedTreatmentId: (populatedTreatment._id || populatedTreatment.id)?.toString(),
+            selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+          }))
+          setIsTreatmentLockedBySource(true)
         }
       } else if (redemption.type === "subscription" && (redemption.data as any)?.treatmentId) {
         const treatmentFromSub = (redemption.data as any).treatmentId
-        setAvailableTreatmentsForStep([treatmentFromSub])
-        setSelectedCategory(treatmentFromSub.category || "Uncategorized")
-        setBookingOptions((prev) => ({
-          ...prev,
-          selectedTreatmentId: (treatmentFromSub._id || treatmentFromSub.id)?.toString(),
-          selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
-        }))
-        setIsTreatmentLockedBySource(true)
+        
+        // Handle case where treatmentId is populated object vs just ID
+        if (typeof treatmentFromSub === 'object' && treatmentFromSub?.name) {
+          setAvailableTreatmentsForStep([treatmentFromSub])
+          setSelectedCategory(treatmentFromSub.category || "Uncategorized")
+          setBookingOptions((prev) => ({
+            ...prev,
+            selectedTreatmentId: (treatmentFromSub._id || treatmentFromSub.id)?.toString(),
+            selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+          }))
+          setIsTreatmentLockedBySource(true)
+        } else {
+          // If treatmentId is just an ID, find it in activeTreatments
+          const treatmentFromActiveTreatments = (initialData.activeTreatments || []).find(
+            (t) => (t._id || t.id)?.toString() === treatmentFromSub?.toString(),
+          )
+          if (treatmentFromActiveTreatments) {
+            setAvailableTreatmentsForStep([treatmentFromActiveTreatments])
+            setSelectedCategory(treatmentFromActiveTreatments.category || "Uncategorized")
+            setBookingOptions((prev) => ({
+              ...prev,
+              selectedTreatmentId: (treatmentFromActiveTreatments._id || treatmentFromActiveTreatments.id)?.toString(),
+              selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+            }))
+            setIsTreatmentLockedBySource(true)
+          }
+        }
       } else {
         // Monetary voucher or coupon - show all treatments
         setAvailableTreatmentsForStep(initialData.activeTreatments || [])
@@ -397,7 +432,9 @@ export function GuestTreatmentSelectionStep({
                       `מנוי - נותרו: ${(bookingOptions.redemptionData.data as any)?.remainingQuantity} טיפולים`
                     )}
                     {bookingOptions.redemptionData.type === "treatment_voucher" && (
-                      `שובר טיפול - ${(bookingOptions.redemptionData.data as any)?.treatmentName}`
+                      `שובר טיפול - ${(bookingOptions.redemptionData.data as any)?.treatmentId?.name || 
+                        (bookingOptions.redemptionData.data as any)?.treatmentName || 
+                        "טיפול לא זוהה"}`
                     )}
                     {bookingOptions.redemptionData.type === "monetary_voucher" && (
                       `שובר כספי - יתרה: ${(bookingOptions.redemptionData.data as any)?.remainingAmount?.toFixed(2)} ₪`

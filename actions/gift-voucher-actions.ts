@@ -621,6 +621,7 @@ export interface PurchaseInitiationData {
   isGift: boolean
   recipientName?: string
   recipientPhone?: string
+  recipientEmail?: string
   greetingMessage?: string
   sendDate?: string
 }
@@ -628,6 +629,7 @@ export interface PurchaseInitiationData {
 export interface GiftDetailsPayload {
   recipientName: string
   recipientPhone: string
+  recipientEmail?: string
   greetingMessage?: string
   sendDate?: string
 }
@@ -1573,11 +1575,17 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
       validFrom: new Date(),
       validUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       isActive: false,
+      guestInfo: {
+        name: guestInfo.name,
+        email: guestInfo.email || "",
+        phone: guestInfo.phone
+      },
     }
 
     if (isGift) {
       if (_data.recipientName) giftVoucherData.recipientName = _data.recipientName
       if (_data.recipientPhone) giftVoucherData.recipientPhone = _data.recipientPhone
+      if (_data.recipientEmail) giftVoucherData.recipientEmail = _data.recipientEmail
       if (_data.greetingMessage) giftVoucherData.greetingMessage = _data.greetingMessage
       if (_data.sendDate) giftVoucherData.sendDate = _data.sendDate === "immediate" ? new Date() : new Date(_data.sendDate)
     }

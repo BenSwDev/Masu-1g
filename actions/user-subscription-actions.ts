@@ -693,6 +693,11 @@ export async function initiateGuestSubscriptionPurchase(data: {
       status: "pending_payment", // Start with pending payment
       paymentAmount: totalPaymentAmount,
       pricePerSession: treatmentPrice,
+      guestInfo: {
+        name: guestInfo.name,
+        email: guestInfo.email,
+        phone: guestInfo.phone
+      },
       // Payment will be set when confirmed
     })
 
@@ -921,6 +926,11 @@ export async function purchaseGuestSubscription({
       paymentMethodId: paymentMethodId && mongoose.Types.ObjectId.isValid(paymentMethodId) ? new mongoose.Types.ObjectId(paymentMethodId) : undefined,
       paymentAmount: totalPaymentAmount,
       pricePerSession: singleSessionPrice,
+      guestInfo: {
+        name: sanitizedGuestInfo.name,
+        email: sanitizedGuestInfo.email,
+        phone: sanitizedGuestInfo.phone
+      },
     })
 
     await newUserSubscription.save()

@@ -79,10 +79,24 @@ export function GuestTreatmentSelectionStep({
     )
   }, [availableTreatmentsForStep, bookingOptions.selectedTreatmentId])
 
-  const showCategorySelection =
-    (bookingOptions.source === "new_purchase" ||
-      (bookingOptions.source === "gift_voucher_redemption" && voucher?.voucherType === "monetary")) &&
-    !isTreatmentLockedBySource
+  const showCategorySelection = useMemo(() => {
+    // Show category selection for new purchases
+    if (bookingOptions.source === "new_purchase" && !isTreatmentLockedBySource) {
+      return true
+    }
+    
+    // Show category selection for monetary vouchers (props-based)
+    if (bookingOptions.source === "gift_voucher_redemption" && voucher?.voucherType === "monetary" && !isTreatmentLockedBySource) {
+      return true
+    }
+    
+    // Show category selection for monetary vouchers (code-based redemption)
+    if (bookingOptions.redemptionData && bookingOptions.redemptionData.type === "monetary_voucher" && !isTreatmentLockedBySource) {
+      return true
+    }
+    
+    return false
+  }, [bookingOptions.source, bookingOptions.redemptionData, voucher?.voucherType, isTreatmentLockedBySource])
 
   // Effect to handle redemption-specific treatment locking
   useEffect(() => {

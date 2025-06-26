@@ -36,7 +36,7 @@ export async function registerUser(formData: FormData) {
       // Validate phone number format
       if (formattedPhone && !validatePhone(formattedPhone)) {
         logger.warn(`[${requestId}] Invalid phone format: ${formattedPhone}`)
-        return { success: false, message: "invalidPhone" }
+          return { success: false, message: "invalidPhone" }
       }
     }
 

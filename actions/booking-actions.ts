@@ -3071,112 +3071,112 @@ export async function updateBookingStatusAfterPayment(
     await dbConnect()
     
     await mongooseDbSession.withTransaction(async () => {
-      bookingLogger.logPayment({
-        bookingId,
-        paymentStatus,
-        metadata: { transactionId }
-      }, `Processing payment ${paymentStatus} for booking`)
-      
+    bookingLogger.logPayment({
+      bookingId,
+      paymentStatus,
+      metadata: { transactionId }
+    }, `Processing payment ${paymentStatus} for booking`)
+    
       const booking = await Booking.findById(bookingId).session(mongooseDbSession)
-      if (!booking) {
-        bookingLogger.logError({ bookingId }, "Booking not found", "Payment processing failed - booking not found")
+    if (!booking) {
+      bookingLogger.logError({ bookingId }, "Booking not found", "Payment processing failed - booking not found")
         throw new Error("Booking not found")
-      }
+    }
 
-      if (paymentStatus === "success") {
+    if (paymentStatus === "success") {
         // Payment successful - update status to paid
-        booking.paymentDetails.paymentStatus = "paid"
-        booking.paymentDetails.transactionId = transactionId
-        booking.status = "in_process" // Now in process - paid but not assigned professional
-        
-        // Find suitable professionals and save to booking
+      booking.paymentDetails.paymentStatus = "paid"
+      booking.paymentDetails.transactionId = transactionId
+      booking.status = "in_process" // Now in process - paid but not assigned professional
+      
+      // Find suitable professionals and save to booking
         const suitableProfessionalsResult = await findSuitableProfessionals(bookingId)
-        
+      
         if (suitableProfessionalsResult.success && suitableProfessionalsResult.professionals) {
-          // Save suitable professionals list to booking
+        // Save suitable professionals list to booking
           booking.suitableProfessionals = suitableProfessionalsResult.professionals.map((prof: any) => ({
-            professionalId: prof.userId._id,
-            name: prof.userId.name,
-            email: prof.userId.email,
-            phone: prof.userId.phone,
-            gender: prof.userId.gender,
-            profileId: prof._id,
-            calculatedAt: new Date()
-          }))
-          
-          logger.info("Saved suitable professionals to booking", { 
-            bookingId, 
+          professionalId: prof.userId._id,
+          name: prof.userId.name,
+          email: prof.userId.email,
+          phone: prof.userId.phone,
+          gender: prof.userId.gender,
+          profileId: prof._id,
+          calculatedAt: new Date()
+        }))
+        
+        logger.info("Saved suitable professionals to booking", { 
+          bookingId, 
             professionalCount: booking.suitableProfessionals?.length || 0
-          })
+        })
+      }
+      
+      // Ensure required fields have valid values for backward compatibility
+      if (!booking.treatmentCategory) {
+        booking.treatmentCategory = new mongoose.Types.ObjectId()
+      }
+      if (typeof booking.staticTreatmentPrice !== 'number') {
+        booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+      }
+      if (typeof booking.staticTherapistPay !== 'number') {
+        booking.staticTherapistPay = 0
+      }
+      if (typeof booking.companyFee !== 'number') {
+        booking.companyFee = 0
+      }
+      if (!booking.consents) {
+        booking.consents = {
+          customerAlerts: "email",
+          patientAlerts: "email",
+          marketingOptIn: false,
+          termsAccepted: false
         }
-        
-        // Ensure required fields have valid values for backward compatibility
-        if (!booking.treatmentCategory) {
-          booking.treatmentCategory = new mongoose.Types.ObjectId()
-        }
-        if (typeof booking.staticTreatmentPrice !== 'number') {
-          booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
-        }
-        if (typeof booking.staticTherapistPay !== 'number') {
-          booking.staticTherapistPay = 0
-        }
-        if (typeof booking.companyFee !== 'number') {
-          booking.companyFee = 0
-        }
-        if (!booking.consents) {
-          booking.consents = {
-            customerAlerts: "email",
-            patientAlerts: "email",
-            marketingOptIn: false,
-            termsAccepted: false
-          }
-        }
-        
+      }
+      
         await booking.save({ session: mongooseDbSession })
-        
+      
         if (suitableProfessionalsResult.success && suitableProfessionalsResult.professionals && suitableProfessionalsResult.professionals.length > 0) {
-          logger.info("Found suitable professionals for booking", { 
-            bookingId,
+        logger.info("Found suitable professionals for booking", { 
+          bookingId,
             professionalCount: suitableProfessionalsResult.professionals.length 
           })
-        } else {
-          logger.warn("No suitable professionals found for booking", { bookingId })
-        }
-        
       } else {
+        logger.warn("No suitable professionals found for booking", { bookingId })
+      }
+      
+    } else {
         // Payment failed - ROLLBACK ALL REDEMPTIONS AND CANCEL BOOKING
         await rollbackBookingRedemptions(booking, mongooseDbSession)
         
         booking.status = "cancelled"
         booking.cancellationReason = "Payment failed"
         booking.cancelledBy = "admin" // Use admin instead of system
-        booking.paymentDetails.paymentStatus = "failed"
-        if (transactionId) {
-          booking.paymentDetails.transactionId = transactionId
+      booking.paymentDetails.paymentStatus = "failed"
+      if (transactionId) {
+        booking.paymentDetails.transactionId = transactionId
+      }
+      
+      // Ensure required fields have valid values for backward compatibility
+      if (!booking.treatmentCategory) {
+        booking.treatmentCategory = new mongoose.Types.ObjectId()
+      }
+      if (typeof booking.staticTreatmentPrice !== 'number') {
+        booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
+      }
+      if (typeof booking.staticTherapistPay !== 'number') {
+        booking.staticTherapistPay = 0
+      }
+      if (typeof booking.companyFee !== 'number') {
+        booking.companyFee = 0
+      }
+      if (!booking.consents) {
+        booking.consents = {
+          customerAlerts: "email",
+          patientAlerts: "email",
+          marketingOptIn: false,
+          termsAccepted: false
         }
-        
-        // Ensure required fields have valid values for backward compatibility
-        if (!booking.treatmentCategory) {
-          booking.treatmentCategory = new mongoose.Types.ObjectId()
-        }
-        if (typeof booking.staticTreatmentPrice !== 'number') {
-          booking.staticTreatmentPrice = booking.priceDetails?.basePrice || 0
-        }
-        if (typeof booking.staticTherapistPay !== 'number') {
-          booking.staticTherapistPay = 0
-        }
-        if (typeof booking.companyFee !== 'number') {
-          booking.companyFee = 0
-        }
-        if (!booking.consents) {
-          booking.consents = {
-            customerAlerts: "email",
-            patientAlerts: "email",
-            marketingOptIn: false,
-            termsAccepted: false
-          }
-        }
-        
+      }
+      
         await booking.save({ session: mongooseDbSession })
         
         logger.info("Payment failed - booking cancelled and redemptions rolled back", { 
@@ -3220,7 +3220,7 @@ export async function updateBookingStatusAfterPayment(
     
     return { success: true, booking: updatedBooking?.toObject() as IBooking }
       
-  } catch (error) {
+      } catch (error) {
     logger.error("Error updating booking status after payment:", {
       bookingId,
       paymentStatus,

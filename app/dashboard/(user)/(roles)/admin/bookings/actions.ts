@@ -26,6 +26,7 @@ export interface GetAllBookingsFilters {
   dateRange?: string
   priceRange?: string
   address?: string
+  subscription_id?: string
   page?: number
   limit?: number
   sortBy?: string
@@ -124,6 +125,7 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
       dateRange,
       priceRange,
       address,
+      subscription_id,
       page = 1,
       limit = 20,
       sortBy = "createdAt",
@@ -137,6 +139,7 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
     if (status) query.status = status
     if (professional) query.professionalId = new Types.ObjectId(professional)
     if (treatment) query.treatmentId = new Types.ObjectId(treatment)
+    if (subscription_id) query["priceDetails.redeemedUserSubscriptionId"] = new Types.ObjectId(subscription_id)
     if (address) query["bookingAddressSnapshot.fullAddress"] = {
       $regex: address,
       $options: "i",

@@ -1325,10 +1325,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         .populate({ path: "treatmentId", model: Treatment, populate: { path: "durations" } })
         .lean(),
       GiftVoucher.find({
-        $or: [
-          { ownerUserId: userId },
-          ...(authSession.user.email ? [{ recipientEmail: authSession.user.email }] : [])
-        ],
+        ownerUserId: userId, // Only get vouchers owned by the user (for gifts, this is the recipient)
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() },
         isActive: true,

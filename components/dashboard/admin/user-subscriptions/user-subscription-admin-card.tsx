@@ -83,6 +83,52 @@ interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | '
   }
 }
 
+// Type compatible with the modal component
+type ModalCompatibleUserSubscription = Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> & {
+  userId?: {
+    _id: string
+    name: string
+    email?: string
+  } | null
+  subscriptionId?: {
+    _id: string
+    name: string
+    description?: string
+    price: number
+    duration: number
+    treatments: string[]
+    isActive: boolean
+  }
+  treatmentId?: {
+    _id: string
+    name: string
+    price: number
+    durations: Array<{
+      _id: string
+      minutes: number
+      price: number
+    }>
+  }
+  paymentMethodId?: {
+    _id: string
+    cardName: string
+    cardNumber: string
+  } | null
+  selectedDurationDetails?: {
+    minutes: number
+    price: number
+  }
+  usedQuantity?: number
+  cancellationDate?: Date
+  paymentDate?: Date
+  transactionId?: string
+  guestInfo?: {
+    name: string
+    email?: string
+    phone: string
+  }
+}
+
 interface UserSubscriptionAdminCardProps {
   userSubscription: PopulatedUserSubscription
   onSubscriptionUpdate: () => void
@@ -169,6 +215,13 @@ export default function UserSubscriptionAdminCard({
 
   const formatDate = (date: Date | string) => format(new Date(date), "dd/MM/yy", { locale: he })
   const usagePercentage = (userSubscription.remainingQuantity / userSubscription.totalQuantity) * 100
+
+  // Convert to modal-compatible format
+  const modalCompatibleSubscription: ModalCompatibleUserSubscription = {
+    ...userSubscription,
+    subscriptionId: userSubscription.subscriptionId,
+    treatmentId: userSubscription.treatmentId,
+  }
 
   return (
     <TooltipProvider>
@@ -316,7 +369,7 @@ export default function UserSubscriptionAdminCard({
       <UserSubscriptionDetailsModal
         isOpen={showDetailsModal}
         onOpenChange={setShowDetailsModal}
-        userSubscription={userSubscription}
+        userSubscription={modalCompatibleSubscription}
       />
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>

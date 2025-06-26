@@ -29,6 +29,7 @@ import {
   Package,
   Receipt,
   Info,
+  Link
 } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { toast } from "sonner"
@@ -366,6 +367,56 @@ export default function AdminGiftVoucherDetailsModal({
 
           {/* Right Column */}
           <div className="space-y-6">
+            {/* Usage History */}
+            {voucher.usageHistory && voucher.usageHistory.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    {t("giftVouchers.details.usageHistory")}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {voucher.usageHistory.map((usage, index) => (
+                    <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {usage.description || "שימוש בשובר"}
+                        </span>
+                        <span className="text-sm font-bold text-green-600">
+                          ₪{usage.amountUsed.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {format(new Date(usage.date), "dd/MM/yyyy HH:mm")}
+                        </div>
+                        {usage.orderId && (
+                          <div className="flex items-center gap-1">
+                            <Link className="h-3 w-3" />
+                            <span>הזמנה: {usage.orderId}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Remaining balance display */}
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        {t("giftVouchers.details.remainingBalance")}
+                      </span>
+                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                        ₪{voucher.remainingAmount?.toFixed(2) || "0.00"}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Dates & Timeline */}
             <Card>
               <CardHeader>

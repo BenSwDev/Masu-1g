@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     await dbConnect()
 
     const mongooseDbSession = await mongoose.startSession()
-    let bookingResult: IBooking | null = null
+    let bookingResult: any = null
 
     try {
       await mongooseDbSession.withTransaction(async () => {

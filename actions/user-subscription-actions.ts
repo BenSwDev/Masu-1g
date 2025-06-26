@@ -660,6 +660,7 @@ export async function initiateGuestSubscriptionPurchase(data: {
     }
 
     const totalPrice = subscription.price
+    const totalPaymentAmount = treatmentPrice > 0 ? subscription.quantity * treatmentPrice : totalPrice
 
     // Find or create user by phone
     const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
@@ -672,18 +673,26 @@ export async function initiateGuestSubscriptionPurchase(data: {
       return { success: false, error: "Failed to create or find user" }
     }
 
+    // Generate unique code and calculate dates
+    const code = await generateUniqueSubscriptionCode()
+    const purchaseDate = new Date()
+    const expiryDate = new Date(purchaseDate)
+    expiryDate.setMonth(expiryDate.getMonth() + subscription.validityMonths)
+
     // Create subscription with pending_payment status
     const newUserSubscription = new UserSubscription({
+      code,
       userId: new mongoose.Types.ObjectId(userResult.userId),
       subscriptionId: new mongoose.Types.ObjectId(subscriptionId),
       treatmentId: new mongoose.Types.ObjectId(treatmentId),
       selectedDurationId: selectedDurationId ? new mongoose.Types.ObjectId(selectedDurationId) : undefined,
+      purchaseDate,
+      expiryDate,
       remainingQuantity: subscription.quantity + (subscription.bonusQuantity || 0),
       totalQuantity: subscription.quantity + (subscription.bonusQuantity || 0),
       status: "pending_payment", // Start with pending payment
-      validUntil: new Date(Date.now() + subscription.validityMonths * 30 * 24 * 60 * 60 * 1000),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      paymentAmount: totalPaymentAmount,
+      pricePerSession: treatmentPrice,
       // Payment will be set when confirmed
     })
 
@@ -699,7 +708,7 @@ export async function initiateGuestSubscriptionPurchase(data: {
     return {
       success: true,
       userSubscriptionId: (newUserSubscription._id as any).toString(),
-      amount: totalPrice,
+      amount: totalPaymentAmount,
     }
   } catch (error) {
     logger.error(`[${requestId}] Error initiating guest subscription purchase`, {

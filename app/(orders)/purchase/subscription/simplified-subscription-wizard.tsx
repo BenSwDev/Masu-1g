@@ -143,6 +143,10 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     isBaseTreatmentCoveredBySubscription: false,
     isBaseTreatmentCoveredByTreatmentVoucher: false,
     isFullyCoveredByVoucherOrSubscription: false,
+    totalProfessionalPayment: 0,
+    totalOfficeCommission: totalPrice,
+    baseProfessionalPayment: 0,
+    surchargesProfessionalPayment: 0,
   }
 
   // Group treatments by category
@@ -281,9 +285,22 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
 
   // No longer needed as we redirect to confirmation page
 
-  const treatmentCategories = [...new Set(treatments.map(t => t.category))]
+  // Filter out undefined categories and get unique categories
+  const treatmentCategories = [...new Set(treatments.map(t => t.category).filter(Boolean))]
   const categoryTreatments = selectedCategory ? 
     treatments.filter(t => t.category === selectedCategory) : []
+
+  // Function to translate category names
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case "massages":
+        return "עיסויים"
+      case "facial_treatments":
+        return "טיפולי פנים"
+      default:
+        return category
+    }
+  }
 
   const renderStep1 = () => (
     <div className="max-w-2xl mx-auto space-y-6" dir={dir} lang={language}>
@@ -348,7 +365,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
                   }}
                 >
                   <div className="font-medium">
-                    {t(`treatments.categories.${category}`, category)}
+                    {getCategoryDisplayName(category)}
                   </div>
                 </div>
               ))}

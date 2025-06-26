@@ -159,9 +159,22 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
     return acc
   }, {} as Record<string, ITreatment[]>)
 
-  const treatmentCategories = [...new Set(treatments.map(t => t.category))]
+  // Filter out undefined categories and get unique categories
+  const treatmentCategories = [...new Set(treatments.map(t => t.category).filter(Boolean))]
   const categoryTreatments = selectedCategory ? 
     treatments.filter(t => t.category === selectedCategory) : []
+
+  // Function to translate category names
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case "massages":
+        return "עיסויים"
+      case "facial_treatments":
+        return "טיפולי פנים"
+      default:
+        return category
+    }
+  }
 
   // Wizard navigation
   const nextStep = () => setCurrentStep(s => Math.min(s + 1, 3))
@@ -354,7 +367,7 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
               <SelectContent>
                 {treatmentCategories.map((category) => (
                   <SelectItem key={category} value={category}>
-                    {category}
+                    {getCategoryDisplayName(category)}
                   </SelectItem>
                 ))}
               </SelectContent>

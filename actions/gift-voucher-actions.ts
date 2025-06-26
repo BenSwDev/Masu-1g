@@ -814,7 +814,7 @@ export async function initiatePurchaseGiftVoucher(data: PurchaseInitiationData) 
       originalAmount: determinedPrice,
       remainingAmount: determinedPrice,
       purchaserUserId: new mongoose.Types.ObjectId(session.user.id),
-      ownerUserId: new mongoose.Types.ObjectId(session.user.id),
+      ownerUserId: isGift ? undefined : new mongoose.Types.ObjectId(session.user.id), // For gifts, owner will be set later via setGiftDetails
       isGift,
       status: "pending_payment",
       purchaseDate: new Date(),
@@ -1057,9 +1057,21 @@ export async function setGiftDetails(voucherId: string, details: GiftDetailsPayl
     voucher.recipientName = details.recipientName
     voucher.recipientPhone = details.recipientPhone // Store as is, SMSService should format
     voucher.greetingMessage = details.greetingMessage
-    // The owner of the voucher might change to the recipient if the system supports that,
-    // or it might remain with the purchaser but be designated for the recipient.
-    // For now, ownerUserId remains the purchaser.
+    
+    // Find or create the recipient user and set as owner
+    const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+    const recipientResult = await findOrCreateUserByPhone(details.recipientPhone, {
+      name: details.recipientName,
+      email: undefined, // No email for recipient unless provided
+    })
+
+    if (recipientResult.success && recipientResult.userId) {
+      voucher.ownerUserId = new mongoose.Types.ObjectId(recipientResult.userId)
+      logger.info(`Gift voucher ${voucher.code} ownership transferred to recipient user ${recipientResult.userId}`)
+    } else {
+      logger.warn(`Failed to find or create recipient user for gift voucher ${voucher.code}`, { error: recipientResult.error })
+      // Keep as purchaser ownership for now, but this is not ideal
+    }
 
     const now = new Date()
     let sendNotificationToRecipientNow = false
@@ -1224,18 +1236,18 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
       return { success: false, error: "User not found." }
     }
 
-    if (!voucher.isGift) {
-      // Not a gift - only the purchaser can redeem
-      if (voucher.purchaserUserId?.toString() !== session.user.id) {
+    // Unified ownership check - only the owner can redeem
+    if (voucher.ownerUserId && voucher.ownerUserId.toString() !== session.user.id) {
+      if (!voucher.isGift) {
         return { success: false, error: "רק הרוכש יכול לממש שובר זה." }
+      } else {
+        return { success: false, error: "רק מי שהשובר נרכש עבורו יכול לממש אותו." }
       }
-    } else {
-      // It's a gift - only the recipient can redeem (by phone match)
-      if (!voucher.recipientPhone || !currentUser.phone) {
-        return { success: false, error: "לא ניתן לאמת זכאות למימוש השובר." }
-      }
-      
-      // Normalize both phone numbers for comparison
+    }
+    
+    // Additional validation for gift vouchers using phone number as backup
+    if (voucher.isGift && voucher.recipientPhone && currentUser.phone) {
+      // Normalize both phone numbers for comparison as additional validation
       const normalizePhone = (phone: string) => {
         let cleaned = phone.replace(/[^\d+]/g, "")
         if (!cleaned.startsWith("+")) {
@@ -1259,7 +1271,7 @@ export async function redeemGiftVoucher(code: string, orderDetails: OrderDetails
       const normalizedUserPhone = normalizePhone(currentUser.phone)
       
       if (normalizedRecipientPhone !== normalizedUserPhone) {
-        return { success: false, error: "רק מי שהשובר נרכש עבורו יכול לממש אותו." }
+        return { success: false, error: "השובר לא שייך למספר הטלפון שלך." }
       }
     }
 
@@ -1426,6 +1438,23 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
       return { success: false, error: "Valid phone number is required." }
     }
 
+    // Validate recipient information for gift vouchers
+    if (isGift) {
+      if (!_data.recipientName || !_data.recipientPhone) {
+        logger.warn(`[${requestId}] Missing recipient info for gift voucher`, { 
+          hasRecipientName: !!_data.recipientName,
+          hasRecipientPhone: !!_data.recipientPhone
+        })
+        return { success: false, error: "Recipient name and phone are required for gift vouchers." }
+      }
+      
+      // Validate recipient phone format
+      if (_data.recipientPhone.trim().length < 10) {
+        logger.warn(`[${requestId}] Invalid recipient phone format`, { recipientPhone: _data.recipientPhone })
+        return { success: false, error: "Valid recipient phone number is required." }
+      }
+    }
+
     let determinedPrice = 0
 
     if (voucherType === "monetary") {
@@ -1488,23 +1517,43 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
       }
     }
 
-    // Find or create user by phone
+    // Find or create purchaser user by phone
     const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
-    const userResult = await findOrCreateUserByPhone(guestInfo.phone, {
+    const purchaserResult = await findOrCreateUserByPhone(guestInfo.phone, {
       name: guestInfo.name,
       email: guestInfo.email,
     })
 
-    if (!userResult.success || !userResult.userId) {
-      logger.error(`[${requestId}] Failed to find or create user`, { error: userResult.error })
-      return { success: false, error: userResult.error || "Failed to create user" }
+    if (!purchaserResult.success || !purchaserResult.userId) {
+      logger.error(`[${requestId}] Failed to find or create purchaser user`, { error: purchaserResult.error })
+      return { success: false, error: purchaserResult.error || "Failed to create purchaser user" }
     }
 
-    const userId = userResult.userId
-    logger.info(`[${requestId}] User ${userResult.isNewUser ? 'created' : 'found'}`, { 
-      userId, 
-      userType: userResult.userType 
+    const purchaserUserId = purchaserResult.userId
+    logger.info(`[${requestId}] Purchaser user ${purchaserResult.isNewUser ? 'created' : 'found'}`, { 
+      purchaserUserId, 
+      userType: purchaserResult.userType 
     })
+
+    // For gift vouchers, find or create the recipient user
+    let recipientUserId = purchaserUserId // Default to purchaser for non-gift vouchers
+    if (isGift && _data.recipientPhone) {
+      const recipientResult = await findOrCreateUserByPhone(_data.recipientPhone, {
+        name: _data.recipientName || "מקבל מתנה",
+        email: undefined, // No email for recipient unless provided
+      })
+
+      if (!recipientResult.success || !recipientResult.userId) {
+        logger.error(`[${requestId}] Failed to find or create recipient user`, { error: recipientResult.error })
+        return { success: false, error: recipientResult.error || "Failed to create recipient user" }
+      }
+
+      recipientUserId = recipientResult.userId
+      logger.info(`[${requestId}] Recipient user ${recipientResult.isNewUser ? 'created' : 'found'}`, { 
+        recipientUserId, 
+        userType: recipientResult.userType 
+      })
+    }
 
     const code = await generateUniqueVoucherCode()
 
@@ -1516,8 +1565,8 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
       monetaryValue: determinedPrice,
       originalAmount: determinedPrice,
       remainingAmount: determinedPrice,
-      purchaserUserId: new mongoose.Types.ObjectId(userId),
-      ownerUserId: isGift ? undefined : new mongoose.Types.ObjectId(userId), // אם מתנה, הבעלים יהיה הנמען
+      purchaserUserId: new mongoose.Types.ObjectId(purchaserUserId),
+      ownerUserId: new mongoose.Types.ObjectId(recipientUserId), // Always set owner - purchaser for non-gift, recipient for gift
       isGift,
       status: "pending_payment",
       purchaseDate: new Date(),
@@ -1527,7 +1576,7 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
     }
 
     if (isGift) {
-      if (_data.recipientName) giftVoucherData.recipientName =  _data.recipientName
+      if (_data.recipientName) giftVoucherData.recipientName = _data.recipientName
       if (_data.recipientPhone) giftVoucherData.recipientPhone = _data.recipientPhone
       if (_data.greetingMessage) giftVoucherData.greetingMessage = _data.greetingMessage
       if (_data.sendDate) giftVoucherData.sendDate = _data.sendDate === "immediate" ? new Date() : new Date(_data.sendDate)
@@ -1553,6 +1602,8 @@ export async function initiateGuestPurchaseGiftVoucher(_data: PurchaseInitiation
       amount: determinedPrice,
       voucherType,
       isGift,
+      purchaserUserId,
+      ownerUserId: recipientUserId,
       guestEmail: guestInfo.email
     })
 
@@ -1617,12 +1668,16 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
 
     if (paymentSuccess) {
       voucher.paymentId = paymentId
+      
       if (!voucher.isGift) {
+        // Non-gift voucher - activate immediately for purchaser
         voucher.status = "active"
         voucher.isActive = true
       } else {
+        // Gift voucher - set status based on send date
         const sendDate = voucher.sendDate ? new Date(voucher.sendDate) : new Date()
         if (!voucher.sendDate) voucher.sendDate = sendDate
+        
         if (sendDate <= new Date()) {
           voucher.status = "sent"
           voucher.isActive = true
@@ -1631,44 +1686,14 @@ export async function confirmGuestGiftVoucherPurchase(data: PaymentResultData & 
           voucher.isActive = false
         }
       }
+      
       await voucher.save()
 
       // Send notifications
       try {
         const lang = "he" // Default to Hebrew for guests
-        const appBaseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
-        const redeemLink = `${appBaseUrl}/redeem/${voucher.code}`
-
+        
         if (voucher.isGift && voucher.recipientName && voucher.recipientPhone) {
-          // Send gift voucher to recipient
-          const giftMessage = voucher.greetingMessage 
-            ? `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\n"${voucher.greetingMessage}"\n\nקוד השובר למימוש: ${voucher.code}`
-            : `🎁 קיבלת שובר מתנה מ${guestInfo.name}!\n\nקוד השובר למימוש: ${voucher.code}`
-          
-          const recipientRecipients = []
-          if (voucher.recipientPhone) {
-            recipientRecipients.push({ type: "phone" as const, value: voucher.recipientPhone, language: lang as any })
-          }
-          
-          if (recipientRecipients.length > 0) {
-            await unifiedNotificationService.sendPurchaseSuccess(recipientRecipients, giftMessage)
-          }
-
-          // Send confirmation to purchaser about gift being sent
-          const purchaserMessage = `✅ השובר נשלח בהצלחה ל${voucher.recipientName}!\n\nקוד השובר: ${voucher.code}\nסכום: ₪${voucher.amount}`
-          
-          const purchaserRecipients = []
-          if (guestInfo.email) {
-            purchaserRecipients.push({ type: "email" as const, value: guestInfo.email, name: guestInfo.name, language: lang as any })
-          }
-          if (guestInfo.phone) {
-            purchaserRecipients.push({ type: "phone" as const, value: guestInfo.phone, language: lang as any })
-          }
-          
-          if (purchaserRecipients.length > 0) {
-            await unifiedNotificationService.sendPurchaseSuccess(purchaserRecipients, purchaserMessage)
-          }
-        } else if (voucher.isGift && voucher.recipientName && voucher.recipientPhone) {
           // Send gift voucher to recipient with voucher code only
           const voucherTypeText = voucher.voucherType === "monetary" ? 
             `שובר כספי בסכום ₪${voucher.amount}` :

@@ -364,7 +364,7 @@ export default function UniversalBookingWizard({
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
   const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
   const [abandonedBooking, setAbandonedBooking] = useState<any>(null)
-  const [pendingBookingId, setPendingBookingId] = useState<string | null>(null) // Track pending booking ID
+  // ✅ No longer needed - we create final booking directly
  // Track price calculation requests
 
   const { toast } = useToast()
@@ -822,19 +822,9 @@ export default function UniversalBookingWizard({
       calculatedPrice?.finalAmount === 0 &&
       calculatedPrice?.isFullyCoveredByVoucherOrSubscription
     ) {
-      // Skip payment step, but ensure we have a pending booking first
-      if (!pendingBookingId) {
-        console.log("🔄 Zero payment detected but no pending booking - creating one first")
-        const bookingId = await createPendingBooking()
-        if (!bookingId) {
-          console.error("❌ Failed to create pending booking for zero payment")
-          return
-        }
-        console.log("✅ Created pending booking for zero payment:", bookingId)
-      }
-      
-      // Now proceed with final submit
-      handleFinalSubmit()
+      // ✅ Skip payment step and create final booking directly
+      console.log("💰 Zero payment detected - creating final booking directly")
+      await handleFinalSubmit()
       return
     }
     setCurrentStep((prev) => Math.min(prev + 1, CONFIRMATION_STEP_NUMBER))
@@ -842,7 +832,7 @@ export default function UniversalBookingWizard({
 
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1))
 
-  // Create booking before payment
+  // Legacy function - no longer used with new simplified approach
   const createPendingBooking = useCallback(async () => {
     
     if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.phone) {
@@ -999,7 +989,7 @@ export default function UniversalBookingWizard({
         : await createGuestBooking(payload)
       
       if (result.success && result.booking) {
-        setPendingBookingId(String(result.booking._id))
+        // ✅ No longer tracking pending booking ID
         return String(result.booking._id)
       } else {
         toast({
@@ -1024,111 +1014,53 @@ export default function UniversalBookingWizard({
 
   // Handle final confirmation after successful payment
   const handleFinalSubmit = async () => {
-    console.log("🎯 handleFinalSubmit called", { 
-      pendingBookingId, 
+    console.log("🎯 handleFinalSubmit called - creating final booking", { 
       guestUserId,
       calculatedPrice: calculatedPrice?.finalAmount,
       currentStep 
     })
-    
-    // Create pending booking if it doesn't exist
-    let finalBookingId = pendingBookingId
-    if (!finalBookingId) {
-      console.log("🔄 No pending booking ID found - creating one now")
-      finalBookingId = await createPendingBooking()
+
+    setIsLoading(true)
+    console.log("⏳ Starting final booking creation...")
+
+    try {
+      // ✅ Create the booking directly with confirmed status
+      const finalBookingId = await createFinalBooking()
       if (!finalBookingId) {
-        console.error("❌ Failed to create pending booking in handleFinalSubmit")
+        console.error("❌ Failed to create final booking")
         toast({
           variant: "destructive",
-          title: "שגיאה",
-          description: "לא ניתן ליצור הזמנה. אנא נסה שוב.",
+          title: "שגיאה ביצירת ההזמנה",
+          description: "לא ניתן ליצור את ההזמנה. אנא נסה שוב.",
         })
         return
       }
-      console.log("✅ Created pending booking in handleFinalSubmit:", finalBookingId)
-    }
-
-    setIsLoading(true)
-    console.log("⏳ Starting payment confirmation process...")
-
-    try {
-      // ✅ תיקון: מזהה עסקה אמיתי עם בדיקת סביבה
-      const isProduction = process.env.NODE_ENV === 'production'
-      const transactionId = isProduction 
-        ? `LIVE-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` 
-        : `DEV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       
-      console.log("💳 Calling payment status API with:", { 
-        pendingBookingId: finalBookingId, 
-        transactionId,
-        paymentStatus: "success"
-      })
-        
-      const response = await fetch(`/api/bookings/${finalBookingId}/payment-status`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          paymentStatus: "success",
-          transactionId
-        })
-      })
+      console.log("✅ Final booking created successfully:", finalBookingId)
       
-      const result = await response.json()
-      
-      console.log("📋 Payment update result:", result)
-      
-      if (result.success && result.booking) {
-        console.log("✅ Payment confirmed successfully!", {
-          bookingId: result.booking._id || result.booking.id,
-          status: result.booking.status,
-          paymentStatus: result.booking.paymentDetails?.paymentStatus
-        })
-        
-        // Clear saved form state on successful booking
-        if (guestUserId) {
-          localStorage.removeItem('guestUserId')
-          console.log("🗑️ Cleared localStorage")
-        }
-        
-        // Immediately redirect to confirmation page without showing step 7
-        const bookingId = result.booking._id || result.booking.id
-        console.log("🔄 Attempting redirect with bookingId:", bookingId)
-        
-        if (bookingId) {
-          const confirmationUrl = `/bookings/confirmation?bookingId=${bookingId}&status=success`
-          console.log("🎯 Redirecting to:", confirmationUrl)
-          
-          // Add a small delay to ensure state is updated
-          setTimeout(() => {
-            router.push(confirmationUrl)
-          }, 100)
-        } else {
-          console.warn("⚠️ No booking ID found, showing confirmation step")
-          // Fallback to showing confirmation step if no booking ID
-          setBookingResult(result.booking)
-          setCurrentStep(CONFIRMATION_STEP_NUMBER)
-        }
-        
-        toast({
-          title: t("bookings.success.bookingCreated"),
-          description: t("bookings.success.bookingCreatedDescription"),
-        })
-      } else {
-        console.error("❌ Payment update failed:", {
-          success: result.success,
-          error: result.error,
-          bookingData: result.booking ? "present" : "missing"
-        })
-        toast({
-          variant: "destructive",
-          title: "שגיאה בעדכון ההזמנה",
-          description: result.error || "לא ניתן לעדכן את סטטוס ההזמנה",
-        })
+      // Clear saved form state on successful booking
+      if (guestUserId) {
+        localStorage.removeItem('guestUserId')
+        console.log("🗑️ Cleared localStorage")
       }
+      
+      // Immediately redirect to confirmation page
+      console.log("🔄 Redirecting to confirmation page")
+      const confirmationUrl = `/bookings/confirmation?bookingId=${finalBookingId}&status=success`
+      console.log("🎯 Redirecting to:", confirmationUrl)
+      
+      // Add a small delay to ensure state is updated
+      setTimeout(() => {
+        router.push(confirmationUrl)
+      }, 100)
+      
+      toast({
+        title: t("bookings.success.bookingCreated"),
+        description: t("bookings.success.bookingCreatedDescription"),
+      })
+      
     } catch (error) {
-      console.error("💥 Booking finalization error:", error)
+      console.error("💥 Booking creation error:", error)
       toast({
         variant: "destructive",
         title: t("bookings.errors.unexpectedError"),
@@ -1139,6 +1071,191 @@ export default function UniversalBookingWizard({
       setIsLoading(false)
     }
   }
+
+  // Create final booking with confirmed status
+  const createFinalBooking = useCallback(async () => {
+    
+    if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.phone) {
+      toast({
+        variant: "destructive",
+        title: t("bookings.errors.missingGuestInfo"),
+        description: t("bookings.errors.completeGuestInfo"),
+      })
+      return null
+    }
+
+    // Validate email if booking for someone else and recipient email is provided
+    if (guestInfo.isBookingForSomeoneElse && guestInfo.recipientEmail && !guestInfo.recipientEmail.includes('@')) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה בכתובת אימייל",
+        description: "אנא הזן כתובת אימייל תקינה עבור הנמען",
+      })
+      return null
+    }
+
+    if (
+      !bookingOptions.selectedTreatmentId ||
+      !bookingOptions.bookingDate ||
+      !bookingOptions.bookingTime
+    ) {
+      toast({
+        variant: "destructive",
+        title: t("bookings.errors.incompleteBookingDetails"),
+        description: t("bookings.errors.completeAllFields"),
+      })
+      return null
+    }
+
+    try {
+      const bookingDateTime = new Date(bookingOptions.bookingDate)
+      const [hours, minutes] = bookingOptions.bookingTime!.split(":").map(Number)
+      bookingDateTime.setHours(hours, minutes, 0, 0)
+
+      const selectedTreatment = initialData.activeTreatments.find(
+        (t) => t._id.toString() === bookingOptions.selectedTreatmentId
+      )
+
+      // ✅ Add validation for voucher/subscription redemption
+      if (bookingOptions.source === "gift_voucher_redemption" && bookingOptions.selectedGiftVoucherId) {
+        // Validate treatment matches for treatment vouchers
+        if (voucher?.voucherType === "treatment" && voucher.treatmentId) {
+          const voucherTreatmentId = typeof voucher.treatmentId === 'object' 
+            ? (voucher.treatmentId as any)._id?.toString() || (voucher.treatmentId as any).toString()
+            : voucher.treatmentId.toString()
+            
+          if (voucherTreatmentId !== bookingOptions.selectedTreatmentId) {
+            toast({
+              variant: "destructive",
+              title: "שגיאה בבחירת טיפול",
+              description: "הטיפול שנבחר לא תואם לשובר הטיפול",
+            })
+            return null
+          }
+        }
+      }
+
+      if (bookingOptions.source === "subscription_redemption" && bookingOptions.selectedUserSubscriptionId) {
+        // Validate treatment matches for subscriptions
+        if (userSubscription?.treatmentId) {
+          const subTreatmentId = typeof userSubscription.treatmentId === 'object' 
+            ? (userSubscription.treatmentId as any)._id?.toString() || (userSubscription.treatmentId as any).toString()
+            : userSubscription.treatmentId.toString()
+            
+          if (subTreatmentId !== bookingOptions.selectedTreatmentId) {
+            toast({
+              variant: "destructive",
+              title: "שגיאה בבחירת טיפול",
+              description: "הטיפול שנבחר לא תואם למנוי",
+            })
+            return null
+          }
+        }
+      }
+
+      // ✅ Generate transaction ID for successful payment
+      const isProduction = process.env.NODE_ENV === 'production'
+      const transactionId = isProduction 
+        ? `LIVE-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` 
+        : `DEV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+      const payload = {
+        userId: guestUserId || "guest",
+        treatmentId: bookingOptions.selectedTreatmentId,
+        selectedDurationId: bookingOptions.selectedDurationId,
+        bookingDateTime,
+        therapistGenderPreference: bookingOptions.therapistGenderPreference || "any",
+        source: bookingOptions.source || "new_purchase",
+        redeemedUserSubscriptionId:
+          bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
+        redeemedGiftVoucherId:
+          bookingOptions.source === "gift_voucher_redemption" ? bookingOptions.selectedGiftVoucherId : undefined,
+        customAddressDetails: {
+          fullAddress: `${guestAddress.street} ${guestAddress.houseNumber}, ${guestAddress.city}`,
+          city: guestAddress.city || "",
+          street: guestAddress.street || "",
+          streetNumber: guestAddress.houseNumber || "",
+          apartment: guestAddress.apartmentNumber || undefined,
+          entrance: guestAddress.entrance,
+          floor: guestAddress.floor,
+          notes: guestAddress.notes,
+        },
+        priceDetails: calculatedPrice!,
+        paymentDetails: {
+          paymentStatus: calculatedPrice!.finalAmount === 0 ? "not_required" : "paid", // ✅ Set as paid immediately
+          transactionId: calculatedPrice!.finalAmount === 0 ? undefined : transactionId, // ✅ Add transaction ID
+        },
+        guestInfo: {
+          name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+          email: guestInfo.email || undefined,
+          phone: guestInfo.phone,
+        },
+        isBookingForSomeoneElse: Boolean(guestInfo.isBookingForSomeoneElse),
+        recipientName: guestInfo.isBookingForSomeoneElse 
+          ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
+          : `${guestInfo.firstName} ${guestInfo.lastName}`,
+        recipientEmail: guestInfo.isBookingForSomeoneElse 
+          ? guestInfo.recipientEmail
+          : guestInfo.email,
+        recipientPhone: guestInfo.isBookingForSomeoneElse 
+          ? guestInfo.recipientPhone!
+          : guestInfo.phone,
+        recipientBirthDate: guestInfo.isBookingForSomeoneElse 
+          ? guestInfo.recipientBirthDate
+          : guestInfo.birthDate,
+        recipientGender: guestInfo.isBookingForSomeoneElse 
+          ? guestInfo.recipientGender
+          : guestInfo.gender,
+        // Add notification preferences
+        notificationMethods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
+                            guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
+        recipientNotificationMethods: guestInfo.isBookingForSomeoneElse ? 
+          (guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
+           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"]) : undefined,
+        notificationLanguage: guestInfo.bookerNotificationLanguage || "he",
+        // Add required fields for schema compatibility
+        consents: {
+          customerAlerts: guestInfo.bookerNotificationMethod === "sms" ? "sms" : "email",
+          patientAlerts: guestInfo.isBookingForSomeoneElse 
+            ? (guestInfo.recipientNotificationMethod === "sms" ? "sms" : "email")
+            : (guestInfo.bookerNotificationMethod === "sms" ? "sms" : "email"),
+          marketingOptIn: true,
+          termsAccepted: true
+        },
+      } as CreateBookingPayloadType & { guestInfo: { name: string; email?: string; phone: string } }
+
+      // Choose the correct function based on user type
+      const result = currentUser 
+        ? await createBooking({
+            ...payload,
+            userId: currentUser.id, // Use actual user ID for registered users
+            // Remove guestInfo for registered users as it's not needed
+            guestInfo: undefined
+          })
+        : await createGuestBooking(payload)
+      
+      if (result.success && result.booking) {
+        return String(result.booking._id)
+      } else {
+        toast({
+          variant: "destructive",
+          title: t(result.error || "bookings.errors.bookingFailedTitle") || result.error || "Booking failed",
+          description: result.issues
+            ? result.issues.map((issue) => issue.message).join(", ")
+            : t(result.error || "bookings.errors.bookingFailedTitle"),
+        })
+        return null
+      }
+    } catch (error) {
+      console.error("💥 Final booking creation error:", error)
+      toast({
+        variant: "destructive",
+        title: t("bookings.errors.unexpectedError"),
+        description: t("bookings.errors.tryAgain"),
+      })
+      return null
+    }
+  }, [guestInfo, guestAddress, bookingOptions, calculatedPrice, guestUserId, toast, t, initialData.activeTreatments, currentUser, voucher, userSubscription])
 
   const renderStep = () => {
     switch (currentStep) {
@@ -1218,8 +1335,8 @@ export default function UniversalBookingWizard({
             onConfirm={handleFinalSubmit}
             onPrev={prevStep}
             isLoading={isLoading}
-            createPendingBooking={createPendingBooking}
-            pendingBookingId={pendingBookingId}
+            createPendingBooking={undefined} // ✅ No longer needed - we create final booking directly
+            pendingBookingId={null} // ✅ No longer needed
             isRedeeming={Boolean(voucher || userSubscription)}
           />
         )

@@ -31,11 +31,18 @@ export async function POST(
       transactionId
     })
 
-    const result = await updateBookingStatusAfterPayment(
+    // Add timeout wrapper for the database operation
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Database operation timeout')), 25000)
+    )
+
+    const updatePromise = updateBookingStatusAfterPayment(
       bookingId,
       paymentStatus,
       transactionId
     )
+
+    const result = await Promise.race([updatePromise, timeoutPromise]) as any
 
     if (result.success) {
       logger.info("Payment status updated successfully", {
@@ -64,6 +71,18 @@ export async function POST(
       error: error instanceof Error ? error.message : String(error),
       bookingId: params.bookingId
     })
+    
+    // Handle specific timeout errors
+    if (error instanceof Error && (
+      error.message.includes('timeout') || 
+      error.message.includes('buffering') ||
+      error.message.includes('Database operation timeout')
+    )) {
+      return NextResponse.json(
+        { success: false, error: "Database connection timeout. Please try again." },
+        { status: 503 } // Service Temporarily Unavailable
+      )
+    }
     
     return NextResponse.json(
       { success: false, error: "Internal server error" },

@@ -46,10 +46,35 @@ async function dbConnect() {
   }
 
   if (!cached.promise) {
-    const mongooseOptions = { compressors: ["zlib" as const] } // Specify zlib compressor with proper typing
+    const mongooseOptions = { 
+      compressors: ["zlib" as const], // Specify zlib compressor with proper typing
+      serverSelectionTimeoutMS: 30000, // 30 seconds timeout for initial connection
+      socketTimeoutMS: 45000, // 45 seconds socket timeout
+      connectTimeoutMS: 30000, // 30 seconds connection timeout
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      minPoolSize: 5, // Maintain a minimum of 5 socket connections
+      maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+      bufferMaxEntries: 0, // Disable mongoose buffering
+      bufferCommands: false, // Disable mongoose buffering
+    }
     cached.promise = mongoose
       .connect(MONGODB_URI, mongooseOptions) // Pass options here
       .then(async (mongoose) => {
+        console.log("✅ MongoDB connected successfully")
+        
+        // Set up connection event listeners
+        mongoose.connection.on('error', (error) => {
+          console.error('❌ MongoDB connection error:', error)
+        })
+        
+        mongoose.connection.on('disconnected', () => {
+          console.warn('⚠️ MongoDB disconnected')
+        })
+        
+        mongoose.connection.on('reconnected', () => {
+          console.log('🔄 MongoDB reconnected')
+        })
+        
         // Load all models after connection
         await loadModels()
         return mongoose

@@ -6,10 +6,9 @@ export type PaymentStatus = "pending" | "success" | "failed";
 export interface UsePaymentModalProps {
   onSuccess: () => void | Promise<void>;
   onFailure?: (reason?: string) => void | Promise<void>;
-  pendingBookingId?: string | null;
 }
 
-export function usePaymentModal({ onSuccess, onFailure, pendingBookingId }: UsePaymentModalProps) {
+export function usePaymentModal({ onSuccess, onFailure }: UsePaymentModalProps) {
   const router = useRouter();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("pending");
@@ -61,9 +60,7 @@ export function usePaymentModal({ onSuccess, onFailure, pendingBookingId }: UseP
       // Default behavior - redirect to failure page
       setTimeout(() => {
         setShowPaymentModal(false);
-        const failureUrl = pendingBookingId 
-          ? `/bookings/confirmation?bookingId=${pendingBookingId}&status=failed${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`
-          : `/bookings/confirmation?status=failed${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`;
+        const failureUrl = `/bookings/confirmation?status=failed${reason ? `&reason=${encodeURIComponent(reason)}` : ''}`;
         router.push(failureUrl);
       }, 1000);
     }

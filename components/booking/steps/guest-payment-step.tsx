@@ -109,14 +109,14 @@ export function GuestPaymentStep({
     handleOpenChange,
   } = usePaymentModal({ 
     onSuccess: async () => {
-      console.log("🏦 GuestPaymentStep onSuccess triggered", { createPendingBooking: !!createPendingBooking, pendingBookingId })
+      console.log("🏦 GuestPaymentStep onSuccess triggered - payment simulation successful")
       
-      // Execute the actual booking confirmation - the main wizard will handle pending booking creation
+      // ✅ Simply call onConfirm which will create the final booking directly
       console.log("🎯 Calling onConfirm (handleFinalSubmit)")
       onConfirm();
     },
     onFailure: customFailureHandler,
-    pendingBookingId
+    pendingBookingId: null // ✅ Not needed anymore
   });
   const [marketingConsent, setMarketingConsent] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(true);

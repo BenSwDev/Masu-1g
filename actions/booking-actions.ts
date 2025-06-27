@@ -3101,7 +3101,16 @@ export async function updateBookingStatusAfterPayment(
   const mongooseDbSession = await mongoose.startSession()
   
   try {
-    await dbConnect()
+    logger.info("Starting updateBookingStatusAfterPayment", { bookingId, paymentStatus })
+    
+    // Add timeout to database connection
+    const dbConnectPromise = dbConnect()
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Database connection timeout')), 15000)
+    )
+    
+    await Promise.race([dbConnectPromise, timeoutPromise])
+    logger.info("Database connection established", { bookingId })
     
     await mongooseDbSession.withTransaction(async () => {
     bookingLogger.logPayment({

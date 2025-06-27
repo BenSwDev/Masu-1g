@@ -849,7 +849,9 @@
         "unexpectedError": "שגיאה בלתי צפויה",
         "tryAgain": "נסה שוב",
         "addressRequired": "כתובת נדרשת להזמנה",
-        "creationFailed": "יצירת ההזמנה נכשלה"
+        "creationFailed": "יצירת ההזמנה נכשלה",
+        "voucherTreatmentMismatch": "השובר אינו תואם לטיפול הנבחר",
+        "subscriptionTreatmentMismatch": "המנוי אינו תואם לטיפול הנבחר"
       },
       "monetaryVoucher": "שובר כספי",
       "steps": {

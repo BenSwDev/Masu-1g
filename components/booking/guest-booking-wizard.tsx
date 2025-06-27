@@ -342,7 +342,15 @@ export default function UniversalBookingWizard({
     selectedGiftVoucherId: voucher ? voucher._id.toString() : undefined,
     selectedUserSubscriptionId: userSubscription ? String(userSubscription._id) : undefined,
     selectedTreatmentId:
-      voucher?.treatmentId?.toString() || userSubscription?.treatmentId?.toString(),
+      voucher?.treatmentId
+        ? typeof voucher.treatmentId === 'string' 
+          ? voucher.treatmentId 
+          : (voucher.treatmentId as any)?._id?.toString() || (voucher.treatmentId as any)?.toString()
+        : userSubscription?.treatmentId
+        ? typeof userSubscription.treatmentId === 'string'
+          ? userSubscription.treatmentId.toString()
+          : (userSubscription.treatmentId as any)?._id?.toString() || (userSubscription.treatmentId as any)?.toString()
+        : undefined,
     selectedDurationId:
       voucher?.selectedDurationId?.toString() || userSubscription?.selectedDurationId?.toString(),
   }

@@ -446,8 +446,7 @@ export function GuestTreatmentSelectionStep({
                       `מנוי - נותרו: ${(bookingOptions.redemptionData.data as any)?.remainingQuantity} טיפולים`
                     )}
                     {bookingOptions.redemptionData.type === "treatment_voucher" && (
-                      `שובר טיפול - ${(bookingOptions.redemptionData.data as any)?.treatmentId?.name || 
-                        (bookingOptions.redemptionData.data as any)?.treatmentName || 
+                      `שובר טיפול - ${(bookingOptions.redemptionData.data as any)?.treatmentName || 
                         "טיפול לא זוהה"}`
                     )}
                     {bookingOptions.redemptionData.type === "monetary_voucher" && (

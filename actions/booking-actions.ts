@@ -2424,6 +2424,31 @@ export async function createGuestBooking(
           throw new Error("bookings.errors.voucherRedemptionFailed")
         }
         
+        // Critical validation: ensure voucher matches the selected treatment/duration
+        if (voucher.voucherType === "treatment") {
+          const treatmentMatches = voucher.treatmentId?.toString() === validatedPayload.treatmentId
+          let durationMatches = true
+          
+          if (treatment.pricingType === "duration_based") {
+            durationMatches = voucher.selectedDurationId
+              ? voucher.selectedDurationId.toString() === validatedPayload.selectedDurationId
+              : false
+          } else {
+            durationMatches = !voucher.selectedDurationId
+          }
+          
+          if (!treatmentMatches || !durationMatches) {
+            logger.warn("Treatment voucher does not match selected treatment/duration", {
+              voucherId: voucher._id,
+              voucherTreatmentId: voucher.treatmentId?.toString(),
+              selectedTreatmentId: validatedPayload.treatmentId,
+              voucherDurationId: voucher.selectedDurationId?.toString(),
+              selectedDurationId: validatedPayload.selectedDurationId
+            })
+            throw new Error("bookings.errors.voucherTreatmentMismatch")
+          }
+        }
+        
         if (
           voucher.voucherType === "treatment" &&
           validatedPayload.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher
@@ -2481,6 +2506,29 @@ export async function createGuestBooking(
         ).session(mongooseDbSession)
         if (!userSub || userSub.remainingQuantity < 1 || userSub.status !== "active") {
           throw new Error("bookings.errors.subscriptionRedemptionFailed")
+        }
+        
+        // Critical validation: ensure subscription matches the selected treatment/duration
+        const subTreatmentMatches = userSub.treatmentId?.toString() === validatedPayload.treatmentId
+        let subDurationMatches = true
+        
+        if (treatment.pricingType === "duration_based") {
+          subDurationMatches = userSub.selectedDurationId
+            ? userSub.selectedDurationId.toString() === validatedPayload.selectedDurationId
+            : false
+        } else {
+          subDurationMatches = !userSub.selectedDurationId
+        }
+        
+        if (!subTreatmentMatches || !subDurationMatches) {
+          logger.warn("Subscription does not match selected treatment/duration", {
+            subscriptionId: userSub._id,
+            subTreatmentId: userSub.treatmentId?.toString(),
+            selectedTreatmentId: validatedPayload.treatmentId,
+            subDurationId: userSub.selectedDurationId?.toString(),
+            selectedDurationId: validatedPayload.selectedDurationId
+          })
+          throw new Error("bookings.errors.subscriptionTreatmentMismatch")
         }
         userSub.remainingQuantity -= 1
         if (userSub.remainingQuantity === 0) userSub.status = "depleted"
@@ -3429,13 +3477,21 @@ export async function validateRedemptionCode(
         const isValid = isNotExpired && isValidStatus && isActiveOrSent && hasBalance
         
         if (isValid) {
+          // Ensure treatmentId is stored as string ID for consistency, but preserve treatment name
+          const voucherData = { ...voucher } as any
+          if (voucherData.treatmentId && typeof voucherData.treatmentId === 'object') {
+            const treatmentObj = voucherData.treatmentId as any
+            voucherData.treatmentName = treatmentObj.name // Preserve treatment name for display
+            voucherData.treatmentId = treatmentObj._id?.toString() || treatmentObj.toString()
+          }
+          
           return {
             success: true,
             redemption: {
               code: trimmedCode,
               type: voucher.voucherType === "monetary" ? "monetary_voucher" : "treatment_voucher",
               isValid: true,
-              data: voucher as any
+              data: voucherData as any
             }
           }
         } else {
@@ -3464,13 +3520,21 @@ export async function validateRedemptionCode(
           return { success: false, error: "המנוי לא שייך למשתמש זה" }
         }
         
+        // Ensure treatmentId is stored as string ID for consistency, but preserve treatment name
+        const subscriptionData = { ...userSubscription } as any
+        if (subscriptionData.treatmentId && typeof subscriptionData.treatmentId === 'object') {
+          const treatmentObj = subscriptionData.treatmentId as any
+          subscriptionData.treatmentName = treatmentObj.name // Preserve treatment name for display
+          subscriptionData.treatmentId = treatmentObj._id?.toString() || treatmentObj.toString()
+        }
+        
         return {
           success: true,
           redemption: {
             code: trimmedCode,
             type: "subscription",
             isValid: true,
-            data: userSubscription as any
+            data: subscriptionData as any
           }
         }
       }

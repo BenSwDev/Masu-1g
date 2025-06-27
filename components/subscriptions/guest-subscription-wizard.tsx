@@ -148,6 +148,10 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
     isBaseTreatmentCoveredBySubscription: false,
     isBaseTreatmentCoveredByTreatmentVoucher: false,
     isFullyCoveredByVoucherOrSubscription: false,
+    totalProfessionalPayment: 0,
+    totalOfficeCommission: 0,
+    baseProfessionalPayment: 0,
+    surchargesProfessionalPayment: 0,
   }
 
   useEffect(() => {
@@ -169,19 +173,6 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
 
   const handleGuestInfoSubmit = async (info: any) => {
     setGuestInfo(info)
-    if (!guestUserId) {
-      const result = await createGuestUser({
-        firstName: info.firstName,
-        lastName: info.lastName,
-        email: info.email,
-        phone: info.phone,
-        birthDate: info.birthDate,
-        gender: info.gender,
-      })
-      if (result.success && result.userId) {
-        setGuestUserId(result.userId)
-      }
-    }
     nextStep()
   }
 
@@ -247,6 +238,7 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
         const bookingOptions: SelectedBookingOptions = {
           selectedTreatmentId: (selectedTreatmentId ?? ""),
           selectedDurationId: (selectedDurationId ?? ""),
+          selectedDateTime: null,
           therapistGenderPreference: "any",
           isFlexibleTime: false,
           source: "new_purchase",
@@ -303,6 +295,7 @@ export default function GuestSubscriptionWizard({ subscriptions: propSubscriptio
             setGuestInfo={setGuestInfo} 
             onNext={handleGuestInfoSubmit} 
             onPrev={prevStep}
+            hideBookingForSomeoneElse={true}
           />
         )
       case 4:

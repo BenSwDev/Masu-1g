@@ -14,6 +14,7 @@ import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
@@ -21,22 +22,52 @@ import type { User as NextAuthUser } from "next-auth"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
 import { Separator } from "@/components/common/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
+import { useState, useEffect } from "react"
+import { Calendar, Clock, User, Link } from "lucide-react"
 
-interface PopulatedUserSubscription extends IUserSubscription {
-  userId?: Pick<NextAuthUser, "name" | "email"> & { _id: string } | null
-  subscriptionId: ISubscription
-  treatmentId: ITreatment
-  selectedDurationDetails?: ITreatmentDuration
-  paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> {
+  userId?: {
+    _id: string
+    name: string
+    email?: string
+  } | null
+  subscriptionId?: {
+    _id: string
+    name: string
+    description?: string
+    price: number
+    duration: number
+    treatments: string[]
+    isActive: boolean
+  }
+  treatmentId?: {
+    _id: string
+    name: string
+    price: number
+    durations: Array<{
+      _id: string
+      minutes: number
+      price: number
+    }>
+  }
+  paymentMethodId?: {
+    _id: string
+    cardName: string
+    cardNumber: string
+  } | null
+  selectedDurationDetails?: {
+    minutes: number
+    price: number
+  }
+  usedQuantity?: number
+  cancellationDate?: Date
+  paymentDate?: Date
+  transactionId?: string
   guestInfo?: {
     name: string
-    email: string
+    email?: string
     phone: string
   }
-  cancellationDate?: Date | string | null
-  paymentDate?: Date | string | null
-  transactionId?: string | null
-  usedQuantity?: number
 }
 
 interface UserSubscriptionDetailsModalProps {
@@ -51,6 +82,30 @@ export default function UserSubscriptionDetailsModal({
   userSubscription,
 }: UserSubscriptionDetailsModalProps) {
   const { t } = useTranslation()
+  const [relatedBookings, setRelatedBookings] = useState<any[]>([])
+  const [loadingBookings, setLoadingBookings] = useState(false)
+
+  // Fetch related bookings when modal opens
+  useEffect(() => {
+    const fetchRelatedBookings = async () => {
+      if (!isOpen || !userSubscription?._id) return
+      
+      setLoadingBookings(true)
+      try {
+        const response = await fetch(`/api/admin/bookings?subscription_id=${userSubscription._id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setRelatedBookings(data.bookings || [])
+        }
+      } catch (error) {
+        console.error('Error fetching related bookings:', error)
+      } finally {
+        setLoadingBookings(false)
+      }
+    }
+
+    fetchRelatedBookings()
+  }, [isOpen, userSubscription?._id])
 
   if (!userSubscription) return null
 
@@ -114,9 +169,7 @@ export default function UserSubscriptionDetailsModal({
         <DialogHeader>
           <DialogTitle>{t("userSubscriptions.detailsModal.title")}</DialogTitle>
           <DialogDescription>
-            {t("userSubscriptions.detailsModal.description", {
-              userName: userSubscription.userId?.name || userSubscription.guestInfo?.name || t("common.unknownUser"),
-            })}
+            {t("userSubscriptions.detailsModal.description")}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] pr-4">
@@ -157,7 +210,7 @@ export default function UserSubscriptionDetailsModal({
                     />
                     <DetailItem
                       label={t("common.phone")}
-                      value={userSubscription.guestInfo.phone}
+                      value={formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}
                     />
                   </>
                 ) : (
@@ -175,7 +228,7 @@ export default function UserSubscriptionDetailsModal({
               </h3>
               <dl className="divide-y divide-gray-200 dark:divide-gray-700">
                 <DetailItem label={t("common.name")} value={userSubscription.subscriptionId?.name} />
-                <DetailItem label={t("common.id")} value={userSubscription.subscriptionId?._id.toString()} />
+                <DetailItem label={t("common.id")} value={userSubscription.subscriptionId?._id ? String(userSubscription.subscriptionId._id) : undefined} />
                 <DetailItem
                   label={t("common.status")}
                   value={<Badge className={statusInfo.className}>{statusInfo.label}</Badge>}
@@ -223,7 +276,7 @@ export default function UserSubscriptionDetailsModal({
                   label={t("userSubscriptions.remainingQuantity")}
                   value={userSubscription.remainingQuantity}
                 />
-                <DetailItem label={t("userSubscriptions.usedQuantity")} value={userSubscription.usedQuantity} />
+                <DetailItem label={t("userSubscriptions.usedQuantity")} value={userSubscription.usedQuantity || 0} />
               </dl>
             </section>
             <Separator />
@@ -249,6 +302,68 @@ export default function UserSubscriptionDetailsModal({
                   value={userSubscription.transactionId || t("common.notAvailable")}
                 />
               </dl>
+            </section>
+            <Separator />
+            
+            {/* Related Bookings Section */}
+            <section>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
+                <Link className="h-5 w-5" />
+                {t("userSubscriptions.detailsModal.relatedBookings")} ({relatedBookings.length})
+              </h3>
+              {loadingBookings ? (
+                <div className="text-center py-4 text-gray-500">
+                  {t("common.loading")}
+                </div>
+              ) : relatedBookings.length > 0 ? (
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {relatedBookings.map((booking: any, index: number) => (
+                    <div key={booking._id || index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-sm">
+                          {booking.bookingNumber}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          booking.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          booking.status.includes('cancelled') ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {t(`bookings.status.${booking.status}`)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(booking.bookingDateTime).toLocaleDateString('he-IL')}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(booking.bookingDateTime).toLocaleTimeString('he-IL', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                        {booking.treatmentId?.name && (
+                          <div className="text-xs font-medium">
+                            {booking.treatmentId.name}
+                          </div>
+                        )}
+                        {booking.professionalId?.name && (
+                          <div className="flex items-center gap-1">
+                            <User className="h-3 w-3" />
+                            {booking.professionalId.name}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  {t("userSubscriptions.detailsModal.noRelatedBookings")}
+                </div>
+              )}
             </section>
           </div>
         </ScrollArea>

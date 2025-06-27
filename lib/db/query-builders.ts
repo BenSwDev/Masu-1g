@@ -8,9 +8,15 @@ import VerificationToken from "./models/verification-token"
 
 // User queries
 export const UserQueries = {
-  // Find user by email for login (only required fields)
-  async findForLogin(email: string) {
-    return User.findOne({ email: email.toLowerCase() }).select("+password email name image roles").lean().exec()
+  // Find user by phone for login (only required fields)
+  async findForLogin(phone: string) {
+    // Use centralized phone normalization
+    const { createPhoneVariations } = await import("@/lib/utils/phone-utils")
+    const variations = createPhoneVariations(phone)
+    
+    return User.findOne({
+      phone: { $in: variations }
+    }).select("+password email name image roles phone").lean().exec()
   },
 
   // Find user by ID (no password)
@@ -39,48 +45,13 @@ export const UserQueries = {
   async phoneExists(phone: string): Promise<boolean> {
     if (!phone) return false
 
-    // Clean and normalize the phone number
-    let cleaned = phone.replace(/[^\d+]/g, "")
+    // Use the centralized phone utility to create all variations
+    const { createPhoneVariations } = await import("@/lib/utils/phone-utils")
+    const variations = createPhoneVariations(phone)
 
-    // If there's no plus sign, assume it's a local number
-    if (!cleaned.startsWith("+")) {
-      // Handle Israeli numbers specifically
-      if (cleaned.startsWith("0")) {
-        // Israeli number starting with 0 (e.g., 0525131777)
-        cleaned = "+972" + cleaned.substring(1)
-      } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-        // Israeli mobile number without 0 (e.g., 525131777)
-        cleaned = "+972" + cleaned
-      } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-        // Number with 972 but no plus (e.g., 972525131777)
-        cleaned = "+" + cleaned
-      } else {
-        // Default: assume Israeli number and add +972
-        cleaned = "+972" + cleaned
-      }
-    } else {
-      // Handle +972 numbers that might have 0 after country code
-      if (cleaned.startsWith("+9720")) {
-        // Remove the 0 after +972 (e.g., +9720525131777 -> +972525131777)
-        cleaned = "+972" + cleaned.substring(5)
-      }
-    }
-
-    // Create variations of the phone number for searching
-    const countryCode = cleaned.substring(0, cleaned.indexOf("+") + 4) // +972
-    const nationalNumber = cleaned.substring(cleaned.indexOf("+") + 4).replace(/\D/g, "")
-    
-    // Create variations with and without leading zero
-    const withZero = `${countryCode}0${nationalNumber}`
-    const withoutZero = `${countryCode}${nationalNumber}`
-
-    // Search for both variations
+    // Search for any of the variations
     const user = await User.findOne({
-      $or: [
-        { phone: withZero },
-        { phone: withoutZero },
-        { phone: cleaned } // The original cleaned number
-      ]
+      phone: { $in: variations }
     }).lean()
 
     return !!user

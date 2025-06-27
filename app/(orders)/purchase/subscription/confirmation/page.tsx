@@ -42,9 +42,6 @@ async function getSubscriptionPurchaseData(subscriptionId: string) {
       )
     }
 
-    const appBaseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    const redeemLink = `${appBaseUrl}/redeem-subscription/${subscriptionId}`
-
     return {
       subscription: {
         name: subscription.name,
@@ -67,7 +64,6 @@ async function getSubscriptionPurchaseData(subscriptionId: string) {
       purchaseDate: userSubscription.purchaseDate,
       expiryDate: userSubscription.expiryDate,
       subscriptionCode: userSubscription.code, // Add subscription code
-      redeemLink,
     }
   } catch (error) {
     console.error("Error fetching subscription purchase data:", error)

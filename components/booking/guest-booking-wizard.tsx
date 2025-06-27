@@ -39,7 +39,7 @@ import type { IBooking } from "@/lib/db/models/booking"
 interface GuestInfo {
   firstName: string
   lastName: string
-  email: string
+  email?: string
   phone: string
   birthDate?: Date
   gender?: "male" | "female" | "other"
@@ -111,6 +111,9 @@ export default function UniversalBookingWizard({
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [isPriceCalculating, setIsPriceCalculating] = useState(false)
+  
+  // Track redemption data for locked fields logic
+  const [redemptionData, setRedemptionData] = useState<any>(null)
 
   const prefilledGuestInfo = useMemo<Partial<GuestInfo>>(() => {
     // Priority 1: Logged in user data
@@ -171,13 +174,62 @@ export default function UniversalBookingWizard({
       }
     }
     
+    // Priority 5: Redemption data from code input
+    if (redemptionData) {
+      const redemption = redemptionData
+      
+      // For gift vouchers with recipient info
+      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.isGift && redemption.data?.recipientName) {
+        const [first, ...rest] = redemption.data.recipientName.split(" ")
+        return {
+          firstName: first,
+          lastName: rest.join(" "),
+          phone: redemption.data.recipientPhone,
+          email: redemption.data.recipientEmail || "",
+          isBookingForSomeoneElse: false,
+          bookerNotificationMethod: "email",
+          bookerNotificationLanguage: "he"
+        }
+      }
+      
+      // For non-gift vouchers purchased by guests
+      if ((redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") && redemption.data?.guestInfo && !redemption.data?.isGift) {
+        const guestInfo = redemption.data.guestInfo
+        const [first, ...rest] = guestInfo.name.split(" ")
+        return {
+          firstName: first,
+          lastName: rest.join(" "),
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+          isBookingForSomeoneElse: false,
+          bookerNotificationMethod: "email",
+          bookerNotificationLanguage: "he"
+        }
+      }
+      
+      // For subscriptions with guest info
+      if (redemption.type === "subscription" && redemption.data?.guestInfo) {
+        const guestInfo = redemption.data.guestInfo
+        const [first, ...rest] = guestInfo.name.split(" ")
+        return {
+          firstName: first,
+          lastName: rest.join(" "),
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+          isBookingForSomeoneElse: false,
+          bookerNotificationMethod: "email",
+          bookerNotificationLanguage: "he"
+        }
+      }
+    }
+    
     // Default for guests
     return {
       isBookingForSomeoneElse: false,
       bookerNotificationMethod: "email",
       bookerNotificationLanguage: "he"
     }
-  }, [voucher, userSubscription, currentUser])
+  }, [voucher, userSubscription, currentUser, redemptionData])
 
   const lockedFields = useMemo(() => {
     // If user is logged in, lock their basic info
@@ -185,6 +237,39 @@ export default function UniversalBookingWizard({
       return ["firstName", "lastName", "email", "phone"] as const
     }
     
+    // Check redemption data from code input first
+    if (redemptionData) {
+      const redemption = redemptionData
+      
+      // For treatment vouchers, lock fields based on voucher data
+      if (redemption.type === "treatment_voucher" || redemption.type === "monetary_voucher") {
+        const voucherData = redemption.data as any
+        
+        // If it's a gift voucher, lock recipient info
+        if (voucherData?.isGift && voucherData?.recipientName) {
+          const fields = ["firstName", "lastName", "phone"] as const
+          if (voucherData?.recipientEmail) {
+            return [...fields, "email"] as const
+          }
+          return fields
+        }
+        
+        // If it's a non-gift voucher purchased by a guest, lock purchaser info
+        if (voucherData?.guestInfo && !voucherData?.isGift) {
+          return ["firstName", "lastName", "phone", "email"] as const
+        }
+      }
+      
+      // For subscriptions, lock fields based on subscription data
+      if (redemption.type === "subscription") {
+        const subscriptionData = redemption.data as any
+        if (subscriptionData?.guestInfo) {
+          return ["firstName", "lastName", "email", "phone"] as const
+        }
+      }
+    }
+    
+    // Fallback to props-based logic (legacy flow)
     if (voucher?.isGift && voucher.recipientName) {
       // For gift vouchers - lock name and phone, but email might be empty so allow editing
       const fields = ["firstName", "lastName", "phone"] as const
@@ -201,14 +286,21 @@ export default function UniversalBookingWizard({
       return ["firstName", "lastName", "email", "phone"] as const
     }
     return [] as const
-  }, [voucher, userSubscription, currentUser])
+  }, [voucher, userSubscription, currentUser, redemptionData])
 
   // Hide "booking for someone else" option when redeeming voucher/subscription
   const hideBookingForSomeoneElse = useMemo(() => {
-    return Boolean(voucher || userSubscription)
-  }, [voucher, userSubscription])
+    return Boolean(voucher || userSubscription || redemptionData)
+  }, [voucher, userSubscription, redemptionData])
 
   const [guestInfo, setGuestInfoState] = useState<Partial<GuestInfo>>(prefilledGuestInfo)
+  
+  // Update guest info when redemption data changes
+  useEffect(() => {
+    if (redemptionData && Object.keys(prefilledGuestInfo).length > 0) {
+      setGuestInfoState(prefilledGuestInfo)
+    }
+  }, [redemptionData, prefilledGuestInfo])
   // Pre-fill address for logged-in users
   const prefilledAddress = useMemo<Partial<GuestAddress>>(() => {
     if (currentUser && initialData.userAddresses && initialData.userAddresses.length > 0) {
@@ -294,7 +386,7 @@ export default function UniversalBookingWizard({
         // Create guest user after step 3 (Personal Info step) for guests only 
         if (currentStep === 3 && !currentUser && !guestUserId) {
           
-          if (updatedState.firstName && updatedState.lastName && updatedState.email && updatedState.phone) {
+          if (updatedState.firstName && updatedState.lastName && updatedState.phone) {
             const guestUserData = {
               firstName: updatedState.firstName,
               lastName: updatedState.lastName,
@@ -457,12 +549,13 @@ export default function UniversalBookingWizard({
     attemptAutoCreate()
   }, [guestInfo.firstName, guestInfo.lastName, guestInfo.email, guestInfo.phone, guestUserId])
 
-  // Save form state whenever it changes (after step 1)
+  // Save form state whenever it changes (after step 1, but NOT during payment or confirmation)
   useEffect(() => {
     // Determine which user ID to use
     const userId = currentUser?.id || guestUserId
     
-    if (userId && currentStep > 1) {
+    // Don't save during payment step (6) or confirmation step (7) to avoid interference
+    if (userId && currentStep > 1 && currentStep < 6) {
       const saveFormState = async () => {
         try {
           const result = await saveAbandonedBooking(userId, {
@@ -736,7 +829,7 @@ export default function UniversalBookingWizard({
   // Create booking before payment
   const createPendingBooking = useCallback(async () => {
     
-    if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.email || !guestInfo.phone) {
+    if (!guestInfo.firstName || !guestInfo.lastName || !guestInfo.phone) {
       toast({
         variant: "destructive",
         title: t("bookings.errors.missingGuestInfo"),
@@ -802,8 +895,8 @@ export default function UniversalBookingWizard({
           ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
           : `${guestInfo.firstName} ${guestInfo.lastName}`,
         recipientEmail: guestInfo.isBookingForSomeoneElse 
-          ? guestInfo.recipientEmail!
-          : guestInfo.email!,
+          ? guestInfo.recipientEmail
+          : guestInfo.email,
         recipientPhone: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientPhone!
           : guestInfo.phone!,
@@ -830,7 +923,7 @@ export default function UniversalBookingWizard({
           marketingOptIn: true,
           termsAccepted: true
         },
-      } as CreateBookingPayloadType & { guestInfo: { name: string; email: string; phone: string } }
+      } as CreateBookingPayloadType & { guestInfo: { name: string; email?: string; phone: string } }
 
       // Choose the correct function based on user type
       const result = currentUser 
@@ -866,12 +959,12 @@ export default function UniversalBookingWizard({
     }
   }, [guestInfo, guestAddress, bookingOptions, calculatedPrice, guestUserId, toast, t, initialData.activeTreatments])
 
-  // createPendingBooking function
-
   // Handle final confirmation after successful payment
   const handleFinalSubmit = async () => {
+    console.log("🎯 handleFinalSubmit called", { pendingBookingId })
     
     if (!pendingBookingId) {
+      console.error("❌ No pending booking ID found")
       toast({
         variant: "destructive",
         title: "שגיאה",
@@ -881,6 +974,7 @@ export default function UniversalBookingWizard({
     }
 
     setIsLoading(true)
+    console.log("⏳ Starting payment confirmation process...")
 
     try {
       // ✅ תיקון: מזהה עסקה אמיתי עם בדיקת סביבה
@@ -888,6 +982,11 @@ export default function UniversalBookingWizard({
       const transactionId = isProduction 
         ? `LIVE-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` 
         : `DEV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      
+      console.log("💳 Calling updateBookingStatusAfterPayment with:", { 
+        pendingBookingId, 
+        transactionId 
+      })
         
       const result = await updateBookingStatusAfterPayment(
         pendingBookingId,
@@ -895,17 +994,27 @@ export default function UniversalBookingWizard({
         transactionId
       )
       
+      console.log("📋 Payment update result:", result)
+      
       if (result.success && result.booking) {
+        console.log("✅ Payment confirmed successfully!")
+        
         // Clear saved form state on successful booking
         if (guestUserId) {
           localStorage.removeItem('guestUserId')
+          console.log("🗑️ Cleared localStorage")
         }
         
         // Immediately redirect to confirmation page without showing step 7
         const bookingId = result.booking._id || result.booking.id
+        console.log("🔄 Attempting redirect with bookingId:", bookingId)
+        
         if (bookingId) {
-          router.push(`/bookings/confirmation?bookingId=${bookingId}&status=success`)
+          const confirmationUrl = `/bookings/confirmation?bookingId=${bookingId}&status=success`
+          console.log("🎯 Redirecting to:", confirmationUrl)
+          router.push(confirmationUrl)
         } else {
+          console.warn("⚠️ No booking ID found, showing confirmation step")
           // Fallback to showing confirmation step if no booking ID
           setBookingResult(result.booking)
           setCurrentStep(CONFIRMATION_STEP_NUMBER)
@@ -916,6 +1025,7 @@ export default function UniversalBookingWizard({
           description: t("bookings.success.bookingCreatedDescription"),
         })
       } else {
+        console.error("❌ Payment update failed:", result.error)
         toast({
           variant: "destructive",
           title: "שגיאה בעדכון ההזמנה",
@@ -930,6 +1040,7 @@ export default function UniversalBookingWizard({
         description: t("bookings.errors.tryAgain"),
       })
     } finally {
+      console.log("🏁 handleFinalSubmit completed, setting loading to false")
       setIsLoading(false)
     }
   }
@@ -949,6 +1060,7 @@ export default function UniversalBookingWizard({
             voucher={voucher}
             userSubscription={userSubscription}
             currentUser={currentUser}
+            setRedemptionData={setRedemptionData}
           />
         )
       case 2:

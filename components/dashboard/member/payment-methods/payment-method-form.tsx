@@ -89,17 +89,23 @@ export function PaymentMethodForm({
     }
   }, [paymentMethod, isEditing, form, open]) // Added 'open' to reset form when dialog reopens for new entry
 
-  const onSubmit = async (_data: PaymentMethodFormValues) => {
+  const onSubmit = async (formValues: PaymentMethodFormValues) => {
     setIsLoading(true)
-    try {
-      const formData: PaymentMethodFormData = {
-        ...data, // Spread all validated form data
-      }
+    
+    const data = {
+      cardNumber: formValues.cardNumber,
+      expiryMonth: formValues.expiryMonth,
+      expiryYear: formValues.expiryYear,
+      cvv: formValues.cvv,
+      cardHolderName: formValues.cardHolderName,
+      cardName: formValues.cardName || "",
+      isDefault: formValues.isDefault || false,
+    }
 
-      const result =
-        isEditing && paymentMethod
-          ? await updatePaymentMethod(paymentMethod._id as string, formData)
-          : await createPaymentMethod(formData)
+    try {
+      const result = paymentMethod
+        ? await updatePaymentMethod(String(paymentMethod._id), data)
+        : await createPaymentMethod(data)
 
       if (result.success && result.paymentMethod) {
         toast.success(isEditing ? t("paymentMethods.updated") : t("paymentMethods.created"))

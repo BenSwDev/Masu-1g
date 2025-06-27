@@ -61,7 +61,7 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
       .then(() => {
         toast({
           title: t("partnerAssignedCoupons.toast.copySuccessTitle"),
-          description: t("partnerAssignedCoupons.toast.copySuccessDescription", { code: coupon.code }),
+          description: t("partnerAssignedCoupons.toast.copySuccessDescription") + " " + coupon.code,
         })
       })
       .catch((_err) => {
@@ -143,7 +143,7 @@ export default function AssignedCouponCard({ coupon }: AssignedCouponCardProps) 
         )}
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground">
-        {t("partnerAssignedCoupons.card.createdLabel", { date: formatDate(coupon.createdAt as Date) })}
+        {t("partnerAssignedCoupons.card.createdLabel")} {formatDate(coupon.createdAt as Date)}
       </CardFooter>
     </Card>
   )

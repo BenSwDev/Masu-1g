@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils/utils"
 interface GuestInfo {
   firstName: string
   lastName: string
-  email: string
+  email?: string
   phone: string
   birthDate?: Date
   gender?: "male" | "female" | "other"
@@ -87,7 +87,7 @@ export function GuestInfoStep({
   const guestInfoSchema = z.object({
     firstName: z.string().min(2, { message: t("guestInfo.validation.firstNameMin") }),
     lastName: z.string().min(2, { message: t("guestInfo.validation.lastNameMin") }),
-    email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }),
+    email: z.string().email({ message: t("guestInfo.validation.emailInvalid") }).optional(),
     phone: z.string().min(10, { message: t("guestInfo.validation.phoneMin") }),
     birthDate: z.date().optional(),
     gender: z.enum(["male", "female", "other"]).optional(),
@@ -109,7 +109,6 @@ export function GuestInfoStep({
       return (
         data.recipientFirstName &&
         data.recipientLastName &&
-        data.recipientEmail &&
         data.recipientPhone &&
         (hideRecipientBirthGender ? true : data.recipientBirthDate && data.recipientGender)
       )
@@ -162,6 +161,14 @@ export function GuestInfoStep({
 
   const watchIsGift = form.watch("isGift")
   const watchSendOption = form.watch("sendOption")
+
+  // אם showGiftOptions=true, תמיד isGift=true
+  useEffect(() => {
+    if (showGiftOptions) {
+      form.setValue("isGift", true)
+    }
+  }, [showGiftOptions, form])
+
   const timeOptions = useMemo(() => {
     const opts = []
     for (let i = 8; i <= 23; i++) {
@@ -301,7 +308,7 @@ export function GuestInfoStep({
                   <FormItem>
                     <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                       <Mail className="h-4 w-4" />
-                      {t("guestInfo.email")} *
+                      {t("guestInfo.email")}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -486,7 +493,7 @@ export function GuestInfoStep({
                     <FormItem>
                       <FormLabel className={`flex items-center gap-2 ${dir === "rtl" ? "flex-row-reverse" : ""}`}>
                         <Mail className="h-4 w-4" />
-                        {t("guestInfo.recipientEmail")} *
+                        {t("guestInfo.recipientEmail")}
                       </FormLabel>
                       <FormControl>
                       <Input
@@ -603,15 +610,11 @@ export function GuestInfoStep({
 
                 {showGiftOptions && (
                   <div className="space-y-4">
-                    <div className={`flex items-center space-x-2 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}>
-                      <Checkbox
-                        id="isGift"
-                        checked={watchIsGift}
-                        onCheckedChange={(checked) => form.setValue("isGift", checked as boolean)}
-                      />
-                      <label htmlFor="isGift" className="flex items-center gap-2 cursor-pointer">
-                        {t("purchaseGiftVoucher.sendAsGift")}
-                      </label>
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2 text-blue-800">
+                        <span className="font-medium">שובר מתנה</span>
+                        <span className="text-sm">(כל השוברים הם מתנות)</span>
+                      </div>
                     </div>
 
                     {watchIsGift && (

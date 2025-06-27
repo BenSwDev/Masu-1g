@@ -22,13 +22,43 @@ import UserSubscriptionAdminCard from "./user-subscription-admin-card"
 import UserSubscriptionAdminCardSkeleton from "./user-subscription-admin-card-skeleton"
 import UserSubscriptionForm from "./user-subscription-form"
 import CreateUserSubscriptionForm from "./create-user-subscription-form"
+import { useRouter } from "next/navigation"
 
-interface PopulatedUserSubscription extends IUserSubscription {
-  userId: Pick<User, "name" | "email"> & { _id: string }
-  subscriptionId: ISubscription
-  treatmentId: ITreatment
-  selectedDurationDetails?: ITreatmentDuration
-  paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> {
+  userId?: {
+    _id: string
+    name: string
+    email?: string // Make email optional
+  } | null
+  subscriptionId: {
+    _id: string
+    name: string
+    description?: string
+    price: number
+    duration: number
+    treatments: string[]
+    isActive: boolean
+  }
+  treatmentId: {
+    _id: string
+    name: string
+    price: number
+    durations: Array<{
+      _id: string
+      minutes: number
+      price: number
+    }>
+  }
+  paymentMethodId?: {
+    _id: string
+    cardName: string
+    cardNumber: string
+  } | null
+  guestInfo?: {
+    name: string
+    email?: string // Make email optional to match the new system
+    phone: string
+  }
 }
 
 interface AdminUserSubscriptionsClientProps {
@@ -47,6 +77,7 @@ const AdminUserSubscriptionsClient = ({
 }: AdminUserSubscriptionsClientProps) => {
   const { t } = useTranslation()
   const isMobile = useIsMobile()
+  const router = useRouter()
 
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
@@ -143,31 +174,30 @@ const AdminUserSubscriptionsClient = ({
     setIsEditDialogOpen(true)
   }
 
-  const handleUpdate = async (_data: FormData) => {
+  const handleUpdate = async (data: FormData) => {
     if (!currentSubscription) return
-    setIsSaving(true)
+    
     const result = await updateUserSubscription(String(currentSubscription._id), data)
+    
     if (result.success) {
-      toast.success(t("userSubscriptions.updateSuccess"))
-      setIsEditDialogOpen(false)
+      toast.success(t("userSubscriptions.updateSuccessToast"))
+      setCurrentSubscription(null)
       await fetchData(currentPage, limit, searchTerm, statusFilter)
     } else {
-      toast.error(result.error || t("userSubscriptions.updateError"))
+      toast.error(result.error || t("common.unknownError"))
     }
-    setIsSaving(false)
   }
 
-  const handleCreate = async (_data: FormData) => {
-    setIsSaving(true)
+  const handleCreate = async (data: FormData) => {
     const result = await createUserSubscription(data)
+    
     if (result.success) {
-      toast.success(t("userSubscriptions.createSuccess"))
+      toast.success(t("userSubscriptions.createSuccessToast"))
       setIsCreateDialogOpen(false)
       await fetchData(currentPage, limit, searchTerm, statusFilter)
     } else {
-      toast.error(result.error || t("userSubscriptions.createError"))
+      toast.error(result.error || t("common.unknownError"))
     }
-    setIsSaving(false)
   }
 
   const TableSkeleton = () => (
@@ -453,11 +483,7 @@ const AdminUserSubscriptionsClient = ({
       {pagination && pagination.totalPages > 1 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            {t("common.pagination.pageInfo", {
-              page: pagination.page,
-              totalPages: pagination.totalPages,
-              totalResults: pagination.total,
-            })}
+            {t("common.pagination.pageInfo")} - {t("common.pagination.page")}: {pagination.page}, {t("common.pagination.total")}: {pagination.total}, {t("common.pagination.totalResults")}: {pagination.totalResults}
           </div>
           <div className="flex gap-2 items-center">
             <Button
@@ -488,7 +514,7 @@ const AdminUserSubscriptionsClient = ({
               <SelectContent>
                 {[5, 10, 20, 50].map((l) => (
                   <SelectItem key={l} value={l.toString()}>
-                    {t("common.pagination.showPerPage", { count: l })}
+                    {t("common.pagination.showPerPage")} {l}
                   </SelectItem>
                 ))}
               </SelectContent>

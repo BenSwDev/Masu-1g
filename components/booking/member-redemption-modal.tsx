@@ -37,18 +37,19 @@ export default function MemberRedemptionModal({ subscriptions, vouchers }: Membe
               {sub.treatmentId && (
                 <div className="text-sm text-muted-foreground">{sub.treatmentId.name}</div>
               )}
-              <Button asChild className="mt-2 w-full">
-                <Link href={`/redeem-subscription/${sub._id}`}>{t("subscriptions.redeem") || "למימוש"}</Link>
-              </Button>
+              <div className="mt-2 p-3 bg-blue-50 border-2 border-blue-200 rounded-lg text-center">
+                <div className="font-mono text-lg font-bold text-blue-800">{sub.code}</div>
+                <div className="text-xs text-blue-600 mt-1">קוד המנוי למימוש</div>
+              </div>
             </div>
           ))}
           {vouchers?.map((v: IGiftVoucher) => (
             <div key={v._id} className="border rounded p-3 space-y-1">
               <div className="font-medium">{v.voucherType === "monetary" ? t("giftVouchers.types.monetary") || "שובר כספי" : t("giftVouchers.types.treatment") || "שובר טיפול"}</div>
-              <div className="text-sm">{v.code}</div>
-              <Button asChild className="mt-2 w-full">
-                <Link href={`/redeem/${v.code}`}>{t("giftVouchers.redeemVoucher") || "למימוש"}</Link>
-              </Button>
+              <div className="mt-2 p-3 bg-green-50 border-2 border-green-200 rounded-lg text-center">
+                <div className="font-mono text-lg font-bold text-green-800">{v.code}</div>
+                <div className="text-xs text-green-600 mt-1">קוד השובר למימוש</div>
+              </div>
             </div>
           ))}
         </div>

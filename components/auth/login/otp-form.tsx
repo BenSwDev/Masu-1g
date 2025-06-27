@@ -15,7 +15,7 @@ import { useSession } from "next-auth/react"
 
 interface OTPFormProps {
   className?: string
-  loginType: "email" | "phone"
+  loginType: "phone"
   identifier: string
   onIdentifierChange?: (value: string) => void
 }
@@ -182,17 +182,12 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
   // Get current identifier from input field (client-side only)
   const getCurrentIdentifier = () => {
     if (typeof window !== "undefined") {
-      if (loginType === "email") {
-        const inputEl = document.getElementById("otp-identifier") as HTMLInputElement
-        return inputEl?.value || currentIdentifier
-      } else {
-        // For phone, get the value from the hidden input that PhoneInput creates
+              // For phone, get the value from the hidden input that PhoneInput creates
         const hiddenInput = document.querySelector('input[name="phone"][type="hidden"]') as HTMLInputElement
         if (hiddenInput && hiddenInput.value) {
           return hiddenInput.value
         }
         return currentIdentifier
-      }
     }
     return currentIdentifier
   }
@@ -204,10 +199,10 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
 
     // הסרת הוולידציה המיידית - בדיקה רק בעת לחיצה על הכפתור
     if (!identifierValue) {
-      setError(loginType === "email" ? t("errors.invalidEmail") : t("errors.invalidPhone"))
+      setError(t("errors.invalidPhone"))
       toast({
         title: t("errors.invalidInput"),
-        description: loginType === "email" ? t("errors.invalidEmail") : t("errors.invalidPhone"),
+        description: t("errors.invalidPhone"),
         variant: "destructive",
       })
       return
@@ -227,7 +222,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
 
       toast({
         title: t("login.sendingOTP"),
-        description: loginType === "email" ? t("login.sendingOTPToEmail") : t("login.sendingOTPToPhone"),
+        description: t("login.sendingOTPToPhone"),
       })
 
       const result = await sendOTP(identifierValue, loginType, language)
@@ -241,7 +236,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
 
         toast({
           title: t("login.otpSent"),
-          description: loginType === "email" ? t("login.otpSentToEmail") : t("login.otpSentToPhone"),
+          description: t("login.otpSentToPhone"),
         })
       } else {
         setError(result.message)
@@ -278,7 +273,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
     const identifierValue = getCurrentIdentifier()
 
     if (!identifierValue) {
-      setError(loginType === "email" ? t("errors.invalidEmail") : t("errors.invalidPhone"))
+      setError(t("errors.invalidPhone"))
       return
     }
 
@@ -358,7 +353,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
       {!otpSent ? (
         <>
           <p className="text-sm text-muted-foreground text-center">
-            {loginType === "email" ? t("login.otpEmailInstructions") : t("login.otpPhoneInstructions")}
+            {t("login.otpPhoneInstructions")}
           </p>
           <Button
             onClick={handleSendOTP}
@@ -382,7 +377,7 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
         <>
           <div className="text-center">
             <p className="text-sm text-muted-foreground">
-              {loginType === "email" ? t("login.otpEmailSent") : t("login.otpPhoneSent")}
+              {t("login.otpPhoneSent")}
             </p>
             <p className="font-medium mt-1">{obscuredIdentifier}</p>
           </div>

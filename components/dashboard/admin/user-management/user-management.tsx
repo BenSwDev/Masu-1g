@@ -141,20 +141,18 @@ const getAvatarGradient = (name?: string | null): string => {
   return gradients[index]
 }
 
-// Helper function to get role badge styling
-const getRoleBadgeStyle = (role: string): string => {
-  const styles = {
-    admin:
-      "bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
-    professional:
-      "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
-    member:
-      "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
-    partner:
-      "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800",
+// Fix role badge styling function
+const getRoleBadgeStyle = (role: string) => {
+  const styles: Record<string, string> = {
+    admin: "bg-red-50 text-red-700 border-red-200 hover:bg-red-100",
+    professional: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+    member: "bg-green-50 text-green-700 border-green-200 hover:bg-green-100",
+    partner: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100",
   }
   return styles[role] || "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
 }
+
+
 
 // In the UserManagement function parameters, uncomment initialRoleFilter
 export function UserManagement({
@@ -192,6 +190,18 @@ export function UserManagement({
   const [userForPasswordChange, setUserForPasswordChange] = useState<UserData | null>(null)
 
   const [isLoading, setIsLoading] = useState(false) // General loading state for table actions
+
+  // Fix role translation function
+  const getRoleTranslation = (role: string) => {
+    const roleKey = `roles.${role.toLowerCase()}` as const
+    return t(roleKey)
+  }
+
+  // Fix gender translation function  
+  const getGenderTranslation = (gender: string) => {
+    const genderKey = `gender.${gender.toLowerCase()}` as const
+    return t(genderKey)
+  }
 
   // Update URL when filters, sort, or page change
   useEffect(() => {
@@ -239,7 +249,7 @@ export function UserManagement({
       <div className="flex flex-wrap gap-1">
         {roles.map((role) => (
           <Badge key={role} className={`${getRoleBadgeStyle(role)} transition-all duration-200 font-medium border`}>
-            {t(`roles.${role.toLowerCase()}`, role)}
+            {getRoleTranslation(role)}
           </Badge>
         ))}
       </div>
@@ -248,7 +258,7 @@ export function UserManagement({
 
   const getGenderDisplay = (gender?: string | null): string => {
     if (!gender) return t("common.notSet")
-    return t(`gender.${gender.toLowerCase()}`, gender)
+    return getGenderTranslation(gender)
   }
 
   const handleOpenCreateUserForm = () => {
@@ -463,6 +473,16 @@ export function UserManagement({
     )
   }
 
+  const getRoleLabel = (role: string) => {
+    const roleKey = `admin.users.roles.${role}` as const
+    return t(roleKey)
+  }
+
+  const getGenderLabel = (gender: string) => {
+    const genderKey = `admin.users.genders.${gender}` as const
+    return t(genderKey)
+  }
+
   return (
     <div className="space-y-6">
       {/* Statistics and Add User Button */}
@@ -482,7 +502,7 @@ export function UserManagement({
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-blue-950/20" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                {t("roles.memberPlural", "Members")}
+                {t("roles.memberPlural")}
               </CardTitle>
               <div className="p-2 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors dark:bg-blue-900 dark:group-hover:bg-blue-800">
                 <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -497,7 +517,7 @@ export function UserManagement({
             <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-green-950/20" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                {t("roles.professionalPlural", "Professionals")}
+                {t("roles.professionalPlural")}
               </CardTitle>
               <div className="p-2 bg-green-100 rounded-full group-hover:bg-green-200 transition-colors dark:bg-green-900 dark:group-hover:bg-green-800">
                 <Briefcase className="h-4 w-4 text-green-600 dark:text-green-400" />
@@ -514,7 +534,7 @@ export function UserManagement({
             <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-purple-950/20" />
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors">
-                {t("roles.partnerPlural", "Partners")}
+                {t("roles.partnerPlural")}
               </CardTitle>
               <div className="p-2 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors dark:bg-purple-900 dark:group-hover:bg-purple-800">
                 <Handshake className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -584,7 +604,7 @@ export function UserManagement({
                     onCheckedChange={() => handleRoleFilterChange(role)}
                     className="transition-colors duration-200"
                   >
-                    {t(`roles.${role.toLowerCase()}`, role)}
+                    {getRoleTranslation(role)}
                     {roleFilter.includes(role) && <Check className="ml-auto h-4 w-4 text-primary" />}
                   </DropdownMenuCheckboxItem>
                 ))}
@@ -625,7 +645,7 @@ export function UserManagement({
               )}
               {roleFilter.map((role) => (
                 <Badge key={role} variant="secondary" className="flex items-center gap-1">
-                  {t(`roles.${role.toLowerCase()}`, role)}
+                  {getRoleTranslation(role)}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -702,7 +722,7 @@ export function UserManagement({
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                     <div>
-                      <span className="font-medium">{t("admin.users.phone")}:</span> {user.phone || t("common.notSet")}
+                                              <span className="font-medium">{t("admin.users.phone")}:</span> {user.phone || t("common.notSet")}
                     </div>
                     <div>
                       <span className="font-medium">{t("admin.users.gender")}:</span> {getGenderDisplay(user.gender)}
@@ -775,7 +795,7 @@ export function UserManagement({
                         </Avatar>
                       </TableCell>
                       <TableCell className="font-medium">{user.name || t("common.notSet")}</TableCell>
-                      <TableCell>{user.phone || t("common.notSet")}</TableCell>
+                                              <TableCell>{user.phone || t("common.notSet")}</TableCell>
                       <TableCell>{user.email || t("common.notSet")}</TableCell>
                       <TableCell>{getRolesDisplay(user.roles)}</TableCell>
                       <TableCell>
@@ -854,7 +874,7 @@ export function UserManagement({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("admin.users.confirmDeleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("admin.users.confirmDeleteMessage", { userName: userToDelete?.name || t("admin.users.thisUser") })}
+              {t("admin.users.confirmDeleteMessage")} {userToDelete?.name || t("admin.users.thisUser")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -876,8 +896,8 @@ export function UserManagement({
             <AlertDialogTitle>{t("admin.users.confirmChangePasswordTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
               {userForPasswordChange?.email
-                ? t("admin.users.confirmChangePasswordMessage", { userEmail: userForPasswordChange.email })
-                : t("admin.users.confirmChangePasswordMessage", { userEmail: t("admin.users.thisUser") })}
+                ? t("admin.users.confirmChangePasswordMessage") + " " + (userForPasswordChange.email || t("admin.users.thisUser"))
+                : t("admin.users.confirmChangePasswordMessage") + " " + t("admin.users.thisUser")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -513,12 +513,8 @@ export async function calculateBookingPrice(
         userSub &&
         userSub.status === "active" &&
         userSub.remainingQuantity > 0 &&
-        (
-          // For registered users
-          (userSub.userId && userId && userSub.userId.toString() === userId) ||
-          // For guest subscriptions (no owner)
-          userSub.userId == null
-        )
+        // Only the subscription owner can redeem it
+        userSub.userId && userId && userSub.userId.toString() === userId
       ) {
         const subTreatment = userSub.treatmentId as ITreatment
         const isTreatmentMatch = subTreatment && (subTreatment._id as any).toString() === treatmentId
@@ -776,12 +772,12 @@ export async function createBooking(
         ...validatedPayload,
         bookingNumber,
         bookedByUserName: bookingUser.name,
-        bookedByUserEmail: bookingUser.email,
+        bookedByUserEmail: bookingUser.email || undefined,
         bookedByUserPhone: bookingUser.phone,
         // Add recipient fields for "booking for someone else" logic
         recipientName: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientName : bookingUser.name,
         recipientPhone: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientPhone : bookingUser.phone,
-        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : bookingUser.email,
+        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : (bookingUser.email || undefined),
         recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
@@ -792,8 +788,8 @@ export async function createBooking(
         staticTherapistPay: validatedPayload.staticPricingData?.staticTherapistPay || 0,
         companyFee: validatedPayload.staticPricingData?.companyFee || 0,
         consents: validatedPayload.consents || {
-          customerAlerts: "email",
-          patientAlerts: "email",
+          customerAlerts: "sms",
+          patientAlerts: "sms",
           marketingOptIn: false,
           termsAccepted: false
         },
@@ -1329,7 +1325,7 @@ export async function getBookingInitialData(userId: string): Promise<{ success: 
         .populate({ path: "treatmentId", model: Treatment, populate: { path: "durations" } })
         .lean(),
       GiftVoucher.find({
-        $or: [{ ownerUserId: userId }, { recipientEmail: authSession.user.email }],
+        ownerUserId: userId, // Only get vouchers owned by the user (for gifts, this is the recipient)
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() },
         isActive: true,
@@ -1490,7 +1486,7 @@ export async function professionalAcceptBooking(
 
         if (clientUser && treatment && professional) {
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
-          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
+          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["sms"]
 
           const baseUrl =
             process.env.NEXT_PUBLIC_APP_URL ||
@@ -1963,7 +1959,7 @@ export async function assignProfessionalToBooking(
         if (clientUser && professional && treatment) {
           // Client notification
           const clientLang = (clientUser.notificationPreferences?.language as NotificationLanguage) || "he"
-          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["email"]
+          const clientNotificationMethods = clientUser.notificationPreferences?.methods || ["sms"]
 
           const baseUrl =
             process.env.NEXT_PUBLIC_APP_URL ||
@@ -1993,7 +1989,7 @@ export async function assignProfessionalToBooking(
 
           // Professional notification
           const professionalLang = (professional.notificationPreferences?.language as NotificationLanguage) || "he"
-          const professionalNotificationMethods = professional.notificationPreferences?.methods || ["email"]
+          const professionalNotificationMethods = professional.notificationPreferences?.methods || ["sms"]
 
           const professionalNotificationData: ProfessionalBookingNotificationData = {
             type: "BOOKING_ASSIGNED_PROFESSIONAL",
@@ -2261,7 +2257,7 @@ export async function createGuestBooking(
 
     // For guest bookings, use provided guest info instead of fetching user
     const guestInfo = validatedPayload.guestInfo
-    if (!guestInfo || !guestInfo.name || !guestInfo.email || !guestInfo.phone) {
+    if (!guestInfo || !guestInfo.name || !guestInfo.phone) {
       logger.warn("Missing or invalid guest info in createGuestBooking", { guestInfo })
       return { success: false, error: "bookings.errors.guestInfoRequired" }
     }
@@ -2327,17 +2323,28 @@ export async function createGuestBooking(
       // Company fee is the difference
       const companyFee = Math.max(0, staticTreatmentPrice - staticTherapistPay)
 
+      // Find or create user by phone to ensure all bookings are associated with a user
+      const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+      const userResult = await findOrCreateUserByPhone(guestInfo.phone, {
+        name: guestInfo.name,
+        email: guestInfo.email,
+      })
+
+      if (!userResult.success || !userResult.userId) {
+        throw new Error("Failed to create or find user for guest booking")
+      }
+
       const newBooking = new Booking({
         ...validatedPayload,
-        userId: null, // Guest booking - no user association initially
+        userId: new mongoose.Types.ObjectId(userResult.userId), // Associate booking with user
         bookingNumber,
         bookedByUserName: guestInfo.name,
-        bookedByUserEmail: validatedPayload.guestInfo.email, // Store original email, not modified one
+        bookedByUserEmail: validatedPayload.guestInfo.email || undefined, // Store original email, not modified one
         bookedByUserPhone: guestInfo.phone,
         // Only set recipient fields if explicitly booking for someone else
         recipientName: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientName : guestInfo.name,
         recipientPhone: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientPhone : guestInfo.phone,
-        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : validatedPayload.guestInfo.email,
+        recipientEmail: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientEmail : (validatedPayload.guestInfo.email || undefined),
         recipientBirthDate: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientBirthDate : undefined,
         recipientGender: validatedPayload.isBookingForSomeoneElse ? validatedPayload.recipientGender : undefined,
         bookingAddressSnapshot,
@@ -2348,8 +2355,8 @@ export async function createGuestBooking(
         staticTherapistPay,
         companyFee,
         consents: validatedPayload.consents || {
-          customerAlerts: "email",
-          patientAlerts: "email",
+          customerAlerts: "sms",
+          patientAlerts: "sms",
           marketingOptIn: false,
           termsAccepted: true // Default to true for guest bookings
         },
@@ -2677,146 +2684,20 @@ export async function getGuestBookingInitialData(): Promise<{ success: boolean; 
 export async function createGuestUser(guestInfo: {
   firstName: string
   lastName: string
-  email: string
+  email?: string
   phone: string
   birthDate?: Date
   gender?: "male" | "female" | "other"
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
-  try {
-    // Validate input data
-    if (!guestInfo.firstName?.trim() || !guestInfo.lastName?.trim()) {
-      return { success: false, error: "First name and last name are required" }
-    }
-    
-    if (!guestInfo.email?.trim() || !guestInfo.phone?.trim()) {
-      return { success: false, error: "Email and phone are required" }
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(guestInfo.email.trim())) {
-      return { success: false, error: "Invalid email format" }
-    }
-
-    // Validate phone format (basic Israeli phone validation)
-    const phoneRegex = /^(\+972|0)?[5-9]\d{8}$/
-    if (!phoneRegex.test(guestInfo.phone.replace(/[-\s]/g, ""))) {
-      return { success: false, error: "Invalid phone format" }
-    }
-
-    logger.info("Creating guest user", { 
-      email: guestInfo.email,
-      phone: guestInfo.phone 
-    })
-    
-    await dbConnect()
-
-    // For guests, we ALWAYS create a new user record, even if there's a registered user 
-    // with the same email/phone. Guests are separate entities and can have duplicates.
-    // Only registered users need unique email/phone constraints.
-    
-    // Generate secure random password for guest user
-    const crypto = require('crypto')
-    const randomPassword = crypto.randomBytes(16).toString('hex')
-    const uniqueId = crypto.randomBytes(8).toString('hex')
-    const timestamp = Date.now()
-    
-    // Create unique email and phone for guest to avoid conflicts
-    const guestEmail = `guest_${timestamp}_${uniqueId}_${guestInfo.email.replace('@', '_at_')}`
-    const guestPhone = `${guestInfo.phone.replace(/[-\s]/g, "")}_guest_${uniqueId}`
-
-    // Create new guest user with validated data
-    const guestUser = new User({
-      name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
-      email: guestEmail, // Use unique guest email to avoid conflicts
-      phone: guestPhone, // Use unique guest phone to avoid conflicts
-      gender: guestInfo.gender && ["male", "female", "other"].includes(guestInfo.gender) ? guestInfo.gender : "other", // Ensure valid gender
-      dateOfBirth: guestInfo.birthDate,
-      password: randomPassword, // Secure random password
-      roles: [UserRole.GUEST],
-      activeRole: UserRole.GUEST,
-      emailVerified: null,
-      phoneVerified: null,
-      // Store original email and phone for reference
-      originalGuestEmail: guestInfo.email.trim().toLowerCase(),
-      originalGuestPhone: guestInfo.phone.replace(/[-\s]/g, ""),
-    })
-
-    await guestUser.save()
-    
-    logger.info("Guest user created successfully", {
-      userId: guestUser._id.toString(),
-      originalEmail: guestInfo.email,
-      originalPhone: guestInfo.phone,
-      guestEmail: guestEmail,
-      guestPhone: guestPhone,
-    })
-
-    return { success: true, userId: guestUser._id.toString() }
-  } catch (error) {
-    logger.error("Error creating guest user:", { 
-      error: error instanceof Error ? error.message : String(error),
-      email: guestInfo.email 
-    })
-    
-    // For guests, we should retry with a different unique identifier if there's a conflict
-    if (error instanceof Error && (error.message.includes('duplicate key') || (error as any).code === 11000)) {
-      // Try again with a more unique identifier
-      try {
-        const crypto = require('crypto')
-        const uniqueId = crypto.randomBytes(8).toString('hex')
-        const timestamp = Date.now()
-        const guestEmail = `guest_${timestamp}_${uniqueId}_${guestInfo.email.replace('@', '_at_')}`
-        
-        const retryUniqueId = crypto.randomBytes(8).toString('hex')
-        const retryTimestamp = Date.now()
-        const retryGuestEmail = `guest_${retryTimestamp}_${retryUniqueId}_${guestInfo.email.replace('@', '_at_')}`
-        const retryGuestPhone = `${guestInfo.phone.replace(/[-\s]/g, "")}_guest_${retryUniqueId}`
-        
-        const guestUser = new User({
-          name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
-          email: retryGuestEmail,
-          phone: retryGuestPhone,
-          gender: guestInfo.gender && ["male", "female", "other"].includes(guestInfo.gender) ? guestInfo.gender : "other", // Ensure valid gender
-          dateOfBirth: guestInfo.birthDate,
-          password: crypto.randomBytes(16).toString('hex'),
-          roles: [UserRole.GUEST],
-          activeRole: UserRole.GUEST,
-          emailVerified: null,
-          phoneVerified: null,
-          originalGuestEmail: guestInfo.email.trim().toLowerCase(),
-          originalGuestPhone: guestInfo.phone.replace(/[-\s]/g, ""),
-        })
-        
-        await guestUser.save()
-        
-        logger.info("Guest user created successfully on retry", {
-          userId: guestUser._id.toString(),
-          originalEmail: guestInfo.email,
-          originalPhone: guestInfo.phone,
-          guestEmail: retryGuestEmail,
-          guestPhone: retryGuestPhone,
-        })
-        
-        return { success: true, userId: guestUser._id.toString() }
-      } catch (retryError) {
-        logger.error("Failed to create guest user on retry:", retryError)
-        return { success: false, error: "Failed to create guest user" }
-      }
-    }
-    
-    // Return appropriate error messages based on error type
-    if (error instanceof Error) {
-      if (error.message.includes('validation') || error.name === 'ValidationError') {
-        return { success: false, error: "Invalid user data provided" }
-      }
-      if (error.message.includes('required')) {
-        return { success: false, error: "Required fields missing" }
-      }
-    }
-    
-    return { success: false, error: "Failed to create guest user" }
-  }
+  // שימוש בפונקציה החדשה
+  const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+  
+  return await findOrCreateUserByPhone(guestInfo.phone, {
+    name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+    email: guestInfo.email,
+    gender: guestInfo.gender,
+    dateOfBirth: guestInfo.birthDate,
+  })
 }
 
 export async function saveAbandonedBooking(
@@ -2879,7 +2760,7 @@ export async function saveAbandonedBooking(
       // Update other fields if they exist with safe defaults
       if (formData.guestInfo?.firstName && formData.guestInfo?.lastName) {
         updateData.bookedByUserName = `${formData.guestInfo.firstName.trim()} ${formData.guestInfo.lastName.trim()}`
-        updateData.bookedByUserEmail = formData.guestInfo.email?.trim() || ""
+        updateData.bookedByUserEmail = formData.guestInfo.email?.trim() || undefined
         updateData.bookedByUserPhone = formData.guestInfo.phone?.replace(/[-\s]/g, "") || ""
       }
       
@@ -2943,16 +2824,16 @@ export async function saveAbandonedBooking(
       bookedByUserName: formData.guestInfo?.firstName && formData.guestInfo?.lastName 
         ? `${formData.guestInfo.firstName.trim()} ${formData.guestInfo.lastName.trim()}` 
         : "Guest User",
-      bookedByUserEmail: formData.guestInfo?.email?.trim() || "",
+              bookedByUserEmail: formData.guestInfo?.email?.trim() || undefined,
       bookedByUserPhone: formData.guestInfo?.phone?.replace(/[-\s]/g, "") || "",
       recipientName: formData.guestInfo?.isBookingForSomeoneElse && formData.guestInfo.recipientFirstName && formData.guestInfo.recipientLastName
         ? `${formData.guestInfo.recipientFirstName.trim()} ${formData.guestInfo.recipientLastName.trim()}`
         : formData.guestInfo?.firstName && formData.guestInfo?.lastName 
           ? `${formData.guestInfo.firstName.trim()} ${formData.guestInfo.lastName.trim()}` 
           : "Guest User",
-      recipientEmail: formData.guestInfo?.isBookingForSomeoneElse 
-        ? formData.guestInfo.recipientEmail?.trim()
-        : formData.guestInfo?.email?.trim(),
+              recipientEmail: formData.guestInfo?.isBookingForSomeoneElse
+          ? formData.guestInfo.recipientEmail?.trim()
+          : (formData.guestInfo?.email?.trim() || undefined),
       recipientPhone: formData.guestInfo?.isBookingForSomeoneElse 
         ? formData.guestInfo.recipientPhone?.replace(/[-\s]/g, "")
         : formData.guestInfo?.phone?.replace(/[-\s]/g, ""),
@@ -3121,38 +3002,99 @@ export async function getAbandonedBooking(userId: string): Promise<{
   }
 }
 
+// Add rollback function before updateBookingStatusAfterPayment
+async function rollbackBookingRedemptions(booking: IBooking, session: any): Promise<void> {
+  logger.info("Rolling back booking redemptions due to payment failure", { bookingId: (booking._id as any).toString() })
+
+  // Rollback subscription redemption
+  if (booking.priceDetails.redeemedUserSubscriptionId && booking.priceDetails.isBaseTreatmentCoveredBySubscription) {
+    const userSub = await UserSubscription.findById(booking.priceDetails.redeemedUserSubscriptionId).session(session)
+    if (userSub) {
+      userSub.remainingQuantity += 1
+      if (userSub.status === "depleted") userSub.status = "active"
+      await userSub.save({ session })
+      logger.info("Rolled back subscription redemption", { subscriptionId: userSub._id, newQuantity: userSub.remainingQuantity })
+    }
+  }
+
+  // Rollback gift voucher redemption
+  if (booking.priceDetails.appliedGiftVoucherId && booking.priceDetails.voucherAppliedAmount > 0) {
+    const voucher = await GiftVoucher.findById(booking.priceDetails.appliedGiftVoucherId).session(session) as IGiftVoucher | null
+    if (voucher) {
+      if (voucher.voucherType === "treatment" && booking.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
+        voucher.status = "active"
+        voucher.isActive = true
+        voucher.remainingAmount = voucher.originalAmount || voucher.amount
+      } else if (voucher.voucherType === "monetary") {
+        voucher.remainingAmount = (voucher.remainingAmount || 0) + booking.priceDetails.voucherAppliedAmount
+        if (voucher.originalAmount && voucher.remainingAmount > voucher.originalAmount) {
+          voucher.remainingAmount = voucher.originalAmount
+        }
+        voucher.status = voucher.remainingAmount > 0 
+          ? voucher.remainingAmount < (voucher.originalAmount || voucher.amount) 
+            ? "partially_used" 
+            : "active"
+          : "fully_used"
+        voucher.isActive = voucher.remainingAmount > 0
+      }
+
+      // Remove from usage history
+      if (voucher.usageHistory) {
+        voucher.usageHistory = voucher.usageHistory.filter(
+          entry => entry.orderId?.toString() !== (booking._id as any).toString()
+        )
+      }
+      await voucher.save({ session })
+      logger.info("Rolled back voucher redemption", { voucherId: voucher._id, newAmount: voucher.remainingAmount })
+    }
+  }
+
+  // Rollback coupon usage
+  if (booking.priceDetails.appliedCouponId && booking.priceDetails.discountAmount > 0) {
+    const coupon = await Coupon.findById(booking.priceDetails.appliedCouponId).session(session)
+    if (coupon && coupon.timesUsed > 0) {
+      coupon.timesUsed -= 1
+      await coupon.save({ session })
+      logger.info("Rolled back coupon usage", { couponId: coupon._id, newTimesUsed: coupon.timesUsed })
+    }
+  }
+}
+
 export async function updateBookingStatusAfterPayment(
   bookingId: string,
   paymentStatus: "success" | "failed",
   transactionId?: string
 ): Promise<{ success: boolean; booking?: IBooking; error?: string }> {
+  const mongooseDbSession = await mongoose.startSession()
+  
   try {
     await dbConnect()
     
+    await mongooseDbSession.withTransaction(async () => {
     bookingLogger.logPayment({
       bookingId,
       paymentStatus,
       metadata: { transactionId }
     }, `Processing payment ${paymentStatus} for booking`)
     
-    const booking = await Booking.findById(bookingId)
+      const booking = await Booking.findById(bookingId).session(mongooseDbSession)
     if (!booking) {
       bookingLogger.logError({ bookingId }, "Booking not found", "Payment processing failed - booking not found")
-      return { success: false, error: "Booking not found" }
+        throw new Error("Booking not found")
     }
 
     if (paymentStatus === "success") {
-      // Update payment status and booking status
+        // Payment successful - update status to paid
       booking.paymentDetails.paymentStatus = "paid"
       booking.paymentDetails.transactionId = transactionId
       booking.status = "in_process" // Now in process - paid but not assigned professional
       
       // Find suitable professionals and save to booking
-      const suitableProfessionals = await findSuitableProfessionals(bookingId)
+        const suitableProfessionalsResult = await findSuitableProfessionals(bookingId)
       
-      if (suitableProfessionals.success && suitableProfessionals.professionals) {
+        if (suitableProfessionalsResult.success && suitableProfessionalsResult.professionals) {
         // Save suitable professionals list to booking
-        booking.suitableProfessionals = suitableProfessionals.professionals.map((prof: any) => ({
+          booking.suitableProfessionals = suitableProfessionalsResult.professionals.map((prof: any) => ({
           professionalId: prof.userId._id,
           name: prof.userId.name,
           email: prof.userId.email,
@@ -3164,7 +3106,7 @@ export async function updateBookingStatusAfterPayment(
         
         logger.info("Saved suitable professionals to booking", { 
           bookingId, 
-          professionalCount: booking.suitableProfessionals.length 
+            professionalCount: booking.suitableProfessionals?.length || 0
         })
       }
       
@@ -3190,48 +3132,24 @@ export async function updateBookingStatusAfterPayment(
         }
       }
       
-      await booking.save()
+        await booking.save({ session: mongooseDbSession })
       
-      if (suitableProfessionals.success && suitableProfessionals.professionals && suitableProfessionals.professionals.length > 0) {
+        if (suitableProfessionalsResult.success && suitableProfessionalsResult.professionals && suitableProfessionalsResult.professionals.length > 0) {
         logger.info("Found suitable professionals for booking", { 
           bookingId,
-          professionalCount: suitableProfessionals.professionals.length 
-        })
-        
-        // Send SMS notifications to all suitable professionals
-        try {
-          const { sendProfessionalBookingNotifications } = await import("@/actions/notification-service")
-          const smsResult = await sendProfessionalBookingNotifications(bookingId)
-          
-          if (smsResult.success) {
-            logger.info("Sent SMS notifications to professionals", { 
-              bookingId,
-              sentCount: smsResult.sentCount 
-            })
-          } else {
-            logger.error("Failed to send SMS notifications to professionals", { 
-              bookingId,
-              error: smsResult.error 
-            })
-          }
-        } catch (error) {
-          logger.error("Error sending SMS notifications", { 
-            bookingId,
-            error: error instanceof Error ? error.message : String(error) 
+            professionalCount: suitableProfessionalsResult.professionals.length 
           })
-        }
       } else {
         logger.warn("No suitable professionals found for booking", { bookingId })
       }
       
-      // TODO: Send confirmation notifications to user
-      
-      revalidatePath("/dashboard/admin/bookings")
-      revalidatePath("/dashboard/member/bookings")
-      
-      return { success: true, booking: booking.toObject() as IBooking }
     } else {
-      // Payment failed - keep as pending payment
+        // Payment failed - ROLLBACK ALL REDEMPTIONS AND CANCEL BOOKING
+        await rollbackBookingRedemptions(booking, mongooseDbSession)
+        
+        booking.status = "cancelled"
+        booking.cancellationReason = "Payment failed"
+        booking.cancelledBy = "admin" // Use admin instead of system
       booking.paymentDetails.paymentStatus = "failed"
       if (transactionId) {
         booking.paymentDetails.transactionId = transactionId
@@ -3259,10 +3177,49 @@ export async function updateBookingStatusAfterPayment(
         }
       }
       
-      await booking.save()
-      
-      return { success: true, booking: booking.toObject() as IBooking }
+        await booking.save({ session: mongooseDbSession })
+        
+        logger.info("Payment failed - booking cancelled and redemptions rolled back", { 
+          bookingId,
+          originalStatus: "pending_payment"
+        })
+      }
+    })
+    
+    const updatedBooking = await Booking.findById(bookingId)
+    
+    // Send notifications only after successful payment
+    if (paymentStatus === "success" && updatedBooking) {
+      try {
+        const { sendProfessionalBookingNotifications } = await import("@/actions/notification-service")
+        const smsResult = await sendProfessionalBookingNotifications(bookingId)
+        
+        if (smsResult.success) {
+          logger.info("Sent SMS notifications to professionals", { 
+            bookingId,
+            sentCount: smsResult.sentCount 
+          })
+        } else {
+          logger.error("Failed to send SMS notifications to professionals", { 
+            bookingId,
+            error: smsResult.error 
+          })
+        }
+      } catch (error) {
+        logger.error("Error sending SMS notifications", { 
+          bookingId,
+          error: error instanceof Error ? error.message : String(error) 
+        })
+      }
     }
+    
+    revalidatePath("/dashboard/admin/bookings")
+    revalidatePath("/dashboard/member/bookings")
+    revalidatePath("/dashboard/member/subscriptions")
+    revalidatePath("/dashboard/member/gift-vouchers")
+    
+    return { success: true, booking: updatedBooking?.toObject() as IBooking }
+      
       } catch (error) {
     logger.error("Error updating booking status after payment:", {
       bookingId,
@@ -3270,6 +3227,8 @@ export async function updateBookingStatusAfterPayment(
       error: error instanceof Error ? error.message : String(error)
     })
     return { success: false, error: "Failed to update booking status" }
+  } finally {
+    await mongooseDbSession.endSession()
   }
 }
 
@@ -3451,11 +3410,23 @@ export async function validateRedemptionCode(
         code: { $regex: new RegExp(`^${trimmedCode}$`, 'i') },
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() }
-      }).lean()
+      }).populate('treatmentId', 'name pricingType fixedPrice durations').lean()
 
       if (voucher) {
-        const isValid = (voucher.isActive || voucher.status === "sent") && 
-                       (voucher.voucherType !== "monetary" || (voucher.remainingAmount && voucher.remainingAmount > 0))
+        // Comprehensive validation
+        const now = new Date()
+        const isNotExpired = voucher.validUntil >= now
+        const isValidStatus = ["active", "partially_used", "sent"].includes(voucher.status)
+        const isActiveOrSent = voucher.isActive || voucher.status === "sent"
+        
+                 let hasBalance = true
+         if (voucher.voucherType === "monetary") {
+           hasBalance = Boolean(voucher.remainingAmount && voucher.remainingAmount > 0)
+         } else if (voucher.voucherType === "treatment") {
+           hasBalance = voucher.status !== "fully_used"
+         }
+        
+        const isValid = isNotExpired && isValidStatus && isActiveOrSent && hasBalance
         
         if (isValid) {
           return {
@@ -3468,7 +3439,12 @@ export async function validateRedemptionCode(
             }
           }
         } else {
-          return { success: false, error: "השובר לא תקף או נוצל במלואו" }
+          let errorMsg = "השובר לא תקף"
+          if (!isNotExpired) errorMsg = "השובר פג תוקף"
+          else if (!hasBalance) errorMsg = "השובר נוצל במלואו"
+          else if (!isValidStatus || !isActiveOrSent) errorMsg = "השובר לא פעיל"
+          
+          return { success: false, error: errorMsg }
         }
       }
     }
@@ -3480,7 +3456,7 @@ export async function validateRedemptionCode(
         remainingQuantity: { $gt: 0 },
         status: "active",
         expiryDate: { $gte: new Date() }
-      }).populate('subscriptionId').populate('treatmentId').lean()
+      }).populate('subscriptionId').populate('treatmentId', 'name pricingType fixedPrice durations').lean()
 
       if (userSubscription) {
         // For logged-in users, verify ownership (unless it's a guest subscription)

@@ -141,18 +141,6 @@ export const SchedulingDetailsSchema = z
   )
   .refine(
     (data) => {
-      if (data.isBookingForSomeoneElse) {
-        return !!data.recipientEmail && data.recipientEmail.trim().length > 0
-      }
-      return true
-    },
-    {
-      message: "bookings.validation.recipientEmailRequired",
-      path: ["recipientEmail"],
-    },
-  )
-  .refine(
-    (data) => {
       if (data.isBookingForSomeoneElse && data.recipientBirthDate) {
         const today = new Date()
         const birthDate = new Date(data.recipientBirthDate)
@@ -289,18 +277,7 @@ export const BookingWizardSchema = BaseBookingWizardSchema
       path: ["recipientPhone"],
     },
   )
-  .refine(
-    (data) => {
-      if (data.isBookingForSomeoneElse) {
-        return !!data.recipientEmail && data.recipientEmail.trim().length > 0
-      }
-      return true
-    },
-    {
-      message: "bookings.validation.recipientEmailRequired",
-      path: ["recipientEmail"],
-    },
-  )
+
 
 // Schema for the payload of calculateBookingPrice action
 export const CalculatePricePayloadSchema = z.object({
@@ -363,7 +340,7 @@ export const CreateBookingPayloadSchema = z.object({
   notificationLanguage: z.enum(["he", "en", "ru"]).default("he"),
   guestInfo: z.object({
     name: z.string(),
-    email: z.string().email(),
+    email: z.string().email().optional(),
     phone: z.string(),
   }).optional(), // Optional for regular bookings, required for guest bookings
   
@@ -443,7 +420,7 @@ export const CreateGuestBookingPayloadSchema = z.object({
   notificationLanguage: z.enum(["he", "en", "ru"]).default("he"),
   guestInfo: z.object({
     name: z.string().min(1, "Guest name is required"),
-    email: z.string().email("Invalid email format"),
+    email: z.string().email("Invalid email format").optional(),
     phone: z.string()
       .min(1, "Guest phone is required")
       .refine((phone) => {
@@ -491,16 +468,7 @@ export const CreateGuestBookingPayloadSchema = z.object({
   message: "Recipient phone is required when booking for someone else",
   path: ["recipientPhone"]
 })
-.refine((data) => {
-  // If booking for someone else, validate recipient email
-  if (data.isBookingForSomeoneElse) {
-    return data.recipientEmail && data.recipientEmail.trim().length > 0
-  }
-  return true
-}, {
-  message: "Recipient email is required when booking for someone else",
-  path: ["recipientEmail"]
-})
+
 
 export type CalculatePricePayloadType = z.infer<typeof CalculatePricePayloadSchema>
 export type CreateBookingPayloadType = z.infer<typeof CreateBookingPayloadSchema>

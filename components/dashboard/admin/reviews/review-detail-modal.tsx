@@ -19,6 +19,7 @@ import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { updateReviewResponse } from "@/app/dashboard/(user)/(roles)/admin/reviews/actions"
 import { toast } from "sonner"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface ReviewDetailModalProps {
   review: PopulatedReview | null
@@ -163,7 +164,7 @@ export default function ReviewDetailModal({
                   <div className="flex items-center space-x-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">{t("adminReviews.phone")}:</span>
-                    <span>{userInfo?.phone || "-"}</span>
+                    <span>{formatPhoneForDisplay(userInfo?.phone || "")}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Mail className="h-4 w-4 text-muted-foreground" />
@@ -187,7 +188,7 @@ export default function ReviewDetailModal({
                       <div className="flex items-center space-x-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{t("adminReviews.recipientPhone")}:</span>
-                        <span>{bookingInfo.recipientPhone}</span>
+                        <span>{formatPhoneForDisplay(bookingInfo.recipientPhone || "")}</span>
                       </div>
                     )}
                     {bookingInfo.recipientEmail && (
@@ -217,7 +218,7 @@ export default function ReviewDetailModal({
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4 text-muted-foreground" />
                 <span className="font-medium">{t("adminReviews.phone")}:</span>
-                <span>{professionalInfo?.phone || "-"}</span>
+                <span>{formatPhoneForDisplay(professionalInfo?.phone || "")}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="h-4 w-4 text-muted-foreground" />

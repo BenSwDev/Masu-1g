@@ -81,6 +81,7 @@ interface GuestPaymentStepProps {
   createPendingBooking?: () => Promise<string | null>;
   pendingBookingId?: string | null;
   isRedeeming?: boolean;
+  customFailureHandler?: (reason?: string) => void | Promise<void>;
 }
 
 export function GuestPaymentStep({
@@ -93,6 +94,7 @@ export function GuestPaymentStep({
   createPendingBooking,
   pendingBookingId = null,
   isRedeeming = false,
+  customFailureHandler,
 }: GuestPaymentStepProps) {
   const { t, dir } = useTranslation();
   const {
@@ -107,36 +109,44 @@ export function GuestPaymentStep({
     handleOpenChange,
   } = usePaymentModal({ 
     onSuccess: async () => {
+      console.log("🏦 GuestPaymentStep onSuccess triggered", { createPendingBooking: !!createPendingBooking, pendingBookingId })
+      
       // Create pending booking if not already created
       if (createPendingBooking && !pendingBookingId) {
+        console.log("📝 Creating pending booking...")
         const bookingId = await createPendingBooking();
+        console.log("📝 Created pending booking:", bookingId)
         if (!bookingId) {
+          console.error("❌ Failed to create pending booking")
           // Error creating booking - createPendingBooking already shows error toast
           return;
         }
       }
+      
+      console.log("🎯 Calling onConfirm (handleFinalSubmit)")
       // Execute the actual booking confirmation
       onConfirm();
     },
+    onFailure: customFailureHandler,
     pendingBookingId
   });
   const [marketingConsent, setMarketingConsent] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(true);
   
   // ➕ שדות הסכמות חדשים
-  const [customerAlerts, setCustomerAlerts] = useState<"sms" | "email" | "none">("email");
-  const [patientAlerts, setPatientAlerts] = useState<"sms" | "email" | "none">("email");
+  const [customerAlerts, setCustomerAlerts] = useState<"sms" | "email" | "none">("sms");
+  const [patientAlerts, setPatientAlerts] = useState<"sms" | "email" | "none">("sms");
 
   // Notification preferences state
   const [bookerNotificationMethod, setBookerNotificationMethod] = useState<
     "email" | "sms" | "both"
-  >(guestInfo.bookerNotificationMethod || "email");
+  >(guestInfo.bookerNotificationMethod || "sms");
   const [bookerNotificationLanguage, setBookerNotificationLanguage] = useState<
     "he" | "en" | "ru"
   >(guestInfo.bookerNotificationLanguage || "he");
   const [recipientNotificationMethod, setRecipientNotificationMethod] =
     useState<"email" | "sms" | "both">(
-      guestInfo.recipientNotificationMethod || "email",
+      guestInfo.recipientNotificationMethod || "sms",
     );
   const [recipientNotificationLanguage, setRecipientNotificationLanguage] =
     useState<"he" | "en" | "ru">(

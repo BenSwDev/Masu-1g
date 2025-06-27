@@ -16,12 +16,14 @@ import GuestGiftVoucherConfirmation from "./guest-gift-voucher-confirmation"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { CalculatedPriceDetails } from "@/types/booking"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface Props {
   treatments: ITreatment[]
+  currentUser: any
 }
 
-export default function GuestGiftVoucherWizard({ treatments }: Props) {
+export default function GuestGiftVoucherWizard({ treatments, currentUser }: Props) {
   const router = useRouter()
   const { toast } = useToast()
   const { t, language, dir } = useTranslation()
@@ -35,26 +37,20 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
   const [purchasedVoucher, setPurchasedVoucher] = useState<GiftVoucherPlain | null>(null)
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
 
-  // Add user detection (you might need to import useAuth or similar)
-  const currentUser: { name?: string; email?: string; phone?: string } | null = null // TODO: Add actual user detection
+  // Extract user information safely
+  const [first, ...rest] = ((currentUser?.name as string) || "").split(" ")
+  const defaultGuestInfo = {
+    firstName: first || "",
+    lastName: rest.join(" ") || "",
+    email: (currentUser?.email as string) || "",
+    phone: (currentUser?.phone as string) || "",
+    gender: undefined as "male" | "female" | "other" | undefined,
+    birthDate: undefined as Date | undefined,
+  }
 
-  // Pre-fill guest info for logged-in users
-  const prefilledGuestInfo = useMemo(() => {
-    if (currentUser) {
-      const [first, ...rest] = (currentUser.name || "").split(" ")
-      return {
-        firstName: first || "",
-        lastName: rest.join(" ") || "",
-        email: currentUser.email || "",
-        phone: currentUser.phone || "",
-      }
-    }
-    return {}
-  }, [currentUser])
+  const [guestInfo, setGuestInfo] = useState<any>(defaultGuestInfo)
 
-  const [guestInfo, setGuestInfo] = useState<any>(prefilledGuestInfo)
-
-  const selectedTreatment = treatments.find(t => t._id.toString() === selectedTreatmentId)
+  const selectedTreatment = treatments.find(t => String(t._id) === selectedTreatmentId)
   const selectedDuration = selectedTreatment?.pricingType === "duration_based"
     ? selectedTreatment.durations?.find(d => d._id.toString() === selectedDurationId)
     : undefined
@@ -76,6 +72,11 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
     isBaseTreatmentCoveredBySubscription: false,
     isBaseTreatmentCoveredByTreatmentVoucher: false,
     isFullyCoveredByVoucherOrSubscription: false,
+    // Add required fields for CalculatedPriceDetails
+    totalProfessionalPayment: 0,
+    totalOfficeCommission: 0,
+    baseProfessionalPayment: 0,
+    surchargesProfessionalPayment: 0,
   }
 
   const TOTAL_STEPS = 6
@@ -164,7 +165,7 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
     setIsLoading(false)
     if (confirmRes.success && confirmRes.voucher) {
       // Immediately redirect to confirmation page
-      const voucherId = confirmRes.voucher._id || confirmRes.voucher.id
+      const voucherId = confirmRes.voucher._id || (confirmRes.voucher as any).id
       if (voucherId) {
         router.push(`/purchase/gift-voucher/confirmation?voucherId=${voucherId}&status=success`)
       } else {
@@ -310,7 +311,7 @@ export default function GuestGiftVoucherWizard({ treatments }: Props) {
             <CardContent className="space-y-2">
               <div className="flex justify-between"><span>{t("common.name")}</span><span>{guestInfo.firstName} {guestInfo.lastName}</span></div>
               <div className="flex justify-between"><span>{t("common.email")}</span><span>{guestInfo.email}</span></div>
-              <div className="flex justify-between"><span>{t("common.phone")}</span><span>{guestInfo.phone}</span></div>
+              <div className="flex justify-between"><span>{t("common.phone")}</span><span>{formatPhoneForDisplay(guestInfo.phone || "")}</span></div>
             </CardContent>
           </Card>
         </div>

@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/
 import { CalendarIcon, User, UserPlus } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { PhoneInput } from "@/components/common/phone-input"
 
 interface BookingCreateCustomerStepProps {
   formData: any
@@ -39,9 +40,10 @@ export default function BookingCreateCustomerStep({
       if (!formData.guestInfo?.lastName) {
         newErrors.lastName = "שם משפחה נדרש"
       }
-      if (!formData.guestInfo?.email) {
-        newErrors.email = "אימייל נדרש"
-      }
+      // Email is now optional in the phone-auth system
+      // if (!formData.guestInfo?.email) {
+      //   newErrors.email = "אימייל נדרש"
+      // }
       if (!formData.guestInfo?.phone) {
         newErrors.phone = "טלפון נדרש"
       }
@@ -152,7 +154,7 @@ export default function BookingCreateCustomerStep({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">אימייל *</Label>
+                  <Label htmlFor="email">אימייל</Label>
                   <Input
                     id="email"
                     type="email"
@@ -166,10 +168,9 @@ export default function BookingCreateCustomerStep({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">טלפון *</Label>
-                  <Input
-                    id="phone"
-                    value={formData.guestInfo?.phone || ""}
-                    onChange={(e) => updateGuestInfo("phone", e.target.value)}
+                  <PhoneInput
+                    fullNumberValue={formData.guestInfo?.phone || ""}
+                    onPhoneChange={(value) => updateGuestInfo("phone", value)}
                     className={errors.phone ? "border-red-500" : ""}
                   />
                   {errors.phone && (
@@ -299,10 +300,9 @@ export default function BookingCreateCustomerStep({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="recipientPhone">טלפון *</Label>
-                    <Input
-                      id="recipientPhone"
-                      value={formData.recipientInfo?.phone || ""}
-                      onChange={(e) => updateRecipientInfo("phone", e.target.value)}
+                    <PhoneInput
+                      fullNumberValue={formData.recipientInfo?.phone || ""}
+                      onPhoneChange={(value: string) => updateRecipientInfo("phone", value)}
                       className={errors.recipientPhone ? "border-red-500" : ""}
                     />
                     {errors.recipientPhone && (

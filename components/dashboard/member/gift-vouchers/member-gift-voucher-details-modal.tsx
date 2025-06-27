@@ -12,6 +12,7 @@ import {
 } from "@/components/common/ui/dialog"
 import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Separator } from "@/components/common/ui/separator"
 import { ScrollArea } from "@/components/common/ui/scroll-area"
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
@@ -241,7 +242,7 @@ export default function MemberGiftVoucherDetailsModal({
                       <DetailItem
                         icon={Phone}
                         label={t("giftVouchers.fields.recipientPhone")}
-                        value={voucher.recipientPhone}
+                        value={formatPhoneForDisplay(voucher.recipientPhone || "")}
                       />
                     )}
                     {voucher.sendDate && (

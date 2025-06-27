@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { getPartnerById } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
 import { User, AlertTriangle } from "lucide-react"
 import type { IPartnerProfile } from "@/lib/db/models/partner-profile"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import type { IUser } from "@/lib/db/models/user"
 
 interface PartnerProfileDialogProps {
@@ -93,7 +94,7 @@ export default function PartnerProfileDialog({ partnerId, open, onOpenChange }: 
               </div>
               <div className="space-y-1">
                 <Label className="text-sm text-muted-foreground">טלפון</Label>
-                <p>{partner.userId.phone}</p>
+                <p>{formatPhoneForDisplay(partner.userId.phone || "")}</p>
               </div>
               <div className="space-y-1">
                 <Label className="text-sm text-muted-foreground">ח.פ</Label>

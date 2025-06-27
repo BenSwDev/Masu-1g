@@ -151,28 +151,34 @@ type FixedHoursFormData = z.infer<typeof fixedHoursFormSchema>
 type SpecialDateFormData = z.infer<typeof specialDateFormSchema>
 type SpecialDateEventFormData = z.infer<typeof specialDateEventFormSchema>
 
-const getDefaultFixedHours = (): IFixedHours[] => {
-  const days = []
-  for (let i = 0; i < 7; i++) {
+const getDefaultFixedHours = (settings?: IWorkingHoursSettings): IFixedHours[] => {
+  const days: IFixedHours[] = []
+  
+  for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+    const existingDay = settings?.fixedHours?.find((fh) => fh.dayOfWeek === dayOfWeek)
     days.push({
-      dayOfWeek: i,
-      isActive: false,
-      startTime: "09:00",
-      endTime: "17:00",
-      hasPriceAddition: false,
-      priceAddition: { 
-        amount: 0, 
-        type: "fixed" as const,
-        description: "",
-        priceAdditionStartTime: null,
-        priceAdditionEndTime: null,
+      dayOfWeek,
+      isActive: existingDay?.isActive ?? false,
+      startTime: existingDay?.startTime ?? "09:00",
+      endTime: existingDay?.endTime ?? "17:00",
+      hasPriceAddition: existingDay?.hasPriceAddition ?? false,
+      priceAddition: {
+        amount: existingDay?.priceAddition?.amount ?? 0,
+        type: (existingDay?.priceAddition?.type as "fixed" | "percentage") ?? "fixed",
+        description: existingDay?.priceAddition?.description ?? "",
+        priceAdditionStartTime: existingDay?.priceAddition?.priceAdditionStartTime ?? null,
+        priceAdditionEndTime: existingDay?.priceAddition?.priceAdditionEndTime ?? null,
       },
-      notes: "",
-      minimumBookingAdvanceHours: 2,
-      cutoffTime: null,
-      professionalShare: { amount: 70, type: "percentage" },
+      notes: existingDay?.notes ?? "",
+      minimumBookingAdvanceHours: existingDay?.minimumBookingAdvanceHours ?? 24,
+      cutoffTime: existingDay?.cutoffTime ?? null,
+      professionalShare: {
+        type: (existingDay?.professionalShare?.type as "fixed" | "percentage") ?? "percentage",
+        amount: existingDay?.professionalShare?.amount ?? 70,
+      },
     })
   }
+
   return days
 }
 
@@ -200,7 +206,7 @@ export default function WorkingHoursClient() {
   const fixedHoursForm = useForm<FixedHoursFormData>({
     resolver: zodResolver(fixedHoursFormSchema),
     defaultValues: {
-      fixedHours: workingHoursData?.fixedHours || getDefaultFixedHours(),
+      fixedHours: workingHoursData?.fixedHours || getDefaultFixedHours(workingHoursData),
     },
   })
 

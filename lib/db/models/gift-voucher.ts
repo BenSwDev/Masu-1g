@@ -21,6 +21,7 @@ export interface GiftVoucherPlain {
   isGift: boolean
   recipientName?: string
   recipientPhone?: string
+  recipientEmail?: string
   greetingMessage?: string
   sendDate?: Date | string // Allow string for form input
   status:
@@ -67,6 +68,7 @@ export interface IGiftVoucher extends Document {
   isGift: boolean
   recipientName?: string
   recipientPhone?: string
+  recipientEmail?: string
   greetingMessage?: string
   sendDate?: Date
   status:
@@ -109,6 +111,7 @@ const GiftVoucherSchema: Schema<IGiftVoucher> = new Schema(
     isGift: { type: Boolean, default: false },
     recipientName: { type: String },
     recipientPhone: { type: String },
+    recipientEmail: { type: String },
     greetingMessage: { type: String, maxLength: 500 },
     sendDate: { type: Date },
     status: {

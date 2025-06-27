@@ -112,7 +112,7 @@ export default function ProfessionalContractTab({
             )}
             {professional.userId.phone && (
               <p>
-                <span className="font-medium">טלפון:</span> {professional.userId.phone}
+                <span className="font-medium">טלפון:</span> {formatPhoneForDisplay(professional.userId.phone || "")}
               </p>
             )}
             <p>

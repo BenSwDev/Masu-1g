@@ -34,6 +34,7 @@ interface GuestTreatmentSelectionStepProps {
   voucher?: IGiftVoucher
   userSubscription?: any
   currentUser?: any
+  setRedemptionData?: React.Dispatch<React.SetStateAction<any>>
 }
 
 export function GuestTreatmentSelectionStep({
@@ -48,6 +49,7 @@ export function GuestTreatmentSelectionStep({
   voucher,
   userSubscription,
   currentUser,
+  setRedemptionData,
 }: GuestTreatmentSelectionStepProps) {
   const { t, dir } = useTranslation()
   const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory ?? null)
@@ -77,10 +79,24 @@ export function GuestTreatmentSelectionStep({
     )
   }, [availableTreatmentsForStep, bookingOptions.selectedTreatmentId])
 
-  const showCategorySelection =
-    (bookingOptions.source === "new_purchase" ||
-      (bookingOptions.source === "gift_voucher_redemption" && voucher?.voucherType === "monetary")) &&
-    !isTreatmentLockedBySource
+  const showCategorySelection = useMemo(() => {
+    // Show category selection for new purchases
+    if (bookingOptions.source === "new_purchase" && !isTreatmentLockedBySource) {
+      return true
+    }
+    
+    // Show category selection for monetary vouchers (props-based)
+    if (bookingOptions.source === "gift_voucher_redemption" && voucher?.voucherType === "monetary" && !isTreatmentLockedBySource) {
+      return true
+    }
+    
+    // Show category selection for monetary vouchers (code-based redemption)
+    if (bookingOptions.redemptionData && bookingOptions.redemptionData.type === "monetary_voucher" && !isTreatmentLockedBySource) {
+      return true
+    }
+    
+    return false
+  }, [bookingOptions.source, bookingOptions.redemptionData, voucher?.voucherType, isTreatmentLockedBySource])
 
   // Effect to handle redemption-specific treatment locking
   useEffect(() => {
@@ -91,8 +107,13 @@ export function GuestTreatmentSelectionStep({
       const redemption = bookingOptions.redemptionData
       
       if (redemption.type === "treatment_voucher" && (redemption.data as any)?.treatmentId) {
+        // Check if treatmentId is populated object or just ID
+        const treatmentIdToFind = typeof (redemption.data as any).treatmentId === 'string' 
+          ? (redemption.data as any).treatmentId 
+          : (redemption.data as any).treatmentId?._id || (redemption.data as any).treatmentId?.toString()
+        
         const treatmentFromVoucher = (initialData.activeTreatments || []).find(
-          (t) => (t._id || t.id)?.toString() === (redemption.data as any).treatmentId?.toString(),
+          (t) => (t._id || t.id)?.toString() === treatmentIdToFind?.toString(),
         )
         if (treatmentFromVoucher) {
           setAvailableTreatmentsForStep([treatmentFromVoucher])
@@ -103,21 +124,84 @@ export function GuestTreatmentSelectionStep({
             selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
           }))
           setIsTreatmentLockedBySource(true)
+        } else if (typeof (redemption.data as any).treatmentId === 'object' && (redemption.data as any).treatmentId?.name) {
+          // If treatment is populated object but not found in activeTreatments, use it directly
+          const populatedTreatment = (redemption.data as any).treatmentId
+          setAvailableTreatmentsForStep([populatedTreatment])
+          setSelectedCategory(populatedTreatment.category || "Uncategorized")
+          setBookingOptions((prev) => ({
+            ...prev,
+            selectedTreatmentId: (populatedTreatment._id || populatedTreatment.id)?.toString(),
+            selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+          }))
+          setIsTreatmentLockedBySource(true)
         }
       } else if (redemption.type === "subscription" && (redemption.data as any)?.treatmentId) {
         const treatmentFromSub = (redemption.data as any).treatmentId
+        
+        // Handle case where treatmentId is populated object vs just ID
+        if (typeof treatmentFromSub === 'object' && treatmentFromSub?.name) {
+          setAvailableTreatmentsForStep([treatmentFromSub])
+          setSelectedCategory(treatmentFromSub.category || "Uncategorized")
+          setBookingOptions((prev) => ({
+            ...prev,
+            selectedTreatmentId: (treatmentFromSub._id || treatmentFromSub.id)?.toString(),
+            selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+          }))
+          setIsTreatmentLockedBySource(true)
+        } else {
+          // If treatmentId is just an ID, find it in activeTreatments
+          const treatmentFromActiveTreatments = (initialData.activeTreatments || []).find(
+            (t) => (t._id || t.id)?.toString() === treatmentFromSub?.toString(),
+          )
+          if (treatmentFromActiveTreatments) {
+            setAvailableTreatmentsForStep([treatmentFromActiveTreatments])
+            setSelectedCategory(treatmentFromActiveTreatments.category || "Uncategorized")
+            setBookingOptions((prev) => ({
+              ...prev,
+              selectedTreatmentId: (treatmentFromActiveTreatments._id || treatmentFromActiveTreatments.id)?.toString(),
+              selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+            }))
+            setIsTreatmentLockedBySource(true)
+          }
+        }
+      } else {
+        // Monetary voucher or coupon - show all treatments
+        setAvailableTreatmentsForStep(initialData.activeTreatments || [])
+        setIsTreatmentLockedBySource(false)
+      }
+    } else if (voucher?.voucherType === "treatment" && voucher.treatmentId) {
+      // Handle voucher passed as props (legacy flow)
+      const treatmentFromVoucher = (initialData.activeTreatments || []).find(
+        (t) => (t._id || t.id)?.toString() === voucher.treatmentId?.toString(),
+      )
+      if (treatmentFromVoucher) {
+        setAvailableTreatmentsForStep([treatmentFromVoucher])
+        setSelectedCategory(treatmentFromVoucher.category || "Uncategorized")
+        setBookingOptions((prev) => ({
+          ...prev,
+          selectedTreatmentId: (treatmentFromVoucher._id || treatmentFromVoucher.id)?.toString(),
+          selectedDurationId: voucher.selectedDurationId?.toString(),
+        }))
+        setIsTreatmentLockedBySource(true)
+      }
+    } else if (userSubscription?.treatmentId) {
+      // Handle user subscription passed as props (legacy flow)
+      const treatmentFromSub = typeof userSubscription.treatmentId === 'string' 
+        ? (initialData.activeTreatments || []).find(
+            (t) => (t._id || t.id)?.toString() === userSubscription.treatmentId?.toString(),
+          )
+        : userSubscription.treatmentId
+      
+      if (treatmentFromSub) {
         setAvailableTreatmentsForStep([treatmentFromSub])
         setSelectedCategory(treatmentFromSub.category || "Uncategorized")
         setBookingOptions((prev) => ({
           ...prev,
           selectedTreatmentId: (treatmentFromSub._id || treatmentFromSub.id)?.toString(),
-          selectedDurationId: (redemption.data as any).selectedDurationId?.toString(),
+          selectedDurationId: userSubscription.selectedDurationId?.toString(),
         }))
         setIsTreatmentLockedBySource(true)
-      } else {
-        // Monetary voucher or coupon - show all treatments
-        setAvailableTreatmentsForStep(initialData.activeTreatments || [])
-        setIsTreatmentLockedBySource(false)
       }
     } else {
       // No redemption - show all treatments
@@ -125,14 +209,53 @@ export function GuestTreatmentSelectionStep({
       setIsTreatmentLockedBySource(false)
       setSelectedCategory(initialCategory ?? null)
     }
-  }, [bookingOptions.redemptionData, initialData.activeTreatments, setBookingOptions, initialCategory])
+  }, [bookingOptions.redemptionData, voucher, userSubscription, initialData.activeTreatments, setBookingOptions, initialCategory])
 
   const availableDurations = useMemo(() => {
     if (selectedTreatment?.pricingType === "duration_based" && selectedTreatment.durations) {
-      return selectedTreatment.durations.filter((d: any) => d.isActive)
+      const activeDurations = selectedTreatment.durations.filter((d: any) => d.isActive)
+      
+      // If we have a redemption with a specific duration, only show that duration
+      if (bookingOptions.redemptionData) {
+        const redemption = bookingOptions.redemptionData
+        
+        // For treatment vouchers with specific duration
+        if (redemption.type === "treatment_voucher" && (redemption.data as any)?.selectedDurationId) {
+          const specificDuration = activeDurations.find(
+            (d: any) => (d._id || d.id)?.toString() === (redemption.data as any).selectedDurationId?.toString()
+          )
+          return specificDuration ? [specificDuration] : []
+        }
+        
+        // For subscriptions with specific duration
+        if (redemption.type === "subscription" && (redemption.data as any)?.selectedDurationId) {
+          const specificDuration = activeDurations.find(
+            (d: any) => (d._id || d.id)?.toString() === (redemption.data as any).selectedDurationId?.toString()
+          )
+          return specificDuration ? [specificDuration] : []
+        }
+      }
+      
+      // For vouchers passed as props (legacy flow)
+      if (voucher?.voucherType === "treatment" && voucher.selectedDurationId) {
+        const specificDuration = activeDurations.find(
+          (d: any) => (d._id || d.id)?.toString() === voucher.selectedDurationId?.toString()
+        )
+        return specificDuration ? [specificDuration] : []
+      }
+      
+      // For user subscriptions passed as props (legacy flow)
+      if (userSubscription?.selectedDurationId) {
+        const specificDuration = activeDurations.find(
+          (d: any) => (d._id || d.id)?.toString() === userSubscription.selectedDurationId?.toString()
+        )
+        return specificDuration ? [specificDuration] : []
+      }
+      
+      return activeDurations
     }
     return []
-  }, [selectedTreatment])
+  }, [selectedTreatment, bookingOptions.redemptionData, voucher, userSubscription])
 
   const formatPrice = (price: number) => {
     return `₪${price}`
@@ -149,6 +272,20 @@ export function GuestTreatmentSelectionStep({
     if (selectedTreatment?.allowTherapistGenderSelection && !hideGenderPreference && !bookingOptions.therapistGenderPreference) return false
     return true
   }, [bookingOptions.selectedTreatmentId, bookingOptions.selectedDurationId, bookingOptions.therapistGenderPreference, selectedTreatment])
+
+  // Auto-select duration if only one is available (locked by redemption)
+  useEffect(() => {
+    if (availableDurations.length === 1 && !bookingOptions.selectedDurationId) {
+      const singleDuration = availableDurations[0]
+      const durationId = (singleDuration._id || singleDuration.id)?.toString()
+      if (durationId) {
+        setBookingOptions((prev) => ({
+          ...prev,
+          selectedDurationId: durationId,
+        }))
+      }
+    }
+  }, [availableDurations, bookingOptions.selectedDurationId, setBookingOptions])
 
   const handleTreatmentSelect = (treatmentId: string) => {
     setBookingOptions((prev) => ({
@@ -204,6 +341,11 @@ export function GuestTreatmentSelectionStep({
             : undefined
         }))
         
+        // Update redemption data for locked fields logic
+        if (setRedemptionData) {
+          setRedemptionData(redemption)
+        }
+        
         // Clear the input
         setRedemptionCode("")
       } else {
@@ -226,6 +368,12 @@ export function GuestTreatmentSelectionStep({
       selectedUserSubscriptionId: undefined,
       appliedCouponCode: undefined
     }))
+    
+    // Clear redemption data for locked fields logic
+    if (setRedemptionData) {
+      setRedemptionData(null)
+    }
+    
     setRedemptionCode("")
     setRedemptionError(null)
   }
@@ -238,8 +386,8 @@ export function GuestTreatmentSelectionStep({
         <p className="text-muted-foreground mt-2">{t("bookings.steps.treatment.description")}</p>
       </div>
 
-      {/* Redemption Code Input - Show only when no active redemption */}
-      {!bookingOptions.redemptionData && (
+      {/* Redemption Code Input - Show only when no active redemption and no voucher/subscription passed as props */}
+      {!bookingOptions.redemptionData && !voucher && !userSubscription && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -298,7 +446,9 @@ export function GuestTreatmentSelectionStep({
                       `מנוי - נותרו: ${(bookingOptions.redemptionData.data as any)?.remainingQuantity} טיפולים`
                     )}
                     {bookingOptions.redemptionData.type === "treatment_voucher" && (
-                      `שובר טיפול - ${(bookingOptions.redemptionData.data as any)?.treatmentName}`
+                      `שובר טיפול - ${(bookingOptions.redemptionData.data as any)?.treatmentId?.name || 
+                        (bookingOptions.redemptionData.data as any)?.treatmentName || 
+                        "טיפול לא זוהה"}`
                     )}
                     {bookingOptions.redemptionData.type === "monetary_voucher" && (
                       `שובר כספי - יתרה: ${(bookingOptions.redemptionData.data as any)?.remainingAmount?.toFixed(2)} ₪`
@@ -480,45 +630,70 @@ export function GuestTreatmentSelectionStep({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              {t("treatments.selectDuration")}
+              {availableDurations.length === 1 ? "משך הטיפול" : t("treatments.selectDuration")}
             </CardTitle>
-            <CardDescription>{t("treatments.selectDurationDescription")}</CardDescription>
+            <CardDescription>
+              {availableDurations.length === 1 
+                ? "משך הטיפול נקבע לפי המנוי/שובר שנבחר" 
+                : t("treatments.selectDurationDescription")
+              }
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <RadioGroup
-              value={bookingOptions.selectedDurationId || ""}
-              onValueChange={handleDurationSelect}
-              className="space-y-4"
-            >
-              {availableDurations.map((duration: any) => {
-                const durationId = (duration._id || duration.id)?.toString()
-                
-                if (!durationId) return null // Skip durations without valid ID
-                
-                return (
-                  <Label
-                    key={durationId}
-                    htmlFor={durationId}
-                    className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}
-                  >
-                    <RadioGroupItem value={durationId} id={durationId} />
-                  <div className="flex-1 flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium">{duration.name || formatDurationString(duration.minutes || 0)}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDurationString(duration.minutes || 0)}
-                      </p>
-                    </div>
-                    {showPrice && (
-                      <div className="text-lg font-semibold text-primary">
-                        {formatPrice(duration.price || 0)}
-                      </div>
-                    )}
+            {availableDurations.length === 1 ? (
+              // Show locked duration - not selectable
+              <div className="p-4 border rounded-lg bg-muted/20">
+                <div className="flex justify-between items-center">
+                  <div>
+                                         <h4 className="font-medium">{formatDurationString(availableDurations[0].minutes || 0)}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {formatDurationString(availableDurations[0].minutes || 0)}
+                    </p>
                   </div>
-                </Label>
-                )
-              })}
-            </RadioGroup>
+                  {showPrice && (
+                    <div className="text-lg font-semibold text-primary">
+                      {formatPrice(availableDurations[0].price || 0)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              // Show selectable durations
+              <RadioGroup
+                value={bookingOptions.selectedDurationId || ""}
+                onValueChange={handleDurationSelect}
+                className="space-y-4"
+              >
+                {availableDurations.map((duration: any) => {
+                  const durationId = (duration._id || duration.id)?.toString()
+                  
+                  if (!durationId) return null // Skip durations without valid ID
+                  
+                  return (
+                    <Label
+                      key={durationId}
+                      htmlFor={durationId}
+                      className={`flex cursor-pointer items-center p-4 border rounded-lg hover:bg-muted/50 ${dir === "rtl" ? "flex-row-reverse space-x-reverse" : ""}`}
+                    >
+                      <RadioGroupItem value={durationId} id={durationId} />
+                    <div className="flex-1 flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium">{duration.name || formatDurationString(duration.minutes || 0)}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDurationString(duration.minutes || 0)}
+                        </p>
+                      </div>
+                      {showPrice && (
+                        <div className="text-lg font-semibold text-primary">
+                          {formatPrice(duration.price || 0)}
+                        </div>
+                      )}
+                    </div>
+                  </Label>
+                  )
+                })}
+              </RadioGroup>
+            )}
           </CardContent>
         </Card>
       )}

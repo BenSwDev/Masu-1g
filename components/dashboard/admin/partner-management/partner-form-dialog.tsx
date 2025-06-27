@@ -39,7 +39,7 @@ interface PartnerFormDialogProps {
 
 const formSchema = z.object({
   name: z.string().min(2),
-  email: z.string().email(),
+  email: z.string().email().optional(),
   phone: z.preprocess(v => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().min(5).optional()),
   password: z.preprocess(v => (typeof v === "string" && v === "" ? undefined : v), z.string().min(6).optional()),
   gender: z.enum(["male", "female", "other"]).default("male"),
@@ -83,7 +83,7 @@ export default function PartnerFormDialog({ isOpen, onOpenChange, initialData, o
       setLoading(true)
       const _data = new FormData()
       data.append("name", values.name)
-      data.append("email", values.email)
+      if (values.email) data.append("email", values.email)
       data.append("phone", values.phone ?? "")
       if (!initialData && values.password) data.append("password", values.password)
       data.append("gender", values.gender)
@@ -135,7 +135,7 @@ export default function PartnerFormDialog({ isOpen, onOpenChange, initialData, o
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>אימייל</FormLabel>
+                  <FormLabel>אימייל (אופציונלי)</FormLabel>
                   <FormControl>
                     <Input type="email" {...field} disabled={loading} />
                   </FormControl>

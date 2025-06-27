@@ -31,6 +31,7 @@ import { toast } from "sonner"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import type { PopulatedBooking } from "@/types/booking"
 
 interface SuitableProfessionalsModalProps {
@@ -271,7 +272,7 @@ export function SuitableProfessionalsModal({
                   <div className="text-xs text-green-700 space-y-1">
                     <div className="flex items-center gap-1">
                       <Phone className="h-3 w-3" />
-                      {(currentProfessional as any)?.phone || "לא זמין"}
+                      {formatPhoneForDisplay((currentProfessional as any)?.phone || "")}
                     </div>
                     <div className="flex items-center gap-1">
                       <Mail className="h-3 w-3" />
@@ -337,7 +338,7 @@ export function SuitableProfessionalsModal({
                         <div className="text-xs text-muted-foreground space-y-1">
                           <div className="flex items-center gap-1">
                             <Phone className="h-3 w-3" />
-                            {professional.phone || "לא זמין"}
+                            {formatPhoneForDisplay(professional.phone || "")}
                           </div>
                           <div className="flex items-center gap-1">
                             <Mail className="h-3 w-3" />

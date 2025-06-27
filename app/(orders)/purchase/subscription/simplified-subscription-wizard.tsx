@@ -16,7 +16,7 @@ import type { ITreatment } from "@/lib/db/models/treatment"
 import { getActiveSubscriptionsForPurchase, getTreatments, type SerializedSubscription, type SerializedTreatment } from "./actions"
 import { GuestInfoStep } from "@/components/booking/steps/guest-info-step"
 import { GuestPaymentStep } from "@/components/booking/steps/guest-payment-step"
-import { purchaseGuestSubscription, saveAbandonedSubscriptionPurchase } from "@/actions/user-subscription-actions"
+import { purchaseGuestSubscription, saveAbandonedSubscriptionPurchase, initiateGuestSubscriptionPurchase, confirmGuestSubscriptionPurchase } from "@/actions/user-subscription-actions"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { CalculatedPriceDetails } from "@/types/booking"
 import GuestSubscriptionConfirmation from "@/components/subscriptions/guest-subscription-confirmation"
@@ -70,6 +70,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [showPaymentSection, setShowPaymentSection] = useState(false)
+  const [pendingSubscriptionId, setPendingSubscriptionId] = useState<string | null>(null)
 
   // Load data on mount if not provided via props
   useEffect(() => {
@@ -142,6 +143,10 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     isBaseTreatmentCoveredBySubscription: false,
     isBaseTreatmentCoveredByTreatmentVoucher: false,
     isFullyCoveredByVoucherOrSubscription: false,
+    totalProfessionalPayment: 0,
+    totalOfficeCommission: totalPrice,
+    baseProfessionalPayment: 0,
+    surchargesProfessionalPayment: 0,
   }
 
   // Group treatments by category
@@ -175,11 +180,11 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
     setIsLoading(true)
     
     try {
-      const result = await purchaseGuestSubscription({
+      // Step 1: Initiate purchase (creates subscription with pending_payment status)
+      const initiateResult = await initiateGuestSubscriptionPurchase({
         subscriptionId: selectedSubscriptionId,
         treatmentId: selectedTreatmentId,
         selectedDurationId: selectedDurationId || undefined,
-        paymentMethodId: "guest",
         guestInfo: {
           name: guestInfo.firstName + " " + guestInfo.lastName,
           email: guestInfo.email,
@@ -187,20 +192,78 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
         },
       })
       
-      if (result.success && result.userSubscription) {
-        // Navigate to confirmation page with the purchased subscription ID
-        const subscriptionId = result.userSubscription._id || result.userSubscription.id
+      if (!initiateResult.success || !initiateResult.userSubscriptionId) {
+        toast({ variant: "destructive", title: "שגיאה", description: initiateResult.error || "שגיאה ביצירת המנוי" })
+        setIsLoading(false)
+        return
+      }
+
+      // Store pending subscription ID for payment confirmation
+      setPendingSubscriptionId(initiateResult.userSubscriptionId)
+      setIsLoading(false)
+      
+    } catch (error) {
+      console.error("Purchase error:", error)
+      toast({ variant: "destructive", title: "שגיאה", description: "שגיאה ברכישת המנוי" })
+      setIsLoading(false)
+    }
+  }
+
+  const handlePaymentSuccess = async () => {
+    if (!pendingSubscriptionId) return
+    setIsLoading(true)
+    
+    try {
+      const confirmResult = await confirmGuestSubscriptionPurchase({
+        subscriptionId: pendingSubscriptionId,
+        paymentId: `guest_subscription_payment_${Date.now()}`,
+        success: true,
+        guestInfo: {
+          name: guestInfo.firstName + " " + guestInfo.lastName,
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+        }
+      })
+      
+      if (confirmResult.success && confirmResult.subscription) {
+        const subscriptionId = confirmResult.subscription._id || confirmResult.subscription.id
         if (subscriptionId) {
           router.push(`/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`)
         } else {
           toast({ variant: "destructive", title: "שגיאה", description: "לא ניתן למצוא מזהה המנוי. אנא פנה לתמיכה." })
         }
       } else {
-        toast({ variant: "destructive", title: "שגיאה", description: result.error || "שגיאה ברכישת המנוי" })
+        toast({ variant: "destructive", title: "שגיאה", description: confirmResult.error || "שגיאה באישור התשלום" })
       }
     } catch (error) {
-      console.error("Purchase error:", error)
-      toast({ variant: "destructive", title: "שגיאה", description: "שגיאה ברכישת המנוי" })
+      console.error("Payment confirmation error:", error)
+      toast({ variant: "destructive", title: "שגיאה", description: "שגיאה באישור התשלום" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePaymentFailure = async () => {
+    if (!pendingSubscriptionId) return
+    setIsLoading(true)
+    
+    try {
+      await confirmGuestSubscriptionPurchase({
+        subscriptionId: pendingSubscriptionId,
+        paymentId: `guest_subscription_payment_failed_${Date.now()}`,
+        success: false,
+        guestInfo: {
+          name: guestInfo.firstName + " " + guestInfo.lastName,
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+        }
+      })
+      
+      toast({ variant: "destructive", title: "התשלום נכשל", description: "התשלום לא עבר בהצלחה. המנוי לא הופעל." })
+      setPendingSubscriptionId(null)
+    } catch (error) {
+      console.error("Payment failure handling error:", error)
+      toast({ variant: "destructive", title: "שגיאה", description: "שגיאה בטיפול בכישלון התשלום" })
     } finally {
       setIsLoading(false)
     }
@@ -222,9 +285,22 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
 
   // No longer needed as we redirect to confirmation page
 
-  const treatmentCategories = [...new Set(treatments.map(t => t.category))]
+  // Filter out undefined categories and get unique categories
+  const treatmentCategories = [...new Set(treatments.map(t => t.category).filter(Boolean))]
   const categoryTreatments = selectedCategory ? 
     treatments.filter(t => t.category === selectedCategory) : []
+
+  // Function to translate category names
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case "massages":
+        return "עיסויים"
+      case "facial_treatments":
+        return "טיפולי פנים"
+      default:
+        return category
+    }
+  }
 
   const renderStep1 = () => (
     <div className="max-w-2xl mx-auto space-y-6" dir={dir} lang={language}>
@@ -289,7 +365,7 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
                   }}
                 >
                   <div className="font-medium">
-                    {t(`treatments.categories.${category}`, category)}
+                    {getCategoryDisplayName(category)}
                   </div>
                 </div>
               ))}
@@ -381,9 +457,11 @@ export default function SimplifiedSubscriptionWizard({ subscriptions: propSubscr
                 calculatedPrice={calculatedPrice}
                 guestInfo={guestInfo}
                 setGuestInfo={setGuestInfo}
-                onConfirm={handlePurchase}
+                onConfirm={pendingSubscriptionId ? handlePaymentSuccess : handlePurchase}
                 onPrev={() => {}} // No back needed in single form
                 isLoading={isLoading}
+                pendingBookingId={pendingSubscriptionId}
+                customFailureHandler={pendingSubscriptionId ? handlePaymentFailure : undefined}
               />
             </CardContent>
           </Card>

@@ -35,36 +35,26 @@ export function AddressCard({ address, onEdit }: AddressCardProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSetDefault = async () => {
-    try {
-      setIsLoading(true)
-      const result = await setDefaultAddress(address._id.toString())
-      if (result.success) {
-        toast.success(t("addresses.setDefaultSuccess"))
-        queryClient.invalidateQueries({ queryKey: ["addresses"] })
-      } else {
-        toast.error(result.error || t("addresses.setDefaultError"))
-      }
-    } catch (error) {
-      toast.error(t("addresses.setDefaultError"))
-    } finally {
-      setIsLoading(false)
+    if (!address._id) return
+    
+    const result = await setDefaultAddress(String(address._id))
+    if (result.success) {
+      toast.success(t("addresses.setDefaultSuccess"))
+      queryClient.invalidateQueries({ queryKey: ["addresses"] })
+    } else {
+      toast.error(result.error)
     }
   }
 
   const handleDelete = async () => {
-    try {
-      setIsLoading(true)
-      const result = await deleteAddress(address._id.toString())
-      if (result.success) {
-        toast.success(t("addresses.deleteSuccess"))
-        queryClient.invalidateQueries({ queryKey: ["addresses"] })
-      } else {
-        toast.error(result.error || t("addresses.deleteError"))
-      }
-    } catch (error) {
-      toast.error(t("addresses.deleteError"))
-    } finally {
-      setIsLoading(false)
+    if (!address._id) return
+    
+    const result = await deleteAddress(String(address._id))
+    if (result.success) {
+      toast.success(t("addresses.deleteSuccess"))
+      queryClient.invalidateQueries({ queryKey: ["addresses"] })
+    } else {
+      toast.error(result.error)
     }
   }
 

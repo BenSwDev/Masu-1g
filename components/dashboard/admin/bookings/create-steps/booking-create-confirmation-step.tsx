@@ -8,6 +8,7 @@ import { Badge } from "@/components/common/ui/badge"
 import { Separator } from "@/components/common/ui/separator"
 import { CheckCircle, User, Stethoscope, Clock, MapPin, CreditCard, ArrowLeft, Send } from "lucide-react"
 import { format } from "date-fns"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface BookingCreateConfirmationStepProps {
   formData: any
@@ -132,7 +133,7 @@ export default function BookingCreateConfirmationStep({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">טלפון:</span>
-                <span className="font-medium">{formData.guestInfo.phone}</span>
+                <span className="font-medium">{formatPhoneForDisplay(formData.guestInfo.phone || "")}</span>
               </div>
             </>
           )}
@@ -147,7 +148,7 @@ export default function BookingCreateConfirmationStep({
               {formData.recipientInfo && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">טלפון מטופל:</span>
-                  <span className="font-medium">{formData.recipientInfo.phone}</span>
+                  <span className="font-medium">{formatPhoneForDisplay(formData.recipientInfo.phone || "")}</span>
                 </div>
               )}
             </>

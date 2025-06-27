@@ -8,6 +8,7 @@ import { Label } from "@/components/common/ui/label"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { sendReviewReminder } from "@/actions/review-actions"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface SendReviewDialogProps {
   booking: PopulatedBooking
@@ -58,7 +59,7 @@ export default function SendReviewDialog({ booking, open, onOpenChange, onSent }
           {booking.recipientPhone || (booking.userId as any)?.phone ? (
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
               <Checkbox id="send-sms" checked={sendSms} onCheckedChange={(v) => setSendSms(Boolean(v))} />
-              <Label htmlFor="send-sms">SMS ({booking.recipientPhone || (booking.userId as any)?.phone})</Label>
+                              <Label htmlFor="send-sms">SMS ({formatPhoneForDisplay(booking.recipientPhone || (booking.userId as any)?.phone || "")})</Label>
             </div>
           ) : null}
         </div>

@@ -4,17 +4,18 @@ import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Textarea } from "@/components/common/ui/textarea"
 import { Label } from "@/components/common/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
 import { Badge } from "@/components/common/ui/badge"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
-import { Separator } from "@/components/common/ui/separator"
 import { useToast } from "@/components/common/ui/use-toast"
-import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX } from "lucide-react"
+import { User, Save, Loader2, CheckCircle, AlertTriangle, Mail, Phone, Calendar, UserCheck, Clock, UserX, Pencil, X, MapPin, Briefcase, Shield, Eye, EyeOff } from "lucide-react"
 import { updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
+import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 
 interface ProfessionalBasicInfoTabProps extends ProfessionalTabProps {}
 
@@ -30,12 +31,12 @@ export default function ProfessionalBasicInfoTab({
   
   // Form state for creating new professional
   const [formData, setFormData] = useState({
-    name: professional?.userId?.name || "",
-    email: professional?.userId?.email || "",
-    phone: professional?.userId?.phone || "",
-    gender: professional?.userId?.gender || "male",
-    birthDate: professional?.userId?.birthDate ? 
-      new Date(professional.userId.birthDate).toISOString().split('T')[0] : "",
+    name: (typeof professional?.userId === 'object' && professional?.userId?.name) || "",
+    email: (typeof professional?.userId === 'object' && professional?.userId?.email) || "",
+    phone: (typeof professional?.userId === 'object' && professional?.userId?.phone) || "",
+    gender: (typeof professional?.userId === 'object' && professional?.userId?.gender) || "male",
+    birthDate: (typeof professional?.userId === 'object' && professional?.userId?.dateOfBirth) ? 
+      new Date(professional.userId.dateOfBirth).toISOString().split('T')[0] : "",
   })
 
   // State for status management
@@ -55,9 +56,7 @@ export default function ProfessionalBasicInfoTab({
       errors.name = "שם חייב להכיל לפחות 2 תווים"
     }
     
-    if (!formData.email.trim()) {
-      errors.email = "אימייל הוא שדה חובה"
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = "כתובת אימייל לא תקינה"
     }
     
@@ -309,7 +308,7 @@ export default function ProfessionalBasicInfoTab({
               
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
-                  אימייל *
+                  אימייל (אופציונלי)
                 </Label>
                 <div className="relative">
                   <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -323,7 +322,7 @@ export default function ProfessionalBasicInfoTab({
                         setValidationErrors(prev => ({ ...prev, email: "" }))
                       }
                     }}
-                    placeholder="example@domain.com"
+                    placeholder="example@domain.com (אופציונלי)"
                     className={`pr-10 ${validationErrors.email ? "border-red-500" : ""}`}
                   />
                 </div>
@@ -360,7 +359,7 @@ export default function ProfessionalBasicInfoTab({
                 <Label htmlFor="gender" className="text-sm font-medium">
                   מגדר *
                 </Label>
-                <Select value={formData.gender} onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}>
+                <Select value={formData.gender} onValueChange={(value: "male" | "female" | "other") => setFormData(prev => ({ ...prev, gender: value }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -391,7 +390,7 @@ export default function ProfessionalBasicInfoTab({
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
                 onClick={handleCreateProfessional}
-                disabled={creationLoading || !formData.name || !formData.email || !formData.phone}
+                disabled={creationLoading || !formData.name || !formData.phone}
                 className="flex items-center gap-2 min-w-[120px]"
               >
                 {creationLoading ? (
@@ -468,19 +467,19 @@ export default function ProfessionalBasicInfoTab({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">שם מלא</Label>
-              <p className="text-sm font-medium">{professional.userId.name}</p>
+              <p className="text-sm font-medium">{typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}</p>
             </div>
             
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">מגדר</Label>
-              <p className="text-sm">{professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}</p>
+              <p className="text-sm">{typeof professional.userId === 'object' && professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}</p>
             </div>
             
             <div className="space-y-1">
               <Label className="text-sm font-medium text-muted-foreground">אימייל</Label>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm">{professional.userId.email}</p>
+                <p className="text-sm">{typeof professional.userId === 'object' ? professional.userId.email : 'לא זמין'}</p>
               </div>
             </div>
             
@@ -488,7 +487,7 @@ export default function ProfessionalBasicInfoTab({
               <Label className="text-sm font-medium text-muted-foreground">טלפון</Label>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm">{professional.userId.phone}</p>
+                <p className="text-sm">{formatPhoneForDisplay(typeof professional.userId === 'object' ? professional.userId.phone || "" : "")}</p>
               </div>
             </div>
             
@@ -497,8 +496,8 @@ export default function ProfessionalBasicInfoTab({
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <p className="text-sm">
-                  {professional.userId.birthDate 
-                    ? formatDate(professional.userId.birthDate)
+                  {typeof professional.userId === 'object' && professional.userId.dateOfBirth 
+                    ? formatDate(professional.userId.dateOfBirth)
                     : 'לא צוין'
                   }
                 </p>

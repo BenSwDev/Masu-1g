@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { useTranslation } from "@/lib/translations/i18n"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface GuestInfo {
   firstName?: string
@@ -87,7 +88,7 @@ export default function GuestSubscriptionSummaryStep({
                 <span className="text-muted-foreground flex items-center gap-1">
                   <Phone className="h-4 w-4" /> {t("common.phone")}:
                 </span>
-                <span className="font-medium">{guestInfo.phone}</span>
+                <span className="font-medium">{formatPhoneForDisplay(guestInfo.phone || "")}</span>
               </div>
             </CardContent>
           </Card>

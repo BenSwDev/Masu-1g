@@ -1443,6 +1443,7 @@
       "passwordMismatch": "הסיסמאות אינן תואמות",
       "phoneExists": "קיים כבר חשבון עם מספר טלפון זה",
       "registrationFailed": "ההרשמה נכשלה",
+      "userUpgraded": "החשבון שלך עודכן בהצלחה ממשתמש אורח למשתמש רשום",
       "unknown": "אירעה שגיאה בלתי צפויה",
       "weakPassword": "הסיסמה חלשה מדי",
       "missingInfoTitle": "מידע חסר",
@@ -2694,7 +2695,10 @@
         "title": "פרטי מנוי משתמש",
         "treatmentSectionTitle": "פרטי טיפול",
         "usageSectionTitle": "פרטי ניצול",
-        "userSectionTitle": "פרטי משתמש"
+        "userSectionTitle": "פרטי משתמש",
+        "guestSectionTitle": "פרטי אורח",
+        "relatedBookings": "הזמנות קשורות",
+        "noRelatedBookings": "אין הזמנות קשורות למנוי זה"
       },
       "expires": "פג תוקף",
       "expiryDate": "תאריך תפוגה",
@@ -4016,7 +4020,10 @@
       "title": "פרטי מנוי",
       "treatmentSectionTitle": "פרטי טיפול",
       "usageSectionTitle": "שימושים",
-      "userSectionTitle": "פרטי משתמש"
+      "userSectionTitle": "פרטי משתמש",
+      "guestSectionTitle": "פרטי אורח",
+      "relatedBookings": "הזמנות קשורות",
+      "noRelatedBookings": "אין הזמנות קשורות למנוי זה"
     },
     "actions": {
       "cancel": "ביטול",
@@ -4072,7 +4079,8 @@
     "totalQuantity": "סה\"כ כמות",
     "transactionId": "מזהה עסקה",
     "usage": "שימוש",
-    "usedQuantity": "כמות מנוצלת"
+    "usedQuantity": "כמות מנוצלת",
+    "guest": "אורח"
   },
   "09:00": "09:00",
   "17:00": "17:00",

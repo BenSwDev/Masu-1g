@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Skeleton } from "@/components/common/ui/skeleton"
 import { useToast } from "@/components/common/ui/use-toast"
 import { Search, RefreshCw, Plus, Edit, Trash2 } from "lucide-react"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { getPartners, removePartner } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
 import PartnerFormDialog from "./partner-form-dialog"
 import PartnerProfileDialog from "./partner-profile-dialog"
@@ -166,7 +167,7 @@ export function PartnerManagement({
                   <TableRow key={p._id} className="hover:bg-muted cursor-pointer" onClick={() => setSelectedId(p._id)}>
                     <TableCell>{p.userId.name}</TableCell>
                     <TableCell>{p.userId.email}</TableCell>
-                    <TableCell>{p.userId.phone}</TableCell>
+                    <TableCell>{formatPhoneForDisplay(p.userId.phone || "")}</TableCell>
                     <TableCell>{p.businessNumber}</TableCell>
                     <TableCell>{p.contactName}</TableCell>
                     <TableCell className="space-x-2" onClick={e => e.stopPropagation()}>

@@ -26,26 +26,29 @@ import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { User as NextAuthUser } from "next-auth"
 import { useTranslation } from "@/lib/translations/i18n"
 import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
+import { useRouter } from "next/navigation"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
-interface PopulatedUserSubscription extends IUserSubscription {
-  userId?: Pick<NextAuthUser, "name" | "email"> & { _id: string } | null
-  subscriptionId: ISubscription
-  treatmentId: ITreatment
-  selectedDurationDetails?: ITreatmentDuration
-  paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId'> {
+  userId?: {
+    _id: string
+    name: string
+    email?: string // Make email optional
+  } | null
+  subscriptionId?: {
+    _id: string
+    name: string
+    description?: string
+    price: number
+    duration: number
+    treatments: string[]
+    isActive: boolean
+  }
   guestInfo?: {
     name: string
-    email: string
+    email?: string // Make email optional
     phone: string
   }
-  // Add other optional fields from the modal if they might be accessed,
-  // or ensure the base IUserSubscription is accurate.
-  // For this specific fix, only purchaseDate and expiryDate are formatted here.
-  // These are required in the schema, but defensive coding in formatDate is still good.
-  cancellationDate?: Date | string | null
-  paymentDate?: Date | string | null
-  transactionId?: string | null
-  usedQuantity?: number
 }
 
 interface UserSubscriptionRowProps {
@@ -61,41 +64,48 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
   const [showDetailsModal, setShowDetailsModal] = useState(false) // Changed from showDetailsDialog
   const [isCancelling, setIsCancelling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
 
   const handleCancel = async () => {
-    setIsCancelling(true)
-    try {
-      const result = await cancelSubscription(userSubscription._id.toString())
-      if (result.success) {
-        toast.success(t("userSubscriptions.notifications.cancelSuccess"))
-        onSubscriptionUpdate()
-      } else {
-        toast.error(result.error || t("userSubscriptions.notifications.cancelError"))
-      }
-    } catch (error) {
-      toast.error(t("userSubscriptions.notifications.cancelError"))
-    } finally {
-      setIsCancelling(false)
-      setShowCancelDialog(false)
+    if (!userSubscription._id) return
+    
+    const result = await cancelSubscription(String(userSubscription._id))
+    
+    if (result.success) {
+      toast({ 
+        title: t("common.success"), 
+        description: t("userSubscriptions.cancelSuccessToast") 
+      })
+      router.refresh()
+    } else {
+      toast({ 
+        title: t("common.error"), 
+        description: result.error || t("common.unknownError"),
+        variant: "destructive" 
+      })
     }
+    setShowCancelDialog(false)
   }
 
   const handleDelete = async () => {
-    setIsDeleting(true)
-    try {
-      const result = await deleteUserSubscription(userSubscription._id.toString())
-      if (result.success) {
-        toast.success(t("userSubscriptions.notifications.deleteSuccess"))
-        onSubscriptionUpdate()
-      } else {
-        toast.error(result.error || t("userSubscriptions.notifications.deleteError"))
-      }
-    } catch (error) {
-      toast.error(t("userSubscriptions.notifications.deleteError"))
-    } finally {
-      setIsDeleting(false)
-      setShowDeleteDialog(false)
+    if (!userSubscription._id) return
+    
+    const result = await deleteUserSubscription(String(userSubscription._id))
+    
+    if (result.success) {
+      toast({ 
+        title: t("common.success"), 
+        description: t("userSubscriptions.deleteSuccessToast") 
+      })
+      router.refresh()
+    } else {
+      toast({ 
+        title: t("common.error"), 
+        description: result.error || t("common.unknownError"),
+        variant: "destructive" 
+      })
     }
+    setShowDeleteDialog(false)
   }
 
   const handleEdit = () => {
@@ -173,7 +183,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                     </Badge>
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.email}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.phone}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}</span>
                 </>
               ) : (
                 <span className="font-medium text-gray-900 dark:text-gray-100">
@@ -193,7 +203,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                 {userSubscription.subscriptionId?.name}
               </span>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                ID: {userSubscription.subscriptionId?._id.toString().slice(-6)}
+                ID: {userSubscription.subscriptionId?._id ? String(userSubscription.subscriptionId._id).slice(-6) : "N/A"}
               </span>
             </div>
           </div>

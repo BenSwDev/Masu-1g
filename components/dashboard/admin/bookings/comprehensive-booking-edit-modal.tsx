@@ -28,6 +28,8 @@ import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getAvailableProfessionals, assignProfessionalToBooking, updateBookingByAdmin } from "@/actions/booking-actions"
+import { PhoneInput } from "@/components/common/phone-input"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 type TFunction = (key: string, options?: any) => string
 
@@ -455,10 +457,9 @@ export default function ComprehensiveBookingEditModal({
                       <Phone className="h-4 w-4" />
                       {t("adminBookings.clientPhone")}
                     </Label>
-                    <Input 
-                      type="tel"
-                      value={editedBooking.bookedByUserPhone || bookedByInfo.phone}
-                      onChange={(e) => setEditedBooking((prev: any) => ({ ...prev, bookedByUserPhone: e.target.value }))}
+                    <PhoneInput
+                      fullNumberValue={editedBooking.bookedByUserPhone || bookedByInfo.phone}
+                      onPhoneChange={(value) => setEditedBooking((prev: any) => ({ ...prev, bookedByUserPhone: value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -560,10 +561,9 @@ export default function ComprehensiveBookingEditModal({
                       </div>
                       <div className="space-y-2">
                         <Label>{t("adminBookings.recipientPhone")}</Label>
-                        <Input 
-                          type="tel"
-                          value={editedBooking.recipientPhone || booking.recipientPhone || ""}
-                          onChange={(e) => setEditedBooking((prev: any) => ({ ...prev, recipientPhone: e.target.value }))}
+                        <PhoneInput
+                          fullNumberValue={editedBooking.recipientPhone || booking.recipientPhone || ""}
+                          onPhoneChange={(value: string) => setEditedBooking((prev: any) => ({ ...prev, recipientPhone: value }))}
                         />
                       </div>
                     </div>
@@ -635,7 +635,7 @@ export default function ComprehensiveBookingEditModal({
                         {professional?.phone && (
                           <div className="flex items-center gap-2 text-green-700">
                             <Phone className="h-3 w-3" />
-                            <span>{professional.phone}</span>
+                            <span>{formatPhoneForDisplay(professional.phone || "")}</span>
                           </div>
                         )}
                         {professional?.email && (

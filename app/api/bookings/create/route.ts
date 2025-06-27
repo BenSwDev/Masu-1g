@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     await dbConnect()
 
     const mongooseDbSession = await mongoose.startSession()
-    let bookingResult: IBooking | null = null
+    let bookingResult: any = null
 
     try {
       await mongooseDbSession.withTransaction(async () => {
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
           ...validatedPayload,
           bookingNumber,
           bookedByUserName: bookingUser.name,
-          bookedByUserEmail: bookingUser.email,
+          bookedByUserEmail: bookingUser.email || undefined,
           bookedByUserPhone: bookingUser.phone,
           bookingAddressSnapshot,
           status: "pending_payment",
@@ -241,7 +241,7 @@ export async function POST(request: NextRequest) {
           if (userForNotification && treatment) {
             const { unifiedNotificationService } = await import("@/lib/notifications/unified-notification-service")
             const lang = userForNotification.notificationPreferences?.language || "he"
-            const methods = userForNotification.notificationPreferences?.methods || ["email"]
+            const methods = userForNotification.notificationPreferences?.methods || ["sms"]
             const recipients: any[] = []
 
             if (methods.includes("email") && userForNotification.email) {
@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
         } catch (notificationError) {
           logger.error("Failed to send booking notifications:", {
             error: notificationError,
-            bookingId: finalBookingObject._id.toString(),
+            bookingId: finalBookingObject.id.toString(),
           })
         }
 

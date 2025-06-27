@@ -10,6 +10,8 @@ import { Badge } from "@/components/common/ui/badge"
 import { Separator } from "@/components/common/ui/separator"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { PhoneInput } from "@/components/common/phone-input"
 import { 
   User, 
   Mail, 
@@ -111,15 +113,15 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
             <div className="space-y-2">
               <Label className="text-sm font-medium">טלפון</Label>
               {isEditing ? (
-                <Input
-                  value={booking.bookedByUserPhone || ""}
-                  onChange={(e) => onUpdate({ bookedByUserPhone: e.target.value })}
+                <PhoneInput
+                  fullNumberValue={booking.bookedByUserPhone || ""}
+                  onPhoneChange={(value) => onUpdate({ bookedByUserPhone: value })}
                   placeholder="מספר טלפון"
                 />
               ) : (
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span>{booking.bookedByUserPhone || booking.userId?.phone || "לא צוין"}</span>
+                  <span>{formatPhoneForDisplay(booking.bookedByUserPhone || booking.userId?.phone || "")}</span>
                 </div>
               )}
             </div>
@@ -193,15 +195,15 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">טלפון</Label>
                   {isEditing ? (
-                    <Input
-                      value={booking.recipientPhone || ""}
-                      onChange={(e) => onUpdate({ recipientPhone: e.target.value })}
+                    <PhoneInput
+                      fullNumberValue={booking.recipientPhone || ""}
+                      onPhoneChange={(value) => onUpdate({ recipientPhone: value })}
                       placeholder="מספר טלפון"
                     />
                   ) : (
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span>{booking.recipientPhone || "לא צוין"}</span>
+                      <span>{formatPhoneForDisplay(booking.recipientPhone || "")}</span>
                     </div>
                   )}
                 </div>

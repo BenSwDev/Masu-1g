@@ -78,69 +78,44 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
     return null
   }, [populatedTreatment, selectedDurationId])
 
-  const getBookingStatusInfo = (statusKey: PopulatedBooking["status"]) => {
-    switch (statusKey) {
-      case "pending_professional_assignment":
-        return {
-          label: t("memberBookings.status.pending_professional_assignment"),
-          icon: <Hourglass className="mr-1.5 h-4 w-4 text-amber-600" />,
-          badgeClass: "bg-amber-100 text-amber-700 border-amber-300",
-          textColor: "text-amber-700",
-        }
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending_payment":
+        return <Badge className="bg-yellow-100 text-yellow-800">{t("bookings.status.pendingPayment")}</Badge>
+      case "payment_failed":
+        return <Badge className="bg-red-100 text-red-800">{t("bookings.status.paymentFailed")}</Badge>
       case "confirmed":
-        return {
-          label: t("memberBookings.status.confirmed"),
-          icon: <CheckCircle className="mr-1.5 h-4 w-4 text-green-600" />,
-          badgeClass: "bg-green-100 text-green-700 border-green-300",
-          textColor: "text-green-700",
-        }
-      // Add professional_en_route case
+        return <Badge className="bg-blue-100 text-blue-800">{t("bookings.status.confirmed")}</Badge>
+      case "pending_professional_assignment":
+        return <Badge className="bg-orange-100 text-orange-800">{t("bookings.status.pendingProfessionalAssignment")}</Badge>
+      case "professional_assigned":
+        return <Badge className="bg-purple-100 text-purple-800">{t("bookings.status.professionalAssigned")}</Badge>
+      case "professional_accepted":
+        return <Badge className="bg-teal-100 text-teal-800">{t("bookings.status.professionalAccepted")}</Badge>
       case "professional_en_route":
-        return {
-          label: t("memberBookings.status.professional_en_route"),
-          icon: <UserCheck className="mr-1.5 h-4 w-4 text-blue-600" />,
-          badgeClass: "bg-blue-100 text-blue-700 border-blue-300",
-          textColor: "text-blue-700",
-        }
+        return <Badge className="bg-indigo-100 text-indigo-800">{t("bookings.status.professionalEnRoute")}</Badge>
+      case "in_progress":
+        return <Badge className="bg-blue-100 text-blue-800">{t("bookings.status.inProgress")}</Badge>
       case "completed":
-        return {
-          label: t("memberBookings.status.completed"),
-          icon: <CheckCircle className="mr-1.5 h-4 w-4 text-sky-600" />,
-          badgeClass: "bg-sky-100 text-sky-700 border-sky-300",
-          textColor: "text-sky-700",
-        }
+        return <Badge className="bg-green-100 text-green-800">{t("bookings.status.completed")}</Badge>
       case "cancelled_by_user":
+        return <Badge className="bg-red-100 text-red-800">{t("bookings.status.cancelledByUser")}</Badge>
       case "cancelled_by_admin":
-        return {
-          label: t(`memberBookings.status.${statusKey}`),
-          icon: <XCircle className="mr-1.5 h-4 w-4 text-red-600" />,
-          badgeClass: "bg-red-100 text-red-700 border-red-300",
-          textColor: "text-red-700",
-        }
+        return <Badge className="bg-red-100 text-red-800">{t("bookings.status.cancelledByAdmin")}</Badge>
+      case "cancelled_by_professional":
+        return <Badge className="bg-red-100 text-red-800">{t("bookings.status.cancelledByProfessional")}</Badge>
       case "no_show":
-        return {
-          label: t("memberBookings.status.no_show"),
-          icon: <UserX className="mr-1.5 h-4 w-4 text-orange-600" />, // Changed icon to UserX
-          badgeClass: "bg-orange-100 text-orange-700 border-orange-300",
-          textColor: "text-orange-700",
-        }
+        return <Badge className="bg-gray-100 text-gray-800">{t("bookings.status.noShow")}</Badge>
+      case "refunded":
+        return <Badge className="bg-gray-100 text-gray-800">{t("bookings.status.refunded")}</Badge>
       case "abandoned_pending_payment":
-        return {
-          label: t("memberBookings.status.abandoned_pending_payment") || "ננטש - ממתין לתשלום",
-          icon: <Hourglass className="mr-1.5 h-4 w-4 text-gray-600" />,
-          badgeClass: "bg-gray-100 text-gray-700 border-gray-300",
-          textColor: "text-gray-700",
-        }
+        return <Badge className="bg-gray-100 text-gray-800">{t("bookings.status.abandonedPendingPayment")}</Badge>
       default:
-        return {
-          label: t("common.status.unknown"),
-          icon: <Hourglass className="mr-1.5 h-4 w-4 text-gray-600" />,
-          badgeClass: "bg-gray-100 text-gray-700 border-gray-300",
-          textColor: "text-gray-700",
-        }
+        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>
     }
   }
-  const statusInfo = getBookingStatusInfo(status)
+
+  const statusInfo = getStatusBadge(status)
 
   const getPaymentStatusText = (statusKey: string) => {
     const key = `bookings.confirmation.paymentStatus.${statusKey.toLowerCase()}`
@@ -262,10 +237,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
         <h2 className="text-xl font-semibold text-primary">
           {t("bookingDetails.drawerTitle")} #{bookingNumber}
         </h2>
-        <Badge variant="outline" className={cn("mt-1 text-sm font-medium", statusInfo.badgeClass)}>
-          {statusInfo.icon}
-          {statusInfo.label}
-        </Badge>
+        {statusInfo}
       </div>
 
       <Card className="shadow-md">
@@ -282,7 +254,7 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
               {recipientPhone &&
                 renderDetailItem(
                   t("bookings.confirmation.recipientPhone"),
-                  recipientPhone,
+                  formatPhoneForDisplay(recipientPhone || ""),
                   <Phone className="h-4 w-4" />,
                 )}
               <Separator className="my-2" />

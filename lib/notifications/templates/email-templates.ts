@@ -33,7 +33,7 @@ export interface EmailNotificationData {
   price?: number
 }
 
-export const getEmailTemplate = (_data: EmailNotificationData, language = "en", userName?: string) => {
+export const getEmailTemplate = (data: EmailNotificationData, language = "en", userName?: string) => {
   let subject = ""
   let text = ""
   let html = ""
@@ -540,8 +540,8 @@ body {
 
     case "purchase-success":
       subject = language === "he" ? "תודה על רכישתך" : "Purchase Confirmation"
-      text = data.message
-      html = wrapHtml(`<p>${data.message}</p>`, subject)
+      text = data.message || ""
+      html = wrapHtml(`<p>${data.message || ""}</p>`, subject)
       break
 
     case "review-reminder":

@@ -16,7 +16,7 @@ export interface CachedUserProfile {
 }
 
 export function useCachedUser() {
-  const { _data: session, status } = useSession()
+  const { data: session, status } = useSession()
   const [cachedProfile, setCachedProfile] = useState<CachedUserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 

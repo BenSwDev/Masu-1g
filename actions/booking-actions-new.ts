@@ -362,20 +362,15 @@ export async function createGuestUser(guestInfo: {
   birthDate?: Date
   gender?: "male" | "female" | "other"
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
-  try {
-    const response = await fetch('/api/bookings/guest/user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(guestInfo),
-    })
-    
-    return await response.json()
-  } catch (error) {
-    return { 
-      success: false, 
-      error: "Failed to create guest user" 
-    }
-  }
+  // Use the fixed findOrCreateUserByPhone function directly
+  const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+  
+  return await findOrCreateUserByPhone(guestInfo.phone, {
+    name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+    email: guestInfo.email,
+    gender: guestInfo.gender,
+    dateOfBirth: guestInfo.birthDate,
+  })
 }
 
 export async function saveAbandonedBooking(

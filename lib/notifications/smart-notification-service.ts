@@ -6,7 +6,7 @@ import dbConnect from "@/lib/db/mongoose"
 
 interface UserNotificationProfile {
   userId: string
-  email: string
+  email?: string
   phone?: string
   preferences: INotificationPreferences
   name?: string
@@ -57,7 +57,7 @@ export class SmartNotificationService {
     const recipients: NotificationRecipient[] = []
 
     profile.preferences.methods.forEach(method => {
-      if (method === "email") {
+      if (method === "email" && profile.email) {
         recipients.push({
           type: "email",
           value: profile.email,
@@ -194,7 +194,7 @@ export class SmartNotificationService {
    * Send to guest user (no preferences, use defaults)
    */
   async sendToGuest(
-    email: string, 
+    email: string | null, 
     phone: string | null, 
     data: NotificationData,
     language: "he" | "en" | "ru" = "he",
@@ -202,13 +202,15 @@ export class SmartNotificationService {
   ): Promise<NotificationResult[]> {
     const recipients: NotificationRecipient[] = []
     
-    // Always send to email for guests
-    recipients.push({
-      type: "email",
-      value: email,
-      name,
-      language
-    })
+    // Always send to email for guests if email provided
+    if (email) {
+      recipients.push({
+        type: "email",
+        value: email,
+        name,
+        language
+      })
+    }
 
     // Send to phone if provided
     if (phone) {
@@ -235,21 +237,26 @@ export class SmartNotificationService {
       return [{ success: false, error: "Professional not found or has no contact information" }]
     }
 
-    const recipients: NotificationRecipient[] = [
-      {
+    const recipients: NotificationRecipient[] = []
+    
+    // Add email recipient if available
+    if (profile.email) {
+      recipients.push({
         type: "email",
         value: profile.email,
         name: profile.name,
         language: profile.preferences.language
-      },
-      {
-        type: "phone",
-        value: profile.phone,
-        language: profile.preferences.language
-      }
-    ]
+      })
+    }
+    
+    // Always add phone recipient for professionals
+    recipients.push({
+      type: "phone",
+      value: profile.phone,
+      language: profile.preferences.language
+    })
 
-    logger.info(`Sending professional notification to ${professionalId} via email and SMS`)
+    logger.info(`Sending professional notification to ${professionalId} via ${recipients.map(r => r.type).join(' and ')}`)
     return await unifiedNotificationService.sendNotificationToMultiple(recipients, data)
   }
 

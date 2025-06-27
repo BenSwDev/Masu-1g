@@ -71,6 +71,7 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
   const [guestInfo, setGuestInfo] = useState<any>({})
   const [guestUserId, setGuestUserId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [pendingSubscriptionId, setPendingSubscriptionId] = useState<string | null>(null)
 
   // Load data on mount if not provided via props
   useEffect(() => {
@@ -158,9 +159,22 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
     return acc
   }, {} as Record<string, ITreatment[]>)
 
-  const treatmentCategories = [...new Set(treatments.map(t => t.category))]
+  // Filter out undefined categories and get unique categories
+  const treatmentCategories = [...new Set(treatments.map(t => t.category).filter(Boolean))]
   const categoryTreatments = selectedCategory ? 
     treatments.filter(t => t.category === selectedCategory) : []
+
+  // Function to translate category names
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case "massages":
+        return "עיסויים"
+      case "facial_treatments":
+        return "טיפולי פנים"
+      default:
+        return category
+    }
+  }
 
   // Wizard navigation
   const nextStep = () => setCurrentStep(s => Math.min(s + 1, 3))
@@ -168,19 +182,6 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
 
   const handleGuestInfoSubmit = async (info: any) => {
     setGuestInfo(info)
-    if (!guestUserId) {
-      const result = await createGuestUser({
-        firstName: info.firstName,
-        lastName: info.lastName,
-        email: info.email,
-        phone: info.phone,
-        birthDate: info.birthDate,
-        gender: info.gender,
-      })
-      if (result.success && result.userId) {
-        setGuestUserId(result.userId)
-      }
-    }
     nextStep()
   }
 
@@ -189,11 +190,12 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
     setIsLoading(true)
     
     try {
-      const result = await purchaseGuestSubscription({
+      // Step 1: Initiate purchase (creates subscription with pending_payment status)
+      const { initiateGuestSubscriptionPurchase } = await import("@/actions/user-subscription-actions")
+      const initiateResult = await initiateGuestSubscriptionPurchase({
         subscriptionId: selectedSubscriptionId,
         treatmentId: selectedTreatmentId,
         selectedDurationId: selectedDurationId || undefined,
-        paymentMethodId: "guest",
         guestInfo: {
           name: guestInfo.firstName + " " + guestInfo.lastName,
           email: guestInfo.email,
@@ -201,20 +203,80 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
         },
       })
       
-      if (result.success && result.userSubscription) {
-        // Navigate to confirmation page with the purchased subscription ID
-        const subscriptionId = result.userSubscription._id || result.userSubscription.id
+      if (!initiateResult.success || !initiateResult.userSubscriptionId) {
+        toast({ variant: "destructive", title: "שגיאה", description: initiateResult.error || "שגיאה ביצירת המנוי" })
+        setIsLoading(false)
+        return
+      }
+
+      // Store pending subscription ID and move to payment step
+      setPendingSubscriptionId(initiateResult.userSubscriptionId)
+      setIsLoading(false)
+      
+    } catch (error) {
+      console.error("Purchase error:", error)
+      toast({ variant: "destructive", title: "שגיאה", description: "שגיאה ברכישת המנוי" })
+      setIsLoading(false)
+    }
+  }
+
+  const handlePaymentSuccess = async () => {
+    if (!pendingSubscriptionId) return
+    setIsLoading(true)
+    
+    try {
+      const { confirmGuestSubscriptionPurchase } = await import("@/actions/user-subscription-actions")
+      const confirmResult = await confirmGuestSubscriptionPurchase({
+        subscriptionId: pendingSubscriptionId,
+        paymentId: `guest_subscription_payment_${Date.now()}`,
+        success: true,
+        guestInfo: {
+          name: guestInfo.firstName + " " + guestInfo.lastName,
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+        }
+      })
+      
+      if (confirmResult.success && confirmResult.subscription) {
+        const subscriptionId = confirmResult.subscription._id || confirmResult.subscription.id
         if (subscriptionId) {
           router.push(`/purchase/subscription/confirmation?subscriptionId=${subscriptionId}&status=success`)
         } else {
           toast({ variant: "destructive", title: "שגיאה", description: "לא ניתן למצוא מזהה המנוי. אנא פנה לתמיכה." })
         }
       } else {
-        toast({ variant: "destructive", title: "שגיאה", description: result.error || "שגיאה ברכישת המנוי" })
+        toast({ variant: "destructive", title: "שגיאה", description: confirmResult.error || "שגיאה באישור התשלום" })
       }
     } catch (error) {
-      console.error("Purchase error:", error)
-      toast({ variant: "destructive", title: "שגיאה", description: "שגיאה ברכישת המנוי" })
+      console.error("Payment confirmation error:", error)
+      toast({ variant: "destructive", title: "שגיאה", description: "שגיאה באישור התשלום" })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePaymentFailure = async () => {
+    if (!pendingSubscriptionId) return
+    setIsLoading(true)
+    
+    try {
+      const { confirmGuestSubscriptionPurchase } = await import("@/actions/user-subscription-actions")
+      await confirmGuestSubscriptionPurchase({
+        subscriptionId: pendingSubscriptionId,
+        paymentId: `guest_subscription_payment_failed_${Date.now()}`,
+        success: false,
+        guestInfo: {
+          name: guestInfo.firstName + " " + guestInfo.lastName,
+          email: guestInfo.email,
+          phone: guestInfo.phone,
+        }
+      })
+      
+      toast({ variant: "destructive", title: "התשלום נכשל", description: "התשלום לא עבר בהצלחה. המנוי לא הופעל." })
+      setPendingSubscriptionId(null)
+    } catch (error) {
+      console.error("Payment failure handling error:", error)
+      toast({ variant: "destructive", title: "שגיאה", description: "שגיאה בטיפול בכישלון התשלום" })
     } finally {
       setIsLoading(false)
     }
@@ -305,7 +367,7 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
               <SelectContent>
                 {treatmentCategories.map((category) => (
                   <SelectItem key={category} value={category}>
-                    {category}
+                    {getCategoryDisplayName(category)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -444,9 +506,11 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
             calculatedPrice={calculatedPrice}
             guestInfo={guestInfo}
             setGuestInfo={setGuestInfo}
-            onConfirm={handlePurchase}
+            onConfirm={pendingSubscriptionId ? handlePaymentSuccess : handlePurchase}
             onPrev={prevStep}
             isLoading={isLoading}
+            pendingBookingId={pendingSubscriptionId}
+            customFailureHandler={pendingSubscriptionId ? handlePaymentFailure : undefined}
           />
         </CardContent>
       </Card>

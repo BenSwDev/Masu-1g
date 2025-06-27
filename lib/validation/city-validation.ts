@@ -33,7 +33,7 @@ async function getActiveCities(): Promise<Set<string>> {
       return new Set()
     }
     const cities = await City.find({ isActive: true }).select('name').lean()
-    activeCitiesCache = new Set(cities.map(city => city.name))
+    activeCitiesCache = new Set(cities.map((city: any) => city.name))
     cacheTimestamp = now
     return activeCitiesCache
   } catch (error) {

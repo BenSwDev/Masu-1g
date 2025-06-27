@@ -39,22 +39,94 @@ import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { User as NextAuthUser } from "next-auth"
 import { useTranslation } from "@/lib/translations/i18n"
 import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
+import { useRouter } from "next/navigation"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
-interface PopulatedUserSubscription extends IUserSubscription {
-  userId?: Pick<NextAuthUser, "name" | "email"> & { _id: string } | null
-  subscriptionId: ISubscription
-  treatmentId: ITreatment
-  selectedDurationDetails?: ITreatmentDuration
-  paymentMethodId: { _id: string; cardName?: string; cardNumber: string }
+interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> {
+  userId?: {
+    _id: string
+    name: string
+    email?: string
+  } | null
+  subscriptionId: {
+    _id: string
+    name: string
+    description?: string
+    price: number
+    duration: number
+    treatments: string[]
+    isActive: boolean
+  }
+  treatmentId: {
+    _id: string
+    name: string
+    price: number
+    durations: Array<{
+      _id: string
+      minutes: number
+      price: number
+    }>
+  }
+  paymentMethodId?: {
+    _id: string
+    cardName: string
+    cardNumber: string
+  } | null
+  selectedDurationDetails?: {
+    minutes: number
+    price: number
+  }
   guestInfo?: {
     name: string
-    email: string
+    email?: string
     phone: string
   }
-  cancellationDate?: Date | string | null
-  paymentDate?: Date | string | null
-  transactionId?: string | null
+}
+
+// Type compatible with the modal component
+type ModalCompatibleUserSubscription = Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> & {
+  userId?: {
+    _id: string
+    name: string
+    email?: string
+  } | null
+  subscriptionId?: {
+    _id: string
+    name: string
+    description?: string
+    price: number
+    duration: number
+    treatments: string[]
+    isActive: boolean
+  }
+  treatmentId?: {
+    _id: string
+    name: string
+    price: number
+    durations: Array<{
+      _id: string
+      minutes: number
+      price: number
+    }>
+  }
+  paymentMethodId?: {
+    _id: string
+    cardName: string
+    cardNumber: string
+  } | null
+  selectedDurationDetails?: {
+    minutes: number
+    price: number
+  }
   usedQuantity?: number
+  cancellationDate?: Date
+  paymentDate?: Date
+  transactionId?: string
+  guestInfo?: {
+    name: string
+    email?: string
+    phone: string
+  }
 }
 
 interface UserSubscriptionAdminCardProps {
@@ -74,41 +146,34 @@ export default function UserSubscriptionAdminCard({
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [isCancelling, setIsCancelling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
 
   const handleCancel = async () => {
-    setIsCancelling(true)
-    try {
-      const result = await cancelSubscription(userSubscription._id.toString())
-      if (result.success) {
-        toast.success(t("userSubscriptions.notifications.cancelSuccess"))
-        onSubscriptionUpdate()
-      } else {
-        toast.error(result.error || t("userSubscriptions.notifications.cancelError"))
-      }
-    } catch (error) {
-      toast.error(t("userSubscriptions.notifications.cancelError"))
-    } finally {
-      setIsCancelling(false)
-      setShowCancelDialog(false)
+    if (!userSubscription._id) return
+    
+    const result = await cancelSubscription(String(userSubscription._id))
+    
+    if (result.success) {
+      toast.success(t("common.success"))
+      router.refresh()
+    } else {
+      toast.error(t("common.error"))
     }
+    setShowCancelDialog(false)
   }
 
   const handleDelete = async () => {
-    setIsDeleting(true)
-    try {
-      const result = await deleteUserSubscription(userSubscription._id.toString())
-      if (result.success) {
-        toast.success(t("userSubscriptions.notifications.deleteSuccess"))
-        onSubscriptionUpdate()
-      } else {
-        toast.error(result.error || t("userSubscriptions.notifications.deleteError"))
-      }
-    } catch (error) {
-      toast.error(t("userSubscriptions.notifications.deleteError"))
-    } finally {
-      setIsDeleting(false)
-      setShowDeleteDialog(false)
+    if (!userSubscription._id) return
+    
+    const result = await deleteUserSubscription(String(userSubscription._id))
+    
+    if (result.success) {
+      toast.success(t("common.success"))
+      router.refresh()
+    } else {
+      toast.error(t("common.error"))
     }
+    setShowDeleteDialog(false)
   }
 
   const handleEdit = () => {
@@ -151,6 +216,13 @@ export default function UserSubscriptionAdminCard({
   const formatDate = (date: Date | string) => format(new Date(date), "dd/MM/yy", { locale: he })
   const usagePercentage = (userSubscription.remainingQuantity / userSubscription.totalQuantity) * 100
 
+  // Convert to modal-compatible format
+  const modalCompatibleSubscription: ModalCompatibleUserSubscription = {
+    ...userSubscription,
+    subscriptionId: userSubscription.subscriptionId,
+    treatmentId: userSubscription.treatmentId,
+  }
+
   return (
     <TooltipProvider>
       <Card className="shadow-md hover:shadow-lg transition-shadow">
@@ -171,7 +243,7 @@ export default function UserSubscriptionAdminCard({
                     </Badge>
                   </CardTitle>
                   <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.email}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{userSubscription.guestInfo.phone}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{formatPhoneForDisplay(userSubscription.guestInfo.phone || "")}</p>
                 </>
               ) : (
                 <CardTitle className="text-lg mb-1">{t("common.unknownUser")}</CardTitle>
@@ -192,7 +264,7 @@ export default function UserSubscriptionAdminCard({
             <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 mt-1">
               <User className="h-4 w-4 text-blue-600 dark:text-blue-400" /> {/* Assuming treatment icon */}
               <span>
-                {userSubscription.treatmentId?.name} ({userSubscription.selectedDurationDetails?.minutes}{" "}
+                {userSubscription.treatmentId.name} ({userSubscription.selectedDurationDetails?.minutes}{" "}
                 {t("common.minutes")})
               </span>
             </div>
@@ -297,7 +369,7 @@ export default function UserSubscriptionAdminCard({
       <UserSubscriptionDetailsModal
         isOpen={showDetailsModal}
         onOpenChange={setShowDetailsModal}
-        userSubscription={userSubscription}
+        userSubscription={modalCompatibleSubscription}
       />
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
@@ -305,9 +377,7 @@ export default function UserSubscriptionAdminCard({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.cancelDialog.description", {
-                userName: userSubscription.userId?.name || t("common.thisUser"),
-              })}
+              {t("userSubscriptions.cancelDialog.description")} {userSubscription.userId?.name || t("common.thisUser")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -335,9 +405,7 @@ export default function UserSubscriptionAdminCard({
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.deleteDialog.description", {
-                userName: userSubscription.userId?.name || t("common.thisUser"),
-              })}
+              {t("userSubscriptions.deleteDialog.description")} {userSubscription.userId?.name || t("common.thisUser")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

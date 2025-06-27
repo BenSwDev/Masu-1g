@@ -153,45 +153,59 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
             <TooltipTrigger asChild>
               <div className="flex items-center">
                 <UserCircle className="h-4 w-4 mr-1 text-gray-600" />
-                {voucher.ownerName || 
-                 (voucher.ownerUserId ? voucher.ownerUserId : 
-                  `${t("userSubscriptions.guest")}: ${(voucher as any).guestInfo?.name || t("common.unknown")}`)}
+                {/* Display Owner (for gifts this is the recipient) */}
+                {voucher.isGift ? (
+                  <div className="flex items-center gap-1">
+                    <span>{voucher.recipientName || voucher.ownerName || t("common.unknown")}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {t("giftVouchers.myVouchers.giftedTo")}
+                    </Badge>
+                  </div>
+                ) : (
+                  <span>{voucher.ownerName || (voucher.ownerUserId ? voucher.ownerUserId : `${t("userSubscriptions.guest")}: ${(voucher as any).guestInfo?.name || t("common.unknown")}`)}</span>
+                )}
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              {voucher.ownerName ? (
+              {voucher.isGift ? (
                 <>
                   <p>
-                    {t("giftVouchers.fields.owner")}: {voucher.ownerName}
+                    {t("giftVouchers.fields.recipientName")}: {voucher.recipientName || t("common.unknown")}
                   </p>
                   <p>
-                    {t("giftVouchers.fields.owner")}: {voucher.ownerUserId}
-                  </p>
-                </>
-              ) : (voucher as any).guestInfo ? (
-                <>
-                  <p>
-                    {t("giftVouchers.fields.owner")}: {(voucher as any).guestInfo.name} ({t("userSubscriptions.guest")})
+                    {t("common.phone")}: {formatPhoneForDisplay(voucher.recipientPhone || "")}
                   </p>
                   <p>
-                    {t("common.email")}: {(voucher as any).guestInfo.email}
-                  </p>
-                  <p>
-                    {t("common.phone")}: {(voucher as any).guestInfo.phone}
+                    {t("giftVouchers.fields.purchaser")}: {voucher.purchaserName || t("common.unknown")}
                   </p>
                 </>
               ) : (
-                <p>{t("giftVouchers.fields.owner")}: {t("common.unknown")}</p>
-              )}
-              {voucher.isGift && voucher.purchaserName && (
-                <p>
-                  {t("giftVouchers.fields.purchaser")}: {voucher.purchaserName}
-                </p>
-              )}
-              {voucher.isGift && voucher.recipientName && (
-                <p>
-                  {t("giftVouchers.fields.recipientName")}: {voucher.recipientName}
-                </p>
+                <>
+                  {voucher.ownerName ? (
+                    <>
+                      <p>
+                        {t("giftVouchers.fields.owner")}: {voucher.ownerName}
+                      </p>
+                      <p>
+                        {t("common.id")}: {voucher.ownerUserId}
+                      </p>
+                    </>
+                  ) : (voucher as any).guestInfo ? (
+                    <>
+                      <p>
+                        {t("giftVouchers.fields.owner")}: {(voucher as any).guestInfo.name} ({t("userSubscriptions.guest")})
+                      </p>
+                      <p>
+                        {t("common.email")}: {(voucher as any).guestInfo.email}
+                      </p>
+                      <p>
+                        {t("common.phone")}: {formatPhoneForDisplay((voucher as any).guestInfo.phone || "")}
+                      </p>
+                    </>
+                  ) : (
+                    <p>{t("giftVouchers.fields.owner")}: {t("common.unknown")}</p>
+                  )}
+                </>
               )}
             </TooltipContent>
           </Tooltip>

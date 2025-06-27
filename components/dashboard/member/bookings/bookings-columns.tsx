@@ -5,6 +5,7 @@ import { Button } from "@/components/common/ui/button"
 import { Badge } from "@/components/common/ui/badge"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
 import { 
@@ -51,7 +52,7 @@ const ReviewAction = ({ booking, t }: { booking: PopulatedBooking; t: TFunction 
   const canReview = booking.status === "completed"
 
   // Fetch existing review if any
-  const { _data: existingReview, refetch, isLoading, error } = useQuery({
+  const { data: existingReview, refetch, isLoading, error } = useQuery({
     queryKey: ["review", booking._id],
     queryFn: () => getReviewByBookingId(booking._id.toString()),
     enabled: canReview,
@@ -498,7 +499,7 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
               <div className="space-y-1">
                 <div className="font-medium text-gray-900">{booking.recipientName}</div>
                 {booking.recipientPhone && (
-                  <div className="text-xs text-gray-600">{booking.recipientPhone}</div>
+                  <div className="text-xs text-gray-600">{formatPhoneForDisplay(booking.recipientPhone || "")}</div>
                 )}
                 <div className="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded">
                   {t("memberBookings.table.bookingForOther")}

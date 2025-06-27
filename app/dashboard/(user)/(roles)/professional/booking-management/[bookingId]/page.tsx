@@ -18,6 +18,7 @@ import {
   professionalMarkCompleted,
 } from "@/actions/booking-actions"
 import { useTranslation } from "@/lib/translations/i18n" // ודא שהנתיב נכון
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { AlertCircle, CheckCircle2, Hourglass, Send, Check, X } from "lucide-react"
 
 // Helper function to format date and time
@@ -39,7 +40,7 @@ const formatDateTime = (dateString: string | Date | undefined, locale = "he-IL")
 export default function ProfessionalBookingManagementPage() {
   const params = useParams()
   const router = useRouter()
-  const { _data: session, status: sessionStatus } = useSession()
+  const { data: session, status: sessionStatus } = useSession()
   const { toast } = useToast()
   const { t, language } = useTranslation()
 
@@ -274,7 +275,7 @@ export default function ProfessionalBookingManagementPage() {
                 <strong>{t("professionalBookingManagement.clientDetails.name")}:</strong> {clientName}
               </p>
               <p>
-                <strong>{t("professionalBookingManagement.clientDetails.phone")}:</strong> {clientPhone}
+                <strong>{t("professionalBookingManagement.clientDetails.phone")}:</strong> {formatPhoneForDisplay(clientPhone || "")}
               </p>
               <p>
                 <strong>{t("professionalBookingManagement.clientDetails.email")}:</strong> {clientEmail}
@@ -297,9 +298,7 @@ export default function ProfessionalBookingManagementPage() {
               <X className="h-4 w-4" />
               <AlertTitle>{t("professionalBookingManagement.status.alreadyAssigned.title")}</AlertTitle>
               <AlertDescription>
-                {t("professionalBookingManagement.status.alreadyAssigned.description", {
-                  professionalName: booking.professionalId?.name || t("common.anotherProfessional"),
-                })}
+                {t("professionalBookingManagement.status.alreadyAssigned.description")}
               </AlertDescription>
             </Alert>
           )}

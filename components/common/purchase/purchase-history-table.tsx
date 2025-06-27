@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import {
   Table,
   TableBody,
@@ -371,7 +372,7 @@ export default function PurchaseHistoryTable({
                   <p className="text-sm text-muted-foreground">
                     {t('purchaseHistory.voucherDetails.recipientPhone') || 'טלפון המקבל'}:
                   </p>
-                  <p className="font-medium">{voucherDetails.recipientPhone || 'לא צוין'}</p>
+                  <p className="font-medium">{formatPhoneForDisplay(voucherDetails.recipientPhone || "")}</p>
                 </div>
               </>
             )}

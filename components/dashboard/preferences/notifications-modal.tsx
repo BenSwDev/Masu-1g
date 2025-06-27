@@ -20,7 +20,7 @@ interface NotificationsModalProps {
   currentPreferences: INotificationPreferences | undefined
 }
 
-const defaultPrefs: INotificationPreferences = { methods: ["email", "sms"], language: "he" }
+const defaultPrefs: INotificationPreferences = { methods: ["sms", "email"], language: "he" }
 
 export function NotificationsModal({ isOpen, onClose, currentPreferences }: NotificationsModalProps) {
   const [selectedMethods, setSelectedMethods] = useState<INotificationPreferences["methods"]>(
@@ -31,7 +31,7 @@ export function NotificationsModal({ isOpen, onClose, currentPreferences }: Noti
   )
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
-  const { _data: session, update: updateSession } = useSession()
+  const { data: session, update: updateSession } = useSession()
   const { t, dir } = useTranslation() // Correctly destructure dir
 
   useEffect(() => {

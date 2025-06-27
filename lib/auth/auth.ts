@@ -61,31 +61,16 @@ export function validateEmail(email: string): boolean {
 }
 
 export function validatePhone(phone: string): boolean {
-  let cleaned = phone.replace(/[^\d+]/g, "")
-  if (!cleaned.startsWith("+")) {
-    if (cleaned.startsWith("0")) {
-      cleaned = "+972" + cleaned.substring(1)
-    } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-      cleaned = "+972" + cleaned
-    } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-      cleaned = "+" + cleaned
-    } else if (cleaned.length === 10 && /^[5-9]/.test(cleaned)) {
-      cleaned = "+972" + cleaned
-    } else {
-      cleaned = "+972" + cleaned
+  // Use the centralized phone validation
+  try {
+    const { validatePhoneNumber } = require("@/lib/utils/phone-utils")
+    return validatePhoneNumber(phone)
+  } catch {
+    // Fallback validation if import fails
+    if (!phone) return false
+    const cleaned = phone.replace(/[^\d+]/g, "")
+    return cleaned.startsWith("+") && cleaned.length >= 9 && cleaned.length <= 15
     }
-  } else {
-    if (cleaned.startsWith("+9720")) {
-      cleaned = "+972" + cleaned.substring(5)
-    }
-  }
-  if (cleaned.startsWith("+972")) {
-    const nationalNumber = cleaned.substring(4)
-    if (!nationalNumber.startsWith("5") || nationalNumber.length !== 9) {
-      return false
-    }
-  }
-  return true
 }
 
 // Helper function to determine the default active role based on priority
@@ -99,7 +84,7 @@ function getDefaultActiveRole(roles: string[]): string {
 }
 
 const defaultTreatmentPreferences: ITreatmentPreferences = { therapistGender: "any" }
-const defaultNotificationPreferences: INotificationPreferences = { methods: ["email", "sms"], language: "he" }
+const defaultNotificationPreferences: INotificationPreferences = { methods: ["sms", "email"], language: "he" }
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise) as any,
@@ -107,38 +92,25 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        phone: { label: "Phone", type: "tel" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing email or password")
+        if (!credentials?.phone || !credentials?.password) {
+          throw new Error("Missing phone or password")
         }
         await dbConnect()
-        const identifier = credentials.email.toLowerCase().trim()
+        const identifier = credentials.phone.toLowerCase().trim()
         let query: any = {}
-        if (validateEmail(identifier)) {
-          query = { email: identifier }
-        } else if (validatePhone(identifier)) {
-          let cleaned = identifier.replace(/[^\d+]/g, "")
-          if (!cleaned.startsWith("+")) {
-            if (cleaned.startsWith("0")) {
-              cleaned = "+972" + cleaned.substring(1)
-            } else if (cleaned.length === 9 && /^[5-9]/.test(cleaned)) {
-              cleaned = "+972" + cleaned
-            } else if (cleaned.length === 10 && cleaned.startsWith("972")) {
-              cleaned = "+" + cleaned
-            } else {
-              cleaned = "+972" + cleaned
-            }
-          }
-          if (cleaned.startsWith("+9720")) {
-            cleaned = "+972" + cleaned.substring(5)
-          }
+        
+        if (validatePhone(identifier)) {
+          const { normalizePhoneNumber } = await import("@/lib/utils/phone-utils")
+          const cleaned = normalizePhoneNumber(identifier)
           query = { phone: cleaned }
         } else {
-          throw new Error("Invalid email or phone format")
+          throw new Error("Invalid phone format - only phone login is supported")
         }
+        
         const user = (await User.findOne(query).select(
           "+password email name image roles activeRole treatmentPreferences notificationPreferences",
         )) as CustomUser // Include preferences and activeRole

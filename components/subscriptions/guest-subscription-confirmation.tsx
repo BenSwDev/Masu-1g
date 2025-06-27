@@ -71,7 +71,6 @@ export default function GuestSubscriptionConfirmation({
   const purchaseDate = userSubscription.purchaseDate
   const expiryDate = userSubscription.expiryDate
   const subscriptionCode = userSubscription.subscriptionCode
-  const redeemLink = userSubscription.redeemLink
 
   const totalSessions = subscription.quantity + subscription.bonusQuantity
 

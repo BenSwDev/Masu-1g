@@ -21,8 +21,8 @@ export interface INotificationPreferences {
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId
   name: string
-  email: string
-  phone?: string
+  email?: string
+  phone: string
   password?: string
   gender?: "male" | "female" | "other"
   dateOfBirth?: Date
@@ -48,14 +48,14 @@ const UserSchema: Schema = new Schema(
     },
     email: {
       type: String,
-      required: [true, "Email is required"],
-      unique: true,
+      required: false,
       lowercase: true,
       trim: true,
     },
     phone: {
       type: String,
-      required: false,
+      required: true,
+      unique: true,
       trim: true,
     },
     password: {
@@ -137,13 +137,13 @@ UserSchema.pre("save", function (next) {
     this.treatmentPreferences = { therapistGender: "any" }
   }
   if (this.isNew || !this.notificationPreferences) {
-    this.notificationPreferences = { methods: ["email", "sms"], language: "he" }
+    this.notificationPreferences = { methods: ["sms", "email"], language: "he" }
   }
   if (this.treatmentPreferences && (this.treatmentPreferences as any).therapistGender === undefined) {
     (this.treatmentPreferences as any).therapistGender = "any"
   }
   if (this.notificationPreferences && (this.notificationPreferences as any).methods === undefined) {
-    (this.notificationPreferences as any).methods = ["email", "sms"]
+    (this.notificationPreferences as any).methods = ["sms", "email"]
   }
   if (this.notificationPreferences && (this.notificationPreferences as any).language === undefined) {
     (this.notificationPreferences as any).language = "he"

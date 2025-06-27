@@ -39,7 +39,7 @@ export class NotificationManager {
 
     // In development mode, just log the notification
     if (this.isDevelopment) {
-      logNotification(recipient.type === "email" ? "email" : "sms", recipient.value, data)
+      logNotification(recipient.type === "email" ? "email" : "sms", recipient.value, data as unknown as Record<string, unknown>)
       logger.info(`[${logId}] Development mode - notification logged only`)
       return { success: true, messageId: `dev_${logId}` }
     }

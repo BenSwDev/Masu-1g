@@ -10,13 +10,14 @@ export interface IUserSubscription extends Document {
   expiryDate: Date
   totalQuantity: number // Total sessions including bonus
   remainingQuantity: number
-  status: "active" | "expired" | "depleted" | "cancelled"
+  status: "active" | "expired" | "depleted" | "cancelled" | "pending_payment"
   paymentMethodId?: mongoose.Types.ObjectId // Ref to PaymentMethod model - optional for guest purchases
+  paymentId?: string // Payment transaction ID from payment provider
   paymentAmount: number // Total amount paid for this subscription package
   pricePerSession?: number // Price of a single session at the time of purchase
   guestInfo?: { // Guest information for non-user purchases
     name: string
-    email: string
+    email?: string
     phone: string
   }
   createdAt: Date
@@ -75,14 +76,18 @@ const UserSubscriptionSchema = new Schema<IUserSubscription>(
     status: {
       type: String,
       required: true,
-      enum: ["active", "expired", "depleted", "cancelled"],
-      default: "active",
+      enum: ["active", "expired", "depleted", "cancelled", "pending_payment"],
+      default: "pending_payment", // Default to pending payment for new purchases
       index: true,
     },
     paymentMethodId: {
       type: Schema.Types.ObjectId,
       ref: "PaymentMethod",
       required: false, // Made optional for guest purchases
+    },
+    paymentId: {
+      type: String,
+      required: false, // Payment transaction ID from payment provider
     },
     paymentAmount: {
       // Total price paid for the subscription package
@@ -100,7 +105,7 @@ const UserSubscriptionSchema = new Schema<IUserSubscription>(
       // Guest information for non-user purchases
       type: {
         name: { type: String, required: true },
-        email: { type: String, required: true },
+        email: { type: String, required: false },
         phone: { type: String, required: true },
       },
       required: false,

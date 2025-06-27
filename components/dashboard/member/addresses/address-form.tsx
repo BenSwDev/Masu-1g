@@ -34,55 +34,54 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
 
     try {
       const formData = new FormData(e.currentTarget)
-      const data: Partial<IAddress> & { addressType: IAddress["addressType"] } = {
-        // Ensure addressType is always present
-        city: formData.get("city")?.toString() || "",
-        street: formData.get("street")?.toString() || "",
-        streetNumber: formData.get("streetNumber")?.toString() || "",
-        addressType: formData.get("addressType") as IAddress["addressType"],
+      const data = {
+        city: formData.get("city") as string,
+        street: formData.get("street") as string,
+        streetNumber: formData.get("streetNumber") as string,
+        addressType,
         hasPrivateParking: formData.get("hasPrivateParking") === "on",
-        additionalNotes: formData.get("additionalNotes")?.toString() || "",
         isDefault: formData.get("isDefault") === "on",
-      }
-
-      // Add type-specific details
-      switch (data.addressType) {
-        case "apartment":
-          data.apartmentDetails = {
-            floor: formData.get("floor") ? Number.parseInt(formData.get("floor") as string) : undefined,
+        additionalNotes: formData.get("additionalNotes") as string,
+        ...(addressType === "apartment" && {
+          apartmentDetails: {
             apartmentNumber: formData.get("apartmentNumber") as string,
-            entrance: formData.get("entrance") as string,
-          }
-          break
-        case "house":
-          data.houseDetails = {
-            doorName: formData.get("doorName") as string,
-            entrance: formData.get("entrance") as string,
-          }
-          break
-        case "office":
-          data.officeDetails = {
-            buildingName: formData.get("buildingName") as string,
-            entrance: formData.get("entrance") as string,
             floor: formData.get("floor") ? Number.parseInt(formData.get("floor") as string) : undefined,
-          }
-          break
-        case "hotel":
-          data.hotelDetails = {
+            entrance: formData.get("entrance") as string,
+          },
+        }),
+        ...(addressType === "house" && {
+          houseDetails: {
+            entrance: formData.get("entrance") as string,
+          },
+        }),
+        ...(addressType === "private" && {
+          privateDetails: {
+            entrance: formData.get("entrance") as string,
+          },
+        }),
+        ...(addressType === "office" && {
+          officeDetails: {
+            floor: formData.get("floor") ? Number.parseInt(formData.get("floor") as string) : undefined,
+            entrance: formData.get("entrance") as string,
+            companyName: formData.get("companyName") as string,
+          },
+        }),
+        ...(addressType === "hotel" && {
+          hotelDetails: {
             hotelName: formData.get("hotelName") as string,
             roomNumber: formData.get("roomNumber") as string,
-          }
-          break
-        case "other":
-          data.otherDetails = {
+          },
+        }),
+        ...(addressType === "other" && {
+          otherDetails: {
             instructions: formData.get("instructions") as string,
-          }
-          break
+          },
+        }),
       }
 
       const result = address
-        ? await updateAddress(address._id.toString(), data as IAddress) // Cast needed due to partial nature for creation
-        : await createAddress(data as IAddress) // Cast needed
+        ? await updateAddress(String(address._id), data as any) // Type assertion needed due to complex union type
+        : await createAddress(data as any) // Type assertion needed
 
       if (result.success && result.address) {
         toast.success(address ? t("addresses.updateSuccess") : t("addresses.createSuccess"))
@@ -144,9 +143,9 @@ export function AddressForm({ address, onCancel, onSuccess }: AddressFormProps) 
 
         <div className="space-y-2">
           <Label htmlFor="addressType">{t("addresses.fields.addressType")}</Label>
-          <Select name="addressType" defaultValue={addressType} onValueChange={setAddressType}>
+          <Select name="addressType" defaultValue={addressType} onValueChange={(value: "apartment" | "house" | "private" | "office" | "hotel" | "other") => setAddressType(value)}>
             <SelectTrigger className="focus:ring-turquoise-500">
-              <SelectValue placeholder={t("addresses.fields.addressTypePlaceholder", "Select address type")} />
+              <SelectValue placeholder={t("addresses.fields.addressTypePlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="apartment">{t("addresses.types.apartment")}</SelectItem>

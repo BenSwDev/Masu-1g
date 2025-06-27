@@ -196,7 +196,8 @@ const PriceDetailsSchema = new Schema<IPriceDetails>(
     appliedGiftVoucherId: { type: Schema.Types.ObjectId, ref: "GiftVoucher" },
     redeemedUserSubscriptionId: { type: Schema.Types.ObjectId, ref: "UserSubscription" },
     totalProfessionalPayment: { type: Number, min: 0 },
-    totalOfficeCommission: { type: Number, min: 0 },
+    // Office commission might be negative when the company pays out of pocket
+    totalOfficeCommission: { type: Number },
     baseProfessionalPayment: { type: Number, min: 0 },
     surchargesProfessionalPayment: { type: Number, min: 0 },
   },

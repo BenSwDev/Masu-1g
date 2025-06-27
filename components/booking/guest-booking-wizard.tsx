@@ -667,7 +667,7 @@ export default function UniversalBookingWizard({
       selectedDurationId: bookingOptions.selectedDurationId,
       bookingDateTime,
       couponCode: bookingOptions.appliedCouponCode,
-      giftVoucherCode: voucher?.code,
+      giftVoucherCode: bookingOptions.redemptionCode || voucher?.code,
       userSubscriptionId:
         bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
     }

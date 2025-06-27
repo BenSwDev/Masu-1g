@@ -1808,7 +1808,7 @@ export async function saveAbandonedGiftVoucherPurchase(
         savedAt: new Date(),
       }
       await existing.save()
-      return { success: true, purchaseId: existing.id.toString() }
+      return { success: true, purchaseId: String(existing._id) }
     }
 
     const purchase = new GiftVoucherPurchase({
@@ -1822,7 +1822,7 @@ export async function saveAbandonedGiftVoucherPurchase(
       },
     })
     await purchase.save()
-    return { success: true, purchaseId: purchase.id.toString() }
+    return { success: true, purchaseId: String(purchase._id) }
   } catch (error) {
     return { success: false, error: "Failed to save abandoned purchase" }
   }

@@ -2580,14 +2580,14 @@ export async function createGuestBooking(
         }
       } catch (notificationError) {
         logger.error("Failed to send notification for guest booking:", {
-          bookingId: finalBookingObject.id.toString(),
+          bookingId: String(finalBookingObject._id),
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
         })
         // Don't fail the booking if notifications fail
       }
 
       logger.info("Guest booking created successfully", {
-        bookingId: finalBookingObject.id.toString(),
+        bookingId: String(finalBookingObject._id),
         bookingNumber: finalBookingObject.bookingNumber,
         guestEmail: guestInfo.email,
       })
@@ -2809,11 +2809,11 @@ export async function saveAbandonedBooking(
       Object.assign(existingAbandoned, updateData)
       await existingAbandoned.save()
       
-      logger.info("Updated existing abandoned booking", { 
-        bookingId: existingAbandoned.id.toString(),
-        currentStep: formData.currentStep 
+      logger.info("Updated existing abandoned booking", {
+        bookingId: String(existingAbandoned._id),
+        currentStep: formData.currentStep
       })
-      return { success: true, bookingId: existingAbandoned.id.toString() }
+      return { success: true, bookingId: String(existingAbandoned._id) }
     }
 
     // Create new abandoned booking record with safe defaults
@@ -2958,11 +2958,11 @@ export async function saveAbandonedBooking(
     const abandonedBooking = new Booking(abandonedBookingData)
     await abandonedBooking.save()
     
-    logger.info("Created new abandoned booking", { 
-      bookingId: abandonedBooking.id.toString(),
-      currentStep: formData.currentStep 
+    logger.info("Created new abandoned booking", {
+      bookingId: String(abandonedBooking._id),
+      currentStep: formData.currentStep
     })
-    return { success: true, bookingId: abandonedBooking.id.toString() }
+    return { success: true, bookingId: String(abandonedBooking._id) }
   } catch (error) {
     logger.error("Error saving abandoned booking:", { 
       error: error instanceof Error ? error.message : String(error),
@@ -3133,15 +3133,34 @@ export async function updateBookingStatusAfterPayment(
       }
       
         await booking.save({ session: mongooseDbSession })
-      
-        if (suitableProfessionalsResult.success && suitableProfessionalsResult.professionals && suitableProfessionalsResult.professionals.length > 0) {
-        logger.info("Found suitable professionals for booking", { 
-          bookingId,
-            professionalCount: suitableProfessionalsResult.professionals.length 
+
+        // Clean up any other pending_payment bookings for this user
+        await Booking.updateMany(
+          {
+            userId: booking.userId,
+            status: "pending_payment",
+            _id: { $ne: booking._id }
+          },
+          {
+            status: "cancelled",
+            cancellationReason: "Replaced by successful payment",
+            cancelledBy: "system"
+          },
+          { session: mongooseDbSession }
+        )
+
+        if (
+          suitableProfessionalsResult.success &&
+          suitableProfessionalsResult.professionals &&
+          suitableProfessionalsResult.professionals.length > 0
+        ) {
+          logger.info("Found suitable professionals for booking", {
+            bookingId,
+            professionalCount: suitableProfessionalsResult.professionals.length
           })
-      } else {
-        logger.warn("No suitable professionals found for booking", { bookingId })
-      }
+        } else {
+          logger.warn("No suitable professionals found for booking", { bookingId })
+        }
       
     } else {
         // Payment failed - ROLLBACK ALL REDEMPTIONS AND CANCEL BOOKING

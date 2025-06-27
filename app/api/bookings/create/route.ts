@@ -279,7 +279,7 @@ export async function POST(request: NextRequest) {
         } catch (notificationError) {
           logger.error("Failed to send booking notifications:", {
             error: notificationError,
-            bookingId: finalBookingObject.id.toString(),
+            bookingId: finalBookingObject._id.toString(),
           })
         }
 

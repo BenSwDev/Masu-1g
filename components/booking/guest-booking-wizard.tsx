@@ -137,7 +137,7 @@ export default function UniversalBookingWizard({
         firstName: first,
         lastName: rest.join(" "),
         phone: voucher.recipientPhone,
-        email: "", // Gift vouchers usually don't have recipient email
+        email: (voucher as any).recipientEmail || "", // Use recipientEmail if available
         isBookingForSomeoneElse: false, // No booking for someone else when using voucher/subscription
         bookerNotificationMethod: "email",
         bookerNotificationLanguage: "he"

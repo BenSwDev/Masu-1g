@@ -554,7 +554,7 @@ export async function getAvailableProfessionals(): Promise<GetAvailableProfessio
           _id: prof._id.toString(),
           firstName,
           lastName,
-          email: prof.email || "",
+          email: prof.email,
           phone: prof.phone || "",
           isActive: true,
         }
@@ -609,7 +609,7 @@ export async function getSuitableProfessionals(bookingId: string): Promise<GetSu
           _id: prof._id.toString(),
           firstName,
           lastName,
-          email: prof.email || "" ,
+          email: prof.email,
           phone: prof.phone || "",
           isActive: true,
           gender: prof.gender,

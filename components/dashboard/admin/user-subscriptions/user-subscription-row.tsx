@@ -29,7 +29,7 @@ import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 import { useRouter } from "next/navigation"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
-interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId'> {
+interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId'> {
   userId?: {
     _id: string
     name: string
@@ -366,7 +366,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
       <UserSubscriptionDetailsModal
         isOpen={showDetailsModal}
         onOpenChange={setShowDetailsModal}
-        userSubscription={userSubscription as any}
+        userSubscription={userSubscription}
       />
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
@@ -374,7 +374,9 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.cancelDialog.description")}
+              {t("userSubscriptions.cancelDialog.description", {
+                userName: userSubscription.userId?.name || t("common.thisUser"),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -402,7 +404,9 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.deleteDialog.description")}
+              {t("userSubscriptions.deleteDialog.description", {
+                userName: userSubscription.userId?.name || t("common.thisUser"),
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

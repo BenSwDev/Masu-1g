@@ -2580,14 +2580,14 @@ export async function createGuestBooking(
         }
       } catch (notificationError) {
         logger.error("Failed to send notification for guest booking:", {
-          bookingId: finalBookingObject.id.toString(),
+          bookingId: finalBookingObject._id?.toString() || "unknown",
           error: notificationError instanceof Error ? notificationError.message : String(notificationError),
         })
         // Don't fail the booking if notifications fail
       }
 
       logger.info("Guest booking created successfully", {
-        bookingId: finalBookingObject.id.toString(),
+        bookingId: finalBookingObject._id?.toString() || "unknown",
         bookingNumber: finalBookingObject.bookingNumber,
         guestEmail: guestInfo.email,
       })
@@ -2810,10 +2810,10 @@ export async function saveAbandonedBooking(
       await existingAbandoned.save()
       
       logger.info("Updated existing abandoned booking", { 
-        bookingId: existingAbandoned.id.toString(),
+        bookingId: existingAbandoned._id?.toString() || "unknown",
         currentStep: formData.currentStep 
       })
-      return { success: true, bookingId: existingAbandoned.id.toString() }
+      return { success: true, bookingId: existingAbandoned._id?.toString() || "unknown" }
     }
 
     // Create new abandoned booking record with safe defaults
@@ -2959,10 +2959,10 @@ export async function saveAbandonedBooking(
     await abandonedBooking.save()
     
     logger.info("Created new abandoned booking", { 
-      bookingId: abandonedBooking.id.toString(),
+      bookingId: abandonedBooking._id?.toString() || "unknown",
       currentStep: formData.currentStep 
     })
-    return { success: true, bookingId: abandonedBooking.id.toString() }
+    return { success: true, bookingId: abandonedBooking._id?.toString() || "unknown" }
   } catch (error) {
     logger.error("Error saving abandoned booking:", { 
       error: error instanceof Error ? error.message : String(error),

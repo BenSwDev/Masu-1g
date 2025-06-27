@@ -820,15 +820,42 @@ export default function UniversalBookingWizard({
       }
     }
 
-    if (
-      currentStep === TOTAL_STEPS_WITH_PAYMENT - 1 && // Summary step (now step 5)
-      calculatedPrice?.finalAmount === 0 &&
-      calculatedPrice?.isFullyCoveredByVoucherOrSubscription
-    ) {
-      // Skip payment step, go directly to confirmation by simulating final submit
-      handleFinalSubmit()
-      return
+    // Handle transition from summary (step 5) to payment (step 6)
+    if (currentStep === TOTAL_STEPS_WITH_PAYMENT - 1) { // Summary step (step 5)
+      if (calculatedPrice?.finalAmount === 0 && calculatedPrice?.isFullyCoveredByVoucherOrSubscription) {
+        // Skip payment step, go directly to confirmation by simulating final submit
+        // First, create the pending booking if it doesn't exist
+        if (!pendingBookingId) {
+          console.log("💰 Zero payment detected - creating booking before finalization...")
+          const bookingId = await createPendingBooking()
+          if (!bookingId) {
+            console.error("❌ Failed to create booking for zero payment")
+            return
+          }
+          console.log("✅ Created booking for zero payment:", bookingId)
+        }
+        
+        handleFinalSubmit()
+        return
+      } else {
+        // Regular payment flow - create pending booking before going to payment step
+        if (!pendingBookingId) {
+          console.log("💳 Regular payment detected - creating pending booking before payment step...")
+          const bookingId = await createPendingBooking()
+          if (!bookingId) {
+            console.error("❌ Failed to create pending booking")
+            toast({
+              variant: "destructive",
+              title: "שגיאה ביצירת הזמנה",
+              description: "לא ניתן ליצור הזמנה. נסה שוב.",
+            })
+            return
+          }
+          console.log("✅ Created pending booking for payment:", bookingId)
+        }
+      }
     }
+    
     setCurrentStep((prev) => Math.min(prev + 1, CONFIRMATION_STEP_NUMBER))
   }
 

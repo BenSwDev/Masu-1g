@@ -111,9 +111,9 @@ export function GuestPaymentStep({
     onSuccess: async () => {
       console.log("🏦 GuestPaymentStep onSuccess triggered", { createPendingBooking: !!createPendingBooking, pendingBookingId })
       
-      // Create pending booking if not already created
-      if (createPendingBooking && !pendingBookingId) {
-        console.log("📝 Creating pending booking...")
+      // If we don't have a pending booking ID yet, create one
+      if (!pendingBookingId && createPendingBooking) {
+        console.log("📝 Creating pending booking (fallback)...")
         const bookingId = await createPendingBooking();
         console.log("📝 Created pending booking:", bookingId)
         if (!bookingId) {
@@ -121,6 +121,11 @@ export function GuestPaymentStep({
           // Error creating booking - createPendingBooking already shows error toast
           return;
         }
+      }
+      
+      if (!pendingBookingId && !createPendingBooking) {
+        console.error("❌ No pending booking ID and no createPendingBooking function available")
+        return;
       }
       
       console.log("🎯 Calling onConfirm (handleFinalSubmit)")

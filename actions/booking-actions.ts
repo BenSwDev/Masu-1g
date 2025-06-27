@@ -847,6 +847,15 @@ export async function createBooking(
         if (!userSub || userSub.remainingQuantity < 1 || userSub.status !== "active") {
           throw new Error("bookings.errors.subscriptionRedemptionFailed")
         }
+        
+        // ✅ Add treatment validation for subscriptions
+        if (userSub.treatmentId) {
+          const subTreatmentId = userSub.treatmentId.toString()
+          if (subTreatmentId !== validatedPayload.treatmentId) {
+            throw new Error("bookings.errors.treatmentMismatch")
+          }
+        }
+        
         userSub.remainingQuantity -= 1
         if (userSub.remainingQuantity === 0) userSub.status = "depleted"
         await userSub.save({ session: mongooseDbSession })
@@ -862,6 +871,14 @@ export async function createBooking(
         if (!voucher) throw new Error("bookings.errors.voucherNotFoundDuringCreation")
         if (!voucher.isActive && voucher.status !== "sent")
           throw new Error("bookings.errors.voucherRedemptionFailedInactive")
+          
+        // ✅ Add treatment validation for treatment vouchers
+        if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+          const voucherTreatmentId = voucher.treatmentId.toString()
+          if (voucherTreatmentId !== validatedPayload.treatmentId) {
+            throw new Error("bookings.errors.treatmentMismatch")
+          }
+        }
 
         if (
           voucher.voucherType === "treatment" &&
@@ -2424,6 +2441,14 @@ export async function createGuestBooking(
           throw new Error("bookings.errors.voucherRedemptionFailed")
         }
         
+        // ✅ Add treatment validation for treatment vouchers
+        if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+          const voucherTreatmentId = voucher.treatmentId.toString()
+          if (voucherTreatmentId !== validatedPayload.treatmentId) {
+            throw new Error("bookings.errors.treatmentMismatch")
+          }
+        }
+        
         if (
           voucher.voucherType === "treatment" &&
           validatedPayload.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher
@@ -2481,6 +2506,14 @@ export async function createGuestBooking(
         ).session(mongooseDbSession)
         if (!userSub || userSub.remainingQuantity < 1 || userSub.status !== "active") {
           throw new Error("bookings.errors.subscriptionRedemptionFailed")
+        }
+        
+        // ✅ Add treatment validation for subscriptions
+        if (userSub.treatmentId) {
+          const subTreatmentId = userSub.treatmentId.toString()
+          if (subTreatmentId !== validatedPayload.treatmentId) {
+            throw new Error("bookings.errors.treatmentMismatch")
+          }
         }
         userSub.remainingQuantity -= 1
         if (userSub.remainingQuantity === 0) userSub.status = "depleted"

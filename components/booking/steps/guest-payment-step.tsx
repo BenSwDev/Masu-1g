@@ -111,20 +111,8 @@ export function GuestPaymentStep({
     onSuccess: async () => {
       console.log("🏦 GuestPaymentStep onSuccess triggered", { createPendingBooking: !!createPendingBooking, pendingBookingId })
       
-      // Create pending booking if not already created
-      if (createPendingBooking && !pendingBookingId) {
-        console.log("📝 Creating pending booking...")
-        const bookingId = await createPendingBooking();
-        console.log("📝 Created pending booking:", bookingId)
-        if (!bookingId) {
-          console.error("❌ Failed to create pending booking")
-          // Error creating booking - createPendingBooking already shows error toast
-          return;
-        }
-      }
-      
+      // Execute the actual booking confirmation - the main wizard will handle pending booking creation
       console.log("🎯 Calling onConfirm (handleFinalSubmit)")
-      // Execute the actual booking confirmation
       onConfirm();
     },
     onFailure: customFailureHandler,

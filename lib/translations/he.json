@@ -706,6 +706,9 @@
     "drawerTitle": "פרטי הזמנה"
   },
   "bookings": {
+    "errors": {
+      "treatmentMismatch": "הטיפול שנבחר לא תואם לקוד המימוש"
+    },
     "guestInformation": "פרטי האורח",
     "bookingDetails": "פרטי ההזמנה",
     "selectedTreatment": "הטיפול הנבחר",

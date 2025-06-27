@@ -24,8 +24,7 @@ import {
   getAvailableTimeSlots,
   createGuestUser,
   saveAbandonedBooking,
-  getAbandonedBooking,
-  updateBookingStatusAfterPayment
+  getAbandonedBooking
 } from "@/actions/booking-actions"
 import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
 import { Progress } from "@/components/common/ui/progress"
@@ -823,7 +822,18 @@ export default function UniversalBookingWizard({
       calculatedPrice?.finalAmount === 0 &&
       calculatedPrice?.isFullyCoveredByVoucherOrSubscription
     ) {
-      // Skip payment step, go directly to confirmation by simulating final submit
+      // Skip payment step, but ensure we have a pending booking first
+      if (!pendingBookingId) {
+        console.log("🔄 Zero payment detected but no pending booking - creating one first")
+        const bookingId = await createPendingBooking()
+        if (!bookingId) {
+          console.error("❌ Failed to create pending booking for zero payment")
+          return
+        }
+        console.log("✅ Created pending booking for zero payment:", bookingId)
+      }
+      
+      // Now proceed with final submit
       handleFinalSubmit()
       return
     }
@@ -875,6 +885,43 @@ export default function UniversalBookingWizard({
       const selectedTreatment = initialData.activeTreatments.find(
         (t) => t._id.toString() === bookingOptions.selectedTreatmentId
       )
+
+      // ✅ Add validation for voucher/subscription redemption
+      if (bookingOptions.source === "gift_voucher_redemption" && bookingOptions.selectedGiftVoucherId) {
+        // Validate treatment matches for treatment vouchers
+        if (voucher?.voucherType === "treatment" && voucher.treatmentId) {
+          const voucherTreatmentId = typeof voucher.treatmentId === 'object' 
+            ? (voucher.treatmentId as any)._id?.toString() || (voucher.treatmentId as any).toString()
+            : voucher.treatmentId.toString()
+            
+          if (voucherTreatmentId !== bookingOptions.selectedTreatmentId) {
+            toast({
+              variant: "destructive",
+              title: "שגיאה בבחירת טיפול",
+              description: "הטיפול שנבחר לא תואם לשובר הטיפול",
+            })
+            return null
+          }
+        }
+      }
+
+      if (bookingOptions.source === "subscription_redemption" && bookingOptions.selectedUserSubscriptionId) {
+        // Validate treatment matches for subscriptions
+        if (userSubscription?.treatmentId) {
+          const subTreatmentId = typeof userSubscription.treatmentId === 'object' 
+            ? (userSubscription.treatmentId as any)._id?.toString() || (userSubscription.treatmentId as any).toString()
+            : userSubscription.treatmentId.toString()
+            
+          if (subTreatmentId !== bookingOptions.selectedTreatmentId) {
+            toast({
+              variant: "destructive",
+              title: "שגיאה בבחירת טיפול",
+              description: "הטיפול שנבחר לא תואם למנוי",
+            })
+            return null
+          }
+        }
+      }
 
       const payload = {
         userId: guestUserId || "guest",
@@ -984,19 +1031,21 @@ export default function UniversalBookingWizard({
       currentStep 
     })
     
-    if (!pendingBookingId) {
-      console.error("❌ No pending booking ID found", {
-        guestUserId,
-        currentStep,
-        bookingOptions,
-        guestInfo: { firstName: guestInfo.firstName, lastName: guestInfo.lastName, phone: guestInfo.phone }
-      })
-      toast({
-        variant: "destructive",
-        title: "שגיאה",
-        description: "מזהה הזמנה חסר. אנא נסה שוב.",
-      })
-      return
+    // Create pending booking if it doesn't exist
+    let finalBookingId = pendingBookingId
+    if (!finalBookingId) {
+      console.log("🔄 No pending booking ID found - creating one now")
+      finalBookingId = await createPendingBooking()
+      if (!finalBookingId) {
+        console.error("❌ Failed to create pending booking in handleFinalSubmit")
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
+          description: "לא ניתן ליצור הזמנה. אנא נסה שוב.",
+        })
+        return
+      }
+      console.log("✅ Created pending booking in handleFinalSubmit:", finalBookingId)
     }
 
     setIsLoading(true)
@@ -1009,17 +1058,24 @@ export default function UniversalBookingWizard({
         ? `LIVE-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}` 
         : `DEV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
       
-      console.log("💳 Calling updateBookingStatusAfterPayment with:", { 
-        pendingBookingId, 
+      console.log("💳 Calling payment status API with:", { 
+        pendingBookingId: finalBookingId, 
         transactionId,
         paymentStatus: "success"
       })
         
-      const result = await updateBookingStatusAfterPayment(
-        pendingBookingId,
-        "success",
-        transactionId
-      )
+      const response = await fetch(`/api/bookings/${finalBookingId}/payment-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentStatus: "success",
+          transactionId
+        })
+      })
+      
+      const result = await response.json()
       
       console.log("📋 Payment update result:", result)
       

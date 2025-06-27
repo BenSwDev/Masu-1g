@@ -185,8 +185,8 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
     nextStep()
   }
 
-  const handlePurchase = async () => {
-    if (!selectedSubscriptionId || !selectedTreatmentId) return
+  const handlePurchase = async (): Promise<string | null> => {
+    if (!selectedSubscriptionId || !selectedTreatmentId) return null
     setIsLoading(true)
     
     try {
@@ -206,17 +206,21 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
       if (!initiateResult.success || !initiateResult.userSubscriptionId) {
         toast({ variant: "destructive", title: "שגיאה", description: initiateResult.error || "שגיאה ביצירת המנוי" })
         setIsLoading(false)
-        return
+        return null
       }
 
-      // Store pending subscription ID and move to payment step
+      // Store pending subscription ID
       setPendingSubscriptionId(initiateResult.userSubscriptionId)
+      console.log("✅ Subscription created with pending status, ID:", initiateResult.userSubscriptionId)
+      
       setIsLoading(false)
+      return initiateResult.userSubscriptionId
       
     } catch (error) {
       console.error("Purchase error:", error)
       toast({ variant: "destructive", title: "שגיאה", description: "שגיאה ברכישת המנוי" })
       setIsLoading(false)
+      return null
     }
   }
 
@@ -492,6 +496,15 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
     </div>
   )
 
+  // Wrapper function for onConfirm that doesn't return a value
+  const handleConfirm = async () => {
+    if (pendingSubscriptionId) {
+      await handlePaymentSuccess()
+    } else {
+      await handlePurchase()
+    }
+  }
+
   // Step 3: Payment
   const renderStep3 = () => (
     <div className="max-w-2xl mx-auto" dir={dir} lang={language}>
@@ -506,9 +519,10 @@ export default function UnifiedSubscriptionWizard({ subscriptions: propSubscript
             calculatedPrice={calculatedPrice}
             guestInfo={guestInfo}
             setGuestInfo={setGuestInfo}
-            onConfirm={pendingSubscriptionId ? handlePaymentSuccess : handlePurchase}
+            onConfirm={handleConfirm}
             onPrev={prevStep}
             isLoading={isLoading}
+            createPendingBooking={pendingSubscriptionId ? undefined : handlePurchase}
             pendingBookingId={pendingSubscriptionId}
             customFailureHandler={pendingSubscriptionId ? handlePaymentFailure : undefined}
           />

@@ -158,6 +158,14 @@ export function GuestPaymentStep({
       guestInfo.recipientNotificationLanguage || "he",
     );
 
+  // Auto-open payment modal when pendingBookingId is set (for subscription purchases)
+  useEffect(() => {
+    if (pendingBookingId && !showPaymentModal && !isLoading) {
+      console.log("🎬 Auto-opening payment modal for subscription/booking:", pendingBookingId)
+      openModal()
+    }
+  }, [pendingBookingId, showPaymentModal, isLoading, openModal])
+
   // Update guest info when notification preferences change
   useEffect(() => {
     setGuestInfo({

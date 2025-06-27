@@ -63,7 +63,7 @@ async function UserSubscriptionsData() {
     return (
       <div className="p-6">
         <AdminUserSubscriptionsClient
-          initialUserSubscriptions={result.userSubscriptions || []}
+          initialUserSubscriptions={result.userSubscriptions as any || []}
           initialPagination={result.pagination}
         />
       </div>

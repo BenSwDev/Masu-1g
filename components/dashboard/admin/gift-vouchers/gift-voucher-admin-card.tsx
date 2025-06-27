@@ -299,21 +299,21 @@ export default function GiftVoucherAdminCard({
               <AlertTriangle className="h-3 w-3" />
               <span>
                 {daysUntilExpiry === 0 
-                  ? t("giftVouchers.expiringToday")
-                  : t("giftVouchers.expiringIn", { days: daysUntilExpiry })
+                  ? "פג תוקף היום"
+                  : `פוקע תוקפו בעוד ${daysUntilExpiry} ימים`
                 }
               </span>
             </div>
           )}
 
           {/* Payment Info */}
-          {voucher.paymentAmount && (
+          {(voucher as any).paymentAmount && (
             <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-3 w-3" />
                 <span>{t("giftVouchers.fields.paymentAmount")}</span>
               </div>
-              <span className="font-medium">{voucher.paymentAmount.toFixed(2)} ₪</span>
+              <span className="font-medium">{(voucher as any).paymentAmount.toFixed(2)} ₪</span>
             </div>
           )}
         </CardContent>

@@ -249,8 +249,8 @@ export default function AdminGiftVoucherDetailsModal({
                     <AlertTriangle className="h-4 w-4" />
                     <span className="text-sm">
                       {daysUntilExpiry === 0 
-                        ? t("giftVouchers.expiringToday")
-                        : t("giftVouchers.expiringIn", { days: daysUntilExpiry })
+                        ? "פג תוקף היום"
+                        : `פוקע תוקפו בעוד ${daysUntilExpiry} ימים`
                       }
                     </span>
                   </div>
@@ -349,13 +349,13 @@ export default function AdminGiftVoucherDetailsModal({
                           <span className="font-medium">{voucher.recipientEmail}</span>
                         </div>
                       )}
-                      {voucher.giftMessage && (
+                      {(voucher as any).giftMessage && (
                         <div className="pt-2">
                           <span className="text-sm text-gray-600 dark:text-gray-400 block mb-1">
                             {t("giftVouchers.fields.giftMessage")}
                           </span>
                           <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded text-sm">
-                            {voucher.giftMessage}
+                            {(voucher as any).giftMessage}
                           </div>
                         </div>
                       )}
@@ -457,7 +457,7 @@ export default function AdminGiftVoucherDetailsModal({
             </Card>
 
             {/* Payment Information */}
-            {(voucher.paymentAmount || voucher.paymentMethodId || voucher.transactionId) && (
+            {((voucher as any).paymentAmount || (voucher as any).paymentMethodId || (voucher as any).transactionId) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -466,28 +466,28 @@ export default function AdminGiftVoucherDetailsModal({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {voucher.paymentAmount && (
+                  {(voucher as any).paymentAmount && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {t("giftVouchers.fields.paymentAmount")}
                       </span>
-                      <span className="font-bold text-lg">{voucher.paymentAmount.toFixed(2)} ₪</span>
+                      <span className="font-bold text-lg">{(voucher as any).paymentAmount.toFixed(2)} ₪</span>
                     </div>
                   )}
-                  {voucher.paymentMethodId && (
+                  {(voucher as any).paymentMethodId && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {t("giftVouchers.fields.paymentMethod")}
                       </span>
-                      <span className="font-medium">{voucher.paymentMethodId}</span>
+                      <span className="font-medium">{(voucher as any).paymentMethodId}</span>
                     </div>
                   )}
-                  {voucher.transactionId && (
+                  {(voucher as any).transactionId && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600 dark:text-gray-400">
                         {t("giftVouchers.fields.transactionId")}
                       </span>
-                      <span className="font-mono text-sm">{voucher.transactionId}</span>
+                      <span className="font-mono text-sm">{(voucher as any).transactionId}</span>
                     </div>
                   )}
                 </CardContent>
@@ -495,7 +495,7 @@ export default function AdminGiftVoucherDetailsModal({
             )}
 
             {/* Admin Notes & Extra Info */}
-            {(voucher.notes || voucher.isActive !== undefined) && (
+            {((voucher as any).notes || voucher.isActive !== undefined) && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -514,13 +514,13 @@ export default function AdminGiftVoucherDetailsModal({
                       </Badge>
                     </div>
                   )}
-                  {voucher.notes && (
+                  {(voucher as any).notes && (
                     <div>
                       <span className="text-sm text-gray-600 dark:text-gray-400 block mb-2">
                         {t("giftVouchers.fields.notes")}
                       </span>
                       <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded text-sm">
-                        {voucher.notes}
+                        {(voucher as any).notes}
                       </div>
                     </div>
                   )}

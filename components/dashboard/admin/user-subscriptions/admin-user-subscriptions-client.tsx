@@ -120,7 +120,7 @@ const AdminUserSubscriptionsClient = ({
       })
 
       if (result.success && result.userSubscriptions && result.pagination) {
-        setUserSubscriptions(result.userSubscriptions as PopulatedUserSubscription[])
+        setUserSubscriptions(result.userSubscriptions as any)
         setPagination(result.pagination)
         if (showRefreshToast) {
           toast.success(t("userSubscriptions.notifications.dataRefreshed"))
@@ -468,9 +468,9 @@ const AdminUserSubscriptionsClient = ({
                   {userSubscriptions.map((subscription) => (
                     <UserSubscriptionRow
                       key={String(subscription._id)}
-                      userSubscription={subscription}
+                      userSubscription={subscription as any}
                       onSubscriptionUpdate={() => fetchData(currentPage, limit, searchTerm, statusFilter)}
-                      onEdit={handleEdit}
+                      onEdit={handleEdit as any}
                     />
                   ))}
                 </tbody>
@@ -483,7 +483,7 @@ const AdminUserSubscriptionsClient = ({
       {pagination && pagination.totalPages > 1 && (
         <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
           <div className="text-sm text-gray-700 dark:text-gray-300">
-            {t("common.pagination.pageInfo")} - {t("common.pagination.page")}: {pagination.page}, {t("common.pagination.total")}: {pagination.total}, {t("common.pagination.totalResults")}: {pagination.totalResults}
+            עמוד {pagination.page} מתוך {pagination.totalPages} (סה"כ {pagination.total} תוצאות)
           </div>
           <div className="flex gap-2 items-center">
             <Button

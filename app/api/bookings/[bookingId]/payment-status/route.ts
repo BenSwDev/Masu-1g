@@ -36,15 +36,14 @@ async function rollbackBookingRedemptions(booking: any, session: any): Promise<v
 
   // Rollback gift voucher redemption
   if (booking.priceDetails.appliedGiftVoucherId && booking.priceDetails.voucherAppliedAmount > 0) {
-    const voucher = await GiftVoucher.findById(booking.priceDetails.appliedGiftVoucherId).session(session)
+    const voucher = await GiftVoucher.findById(booking.priceDetails.appliedGiftVoucherId).session(session) as any
     if (voucher) {
       if (voucher.voucherType === "monetary") {
-        voucher.currentBalance += booking.priceDetails.voucherAppliedAmount
+        voucher.remainingAmount += booking.priceDetails.voucherAppliedAmount
         voucher.status = "active"
       } else if (voucher.voucherType === "treatment") {
-        voucher.isUsed = false
-        voucher.usageDate = undefined
         voucher.status = "active"
+        voucher.usedAt = undefined
       }
       await voucher.save({ session })
       logger.info("Rolled back gift voucher redemption", { 

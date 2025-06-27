@@ -72,17 +72,10 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
     const result = await cancelSubscription(String(userSubscription._id))
     
     if (result.success) {
-      toast({ 
-        title: t("common.success"), 
-        description: t("userSubscriptions.cancelSuccessToast") 
-      })
+      toast.success(t("userSubscriptions.cancelSuccessToast"))
       router.refresh()
     } else {
-      toast({ 
-        title: t("common.error"), 
-        description: result.error || t("common.unknownError"),
-        variant: "destructive" 
-      })
+      toast.error(result.error || t("common.unknownError"))
     }
     setShowCancelDialog(false)
   }
@@ -93,17 +86,10 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
     const result = await deleteUserSubscription(String(userSubscription._id))
     
     if (result.success) {
-      toast({ 
-        title: t("common.success"), 
-        description: t("userSubscriptions.deleteSuccessToast") 
-      })
+      toast.success(t("userSubscriptions.deleteSuccessToast"))
       router.refresh()
     } else {
-      toast({ 
-        title: t("common.error"), 
-        description: result.error || t("common.unknownError"),
-        variant: "destructive" 
-      })
+      toast.error(result.error || t("common.unknownError"))
     }
     setShowDeleteDialog(false)
   }
@@ -212,10 +198,10 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
         {/* Treatment Details */}
         <td className="py-4 px-4">
           <div className="flex flex-col">
-            <span className="font-medium text-gray-900 dark:text-gray-100">{userSubscription.treatmentId?.name}</span>
-            {userSubscription.selectedDurationDetails && (
+            <span className="font-medium text-gray-900 dark:text-gray-100">{(userSubscription as any).treatmentId?.name}</span>
+            {(userSubscription as any).selectedDurationDetails && (
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {userSubscription.selectedDurationDetails.minutes} {t("common.minutes")}
+                {(userSubscription as any).selectedDurationDetails.minutes} {t("common.minutes")}
               </span>
             )}
             {userSubscription.pricePerSession && (
@@ -242,10 +228,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  {t("userSubscriptions.usageTooltip", {
-                    remaining: userSubscription.remainingQuantity,
-                    total: userSubscription.totalQuantity,
-                  })}
+                  שימוש: {userSubscription.remainingQuantity} נותרו מתוך {userSubscription.totalQuantity}
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -282,8 +265,8 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
                 ₪{userSubscription.paymentAmount?.toFixed(2) || "0.00"}
               </span>
               <span className="text-gray-500 dark:text-gray-400">
-                {userSubscription.paymentMethodId?.cardName || t("common.card")}{" "}
-                {maskCardNumber(userSubscription.paymentMethodId?.cardNumber)}
+                {(userSubscription.paymentMethodId as any)?.cardName || t("common.card")}{" "}
+                {maskCardNumber((userSubscription.paymentMethodId as any)?.cardNumber)}
               </span>
             </div>
           </div>
@@ -366,7 +349,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
       <UserSubscriptionDetailsModal
         isOpen={showDetailsModal}
         onOpenChange={setShowDetailsModal}
-        userSubscription={userSubscription}
+        userSubscription={userSubscription as any}
       />
 
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
@@ -374,9 +357,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.cancelDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.cancelDialog.description", {
-                userName: userSubscription.userId?.name || t("common.thisUser"),
-              })}
+              האם אתה בטוח שברצונך לבטל את המנוי של {userSubscription.userId?.name || "משתמש זה"}?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -404,9 +385,7 @@ export default function UserSubscriptionRow({ userSubscription, onSubscriptionUp
           <AlertDialogHeader>
             <AlertDialogTitle>{t("userSubscriptions.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("userSubscriptions.deleteDialog.description", {
-                userName: userSubscription.userId?.name || t("common.thisUser"),
-              })}
+              האם אתה בטוח שברצונך למחוק את המנוי של {userSubscription.userId?.name || "משתמש זה"}? פעולה זו לא ניתנת לביטול.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

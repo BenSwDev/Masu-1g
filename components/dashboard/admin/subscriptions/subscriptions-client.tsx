@@ -117,37 +117,50 @@ const SubscriptionsClient = ({ initialSubscriptions = [], treatments = [], pagin
     fetchSubscriptions(1, "", undefined)
   }
 
-  const handleCreate = async (_data: FormData) => {
+  const handleCreate = async (formData: FormData) => {
     setIsLoading(true)
     try {
+      const data = {
+        name: formData.get('name') as string,
+        description: formData.get('description') as string,
+        treatmentId: formData.get('treatmentId') as string,
+        sessionsCount: parseInt(formData.get('sessionsCount') as string),
+        price: parseFloat(formData.get('price') as string),
+        isActive: formData.get('isActive') === 'true'
+      }
       const result = await createSubscription(data)
       if (result.success) {
-        setSubscriptions([result.subscription, ...subscriptions])
+        setSubscriptions([result.subscription as any, ...subscriptions])
         toast.success(t("subscriptions.createSuccess"))
         setIsCreateDialogOpen(false)
         // Refresh the list to ensure correct ordering and pagination
-        fetchSubscriptions(
-          currentPage,
-          searchTerm,
-          activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined,
-        )
+        await fetchSubscriptions(1, searchTerm, activeFilter === "active" ? true : activeFilter === "inactive" ? false : undefined)
       } else {
         toast.error(result.error || t("subscriptions.createError"))
       }
     } catch (error) {
+      console.error("Error creating subscription:", error)
       toast.error(t("subscriptions.createError"))
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleUpdate = async (_data: FormData) => {
+  const handleUpdate = async (formData: FormData) => {
     if (!currentSubscription) return
     setIsLoading(true)
     try {
-      const result = await updateSubscription(currentSubscription._id as string, _data)
+      const data = {
+        name: formData.get('name') as string,
+        description: formData.get('description') as string,
+        treatmentId: formData.get('treatmentId') as string,
+        sessionsCount: parseInt(formData.get('sessionsCount') as string),
+        price: parseFloat(formData.get('price') as string),
+        isActive: formData.get('isActive') === 'true'
+      }
+      const result = await updateSubscription(currentSubscription._id as string, data)
       if (result.success && result.subscription) {
-        setSubscriptions(subscriptions.map((s) => (s._id === currentSubscription._id ? result.subscription : s)))
+        setSubscriptions(subscriptions.map((s) => (s._id === currentSubscription._id ? result.subscription as any : s)))
         toast.success(t("subscriptions.updateSuccess"))
         setIsEditDialogOpen(false)
       } else {

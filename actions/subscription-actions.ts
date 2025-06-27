@@ -12,7 +12,7 @@ import { logger } from "@/lib/logs/logger"
  */
 export async function getSubscriptions(): Promise<{
   success: boolean
-  subscriptions?: ISubscription[]
+  subscriptions?: any[]
   error?: string
 }> {
   try {
@@ -25,9 +25,9 @@ export async function getSubscriptions(): Promise<{
       })
       .lean()
 
-    const serializedSubscriptions = subscriptions.map((sub) => ({
+    const serializedSubscriptions = subscriptions.map((sub: any) => ({
       ...sub,
-      _id: sub.id.toString(),
+      _id: sub._id.toString(),
       treatmentId: sub.treatmentId ? {
         ...sub.treatmentId,
         _id: sub.treatmentId._id.toString(),
@@ -46,7 +46,7 @@ export async function getSubscriptions(): Promise<{
  */
 export async function getSubscriptionById(id: string): Promise<{
   success: boolean
-  subscription?: ISubscription
+  subscription?: any
   error?: string
 }> {
   try {
@@ -57,7 +57,7 @@ export async function getSubscriptionById(id: string): Promise<{
         path: "treatmentId",
         select: "name category pricingType fixedPrice durations defaultDurationMinutes",
       })
-      .lean()
+      .lean() as any
 
     if (!subscription) {
       return { success: false, error: "Subscription not found" }
@@ -91,7 +91,7 @@ export async function createSubscription(data: {
   isActive: boolean
 }): Promise<{
   success: boolean
-  subscription?: ISubscription
+  subscription?: any
   error?: string
 }> {
   try {
@@ -132,7 +132,7 @@ export async function updateSubscription(id: string, data: Partial<{
   isActive: boolean
 }>): Promise<{
   success: boolean
-  subscription?: ISubscription
+  subscription?: any
   error?: string
 }> {
   try {

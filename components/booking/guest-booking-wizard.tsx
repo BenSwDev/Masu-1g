@@ -667,7 +667,7 @@ export default function UniversalBookingWizard({
       selectedDurationId: bookingOptions.selectedDurationId,
       bookingDateTime,
       couponCode: bookingOptions.appliedCouponCode,
-      giftVoucherCode: voucher?.code,
+      giftVoucherCode: bookingOptions.redemptionCode || voucher?.code,
       userSubscriptionId:
         bookingOptions.source === "subscription_redemption" ? bookingOptions.selectedUserSubscriptionId : undefined,
     }
@@ -704,6 +704,9 @@ export default function UniversalBookingWizard({
     bookingOptions.bookingDate,
     bookingOptions.bookingTime,
     bookingOptions.appliedCouponCode,
+    bookingOptions.redemptionCode,
+    bookingOptions.selectedGiftVoucherId,
+    bookingOptions.selectedUserSubscriptionId,
     guestInfo.email,
     currentStep,
     triggerPriceCalculation,
@@ -1012,7 +1015,12 @@ export default function UniversalBookingWizard({
         if (bookingId) {
           const confirmationUrl = `/bookings/confirmation?bookingId=${bookingId}&status=success`
           console.log("🎯 Redirecting to:", confirmationUrl)
-          router.push(confirmationUrl)
+          try {
+            router.replace(confirmationUrl)
+          } catch (routeError) {
+            console.error("Navigation failed, falling back to full page reload", routeError)
+            window.location.href = confirmationUrl
+          }
         } else {
           console.warn("⚠️ No booking ID found, showing confirmation step")
           // Fallback to showing confirmation step if no booking ID

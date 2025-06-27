@@ -16,7 +16,6 @@ import { GuestSchedulingStep } from "./steps/guest-scheduling-step"
 import { GuestSummaryStep } from "./steps/guest-summary-step"
 import { GuestPaymentStep } from "./steps/guest-payment-step"
 import { GuestBookingConfirmation } from "./steps/guest-booking-confirmation"
-import NotificationPreferencesSelector from "./notification-preferences-selector"
 
 import { 
   calculateBookingPrice, 
@@ -184,7 +183,7 @@ export default function UniversalBookingWizard({
         return {
           firstName: first,
           lastName: rest.join(" "),
-          phone: redemption.data.recipientPhone,
+          phone: redemption.data.recipientPhone || "",
           email: redemption.data.recipientEmail || "",
           isBookingForSomeoneElse: false,
           bookerNotificationMethod: "email",
@@ -199,8 +198,8 @@ export default function UniversalBookingWizard({
         return {
           firstName: first,
           lastName: rest.join(" "),
-          email: guestInfo.email,
-          phone: guestInfo.phone,
+          email: guestInfo.email || "",
+          phone: guestInfo.phone || "",
           isBookingForSomeoneElse: false,
           bookerNotificationMethod: "email",
           bookerNotificationLanguage: "he"
@@ -214,8 +213,8 @@ export default function UniversalBookingWizard({
         return {
           firstName: first,
           lastName: rest.join(" "),
-          email: guestInfo.email,
-          phone: guestInfo.phone,
+          email: guestInfo.email || "",
+          phone: guestInfo.phone || "",
           isBookingForSomeoneElse: false,
           bookerNotificationMethod: "email",
           bookerNotificationLanguage: "he"
@@ -247,16 +246,20 @@ export default function UniversalBookingWizard({
         
         // If it's a gift voucher, lock recipient info
         if (voucherData?.isGift && voucherData?.recipientName) {
-          const fields = ["firstName", "lastName", "phone"] as const
+          const fields = ["firstName", "lastName"] as const
+          const fieldsWithPhone = voucherData?.recipientPhone ? [...fields, "phone"] as const : fields
           if (voucherData?.recipientEmail) {
-            return [...fields, "email"] as const
+            return [...fieldsWithPhone, "email"] as const
           }
-          return fields
+          return fieldsWithPhone
         }
         
         // If it's a non-gift voucher purchased by a guest, lock purchaser info
         if (voucherData?.guestInfo && !voucherData?.isGift) {
-          return ["firstName", "lastName", "phone", "email"] as const
+          const baseFields = ["firstName", "lastName"] as const
+          const fieldsWithPhone = voucherData.guestInfo.phone ? [...baseFields, "phone"] as const : baseFields
+          const fieldsWithEmail = voucherData.guestInfo.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+          return fieldsWithEmail
         }
       }
       
@@ -264,7 +267,10 @@ export default function UniversalBookingWizard({
       if (redemption.type === "subscription") {
         const subscriptionData = redemption.data as any
         if (subscriptionData?.guestInfo) {
-          return ["firstName", "lastName", "email", "phone"] as const
+          const baseFields = ["firstName", "lastName"] as const
+          const fieldsWithPhone = subscriptionData.guestInfo.phone ? [...baseFields, "phone"] as const : baseFields
+          const fieldsWithEmail = subscriptionData.guestInfo.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+          return fieldsWithEmail
         }
       }
     }

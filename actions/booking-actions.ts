@@ -3419,23 +3419,35 @@ export async function validateRedemptionCode(
         const isValidStatus = ["active", "partially_used", "sent"].includes(voucher.status)
         const isActiveOrSent = voucher.isActive || voucher.status === "sent"
         
-                 let hasBalance = true
-         if (voucher.voucherType === "monetary") {
-           hasBalance = Boolean(voucher.remainingAmount && voucher.remainingAmount > 0)
-         } else if (voucher.voucherType === "treatment") {
-           hasBalance = voucher.status !== "fully_used"
-         }
+        let hasBalance = true
+        if (voucher.voucherType === "monetary") {
+          hasBalance = Boolean(voucher.remainingAmount && voucher.remainingAmount > 0)
+        } else if (voucher.voucherType === "treatment") {
+          hasBalance = voucher.status !== "fully_used"
+        }
         
         const isValid = isNotExpired && isValidStatus && isActiveOrSent && hasBalance
         
         if (isValid) {
+          // Ensure treatmentId is properly handled for treatment vouchers
+          let enhancedVoucher = { ...voucher }
+          if (voucher.voucherType === "treatment" && voucher.treatmentId) {
+            // If treatmentId is populated, extract the ID and preserve the name
+            if (typeof voucher.treatmentId === 'object' && (voucher.treatmentId as any)._id) {
+              (enhancedVoucher as any).treatmentName = (voucher.treatmentId as any).name
+              enhancedVoucher.treatmentId = (voucher.treatmentId as any)._id.toString() as any
+            } else if (typeof voucher.treatmentId === 'string') {
+              enhancedVoucher.treatmentId = voucher.treatmentId
+            }
+          }
+          
           return {
             success: true,
             redemption: {
               code: trimmedCode,
               type: voucher.voucherType === "monetary" ? "monetary_voucher" : "treatment_voucher",
               isValid: true,
-              data: voucher as any
+              data: enhancedVoucher as any
             }
           }
         } else {
@@ -3464,13 +3476,25 @@ export async function validateRedemptionCode(
           return { success: false, error: "המנוי לא שייך למשתמש זה" }
         }
         
+        // Ensure treatmentId is properly handled
+        let enhancedSubscription = { ...userSubscription }
+        if (userSubscription.treatmentId) {
+          // If treatmentId is populated, extract the ID and preserve the name
+          if (typeof userSubscription.treatmentId === 'object' && (userSubscription.treatmentId as any)._id) {
+            (enhancedSubscription as any).treatmentName = (userSubscription.treatmentId as any).name
+            enhancedSubscription.treatmentId = (userSubscription.treatmentId as any)._id.toString() as any
+          } else if (typeof userSubscription.treatmentId === 'string') {
+            enhancedSubscription.treatmentId = userSubscription.treatmentId
+          }
+        }
+        
         return {
           success: true,
           redemption: {
             code: trimmedCode,
             type: "subscription",
             isValid: true,
-            data: userSubscription as any
+            data: enhancedSubscription as any
           }
         }
       }

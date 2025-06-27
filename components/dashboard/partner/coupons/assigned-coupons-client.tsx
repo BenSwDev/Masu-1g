@@ -18,11 +18,11 @@ export default function AssignedCouponsClient({ initialData }: AssignedCouponsCl
   const searchParams = useSearchParams()
   const { t, dir } = useTranslation()
 
-  const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData.coupons || [])
+  const [coupons, setCoupons] = React.useState<ICoupon[]>(initialData?.coupons || [])
   const [pagination, setPagination] = React.useState({
-    totalPages: 1,
-    currentPage: 1,
-    totalCoupons: 0,
+    totalPages: initialData?.totalPages || 1,
+    currentPage: initialData?.currentPage || 1,
+    totalCoupons: initialData?.totalCoupons || 0,
   })
   const [loading, setLoading] = React.useState(false)
 

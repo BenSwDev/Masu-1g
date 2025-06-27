@@ -357,20 +357,30 @@ export async function updateBookingByAdmin(
 export async function createGuestUser(guestInfo: {
   firstName: string
   lastName: string
-  email: string
+  email?: string
   phone: string
   birthDate?: Date
   gender?: "male" | "female" | "other"
 }): Promise<{ success: boolean; userId?: string; error?: string }> {
-  // Use the fixed findOrCreateUserByPhone function directly
-  const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
-  
-  return await findOrCreateUserByPhone(guestInfo.phone, {
-    name: `${guestInfo.firstName} ${guestInfo.lastName}`,
-    email: guestInfo.email,
-    gender: guestInfo.gender,
-    dateOfBirth: guestInfo.birthDate,
-  })
+  try {
+    // Use the fixed findOrCreateUserByPhone function directly
+    const { findOrCreateUserByPhone } = await import("@/actions/auth-actions")
+    
+    const result = await findOrCreateUserByPhone(guestInfo.phone, {
+      name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+      email: guestInfo.email,
+      gender: guestInfo.gender,
+      dateOfBirth: guestInfo.birthDate,
+    })
+    
+    return result
+  } catch (error) {
+    console.error("Error creating guest user:", error)
+    return { 
+      success: false, 
+      error: "Failed to create guest user" 
+    }
+  }
 }
 
 export async function saveAbandonedBooking(

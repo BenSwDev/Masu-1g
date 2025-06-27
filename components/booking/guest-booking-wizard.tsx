@@ -838,6 +838,16 @@ export default function UniversalBookingWizard({
       return null
     }
 
+    // Validate email if booking for someone else and recipient email is provided
+    if (guestInfo.isBookingForSomeoneElse && guestInfo.recipientEmail && !guestInfo.recipientEmail.includes('@')) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה בכתובת אימייל",
+        description: "אנא הזן כתובת אימייל תקינה עבור הנמען",
+      })
+      return null
+    }
+
     if (
       !bookingOptions.selectedTreatmentId ||
       !bookingOptions.bookingDate ||
@@ -887,8 +897,8 @@ export default function UniversalBookingWizard({
         },
         guestInfo: {
           name: `${guestInfo.firstName} ${guestInfo.lastName}`,
-          email: guestInfo.email!,
-          phone: guestInfo.phone!,
+          email: guestInfo.email || undefined,
+          phone: guestInfo.phone,
         },
         isBookingForSomeoneElse: Boolean(guestInfo.isBookingForSomeoneElse),
         recipientName: guestInfo.isBookingForSomeoneElse 
@@ -899,7 +909,7 @@ export default function UniversalBookingWizard({
           : guestInfo.email,
         recipientPhone: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientPhone!
-          : guestInfo.phone!,
+          : guestInfo.phone,
         recipientBirthDate: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientBirthDate
           : guestInfo.birthDate,
@@ -961,10 +971,20 @@ export default function UniversalBookingWizard({
 
   // Handle final confirmation after successful payment
   const handleFinalSubmit = async () => {
-    console.log("🎯 handleFinalSubmit called", { pendingBookingId })
+    console.log("🎯 handleFinalSubmit called", { 
+      pendingBookingId, 
+      guestUserId,
+      calculatedPrice: calculatedPrice?.finalAmount,
+      currentStep 
+    })
     
     if (!pendingBookingId) {
-      console.error("❌ No pending booking ID found")
+      console.error("❌ No pending booking ID found", {
+        guestUserId,
+        currentStep,
+        bookingOptions,
+        guestInfo: { firstName: guestInfo.firstName, lastName: guestInfo.lastName, phone: guestInfo.phone }
+      })
       toast({
         variant: "destructive",
         title: "שגיאה",
@@ -985,7 +1005,8 @@ export default function UniversalBookingWizard({
       
       console.log("💳 Calling updateBookingStatusAfterPayment with:", { 
         pendingBookingId, 
-        transactionId 
+        transactionId,
+        paymentStatus: "success"
       })
         
       const result = await updateBookingStatusAfterPayment(
@@ -997,7 +1018,11 @@ export default function UniversalBookingWizard({
       console.log("📋 Payment update result:", result)
       
       if (result.success && result.booking) {
-        console.log("✅ Payment confirmed successfully!")
+        console.log("✅ Payment confirmed successfully!", {
+          bookingId: result.booking._id || result.booking.id,
+          status: result.booking.status,
+          paymentStatus: result.booking.paymentDetails?.paymentStatus
+        })
         
         // Clear saved form state on successful booking
         if (guestUserId) {
@@ -1012,7 +1037,11 @@ export default function UniversalBookingWizard({
         if (bookingId) {
           const confirmationUrl = `/bookings/confirmation?bookingId=${bookingId}&status=success`
           console.log("🎯 Redirecting to:", confirmationUrl)
-          router.push(confirmationUrl)
+          
+          // Add a small delay to ensure state is updated
+          setTimeout(() => {
+            router.push(confirmationUrl)
+          }, 100)
         } else {
           console.warn("⚠️ No booking ID found, showing confirmation step")
           // Fallback to showing confirmation step if no booking ID
@@ -1025,7 +1054,11 @@ export default function UniversalBookingWizard({
           description: t("bookings.success.bookingCreatedDescription"),
         })
       } else {
-        console.error("❌ Payment update failed:", result.error)
+        console.error("❌ Payment update failed:", {
+          success: result.success,
+          error: result.error,
+          bookingData: result.booking ? "present" : "missing"
+        })
         toast({
           variant: "destructive",
           title: "שגיאה בעדכון ההזמנה",
@@ -1101,55 +1134,18 @@ export default function UniversalBookingWizard({
         )
       case 5:
         return (
-          <div className="space-y-6">
-            <GuestSummaryStep
-              initialData={initialData}
-              bookingOptions={bookingOptions}
-              guestInfo={guestInfo}
-              calculatedPrice={calculatedPrice}
-              isPriceCalculating={isPriceCalculating}
-              onNext={nextStep}
-              onPrev={prevStep}
-              setBookingOptions={setBookingOptions}
-              voucher={voucher}
-              userSubscription={userSubscription}
-            />
-            
-            {/* Notification Preferences for Booker */}
-            <NotificationPreferencesSelector
-              value={{
-                methods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
-                         guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
-                language: guestInfo.bookerNotificationLanguage || "he"
-              }}
-              onChange={(prefs) => setGuestInfo({
-                bookerNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
-                                         prefs.methods.includes("sms") ? "sms" : "email",
-                bookerNotificationLanguage: prefs.language
-              })}
-              isForRecipient={false}
-              className="mt-6"
-            />
-            
-            {/* Notification Preferences for Recipient (if booking for someone else) */}
-            {guestInfo.isBookingForSomeoneElse && (
-              <NotificationPreferencesSelector
-                value={{
-                  methods: guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
-                           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"],
-                  language: guestInfo.recipientNotificationLanguage || "he"
-                }}
-                onChange={(prefs) => setGuestInfo({
-                  recipientNotificationMethod: prefs.methods.includes("email") && prefs.methods.includes("sms") ? "both" :
-                                              prefs.methods.includes("sms") ? "sms" : "email",
-                  recipientNotificationLanguage: prefs.language
-                })}
-                isForRecipient={true}
-                recipientName={`${guestInfo.recipientFirstName || ''} ${guestInfo.recipientLastName || ''}`.trim()}
-                className="mt-4"
-              />
-            )}
-          </div>
+          <GuestSummaryStep
+            initialData={initialData}
+            bookingOptions={bookingOptions}
+            guestInfo={guestInfo}
+            calculatedPrice={calculatedPrice}
+            isPriceCalculating={isPriceCalculating}
+            onNext={nextStep}
+            onPrev={prevStep}
+            setBookingOptions={setBookingOptions}
+            voucher={voucher}
+            userSubscription={userSubscription}
+          />
         )
       case 6:
         return (

@@ -1,6 +1,7 @@
 import User from "./models/user"
 import PasswordResetToken from "./models/password-reset-token"
 import VerificationToken from "./models/verification-token"
+import { createPhoneVariations } from "@/lib/utils/phone-utils"
 
 /**
  * Optimized query builders with proper projections and lean queries
@@ -11,7 +12,6 @@ export const UserQueries = {
   // Find user by phone for login (only required fields)
   async findForLogin(phone: string) {
     // Use centralized phone normalization
-    const { createPhoneVariations } = await import("@/lib/utils/phone-utils")
     const variations = createPhoneVariations(phone)
     
     return User.findOne({
@@ -46,7 +46,6 @@ export const UserQueries = {
     if (!phone) return false
 
     // Use the centralized phone utility to create all variations
-    const { createPhoneVariations } = await import("@/lib/utils/phone-utils")
     const variations = createPhoneVariations(phone)
 
     // Search for any of the variations

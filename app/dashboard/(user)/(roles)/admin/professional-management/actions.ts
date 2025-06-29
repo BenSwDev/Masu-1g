@@ -820,6 +820,7 @@ export async function updateProfessionalWorkAreas(
       }
     })
 
+    // Update work areas
     const professional = await ProfessionalProfile.findByIdAndUpdate(
       id,
       { 
@@ -828,8 +829,6 @@ export async function updateProfessionalWorkAreas(
       },
       { new: true, runValidators: true }
     )
-      .populate("userId", "name email phone gender dateOfBirth roles")
-      .lean()
 
     if (!professional) {
       return { success: false, error: "מטפל לא נמצא" }
@@ -837,23 +836,27 @@ export async function updateProfessionalWorkAreas(
 
     // Update covered cities for each work area
     try {
-      const updatedProfessional = await ProfessionalProfile.findById(id)
-      if (updatedProfessional) {
-        for (let i = 0; i < updatedProfessional.workAreas.length; i++) {
-          await updatedProfessional.updateCoveredCities(i)
-        }
+      for (let i = 0; i < professional.workAreas.length; i++) {
+        await professional.updateCoveredCities(i)
       }
+      // Save the professional after updating covered cities
+      await professional.save()
     } catch (coveredCitiesError) {
       // Log error but don't fail the entire operation
       console.error("Error updating covered cities:", coveredCitiesError)
     }
+
+    // Get the final updated professional with populated user data and updated covered cities
+    const finalProfessional = await ProfessionalProfile.findById(id)
+      .populate("userId", "name email phone gender dateOfBirth roles")
+      .lean()
 
     // Revalidate the professional management page
     revalidatePath("/dashboard/admin/professional-management")
 
     return { 
       success: true, 
-      professional: professional as ProfessionalWithUser 
+      professional: finalProfessional as unknown as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error updating professional work areas:", error)

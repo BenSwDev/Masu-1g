@@ -51,14 +51,22 @@ function getHebrewDayName(date: Date): string {
   return days[date.getDay()]
 }
 
-// Helper function to calculate professional costs from actual booking data
+// Helper function to calculate professional costs from booking
 function calculateProfessionalCosts(booking: any): number {
-  // Use the actual professional payment from price details if available
+  // Use the new financial breakdown if available
   if (booking.priceDetails?.totalProfessionalPayment) {
     return booking.priceDetails.totalProfessionalPayment
   }
-  // Fallback to static fields for backward compatibility
-  return booking.staticTherapistPay || 0
+  
+  // Fallback to legacy fields
+  if (booking.staticTherapistPay) {
+    return booking.staticTherapistPay
+  }
+  
+  // Default calculation if no specific data
+  const finalAmount = booking.priceDetails?.finalAmount || booking.totalAmount || 0
+  // Assume 70% goes to professional as default
+  return Math.round(finalAmount * 0.7)
 }
 
 export async function GET(request: NextRequest) {
@@ -115,153 +123,286 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get bookings data
+    // ✅ Get bookings data - paid bookings only
     const bookings = await db.collection('bookings').find({
       createdAt: { $gte: dayStart, $lte: dayEnd },
-      status: { $in: ['confirmed', 'completed'] }
+      status: { $in: ['confirmed', 'completed'] },
+      'paymentDetails.paymentStatus': 'paid'
     }).toArray()
 
     for (const booking of bookings) {
       const customer = booking.userId ? await db.collection('users').findOne({ _id: booking.userId }) : null
+      const finalAmount = booking.priceDetails?.finalAmount || booking.totalAmount || 0
+      const professionalCost = calculateProfessionalCosts(booking)
       
       transactions.push({
         id: booking._id.toString(),
         type: 'booking',
         time: booking.createdAt.toISOString(),
-        customerName: customer?.name || booking.guestInfo?.name,
-        customerEmail: customer?.email || booking.guestInfo?.email,
-        customerPhone: customer?.phone || booking.guestInfo?.phone,
-        amount: booking.totalAmount || 0,
-        professionalCost: calculateProfessionalCosts(booking),
+        customerName: customer?.name || booking.guestInfo?.name || booking.bookedByUserName,
+        customerEmail: customer?.email || booking.guestInfo?.email || booking.bookedByUserEmail,
+        customerPhone: customer?.phone || booking.guestInfo?.phone || booking.bookedByUserPhone,
+        amount: finalAmount,
+        professionalCost: professionalCost,
         description: `הזמנת טיפול: ${booking.treatmentName || 'לא צוין'}`,
         status: booking.status,
-        paymentMethod: booking.payment?.method,
-        transactionId: booking.transactionId || booking._id.toString()
+        paymentMethod: booking.paymentDetails?.method || 'לא צוין',
+        transactionId: booking.paymentDetails?.transactionId || booking._id.toString()
       })
 
       summary.breakdown.bookings.count++
-      summary.breakdown.bookings.amount += booking.totalAmount || 0
+      summary.breakdown.bookings.amount += finalAmount
+      summary.totalProfessionalCosts += professionalCost
     }
 
-    // Get gift vouchers data
+    // ✅ Get gift vouchers data - new purchases
     const newVouchers = await db.collection('gift-vouchers').find({
-      createdAt: { $gte: dayStart, $lte: dayEnd }
+      createdAt: { $gte: dayStart, $lte: dayEnd },
+      status: { $in: ['active', 'pending_send', 'sent'] }
     }).toArray()
 
     for (const voucher of newVouchers) {
-      const customer = voucher.purchasedBy ? await db.collection('users').findOne({ _id: voucher.purchasedBy }) : null
+      const customer = voucher.purchaserUserId ? await db.collection('users').findOne({ _id: voucher.purchaserUserId }) : null
+      const voucherAmount = voucher.amount || 0
       
       transactions.push({
         id: voucher._id.toString(),
         type: 'voucher_new',
         time: voucher.createdAt.toISOString(),
-        customerName: customer?.name,
-        customerEmail: customer?.email,
-        customerPhone: customer?.phone,
-        amount: voucher.monetaryValue || voucher.treatmentValue || 0,
-        description: `רכישת שובר מתנה: ${voucher.type === 'monetary' ? 'כספי' : 'טיפול'}`,
+        customerName: customer?.name || voucher.guestInfo?.name,
+        customerEmail: customer?.email || voucher.guestInfo?.email,
+        customerPhone: customer?.phone || voucher.guestInfo?.phone,
+        amount: voucherAmount,
+        description: `רכישת שובר מתנה: ${voucher.voucherType === 'monetary' ? 'כספי' : 'טיפול'}`,
         status: voucher.status || 'active',
         transactionId: voucher.code || voucher._id.toString()
       })
 
       summary.breakdown.newVouchers.count++
-      summary.breakdown.newVouchers.amount += voucher.monetaryValue || voucher.treatmentValue || 0
+      summary.breakdown.newVouchers.amount += voucherAmount
     }
 
-    // Get redeemed vouchers data
-    const redeemedVouchers = await db.collection('bookings').find({
+    // ✅ Get redeemed vouchers data - bookings that used vouchers
+    const voucherBookings = await db.collection('bookings').find({
       createdAt: { $gte: dayStart, $lte: dayEnd },
-      'payment.giftVoucherId': { $exists: true, $ne: null }
+      $or: [
+        { 'priceDetails.appliedGiftVoucherId': { $exists: true, $ne: null } },
+        { redeemedGiftVoucherId: { $exists: true, $ne: null } }
+      ],
+      status: { $in: ['confirmed', 'completed'] },
+      'paymentDetails.paymentStatus': 'paid'
     }).toArray()
 
-    for (const booking of redeemedVouchers) {
+    for (const booking of voucherBookings) {
       const customer = booking.userId ? await db.collection('users').findOne({ _id: booking.userId }) : null
+      const voucherAmount = booking.priceDetails?.voucherAppliedAmount || 0
       
       transactions.push({
         id: `${booking._id.toString()}_voucher_redeemed`,
         type: 'voucher_redeemed',
         time: booking.createdAt.toISOString(),
-        customerName: customer?.name || booking.guestInfo?.name,
-        customerEmail: customer?.email || booking.guestInfo?.email,
-        customerPhone: customer?.phone || booking.guestInfo?.phone,
-        amount: -(booking.payment?.voucherDiscount || 0),
+        customerName: customer?.name || booking.guestInfo?.name || booking.bookedByUserName,
+        customerEmail: customer?.email || booking.guestInfo?.email || booking.bookedByUserEmail,
+        customerPhone: customer?.phone || booking.guestInfo?.phone || booking.bookedByUserPhone,
+        amount: -voucherAmount, // Negative because it's a discount
         description: `מימוש שובר מתנה בהזמנה`,
         status: 'redeemed',
-        transactionId: booking.payment?.giftVoucherId || booking._id.toString()
+        transactionId: booking.priceDetails?.appliedGiftVoucherId?.toString() || booking._id.toString()
       })
 
       summary.breakdown.redeemedVouchers.count++
-      summary.breakdown.redeemedVouchers.amount += booking.payment?.voucherDiscount || 0
+      summary.breakdown.redeemedVouchers.amount += voucherAmount
     }
 
-    // Get user subscriptions data
+    // ✅ Get user subscriptions data - new purchases
     const newSubscriptions = await db.collection('user-subscriptions').find({
-      createdAt: { $gte: dayStart, $lte: dayEnd }
+      createdAt: { $gte: dayStart, $lte: dayEnd },
+      status: { $in: ['active', 'expired', 'depleted'] } // Paid subscriptions
     }).toArray()
 
     for (const subscription of newSubscriptions) {
-      const customer = await db.collection('users').findOne({ _id: subscription.userId })
+      const customer = subscription.userId ? await db.collection('users').findOne({ _id: subscription.userId }) : null
       const subscriptionDetails = await db.collection('subscriptions').findOne({ _id: subscription.subscriptionId })
+      const paymentAmount = subscription.paymentAmount || 0
       
       transactions.push({
         id: subscription._id.toString(),
         type: 'subscription_new',
         time: subscription.createdAt.toISOString(),
-        customerName: customer?.name,
-        customerEmail: customer?.email,
-        customerPhone: customer?.phone,
-        amount: subscription.amount || 0,
+        customerName: customer?.name || subscription.guestInfo?.name,
+        customerEmail: customer?.email || subscription.guestInfo?.email,
+        customerPhone: customer?.phone || subscription.guestInfo?.phone,
+        amount: paymentAmount,
         description: `רכישת מנוי: ${subscriptionDetails?.name || 'לא צוין'}`,
         status: subscription.status || 'active',
-        transactionId: subscription.transactionId || subscription._id.toString()
+        transactionId: subscription.paymentId || subscription._id.toString()
       })
 
       summary.breakdown.newSubscriptions.count++
-      summary.breakdown.newSubscriptions.amount += subscription.amount || 0
+      summary.breakdown.newSubscriptions.amount += paymentAmount
     }
 
-    // Get redeemed subscriptions
-    const redeemedSubscriptions = await db.collection('bookings').find({
+    // ✅ Get redeemed subscriptions - bookings that used subscriptions
+    const subscriptionBookings = await db.collection('bookings').find({
       createdAt: { $gte: dayStart, $lte: dayEnd },
-      'payment.userSubscriptionId': { $exists: true, $ne: null }
+      $or: [
+        { 'priceDetails.redeemedUserSubscriptionId': { $exists: true, $ne: null } },
+        { redeemedUserSubscriptionId: { $exists: true, $ne: null } }
+      ],
+      status: { $in: ['confirmed', 'completed'] },
+      'paymentDetails.paymentStatus': 'paid'
     }).toArray()
 
-    for (const booking of redeemedSubscriptions) {
+    for (const booking of subscriptionBookings) {
       const customer = booking.userId ? await db.collection('users').findOne({ _id: booking.userId }) : null
+      // The value of the treatment that was covered by subscription
+      const treatmentValue = booking.priceDetails?.treatmentPriceAfterSubscriptionOrTreatmentVoucher || 0
       
       transactions.push({
         id: `${booking._id.toString()}_subscription_redeemed`,
         type: 'subscription_redeemed',
         time: booking.createdAt.toISOString(),
-        customerName: customer?.name || booking.guestInfo?.name,
-        customerEmail: customer?.email || booking.guestInfo?.email,
-        customerPhone: customer?.phone || booking.guestInfo?.phone,
-        amount: -(booking.payment?.subscriptionDiscount || 0),
+        customerName: customer?.name || booking.guestInfo?.name || booking.bookedByUserName,
+        customerEmail: customer?.email || booking.guestInfo?.email || booking.bookedByUserEmail,
+        customerPhone: customer?.phone || booking.guestInfo?.phone || booking.bookedByUserPhone,
+        amount: -treatmentValue, // Negative because it's a discount
         description: `מימוש מנוי בהזמנה`,
         status: 'redeemed',
-        transactionId: booking.payment?.userSubscriptionId || booking._id.toString()
+        transactionId: booking.priceDetails?.redeemedUserSubscriptionId?.toString() || booking._id.toString()
       })
 
       summary.breakdown.redeemedSubscriptions.count++
-      summary.breakdown.redeemedSubscriptions.amount += booking.payment?.subscriptionDiscount || 0
+      summary.breakdown.redeemedSubscriptions.amount += treatmentValue
     }
 
-    // Sort transactions by time
+    // ✅ Get coupons data - new coupons created
+    const newCoupons = await db.collection('coupons').find({
+      createdAt: { $gte: dayStart, $lte: dayEnd },
+      isActive: true
+    }).toArray()
+
+    for (const coupon of newCoupons) {
+      const discountValue = coupon.discountValue || 0
+      
+      transactions.push({
+        id: coupon._id.toString(),
+        type: 'coupon_new',
+        time: coupon.createdAt.toISOString(),
+        amount: discountValue,
+        description: `יצירת קופון: ${coupon.code} - ${coupon.description || 'ללא תיאור'}`,
+        status: coupon.isActive ? 'active' : 'inactive',
+        transactionId: coupon.code || coupon._id.toString()
+      })
+
+      summary.breakdown.newCoupons.count++
+      summary.breakdown.newCoupons.amount += discountValue
+    }
+
+    // ✅ Get redeemed coupons - bookings that used coupons
+    const couponBookings = await db.collection('bookings').find({
+      createdAt: { $gte: dayStart, $lte: dayEnd },
+      $or: [
+        { 'priceDetails.appliedCouponId': { $exists: true, $ne: null } },
+        { appliedCouponId: { $exists: true, $ne: null } }
+      ],
+      status: { $in: ['confirmed', 'completed'] },
+      'paymentDetails.paymentStatus': 'paid'
+    }).toArray()
+
+    for (const booking of couponBookings) {
+      const customer = booking.userId ? await db.collection('users').findOne({ _id: booking.userId }) : null
+      const discountAmount = booking.priceDetails?.discountAmount || 0
+      
+      transactions.push({
+        id: `${booking._id.toString()}_coupon_redeemed`,
+        type: 'coupon_redeemed',
+        time: booking.createdAt.toISOString(),
+        customerName: customer?.name || booking.guestInfo?.name || booking.bookedByUserName,
+        customerEmail: customer?.email || booking.guestInfo?.email || booking.bookedByUserEmail,
+        customerPhone: customer?.phone || booking.guestInfo?.phone || booking.bookedByUserPhone,
+        amount: -discountAmount, // Negative because it's a discount
+        description: `מימוש קופון בהזמנה`,
+        status: 'redeemed',
+        transactionId: booking.priceDetails?.appliedCouponId?.toString() || booking._id.toString()
+      })
+
+      summary.breakdown.redeemedCoupons.count++
+      summary.breakdown.redeemedCoupons.amount += discountAmount
+    }
+
+    // ✅ Get partner coupon batches - new batches created
+    const newPartnerCoupons = await db.collection('partner-coupon-batches').find({
+      createdAt: { $gte: dayStart, $lte: dayEnd },
+      isActive: true
+    }).toArray()
+
+    for (const batch of newPartnerCoupons) {
+      const totalValue = (batch.totalCoupons || 0) * (batch.discountValue || 0)
+      
+      transactions.push({
+        id: batch._id.toString(),
+        type: 'partner_coupon_new',
+        time: batch.createdAt.toISOString(),
+        amount: totalValue,
+        description: `יצירת אצווה של קופוני שותפים: ${batch.totalCoupons} קופונים`,
+        status: batch.isActive ? 'active' : 'inactive',
+        transactionId: batch._id.toString()
+      })
+
+      summary.breakdown.newPartnerCoupons.count += batch.totalCoupons || 0
+      summary.breakdown.newPartnerCoupons.amount += totalValue
+    }
+
+    // ✅ Get redeemed partner coupons - bookings that used partner coupons
+    const partnerCouponBookings = await db.collection('bookings').find({
+      createdAt: { $gte: dayStart, $lte: dayEnd },
+      'appliedPartnerCouponId': { $exists: true, $ne: null },
+      status: { $in: ['confirmed', 'completed'] },
+      'paymentDetails.paymentStatus': 'paid'
+    }).toArray()
+
+    for (const booking of partnerCouponBookings) {
+      const customer = booking.userId ? await db.collection('users').findOne({ _id: booking.userId }) : null
+      const discountAmount = booking.partnerCouponDiscount || 0
+      
+      transactions.push({
+        id: `${booking._id.toString()}_partner_coupon_redeemed`,
+        type: 'partner_coupon_redeemed',
+        time: booking.createdAt.toISOString(),
+        customerName: customer?.name || booking.guestInfo?.name || booking.bookedByUserName,
+        customerEmail: customer?.email || booking.guestInfo?.email || booking.bookedByUserEmail,
+        customerPhone: customer?.phone || booking.guestInfo?.phone || booking.bookedByUserPhone,
+        amount: -discountAmount, // Negative because it's a discount
+        description: `מימוש קופון שותף בהזמנה`,
+        status: 'redeemed',
+        transactionId: booking.appliedPartnerCouponId?.toString() || booking._id.toString()
+      })
+
+      summary.breakdown.redeemedPartnerCoupons.count++
+      summary.breakdown.redeemedPartnerCoupons.amount += discountAmount
+    }
+
+    // Sort transactions by time (newest first)
     transactions.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
 
-    // Calculate summary totals
+    // ✅ Calculate summary totals
     summary.totalTransactions = transactions.length
+    
+    // Revenue = actual money received
     summary.totalRevenue = 
       summary.breakdown.bookings.amount + 
       summary.breakdown.newVouchers.amount + 
       summary.breakdown.newSubscriptions.amount
 
+    // Redemptions = value of discounts/vouchers used (money NOT received)
     summary.totalRedemptions = 
       summary.breakdown.redeemedVouchers.amount + 
-      summary.breakdown.redeemedSubscriptions.amount
+      summary.breakdown.redeemedSubscriptions.amount + 
+      summary.breakdown.redeemedCoupons.amount + 
+      summary.breakdown.redeemedPartnerCoupons.amount
 
-    summary.totalProfessionalCosts = calculateProfessionalCosts(summary.breakdown.bookings.amount)
-    summary.totalOfficeProfit = summary.totalRevenue - summary.totalProfessionalCosts - summary.totalRedemptions
+    // Office profit = revenue - professional costs
+    summary.totalOfficeProfit = summary.totalRevenue - summary.totalProfessionalCosts
 
     const response: DailyTransactionData = {
       summary,

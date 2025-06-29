@@ -35,14 +35,22 @@ function getHebrewDayName(date: Date): string {
   return days[date.getDay()]
 }
 
-// Helper function to calculate professional costs from actual booking data
+// Helper function to calculate professional costs from booking
 function calculateProfessionalCosts(booking: any): number {
-  // Use the actual professional payment from price details if available
+  // Use the new financial breakdown if available
   if (booking.priceDetails?.totalProfessionalPayment) {
     return booking.priceDetails.totalProfessionalPayment
   }
-  // Fallback to static fields for backward compatibility
-  return booking.staticTherapistPay || 0
+  
+  // Fallback to legacy fields
+  if (booking.staticTherapistPay) {
+    return booking.staticTherapistPay
+  }
+  
+  // Default calculation if no specific data
+  const finalAmount = booking.priceDetails?.finalAmount || booking.totalAmount || 0
+  // Assume 70% goes to professional as default
+  return Math.round(finalAmount * 0.7)
 }
 
 export async function GET(request: NextRequest) {
@@ -107,112 +115,152 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        // Get bookings data
+        // ✅ Get bookings data - paid bookings only
         const bookings = await db.collection('bookings').find({
           createdAt: { $gte: dayStart, $lte: dayEnd },
-          status: { $in: ['confirmed', 'completed'] }
+          status: { $in: ['confirmed', 'completed'] },
+          'paymentDetails.paymentStatus': 'paid'
         }).toArray()
 
         dayData.bookings.count = bookings.length
-        dayData.bookings.amount = bookings.reduce((sum, booking) => sum + (booking.totalAmount || 0), 0)
+        dayData.bookings.amount = bookings.reduce((sum, booking) => {
+          return sum + (booking.priceDetails?.finalAmount || booking.totalAmount || 0)
+        }, 0)
 
-        // Get gift vouchers data
+        // Calculate professional costs for bookings
+        dayData.professionalCosts = bookings.reduce((sum, booking) => {
+          return sum + calculateProfessionalCosts(booking)
+        }, 0)
+
+        // ✅ Get gift vouchers data - new purchases
         const newVouchers = await db.collection('gift-vouchers').find({
-          createdAt: { $gte: dayStart, $lte: dayEnd }
+          createdAt: { $gte: dayStart, $lte: dayEnd },
+          status: { $in: ['active', 'pending_send', 'sent'] }
         }).toArray()
 
         dayData.newVouchers.count = newVouchers.length
         dayData.newVouchers.amount = newVouchers.reduce((sum, voucher) => {
-          return sum + (voucher.monetaryValue || voucher.treatmentValue || 0)
+          // Use the primary 'amount' field which is always set correctly
+          return sum + (voucher.amount || 0)
         }, 0)
 
-        // Get redeemed vouchers data (bookings that used vouchers)
-        const redeemedVouchers = await db.collection('bookings').find({
+        // ✅ Get redeemed vouchers - bookings that used vouchers
+        const voucherBookings = await db.collection('bookings').find({
           createdAt: { $gte: dayStart, $lte: dayEnd },
-          'payment.giftVoucherId': { $exists: true, $ne: null }
+          $or: [
+            { 'priceDetails.appliedGiftVoucherId': { $exists: true, $ne: null } },
+            { redeemedGiftVoucherId: { $exists: true, $ne: null } }
+          ],
+          status: { $in: ['confirmed', 'completed'] },
+          'paymentDetails.paymentStatus': 'paid'
         }).toArray()
 
-        dayData.redeemedVouchers.count = redeemedVouchers.length
-        dayData.redeemedVouchers.amount = redeemedVouchers.reduce((sum, booking) => {
-          return sum + (booking.payment?.voucherDiscount || 0)
+        dayData.redeemedVouchers.count = voucherBookings.length
+        dayData.redeemedVouchers.amount = voucherBookings.reduce((sum, booking) => {
+          return sum + (booking.priceDetails?.voucherAppliedAmount || 0)
         }, 0)
 
-        // Get user subscriptions data (new purchases)
+        // ✅ Get user subscriptions data - new purchases
         const newSubscriptions = await db.collection('user-subscriptions').find({
-          createdAt: { $gte: dayStart, $lte: dayEnd }
+          createdAt: { $gte: dayStart, $lte: dayEnd },
+          status: { $in: ['active', 'expired', 'depleted'] } // Paid subscriptions
         }).toArray()
 
         dayData.newSubscriptions.count = newSubscriptions.length
-        dayData.newSubscriptions.amount = newSubscriptions.reduce((sum, sub) => sum + (sub.amount || 0), 0)
-
-        // Get redeemed subscriptions (bookings that used subscriptions)
-        const redeemedSubscriptions = await db.collection('bookings').find({
-          createdAt: { $gte: dayStart, $lte: dayEnd },
-          'payment.userSubscriptionId': { $exists: true, $ne: null }
-        }).toArray()
-
-        dayData.redeemedSubscriptions.count = redeemedSubscriptions.length
-        dayData.redeemedSubscriptions.amount = redeemedSubscriptions.reduce((sum, booking) => {
-          return sum + (booking.payment?.subscriptionDiscount || 0)
+        dayData.newSubscriptions.amount = newSubscriptions.reduce((sum, sub) => {
+          return sum + (sub.paymentAmount || 0)
         }, 0)
 
-        // Get coupons data
+        // ✅ Get redeemed subscriptions - bookings that used subscriptions
+        const subscriptionBookings = await db.collection('bookings').find({
+          createdAt: { $gte: dayStart, $lte: dayEnd },
+          $or: [
+            { 'priceDetails.redeemedUserSubscriptionId': { $exists: true, $ne: null } },
+            { redeemedUserSubscriptionId: { $exists: true, $ne: null } }
+          ],
+          status: { $in: ['confirmed', 'completed'] },
+          'paymentDetails.paymentStatus': 'paid'
+        }).toArray()
+
+        dayData.redeemedSubscriptions.count = subscriptionBookings.length
+        // For redeemed subscriptions, we count the original treatment value that was "used"
+        dayData.redeemedSubscriptions.amount = subscriptionBookings.reduce((sum, booking) => {
+          // The value of the treatment that was covered by subscription
+          const treatmentValue = booking.priceDetails?.treatmentPriceAfterSubscriptionOrTreatmentVoucher || 0
+          return sum + treatmentValue
+        }, 0)
+
+        // ✅ Get coupons data - new coupons created
         const newCoupons = await db.collection('coupons').find({
-          createdAt: { $gte: dayStart, $lte: dayEnd }
+          createdAt: { $gte: dayStart, $lte: dayEnd },
+          isActive: true
         }).toArray()
 
         dayData.newCoupons.count = newCoupons.length
+        // For coupons, we track potential value (not actual revenue)
         dayData.newCoupons.amount = newCoupons.reduce((sum, coupon) => {
           return sum + (coupon.discountValue || 0)
         }, 0)
 
-        // Get redeemed coupons
-        const redeemedCoupons = await db.collection('bookings').find({
+        // ✅ Get redeemed coupons - bookings that used coupons
+        const couponBookings = await db.collection('bookings').find({
           createdAt: { $gte: dayStart, $lte: dayEnd },
-          'payment.couponId': { $exists: true, $ne: null }
+          $or: [
+            { 'priceDetails.appliedCouponId': { $exists: true, $ne: null } },
+            { appliedCouponId: { $exists: true, $ne: null } }
+          ],
+          status: { $in: ['confirmed', 'completed'] },
+          'paymentDetails.paymentStatus': 'paid'
         }).toArray()
 
-        dayData.redeemedCoupons.count = redeemedCoupons.length
-        dayData.redeemedCoupons.amount = redeemedCoupons.reduce((sum, booking) => {
-          return sum + (booking.payment?.couponDiscount || 0)
+        dayData.redeemedCoupons.count = couponBookings.length
+        dayData.redeemedCoupons.amount = couponBookings.reduce((sum, booking) => {
+          return sum + (booking.priceDetails?.discountAmount || 0)
         }, 0)
 
-        // Get partner coupons data
+        // ✅ Get partner coupon batches - new batches created
         const newPartnerCoupons = await db.collection('partner-coupon-batches').find({
-          createdAt: { $gte: dayStart, $lte: dayEnd }
+          createdAt: { $gte: dayStart, $lte: dayEnd },
+          isActive: true
         }).toArray()
 
-        dayData.newPartnerCoupons.count = newPartnerCoupons.reduce((sum, batch) => sum + (batch.totalCoupons || 0), 0)
+        dayData.newPartnerCoupons.count = newPartnerCoupons.reduce((sum, batch) => {
+          return sum + (batch.totalCoupons || 0)
+        }, 0)
         dayData.newPartnerCoupons.amount = newPartnerCoupons.reduce((sum, batch) => {
           return sum + ((batch.totalCoupons || 0) * (batch.discountValue || 0))
         }, 0)
 
-        // Get redeemed partner coupons
-        const redeemedPartnerCoupons = await db.collection('bookings').find({
+        // ✅ Get redeemed partner coupons - bookings that used partner coupons
+        const partnerCouponBookings = await db.collection('bookings').find({
           createdAt: { $gte: dayStart, $lte: dayEnd },
-          'payment.partnerCouponId': { $exists: true, $ne: null }
+          'appliedPartnerCouponId': { $exists: true, $ne: null },
+          status: { $in: ['confirmed', 'completed'] },
+          'paymentDetails.paymentStatus': 'paid'
         }).toArray()
 
-        dayData.redeemedPartnerCoupons.count = redeemedPartnerCoupons.length
-        dayData.redeemedPartnerCoupons.amount = redeemedPartnerCoupons.reduce((sum, booking) => {
-          return sum + (booking.payment?.partnerCouponDiscount || 0)
+        dayData.redeemedPartnerCoupons.count = partnerCouponBookings.length
+        dayData.redeemedPartnerCoupons.amount = partnerCouponBookings.reduce((sum, booking) => {
+          // Partner coupon discount should be in priceDetails or a specific field
+          return sum + (booking.partnerCouponDiscount || 0)
         }, 0)
 
-        // Calculate totals
+        // ✅ Calculate correct totals
+        // Revenue = actual money received
         dayData.totalRevenue = 
           dayData.bookings.amount + 
           dayData.newVouchers.amount + 
           dayData.newSubscriptions.amount
 
+        // Redemptions = value of discounts/vouchers used (money NOT received)
         dayData.totalRedemptions = 
           dayData.redeemedVouchers.amount + 
           dayData.redeemedSubscriptions.amount + 
           dayData.redeemedCoupons.amount + 
           dayData.redeemedPartnerCoupons.amount
 
-        // Calculate professional costs from actual bookings
-        dayData.professionalCosts = bookings.reduce((sum, booking) => sum + calculateProfessionalCosts(booking), 0)
-        dayData.officeProfit = dayData.totalRevenue - dayData.professionalCosts - dayData.totalRedemptions
+        // Office profit = revenue - professional costs
+        dayData.officeProfit = dayData.totalRevenue - dayData.professionalCosts
 
       } catch (error) {
         console.error(`Error processing data for ${dateStr}:`, error)

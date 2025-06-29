@@ -145,7 +145,7 @@ export default function AdminDailyTransactionsClient({ date }: AdminDailyTransac
         throw new Error('Failed to load daily transactions data')
       }
       
-      const _data = await response.json()
+      const data = await response.json()
       setDailyData(data)
     } catch (err) {
       setError(t('transactions.errors.dayDetailsFailed'))

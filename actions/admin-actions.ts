@@ -9,6 +9,7 @@ import { emailService } from "@/lib/notifications/email-service" // Use the sing
 import type { NotificationData } from "@/lib/notifications/notification-types"
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
+import { revalidatePath } from "next/cache"
 
 // Helper function to sanitize user object (remove password, convert _id to id)
 const sanitizeUser = (userDoc: any): Omit<IUser, "password" | "_id"> & { id: string } => {
@@ -243,6 +244,7 @@ export async function updateUserByAdmin(userId: string, formData: FormData) {
     userToUpdate.dateOfBirth = dateOfBirth || undefined
 
     await userToUpdate.save()
+    revalidatePath("/admin/users")
     return { success: true, message: "admin.users.userUpdatedToast", user: sanitizeUser(userToUpdate) }
   } catch (_error: any) {
     console.error("Error updating user by admin:", error)

@@ -58,6 +58,12 @@ export interface ResetPasswordToDefaultResult {
   message: string
 }
 
+export interface GetUserByIdResult {
+  success: boolean
+  message?: string
+  user?: UserData
+}
+
 // Helper function to sanitize user object
 const sanitizeUser = (userDoc: any): Omit<IUser, "password" | "_id"> & { id: string } => {
   const userObject = userDoc.toObject ? userDoc.toObject() : { ...userDoc }
@@ -140,6 +146,50 @@ export async function getAllUsers(
   } catch (error) {
     console.error("Error in getAllUsers:", error)
     return { success: false, message: "fetchFailed", users: [], total: 0, totalPages: 0, page }
+  }
+}
+
+/**
+ * Fetches a single user by ID
+ * @param userId - ID of the user to fetch
+ * @returns Promise<GetUserByIdResult>
+ */
+export async function getUserById(userId: string): Promise<GetUserByIdResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "notAuthorized" }
+    }
+
+    await dbConnect()
+
+    const userFromDb = await User.findById(userId)
+      .select("name email phone image roles dateOfBirth gender createdAt")
+      .lean()
+
+    if (!userFromDb) {
+      return { success: false, message: "userNotFound" }
+    }
+
+    const user: UserData = {
+      id: userFromDb._id.toString(),
+      name: userFromDb.name,
+      email: userFromDb.email,
+      phone: userFromDb.phone,
+      image: userFromDb.image,
+      roles: userFromDb.roles,
+      dateOfBirth: userFromDb.dateOfBirth ? new Date(userFromDb.dateOfBirth).toISOString() : null,
+      gender: userFromDb.gender,
+      createdAt: new Date(userFromDb.createdAt).toISOString(),
+    }
+
+    return {
+      success: true,
+      user
+    }
+  } catch (error) {
+    console.error("Error in getUserById:", error)
+    return { success: false, message: "fetchFailed" }
   }
 }
 

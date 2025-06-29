@@ -267,8 +267,7 @@ export function UserManagement({
   }
 
   const handleOpenEditUserForm = (user: UserData) => {
-    setEditingUser(user)
-    setIsUserFormOpen(true)
+    router.push(`/dashboard/admin/users/${user.id}/edit`)
   }
 
   const handleUserFormSuccess = () => {

@@ -103,7 +103,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
           initialData={usersResult}
           initialFilters={filters}
           stats={stats}
-        />
+      />
       </Suspense>
     </div>
   )

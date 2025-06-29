@@ -124,17 +124,17 @@ export default function ProfessionalWorkAreasTab({
   }
 
   const handleSave = async () => {
-    // Validate work areas
+      // Validate work areas
     const validWorkAreas = workAreas.filter(w => w.cityId && w.cityName)
 
-    if (validWorkAreas.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "שגיאה",
+      if (validWorkAreas.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "שגיאה",
         description: "נא להוסיף לפחות איזור עבודה אחד תקין"
-      })
-      return
-    }
+        })
+        return
+      }
 
     setSaving(true)
     
@@ -413,18 +413,18 @@ export default function ProfessionalWorkAreasTab({
                                 variant={city === workArea.cityName ? "default" : "outline"} 
                                 className="text-xs"
                               >
-                                {city}
+                        {city}
                                 {city === workArea.cityName && " (מרכזית)"}
-                              </Badge>
-                            ))}
+                      </Badge>
+                    ))}
                             {workArea.coveredCities.length > 15 && (
                               <Badge variant="outline" className="text-xs">
                                 +{workArea.coveredCities.length - 15} נוספות
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
                     {/* Status & Actions */}
@@ -560,29 +560,29 @@ export default function ProfessionalWorkAreasTab({
                       {/* Work areas breakdown */}
                       <div className="mt-3 space-y-1">
                         <div className="text-xs text-muted-foreground">פירוט לפי איזור:</div>
-                        {workAreas
-                          .filter(isValidWorkArea)
-                          .map((area, index) => (
+                  {workAreas
+                    .filter(isValidWorkArea)
+                    .map((area, index) => (
                             <div key={index} className="text-xs">
-                              <span className="font-medium">{area.cityName}</span>
-                              <span className="text-muted-foreground mr-2">
-                                - {getDistanceRadiusText(area.distanceRadius)}
-                              </span>
+                        <span className="font-medium">{area.cityName}</span>
+                        <span className="text-muted-foreground mr-2">
+                          - {getDistanceRadiusText(area.distanceRadius)}
+                        </span>
                               {area.coveredCities && area.coveredCities.length > 0 && (
-                                <span className="text-muted-foreground">
+                          <span className="text-muted-foreground">
                                   (כולל {area.coveredCities.length} ערים)
-                                </span>
-                              )}
-                            </div>
-                          ))}
+                          </span>
+                        )}
                       </div>
+                    ))}
+            </div>
                     </div>
                   )
                 })()}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+        )}
+      </CardContent>
+    </Card>
       )}
     </div>
   )

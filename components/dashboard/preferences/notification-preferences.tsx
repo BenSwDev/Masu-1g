@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Mail, MessageSquare, Globe, Bell, Save, CheckCircle } from "lucide-react"
-import { getUserNotificationPreferences, updateUserNotificationPreferences } from "@/actions/notification-service"
+// Notification preference functions are now called via API routes
 import type { INotificationPreferences } from "@/lib/db/models/user"
 
 interface NotificationPreferencesProps {
@@ -39,7 +39,9 @@ export default function NotificationPreferences({ className }: NotificationPrefe
     if (!session?.user?.id) return
 
     try {
-      const result = await getUserNotificationPreferences(session.user.id)
+      const response = await fetch("/api/user/notification-preferences")
+      const result = await response.json()
+      
       if (result.success && result.preferences) {
         setPreferences(result.preferences)
       }
@@ -78,13 +80,20 @@ export default function NotificationPreferences({ className }: NotificationPrefe
 
     setIsSaving(true)
     try {
-      const result = await updateUserNotificationPreferences(session.user.id, preferences)
+      const response = await fetch("/api/user/notification-preferences", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(preferences),
+      })
+      const result = await response.json()
       
       if (result.success) {
         toast.success("העדפות ההתראות נשמרו בהצלחה")
         setHasChanges(false)
       } else {
-        toast.error(result.message || "שגיאה בשמירת העדפות")
+        toast.error(result.error || "שגיאה בשמירת העדפות")
       }
     } catch (error) {
       console.error("Failed to save notification preferences:", error)

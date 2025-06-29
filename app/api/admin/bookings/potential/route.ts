@@ -44,6 +44,14 @@ export async function GET(request: NextRequest) {
     // Get professional user details
     const professionalUser = professionalProfile.userId as any
 
+    console.log("Professional details:", {
+      id: professionalId,
+      name: professionalUser.name,
+      gender: professionalUser.gender,
+      treatments: professionalProfile.treatments?.length || 0,
+      workAreas: professionalProfile.workAreas?.length || 0
+    })
+
     // Build query for potential bookings
     const potentialBookingsQuery: any = {
       professionalId: { $exists: false }, // Not assigned to any professional
@@ -61,11 +69,14 @@ export async function GET(request: NextRequest) {
       .sort({ createdAt: -1 })
       .lean()
 
+    console.log(`Found ${unassignedBookings.length} unassigned bookings`)
+
     // Filter bookings that match professional criteria
     const potentialBookings = unassignedBookings.filter(booking => {
       // Check gender preference
       if (booking.therapistGenderPreference && booking.therapistGenderPreference !== "any") {
         if (professionalUser.gender !== booking.therapistGenderPreference) {
+          console.log(`Booking ${booking.bookingNumber}: Gender mismatch - needs ${booking.therapistGenderPreference}, professional is ${professionalUser.gender}`)
           return false
         }
       }
@@ -80,6 +91,7 @@ export async function GET(request: NextRequest) {
       )
 
       if (!canHandleTreatment) {
+        console.log(`Booking ${booking.bookingNumber}: Treatment not handled - needs ${treatmentId}`)
         return false
       }
 
@@ -90,18 +102,28 @@ export async function GET(request: NextRequest) {
         // Check if any of the professional's work areas covers this city
         const coversCity = professionalProfile.workAreas.some(workArea => {
           // Check if the city is in the covered cities list
-          return workArea.coveredCities.some(city => 
+          const cityMatch = workArea.coveredCities.some(city => 
             city.toLowerCase() === bookingCity.toLowerCase()
           )
+          
+          // Also check if it's the main city of the work area
+          const isMainCity = workArea.cityName && 
+            workArea.cityName.toLowerCase() === bookingCity.toLowerCase()
+          
+          return cityMatch || isMainCity
         })
 
         if (!coversCity) {
+          console.log(`Booking ${booking.bookingNumber}: City not covered - needs ${bookingCity}`)
           return false
         }
       }
 
+      console.log(`Booking ${booking.bookingNumber}: MATCHES professional criteria`)
       return true
     })
+
+    console.log(`Found ${potentialBookings.length} potential bookings for professional ${professionalUser.name}`)
 
     return NextResponse.json({
       success: true,
@@ -116,7 +138,15 @@ export async function GET(request: NextRequest) {
           ...booking.treatmentId,
           _id: booking.treatmentId._id.toString()
         } : null,
-      }))
+      })),
+      debug: {
+        professionalId,
+        professionalName: professionalUser.name,
+        totalUnassigned: unassignedBookings.length,
+        totalPotential: potentialBookings.length,
+        professionalTreatments: professionalProfile.treatments?.length || 0,
+        professionalWorkAreas: professionalProfile.workAreas?.length || 0
+      }
     })
   } catch (error) {
     console.error("Error in potential bookings API:", error)

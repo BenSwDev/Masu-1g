@@ -281,22 +281,29 @@ ProfessionalProfileSchema.methods.updateCoveredCities = async function(workAreaI
     let coveredCityNames: string[] = []
     
     if (workArea.distanceRadius === "unlimited") {
-      // For unlimited, the query returns all cities except the source city
-      // We need to add the source city back and combine
+      // For unlimited, get all cities
       const allOtherCities = coveredCitiesResult.map((city: any) => city.name).filter(Boolean)
-      coveredCityNames = [workArea.cityName, ...allOtherCities].sort()
+      coveredCityNames = [workArea.cityName, ...allOtherCities]
+        .filter((city, index, arr) => arr.indexOf(city) === index) // Remove duplicates
+        .sort()
     } else {
-      // For limited distance, the query returns cities within distance
-      // We need to add the source city and combine
+      // For limited distance, get cities within distance + source city
       const nearByCities = coveredCitiesResult
         .map((city: any) => city.toCityName || city.name)
         .filter(Boolean)
       
-      // Always include the main city itself
+      // Always include the source city itself
       coveredCityNames = [workArea.cityName, ...nearByCities]
         .filter((city, index, arr) => arr.indexOf(city) === index) // Remove duplicates
         .sort()
     }
+    
+    console.log(`Updating covered cities for ${workArea.cityName} (${workArea.distanceRadius}):`, {
+      sourceCity: workArea.cityName,
+      radius: workArea.distanceRadius,
+      foundCities: coveredCityNames.length,
+      cities: coveredCityNames
+    })
     
     // Update the work area with all covered cities (including the main city)
     this.workAreas[workAreaIndex].coveredCities = coveredCityNames

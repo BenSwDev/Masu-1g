@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { he } from "date-fns/locale"
-import { getProfessionalResponses, resendProfessionalNotifications } from "@/actions/notification-service"
+// Professional response functions are now called via API routes
 import { toast } from "sonner"
 
 interface ProfessionalResponsesDialogProps {
@@ -63,7 +63,9 @@ export function ProfessionalResponsesDialog({
     
     setLoading(true)
     try {
-      const result = await getProfessionalResponses(bookingId)
+      const response = await fetch(`/api/admin/bookings/${bookingId}/professional-responses`)
+      const result = await response.json()
+      
       if (result.success && result.responses) {
         setResponses(result.responses)
       } else {
@@ -80,7 +82,11 @@ export function ProfessionalResponsesDialog({
   const handleResendNotifications = async () => {
     setResending(true)
     try {
-      const result = await resendProfessionalNotifications(bookingId)
+      const response = await fetch(`/api/admin/bookings/${bookingId}/resend-notifications`, {
+        method: "POST",
+      })
+      const result = await response.json()
+      
       if (result.success) {
         toast.success(`נשלחו הודעות ל-${result.sentCount} מטפלים`)
         fetchResponses() // Refresh the list

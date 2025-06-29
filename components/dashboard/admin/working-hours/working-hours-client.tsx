@@ -828,7 +828,7 @@ export default function WorkingHoursClient() {
                                     {hasPriceAddition && (
                                       <div className="space-y-3">
                                         {/* Quick Presets */}
-                                        <div className="space-y-2">
+                                      <div className="space-y-2">
                                           <div className="text-xs font-medium text-muted-foreground">
                                             {t("workingHours.priceAdditionPresets")}
                                           </div>
@@ -967,59 +967,59 @@ export default function WorkingHoursClient() {
                                             )}
                                           />
                                         </div>
-                                                                
-                        {/* Time Range Fields */}
+                                        
+                                        {/* Time Range Fields */}
                         <div className="bg-muted/50 p-2 rounded border">
                           <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {t("workingHours.priceAdditionTimeRangeHelp")}
-                          </div>
-                          <div className="flex gap-2">
-                            <FormField
-                              control={fixedHoursForm.control}
-                              name={`fixedHours.${index}.priceAddition.priceAdditionStartTime`}
-                              render={({ field }) => (
-                                <FormItem>
+                                          {t("workingHours.priceAdditionTimeRangeHelp")}
+                                        </div>
+                                        <div className="flex gap-2">
+                                          <FormField
+                                            control={fixedHoursForm.control}
+                                            name={`fixedHours.${index}.priceAddition.priceAdditionStartTime`}
+                                            render={({ field }) => (
+                                              <FormItem>
                                   <FormLabel className="text-xs">{t("workingHours.priceAdditionStartTime")}</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="time"
-                                      {...field}
-                                      value={field.value || ""}
-                                      placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
+                                                <FormControl>
+                                                  <Input
+                                                    type="time"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
                                       className="w-[120px] h-8"
-                                      aria-label={`${t("workingHours.priceAdditionStartTime")} for ${dayNames[dayOfWeek]}`}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                                                    aria-label={`${t("workingHours.priceAdditionStartTime")} for ${dayNames[dayOfWeek]}`}
+                                                  />
+                                                </FormControl>
+                                                <FormMessage />
+                                              </FormItem>
+                                            )}
+                                          />
                             <div className="flex items-center justify-center mt-5">
                               <ArrowRight className="w-3 h-3 text-muted-foreground" />
                             </div>
-                            <FormField
-                              control={fixedHoursForm.control}
-                              name={`fixedHours.${index}.priceAddition.priceAdditionEndTime`}
-                              render={({ field }) => (
-                                <FormItem>
+                                          <FormField
+                                            control={fixedHoursForm.control}
+                                            name={`fixedHours.${index}.priceAddition.priceAdditionEndTime`}
+                                            render={({ field }) => (
+                                              <FormItem>
                                   <FormLabel className="text-xs">{t("workingHours.priceAdditionEndTime")}</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="time"
-                                      {...field}
-                                      value={field.value || ""}
-                                      placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
+                                                <FormControl>
+                                                  <Input
+                                                    type="time"
+                                                    {...field}
+                                                    value={field.value || ""}
+                                                    placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
                                       className="w-[120px] h-8"
-                                      aria-label={`${t("workingHours.priceAdditionEndTime")} for ${dayNames[dayOfWeek]}`}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                                                    aria-label={`${t("workingHours.priceAdditionEndTime")} for ${dayNames[dayOfWeek]}`}
+                                                  />
+                                                </FormControl>
+                                                <FormMessage />
+                                              </FormItem>
+                                            )}
+                                          />
                           </div>
-                        </div>
+                                        </div>
                                       </div>
                                     )}
                                   </div>

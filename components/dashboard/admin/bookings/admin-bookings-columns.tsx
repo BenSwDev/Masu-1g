@@ -46,10 +46,10 @@ import {
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { assignProfessionalToBooking, getAvailableProfessionals, getSuitableProfessionalsForBooking, unassignProfessionalFromBooking } from "@/actions/booking-actions"
-import { sendProfessionalBookingNotifications } from "@/actions/notification-service"
+// Removed unused import - now using unified notification system
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ProfessionalResponsesDialog } from "./professional-responses-dialog"
-import { SuitableProfessionalsModal } from "./suitable-professionals-modal"
+import { ProfessionalNotificationModal } from "./professional-notification-modal"
 import ReviewDetailModal from "../reviews/review-detail-modal"
 import SendReviewDialog from "./send-review-dialog"
 import { getReviewByBookingId } from "@/actions/review-actions"
@@ -109,12 +109,10 @@ const AdminBookingActions = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
-
-  const [sendingNotifications, setSendingNotifications] = useState(false)
   const [showResponsesModal, setShowResponsesModal] = useState(false)
   const [showSendReviewModal, setShowSendReviewModal] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
-  const [showSuitableProfessionalsModal, setShowSuitableProfessionalsModal] = useState(false)
+  const [showNotificationModal, setShowNotificationModal] = useState(false)
   const queryClient = useQueryClient()
 
   const { data: existingReview, isLoading: loadingReview, refetch: refetchReview } = useQuery({
@@ -135,27 +133,9 @@ const AdminBookingActions = ({
   const canViewResponses = ["confirmed", "in_process"].includes(booking.status)
 
   const handleDropdownClick = (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent any default behavior
     e.stopPropagation() // Prevent row click when clicking dropdown
-  }
-
-  const handleSendToProfessionals = async () => {
-    if (!booking._id) return
-    
-    setSendingNotifications(true)
-    try {
-      const result = await sendProfessionalBookingNotifications(booking._id)
-      if (result.success) {
-        toast.success(`נשלחו הודעות ל-${result.sentCount} מטפלים מתאימים`)
-        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
-      } else {
-        toast.error(result.error || "שגיאה בשליחת הודעות למטפלים")
-      }
-    } catch (error) {
-      console.error("Error sending notifications:", error)
-      toast.error("שגיאה בשליחת הודעות למטפלים")
-    } finally {
-      setSendingNotifications(false)
-    }
+    e.nativeEvent.stopImmediatePropagation() // Stop all event propagation
   }
 
   const handleSendReviewReminder = () => {
@@ -201,34 +181,13 @@ const AdminBookingActions = ({
             <span>{t("adminBookings.assignProfessional")} - {t("adminBookings.useColumnInstead")}</span>
           </DropdownMenuItem>
 
-          <DropdownMenuItem
-            onClick={() => setShowSuitableProfessionalsModal(true)}
-            className="cursor-pointer"
-          >
-            <User className="mr-2 h-4 w-4" />
-            <span>מטפלים אפשריים לשיוך</span>
-          </DropdownMenuItem>
-
-          {canSendToProfessionals ? (
+          {canSendToProfessionals && (
             <DropdownMenuItem
-              onClick={handleSendToProfessionals}
+              onClick={() => setShowNotificationModal(true)}
               className="cursor-pointer"
-              disabled={sendingNotifications}
             >
               <MessageSquare className="mr-2 h-4 w-4" />
-              {sendingNotifications ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  <span>שולח הודעות...</span>
-                </>
-              ) : (
-                <span>שלח הודעות למטפלים מתאימים</span>
-              )}
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem className="cursor-pointer text-muted-foreground" disabled>
-              <MessageSquare className="mr-2 h-4 w-4" />
-              <span>{t("adminBookings.sendToProfessionals")} ({t("common.notActive")})</span>
+              <span>שלח התראות למטפלים</span>
             </DropdownMenuItem>
           )}
 
@@ -301,8 +260,6 @@ const AdminBookingActions = ({
         </Dialog>
       )}
 
-
-
       {/* Professional Responses Modal */}
       <ProfessionalResponsesDialog
         open={showResponsesModal}
@@ -311,12 +268,14 @@ const AdminBookingActions = ({
         bookingStatus={booking.status}
       />
 
-      {/* Suitable Professionals Modal */}
-      <SuitableProfessionalsModal
-        open={showSuitableProfessionalsModal}
-        onOpenChange={setShowSuitableProfessionalsModal}
+      {/* Professional Notification Modal */}
+      <ProfessionalNotificationModal
+        open={showNotificationModal}
+        onOpenChange={setShowNotificationModal}
         booking={booking}
-        t={t}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+        }}
       />
 
       <SendReviewDialog
@@ -376,42 +335,30 @@ const AdminBookingStatusBadge = ({ status, t }: { status: string; t: TFunction }
 
 // Info Components with null safety
 const ClientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  // If there is a userId (registered user)
-  if (booking?.userId) {
-    const user = booking.userId as any
-    return (
-      <div className="space-y-1">
-        <div className="font-medium">{user.name || t("common.unknown")}</div>
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
-          <Phone className="h-3 w-3" />
-                        {formatPhoneForDisplay(user.phone || "")}
-        </div>
-        <div className="text-xs text-muted-foreground flex items-center gap-1">
-          <Mail className="h-3 w-3" />
-          {user.email || "-"}
-        </div>
-      </div>
-    )
-  }
-  // If guest booking (no userId)
+  // Handle both populated and non-populated userId
+  const user = booking?.userId && typeof booking.userId === 'object' && 'name' in booking.userId 
+    ? booking.userId as any 
+    : null
+
+  const clientName = booking?.recipientName || user?.name || t("common.unknown")
+  const clientPhone = booking?.recipientPhone || user?.phone || ""
+  const clientEmail = booking?.recipientEmail || user?.email || ""
+
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-2">
-        <span className="font-medium">{booking.bookedByUserName || booking.recipientName || t("common.guest")}</span>
-        <Badge variant="outline" className="text-blue-700 border-blue-200">{t("common.guest")}</Badge>
-      </div>
-      {booking.bookedByUserPhone || booking.recipientPhone ? (
+      <div className="font-medium text-sm">{clientName}</div>
+      {clientPhone && (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Phone className="h-3 w-3" />
-          {formatPhoneForDisplay(booking.bookedByUserPhone || booking.recipientPhone || "")}
+          {formatPhoneForDisplay(clientPhone)}
         </div>
-      ) : null}
-      {booking.bookedByUserEmail || booking.recipientEmail ? (
+      )}
+      {clientEmail && (
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Mail className="h-3 w-3" />
-          {booking.bookedByUserEmail || booking.recipientEmail}
+          {clientEmail}
         </div>
-      ) : null}
+      )}
     </div>
   )
 }
@@ -419,45 +366,31 @@ const ClientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction })
 // Enhanced Professional Info Component with inline assignment
 const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
   const [showAssignDialog, setShowAssignDialog] = useState(false)
+  const [selectedProfessional, setSelectedProfessional] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedProfessional, setSelectedProfessional] = useState<string>("")
+  const [showNotificationModal, setShowNotificationModal] = useState(false)
   const queryClient = useQueryClient()
 
-  // Query for suitable professionals when needed
-  const { data: suitableProfessionals, refetch: refetchSuitable } = useQuery({
+  const { data: suitableProfessionals, isLoading: loadingSuitable } = useQuery({
     queryKey: ["suitableProfessionals", booking._id],
-    queryFn: () => getSuitableProfessionalsForBooking(booking._id.toString()),
-    enabled: false, // Only fetch when dialog opens
-    staleTime: 60000, // Cache for 1 minute
+    queryFn: () => getSuitableProfessionalsForBooking(booking._id),
+    enabled: !!booking._id && !booking.professionalId,
+    staleTime: 30000,
   })
 
-  // Query for all available professionals as fallback
-  const { data: allProfessionals, refetch: refetchAll } = useQuery({
-    queryKey: ["availableProfessionals"],
-    queryFn: getAvailableProfessionals,
-    enabled: false,
+  const { data: allProfessionals, isLoading: loadingAll } = useQuery({
+    queryKey: ["allProfessionals"],
+    queryFn: () => getAvailableProfessionals(),
+    enabled: !booking.professionalId,
     staleTime: 60000,
   })
 
   const handleOpenAssignDialog = async (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent any default behavior
     e.stopPropagation() // Prevent row click
-    setShowAssignDialog(true)
-    setIsLoading(true)
+    e.nativeEvent.stopImmediatePropagation() // Stop all event propagation
     
-    try {
-      // First try to get suitable professionals
-      const suitableResult = await refetchSuitable()
-      if (!suitableResult.data?.success || !suitableResult.data?.professionals?.length) {
-        // If no suitable professionals, get all available
-        await refetchAll()
-      }
-    } catch (error) {
-      console.error("Error fetching professionals:", error)
-      // Try to get all professionals as fallback
-      await refetchAll()
-    } finally {
-      setIsLoading(false)
-    }
+    setShowAssignDialog(true)
   }
 
   const handleAssign = async () => {
@@ -486,7 +419,9 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
   }
 
   const handleUnassign = async (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent any default behavior
     e.stopPropagation() // Prevent row click
+    e.nativeEvent.stopImmediatePropagation() // Stop all event propagation
     
     setIsLoading(true)
     try {
@@ -509,6 +444,10 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
   const professionalsToShow = suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
     ? suitableProfessionals.professionals
     : allProfessionals?.professionals || []
+
+  const hasSuitableProfessionals = suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
+  const hasAnyProfessionals = (professionalsToShow?.length || 0) > 0
+  const canSendNotifications = !booking.professionalId && ["confirmed", "in_process"].includes(booking.status)
 
   // If professional is assigned
   if (booking?.professionalId) {
@@ -534,6 +473,8 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
               onClick={handleOpenAssignDialog}
               disabled={isLoading}
               className="text-xs h-6"
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
             >
               <UserCheck className="h-3 w-3 mr-1" />
               {t("adminBookings.changeProfessional")}
@@ -544,6 +485,8 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
               onClick={handleUnassign}
               disabled={isLoading}
               className="text-xs h-6 text-red-600 hover:text-red-700"
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
             >
               <UserX className="h-3 w-3 mr-1" />
               {t("adminBookings.unassign")}
@@ -570,21 +513,27 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
                     <SelectValue placeholder={t("adminBookings.chooseProfessional")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {professionalsToShow?.map((prof: any) => (
-                      <SelectItem key={prof._id} value={prof._id}>
-                        <div className="flex items-center gap-2">
-                          <span>{prof.name}</span>
-                          <span className="text-xs text-muted-foreground">
-                            ({prof.gender === "male" ? t("common.male") : t("common.female")})
-                          </span>
-                          {suitableProfessionals?.success && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
-                            <Badge variant="secondary" className="text-xs">
-                              {t("adminBookings.suitable")}
-                            </Badge>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {!hasAnyProfessionals ? (
+                      <div className="p-2 text-center text-muted-foreground text-sm">
+                        {isLoading ? "טוען מטפלים..." : "לא נמצאו מטפלים זמינים"}
+                      </div>
+                    ) : (
+                      professionalsToShow?.map((prof: any) => (
+                        <SelectItem key={prof._id} value={prof._id}>
+                          <div className="flex items-center gap-2">
+                            <span>{prof.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              ({prof.gender === "male" ? t("common.male") : t("common.female")})
+                            </span>
+                            {hasSuitableProfessionals && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
+                              <Badge variant="secondary" className="text-xs">
+                                {t("adminBookings.suitable")}
+                              </Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -617,13 +566,15 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
   // If no professional assigned
   return (
     <>
-      <div className="group relative">
+      <div className="space-y-2">
         <Button
           variant="outline"
           size="sm"
           onClick={handleOpenAssignDialog}
           disabled={isLoading}
           className="text-orange-600 border-orange-200 hover:bg-orange-50 w-full"
+          onMouseDown={(e) => e.stopPropagation()}
+          onMouseUp={(e) => e.stopPropagation()}
         >
           {isLoading ? (
             <>
@@ -637,6 +588,20 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
             </>
           )}
         </Button>
+
+        {canSendNotifications && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowNotificationModal(true)}
+            className="text-blue-600 border-blue-200 hover:bg-blue-50 w-full"
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+          >
+            <MessageSquare className="mr-2 h-3 w-3" />
+            שלח לתפוצה
+          </Button>
+        )}
       </div>
 
       {/* Assignment Dialog */}
@@ -645,37 +610,43 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
           <DialogHeader>
             <DialogTitle>{t("adminBookings.assignProfessional")}</DialogTitle>
             <DialogDescription>
-              {suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
-                ? t("adminBookings.suitableProfessionalsFound", { count: suitableProfessionals.professionals?.length || 0 })
-                : t("adminBookings.showingAllProfessionals")
-              }
+              {t("adminBookings.selectProfessionalForBooking")} #{booking.bookingNumber}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">
-                {t("adminBookings.selectProfessional")}
+                {hasSuitableProfessionals 
+                  ? t("adminBookings.suitableProfessionals") 
+                  : t("adminBookings.availableProfessionals")
+                }
               </label>
               <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder={t("adminBookings.chooseProfessional")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {professionalsToShow?.map((prof: any) => (
-                    <SelectItem key={prof._id} value={prof._id}>
-                      <div className="flex items-center gap-2">
-                        <span>{prof.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ({prof.gender === "male" ? t("common.male") : t("common.female")})
-                        </span>
-                        {suitableProfessionals?.success && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
-                          <Badge variant="secondary" className="text-xs">
-                            {t("adminBookings.suitable")}
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
+                  {!hasAnyProfessionals ? (
+                    <div className="p-2 text-center text-muted-foreground text-sm">
+                      {loadingSuitable || loadingAll ? "טוען מטפלים..." : "לא נמצאו מטפלים זמינים"}
+                    </div>
+                  ) : (
+                    professionalsToShow?.map((prof: any) => (
+                      <SelectItem key={prof._id} value={prof._id}>
+                        <div className="flex items-center gap-2">
+                          <span>{prof.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({prof.gender === "male" ? t("common.male") : t("common.female")})
+                          </span>
+                          {hasSuitableProfessionals && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
+                            <Badge variant="secondary" className="text-xs">
+                              {t("adminBookings.suitable")}
+                            </Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -701,6 +672,16 @@ const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunct
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Professional Notification Modal */}
+      <ProfessionalNotificationModal
+        open={showNotificationModal}
+        onOpenChange={setShowNotificationModal}
+        booking={booking}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+        }}
+      />
     </>
   )
 }
@@ -1141,7 +1122,15 @@ export const getAdminBookingColumns = (
     id: "actions",
     header: t("common.actions"),
     cell: ({ row }) => (
-      <div onClick={(e) => e.stopPropagation()}>
+      <div 
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          e.nativeEvent.stopImmediatePropagation()
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
+      >
         <AdminBookingActions 
           booking={row.original} 
           t={t} 

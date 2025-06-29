@@ -7,7 +7,7 @@ import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { useTranslation } from "@/lib/translations/i18n"
 import { MessageSquareCode, Loader2 } from "lucide-react"
-import { sendOTP, verifyOTP } from "@/actions/notification-service"
+// OTP functions are now called via API routes
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useToast } from "@/components/common/ui/use-toast"
@@ -225,7 +225,19 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
         description: t("login.sendingOTPToPhone"),
       })
 
-      const result = await sendOTP(identifierValue, loginType, language)
+      // Call API route to send OTP
+      const response = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: identifierValue,
+          language: language,
+        }),
+      })
+      
+      const result = await response.json()
       // TODO: Remove debug log
 
 
@@ -289,7 +301,19 @@ export function OTPForm({ className, loginType, identifier, onIdentifierChange }
         description: t("login.pleaseWait"),
       })
 
-      const result = await verifyOTP(identifierValue, loginType, code)
+      // Call API route to verify OTP
+      const response = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phone: identifierValue,
+          otp: code,
+        }),
+      })
+      
+      const result = await response.json()
       // TODO: Remove debug log
 
 

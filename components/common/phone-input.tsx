@@ -141,8 +141,8 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
 
         // Only update state if the values are actually different to prevent infinite loops
         if (selectedCode !== newSelectedCode || phoneNumber !== newPhoneNumber) {
-          setSelectedCode(newSelectedCode)
-          setPhoneNumber(newPhoneNumber)
+        setSelectedCode(newSelectedCode)
+        setPhoneNumber(newPhoneNumber)
         }
       }
     } else if (propsDefaultValue && phoneNumber === "") {

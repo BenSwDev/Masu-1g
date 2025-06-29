@@ -3201,25 +3201,25 @@ export async function updateBookingStatusAfterPayment(
     
     const updatedBooking = await Booking.findById(bookingId)
     
-    // Send notifications only after successful payment
+    // Send automatic notifications to suitable professionals after successful payment
     if (paymentStatus === "success" && updatedBooking) {
       try {
-        const { sendProfessionalBookingNotifications } = await import("@/actions/notification-service")
-        const smsResult = await sendProfessionalBookingNotifications(bookingId)
+        const { sendAutomaticProfessionalNotifications } = await import("@/actions/unified-professional-notifications")
+        const notificationResult = await sendAutomaticProfessionalNotifications(bookingId)
         
-        if (smsResult.success) {
-          logger.info("Sent SMS notifications to professionals", { 
+        if (notificationResult.success) {
+          logger.info("Sent automatic notifications to suitable professionals", { 
             bookingId,
-            sentCount: smsResult.sentCount 
+            sentCount: notificationResult.sentCount 
           })
         } else {
-          logger.error("Failed to send SMS notifications to professionals", { 
+          logger.error("Failed to send automatic notifications to professionals", { 
             bookingId,
-            error: smsResult.error 
+            error: notificationResult.error 
           })
         }
       } catch (error) {
-        logger.error("Error sending SMS notifications", { 
+        logger.error("Error sending automatic notifications", { 
           bookingId,
           error: error instanceof Error ? error.message : String(error) 
         })
@@ -3269,7 +3269,16 @@ export async function findSuitableProfessionals(
     const genderPreference = booking.therapistGenderPreference
     const durationId = booking.selectedDurationId?._id.toString()
     
+    console.log("Finding suitable professionals for booking:", {
+      bookingId,
+      treatmentId,
+      cityName,
+      genderPreference: genderPreference || 'any',
+      durationId: durationId || 'any'
+    })
+    
     if (!cityName) {
+      console.error("Booking city not found for booking:", bookingId)
       return { success: false, error: "Booking city not found" }
     }
 
@@ -3288,6 +3297,8 @@ export async function findSuitableProfessionals(
       { 'workAreas.coveredCities': cityName }
     ]
     
+    console.log("Professional search query:", JSON.stringify(query, null, 2))
+    
     // Find professionals with all criteria
     let professionals = await ProfessionalProfile.find(query)
       .populate({
@@ -3300,25 +3311,32 @@ export async function findSuitableProfessionals(
       .populate('treatments.treatmentId')
       .lean()
     
+    console.log(`Found ${professionals.length} professionals matching basic criteria`)
+    
     // Filter out professionals where userId is null (didn't match professional role)
     professionals = professionals.filter(prof => prof.userId !== null)
+    console.log(`After filtering for professional role: ${professionals.length} professionals`)
     
     // Filter by gender preference if specified
     if (genderPreference && genderPreference !== 'any') {
+      const beforeGenderFilter = professionals.length
       professionals = professionals.filter(prof => {
         const user = prof.userId as any
         return user && user.gender === genderPreference
       })
+      console.log(`After gender filter (${genderPreference}): ${professionals.length} professionals (was ${beforeGenderFilter})`)
     }
     
     // Filter by duration if specified - professional must support this duration
     if (durationId) {
+      const beforeDurationFilter = professionals.length
       professionals = professionals.filter(prof =>
         prof.treatments.some(t => 
           t.treatmentId._id.toString() === treatmentId &&
           (!t.durationId || t.durationId.toString() === durationId)
         )
       )
+      console.log(`After duration filter: ${professionals.length} professionals (was ${beforeDurationFilter})`)
     }
     
     logger.info("Found suitable professionals for booking", {
@@ -3330,12 +3348,31 @@ export async function findSuitableProfessionals(
       durationId: durationId || 'any'
     })
     
-    return { success: true, professionals }
+    // Return formatted results
+    const formattedProfessionals = professionals.map(prof => {
+      const user = prof.userId as any
+      return {
+        _id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        gender: user.gender,
+        profileId: prof._id.toString(),
+        workAreas: prof.workAreas,
+        treatments: prof.treatments
+      }
+    })
+    
+    return { 
+      success: true, 
+      professionals: formattedProfessionals
+    }
   } catch (error) {
     logger.error("Error finding suitable professionals:", {
       bookingId,
       error: error instanceof Error ? error.message : String(error)
     })
+    console.error("Error in findSuitableProfessionals:", error)
     return { success: false, error: "Failed to find suitable professionals" }
   }
 }
@@ -3378,7 +3415,7 @@ export async function getSuitableProfessionalsForBooking(
   }
 }
 
-// Send notifications to all suitable professionals
+// Send notifications to all suitable professionals - UNIFIED SYSTEM
 export async function sendNotificationToSuitableProfessionals(
   bookingId: string
 ): Promise<{ success: boolean; sentCount?: number; error?: string }> {
@@ -3388,8 +3425,9 @@ export async function sendNotificationToSuitableProfessionals(
   }
 
   try {
-    const { sendProfessionalBookingNotifications } = await import("@/actions/notification-service")
-    return await sendProfessionalBookingNotifications(bookingId)
+    // Use the unified notification system
+    const { sendAutomaticProfessionalNotifications } = await import("@/actions/unified-professional-notifications")
+    return await sendAutomaticProfessionalNotifications(bookingId)
   } catch (error) {
     logger.error("Error sending notifications to suitable professionals:", {
       bookingId,

@@ -24,27 +24,36 @@ export async function POST(request: NextRequest) {
     let coveredCities: string[] = []
     
     if (distanceRadius === "unlimited") {
-      // For unlimited, the query returns all cities except the source city
-      // We need to add the source city back and combine
+      // For unlimited, get all cities
       const allOtherCities = coveredCitiesResult.map((city: any) => city.name).filter(Boolean)
-      coveredCities = [cityName, ...allOtherCities].sort()
+      coveredCities = [cityName, ...allOtherCities]
+        .filter((city, index, arr) => arr.indexOf(city) === index) // Remove duplicates
+        .sort()
     } else {
-      // For limited distance, the query returns cities within distance
-      // We need to add the source city and combine
+      // For limited distance, get cities within distance + source city
       const nearByCities = coveredCitiesResult
         .map((city: any) => city.toCityName || city.name)
         .filter(Boolean)
       
-      // Always include the main city itself
+      // Always include the source city itself
       coveredCities = [cityName, ...nearByCities]
         .filter((city, index, arr) => arr.indexOf(city) === index) // Remove duplicates
         .sort()
     }
 
+    console.log(`Coverage calculation for ${cityName} (${distanceRadius}):`, {
+      sourceCity: cityName,
+      radius: distanceRadius,
+      foundCities: coveredCities.length,
+      cities: coveredCities
+    })
+
     return NextResponse.json({
       success: true,
       coveredCities,
-      count: coveredCities.length
+      count: coveredCities.length,
+      sourceCity: cityName,
+      radius: distanceRadius
     })
   } catch (error) {
     console.error("Error calculating covered cities:", error)

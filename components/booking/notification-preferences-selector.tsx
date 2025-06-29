@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Mail, MessageSquare, Globe, Bell, Info } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { getUserNotificationPreferences } from "@/actions/notification-service"
+// User notification preferences are now called via API routes
 import type { INotificationPreferences } from "@/lib/db/models/user"
 
 interface NotificationPreferencesSelectorProps {
@@ -51,7 +51,9 @@ export default function NotificationPreferencesSelector({
 
     setIsLoadingUserPrefs(true)
     try {
-      const result = await getUserNotificationPreferences(session.user.id)
+      const response = await fetch("/api/user/notification-preferences")
+      const result = await response.json()
+      
       if (result.success && result.preferences) {
         setUserPreferences(result.preferences)
         // Auto-populate form with user's preferences if not already set

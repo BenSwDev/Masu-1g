@@ -134,7 +134,7 @@ export async function getAllUsers(filters: UserFilters = {}): Promise<GetUsersRe
       .select("-password") // Exclude password
       .sort({ [sortBy]: sortOrder === "desc" ? -1 : 1 })
       .skip((page - 1) * limit)
-      .limit(limit)
+        .limit(limit)
       .lean()
 
     return {
@@ -419,8 +419,8 @@ export async function toggleUserRole(userId: string, role: string): Promise<Acti
 
     revalidatePath("/dashboard/admin/users")
 
-    return {
-      success: true,
+    return { 
+      success: true, 
       data: {
         ...updatedUser,
         _id: updatedUser!._id.toString()

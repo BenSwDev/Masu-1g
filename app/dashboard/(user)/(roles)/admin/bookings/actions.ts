@@ -137,9 +137,61 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
 
     // Add filters to query
     if (status) query.status = status
-    if (professional) query.professionalId = new Types.ObjectId(professional)
-    if (treatment) query.treatmentId = new Types.ObjectId(treatment)
-    if (subscription_id) query["priceDetails.redeemedUserSubscriptionId"] = new Types.ObjectId(subscription_id)
+    
+    if (professional) {
+      try {
+        // Validate professional ID
+        if (!Types.ObjectId.isValid(professional)) {
+          console.error("Invalid professional ID:", professional)
+          throw new Error("Invalid professional ID format")
+        }
+        query.professionalId = new Types.ObjectId(professional)
+        console.log("Filtering bookings for professional:", professional)
+      } catch (error) {
+        console.error("Error processing professional filter:", error)
+        // Return empty result if professional ID is invalid
+        return {
+          bookings: [],
+          totalPages: 0,
+          totalBookings: 0,
+        }
+      }
+    }
+    
+    if (treatment) {
+      try {
+        if (!Types.ObjectId.isValid(treatment)) {
+          console.error("Invalid treatment ID:", treatment)
+          throw new Error("Invalid treatment ID format")
+        }
+        query.treatmentId = new Types.ObjectId(treatment)
+      } catch (error) {
+        console.error("Error processing treatment filter:", error)
+        return {
+          bookings: [],
+          totalPages: 0,
+          totalBookings: 0,
+        }
+      }
+    }
+    
+    if (subscription_id) {
+      try {
+        if (!Types.ObjectId.isValid(subscription_id)) {
+          console.error("Invalid subscription ID:", subscription_id)
+          throw new Error("Invalid subscription ID format")
+        }
+        query["priceDetails.redeemedUserSubscriptionId"] = new Types.ObjectId(subscription_id)
+      } catch (error) {
+        console.error("Error processing subscription filter:", error)
+        return {
+          bookings: [],
+          totalPages: 0,
+          totalBookings: 0,
+        }
+      }
+    }
+
     if (address) query["bookingAddressSnapshot.fullAddress"] = {
       $regex: address,
       $options: "i",
@@ -182,6 +234,9 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
     const totalBookings = await Booking.countDocuments(query)
     const totalPages = Math.ceil(totalBookings / limit)
 
+    console.log("Booking query:", JSON.stringify(query, null, 2))
+    console.log(`Found ${totalBookings} bookings matching query`)
+
     // Get bookings with pagination and sorting
     const bookings = await Booking.find(query)
       .sort({ [sortBy]: sortDirection === "desc" ? -1 : 1 })
@@ -195,6 +250,18 @@ export async function getAllBookings(filters: GetAllBookingsFilters = {}): Promi
       .populate("priceDetails.redeemedUserSubscriptionId")
       .populate("paymentDetails.paymentMethodId")
       .lean()
+
+    console.log(`Retrieved ${bookings.length} bookings after pagination`)
+    
+    // Log first booking details for debugging
+    if (bookings.length > 0) {
+      console.log("First booking sample:", {
+        id: bookings[0]._id,
+        bookingNumber: bookings[0].bookingNumber,
+        professionalId: bookings[0].professionalId,
+        status: bookings[0].status
+      })
+    }
 
     return {
       bookings: bookings.map(booking => ({

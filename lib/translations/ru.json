@@ -1456,7 +1456,19 @@
     "specialEventUpdated": "[workingHours.specialEventUpdated]",
     "specialEvents": "[workingHours.specialEvents]",
     "specialEventsDescription": "[workingHours.specialEventsDescription]",
-    "specialEventsTab": "[workingHours.specialEventsTab]"
+    "specialEventsTab": "[workingHours.specialEventsTab]",
+    "priceAdditionDescription": "Описание доплаты",
+    "priceAdditionDescriptionPlaceholder": "например: Вечерняя доплата, Ночные часы",
+    "eveningHours": "Вечерние часы",
+    "specialTimeRange": "Особый временной диапазон",
+    "priceAdditionPresets": "Готовые шаблоны",
+    "useEveningPreset": "Использовать вечерний шаблон",
+    "eveningPresetDesc": "20:00-22:00, доплата 50₪ (70% специалисту)",
+    "useNightPreset": "Использовать ночной шаблон",
+    "nightPresetDesc": "22:00-06:00, доплата 80₪ (75% специалисту)",
+    "useWeekendPreset": "Использовать шаблон выходных",
+    "weekendPresetDesc": "Весь день, доплата 30₪ (65% специалисту)",
+    "clearPreset": "Очистить настройки"
   },
   "preferences": {
     "treatment": {

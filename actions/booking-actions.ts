@@ -70,9 +70,6 @@ export type { IGiftVoucherUsageHistory } from "@/types/booking"
 
 // Define the timezone we'll use throughout the app
 const TIMEZONE = "Asia/Jerusalem" // Israel timezone
-// Evening surcharge between 20:00-22:00 on weekdays (Sun-Thu)
-const EVENING_SURCHARGE_AMOUNT = 50
-const EVENING_SURCHARGE_DESCRIPTION = "bookings.surcharges.specialTime"
 
 // Replace the isSameUTCDay function with a timezone-aware version
 function isSameDay(dateLeft: Date, dateRight: Date): boolean {
@@ -322,16 +319,7 @@ export async function getAvailableTimeSlots(
           }
         }
 
-        // Weekday evening surcharge between 20:00-22:00
-        const isWeekday = dayOfWeek >= 0 && dayOfWeek <= 4
-        const isEvening = slotHour >= 20 && slotHour < 22
-        if (isWeekday && isEvening) {
-          slot.surcharge = slot.surcharge || {
-            description: EVENING_SURCHARGE_DESCRIPTION,
-            amount: EVENING_SURCHARGE_AMOUNT,
-            professionalShare: { amount: 70, type: "percentage" } // Default professional share for evening surcharge
-          }
-        }
+        // Note: Evening surcharges are now handled through working hours settings with time ranges
         
         timeSlots.push(slot)
       }
@@ -480,28 +468,7 @@ export async function calculateBookingPrice(
       }
     }
 
-    // Weekday evening surcharge between 20:00-22:00
-    const bookingDateInTZ = toZonedTime(bookingDateTime, TIMEZONE)
-    const weekdayEvening =
-      bookingDateInTZ.getDay() >= 0 &&
-      bookingDateInTZ.getDay() <= 4 &&
-      bookingDateInTZ.getHours() >= 20 &&
-      bookingDateInTZ.getHours() < 22
-    const alreadyAdded = priceDetails.surcharges.some(
-      (s) =>
-        s.description === EVENING_SURCHARGE_DESCRIPTION &&
-        s.amount === EVENING_SURCHARGE_AMOUNT,
-    )
-    // Align with time slot display logic and only apply the evening surcharge
-    // if no other surcharge is already present
-    if (weekdayEvening && !alreadyAdded && priceDetails.surcharges.length === 0) {
-      priceDetails.surcharges.push({
-        description: EVENING_SURCHARGE_DESCRIPTION,
-        amount: EVENING_SURCHARGE_AMOUNT,
-        professionalShare: { amount: 70, type: "percentage" as const } // Default professional share for evening surcharge
-      })
-      priceDetails.totalSurchargesAmount += EVENING_SURCHARGE_AMOUNT
-    }
+    // Note: Evening surcharges are now handled through working hours settings with time ranges
 
     if (userSubscriptionId) {
       const userSub = (await UserSubscription.findById(userSubscriptionId)

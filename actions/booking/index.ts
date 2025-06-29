@@ -6,12 +6,11 @@
 // Core CRUD operations
 export {
   createBooking,
-  createGuestBooking,
-  updateBookingByAdmin,
-  cancelBooking,
   getBookingById,
-  getBookingsByUser,
-  getBookingsByProfessional,
+  getUserBookings,
+  cancelBooking,
+  updateBookingByAdmin,
+  getAllBookings,
 } from './booking-crud'
 
 // Price calculation operations
@@ -23,10 +22,11 @@ export {
 
 // Professional operations
 export {
-  professionalMarkEnRoute,
-  professionalMarkCompleted,
+  findAvailableProfessionals,
   assignProfessionalToBooking,
   unassignProfessionalFromBooking,
+  getProfessionalBookings,
+  updateProfessionalStatus,
 } from './booking-professional'
 
 // Time and availability operations
@@ -34,13 +34,17 @@ export {
   getAvailableTimeSlots,
   isTimeSlotAvailable,
   checkBookingConflicts,
+  generateTimeSlots,
+  filterAvailableSlots,
 } from './booking-availability'
 
 // Utility functions
 export {
-  toPopulatedBooking,
-  constructBookingAddressSnapshot,
-  validateBookingData,
+  constructFullAddressHelper,
+  getNextSequenceValue,
+  formatTimeSlot,
+  formatDuration,
+  isBookingEditable,
 } from './booking-utils'
 
 // Abandoned booking operations
@@ -50,7 +54,7 @@ export {
   deleteAbandonedBooking,
 } from './booking-abandoned'
 
-// Legacy exports for backward compatibility
+// Legacy exports for backward compatibility - all functions from individual modules
 export * from './booking-crud'
 export * from './booking-pricing'
 export * from './booking-professional'

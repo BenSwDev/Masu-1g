@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import type { GiftVoucher as GiftVoucherPlain } from "@/types/core"
 import { useTranslation } from "@/lib/translations/i18n"
 import { format, parseISO } from "date-fns"
 import {

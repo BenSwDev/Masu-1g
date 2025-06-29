@@ -106,45 +106,6 @@ const PaginationEllipsis = ({
 )
 PaginationEllipsis.displayName = "PaginationEllipsis"
 
-interface CustomPaginationProps {
-  currentPage: number
-  totalPages: number
-  onPageChange: (page: number) => void
-  isLoading?: boolean
-}
-
-const CustomPagination = ({ currentPage, totalPages, onPageChange, isLoading }: CustomPaginationProps) => {
-  return (
-    <Pagination>
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1 || isLoading}
-          />
-        </PaginationItem>
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <PaginationItem key={page}>
-            <PaginationLink
-              isActive={currentPage === page}
-              onClick={() => onPageChange(page)}
-              disabled={isLoading}
-            >
-              {page}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
-        <PaginationItem>
-          <PaginationNext
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages || isLoading}
-          />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
-  )
-}
-
 export {
   Pagination,
   PaginationContent,
@@ -153,5 +114,4 @@ export {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-  CustomPagination,
 }

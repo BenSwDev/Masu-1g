@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge" // Corrected import path
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions" // Corrected import path
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip" // Corrected import path
 import { useTranslation } from "@/lib/translations/i18n"
-import { formatPhoneForDisplay } from "@/lib/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface GiftVoucherRowProps {
   voucher: GiftVoucherPlain

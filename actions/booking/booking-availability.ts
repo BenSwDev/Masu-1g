@@ -14,6 +14,8 @@ import { logger } from "@/lib/logs/logger"
 import type { TimeSlot } from "@/types/booking"
 import { add, format, set, addMinutes, isBefore, isAfter } from "date-fns"
 import { formatInTimeZone, toZonedTime, format as formatTz } from "date-fns-tz"
+import { BookingStatus } from "@/types/core"
+import type { PopulatedBooking } from "@/types/booking"
 
 // Define the timezone we'll use throughout the app
 const TIMEZONE = "Asia/Jerusalem" // Israel timezone

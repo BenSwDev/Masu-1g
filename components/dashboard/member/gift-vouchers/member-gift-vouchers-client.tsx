@@ -15,7 +15,8 @@ import { useTranslation } from "@/lib/translations/i18n"
 import {
   getMemberOwnedVouchers,
   getMemberPurchasedVouchers,
-  type GiftVoucherPlain,
+  getGiftVouchersList,
+  type GiftVoucher as GiftVoucherPlain,
 } from "@/actions/gift-voucher-actions"
 import MemberGiftVoucherCard from "./member-gift-voucher-card"
 import { Gift, Plus, ShoppingBag, RefreshCw, TrendingUp, Clock, XCircle } from "lucide-react"

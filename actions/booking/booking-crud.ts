@@ -3,30 +3,28 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import Booking, { type IBooking } from "@/lib/db/models/booking"
+import Booking, { type IBooking, type IBookingAddressSnapshot, type IPriceDetails } from "@/lib/db/models/booking"
 import User from "@/lib/db/models/user"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
-import Address, { type IAddress } from "@/lib/db/models/address"
+import Address, { type IAddress, constructFullAddress as constructFullAddressHelper } from "@/lib/db/models/address"
 import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
 import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import Coupon from "@/lib/db/models/coupon"
+import { getNextSequenceValue } from "@/lib/db/models/counter"
 import mongoose from "mongoose"
 import { logger } from "@/lib/logs/logger"
 import { revalidatePath } from "next/cache"
 import { 
   CreateBookingPayloadSchema, 
-  type CreateBookingPayloadSchemaType 
+  type CreateBookingPayloadType 
 } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
 import type { 
   PopulatedBooking, 
-  BookingStatus,
-  IBookingAddressSnapshot,
-  IPriceDetails,
   CalculatedPriceDetails as ClientCalculatedPriceDetails
 } from "@/types/booking"
-import { constructFullAddressHelper, getNextSequenceValue } from "./booking-utils"
-import { sendBookingConfirmationToUser, sendGuestNotification } from "@/lib/notifications/unified-service"
+import type { BookingStatus } from "@/types/core"
+import { sendBookingConfirmationToUser, sendGuestNotification } from "@/lib/notifications/notification-manager"
 
 /**
  * Create a new booking for authenticated user
@@ -39,7 +37,7 @@ export async function createBooking(
     logger.warn("Invalid payload for createBooking:", { issues: validationResult.error.issues })
     return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
   }
-  const validatedPayload = validationResult.data as CreateBookingPayloadSchemaType & {
+  const validatedPayload = validationResult.data as CreateBookingPayloadType & {
     priceDetails: ClientCalculatedPriceDetails
   }
 
@@ -242,9 +240,9 @@ export async function createBooking(
         validatedPayload.priceDetails.appliedGiftVoucherId &&
         validatedPayload.priceDetails.voucherAppliedAmount > 0
       ) {
-        const voucher = (await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(
+        const voucher = await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(
           mongooseDbSession,
-        )) as IGiftVoucher | null
+        )
         if (!voucher) throw new Error("bookings.errors.voucherNotFoundDuringCreation")
         if (!voucher.isActive && voucher.status !== "sent")
           throw new Error("bookings.errors.voucherRedemptionFailedInactive")
@@ -404,7 +402,7 @@ export async function getBookingById(bookingId: string): Promise<{
         path: "addressId",
         select: "fullAddress city street streetNumber apartmentDetails houseDetails officeDetails hotelDetails otherDetails additionalNotes addressType",
       })
-      .populate<{ professionalId: Pick<User, "_id" | "name"> | null }>({
+      .populate<{ professionalId: { _id: string; name: string } | null }>({
         path: "professionalId",
         select: "name",
       })
@@ -549,7 +547,7 @@ export async function getUserBookings(
         path: "addressId",
         select: "fullAddress city street streetNumber apartmentDetails houseDetails officeDetails hotelDetails otherDetails additionalNotes addressType",
       })
-      .populate<{ professionalId: Pick<User, "_id" | "name"> | null }>({
+      .populate<{ professionalId: { _id: string; name: string } | null }>({
         path: "professionalId",
         select: "name",
       })
@@ -630,9 +628,9 @@ export async function cancelBooking(
 
       // Rollback gift voucher usage
       if (booking.priceDetails.appliedGiftVoucherId && booking.priceDetails.voucherAppliedAmount > 0) {
-        const voucher = (await GiftVoucher.findById(booking.priceDetails.appliedGiftVoucherId).session(
+        const voucher = await GiftVoucher.findById(booking.priceDetails.appliedGiftVoucherId).session(
           mongooseDbSession,
-        )) as IGiftVoucher | null
+        )
         if (voucher) {
           if (voucher.voucherType === "treatment" && booking.priceDetails.isBaseTreatmentCoveredByTreatmentVoucher) {
             voucher.status = "active"
@@ -979,11 +977,11 @@ export async function getAllBookings(
         path: "treatmentId",
         select: "name durations defaultDurationMinutes pricingType fixedPrice isActive",
       })
-      .populate<{ userId: Pick<User, "_id" | "name" | "email" | "phone"> | null }>({
+      .populate<{ userId: { _id: string; name: string; email: string; phone: string } | null }>({
         path: "userId",
         select: "name email phone",
       })
-      .populate<{ professionalId: Pick<User, "_id" | "name"> | null }>({
+      .populate<{ professionalId: { _id: string; name: string } | null }>({
         path: "professionalId",
         select: "name",
       })

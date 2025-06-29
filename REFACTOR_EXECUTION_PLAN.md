@@ -38,8 +38,8 @@ echo "Build time before refactor: $(date)" > refactor-log.txt
 # זיהוי כל ה-imports מ-components/ui
 grep -r "from.*@/components/ui" --include="*.tsx" --include="*.ts" . > imports-ui.txt
 
-# זיהוי כל ה-imports מ-components/common/ui
-grep -r "from.*@/components/common/ui" --include="*.tsx" --include="*.ts" . > imports-common-ui.txt
+# זיהוי כל ה-imports מ-components/ui
+grep -r "from.*@/components/ui" --include="*.tsx" --include="*.ts" . > imports-common-ui.txt
 
 # ספירת השימושים
 echo "UI imports: $(wc -l < imports-ui.txt)"
@@ -57,11 +57,11 @@ files=("toast.tsx" "button.tsx" "card.tsx" "dialog.tsx" "form.tsx" "input.tsx")
 
 for file in "${files[@]}"; do
     echo "=== Comparing $file ==="
-    if diff -u "components/ui/$file" "components/common/ui/$file" > /dev/null; then
+    if diff -u "components/ui/$file" "components/ui/$file" > /dev/null; then
         echo "✅ $file - זהה לחלוטין"
     else
         echo "⚠️ $file - יש הבדלים"
-        diff -u "components/ui/$file" "components/common/ui/$file" | head -20
+        diff -u "components/ui/$file" "components/ui/$file" | head -20
     fi
     echo ""
 done
@@ -77,9 +77,9 @@ chmod +x compare-ui-files.sh
 unique_files=("calendar.tsx" "city-select-form.tsx" "city-select.tsx" "data-table.tsx" "heading.tsx" "modal.tsx" "use-toast.ts")
 
 for file in "${unique_files[@]}"; do
-    if [ -f "components/common/ui/$file" ] && [ ! -f "components/ui/$file" ]; then
+    if [ -f "components/ui/$file" ] && [ ! -f "components/ui/$file" ]; then
         echo "Moving $file..."
-        cp "components/common/ui/$file" "components/ui/$file"
+        cp "components/ui/$file" "components/ui/$file"
     fi
 done
 ```
@@ -89,12 +89,12 @@ done
 # יצירת סקריפט לעדכון imports
 cat > update-imports.sh << 'EOF'
 #!/bin/bash
-echo "Updating imports from @/components/common/ui to @/components/ui..."
+echo "Updating imports from @/components/ui to @/components/ui..."
 
 # Find all TypeScript and React files
 find . -name "*.ts" -o -name "*.tsx" | grep -v node_modules | while read file; do
     # Replace imports
-    sed -i 's|@/components/common/ui|@/components/ui|g' "$file"
+    sed -i 's|@/components/ui|@/components/ui|g' "$file"
 done
 
 echo "Import updates completed"
@@ -116,15 +116,15 @@ else
 fi
 ```
 
-### 2.6 מחיקת components/common/ui
+### 2.6 מחיקת components/ui
 ```bash
 # רק אחרי וידוא שהכל עובד
 ./update-imports.sh
 npm run build
 
 if [ $? -eq 0 ]; then
-    echo "✅ Removing components/common/ui..."
-    rm -rf components/common/ui
+    echo "✅ Removing components/ui..."
+    rm -rf components/ui
     git add .
     git commit -m "refactor: consolidate UI components - remove duplicate common/ui"
 else
@@ -140,15 +140,15 @@ fi
 # מחיקת lib/utils.ts הכפול
 echo "Merging utility functions..."
 
-# העברת תוכן מ-lib/utils.ts ל-lib/utils/utils.ts אם נדרש
+# העברת תוכן מ-lib/utils.ts ל-lib/utils.ts אם נדרש
 if [ -f "lib/utils.ts" ]; then
-    echo "Moving lib/utils.ts content to lib/utils/utils.ts"
+    echo "Moving lib/utils.ts content to lib/utils.ts"
     # Manual merge needed here
 fi
 
 # עדכון imports של cn
 find . -name "*.ts" -o -name "*.tsx" | grep -v node_modules | while read file; do
-    sed -i 's|@/lib/utils|@/lib/utils/utils|g' "$file"
+    sed -i 's|@/lib/utils|@/lib/utils|g' "$file"
 done
 
 # מחיקת הקובץ הכפול
@@ -320,7 +320,7 @@ cat > REFACTOR_SUMMARY.md << 'EOF'
 - Removed unused files
 
 ## Files Removed
-- components/common/ui/ (entire directory)
+- components/ui/ (entire directory)
 - lib/utils.ts (duplicate)
 - [List of unused files]
 
@@ -328,8 +328,8 @@ cat > REFACTOR_SUMMARY.md << 'EOF'
 - [List of modified files with brief description]
 
 ## Import Path Changes
-- All @/components/common/ui imports changed to @/components/ui
-- All @/lib/utils imports changed to @/lib/utils/utils
+- All @/components/ui imports changed to @/components/ui
+- All @/lib/utils imports changed to @/lib/utils
 
 ## Performance Improvements
 - Bundle size reduced by: [X]MB

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/translations/i18n"
-import { formatPhoneForDisplay } from "@/lib/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

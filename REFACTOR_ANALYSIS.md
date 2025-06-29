@@ -6,7 +6,7 @@
 
 **בעיה:** קיימות שתי תיקיות UI זהות עם קבצים כפולים:
 - `components/ui/` (44 קבצים)
-- `components/common/ui/` (56 קבצים)
+- `components/ui/` (56 קבצים)
 
 **קבצים כפולים מזוהים:**
 - `toast.tsx` - זהה לחלוטין
@@ -62,7 +62,7 @@
 
 **בעיה:** פונקציית `cn` מוגדרת פעמיים:
 - `lib/utils.ts` - Line 3
-- `lib/utils/utils.ts` - Line 3
+- `lib/utils.ts` - Line 3
 
 **קבצים נוספים עם כפילויות:**
 - Phone utilities: `lib/utils/phone-utils.ts` vs `lib/notifications/notification-utils.ts` (פונקציות formatPhoneNumber, obscurePhone)
@@ -113,7 +113,7 @@
 ### 2.2 קבצים חשודים כלא בשימוש
 
 **Modal Components:**
-- `components/common/ui/modal.tsx` - ייתכן שמוחלף ב-dialog
+- `components/ui/modal.tsx` - ייתכן שמוחלף ב-dialog
 
 **Skeleton Components:**
 - `*-skeleton.tsx` files - חלקם עשויים להיות לא בשימוש
@@ -127,7 +127,7 @@
 
 ### שלב 1: איחוד UI Components - **Week 1**
 
-**יעד:** מיזוג `components/ui` ו-`components/common/ui`
+**יעד:** מיזוג `components/ui` ו-`components/ui`
 
 **תהליך:**
 1. **ניתוח השימוש:**
@@ -135,13 +135,13 @@
    # בדיקת imports מ-components/ui
    grep -r "from.*components/ui" --include="*.tsx" --include="*.ts"
    
-   # בדיקת imports מ-components/common/ui  
-   grep -r "from.*components/common/ui" --include="*.tsx" --include="*.ts"
+   # בדיקת imports מ-components/ui  
+   grep -r "from.*components/ui" --include="*.tsx" --include="*.ts"
    ```
 
 2. **החזקת components/ui כמקור האמת:**
-   - העברת קבצים ייחודיים מ-`components/common/ui` ל-`components/ui`
-   - מחיקת `components/common/ui`
+   - העברת קבצים ייחודיים מ-`components/ui` ל-`components/ui`
+   - מחיקת `components/ui`
    - עדכון כל ה-imports
 
 3. **קבצים ייחודיים לשמירה:**
@@ -160,7 +160,7 @@
 
 **תהליך:**
 1. **מחיקת lib/utils.ts:**
-   - העברת תוכן ל-`lib/utils/utils.ts`
+   - העברת תוכן ל-`lib/utils.ts`
    - עדכון imports
 
 2. **איחוד Phone Utils:**

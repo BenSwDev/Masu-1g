@@ -42,7 +42,7 @@ export async function sendOTP(
       },
       {
         type: "password-reset", // Use existing type for now
-        otp
+        code: otp
       }
     )
 
@@ -72,7 +72,7 @@ export async function sendOTP(
  */
 export async function verifyOTP(
   phone: string,
-  otp: string
+        code: otp: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await dbConnect()

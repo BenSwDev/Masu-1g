@@ -19,7 +19,7 @@
 
 **בעיה מזוהה:** שתי תיקיות UI זהות לחלוטין
 - `components/ui/` 
-- `components/common/ui/`
+- `components/ui/`
 
 **קבצים כפולים מאומתים:**
 ```
@@ -78,10 +78,10 @@
 ### Phase 1: Quick Wins (יום 1) - חיסכון 200KB+
 ```bash
 # 1. מחיקת כפילויות UI מיידית
-rm -rf components/common/ui/
+rm -rf components/ui/
 
 # 2. עדכון imports אוטומטי
-find . -name "*.ts" -o -name "*.tsx" | xargs sed -i 's|@/components/common/ui|@/components/ui|g'
+find . -name "*.ts" -o -name "*.tsx" | xargs sed -i 's|@/components/ui|@/components/ui|g'
 
 # 3. מחיקת קבצים גדולים לא בשימוש
 rm components/dashboard/admin/bookings/comprehensive-booking-edit-modal.tsx
@@ -147,23 +147,23 @@ rm components/auth/role-protected-route.tsx
 ### 🔥 High Impact, Low Risk (ביצוע מיידי):
 ```bash
 # מחיקת כפילויות UI מאומתות
-rm components/common/ui/toast.tsx
-rm components/common/ui/menubar.tsx  
-rm components/common/ui/context-menu.tsx
-rm components/common/ui/command.tsx
-rm components/common/ui/navigation-menu.tsx
-rm components/common/ui/alert-dialog.tsx
-rm components/common/ui/input-otp.tsx
-rm components/common/ui/hover-card.tsx
-rm components/common/ui/toggle-group.tsx
-rm components/common/ui/accordion.tsx
-rm components/common/ui/slider.tsx
-rm components/common/ui/sonner.tsx
-rm components/common/ui/collapsible.tsx
-rm components/common/ui/aspect-ratio.tsx
+rm components/ui/toast.tsx
+rm components/ui/menubar.tsx  
+rm components/ui/context-menu.tsx
+rm components/ui/command.tsx
+rm components/ui/navigation-menu.tsx
+rm components/ui/alert-dialog.tsx
+rm components/ui/input-otp.tsx
+rm components/ui/hover-card.tsx
+rm components/ui/toggle-group.tsx
+rm components/ui/accordion.tsx
+rm components/ui/slider.tsx
+rm components/ui/sonner.tsx
+rm components/ui/collapsible.tsx
+rm components/ui/aspect-ratio.tsx
 
 # עדכון imports
-find . -name "*.ts" -o -name "*.tsx" | xargs sed -i 's|@/components/common/ui|@/components/ui|g'
+find . -name "*.ts" -o -name "*.tsx" | xargs sed -i 's|@/components/ui|@/components/ui|g'
 ```
 
 ### 🎯 Medium Impact, Low Risk:

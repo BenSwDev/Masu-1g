@@ -34,48 +34,9 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { IBooking } from "@/lib/db/models/booking"
 
-interface GuestInfo {
-  firstName: string
-  lastName: string
-  email?: string
-  phone: string
-  birthDate?: Date
-  gender?: "male" | "female" | "other"
-  notes?: string
-  isBookingForSomeoneElse?: boolean
-  recipientFirstName?: string
-  recipientLastName?: string
-  recipientEmail?: string
-  recipientPhone?: string
-  recipientBirthDate?: Date
-  recipientGender?: "male" | "female" | "other"
-  // Notification preferences
-  bookerNotificationMethod?: "email" | "sms" | "both"
-  bookerNotificationLanguage?: "he" | "en" | "ru"
-  recipientNotificationMethod?: "email" | "sms" | "both"
-  recipientNotificationLanguage?: "he" | "en" | "ru"
-}
-
-interface GuestAddress {
-  city: string
-  street: string
-  houseNumber: string
-  addressType: "apartment" | "house" | "office" | "hotel" | "other"
-  floor?: string
-  apartmentNumber?: string
-  entrance?: string
-  parking: boolean
-  notes?: string
-  // Type-specific details
-  doorName?: string // for house
-  buildingName?: string // for office
-  hotelName?: string // for hotel
-  roomNumber?: string // for hotel
-  instructions?: string // for other
-}
-
-import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import type { GiftVoucher as GiftVoucherPlain } from "@/types/core"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
+import type { GuestInfo } from "@/types/core"
 
 // ✅ תיקון: טיפוסים בטוחים במקום any
 interface UniversalBookingWizardProps {

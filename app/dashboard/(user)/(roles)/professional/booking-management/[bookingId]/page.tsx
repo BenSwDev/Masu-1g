@@ -18,7 +18,7 @@ import {
   professionalMarkCompleted,
 } from "@/actions/booking-actions"
 import { useTranslation } from "@/lib/translations/i18n" // ודא שהנתיב נכון
-import { formatPhoneForDisplay } from "@/lib/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { AlertCircle, CheckCircle2, Hourglass, Send, Check, X } from "lucide-react"
 
 // Helper function to format date and time

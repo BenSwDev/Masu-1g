@@ -66,7 +66,7 @@ export function validateEmail(email: string): boolean {
 export function validatePhone(phone: string): boolean {
   // Use the centralized phone validation
   try {
-    const { validatePhoneNumber } = require("@/lib/phone-utils")
+    const { validatePhoneNumber } = require("@/lib/utils/phone-utils")
     return validatePhoneNumber(phone)
   } catch {
     // Fallback validation if import fails
@@ -107,7 +107,7 @@ export const authOptions: NextAuthOptions = {
         let query: any = {}
         
         if (validatePhone(identifier)) {
-          const { normalizePhoneNumber } = await import("@/lib/phone-utils")
+          const { normalizePhoneNumber } = await import("@/lib/utils/phone-utils")
           const cleaned = normalizePhoneNumber(identifier)
           query = { phone: cleaned }
         } else {

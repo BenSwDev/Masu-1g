@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
-import { formatPhoneForDisplay } from "@/lib/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScrollText, Clock, Info } from "lucide-react"

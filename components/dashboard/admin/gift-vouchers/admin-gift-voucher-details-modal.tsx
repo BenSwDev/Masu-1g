@@ -34,7 +34,7 @@ import {
 import { useTranslation } from "@/lib/translations/i18n"
 import { toast } from "sonner"
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
-import { formatPhoneForDisplay } from "@/lib/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 
 interface AdminGiftVoucherDetailsModalProps {
   voucher: GiftVoucherPlain | null

@@ -268,4 +268,16 @@ export function generateUniqueCode(prefix: string = '', length: number = 8): str
     result += chars.charAt(Math.floor(Math.random() * chars.length))
   }
   return result
-} 
+}
+
+// ============================================================================
+// GUEST TYPES
+// ============================================================================
+export type {
+  GuestInfo,
+  GuestAddress,
+  GuestUserData,
+  CreateGuestUserResult,
+  GuestBookingData,
+  AbandonedBookingResult
+} from "./guest" 

@@ -943,7 +943,7 @@ export async function createBooking(
           }
 
           // Send notification to booker using their notification preferences  
-          await sendBookingConfirmationToUser(userId, bookerBookingData)
+          await sendBookingConfirmationToUser(userId, String(finalBookingObject._id))
           
           // Send notification to recipient if booking for someone else
           if (isBookingForSomeoneElse && validatedPayload.recipientEmail) {
@@ -959,14 +959,16 @@ export async function createBooking(
             }
             
             await sendGuestNotification(
-              validatedPayload.recipientEmail,
-              recipientNotificationMethods.includes("sms") ? (validatedPayload.recipientPhone || null) : null,
+              {
+                name: validatedPayload.recipientName!,
+                email: validatedPayload.recipientEmail,
+                phone: recipientNotificationMethods.includes("sms") ? validatedPayload.recipientPhone : undefined,
+                language: notificationLanguage
+              },
               {
                 type: "treatment-booking-success",
                 ...recipientBookingData,
-              },
-              notificationLanguage,
-              validatedPayload.recipientName
+              }
             )
           }
         }
@@ -2545,11 +2547,13 @@ export async function createGuestBooking(
 
           // Send notification to booker (guest) using smart system
           await sendGuestNotification(
-            validatedPayload.guestInfo.email, // Use original email from payload, not the modified one
-            notificationMethods.includes("sms") ? guestInfo.phone : null,
-            bookerBookingData,
-            notificationLanguage,
-            bookerName
+            {
+              name: bookerName,
+              email: validatedPayload.guestInfo.email,
+              phone: notificationMethods.includes("sms") ? guestInfo.phone : undefined,
+              language: notificationLanguage
+            },
+            bookerBookingData
           )
           
           // Send notification to recipient if booking for someone else
@@ -2567,11 +2571,13 @@ export async function createGuestBooking(
             }
             
             await sendGuestNotification(
-              validatedPayload.recipientEmail,
-              recipientNotificationMethods.includes("sms") ? (validatedPayload.recipientPhone || null) : null,
-              recipientBookingData,
-              notificationLanguage,
-              recipientName
+              {
+                name: recipientName,
+                email: validatedPayload.recipientEmail,
+                phone: recipientNotificationMethods.includes("sms") ? validatedPayload.recipientPhone : undefined,
+                language: notificationLanguage
+              },
+              recipientBookingData
             )
           }
           

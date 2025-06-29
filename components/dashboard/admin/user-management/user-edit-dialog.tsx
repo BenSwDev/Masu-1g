@@ -238,8 +238,8 @@ export default function UserEditDialog({
                     <FormLabel>מספר טלפון *</FormLabel>
                     <FormControl>
                       <PhoneInput
-                        value={field.value}
-                        onChange={field.onChange}
+                        fullNumberValue={field.value}
+                        onPhoneChange={field.onChange}
                         placeholder="הכנס מספר טלפון"
                       />
                     </FormControl>

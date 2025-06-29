@@ -93,14 +93,19 @@ export const SchedulingDetailsSchema = z
     selectedAddressId: z.string().optional(), // Made optional, will validate that either this or customAddress is present
     customAddressDetails: z // New: for one-time address
       .object({
-        fullAddress: z.string({ required_error: "bookings.validation.address.fullAddressRequired" }),
-        city: citySchema, // Use the city validation schema
-        street: z.string({ required_error: "bookings.validation.address.streetRequired" }),
+        fullAddress: z.string().min(1, "Full address is required"),
+        city: z.string().min(1, "City is required"),
+        street: z.string().min(1, "Street is required"),
         streetNumber: z.string().optional(),
         apartment: z.string().optional(),
         entrance: z.string().optional(),
         floor: z.string().optional(),
-        notes: z.string().max(200, "bookings.validation.address.notesTooLong").optional(),
+        notes: z.string().max(500, "Notes too long").optional(),
+        doorName: z.string().optional(),
+        buildingName: z.string().optional(),
+        hotelName: z.string().optional(),
+        roomNumber: z.string().optional(),
+        otherInstructions: z.string().optional(),
         hasPrivateParking: z.boolean().optional(),
       })
       .optional(),
@@ -210,14 +215,19 @@ const BaseBookingWizardSchema = z.object({
   selectedAddressId: z.string().optional(),
   customAddressDetails: z
     .object({
-      fullAddress: z.string({ required_error: "bookings.validation.address.fullAddressRequired" }),
-      city: citySchema, // Use the city validation schema
-      street: z.string({ required_error: "bookings.validation.address.streetRequired" }),
+      fullAddress: z.string().min(1, "Full address is required"),
+      city: z.string().min(1, "City is required"),
+      street: z.string().min(1, "Street is required"),
       streetNumber: z.string().optional(),
       apartment: z.string().optional(),
       entrance: z.string().optional(),
       floor: z.string().optional(),
-      notes: z.string().max(200, "bookings.validation.address.notesTooLong").optional(),
+      notes: z.string().max(500, "Notes too long").optional(),
+      doorName: z.string().optional(),
+      buildingName: z.string().optional(),
+      hotelName: z.string().optional(),
+      roomNumber: z.string().optional(),
+      otherInstructions: z.string().optional(),
       hasPrivateParking: z.boolean().optional(),
     })
     .optional(),
@@ -305,14 +315,20 @@ export const CreateBookingPayloadSchema = z.object({
   selectedAddressId: z.string().optional(), // Can be undefined if customAddressDetails is provided
   customAddressDetails: z // New: for one-time address
     .object({
-      fullAddress: z.string(),
-      city: citySchema,
-      street: z.string(),
+      fullAddress: z.string().min(1, "Full address is required"),
+      city: z.string().min(1, "City is required"),
+      street: z.string().min(1, "Street is required"),
       streetNumber: z.string().optional(),
       apartment: z.string().optional(),
       entrance: z.string().optional(),
       floor: z.string().optional(),
-      notes: z.string().optional(),
+      notes: z.string().max(500, "Notes too long").optional(),
+      doorName: z.string().optional(),
+      buildingName: z.string().optional(),
+      hotelName: z.string().optional(),
+      roomNumber: z.string().optional(),
+      otherInstructions: z.string().optional(),
+      hasPrivateParking: z.boolean().optional(),
     })
     .optional(),
   therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),
@@ -384,6 +400,12 @@ export const CreateGuestBookingPayloadSchema = z.object({
       entrance: z.string().optional(),
       floor: z.string().optional(),
       notes: z.string().max(500, "Notes too long").optional(),
+      doorName: z.string().optional(),
+      buildingName: z.string().optional(),
+      hotelName: z.string().optional(),
+      roomNumber: z.string().optional(),
+      otherInstructions: z.string().optional(),
+      hasPrivateParking: z.boolean().optional(),
     })
     .optional(),
   therapistGenderPreference: z.enum(["any", "male", "female"]).default("any"),

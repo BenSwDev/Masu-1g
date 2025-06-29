@@ -597,26 +597,56 @@ export const getBookingColumns = (t: TFunction, locale: string): ColumnDef<Popul
         const apartment = (address as any)?.apartment || (address as any)?.apartmentNumber
         const floor = (address as any)?.floor
         const entrance = (address as any)?.entrance
-        const addressNotes = (address as any)?.instructions || (address as any)?.additionalNotes
+        const addressNotes = (address as any)?.instructions || (address as any)?.additionalNotes || (address as any)?.notes
         const hasPrivateParking = (address as any)?.hasPrivateParking
         const isAccessible = (address as any)?.isAccessible
         
         return (
           <div className="text-right hidden md:block space-y-1 max-w-[250px]">
             <div className="font-medium text-gray-900">
-              {city || t("memberBookings.table.cityNotSpecified")}
+              {address.fullAddress || 
+               (street && streetNumber 
+                ? `${street} ${streetNumber}, ${city}`
+                : city || t("memberBookings.table.cityNotSpecified")
+               )
+              }
             </div>
             
-            {street && streetNumber && (
-              <div className="text-sm text-gray-700">
-                {street} {streetNumber}
-              </div>
-            )}
-            
+            {/* Type-specific details */}
             <div className="text-xs text-gray-600 space-y-1">
               {apartment && <div>{t("memberBookings.table.apartment")}: {apartment}</div>}
               {floor && <div>{t("memberBookings.table.floor")}: {floor}</div>}
               {entrance && <div>{t("memberBookings.table.entrance")}: {entrance}</div>}
+              
+              {(address as any)?.doorName && (
+                <div className="bg-purple-50 px-2 py-1 rounded">
+                  {t("memberBookings.table.doorName")}: {(address as any).doorName}
+                </div>
+              )}
+              
+              {(address as any)?.buildingName && (
+                <div className="bg-indigo-50 px-2 py-1 rounded">
+                  {t("memberBookings.table.buildingName")}: {(address as any).buildingName}
+                </div>
+              )}
+              
+              {(address as any)?.hotelName && (
+                <div className="bg-pink-50 px-2 py-1 rounded">
+                  {t("memberBookings.table.hotelName")}: {(address as any).hotelName}
+                </div>
+              )}
+              
+              {(address as any)?.roomNumber && (
+                <div className="bg-yellow-50 px-2 py-1 rounded">
+                  {t("memberBookings.table.roomNumber")}: {(address as any).roomNumber}
+                </div>
+              )}
+              
+              {(address as any)?.otherInstructions && (
+                <div className="bg-gray-50 px-2 py-1 rounded">
+                  {t("memberBookings.table.otherInstructions")}: {(address as any).otherInstructions}
+                </div>
+              )}
             </div>
 
             {addressNotes && (

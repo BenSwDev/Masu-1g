@@ -120,33 +120,47 @@ const AddressSchema: Schema = new Schema(
 
 // Helper function to construct fullAddress
 // This can be called before saving or updating an address
-export function constructFullAddress(data: Partial<IAddress>): string {
+export function constructFullAddress(data: Partial<IAddress> | any): string {
   const parts: string[] = []
   if (data.street) parts.push(data.street)
   if (data.streetNumber) parts.push(data.streetNumber)
 
-  if (data.addressType === "apartment" && data.apartmentDetails?.apartmentNumber) {
-    parts.push(`דירה ${data.apartmentDetails.apartmentNumber}`)
-    if (data.apartmentDetails.floor !== undefined && data.apartmentDetails.floor !== null) {
-      parts.push(`קומה ${data.apartmentDetails.floor}`)
+  if (data.addressType === "apartment" && (data.apartmentDetails?.apartmentNumber || data.apartment)) {
+    const apartmentNumber = data.apartmentDetails?.apartmentNumber || data.apartment
+    parts.push(`דירה ${apartmentNumber}`)
+    const floor = data.apartmentDetails?.floor || data.floor
+    if (floor !== undefined && floor !== null && floor !== "") {
+      parts.push(`קומה ${floor}`)
     }
-    if (data.apartmentDetails.entrance) {
-      parts.push(`כניסה ${data.apartmentDetails.entrance}`)
+    const entrance = data.apartmentDetails?.entrance || data.entrance
+    if (entrance) {
+      parts.push(`כניסה ${entrance}`)
     }
-  } else if ((data.addressType === "house" || data.addressType === "private") && data.houseDetails?.doorName) {
-    parts.push(data.houseDetails.doorName)
-    if (data.houseDetails.entrance) {
-      parts.push(`כניסה ${data.houseDetails.entrance}`)
+  } else if ((data.addressType === "house" || data.addressType === "private") && 
+             (data.houseDetails?.doorName || data.doorName)) {
+    const doorName = data.houseDetails?.doorName || data.doorName
+    parts.push(doorName)
+    const entrance = data.houseDetails?.entrance || data.entrance
+    if (entrance) {
+      parts.push(`כניסה ${entrance}`)
     }
   } else if (data.addressType === "office") {
-    if (data.officeDetails?.buildingName) parts.push(data.officeDetails.buildingName)
-    if (data.officeDetails?.floor !== undefined && data.officeDetails.floor !== null) {
-      parts.push(`קומה ${data.officeDetails.floor}`)
+    const buildingName = data.officeDetails?.buildingName || data.buildingName
+    if (buildingName) parts.push(buildingName)
+    const floor = data.officeDetails?.floor || data.floor
+    if (floor !== undefined && floor !== null && floor !== "") {
+      parts.push(`קומה ${floor}`)
     }
-    if (data.officeDetails?.entrance) parts.push(`כניסה ${data.officeDetails.entrance}`)
-  } else if (data.addressType === "hotel" && data.hotelDetails?.hotelName) {
-    parts.push(data.hotelDetails.hotelName)
-    if (data.hotelDetails.roomNumber) parts.push(`חדר ${data.hotelDetails.roomNumber}`)
+    const entrance = data.officeDetails?.entrance || data.entrance
+    if (entrance) parts.push(`כניסה ${entrance}`)
+  } else if (data.addressType === "hotel" && (data.hotelDetails?.hotelName || data.hotelName)) {
+    const hotelName = data.hotelDetails?.hotelName || data.hotelName
+    parts.push(hotelName)
+    const roomNumber = data.hotelDetails?.roomNumber || data.roomNumber
+    if (roomNumber) parts.push(`חדר ${roomNumber}`)
+  } else if (data.addressType === "other" && (data.otherDetails?.instructions || data.otherInstructions)) {
+    const instructions = data.otherDetails?.instructions || data.otherInstructions
+    if (instructions) parts.push(instructions)
   }
 
   if (data.city) parts.push(data.city)

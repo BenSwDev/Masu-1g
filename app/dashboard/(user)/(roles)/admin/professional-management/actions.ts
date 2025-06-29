@@ -844,12 +844,8 @@ export async function updateProfessionalWorkAreas(
         }
       }
     } catch (coveredCitiesError) {
-      // Log error and return it as part of response for user awareness
+      // Log error but don't fail the entire operation
       console.error("Error updating covered cities:", coveredCitiesError)
-      return { 
-        success: false, 
-        error: "איזורי העבודה עודכנו אבל עדכון הערים המכוסות נכשל. אנא נסה שוב." 
-      }
     }
 
     // Revalidate the professional management page

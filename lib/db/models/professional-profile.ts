@@ -271,23 +271,44 @@ ProfessionalProfileSchema.methods.updateCoveredCities = async function(workAreaI
   try {
     const { CityDistance } = await import("@/lib/db/models/city-distance")
     
+    // Get covered cities based on distance radius
     const coveredCitiesResult = await (CityDistance as any).getCoveredCities(
       workArea.cityName, 
       workArea.distanceRadius
     )
     
     // Extract city names from the result
-    const coveredCityNames = coveredCitiesResult
-      .map((city: any) => city.toCityName || city.name)
-      .filter((name: string) => name && name !== workArea.cityName)
+    let coveredCityNames: string[] = []
     
+    if (workArea.distanceRadius === "unlimited") {
+      // For unlimited, the query returns all cities except the source city
+      // We need to add the source city back and combine
+      const allOtherCities = coveredCitiesResult.map((city: any) => city.name).filter(Boolean)
+      coveredCityNames = [workArea.cityName, ...allOtherCities].sort()
+    } else {
+      // For limited distance, the query returns cities within distance
+      // We need to add the source city and combine
+      const nearByCities = coveredCitiesResult
+        .map((city: any) => city.toCityName || city.name)
+        .filter(Boolean)
+      
+      // Always include the main city itself
+      coveredCityNames = [workArea.cityName, ...nearByCities]
+        .filter((city, index, arr) => arr.indexOf(city) === index) // Remove duplicates
+        .sort()
+    }
+    
+    // Update the work area with all covered cities (including the main city)
     this.workAreas[workAreaIndex].coveredCities = coveredCityNames
     await this.save()
     
     return coveredCityNames
   } catch (error) {
     console.error("Error updating covered cities:", error)
-    return []
+    // In case of error, at least include the main city
+    this.workAreas[workAreaIndex].coveredCities = [workArea.cityName]
+    await this.save()
+    return [workArea.cityName]
   }
 }
 

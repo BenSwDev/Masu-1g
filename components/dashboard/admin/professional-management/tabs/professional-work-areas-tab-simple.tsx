@@ -150,11 +150,6 @@ export default function ProfessionalWorkAreasTab({
       const result = await updateProfessionalWorkAreas(professional._id, workAreasForAPI as any)
 
       if (result.success && result.professional) {
-        toast({
-          title: "הצלחה",
-          description: "איזורי העבודה עודכנו בהצלחה"
-        })
-
         // Update professional with new work areas
         const updatedWorkAreas = (result.professional.workAreas || []).map(w => ({
           cityId: w.cityId?.toString() || '',
@@ -166,6 +161,12 @@ export default function ProfessionalWorkAreasTab({
         setWorkAreas(updatedWorkAreas)
         onUpdate({ workAreas: updatedWorkAreas })
         setHasChanges(false)
+        
+        // Show success toast
+        toast({
+          title: "הצלחה",
+          description: "איזורי העבודה עודכנו בהצלחה כולל חישוב ערים מכוסות"
+        })
       } else {
         toast({
           variant: "destructive",
@@ -197,6 +198,56 @@ export default function ProfessionalWorkAreasTab({
       case "80km": return "80 ק\"מ"
       case "unlimited": return "ללא הגבלה"
       default: return radius
+    }
+  }
+
+  const handleUpdateCoveredCities = async (index: number) => {
+    if (!workAreas[index] || !workAreas[index].cityId || !workAreas[index].cityName) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "נא לבחור עיר תחילה"
+      })
+      return
+    }
+
+    setLoading(true)
+    
+    try {
+      const response = await fetch('/api/cities/coverage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cityName: workAreas[index].cityName,
+          distanceRadius: workAreas[index].distanceRadius
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const updatedWorkAreas = [...workAreas]
+        updatedWorkAreas[index].coveredCities = data.coveredCities || [workAreas[index].cityName]
+        setWorkAreas(updatedWorkAreas)
+        setHasChanges(true)
+        
+        toast({
+          title: "הצלחה",
+          description: `נמצאו ${data.coveredCities?.length || 1} ערים מכוסות`
+        })
+      } else {
+        throw new Error('Failed to fetch covered cities')
+      }
+    } catch (error) {
+      console.error("Error updating covered cities:", error)
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
+        description: "שגיאה בעדכון הערים המכוסות"
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -348,26 +399,32 @@ export default function ProfessionalWorkAreasTab({
                 </div>
               </div>
 
-                      {/* Covered Cities Info */}
-              {workArea.coveredCities.length > 0 && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium text-muted-foreground">
-                            ערים מכוסות ({workArea.coveredCities.length})
-                          </Label>
+                      {/* Covered Cities Display */}
+                      {workArea.coveredCities && workArea.coveredCities.length > 0 && (
+                        <div className="mt-3 pt-3 border-t">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                            <Navigation className="w-4 h-4" />
+                            <span>ערים מכוסות ({workArea.coveredCities.length}):</span>
+                          </div>
                           <div className="flex flex-wrap gap-1">
-                    {workArea.coveredCities.slice(0, 10).map((city, cityIndex) => (
-                              <Badge key={cityIndex} variant="outline" className="text-xs">
-                        {city}
-                      </Badge>
-                    ))}
-                    {workArea.coveredCities.length > 10 && (
+                            {workArea.coveredCities.slice(0, 15).map((city, cityIndex) => (
+                              <Badge 
+                                key={cityIndex} 
+                                variant={city === workArea.cityName ? "default" : "outline"} 
+                                className="text-xs"
+                              >
+                                {city}
+                                {city === workArea.cityName && " (מרכזית)"}
+                              </Badge>
+                            ))}
+                            {workArea.coveredCities.length > 15 && (
                               <Badge variant="outline" className="text-xs">
-                        +{workArea.coveredCities.length - 10} נוספות
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              )}
+                                +{workArea.coveredCities.length - 15} נוספות
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
             </div>
 
                     {/* Status & Actions */}
@@ -382,6 +439,24 @@ export default function ProfessionalWorkAreasTab({
                           <AlertTriangle className="w-4 h-4" />
                           <span className="text-xs">חסר</span>
         </div>
+                      )}
+
+                      {/* Update Covered Cities Button */}
+                      {isValid && (
+                        <Button
+                          onClick={() => handleUpdateCoveredCities(index)}
+                          variant="ghost"
+                          size="sm"
+                          disabled={loading}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          title="עדכן ערים מכוסות"
+                        >
+                          {loading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Navigation className="w-4 h-4" />
+                          )}
+                        </Button>
                       )}
 
           <Button
@@ -441,10 +516,13 @@ export default function ProfessionalWorkAreasTab({
                   workAreas
                     .filter(isValidWorkArea)
                     .forEach(area => {
-                      // Add the main city
-                      allCoveredCities.add(area.cityName)
-                      // Add all covered cities
-                      area.coveredCities.forEach(city => allCoveredCities.add(city))
+                      // Add all covered cities (should already include main city from the model)
+                      if (area.coveredCities && area.coveredCities.length > 0) {
+                        area.coveredCities.forEach(city => allCoveredCities.add(city))
+                      } else {
+                        // If no covered cities calculated yet, at least add the main city
+                        allCoveredCities.add(area.cityName)
+                      }
                     })
                   
                   const sortedCities = Array.from(allCoveredCities).sort()
@@ -455,11 +533,23 @@ export default function ProfessionalWorkAreasTab({
                         סה"כ ערים מכוסות: {sortedCities.length}
                       </div>
                       <div className="flex flex-wrap gap-1">
-                        {sortedCities.slice(0, 20).map((city, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {city}
-                          </Badge>
-                        ))}
+                        {sortedCities.slice(0, 20).map((city, index) => {
+                          // Check if this city is a main city for any work area
+                          const isMainCity = workAreas
+                            .filter(isValidWorkArea)
+                            .some(area => area.cityName === city)
+                          
+                          return (
+                            <Badge 
+                              key={index} 
+                              variant={isMainCity ? "default" : "outline"} 
+                              className="text-xs"
+                            >
+                              {city}
+                              {isMainCity && " ⭐"}
+                            </Badge>
+                          )
+                        })}
                         {sortedCities.length > 20 && (
                           <Badge variant="outline" className="text-xs">
                             +{sortedCities.length - 20} נוספות
@@ -478,9 +568,9 @@ export default function ProfessionalWorkAreasTab({
                               <span className="text-muted-foreground mr-2">
                                 - {getDistanceRadiusText(area.distanceRadius)}
                               </span>
-                              {area.coveredCities.length > 0 && (
+                              {area.coveredCities && area.coveredCities.length > 0 && (
                                 <span className="text-muted-foreground">
-                                  (+{area.coveredCities.length} ערים נוספות)
+                                  (כולל {area.coveredCities.length} ערים)
                                 </span>
                               )}
                             </div>

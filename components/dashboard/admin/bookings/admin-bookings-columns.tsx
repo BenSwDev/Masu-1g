@@ -17,7 +17,9 @@ import {
   MessageSquare,
   User,
   Phone,
-  Mail
+  Mail,
+  UserCheck,
+  UserX
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -31,7 +33,8 @@ import {
   Dialog, 
   DialogContent, 
   DialogHeader, 
-  DialogTitle
+  DialogTitle,
+  DialogDescription
 } from "@/components/common/ui/dialog"
 import {
   Select,
@@ -42,7 +45,7 @@ import {
 } from "@/components/common/ui/select"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
-import { assignProfessionalToBooking, getAvailableProfessionals } from "@/actions/booking-actions"
+import { assignProfessionalToBooking, getAvailableProfessionals, getSuitableProfessionalsForBooking, unassignProfessionalFromBooking } from "@/actions/booking-actions"
 import { sendProfessionalBookingNotifications } from "@/actions/notification-service"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { ProfessionalResponsesDialog } from "./professional-responses-dialog"
@@ -94,111 +97,7 @@ const formatCreatedAtSafe = (date: string | Date | null | undefined): string => 
   }
 }
 
-// Professional Assignment Component
-const ProfessionalAssignmentDialog = ({ 
-  booking, 
-  isOpen, 
-  onClose, 
-  t 
-}: { 
-  booking: PopulatedBooking
-  isOpen: boolean
-  onClose: () => void
-  t: TFunction 
-}) => {
-  const [selectedProfessional, setSelectedProfessional] = useState<string>("")
-  const [isAssigning, setIsAssigning] = useState(false)
-  const queryClient = useQueryClient()
 
-  const { data: professionalsData, refetch } = useQuery({
-    queryKey: ["availableProfessionals"],
-    queryFn: getAvailableProfessionals,
-    enabled: isOpen,
-  })
-
-  useEffect(() => {
-    if (isOpen) {
-      refetch()
-    }
-  }, [isOpen, refetch])
-
-  const handleAssign = async () => {
-    if (!selectedProfessional) return
-
-    setIsAssigning(true)
-    try {
-      const result = await assignProfessionalToBooking(booking._id, selectedProfessional)
-      if (result.success) {
-        toast.success(t("adminBookings.assignSuccess"))
-        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
-        onClose()
-      } else {
-        const errorMessage = result.error && result.error.startsWith("bookings.errors.") 
-          ? t(result.error) 
-          : t("adminBookings.assignError")
-        toast.error(errorMessage)
-      }
-    } catch (error) {
-      console.error("Assignment error:", error)
-      toast.error(t("adminBookings.assignError"))
-    } finally {
-      setIsAssigning(false)
-    }
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("adminBookings.assignProfessional")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium">
-              {t("adminBookings.selectProfessional")}
-            </label>
-            <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder={t("adminBookings.chooseProfessional")} />
-              </SelectTrigger>
-              <SelectContent>
-                {professionalsData?.professionals?.map((professional: any) => (
-                  <SelectItem key={professional._id} value={professional._id}>
-                    <div className="flex items-center gap-2">
-                      <span>{professional.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        ({professional.gender === "male" ? t("common.male") : t("common.female")})
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose} disabled={isAssigning}>
-              {t("common.cancel")}
-            </Button>
-            <Button 
-              onClick={handleAssign} 
-              disabled={!selectedProfessional || isAssigning}
-            >
-              {isAssigning ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("common.assigning")}
-                </>
-              ) : (
-                t("adminBookings.assign")
-              )}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 // Admin Actions Component
 const AdminBookingActions = ({ 
@@ -210,7 +109,7 @@ const AdminBookingActions = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
-  const [showAssignModal, setShowAssignModal] = useState(false)
+
   const [sendingNotifications, setSendingNotifications] = useState(false)
   const [showResponsesModal, setShowResponsesModal] = useState(false)
   const [showSendReviewModal, setShowSendReviewModal] = useState(false)
@@ -297,15 +196,10 @@ const AdminBookingActions = ({
             <span>{t("adminBookings.resendToClient")} ({t("common.notActive")})</span>
           </DropdownMenuItem>
 
-          {canAssignProfessional && (
-            <DropdownMenuItem
-              onClick={() => setShowAssignModal(true)}
-              className="cursor-pointer"
-            >
-              <UserPlus className="mr-2 h-4 w-4" />
-              <span>{t("adminBookings.assignEditRemoveProfessional")}</span>
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem className="cursor-pointer text-muted-foreground" disabled>
+            <UserPlus className="mr-2 h-4 w-4" />
+            <span>{t("adminBookings.assignProfessional")} - {t("adminBookings.useColumnInstead")}</span>
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             onClick={() => setShowSuitableProfessionalsModal(true)}
@@ -407,13 +301,7 @@ const AdminBookingActions = ({
         </Dialog>
       )}
 
-      {/* Assignment Modal */}
-      <ProfessionalAssignmentDialog
-        booking={booking}
-        isOpen={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
-        t={t}
-      />
+
 
       {/* Professional Responses Modal */}
       <ProfessionalResponsesDialog
@@ -528,28 +416,292 @@ const ClientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction })
   )
 }
 
+// Enhanced Professional Info Component with inline assignment
 const ProfessionalInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {
-  if (!booking?.professionalId) {
+  const [showAssignDialog, setShowAssignDialog] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [selectedProfessional, setSelectedProfessional] = useState<string>("")
+  const queryClient = useQueryClient()
+
+  // Query for suitable professionals when needed
+  const { data: suitableProfessionals, refetch: refetchSuitable } = useQuery({
+    queryKey: ["suitableProfessionals", booking._id],
+    queryFn: () => getSuitableProfessionalsForBooking(booking._id.toString()),
+    enabled: false, // Only fetch when dialog opens
+    staleTime: 60000, // Cache for 1 minute
+  })
+
+  // Query for all available professionals as fallback
+  const { data: allProfessionals, refetch: refetchAll } = useQuery({
+    queryKey: ["availableProfessionals"],
+    queryFn: getAvailableProfessionals,
+    enabled: false,
+    staleTime: 60000,
+  })
+
+  const handleOpenAssignDialog = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click
+    setShowAssignDialog(true)
+    setIsLoading(true)
+    
+    try {
+      // First try to get suitable professionals
+      const suitableResult = await refetchSuitable()
+      if (!suitableResult.data?.success || !suitableResult.data?.professionals?.length) {
+        // If no suitable professionals, get all available
+        await refetchAll()
+      }
+    } catch (error) {
+      console.error("Error fetching professionals:", error)
+      // Try to get all professionals as fallback
+      await refetchAll()
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleAssign = async () => {
+    if (!selectedProfessional) return
+
+    setIsLoading(true)
+    try {
+      const result = await assignProfessionalToBooking(booking._id, selectedProfessional)
+      if (result.success) {
+        toast.success(t("adminBookings.assignSuccess"))
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+        setShowAssignDialog(false)
+        setSelectedProfessional("")
+      } else {
+        const errorMessage = result.error && result.error.startsWith("bookings.errors.") 
+          ? t(result.error) 
+          : t("adminBookings.assignError")
+        toast.error(errorMessage)
+      }
+    } catch (error) {
+      console.error("Assignment error:", error)
+      toast.error(t("adminBookings.assignError"))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleUnassign = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent row click
+    
+    setIsLoading(true)
+    try {
+      const result = await unassignProfessionalFromBooking(booking._id)
+      if (result.success) {
+        toast.success(t("adminBookings.unassignSuccess"))
+        queryClient.invalidateQueries({ queryKey: ["adminBookings"] })
+      } else {
+        toast.error(t("adminBookings.unassignError"))
+      }
+    } catch (error) {
+      console.error("Unassign error:", error)
+      toast.error(t("adminBookings.unassignError"))
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Get the list of professionals to show
+  const professionalsToShow = suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
+    ? suitableProfessionals.professionals
+    : allProfessionals?.professionals || []
+
+  // If professional is assigned
+  if (booking?.professionalId) {
+    const professional = booking.professionalId as any
     return (
-      <Badge variant="outline" className="text-orange-600 border-orange-200">
-        {t("adminBookings.unassigned")}
-      </Badge>
+      <>
+        <div className="space-y-1 group relative">
+          <div className="font-medium text-sm">{professional.name || t("common.unknown")}</div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1">
+            <Phone className="h-3 w-3" />
+            {formatPhoneForDisplay(professional.phone || "")}
+          </div>
+          <div className="text-xs text-muted-foreground flex items-center gap-1">
+            <Mail className="h-3 w-3" />
+            {professional.email || "-"}
+          </div>
+          
+          {/* Action buttons on hover */}
+          <div className="absolute top-0 left-0 w-full h-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleOpenAssignDialog}
+              disabled={isLoading}
+              className="text-xs h-6"
+            >
+              <UserCheck className="h-3 w-3 mr-1" />
+              {t("adminBookings.changeProfessional")}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleUnassign}
+              disabled={isLoading}
+              className="text-xs h-6 text-red-600 hover:text-red-700"
+            >
+              <UserX className="h-3 w-3 mr-1" />
+              {t("adminBookings.unassign")}
+            </Button>
+          </div>
+        </div>
+
+        {/* Assignment Dialog */}
+        <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{t("adminBookings.changeProfessionalAssignment")}</DialogTitle>
+              <DialogDescription>
+                {t("adminBookings.currentlyAssignedTo")}: {professional.name}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">
+                  {t("adminBookings.selectNewProfessional")}
+                </label>
+                <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder={t("adminBookings.chooseProfessional")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {professionalsToShow?.map((prof: any) => (
+                      <SelectItem key={prof._id} value={prof._id}>
+                        <div className="flex items-center gap-2">
+                          <span>{prof.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({prof.gender === "male" ? t("common.male") : t("common.female")})
+                          </span>
+                          {suitableProfessionals?.success && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
+                            <Badge variant="secondary" className="text-xs">
+                              {t("adminBookings.suitable")}
+                            </Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowAssignDialog(false)} disabled={isLoading}>
+                  {t("common.cancel")}
+                </Button>
+                <Button 
+                  onClick={handleAssign} 
+                  disabled={!selectedProfessional || isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {t("common.assigning")}
+                    </>
+                  ) : (
+                    t("adminBookings.reassign")
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
     )
   }
 
-  const professional = booking.professionalId as any
+  // If no professional assigned
   return (
-    <div className="space-y-1">
-      <div className="font-medium">{professional.name || t("common.unknown")}</div>
-      <div className="text-xs text-muted-foreground flex items-center gap-1">
-        <Phone className="h-3 w-3" />
-                        {formatPhoneForDisplay(professional.phone || "")}
+    <>
+      <div className="group relative">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleOpenAssignDialog}
+          disabled={isLoading}
+          className="text-orange-600 border-orange-200 hover:bg-orange-50 w-full"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+              {t("common.loading")}
+            </>
+          ) : (
+            <>
+              <UserPlus className="mr-2 h-3 w-3" />
+              {t("adminBookings.assignProfessional")}
+            </>
+          )}
+        </Button>
       </div>
-      <div className="text-xs text-muted-foreground flex items-center gap-1">
-        <Mail className="h-3 w-3" />
-        {professional.email || "-"}
-      </div>
-    </div>
+
+      {/* Assignment Dialog */}
+      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("adminBookings.assignProfessional")}</DialogTitle>
+            <DialogDescription>
+              {suitableProfessionals?.success && (suitableProfessionals?.professionals?.length || 0) > 0
+                ? t("adminBookings.suitableProfessionalsFound", { count: suitableProfessionals.professionals?.length || 0 })
+                : t("adminBookings.showingAllProfessionals")
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">
+                {t("adminBookings.selectProfessional")}
+              </label>
+              <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder={t("adminBookings.chooseProfessional")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {professionalsToShow?.map((prof: any) => (
+                    <SelectItem key={prof._id} value={prof._id}>
+                      <div className="flex items-center gap-2">
+                        <span>{prof.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({prof.gender === "male" ? t("common.male") : t("common.female")})
+                        </span>
+                        {suitableProfessionals?.success && suitableProfessionals?.professionals?.some((sp: any) => sp._id === prof._id) && (
+                          <Badge variant="secondary" className="text-xs">
+                            {t("adminBookings.suitable")}
+                          </Badge>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAssignDialog(false)} disabled={isLoading}>
+                {t("common.cancel")}
+              </Button>
+              <Button 
+                onClick={handleAssign} 
+                disabled={!selectedProfessional || isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t("common.assigning")}
+                  </>
+                ) : (
+                  t("adminBookings.assign")
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
@@ -747,9 +899,11 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
   return (
     <div className="space-y-1 max-w-[200px]">
       <div className="font-medium text-sm">
-        {address.street && streetNumber 
+        {address.fullAddress || 
+         (address.street && streetNumber 
           ? `${address.street} ${streetNumber}, ${address.city}`
-          : address.fullAddress || `${address.city}`
+          : `${address.city}`
+         )
         }
       </div>
       
@@ -762,6 +916,42 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
       {address.apartment && (
         <div className="text-xs text-muted-foreground">
           {t("adminBookings.apartment")}: {address.apartment}
+        </div>
+      )}
+
+      {address.entrance && (
+        <div className="text-xs text-muted-foreground">
+          {t("adminBookings.entrance")}: {address.entrance}
+        </div>
+      )}
+
+      {address.doorName && (
+        <div className="text-xs text-muted-foreground bg-purple-50 px-2 py-1 rounded">
+          {t("adminBookings.doorName")}: {address.doorName}
+        </div>
+      )}
+
+      {address.buildingName && (
+        <div className="text-xs text-muted-foreground bg-indigo-50 px-2 py-1 rounded">
+          {t("adminBookings.buildingName")}: {address.buildingName}
+        </div>
+      )}
+
+      {address.hotelName && (
+        <div className="text-xs text-muted-foreground bg-pink-50 px-2 py-1 rounded">
+          {t("adminBookings.hotelName")}: {address.hotelName}
+        </div>
+      )}
+
+      {address.roomNumber && (
+        <div className="text-xs text-muted-foreground bg-yellow-50 px-2 py-1 rounded">
+          {t("adminBookings.roomNumber")}: {address.roomNumber}
+        </div>
+      )}
+
+      {address.otherInstructions && (
+        <div className="text-xs text-muted-foreground bg-gray-50 px-2 py-1 rounded">
+          {t("adminBookings.otherInstructions")}: {address.otherInstructions}
         </div>
       )}
       
@@ -780,16 +970,14 @@ const AddressDetailsInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFun
         </div>
       )}
       
-      {address.additionalNotes && (
-        <div className="text-xs text-muted-foreground">
-          {address.additionalNotes}
+      {(address.additionalNotes || address.notes) && (
+        <div className="text-xs text-muted-foreground bg-orange-50 px-2 py-1 rounded">
+          {address.additionalNotes || address.notes}
         </div>
       )}
     </div>
   )
 }
-
-
 
 // Update RecipientInfo to show more details including age
 const EnhancedRecipientInfo = ({ booking, t }: { booking: PopulatedBooking; t: TFunction }) => {

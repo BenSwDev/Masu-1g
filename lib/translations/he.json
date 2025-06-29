@@ -264,6 +264,18 @@
     "assignProfessionalError": "שגיאה בשיוך המטפל",
     "assignProfessionalSuccess": "המטפל שויך בהצלחה",
     "assignSuccess": "המטפל שויך בהצלחה",
+    "unassign": "בטל שיוך",
+    "unassignSuccess": "השיוך בוטל בהצלחה",
+    "unassignError": "שגיאה בביטול שיוך המטפל",
+    "changeProfessional": "שנה מטפל",
+    "changeProfessionalAssignment": "שינוי שיוך מטפל",
+    "currentlyAssignedTo": "כרגע משויך ל",
+    "selectNewProfessional": "בחר מטפל חדש",
+    "reassign": "שייך מחדש",
+    "suitable": "מתאים",
+    "suitableProfessionalsFound": "נמצאו {{count}} מטפלים מתאימים",
+    "showingAllProfessionals": "מציג את כל המטפלים הזמינים",
+    "useColumnInstead": "השתמש בעמודה במקום",
     "assignedOnly": "מטופלים בלבד",
     "assignedProfessional": "המטפל המשויך",
     "assignmentFailed": "השיוך נכשל",
@@ -706,9 +718,11 @@
     "drawerTitle": "פרטי הזמנה"
   },
   "bookings": {
-    "errors": {
-      "treatmentMismatch": "הטיפול שנבחר לא תואם לקוד המימוש"
-    },
+          "errors": {
+        "treatmentMismatch": "הטיפול שנבחר לא תואם לקוד המימוש",
+        "cannotUnassignCompletedBooking": "לא ניתן לבטל שיוך מטפל מהזמנה שהושלמה",
+        "unassignFailed": "ביטול השיוך נכשל"
+      },
     "guestInformation": "פרטי האורח",
     "bookingDetails": "פרטי ההזמנה",
     "selectedTreatment": "הטיפול הנבחר",

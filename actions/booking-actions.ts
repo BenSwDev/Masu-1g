@@ -698,12 +698,22 @@ export async function createBooking(
     let bookingAddressSnapshot: IBookingAddressSnapshot | undefined
 
     if (validatedPayload.customAddressDetails) {
-      if (!validatedPayload.customAddressDetails.fullAddress) {
-        validatedPayload.customAddressDetails.fullAddress = constructFullAddressHelper(
-          validatedPayload.customAddressDetails as Partial<IAddress>,
-        )
+      // Validate required address fields
+      const addressDetails = validatedPayload.customAddressDetails
+      if (!addressDetails.city?.trim() || !addressDetails.street?.trim()) {
+        logger.warn("Incomplete address details provided", { addressDetails })
+        return { success: false, error: "bookings.errors.incompleteAddress" }
       }
-      bookingAddressSnapshot = validatedPayload.customAddressDetails
+
+      // Use the updated constructFullAddress function if fullAddress is not provided
+      if (!addressDetails.fullAddress) {
+        addressDetails.fullAddress = constructFullAddressHelper(addressDetails)
+      }
+      
+      bookingAddressSnapshot = {
+        ...addressDetails,
+        fullAddress: addressDetails.fullAddress || constructFullAddressHelper(addressDetails)
+      }
     } else if (validatedPayload.selectedAddressId) {
       const selectedAddressDoc = (await Address.findById(validatedPayload.selectedAddressId).lean()) as IAddress | null
 
@@ -2290,20 +2300,14 @@ export async function createGuestBooking(
         return { success: false, error: "bookings.errors.incompleteAddress" }
       }
 
-      // Build full address safely
-      const addressParts = [
-        addressDetails.street?.trim(),
-        addressDetails.streetNumber?.trim(),
-        addressDetails.city?.trim()
-      ].filter(Boolean)
-      
+      // Use the updated constructFullAddress function if fullAddress is not provided
       if (!addressDetails.fullAddress) {
-        addressDetails.fullAddress = addressParts.join(" ")
+        addressDetails.fullAddress = constructFullAddressHelper(addressDetails)
       }
       
       bookingAddressSnapshot = {
         ...addressDetails,
-        fullAddress: addressDetails.fullAddress || addressParts.join(" ")
+        fullAddress: addressDetails.fullAddress || constructFullAddressHelper(addressDetails)
       }
     } else {
       logger.warn("No address provided for guest booking")
@@ -3608,6 +3612,43 @@ export async function validateRedemptionCode(
   } catch (error) {
     logger.error("Error validating redemption code:", { error, code })
     return { success: false, error: "שגיאה בבדיקת קוד המימוש" }
+  }
+}
+
+export async function unassignProfessionalFromBooking(
+  bookingId: string,
+): Promise<{ success: boolean; error?: string; booking?: IBooking }> {
+  try {
+    await dbConnect()
+
+    const booking = await Booking.findById(bookingId)
+    if (!booking) {
+      return { success: false, error: "bookings.errors.bookingNotFound" }
+    }
+
+    // Check if booking can be unassigned
+    if (["completed", "cancelled", "refunded"].includes(booking.status)) {
+      return { success: false, error: "bookings.errors.cannotUnassignCompletedBooking" }
+    }
+
+    // Unassign the professional
+    booking.professionalId = undefined
+    booking.status = "confirmed" // Reset to confirmed status
+    await booking.save()
+
+    logger.info("Professional unassigned from booking", { 
+      bookingId, 
+      previousProfessionalId: booking.professionalId 
+    })
+
+    // Revalidate relevant paths
+    revalidatePath("/dashboard/admin/bookings")
+    revalidatePath("/dashboard/professional")
+
+    return { success: true, booking }
+  } catch (error) {
+    logger.error("Error unassigning professional from booking", { bookingId, error })
+    return { success: false, error: "bookings.errors.unassignFailed" }
   }
 }
 

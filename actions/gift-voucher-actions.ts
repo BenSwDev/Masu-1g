@@ -40,6 +40,11 @@ export interface GiftVoucherPlain extends IGiftVoucherPlainFile {
   selectedDurationName?: string
   purchaserName?: string
   ownerName?: string
+  giftMessage?: string // Alternative field name for greetingMessage
+  paymentAmount?: number // Payment amount for admin display
+  paymentMethodId?: string // Payment method ID for admin display
+  transactionId?: string // Transaction ID for admin display
+  notes?: string // Admin notes
 }
 
 async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<string, any>): Promise<GiftVoucherPlain> {
@@ -107,16 +112,23 @@ async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<strin
       purchaserName,
       ownerUserId: ownerUserIdStr,
       ownerName,
+      guestInfo: voucher.guestInfo,
       isGift: voucher.isGift,
       recipientName: voucher.recipientName,
       recipientPhone: voucher.recipientPhone,
+      recipientEmail: voucher.recipientEmail,
       greetingMessage: voucher.greetingMessage,
+      giftMessage: voucher.giftMessage || voucher.greetingMessage, // Support both field names
       sendDate: formatDate(voucher.sendDate),
       status: voucher.status,
       purchaseDate: formatDate(voucher.purchaseDate)!,
       validFrom: formatDate(voucher.validFrom)!,
       validUntil: formatDate(voucher.validUntil)!,
       paymentId: voucher.paymentId,
+      paymentAmount: voucher.paymentAmount,
+      paymentMethodId: voucher.paymentMethodId,
+      transactionId: voucher.transactionId,
+      notes: voucher.notes,
       usageHistory: voucher.usageHistory?.map((h: any) => ({
         ...h,
         date: formatDate(h.date)!,
@@ -144,13 +156,24 @@ async function toGiftVoucherPlain(voucherDocOrPlain: IGiftVoucher | Record<strin
       monetaryValue: voucher.monetaryValue,
       originalAmount: voucher.originalAmount,
       remainingAmount: voucher.remainingAmount,
-      purchaserUserId: voucher.purchaserUserId?.toString(),
-      ownerUserId: voucher.ownerUserId?.toString(),
+      purchaserUserId: voucher.purchaserUserId?.toString() || "",
+      ownerUserId: voucher.ownerUserId?.toString() || "",
+      guestInfo: voucher.guestInfo,
       isGift: voucher.isGift,
+      recipientName: voucher.recipientName,
+      recipientPhone: voucher.recipientPhone,
+      recipientEmail: voucher.recipientEmail,
+      greetingMessage: voucher.greetingMessage,
+      giftMessage: voucher.giftMessage || voucher.greetingMessage,
       status: voucher.status,
       purchaseDate: new Date(voucher.purchaseDate).toISOString(),
       validFrom: new Date(voucher.validFrom).toISOString(),
       validUntil: new Date(voucher.validUntil).toISOString(),
+      paymentId: voucher.paymentId,
+      paymentAmount: voucher.paymentAmount,
+      paymentMethodId: voucher.paymentMethodId,
+      transactionId: voucher.transactionId,
+      notes: voucher.notes,
       isActive:
         (voucher.status === "active" || voucher.status === "partially_used" || voucher.status === "sent") &&
         new Date(voucher.validUntil) >= new Date() &&

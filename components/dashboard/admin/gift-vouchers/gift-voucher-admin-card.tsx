@@ -300,20 +300,9 @@ export default function GiftVoucherAdminCard({
               <span>
                 {daysUntilExpiry === 0 
                   ? t("giftVouchers.expiringToday")
-                  : t("giftVouchers.expiringIn", { days: daysUntilExpiry })
+                  : `${t("giftVouchers.expiringIn")} ${daysUntilExpiry} ימים`
                 }
               </span>
-            </div>
-          )}
-
-          {/* Payment Info */}
-          {voucher.paymentAmount && (
-            <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-3 w-3" />
-                <span>{t("giftVouchers.fields.paymentAmount")}</span>
-              </div>
-              <span className="font-medium">{voucher.paymentAmount.toFixed(2)} ₪</span>
             </div>
           )}
         </CardContent>

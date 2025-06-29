@@ -28,6 +28,7 @@ export interface GiftVoucherPlain {
   recipientPhone?: string
   recipientEmail?: string
   greetingMessage?: string
+  giftMessage?: string // Alternative field name for greetingMessage
   sendDate?: Date | string // Allow string for form input
   status:
     | "pending_payment"
@@ -42,6 +43,10 @@ export interface GiftVoucherPlain {
   validFrom: Date | string
   validUntil: Date | string
   paymentId?: string
+  paymentAmount?: number // Payment amount for admin display
+  paymentMethodId?: string // Payment method ID for admin display
+  transactionId?: string // Transaction ID for admin display
+  notes?: string // Admin notes
   usageHistory?: { date: Date | string; amountUsed: number; orderId?: string; description?: string }[]
   isActive: boolean
   createdAt?: Date | string
@@ -75,6 +80,7 @@ export interface IGiftVoucher extends Document {
   recipientPhone?: string
   recipientEmail?: string
   greetingMessage?: string
+  giftMessage?: string // Alternative field name for greetingMessage
   sendDate?: Date
   status:
     | "pending_payment"
@@ -89,6 +95,10 @@ export interface IGiftVoucher extends Document {
   validFrom: Date
   validUntil: Date
   paymentId?: string
+  paymentAmount?: number // Payment amount for admin display
+  paymentMethodId?: string // Payment method ID for admin display
+  transactionId?: string // Transaction ID for admin display
+  notes?: string // Admin notes
   usageHistory: { date: Date; amountUsed: number; orderId?: mongoose.Types.ObjectId; description?: string; userId?: mongoose.Types.ObjectId }[]
   isActive: boolean
   createdAt: Date
@@ -118,6 +128,7 @@ const GiftVoucherSchema: Schema<IGiftVoucher> = new Schema(
     recipientPhone: { type: String },
     recipientEmail: { type: String },
     greetingMessage: { type: String, maxLength: 500 },
+    giftMessage: { type: String, maxLength: 500 }, // Alternative field name for greetingMessage
     sendDate: { type: Date },
     status: {
       type: String,
@@ -138,6 +149,10 @@ const GiftVoucherSchema: Schema<IGiftVoucher> = new Schema(
     validFrom: { type: Date, required: true },
     validUntil: { type: Date, required: true },
     paymentId: { type: String, sparse: true },
+    paymentAmount: { type: Number, min: 0 }, // Payment amount for admin display
+    paymentMethodId: { type: String }, // Payment method ID for admin display
+    transactionId: { type: String }, // Transaction ID for admin display
+    notes: { type: String, maxLength: 1000 }, // Admin notes
     usageHistory: [
       {
         date: { type: Date, required: true },

@@ -35,7 +35,9 @@ export interface GiftVoucherPlain {
   isGift: boolean
   recipientName?: string
   recipientPhone?: string
+  recipientEmail?: string
   greetingMessage?: string
+  giftMessage?: string
   sendDate?: Date | string
   status:
     | "pending_payment"
@@ -50,6 +52,10 @@ export interface GiftVoucherPlain {
   validFrom: Date | string
   validUntil: Date | string
   paymentId?: string
+  paymentAmount?: number
+  paymentMethodId?: string
+  transactionId?: string
+  notes?: string
   usageHistory?: { date: Date | string; amountUsed: number; orderId?: string; description?: string }[]
   isActive: boolean
   createdAt?: Date | string
@@ -123,16 +129,23 @@ function toGiftVoucherPlain(doc: any): GiftVoucherPlain {
     purchaserName: doc.purchaserName,
     ownerUserId: doc.ownerUserId?.toString() || "",
     ownerName: doc.ownerName,
+    guestInfo: doc.guestInfo,
     isGift: doc.isGift,
     recipientName: doc.recipientName,
     recipientPhone: doc.recipientPhone,
+    recipientEmail: doc.recipientEmail,
     greetingMessage: doc.greetingMessage,
+    giftMessage: doc.giftMessage,
     sendDate: doc.sendDate,
     status: doc.status,
     purchaseDate: doc.purchaseDate,
     validFrom: doc.validFrom,
     validUntil: doc.validUntil,
     paymentId: doc.paymentId,
+    paymentAmount: doc.paymentAmount,
+    paymentMethodId: doc.paymentMethodId,
+    transactionId: doc.transactionId,
+    notes: doc.notes,
     usageHistory: doc.usageHistory?.map((usage: any) => ({
       date: usage.date,
       amountUsed: usage.amountUsed,

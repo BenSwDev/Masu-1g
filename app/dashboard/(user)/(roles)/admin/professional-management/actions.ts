@@ -245,12 +245,12 @@ export async function getProfessionalById(id: string): Promise<CreateProfessiona
     }
 
     // Verify user has professional role
-    const user = professional.userId as IUser
+    const user = professional.userId as unknown as IUser
     if (!user.roles?.includes("professional")) {
       return { success: false, error: "המשתמש אינו מטפל" }
     }
 
-    return { success: true, professional: professional as ProfessionalWithUser }
+    return { success: true, professional: professional as unknown as ProfessionalWithUser }
   } catch (error) {
     console.error("Error getting professional:", error)
     
@@ -352,7 +352,7 @@ export async function createProfessional(formData: FormData): Promise<CreateProf
 
     return { 
       success: true, 
-      professional: createdProfessionalQuery as ProfessionalWithUser 
+      professional: createdProfessionalQuery as unknown as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error creating professional:", error)
@@ -448,7 +448,7 @@ export async function updateProfessionalStatus(
 
     return { 
       success: true, 
-      professional: updatedProfessional as ProfessionalWithUser 
+      professional: updatedProfessional as unknown as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error updating professional status:", error)
@@ -614,7 +614,7 @@ export async function updateProfessionalBankDetails(
 
     return { 
       success: true, 
-      professional: professional as ProfessionalWithUser 
+      professional: professional as unknown as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error updating professional bank details:", error)
@@ -664,7 +664,7 @@ export async function updateProfessionalBasicInfo(
       return { success: false, error: "מטפל לא נמצא" }
     }
 
-    const user = professional.userId as IUser
+    const user = professional.userId as unknown as IUser
     if (!user) {
       return { success: false, error: "משתמש לא נמצא" }
     }
@@ -765,7 +765,7 @@ export async function updateProfessionalBasicInfo(
 
     return { 
       success: true, 
-      professional: updatedProfessional as ProfessionalWithUser 
+      professional: updatedProfessional as unknown as ProfessionalWithUser 
     }
   } catch (error) {
     console.error("Error updating professional basic info:", error)

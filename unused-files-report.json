@@ -1,0 +1,497 @@
+{
+  "timestamp": "2025-06-29T21:27:43.843Z",
+  "totalFiles": 98,
+  "totalSizeKB": 413.4,
+  "files": [
+    {
+      "path": "components\\dashboard\\admin\\bookings\\comprehensive-booking-edit-modal.tsx",
+      "size": 57839,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\sidebar.tsx",
+      "size": 24192,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\sidebar.tsx",
+      "size": 24144,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\dashboard\\admin\\professional-management\\professional-profile-dialog.tsx",
+      "size": 16078,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\dashboard\\admin\\professional-management\\tabs\\professional-earnings-tab.tsx",
+      "size": 15474,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "actions\\partner-coupon-batch-actions.ts",
+      "size": 12625,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\dashboard\\(user)\\(roles)\\admin\\working-hours\\actions.ts",
+      "size": 11746,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\chart.tsx",
+      "size": 11031,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\chart.tsx",
+      "size": 10851,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\dashboard\\preferences\\notification-preferences.tsx",
+      "size": 10676,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\dashboard\\admin\\professional-management\\professional-edit-modal.tsx",
+      "size": 10491,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\landing\\pricing.tsx",
+      "size": 10343,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\booking\\notification-preferences-selector.tsx",
+      "size": 9462,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\dashboard\\member\\subscriptions\\user-subscription-card.tsx",
+      "size": 8474,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\menubar.tsx",
+      "size": 8230,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\menubar.tsx",
+      "size": 8224,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\dropdown-menu.tsx",
+      "size": 7633,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\context-menu.tsx",
+      "size": 7466,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\context-menu.tsx",
+      "size": 7460,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\carousel.tsx",
+      "size": 6499,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "actions\\professional-booking-view-actions.ts",
+      "size": 5745,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\navigation-menu.tsx",
+      "size": 5180,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\navigation-menu.tsx",
+      "size": 5174,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\command.tsx",
+      "size": 5065,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\command.tsx",
+      "size": 5052,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\toast.tsx",
+      "size": 4988,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\toast.tsx",
+      "size": 4987,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\alert-dialog.tsx",
+      "size": 4588,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\alert-dialog.tsx",
+      "size": 4575,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\form.tsx",
+      "size": 4277,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\drawer.tsx",
+      "size": 3139,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\purchase\\step-indicator.tsx",
+      "size": 3027,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\purchase\\payment-method-selector.tsx",
+      "size": 3023,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\table.tsx",
+      "size": 2882,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\pagination.tsx",
+      "size": 2868,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\breadcrumb.tsx",
+      "size": 2833,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "size": 2781,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "lib\\validation\\partner-coupon-batch-schemas.ts",
+      "size": 2681,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "lib\\validation\\coupon-schemas.ts",
+      "size": 2635,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\purchase\\purchase-navigation.tsx",
+      "size": 2278,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\input-otp.tsx",
+      "size": 2245,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\input-otp.tsx",
+      "size": 2239,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "hooks\\use-cached-preferences.ts",
+      "size": 2133,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\accordion.tsx",
+      "size": 2055,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\accordion.tsx",
+      "size": 2049,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "hooks\\use-cached-user.ts",
+      "size": 1904,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\error.tsx",
+      "size": 1853,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\toggle-group.tsx",
+      "size": 1827,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\toggle-group.tsx",
+      "size": 1814,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\purchase\\purchase-success.tsx",
+      "size": 1788,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\resizable.tsx",
+      "size": 1774,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\resizable.tsx",
+      "size": 1768,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "lib\\db\\init-indexes.ts",
+      "size": 1762,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\purchase\\purchase-summary.tsx",
+      "size": 1683,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\(orders)\\purchase\\gift-voucher\\page-old.tsx",
+      "size": 1671,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\(orders)\\purchase\\gift-voucher\\page-new.tsx",
+      "size": 1664,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\auth\\role-protected-route.tsx",
+      "size": 1604,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\radio-group.tsx",
+      "size": 1525,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\dashboard\\admin\\coupons\\coupon-card-skeleton.tsx",
+      "size": 1512,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\avatar.tsx",
+      "size": 1469,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\(orders)\\purchase\\subscription\\guest-book-subscription-content.tsx",
+      "size": 1405,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\(orders)\\bookings\\treatment\\guest-book-treatment-content.tsx",
+      "size": 1325,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "lib\\db\\queries\\verification-queries.ts",
+      "size": 1283,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\popover.tsx",
+      "size": 1275,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\purchase\\animated-container.tsx",
+      "size": 1263,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "test-notifications.js",
+      "size": 1262,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\hover-card.tsx",
+      "size": 1233,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\hover-card.tsx",
+      "size": 1227,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\dashboard\\partner\\coupons\\partner-coupons-client.tsx",
+      "size": 1215,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\tooltip.tsx",
+      "size": 1189,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\switch.tsx",
+      "size": 1182,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\layout.tsx",
+      "size": 1177,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\auth\\protected-route.tsx",
+      "size": 1159,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\(orders)\\purchase\\gift-voucher\\guest-gift-voucher-page-content.tsx",
+      "size": 1158,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\slider.tsx",
+      "size": 1125,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\slider.tsx",
+      "size": 1119,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\sonner.tsx",
+      "size": 925,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\sonner.tsx",
+      "size": 925,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\toaster.tsx",
+      "size": 836,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\progress.tsx",
+      "size": 819,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\dashboard\\admin\\coupons\\table-loading-skeleton.tsx",
+      "size": 772,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "lib\\cache\\cache-utils.ts",
+      "size": 718,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\textarea.tsx",
+      "size": 711,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "actions\\admin-actions.ts",
+      "size": 663,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "lib\\notifications\\send-notification.ts",
+      "size": 645,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\use-mobile.tsx",
+      "size": 584,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\loading.tsx",
+      "size": 457,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\(orders)\\purchase\\subscription\\page-old.tsx",
+      "size": 376,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\(orders)\\purchase\\subscription\\page-new.tsx",
+      "size": 369,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\collapsible.tsx",
+      "size": 340,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\collapsible.tsx",
+      "size": 340,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\theme-provider.tsx",
+      "size": 303,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "lib\\events\\handlers\\index.ts",
+      "size": 207,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\common\\ui\\aspect-ratio.tsx",
+      "size": 161,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\ui\\aspect-ratio.tsx",
+      "size": 161,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "hooks\\use-query-client.ts",
+      "size": 143,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "app\\page.tsx",
+      "size": 134,
+      "reason": "לא מיובא על ידי אף קובץ"
+    },
+    {
+      "path": "components\\booking\\universal-booking-wizard.tsx",
+      "size": 75,
+      "reason": "לא מיובא על ידי אף קובץ"
+    }
+  ]
+}

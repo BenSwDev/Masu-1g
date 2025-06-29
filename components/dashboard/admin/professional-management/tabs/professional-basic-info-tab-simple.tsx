@@ -17,14 +17,17 @@ import { updateProfessionalStatus } from "@/app/dashboard/(user)/(roles)/admin/p
 import type { Professional, ProfessionalTabProps } from "@/lib/types/professional"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 
-interface ProfessionalBasicInfoTabProps extends ProfessionalTabProps {}
+interface ProfessionalBasicInfoTabProps extends ProfessionalTabProps {
+  onLoadingChange?: (loading: boolean) => void
+}
 
 export default function ProfessionalBasicInfoTab({
   professional,
   onUpdate,
   loading,
   isCreatingNew = false,
-  onCreated
+  onCreated,
+  onLoadingChange
 }: ProfessionalBasicInfoTabProps) {
   const { t, dir } = useTranslation()
   const { toast } = useToast()
@@ -81,6 +84,7 @@ export default function ProfessionalBasicInfoTab({
     }
 
     setCreationLoading(true)
+    onLoadingChange?.(true)
     
     try {
       const formDataToSend = new FormData()
@@ -156,6 +160,7 @@ export default function ProfessionalBasicInfoTab({
       })
     } finally {
       setCreationLoading(false)
+      onLoadingChange?.(false)
     }
   }
 
@@ -390,15 +395,15 @@ export default function ProfessionalBasicInfoTab({
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button
                 onClick={handleCreateProfessional}
-                disabled={creationLoading || !formData.name || !formData.phone}
+                disabled={creationLoading || loading || !formData.name || !formData.phone}
                 className="flex items-center gap-2 min-w-[120px]"
               >
-                {creationLoading ? (
+                {(creationLoading || loading) ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Save className="w-4 h-4" />
                 )}
-                {creationLoading ? "יוצר..." : "צור מטפל"}
+                {(creationLoading || loading) ? "יוצר..." : "צור מטפל"}
               </Button>
             </div>
           </CardContent>

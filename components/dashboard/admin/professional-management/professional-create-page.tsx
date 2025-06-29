@@ -58,8 +58,8 @@ export function ProfessionalCreatePage() {
       title: "הצלחה",
       description: "המטפל נוצר בהצלחה"
     })
-    // מעבר לעמוד העריכה של המטפל החדש
-    router.push(`/dashboard/admin/professional-management/${createdProfessional._id}`)
+    // חזרה לטבלת המטפלים
+    router.push("/dashboard/admin/professional-management")
   }
 
   return (
@@ -105,6 +105,7 @@ export function ProfessionalCreatePage() {
             loading={isCreating}
             isCreatingNew={true}
             onCreated={handleCreated}
+            onLoadingChange={setIsCreating}
           />
         </CardContent>
       </Card>

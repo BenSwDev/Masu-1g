@@ -7,15 +7,16 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Badge } from "@/components/common/ui/badge"
 import { Button } from "@/components/common/ui/button"
 import { Card, CardContent } from "@/components/common/ui/card"
-import { AlertTriangle, ArrowLeft, User, Stethoscope, MapPin, CreditCard, FileText, DollarSign, ScrollText, Save } from "lucide-react"
+import { AlertTriangle, ArrowLeft, User, Stethoscope, MapPin, CreditCard, FileText, DollarSign, ScrollText, Save, Calendar } from "lucide-react"
 import { useToast } from "@/components/common/ui/use-toast"
 import ProfessionalProfileTab from "./tabs/professional-profile-tab"
-import ProfessionalTreatmentsTabNew from "./tabs/professional-treatments-tab-new"
+import ProfessionalTreatmentsTabSimple from "./tabs/professional-treatments-tab-simple"
 import ProfessionalWorkAreasTabSimple from "./tabs/professional-work-areas-tab-simple"
 import ProfessionalBankDetailsTab from "./tabs/professional-bank-details-tab"
 import ProfessionalDocumentsTab from "./tabs/professional-documents-tab"
 import ProfessionalFinancialTab from "./tabs/professional-financial-tab"
 import ProfessionalContractTab from "./tabs/professional-contract-tab"
+import ProfessionalBookingsTab from "./tabs/professional-bookings-tab"
 import type { ProfessionalStatus } from "@/lib/db/models/professional-profile"
 import type { Professional } from "@/lib/types/professional"
 
@@ -115,7 +116,7 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
           
           <div>
             <h1 className="text-2xl font-bold">
-              עריכת מטפל - {updatedProfessional.userId.name}
+              עריכת מטפל - {typeof updatedProfessional.userId === 'object' ? updatedProfessional.userId.name : 'טוען...'}
             </h1>
             <div className="flex items-center gap-3 mt-1">
               {getStatusBadge(updatedProfessional.status)}
@@ -149,7 +150,7 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
       <Card>
         <CardContent className="p-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} dir={dir} className="w-full">
-            <TabsList className="grid w-full grid-cols-7 mb-6">
+            <TabsList className="grid w-full grid-cols-8 mb-6">
               <TabsTrigger value="profile" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">פרופיל</span>
@@ -161,6 +162,10 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
               <TabsTrigger value="workAreas" className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 <span className="hidden sm:inline">איזורי פעילות</span>
+              </TabsTrigger>
+              <TabsTrigger value="bookings" className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                <span className="hidden sm:inline">הזמנות</span>
               </TabsTrigger>
               <TabsTrigger value="bankDetails" className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4" />
@@ -192,7 +197,7 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
               </TabsContent>
 
               <TabsContent value="treatments" className="m-0">
-                <ProfessionalTreatmentsTabNew
+                <ProfessionalTreatmentsTabSimple
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />
@@ -200,6 +205,13 @@ export function ProfessionalEditPage({ professional }: ProfessionalEditPageProps
 
               <TabsContent value="workAreas" className="m-0">
                 <ProfessionalWorkAreasTabSimple
+                  professional={updatedProfessional}
+                  onUpdate={handleUpdate}
+                />
+              </TabsContent>
+
+              <TabsContent value="bookings" className="m-0">
+                <ProfessionalBookingsTab
                   professional={updatedProfessional}
                   onUpdate={handleUpdate}
                 />

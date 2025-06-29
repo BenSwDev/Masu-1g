@@ -124,22 +124,30 @@ export default function ProfessionalWorkAreasTab({
   }
 
   const handleSave = async () => {
-      // Validate work areas
+    // Validate work areas
     const validWorkAreas = workAreas.filter(w => w.cityId && w.cityName)
 
-      if (validWorkAreas.length === 0) {
-        toast({
-          variant: "destructive",
-          title: "שגיאה",
+    if (validWorkAreas.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "שגיאה",
         description: "נא להוסיף לפחות איזור עבודה אחד תקין"
-        })
-        return
-      }
+      })
+      return
+    }
 
     setSaving(true)
     
     try {
-      const result = await updateProfessionalWorkAreas(professional._id, validWorkAreas)
+      // Convert to the format expected by the API (with ObjectId strings)
+      const workAreasForAPI = validWorkAreas.map(wa => ({
+        cityId: wa.cityId, // This is already a string from the select
+        cityName: wa.cityName,
+        distanceRadius: wa.distanceRadius,
+        coveredCities: wa.coveredCities || []
+      }))
+      
+      const result = await updateProfessionalWorkAreas(professional._id, workAreasForAPI as any)
 
       if (result.success && result.professional) {
         toast({
@@ -423,29 +431,68 @@ export default function ProfessionalWorkAreasTab({
               <div className="mt-3 pt-3 border-t">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
                   <Navigation className="w-4 h-4" />
-                  <span>כיסוי גיאוגרפי:</span>
+                  <span>כיסוי גיאוגרפי מאוחד:</span>
                 </div>
-                <div className="space-y-1">
-                  {workAreas
+                
+                {(() => {
+                  // Create unified list of all covered cities without duplicates
+                  const allCoveredCities = new Set<string>()
+                  
+                  workAreas
                     .filter(isValidWorkArea)
-                    .map((area, index) => (
-                      <div key={index} className="text-sm">
-                        <span className="font-medium">{area.cityName}</span>
-                        <span className="text-muted-foreground mr-2">
-                          - {getDistanceRadiusText(area.distanceRadius)}
-                        </span>
-                        {area.coveredCities.length > 0 && (
-                          <span className="text-muted-foreground">
-                            ({area.coveredCities.length} ערים)
-                          </span>
+                    .forEach(area => {
+                      // Add the main city
+                      allCoveredCities.add(area.cityName)
+                      // Add all covered cities
+                      area.coveredCities.forEach(city => allCoveredCities.add(city))
+                    })
+                  
+                  const sortedCities = Array.from(allCoveredCities).sort()
+                  
+                  return (
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">
+                        סה"כ ערים מכוסות: {sortedCities.length}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {sortedCities.slice(0, 20).map((city, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {city}
+                          </Badge>
+                        ))}
+                        {sortedCities.length > 20 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{sortedCities.length - 20} נוספות
+                          </Badge>
                         )}
                       </div>
-                    ))}
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                      
+                      {/* Work areas breakdown */}
+                      <div className="mt-3 space-y-1">
+                        <div className="text-xs text-muted-foreground">פירוט לפי איזור:</div>
+                        {workAreas
+                          .filter(isValidWorkArea)
+                          .map((area, index) => (
+                            <div key={index} className="text-xs">
+                              <span className="font-medium">{area.cityName}</span>
+                              <span className="text-muted-foreground mr-2">
+                                - {getDistanceRadiusText(area.distanceRadius)}
+                              </span>
+                              {area.coveredCities.length > 0 && (
+                                <span className="text-muted-foreground">
+                                  (+{area.coveredCities.length} ערים נוספות)
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   )

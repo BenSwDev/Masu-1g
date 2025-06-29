@@ -7,25 +7,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui
 import { Badge } from "@/components/common/ui/badge"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { Skeleton } from "@/components/common/ui/skeleton"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Input } from "@/components/common/ui/input"
+import { Checkbox } from "@/components/common/ui/checkbox"
 import { Label } from "@/components/common/ui/label"
 import { useToast } from "@/components/common/ui/use-toast"
-import { Stethoscope, Plus, Trash2, Save, Loader2, AlertTriangle, Check, X, Filter } from "lucide-react"
+import { Stethoscope, Save, Loader2, AlertTriangle, Check, Clock, DollarSign } from "lucide-react"
 import { updateProfessionalTreatments } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
 import type { Professional } from "@/lib/types/professional"
+
+interface TreatmentDuration {
+  _id: string
+  minutes: number
+  price: number
+  professionalPrice: number
+  isActive: boolean
+}
 
 interface TreatmentOption {
   _id: string
   name: string
   category: string
   description?: string
-  defaultDurationMinutes: number
+  pricingType: "fixed" | "duration_based"
+  // Fixed pricing
   fixedPrice?: number
+  fixedProfessionalPrice?: number
+  defaultDurationMinutes?: number
+  // Duration-based pricing
+  durations?: TreatmentDuration[]
+  allowTherapistGenderSelection?: boolean
 }
 
 interface ProfessionalTreatment {
   treatmentId: string
+  durationId?: string
+  professionalPrice: number
   treatmentName?: string
 }
 
@@ -43,14 +58,20 @@ export default function ProfessionalTreatmentsTab({
   const { t, dir } = useTranslation()
   const { toast } = useToast()
   
-  const [treatments, setTreatments] = useState<ProfessionalTreatment[]>(professional.treatments || [])
+  const [selectedTreatments, setSelectedTreatments] = useState<Set<string>>(new Set())
   const [availableTreatments, setAvailableTreatments] = useState<TreatmentOption[]>([])
-  const [categories, setCategories] = useState<string[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [loading, setLoading] = useState(false)
+  const [treatmentsByCategory, setTreatmentsByCategory] = useState<Record<string, TreatmentOption[]>>({})
   const [loadingTreatments, setLoadingTreatments] = useState(true)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+
+  // Initialize selected treatments from professional data
+  useEffect(() => {
+    if (professional.treatments) {
+      const selectedIds = new Set(professional.treatments.map(t => t.treatmentId))
+      setSelectedTreatments(selectedIds)
+    }
+  }, [professional.treatments])
 
   // Load available treatments
   useEffect(() => {
@@ -58,13 +79,21 @@ export default function ProfessionalTreatmentsTab({
       try {
         const response = await fetch('/api/treatments')
         if (response.ok) {
-        const _data = await response.json()
+          const data = await response.json()
           const treatmentList = data.treatments || []
           setAvailableTreatments(treatmentList)
           
-          // Extract unique categories
-          const uniqueCategories = [...new Set(treatmentList.map((t: TreatmentOption) => t.category).filter(Boolean))]
-          setCategories(uniqueCategories)
+          // Group treatments by category
+          const grouped = treatmentList.reduce((acc: Record<string, TreatmentOption[]>, treatment: TreatmentOption) => {
+            const category = treatment.category || "אחר"
+            if (!acc[category]) {
+              acc[category] = []
+            }
+            acc[category].push(treatment)
+            return acc
+          }, {})
+          
+          setTreatmentsByCategory(grouped)
         } else {
           throw new Error('Failed to fetch treatments')
         }
@@ -83,51 +112,49 @@ export default function ProfessionalTreatmentsTab({
     loadTreatments()
   }, [toast])
 
-  const handleAddTreatment = () => {
-    const newTreatment: ProfessionalTreatment = {
-      treatmentId: "placeholder",
-      treatmentName: ""
+  const handleTreatmentToggle = (treatmentId: string, checked: boolean) => {
+    const newSelected = new Set(selectedTreatments)
+    if (checked) {
+      newSelected.add(treatmentId)
+    } else {
+      newSelected.delete(treatmentId)
     }
-    setTreatments(prev => [...prev, newTreatment])
+    setSelectedTreatments(newSelected)
     setHasChanges(true)
   }
 
-  const handleRemoveTreatment = (index: number) => {
-    setTreatments(prev => prev.filter((_, i) => i !== index))
-    setHasChanges(true)
-  }
-
-  const handleTreatmentChange = (index: number, treatmentId: string) => {
-    setTreatments(prev => prev.map((treatment, i) => {
-      if (i === index) {
-        const selectedTreatment = availableTreatments.find(t => t._id === treatmentId)
-        return {
-          treatmentId,
-          treatmentName: selectedTreatment?.name || ""
+  const handleCategoryToggle = (category: string, checked: boolean) => {
+    const categoryTreatments = treatmentsByCategory[category] || []
+    const newSelected = new Set(selectedTreatments)
+    
+    categoryTreatments.forEach(treatment => {
+      if (checked) {
+        newSelected.add(treatment._id)
+      } else {
+        newSelected.delete(treatment._id)
       }
-      }
-      return treatment
-    }))
+    })
+    
+    setSelectedTreatments(newSelected)
     setHasChanges(true)
   }
 
   const handleSave = async () => {
-    // Validate treatments
-    const validTreatments = treatments.filter(t => t.treatmentId)
-    
-    if (validTreatments.length === 0) {
-      toast({
-        variant: "destructive", 
-        title: "שגיאה",
-        description: "נא להוסיף לפחות טיפול אחד"
-      })
-      return
-    }
-
     setSaving(true)
     
     try {
-      const result = await updateProfessionalTreatments(professional._id, validTreatments)
+      // Convert selected treatments to the format expected by the API
+      const treatmentsToSave = Array.from(selectedTreatments).map(treatmentId => {
+        const treatment = availableTreatments.find(t => t._id === treatmentId)
+        return {
+          treatmentId,
+          treatmentName: treatment?.name || "",
+          professionalPrice: treatment?.fixedProfessionalPrice || 0,
+          durationId: undefined // Will be handled by duration-based treatments if needed
+        }
+      })
+      
+      const result = await updateProfessionalTreatments(professional._id, treatmentsToSave)
       
       if (result.success && result.professional) {
         toast({
@@ -138,10 +165,11 @@ export default function ProfessionalTreatmentsTab({
         // Update professional with new treatments
         const updatedTreatments = (result.professional.treatments || []).map(t => ({
           treatmentId: t.treatmentId?.toString() || '',
+          durationId: t.durationId?.toString(),
+          professionalPrice: t.professionalPrice || 0,
           treatmentName: (t as any).treatmentName
         }))
         
-        setTreatments(updatedTreatments)
         onUpdate({ treatments: updatedTreatments })
         setHasChanges(false)
       } else {
@@ -149,7 +177,7 @@ export default function ProfessionalTreatmentsTab({
           variant: "destructive",
           title: "שגיאה",
           description: result.error || "שגיאה בעדכון הטיפולים"
-      })
+        })
       }
     } catch (error) {
       console.error("Error saving treatments:", error)
@@ -163,22 +191,22 @@ export default function ProfessionalTreatmentsTab({
     }
   }
 
-  const getFilteredTreatments = () => {
-    if (!selectedCategory) return availableTreatments
-    return availableTreatments.filter(t => t.category === selectedCategory)
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case "massages": return "עיסויים"
+      case "facial_treatments": return "טיפולי פנים"
+      default: return category
+    }
   }
 
-  const isValidTreatment = (treatment: ProfessionalTreatment) => {
-    return treatment.treatmentId !== "" && treatment.treatmentId !== "placeholder"
+  const isCategoryFullySelected = (category: string) => {
+    const categoryTreatments = treatmentsByCategory[category] || []
+    return categoryTreatments.length > 0 && categoryTreatments.every(t => selectedTreatments.has(t._id))
   }
 
-  const getAvailableTreatmentsForSelect = (currentIndex: number) => {
-    const selectedTreatmentIds = treatments
-      .filter((_, i) => i !== currentIndex)
-      .map(t => t.treatmentId)
-      .filter(Boolean)
-    
-    return getFilteredTreatments().filter(t => !selectedTreatmentIds.includes(t._id))
+  const isCategoryPartiallySelected = (category: string) => {
+    const categoryTreatments = treatmentsByCategory[category] || []
+    return categoryTreatments.some(t => selectedTreatments.has(t._id)) && !isCategoryFullySelected(category)
   }
 
   if (disabled) {
@@ -195,175 +223,148 @@ export default function ProfessionalTreatmentsTab({
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" dir={dir}>
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Stethoscope className="h-5 w-5" />
-            טיפולי המטפל
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            הגדר את הטיפולים שהמטפל יכול לבצע. המחירים ומשכי הטיפול יחושבו אוטומטית.
-          </p>
+        <div className="flex items-center gap-2">
+          <Stethoscope className="w-5 h-5" />
+          <h3 className="text-lg font-semibold">טיפולי המטפל</h3>
+          <Badge variant="secondary">{selectedTreatments.size} טיפולים</Badge>
         </div>
+        
         {hasChanges && (
-          <Button onClick={handleSave} disabled={saving}>
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 min-w-[100px]"
+          >
             {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                שומר...
-              </>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                שמור שינויים
-              </>
+              <Save className="w-4 h-4" />
             )}
+            {saving ? "שומר..." : "שמור"}
           </Button>
         )}
       </div>
 
-      {/* Category Filter */}
-      <Card>
-        <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            סינון לפי קטגוריה
-            </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label>בחר קטגוריית טיפולים</Label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="כל הקטגוריות" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">כל הקטגוריות</SelectItem>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Treatments List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>רשימת טיפולים</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loadingTreatments ? (
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
-            </div>
-          ) : (
-            <>
-              {treatments.map((treatment, index) => {
-                const availableForSelect = getAvailableTreatmentsForSelect(index)
-                const selectedTreatmentData = availableTreatments.find(t => t._id === treatment.treatmentId)
-                
-                return (
-                  <div key={index} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <div className="space-y-2">
-                        <Label>טיפול</Label>
-                        <Select
-                          value={treatment.treatmentId === "placeholder" ? "" : treatment.treatmentId}
-                          onValueChange={(value) => handleTreatmentChange(index, value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="בחר טיפול..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableForSelect.map(t => (
-                              <SelectItem key={t._id} value={t._id}>
-                                <div className="flex flex-col">
-                                  <span className="font-medium">{t.name}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {t.category} • {t.defaultDurationMinutes} דקות
-                                    {t.fixedPrice && ` • ₪${t.fixedPrice}`}
-                                  </span>
-                  </div>
-                              </SelectItem>
-                ))}
-                          </SelectContent>
-                        </Select>
-              </div>
-              
-                      {selectedTreatmentData && (
-                        <div className="mt-2 p-2 bg-muted rounded text-sm">
-                          <div className="font-medium text-muted-foreground">פרטי הטיפול:</div>
-                          <div>משך: {selectedTreatmentData.defaultDurationMinutes} דקות</div>
-                          {selectedTreatmentData.fixedPrice && (
-                            <div>מחיר: ₪{selectedTreatmentData.fixedPrice}</div>
-                          )}
-                          {selectedTreatmentData.description && (
-                            <div className="text-xs mt-1">{selectedTreatmentData.description}</div>
-                          )}
-                </div>
-              )}
-            </div>
-
-                    <div className="flex items-center gap-2">
-                      {isValidTreatment(treatment) ? (
-                        <Badge variant="default">
-                          <Check className="h-3 w-3 mr-1" />
-                          תקין
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive">
-                          <X className="h-3 w-3 mr-1" />
-                          לא תקין
-                        </Badge>
-                      )}
-                      
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleRemoveTreatment(index)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+      {loadingTreatments ? (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, j) => (
+                    <div key={j} className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-4" />
+                      <Skeleton className="h-4 flex-1" />
                     </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {Object.entries(treatmentsByCategory).map(([category, treatments]) => (
+            <Card key={category}>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id={`category-${category}`}
+                      checked={isCategoryFullySelected(category)}
+                      onCheckedChange={(checked) => handleCategoryToggle(category, checked as boolean)}
+                      className={isCategoryPartiallySelected(category) ? "data-[state=checked]:bg-orange-500" : ""}
+                    />
+                    <Label htmlFor={`category-${category}`} className="text-base font-semibold cursor-pointer">
+                      {getCategoryDisplayName(category)}
+                    </Label>
+                    <Badge variant="outline">
+                      {treatments.filter(t => selectedTreatments.has(t._id)).length} / {treatments.length}
+                    </Badge>
                   </div>
-                )
-              })}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-3">
+                  {treatments.map(treatment => (
+                    <div key={treatment._id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                      <Checkbox
+                        id={`treatment-${treatment._id}`}
+                        checked={selectedTreatments.has(treatment._id)}
+                        onCheckedChange={(checked) => handleTreatmentToggle(treatment._id, checked as boolean)}
+                      />
+                      <div className="flex-1 space-y-1">
+                        <Label htmlFor={`treatment-${treatment._id}`} className="font-medium cursor-pointer">
+                          {treatment.name}
+                        </Label>
+                        {treatment.description && (
+                          <p className="text-sm text-muted-foreground">{treatment.description}</p>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {/* Pricing info */}
+                          {treatment.pricingType === "fixed" ? (
+                            <div className="flex items-center gap-1 text-xs">
+                              <DollarSign className="w-3 h-3" />
+                              <span>₪{treatment.fixedPrice}</span>
+                              {treatment.defaultDurationMinutes && (
+                                <>
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  <span>{treatment.defaultDurationMinutes} דקות</span>
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 text-xs">
+                              <Clock className="w-3 h-3" />
+                              <span>
+                                {treatment.durations?.map(d => `${d.minutes} דקות (₪${d.price})`).join(", ") || "משתנה"}
+                              </span>
+                            </div>
+                          )}
+                          
+                          {treatment.allowTherapistGenderSelection && (
+                            <Badge variant="outline" className="text-xs">
+                              בחירת מגדר מטפל
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-              <Button onClick={handleAddTreatment} variant="outline" className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                הוסף טיפול
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>סיכום</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>סה"כ טיפולים:</span>
-              <span className="font-medium">{treatments.filter(isValidTreatment).length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>טיפולים לא תקינים:</span>
-              <span className="font-medium text-red-600">
-                {treatments.filter(t => !isValidTreatment(t)).length}
-              </span>
+      {/* Summary Card */}
+      <Card className="bg-muted/50">
+        <CardContent className="p-4">
+          <div className="flex justify-between items-center text-sm">
+            <span>סה"כ טיפולים נבחרים:</span>
+            <div className="flex items-center gap-2">
+              <Badge variant="default" className="flex items-center gap-1">
+                <Check className="w-3 h-3" />
+                {selectedTreatments.size}
+              </Badge>
             </div>
           </div>
+          
+          {selectedTreatments.size === 0 && (
+            <Alert className="mt-3">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                נדרש לבחור לפחות טיפול אחד כדי שהמטפל יוכל לקבל הזמנות
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
     </div>

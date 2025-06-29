@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/common/ui/dialog"
@@ -21,8 +21,8 @@ export interface UserData {
   name: string | null
   email: string | null
   phone?: string | null
-  roles: string[]
-  gender?: string | null
+  roles: ("admin" | "professional" | "member" | "partner")[]
+  gender?: "male" | "female" | "other" | null
   dateOfBirth?: string | null
 }
 
@@ -58,7 +58,7 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       email: initialData?.email || "",
       password: "",
       gender: (initialData?.gender as "male" | "female" | "other") || "male",
-      roles: initialData?.roles || ["member"],
+      roles: (initialData?.roles as ("admin" | "professional" | "member" | "partner")[]) || ["member"],
       dateOfBirth: initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "yyyy-MM-dd") : "",
     },
   })
@@ -70,7 +70,7 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       email: initialData?.email || "",
       password: "",
       gender: (initialData?.gender as "male" | "female" | "other") || "male",
-      roles: initialData?.roles || ["member"],
+      roles: (initialData?.roles as ("admin" | "professional" | "member" | "partner")[]) || ["member"],
       dateOfBirth: initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "yyyy-MM-dd") : "",
     })
   }, [initialData, form])

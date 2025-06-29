@@ -1,6 +1,7 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
 import { Alert, AlertDescription } from "@/components/common/ui/alert"
 import { ScrollText, Clock, Info } from "lucide-react"
@@ -103,14 +104,14 @@ export default function ProfessionalContractTab({
         <CardContent>
           <div className="space-y-2 text-sm">
             <p>
-              <span className="font-medium">שם המטפל:</span> {professional.userId.name}
+              <span className="font-medium">שם המטפל:</span> {typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}
             </p>
-            {professional.userId.email && (
+            {typeof professional.userId === 'object' && professional.userId.email && (
               <p>
                 <span className="font-medium">אימייל:</span> {professional.userId.email}
               </p>
             )}
-            {professional.userId.phone && (
+            {typeof professional.userId === 'object' && professional.userId.phone && (
               <p>
                 <span className="font-medium">טלפון:</span> {formatPhoneForDisplay(professional.userId.phone || "")}
               </p>

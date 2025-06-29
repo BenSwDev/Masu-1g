@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/translations/i18n"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import { Button } from "@/components/common/ui/button"
 import { Input } from "@/components/common/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
@@ -423,16 +424,22 @@ export function ProfessionalManagement({
                   >
                     <TableCell>
                       <div>
-                        <div className="font-medium">{professional.userId.name}</div>
+                        <div className="font-medium">
+                          {typeof professional.userId === 'object' ? professional.userId.name : 'לא זמין'}
+                        </div>
                         <div className="text-sm text-muted-foreground">
-                          {professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}
+                          {typeof professional.userId === 'object' && professional.userId.gender === 'male' ? 'זכר' : 'נקבה'}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
-                        <div className="text-sm">{professional.userId.email}</div>
-                        <div className="text-sm text-muted-foreground">{formatPhoneForDisplay(professional.userId.phone || "")}</div>
+                        <div className="text-sm">
+                          {typeof professional.userId === 'object' ? professional.userId.email : 'לא זמין'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {formatPhoneForDisplay(typeof professional.userId === 'object' ? professional.userId.phone || "" : "")}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

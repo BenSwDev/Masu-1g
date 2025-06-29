@@ -361,12 +361,9 @@ export default function UniversalBookingWizard({
           
           if (updatedState.firstName && updatedState.lastName && updatedState.phone) {
             const guestUserData = {
-              firstName: updatedState.firstName,
-              lastName: updatedState.lastName,
+              name: `${updatedState.firstName} ${updatedState.lastName}`,
               email: updatedState.email,
               phone: updatedState.phone,
-              birthDate: updatedState.birthDate,
-              gender: updatedState.gender,
             }
             try {
               const result = await createGuestUser(guestUserData)
@@ -498,12 +495,9 @@ export default function UniversalBookingWizard({
         guestUserCreatedRef.current = true
         try {
           const result = await createGuestUser({
-            firstName: guestInfo.firstName.trim(),
-            lastName: guestInfo.lastName.trim(),
+            name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
             email: guestInfo.email.trim(),
             phone: guestInfo.phone.trim(),
-            birthDate: guestInfo.birthDate,
-            gender: guestInfo.gender,
           })
           if (result.success && result.userId) {
             setGuestUserId(result.userId)
@@ -743,12 +737,9 @@ export default function UniversalBookingWizard({
       if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.phone) {
         try {
           const result = await createGuestUser({
-            firstName: guestInfo.firstName,
-            lastName: guestInfo.lastName,
-            email: guestInfo.email,
-            phone: guestInfo.phone,
-            birthDate: guestInfo.birthDate,
-            gender: guestInfo.gender,
+            name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
+            email: guestInfo.email.trim(),
+            phone: guestInfo.phone.trim(),
           })
           
           if (result.success && result.userId) {

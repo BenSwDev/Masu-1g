@@ -45,13 +45,13 @@ export default function MemberGiftVouchersClient({
   const refreshVouchers = async () => {
     setLoading(true)
     try {
-      const [ownedResult, purchasedResult] = await Promise.all([getMemberOwnedVouchers(), getMemberPurchasedVouchers()])
+      const [ownedResult, purchasedResult] = await Promise.all([getMemberOwnedVouchers(""), getMemberPurchasedVouchers("")])
 
       if (ownedResult.success) {
-        setOwnedVouchers(ownedResult.giftVouchers)
+        setOwnedVouchers(ownedResult.vouchers || [])
       }
       if (purchasedResult.success) {
-        setPurchasedVouchers(purchasedResult.giftVouchers)
+        setPurchasedVouchers(purchasedResult.vouchers || [])
       }
     } catch (error) {
       toast({

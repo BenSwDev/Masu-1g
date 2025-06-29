@@ -1,4 +1,7 @@
-"use server"
+/**
+ * BOOKING UTILITIES - SINGLE SOURCE OF TRUTH
+ * Following ROLE OF ONE principle - one utility per booking operation
+ */
 
 import mongoose from "mongoose"
 import { logger } from "@/lib/logs/logger"
@@ -9,6 +12,8 @@ import User, { type IUser } from "@/lib/db/models/user"
 import Address, { type IAddress, constructFullAddress } from "@/lib/db/models/address"
 import type { PopulatedBooking } from "@/types/booking"
 import type { Booking as BookingCore, BookingAddress } from "@/types/core"
+import type { PriceDetails } from "@/types/booking"
+import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
 
 // Re-export for convenience
 export { constructFullAddress }

@@ -280,4 +280,26 @@ export type {
   CreateGuestUserResult,
   GuestBookingData,
   AbandonedBookingResult
-} from "./guest" 
+} from "./guest"
+
+// ============================================================================
+// SUBSCRIPTION TYPES
+// ============================================================================
+export type {
+  Subscription,
+  UserSubscription,
+  PopulatedUserSubscription,
+  IUserSubscriptionDocument,
+  UserSubscriptionStatus,
+  SubscriptionPurchaseData,
+  SubscriptionResponse,
+  UserSubscriptionResponse,
+  UserSubscriptionListResponse,
+  SubscriptionFilters
+} from "./subscription"
+
+export {
+  isSubscriptionActive,
+  canUseSubscription,
+  getSubscriptionDisplayStatus
+} from "./subscription" 

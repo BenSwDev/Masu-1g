@@ -45,7 +45,7 @@ function MemberGiftVouchersLoading() {
 }
 
 async function MemberGiftVouchersData() {
-  const [ownedResult, purchasedResult] = await Promise.all([getMemberOwnedVouchers(), getMemberPurchasedVouchers()])
+  const [ownedResult, purchasedResult] = await Promise.all([getMemberOwnedVouchers(""), getMemberPurchasedVouchers("")])
 
   if (!ownedResult.success && !purchasedResult.success) {
     return (
@@ -57,8 +57,8 @@ async function MemberGiftVouchersData() {
 
   return (
     <MemberGiftVouchersClient
-      initialOwnedVouchers={ownedResult.success ? ownedResult.giftVouchers : []}
-      initialPurchasedVouchers={purchasedResult.success ? purchasedResult.giftVouchers : []}
+      initialOwnedVouchers={ownedResult.success ? ownedResult.vouchers || [] : []}
+      initialPurchasedVouchers={purchasedResult.success ? purchasedResult.vouchers || [] : []}
     />
   )
 }

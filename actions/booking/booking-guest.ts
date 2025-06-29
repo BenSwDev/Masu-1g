@@ -26,7 +26,7 @@ import type {
   CalculatedPriceDetails as ClientCalculatedPriceDetails
 } from "@/types/booking"
 import { constructFullAddressHelper, getNextSequenceValue } from "./booking-utils"
-import { sendGuestNotification } from "@/lib/notifications/unified-service"
+import { sendGuestNotification } from "@/actions/notification-service"
 import bcrypt from "bcryptjs"
 
 /**

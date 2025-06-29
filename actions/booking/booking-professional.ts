@@ -9,7 +9,7 @@ import Treatment from "@/lib/db/models/treatment"
 import mongoose from "mongoose"
 import { logger } from "@/lib/logs/logger"
 import { revalidatePath } from "next/cache"
-import { unifiedNotificationService } from "@/lib/notifications/unified-service"
+import { unifiedNotificationService } from "@/lib/notifications/unified-notification-service"
 import type { 
   NotificationLanguage, 
   ProfessionalBookingNotificationData 

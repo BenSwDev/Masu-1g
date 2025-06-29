@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
-import { cn } from "@/lib/utils/utils"
-import { Button } from "@/components/common/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useTranslation } from "@/lib/translations/i18n"
 
 export type CalendarProps = {

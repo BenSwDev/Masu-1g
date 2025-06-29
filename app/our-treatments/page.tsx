@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { getTreatments } from "@/actions/treatment-actions"
 import { GuestLayout } from "@/components/layout/guest-layout"
-import { Card } from "@/components/common/ui/card"
+import { Card } from "@/components/ui/card"
 
 export const dynamic = 'force-dynamic'
 

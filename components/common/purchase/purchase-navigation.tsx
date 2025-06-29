@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/common/ui/button"
+import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
 import { cn } from "@/lib/utils/utils"

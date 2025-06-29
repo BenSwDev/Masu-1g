@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useToast } from "@/components/common/ui/use-toast"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Pagination,
   PaginationContent,
@@ -12,7 +12,7 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/common/ui/pagination"
+} from "@/components/ui/pagination"
 import { useTranslation } from "@/lib/translations/i18n"
 import { getUserPurchaseHistory } from "@/actions/purchase-summary-actions"
 import PurchaseHistoryTable from "@/components/common/purchase/purchase-history-table"

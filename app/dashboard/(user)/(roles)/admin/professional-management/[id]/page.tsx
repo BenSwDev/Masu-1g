@@ -3,8 +3,8 @@ import { Metadata } from "next"
 import { redirect, notFound } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 import { ProfessionalEditPage } from "@/components/dashboard/admin/professional-management/professional-edit-page"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { getProfessionalById } from "../actions"
 
 // Force dynamic rendering

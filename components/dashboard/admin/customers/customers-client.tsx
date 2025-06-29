@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
-import { useToast } from "@/components/common/ui/use-toast"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -14,14 +14,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/common/ui/table"
+} from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/common/ui/dialog"
+} from "@/components/ui/dialog"
 import {
   Pagination,
   PaginationContent,
@@ -30,15 +30,15 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/common/ui/pagination"
+} from "@/components/ui/pagination"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/common/ui/select"
-import { Badge } from "@/components/common/ui/badge"
+} from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
 import { getAllCustomers, getAllPurchaseTransactions } from "@/app/dashboard/(user)/(roles)/admin/customers/actions"
 import PurchaseHistoryTable from "@/components/common/purchase/purchase-history-table"

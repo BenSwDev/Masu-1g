@@ -2,12 +2,12 @@
 
 import { useState, useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { Separator } from "@/components/common/ui/separator"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Badge } from "@/components/common/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
 import { CheckCircle, Calendar, Clock, User, Mail, Phone, FileText, CreditCard, Tag } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"

@@ -4,9 +4,9 @@ import type React from "react"
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Label } from "@/components/common/ui/label"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { changePassword } from "@/actions/account-actions"
 import { Eye, EyeOff } from "lucide-react"
 

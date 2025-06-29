@@ -7,7 +7,7 @@ import { format } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
 
 import type { BookingInitialData, SelectedBookingOptions, CalculatedPriceDetails, TimeSlot } from "@/types/booking"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 import { GuestInfoStep } from "./steps/guest-info-step"
 import { GuestAddressStep } from "./steps/guest-address-step"
@@ -27,11 +27,11 @@ import {
   getAbandonedBooking
 } from "@/actions/booking-actions"
 import type { CreateBookingPayloadType, CalculatePricePayloadType } from "@/lib/validation/booking-schemas"
-import { Progress } from "@/components/common/ui/progress"
+import { Progress } from "@/components/ui/progress"
 import { AlertCircle, RotateCcw } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
-import { Button } from "@/components/common/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { IBooking } from "@/lib/db/models/booking"
 
 interface GuestInfo {

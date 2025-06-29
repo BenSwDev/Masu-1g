@@ -8,22 +8,22 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle 
-} from "@/components/common/ui/dialog"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Textarea } from "@/components/common/ui/textarea"
-import { Badge } from "@/components/common/ui/badge"
-import { Label } from "@/components/common/ui/label"
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/common/ui/select"
-import { Separator } from "@/components/common/ui/separator"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/common/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
+} from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { useQuery, useQueryClient } from "@tanstack/react-query"

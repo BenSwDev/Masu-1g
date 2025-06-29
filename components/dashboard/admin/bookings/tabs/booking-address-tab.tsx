@@ -2,12 +2,12 @@
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Textarea } from "@/components/common/ui/textarea"
-import { Label } from "@/components/common/ui/label"
-import { Badge } from "@/components/common/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import { 
   MapPin,
   Edit,
@@ -20,7 +20,7 @@ import {
 } from "lucide-react"
 import type { PopulatedBooking } from "@/types/booking"
 import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
-import { CitySelectForm } from "@/components/common/ui/city-select-form"
+import { CitySelectForm } from "@/components/ui/city-select-form"
 
 interface BookingAddressTabProps {
   booking: PopulatedBooking

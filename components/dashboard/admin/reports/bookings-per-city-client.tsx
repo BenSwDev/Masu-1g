@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 function getDateRange(frame: string) {
   const now = new Date()

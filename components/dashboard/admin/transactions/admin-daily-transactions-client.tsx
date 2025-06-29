@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
-import { Badge } from "@/components/common/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { 
   Calendar, 
   CreditCard, 
@@ -22,8 +22,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/common/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
+} from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface DailyTransactionDetail {
   id: string

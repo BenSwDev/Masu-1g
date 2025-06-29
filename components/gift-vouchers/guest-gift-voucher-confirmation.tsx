@@ -1,8 +1,8 @@
 "use client"
 
 import { CheckCircle } from "lucide-react"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { useTranslation } from "@/lib/translations/i18n"

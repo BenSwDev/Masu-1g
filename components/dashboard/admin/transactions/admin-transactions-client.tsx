@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
 import { cn } from "@/lib/utils/utils"
 import { useRouter } from "next/navigation"
@@ -14,7 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/common/ui/table"
+} from "@/components/ui/table"
 
 interface DayTransactionData {
   date: string

@@ -6,10 +6,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/common/ui/dialog"
-import { Badge } from "@/components/common/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Separator } from "@/components/common/ui/separator"
+} from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { Star, User, Calendar, Clock, MessageCircle } from "lucide-react"
 import type { PopulatedReview } from "@/types/review"
 import { format } from "date-fns"

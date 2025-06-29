@@ -3,14 +3,14 @@
 import * as React from "react"
 import { PlusCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/common/ui/button"
-import { DataTable } from "@/components/common/ui/data-table"
-import { useToast } from "@/components/common/ui/use-toast"
+import { Button } from "@/components/ui/button"
+import { DataTable } from "@/components/ui/data-table"
+import { useToast } from "@/components/ui/use-toast"
 import type { IPartnerCouponBatch } from "@/lib/db/models/partner-coupon-batch"
 import { PartnerCouponBatchForm, type PartnerCouponBatchFormValues } from "./partner-coupon-batch-form"
 import { type getPartnerCouponBatches, createPartnerCouponBatch, updatePartnerCouponBatch, deletePartnerCouponBatch, getBatchCoupons } from "@/app/dashboard/(user)/(roles)/admin/partner-coupon-batches/actions"
 import { columns as batchColumnsDefinition } from "./partner-coupon-batches-columns"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,9 +20,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/common/ui/alert-dialog"
+} from "@/components/ui/alert-dialog"
 import { useTranslation } from "@/lib/translations/i18n"
-import { useIsMobile } from "@/components/common/ui/use-mobile"
+import { useIsMobile } from "@/components/ui/use-mobile"
 import { PartnerCouponBatchCard } from "./partner-coupon-batch-card"
 import { BatchCouponsModal } from "./batch-coupons-modal"
 import type { TFunction } from "i18next"

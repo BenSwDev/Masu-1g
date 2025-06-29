@@ -5,9 +5,9 @@ import type { TFunction } from "i18next"
 
 import type { IPartnerCouponBatch } from "@/lib/db/models/partner-coupon-batch"
 import { formatDate, formatCurrency } from "@/lib/utils/utils"
-import { Badge } from "@/components/common/ui/badge"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +15,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/common/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 import { StatusBadge, getPartnerName } from "./partner-coupon-batches-columns"
 
 interface PartnerCouponBatchCardProps {

@@ -15,10 +15,10 @@ import {
   Send,
   Gift,
 } from "lucide-react"
-import { Button } from "@/components/common/ui/button" // Corrected import path
-import { Badge } from "@/components/common/ui/badge" // Corrected import path
+import { Button } from "@/components/ui/button" // Corrected import path
+import { Badge } from "@/components/ui/badge" // Corrected import path
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions" // Corrected import path
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip" // Corrected import path
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip" // Corrected import path
 import { useTranslation } from "@/lib/translations/i18n"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 

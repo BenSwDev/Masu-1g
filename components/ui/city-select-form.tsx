@@ -7,8 +7,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue
-} from "@/components/common/ui/select"
-import { Input } from "@/components/common/ui/input"
+} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface CitySelectFormProps {

@@ -2,8 +2,8 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 import { Home, Clock, Shield, Star } from "lucide-react"
-import { Button } from "@/components/common/ui/button"
-import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/common/ui/drawer"
+import { Button } from "@/components/ui/button"
+import { Drawer, DrawerTrigger, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 
 export function LandingServices() {
   const { t, dir } = useTranslation()

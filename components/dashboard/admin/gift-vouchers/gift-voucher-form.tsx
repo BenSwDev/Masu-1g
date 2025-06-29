@@ -3,10 +3,10 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/common/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   createGiftVoucherByAdmin,
   updateGiftVoucherByAdmin,
@@ -16,10 +16,10 @@ import {
   getUsersForAdminSelection,
 } from "@/actions/gift-voucher-actions"
 import { format, parseISO } from "date-fns"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { CalendarIcon, Loader2 } from "lucide-react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
-import { Calendar } from "@/components/common/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils/utils"
 import { useTranslation } from "@/lib/translations/i18n"
 

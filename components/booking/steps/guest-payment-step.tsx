@@ -3,30 +3,30 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/translations/i18n";
 import { usePaymentModal } from "@/hooks/use-payment-modal";
-import { Button } from "@/components/common/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/common/ui/card";
-import { Separator } from "@/components/common/ui/separator";
-import { Badge } from "@/components/common/ui/badge";
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/common/ui/dialog";
-import { Alert, AlertDescription } from "@/components/common/ui/alert";
-import { Checkbox } from "@/components/common/ui/checkbox";
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/common/ui/select";
+} from "@/components/ui/select";
 import {
   Loader2,
   CreditCard,

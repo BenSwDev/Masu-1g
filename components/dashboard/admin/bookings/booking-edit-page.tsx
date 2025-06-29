@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Badge } from "@/components/common/ui/badge"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent } from "@/components/common/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { 
   AlertTriangle, 
   ArrowLeft, 
@@ -19,7 +19,7 @@ import {
   Star,
   Save 
 } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import type { PopulatedBooking } from "@/types/booking"
 import type { BookingStatus } from "@/lib/db/models/booking"
 

@@ -1,8 +1,8 @@
 import { Suspense } from "react"
 import { getMemberOwnedVouchers, getMemberPurchasedVouchers } from "@/actions/gift-voucher-actions"
 import MemberGiftVouchersClient from "@/components/dashboard/member/gift-vouchers/member-gift-vouchers-client"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent } from "@/components/common/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent } from "@/components/ui/card"
 
 export const dynamic = "force-dynamic"
 

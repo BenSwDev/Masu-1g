@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
-import { Alert, AlertDescription } from "@/components/common/ui/alert"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Checkbox } from "@/components/common/ui/checkbox"
-import { Label } from "@/components/common/ui/label"
-import { useToast } from "@/components/common/ui/use-toast"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { useToast } from "@/components/ui/use-toast"
 import { 
   Stethoscope, 
   Save, 

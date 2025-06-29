@@ -1,8 +1,8 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Button } from "@/components/common/ui/button"
-import { Badge } from "@/components/common/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { ArrowUpDown, Star, Eye, MessageCircle } from "lucide-react"

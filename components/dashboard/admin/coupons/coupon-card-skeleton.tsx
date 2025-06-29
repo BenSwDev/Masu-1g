@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
-import { Skeleton } from "@/components/common/ui/skeleton"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function CouponCardSkeleton() {
   return (

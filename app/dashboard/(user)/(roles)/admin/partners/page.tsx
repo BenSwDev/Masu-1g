@@ -3,8 +3,8 @@ import { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 import { PartnerManagement } from "@/components/dashboard/admin/partner-management/partner-management"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getPartners } from "./actions"
 
 export const dynamic = 'force-dynamic'

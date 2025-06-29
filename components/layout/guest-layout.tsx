@@ -3,7 +3,7 @@
 import { MasuLogo } from "@/components/common/masu-logo"
 import { LanguageSelector } from "@/components/common/language-selector"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
+import { Button } from "@/components/ui/button"
 import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { useState } from "react"

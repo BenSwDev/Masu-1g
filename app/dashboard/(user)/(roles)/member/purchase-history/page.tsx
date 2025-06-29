@@ -2,9 +2,9 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import { redirect } from "next/navigation"
 import PurchaseHistoryClient from "@/components/dashboard/member/purchase-history/purchase-history-client"
-import { ScrollArea } from "@/components/common/ui/scroll-area"
-import { Heading } from "@/components/common/ui/heading"
-import { Separator } from "@/components/common/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Heading } from "@/components/ui/heading"
+import { Separator } from "@/components/ui/separator"
 
 // Force dynamic rendering to prevent build-time database connections
 export const dynamic = 'force-dynamic'

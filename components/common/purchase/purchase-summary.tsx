@@ -1,7 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Separator } from "@/components/common/ui/separator"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface SummaryItem {

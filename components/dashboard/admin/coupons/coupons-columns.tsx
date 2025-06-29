@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, CheckCircle, Edit, Trash2, Clock, AlertTriangle, PowerOff } from "lucide-react"
-import { Button } from "@/components/common/ui/button"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,8 +10,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/common/ui/dropdown-menu"
-import { Badge } from "@/components/common/ui/badge"
+} from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { formatDate, formatCurrency } from "@/lib/utils/utils"
 import type { TFunction } from "i18next" // Or the type from your i18n setup

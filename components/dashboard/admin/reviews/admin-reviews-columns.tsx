@@ -2,8 +2,8 @@
 
 import React from "react"
 import { type ColumnDef } from "@tanstack/react-table"
-import { Badge } from "@/components/common/ui/badge"
-import { Button } from "@/components/common/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Star, MessageCircle, AlertTriangle, Eye } from "lucide-react"
 import type { PopulatedReview } from "@/types/review"
 import { format } from "date-fns"

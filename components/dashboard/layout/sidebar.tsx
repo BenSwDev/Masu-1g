@@ -6,9 +6,9 @@ import { useSession } from "next-auth/react"
 import Link from "next/link"
 import { useTranslation } from "@/lib/translations/i18n"
 import { cn } from "@/lib/utils/utils"
-import { Button } from "@/components/common/ui/button"
-import { Avatar, AvatarFallback } from "@/components/common/ui/avatar"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   LayoutDashboard,
   ChevronLeft,
@@ -35,7 +35,7 @@ import {
   PieChart,
   Star,
 } from "lucide-react"
-import { Sheet, SheetContent } from "@/components/common/ui/sheet"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { signOut } from "next-auth/react"
 import {
   DropdownMenu,
@@ -43,8 +43,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/common/ui/dropdown-menu"
-import { toast } from "@/components/common/ui/use-toast"
+} from "@/components/ui/dropdown-menu"
+import { toast } from "@/components/ui/use-toast"
 import { setActiveRole } from "@/actions/role-actions"
 import { TreatmentPreferencesModal } from "@/components/dashboard/preferences/treatment-preferences-modal" // Import modal
 import { NotificationsModal } from "@/components/dashboard/preferences/notifications-modal" // Import modal

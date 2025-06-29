@@ -11,23 +11,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/common/ui/table"
+} from "@/components/ui/table"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
-import { Button } from "@/components/common/ui/button"
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/common/ui/dialog"
+} from "@/components/ui/dialog"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { PurchaseTransaction } from "@/lib/types/purchase-summary"
 import {

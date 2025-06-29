@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent } from "@/components/common/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 
 interface PartnerCouponsClientProps {
   coupons?: any[]

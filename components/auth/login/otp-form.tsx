@@ -3,14 +3,14 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils/utils"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useTranslation } from "@/lib/translations/i18n"
 import { MessageSquareCode, Loader2 } from "lucide-react"
 // OTP functions are now called via API routes
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { useSession } from "next-auth/react"
 
 interface OTPFormProps {

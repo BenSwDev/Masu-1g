@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
-import { Label } from "@/components/common/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import { 

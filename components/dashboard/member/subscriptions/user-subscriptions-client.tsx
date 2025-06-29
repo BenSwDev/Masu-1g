@@ -2,9 +2,9 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
-import { Badge } from "@/components/common/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { formatDate } from "@/lib/utils/utils"
 import { useSubscription, cancelSubscription } from "@/actions/user-subscription-actions"

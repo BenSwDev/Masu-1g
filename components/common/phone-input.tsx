@@ -2,15 +2,15 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils/utils"
-import { Input } from "@/components/common/ui/input"
+import { Input } from "@/components/ui/input"
 import { ChevronDown } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/common/ui/dropdown-menu"
-import { Button } from "@/components/common/ui/button"
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 
 export interface PhoneInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "value" | "defaultValue"> {

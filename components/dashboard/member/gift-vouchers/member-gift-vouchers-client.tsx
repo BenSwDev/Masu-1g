@@ -1,16 +1,16 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { Badge } from "@/components/common/ui/badge"
+import { Badge } from "@/components/ui/badge"
 
 import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
-import { useToast } from "@/components/common/ui/use-toast"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/components/ui/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
 import {
   getMemberOwnedVouchers,

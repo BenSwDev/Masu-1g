@@ -1,8 +1,8 @@
 "use client"
 
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
-import { useIsMobile } from "@/components/common/ui/use-mobile"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { useIsMobile } from "@/components/ui/use-mobile"
 import UserSubscriptionAdminCardSkeleton from "@/components/dashboard/admin/user-subscriptions/user-subscription-admin-card-skeleton"
 
 // Default number of skeleton items to show

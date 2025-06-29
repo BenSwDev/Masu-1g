@@ -3,9 +3,9 @@
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { IAddress } from "@/lib/db/models/address"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { MapPin, Edit, Trash2, Star } from "lucide-react"
 import { setDefaultAddress, deleteAddress } from "@/actions/address-actions"
 import { toast } from "sonner"
@@ -20,7 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/common/ui/alert-dialog"
+} from "@/components/ui/alert-dialog"
 import { useQueryClient } from "@tanstack/react-query"
 
 interface AddressCardProps {

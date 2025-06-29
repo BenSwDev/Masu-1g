@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
 import SubscriptionCard from "./subscription-card"
-import { Button } from "@/components/common/ui/button"
+import { Button } from "@/components/ui/button"
 import { Plus, Search, FilterX } from "lucide-react"
-import { Card, CardContent } from "@/components/common/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { AlertModal } from "@/components/common/modals/alert-modal"
-import { Input } from "@/components/common/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   createSubscription,
   updateSubscription,
@@ -17,7 +17,7 @@ import {
 } from "@/app/dashboard/(user)/(roles)/admin/subscriptions/actions"
 import { toast } from "sonner"
 import SubscriptionForm from "./subscription-form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface SubscriptionPlain {
   _id: string

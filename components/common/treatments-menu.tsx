@@ -9,7 +9,7 @@ import {
   NavigationMenuItem,
   NavigationMenuTrigger,
   NavigationMenuContent
-} from "@/components/common/ui/navigation-menu"
+} from "@/components/ui/navigation-menu"
 
 interface CategoryData {
   name: string

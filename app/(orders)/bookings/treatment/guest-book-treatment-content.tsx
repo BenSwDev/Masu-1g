@@ -1,7 +1,7 @@
 "use client"
 
 import { GuestLayout } from "@/components/layout/guest-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import GuestBookingWizard from "@/components/booking/guest-booking-wizard"
 import { useTranslation } from "@/lib/translations/i18n"
 

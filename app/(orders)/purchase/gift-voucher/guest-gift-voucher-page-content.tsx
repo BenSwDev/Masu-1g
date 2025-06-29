@@ -1,7 +1,7 @@
 "use client"
 
 import { GuestLayout } from "@/components/layout/guest-layout"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import GuestGiftVoucherWizard from "@/components/gift-vouchers/guest-gift-voucher-wizard"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { ITreatment } from "@/lib/db/models/treatment"

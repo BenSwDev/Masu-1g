@@ -2,9 +2,9 @@ import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 import { UserCheck } from "lucide-react"
 import CustomersClient from "@/components/dashboard/admin/customers/customers-client"
-import { ScrollArea } from "@/components/common/ui/scroll-area"
-import { Heading } from "@/components/common/ui/heading"
-import { Separator } from "@/components/common/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Heading } from "@/components/ui/heading"
+import { Separator } from "@/components/ui/separator"
 
 export const dynamic = 'force-dynamic'
 

@@ -2,9 +2,9 @@
 
 import { useMemo } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, Home, AlertCircle } from "lucide-react"
 import { format, isValid } from "date-fns"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"

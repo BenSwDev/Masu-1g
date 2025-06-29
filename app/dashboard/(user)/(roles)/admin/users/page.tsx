@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { getAllUsers, getUserStats } from "./actions"
 import UserManagementClient from "@/components/dashboard/admin/user-management/user-management-client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, UserCheck, UserX, Shield, Briefcase, User, Crown } from "lucide-react"
 
 interface UsersPageProps {

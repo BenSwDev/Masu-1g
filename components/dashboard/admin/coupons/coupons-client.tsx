@@ -3,14 +3,14 @@
 import * as React from "react"
 import { PlusCircle } from "lucide-react"
 import { useRouter } from "next/navigation" // Removed useSearchParams as it's not used
-import { Button } from "@/components/common/ui/button"
-import { DataTable } from "@/components/common/ui/data-table" // Corrected path
-import { useToast } from "@/components/common/ui/use-toast"
+import { Button } from "@/components/ui/button"
+import { DataTable } from "@/components/ui/data-table" // Corrected path
+import { useToast } from "@/components/ui/use-toast"
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { CouponForm, type CouponFormValues } from "./coupon-form"
 import { getAllCoupons, createCoupon, updateCoupon, deleteCoupon } from "@/app/dashboard/(user)/(roles)/admin/coupons/actions"
 import { columns as couponColumnsDefinition } from "./coupons-columns" // Corrected import and aliased
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,9 +20,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/common/ui/alert-dialog"
+} from "@/components/ui/alert-dialog"
 import { useTranslation } from "@/lib/translations/i18n"
-import { useIsMobile } from "@/components/common/ui/use-mobile" // Corrected import name
+import { useIsMobile } from "@/components/ui/use-mobile" // Corrected import name
 import { CouponCard } from "./coupon-card"
 
 interface CouponsClientProps {

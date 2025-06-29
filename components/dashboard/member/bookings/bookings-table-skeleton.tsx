@@ -1,6 +1,6 @@
 "use client"
 
-import { Skeleton } from "@/components/common/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -8,7 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/common/ui/table"
+} from "@/components/ui/table"
 import { useTranslation } from "@/lib/translations/i18n"
 
 export function BookingsTableSkeleton() {

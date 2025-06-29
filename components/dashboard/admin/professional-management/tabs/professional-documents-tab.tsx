@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
-import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { FileText, Upload, Download, Eye, Trash2, AlertTriangle, Check, Clock } from "lucide-react"
 import type { Professional } from "@/lib/types/professional"
 

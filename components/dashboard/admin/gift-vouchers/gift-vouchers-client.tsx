@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback } from "react"
 import { Plus, Filter, RotateCcw, Loader2, Gift, RefreshCw, Download, TrendingUp, Users, List, Grid3x3 } from "lucide-react"
 import { format } from "date-fns"
 
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/common/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,13 +17,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/common/ui/alert-dialog"
-import { CustomPagination as Pagination } from "@/components/common/ui/pagination"
-import { useToast } from "@/components/common/ui/use-toast"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
-import { useIsMobile } from "@/components/common/ui/use-mobile"
+} from "@/components/ui/alert-dialog"
+import { CustomPagination as Pagination } from "@/components/ui/pagination"
+import { useToast } from "@/components/ui/use-toast"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useIsMobile } from "@/components/ui/use-mobile"
 
 import { GiftVoucherForm } from "./gift-voucher-form"
 import { GiftVoucherRow } from "./gift-voucher-row"
@@ -31,8 +31,8 @@ import GiftVoucherAdminCard from "./gift-voucher-admin-card"
 import GiftVoucherAdminCardSkeleton from "./gift-voucher-admin-card-skeleton"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
 import { getGiftVouchers, deleteGiftVoucher, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
-import { Calendar } from "@/components/common/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import type { DateRange } from "react-day-picker"
 import { useTranslation } from "@/lib/translations/i18n"
 

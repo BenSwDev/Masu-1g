@@ -5,7 +5,7 @@ import { getAdminCoupons, getPartnersForSelection } from "./actions"
 // Force dynamic rendering to prevent build-time database connections
 export const dynamic = 'force-dynamic'
 import CouponsClient from "@/components/dashboard/admin/coupons/coupons-client"
-import { Heading } from "@/components/common/ui/heading"
+import { Heading } from "@/components/ui/heading"
 import { ClientAwareCouponsLoadingSkeleton } from "@/components/dashboard/admin/coupons/client-aware-coupons-loading-skeleton"
 import { requireUserSession } from "@/lib/auth/require-session"
 

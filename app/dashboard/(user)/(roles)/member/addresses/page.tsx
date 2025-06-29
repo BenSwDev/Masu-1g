@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@/components/common/ui/button"
-import { Skeleton } from "@/components/common/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { AddressCard } from "@/components/dashboard/member/addresses/address-card"
 import { AddressForm } from "@/components/dashboard/member/addresses/address-form"
 import { getUserAddresses } from "@/actions/address-actions"
@@ -9,7 +9,7 @@ import type { IAddress } from "@/lib/db/models/address"
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { PlusCircle } from "lucide-react"
 
 export default function AddressesPage() {

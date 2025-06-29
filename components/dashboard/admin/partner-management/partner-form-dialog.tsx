@@ -11,13 +11,13 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/common/ui/dialog"
-import { Button } from "@/components/common/ui/button"
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/common/ui/form"
-import { Input } from "@/components/common/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PhoneInput } from "@/components/common/phone-input"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { createPartner, updatePartner } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
 
 export interface PartnerData {

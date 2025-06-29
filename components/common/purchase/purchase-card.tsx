@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils/utils"
 import { Check } from "lucide-react"
 

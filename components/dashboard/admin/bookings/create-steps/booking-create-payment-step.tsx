@@ -2,13 +2,13 @@
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Input } from "@/components/common/ui/input"
-import { Label } from "@/components/common/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CreditCard, ArrowLeft, Banknote, FileText, Gift, Info } from "lucide-react"
 
 interface BookingCreatePaymentStepProps {

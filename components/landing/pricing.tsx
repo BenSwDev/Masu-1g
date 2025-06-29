@@ -2,7 +2,7 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 import { Check, Star, Zap, Crown } from "lucide-react"
-import { Button } from "@/components/common/ui/button"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export function LandingPricing() {

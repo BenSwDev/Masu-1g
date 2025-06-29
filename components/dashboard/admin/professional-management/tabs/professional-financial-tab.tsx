@@ -1,8 +1,8 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { DollarSign, TrendingUp, CreditCard, Clock, AlertTriangle } from "lucide-react"
 import type { Professional } from "@/lib/types/professional"
 

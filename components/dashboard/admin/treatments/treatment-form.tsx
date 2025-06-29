@@ -6,8 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { createTreatment, updateTreatment } from "@/app/dashboard/(user)/(roles)/admin/treatments/actions"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent } from "@/components/common/ui/card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Form,
   FormControl,
@@ -16,14 +16,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/common/ui/form"
-import { Input } from "@/components/common/ui/input"
-import { Textarea } from "@/components/common/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Switch } from "@/components/common/ui/switch"
-import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { PlusIcon, MinusIcon } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 interface TreatmentFormProps {
   treatment?: any

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { Button } from "@/components/common/ui/button"
+import { Button } from "@/components/ui/button"
 import { AlertTriangle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "@/lib/translations/i18n"

@@ -2,8 +2,8 @@
 
 import { Package } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { ISubscription } from "@/lib/db/models/subscription"
 
 interface Props {

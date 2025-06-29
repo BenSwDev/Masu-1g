@@ -4,14 +4,14 @@ import type React from "react"
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Label } from "@/components/common/ui/label"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { PhoneInput } from "@/components/common/phone-input"
 import { requestPhoneChange, confirmPhoneChange } from "@/actions/account-actions"
 import { Phone } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
-import { FormControl } from "@/components/common/ui/form"
+import { useToast } from "@/components/ui/use-toast"
+import { FormControl } from "@/components/ui/form"
 
 interface PhoneChangeFormProps {
   currentPhone?: string

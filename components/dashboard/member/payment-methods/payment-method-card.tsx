@@ -1,15 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
-import { Badge } from "@/components/common/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/common/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/common/ui/alert-dialog"
+} from "@/components/ui/alert-dialog"
 import { MoreVertical, CreditCard, Star, Edit, Trash2 } from "lucide-react"
 import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 import { deletePaymentMethod, setDefaultPaymentMethod } from "@/actions/payment-method-actions"

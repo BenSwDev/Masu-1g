@@ -5,8 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import type { ICoupon } from "@/lib/db/models/coupon"
 import type { getAssignedPartnerCoupons } from "@/actions/coupon-actions"
 import AssignedCouponCard from "./assigned-coupon-card"
-import { Button } from "@/components/common/ui/button" // For pagination if needed
-// import { Input } from '@/components/common/ui/input'; // For filters if needed
+import { Button } from "@/components/ui/button" // For pagination if needed
+// import { Input } from '@/components/ui/input'; // For filters if needed
 import { useTranslation } from "@/lib/translations/i18n"
 
 interface AssignedCouponsClientProps {

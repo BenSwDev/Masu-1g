@@ -1,14 +1,14 @@
 "use client"
 
-import { Card, CardContent } from "@/components/common/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
 import { Search, Filter, Download, RefreshCw, Users, TrendingUp, CalendarIcon, CreditCard, List, Plus } from "lucide-react" // Renamed Calendar to CalendarIcon
-import { Input } from "@/components/common/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button" // Corrected path
-import { Badge } from "@/components/common/ui/badge"
+import { Badge } from "@/components/ui/badge"
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import UserSubscriptionRow from "./user-subscription-row"
 import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
@@ -16,8 +16,8 @@ import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { User } from "next-auth"
 import { getAllUserSubscriptions, updateUserSubscription, createUserSubscription } from "@/app/dashboard/(user)/(roles)/admin/user-subscriptions/actions"
 import { toast } from "sonner"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { useIsMobile } from "@/components/common/ui/use-mobile" // Corrected import
+import { Skeleton } from "@/components/ui/skeleton"
+import { useIsMobile } from "@/components/ui/use-mobile" // Corrected import
 import UserSubscriptionAdminCard from "./user-subscription-admin-card"
 import UserSubscriptionAdminCardSkeleton from "./user-subscription-admin-card-skeleton"
 import UserSubscriptionForm from "./user-subscription-form"

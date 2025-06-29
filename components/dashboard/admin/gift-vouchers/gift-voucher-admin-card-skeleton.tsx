@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardFooter } from "@/components/common/ui/card"
-import { Skeleton } from "@/components/common/ui/skeleton"
+import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function GiftVoucherAdminCardSkeleton() {
   return (

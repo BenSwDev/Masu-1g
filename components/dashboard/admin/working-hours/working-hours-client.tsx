@@ -10,13 +10,13 @@ import { format } from "date-fns"
 import { he, enUS } from "date-fns/locale"
 import { CalendarIcon, Clock, Plus, Trash2, Edit, AlertTriangle, ArrowRight } from "lucide-react"
 
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Checkbox } from "@/components/common/ui/checkbox"
-import { Input } from "@/components/common/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Textarea } from "@/components/common/ui/textarea"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -25,9 +25,9 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogDescription,
-} from "@/components/common/ui/dialog"
-import { Calendar as CalendarComponent } from "@/components/common/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/common/ui/popover"
+} from "@/components/ui/dialog"
+import { Calendar as CalendarComponent } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   Form,
   FormControl,
@@ -36,12 +36,12 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/common/ui/form"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/common/ui/tabs"
-import { useToast } from "@/components/common/ui/use-toast"
+} from "@/components/ui/form"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/components/ui/use-toast"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Badge } from "@/components/common/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
 
 import {
   getWorkingHoursSettings,

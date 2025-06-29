@@ -4,12 +4,12 @@ import type React from "react"
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Label } from "@/components/common/ui/label"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { requestEmailChange, confirmEmailChange } from "@/actions/account-actions"
 import { Mail } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 
 interface EmailChangeFormProps {
   currentEmail: string

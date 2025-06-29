@@ -1,6 +1,6 @@
 'use client'
 
-import { Heading } from '@/components/common/ui/heading'
+import { Heading } from '@/components/ui/heading'
 import { MapPin } from 'lucide-react'
 
 export function CitiesHeading() {

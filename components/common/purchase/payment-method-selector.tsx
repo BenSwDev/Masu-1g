@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/common/ui/button"
-import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useTranslation } from "@/lib/translations/i18n"
 import { PurchaseCard } from "./purchase-card"
 import { PaymentMethodForm } from "@/components/dashboard/member/payment-methods/payment-method-form"

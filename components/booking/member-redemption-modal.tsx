@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
-import { Button } from "@/components/common/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import type { BookingInitialData } from "@/types/booking"
 import { useTranslation } from "@/lib/translations/i18n"

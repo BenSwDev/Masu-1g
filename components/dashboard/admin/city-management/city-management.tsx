@@ -1,16 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Card, CardContent } from "@/components/common/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/common/ui/table"
-import { CustomPagination } from "@/components/common/ui/pagination"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { CustomPagination } from "@/components/ui/pagination"
 import { CityFormDialog } from "./city-form-dialog"
 import { useTranslation } from "@/lib/translations/i18n"
 import { getCities, toggleCityStatus } from "@/app/dashboard/(user)/(roles)/admin/cities/actions"
-import { Checkbox } from "@/components/common/ui/checkbox"
-import { useToast } from "@/components/common/ui/use-toast"
+import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/components/ui/use-toast"
 
 export interface CityData {
   id: string

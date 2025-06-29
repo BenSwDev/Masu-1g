@@ -1,8 +1,8 @@
 "use client"
 
 import { useTranslation, type Language } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/common/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Globe } from "lucide-react"
 
 export function LanguageSelector() {

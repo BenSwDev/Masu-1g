@@ -2,12 +2,12 @@
 
 import { useState } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/common/ui/dialog"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Label } from "@/components/common/ui/label"
-import { Switch } from "@/components/common/ui/switch"
-import { useToast } from "@/components/common/ui/use-toast"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { useToast } from "@/components/ui/use-toast"
 import { Loader2, MapPin } from "lucide-react"
 import { createCity } from "@/app/dashboard/(user)/(roles)/admin/cities/actions"
 

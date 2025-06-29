@@ -1,14 +1,14 @@
 "use client"
 
 import type { ICoupon } from "@/lib/db/models/coupon"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { formatDate, formatCurrency } from "@/lib/utils/utils"
 import { CheckCircle, Info, Copy, Clock, AlertTriangle, PowerOff } from "lucide-react"
-import { useToast } from "@/components/common/ui/use-toast"
-import { Button } from "@/components/common/ui/button"
+import { useToast } from "@/components/ui/use-toast"
+import { Button } from "@/components/ui/button"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/common/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface AssignedCouponCardProps {
   coupon: ICoupon & { effectiveStatus: string } // Added effectiveStatus

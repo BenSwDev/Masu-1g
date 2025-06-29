@@ -7,12 +7,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/common/ui/dialog"
-import { Button } from "@/components/common/ui/button"
-import { Textarea } from "@/components/common/ui/textarea"
-import { Badge } from "@/components/common/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Separator } from "@/components/common/ui/separator"
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { Star, User, Phone, Mail, Calendar, Clock, MessageCircle, AlertTriangle, Edit3 } from "lucide-react"
 import type { PopulatedReview } from "@/types/review"
 import { format } from "date-fns"

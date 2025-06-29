@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 export function LandingTreatments() {

@@ -1,9 +1,9 @@
 "use client"
 
 import { CheckCircle, Calendar, Clock, Gift, Copy } from "lucide-react"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/common/ui/card"
-import { Button } from "@/components/common/ui/button"
-import { useToast } from "@/components/common/ui/use-toast"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { useTranslation } from "@/lib/translations/i18n"
 

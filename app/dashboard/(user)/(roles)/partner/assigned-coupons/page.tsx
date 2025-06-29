@@ -1,8 +1,8 @@
 import { Suspense } from "react"
 import { getAssignedPartnerCoupons } from "@/actions/coupon-actions"
 import AssignedCouponsClient from "@/components/dashboard/partner/coupons/assigned-coupons-client"
-import { Heading } from "@/components/common/ui/heading"
-import { Skeleton } from "@/components/common/ui/skeleton"
+import { Heading } from "@/components/ui/heading"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = {
   title: "My Assigned Coupons", // Placeholder for translation

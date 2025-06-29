@@ -1,9 +1,9 @@
 "use client"
 
-import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
-import { Button } from "@/components/common/ui/button"
-import { Separator } from "@/components/common/ui/separator"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { Gift, CreditCard, Calendar, User, MessageCircle, Phone, Clock, Eye, ShoppingBag } from "lucide-react"

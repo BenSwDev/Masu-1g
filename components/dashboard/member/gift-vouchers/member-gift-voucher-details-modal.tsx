@@ -9,12 +9,12 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/common/ui/dialog"
-import { Button } from "@/components/common/ui/button"
-import { Badge } from "@/components/common/ui/badge"
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
-import { Separator } from "@/components/common/ui/separator"
-import { ScrollArea } from "@/components/common/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { useTranslation } from "@/lib/translations/i18n"
 import { format, parseISO } from "date-fns"

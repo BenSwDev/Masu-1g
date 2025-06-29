@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
-import { ScrollArea } from "@/components/common/ui/scroll-area"
-import { Heading } from "@/components/common/ui/heading"
-import { Separator } from "@/components/common/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Heading } from "@/components/ui/heading"
+import { Separator } from "@/components/ui/separator"
 import AdminTransactionsClient from "@/components/dashboard/admin/transactions/admin-transactions-client"
 
 // Force dynamic rendering to prevent build-time database connections

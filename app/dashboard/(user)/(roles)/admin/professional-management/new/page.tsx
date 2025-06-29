@@ -3,8 +3,8 @@ import { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 import { ProfessionalCreatePage } from "@/components/dashboard/admin/professional-management/professional-create-page"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'

@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/common/ui/card"
+} from "@/components/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { PurchaseStats } from "@/lib/types/purchase-summary"
 import {

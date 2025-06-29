@@ -2,18 +2,18 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/common/ui/radio-group"
-import { Label } from "@/components/common/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/common/ui/select"
-import { Badge } from "@/components/common/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { Sparkles, Clock, Users, GiftIcon, Ticket, Tag, Loader2 } from "lucide-react"
 import type { BookingInitialData, SelectedBookingOptions } from "@/types/booking"
 import type { GiftVoucherPlain as IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import { validateRedemptionCode } from "@/actions/booking-actions"
-import { Input } from "@/components/common/ui/input"
+import { Input } from "@/components/ui/input"
 
 interface GuestTreatmentSelectionStepProps {
   hideGenderPreference?: boolean

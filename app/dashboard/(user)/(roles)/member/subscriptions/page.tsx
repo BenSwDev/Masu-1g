@@ -1,8 +1,8 @@
 import { Suspense } from "react"
 import { getUserSubscriptions } from "@/actions/user-subscription-actions"
 import UserSubscriptionsClient from "@/components/dashboard/member/subscriptions/user-subscriptions-client"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent, CardHeader } from "@/components/common/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 // הגדרת הדף כדינמי
 export const dynamic = "force-dynamic"

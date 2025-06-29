@@ -25,9 +25,9 @@ import {
   UserCheck,
   UserX,
 } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Separator } from "@/components/common/ui/separator"
-import { Badge } from "@/components/common/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { PopulatedBooking, ITreatmentDuration, IGiftVoucherUsageHistory } from "@/types/booking"
 import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"

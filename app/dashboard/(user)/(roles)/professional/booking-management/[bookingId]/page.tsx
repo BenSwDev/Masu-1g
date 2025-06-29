@@ -3,11 +3,11 @@
 import { useEffect, useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Button } from "@/components/common/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/common/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/common/ui/alert"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { useToast } from "@/components/common/ui/use-toast"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/components/ui/use-toast"
 import {
   getBookingByIdForProfessional,
   type BookingDetailsForProfessional,

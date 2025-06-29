@@ -4,31 +4,31 @@ import { useState } from "react"
 import { CalendarIcon, Search, Filter, X } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
-import { Button } from "@/components/common/ui/button"
-import { Input } from "@/components/common/ui/input"
-import { Label } from "@/components/common/ui/label"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/common/ui/select"
+} from "@/components/ui/select"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/common/ui/popover"
-import { Calendar } from "@/components/common/ui/calendar"
-import { Checkbox } from "@/components/common/ui/checkbox"
+} from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/common/ui/card"
-import { Badge } from "@/components/common/ui/badge"
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { PurchaseFilters, TransactionType, TransactionStatus } from "@/lib/types/purchase-summary"
 import { cn } from "@/lib/utils/utils"

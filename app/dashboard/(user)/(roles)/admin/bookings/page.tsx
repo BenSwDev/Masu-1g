@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { requireUserSession } from "@/lib/auth/require-session";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 
 // Force dynamic rendering to prevent build-time database connections

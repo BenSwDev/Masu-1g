@@ -13,15 +13,15 @@ import {
   getPurchaseStats,
 } from "@/actions/purchase-summary-actions"
 import { getProfessionals } from "@/app/dashboard/(user)/(roles)/admin/professional-management/actions"
-import { ScrollArea } from "@/components/common/ui/scroll-area"
-import { Heading } from "@/components/common/ui/heading"
-import { Separator } from "@/components/common/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Heading } from "@/components/ui/heading"
+import { Separator } from "@/components/ui/separator"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/common/ui/card"
+} from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -29,7 +29,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/common/ui/table"
+} from "@/components/ui/table"
 import PurchaseStatsOverview from "@/components/common/purchase/purchase-stats-overview"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import Link from "next/link"

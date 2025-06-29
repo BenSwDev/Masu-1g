@@ -9,9 +9,9 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/common/ui/dialog"
-import { Button } from "@/components/common/ui/button"
-import { Badge } from "@/components/common/ui/badge"
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
@@ -19,8 +19,8 @@ import type { IUserSubscription } from "@/lib/db/models/user-subscription"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { User as NextAuthUser } from "next-auth"
-import { ScrollArea } from "@/components/common/ui/scroll-area"
-import { Separator } from "@/components/common/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState, useEffect } from "react"
 import { Calendar, Clock, User, Link } from "lucide-react"

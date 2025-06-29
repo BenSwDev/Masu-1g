@@ -2,8 +2,8 @@
 
 import { useTranslation } from "@/lib/translations/i18n"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Alert, AlertDescription } from "@/components/common/ui/alert"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ScrollText, Clock, Info } from "lucide-react"
 import type { Professional } from "@/lib/types/professional"
 

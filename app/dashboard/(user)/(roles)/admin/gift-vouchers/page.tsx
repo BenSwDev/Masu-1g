@@ -2,7 +2,7 @@ import { getGiftVouchers, type GiftVoucherPlain } from "./actions"
 import { GiftVouchersClient } from "@/components/dashboard/admin/gift-vouchers/gift-vouchers-client"
 import { Suspense } from "react"
 import { redirect } from "next/navigation"
-import { Card, CardContent } from "@/components/common/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import GiftVoucherAdminCardSkeleton from "@/components/dashboard/admin/gift-vouchers/gift-voucher-admin-card-skeleton"
 import { requireUserSession } from "@/lib/auth/require-session"
 

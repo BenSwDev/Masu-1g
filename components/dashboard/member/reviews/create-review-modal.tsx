@@ -7,11 +7,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/common/ui/dialog"
-import { Button } from "@/components/common/ui/button"
-import { Textarea } from "@/components/common/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
-import { Separator } from "@/components/common/ui/separator"
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { Star, User, Calendar, Clock, MessageCircle } from "lucide-react"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"

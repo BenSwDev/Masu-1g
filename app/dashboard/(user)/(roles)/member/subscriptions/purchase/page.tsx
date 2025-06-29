@@ -1,7 +1,7 @@
 import { getActiveSubscriptionsForPurchase } from "@/actions/subscription-actions"
 import { getActiveTreatmentsForPurchase } from "@/actions/treatment-actions"
 import GuestSubscriptionWizard from "@/components/subscriptions/guest-subscription-wizard"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 // Force this page to be dynamic since it requires user authentication
 export const dynamic = 'force-dynamic'

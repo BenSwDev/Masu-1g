@@ -3,8 +3,8 @@ import { Metadata } from "next"
 import { redirect, notFound } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 import { BookingEditPage } from "@/components/dashboard/admin/bookings/booking-edit-page"
-import { Skeleton } from "@/components/common/ui/skeleton"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getBookingById } from "../actions"
 
 // Force dynamic rendering to prevent build-time database connections

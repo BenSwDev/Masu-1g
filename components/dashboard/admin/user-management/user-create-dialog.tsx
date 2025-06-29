@@ -11,7 +11,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/common/ui/dialog"
+} from "@/components/ui/dialog"
 import {
   Form,
   FormControl,
@@ -19,18 +19,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/common/ui/form"
-import { Input } from "@/components/common/ui/input"
-import { Button } from "@/components/common/ui/button"
-import { Checkbox } from "@/components/common/ui/checkbox"
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/common/ui/select"
-import { useToast } from "@/components/common/ui/use-toast"
+} from "@/components/ui/select"
+import { useToast } from "@/components/ui/use-toast"
 import { PhoneInput } from "@/components/common/phone-input"
 import { createUser, type CreateUserData } from "@/app/dashboard/(user)/(roles)/admin/users/actions"
 

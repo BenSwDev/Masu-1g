@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@/components/common/ui/button"
+import { Button } from "@/components/ui/button"
 import { MasuLogo } from "@/components/common/masu-logo"
 import { useTranslation } from "@/lib/translations/i18n"
 import Link from "next/link"
@@ -13,8 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/common/ui/dialog"
-import { Input } from "@/components/common/ui/input"
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 
 export function LandingHero() {
   const { t, dir } = useTranslation()

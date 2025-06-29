@@ -796,35 +796,24 @@ export default function WorkingHoursClient() {
                                     />
                                     
                                     {hasPriceAddition && (
-                                      <div className="text-xs bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-2">
+                                      <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
                                         {(() => {
                                           const amount = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.amount`) || 0
                                           const type = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.type`) || "fixed"
-                                          const description = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.description`) || ""
                                           const startTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionStartTime`)
                                           const endTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionEndTime`)
                                           const professionalShare = fixedHoursForm.watch(`fixedHours.${index}.professionalShare.amount`) || 70
                                           
                                           return (
-                                            <div className="space-y-2">
-                                              <div className="flex items-center justify-between">
-                                                <div className="font-medium text-blue-900">
-                                                  💰 {description || t("workingHours.priceAddition")}: 
-                                                  <span className="text-lg font-bold mx-2 text-blue-700">
-                                                    {amount}{type === "fixed" ? "₪" : "%"}
-                                                  </span>
-                                                </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                              <div className="font-semibold text-blue-900">
+                                                +{amount}{type === "fixed" ? "₪" : "%"}
+                                                {(startTime && endTime) && (
+                                                  <span className="text-blue-600 mr-2">({startTime}-{endTime})</span>
+                                                )}
                                               </div>
-                                              
-                                              {(startTime && endTime) && (
-                                                <div className="flex items-center gap-2 text-blue-700 bg-blue-100 px-2 py-1 rounded">
-                                                  <Clock className="w-4 h-4" />
-                                                  <span className="font-medium">{startTime} - {endTime}</span>
-                                                </div>
-                                              )}
-                                              
-                                              <div className="flex items-center gap-2 text-green-700 bg-green-100 px-2 py-1 rounded">
-                                                <span className="text-sm">👨‍⚕️ {t("workingHours.professionalShare")}: {professionalShare}%</span>
+                                              <div className="text-green-700 font-medium">
+                                                {professionalShare}% למטפל
                                               </div>
                                             </div>
                                           )
@@ -834,114 +823,73 @@ export default function WorkingHoursClient() {
                                     {hasPriceAddition && (
                                       <div className="space-y-3">
                                         {/* Quick Presets */}
-                                      <div className="space-y-2">
-                                          <div className="text-xs font-medium text-muted-foreground">
-                                            {t("workingHours.priceAdditionPresets")}
-                                          </div>
-                                          <div className="flex gap-1 flex-wrap">
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() => {
-                                                // Apply evening preset
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 50)
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.type`, "fixed")
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.description`, t("workingHours.eveningHours"))
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, "20:00")
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, "22:00")
-                                                fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 70)
-                                                fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.type`, "percentage")
-                                              }}
-                                              className="text-xs h-7"
-                                              title={t("workingHours.eveningPresetDesc")}
-                                            >
-                                              🌅 {t("workingHours.eveningHours")}
-                                            </Button>
-                                            
-                                            <Button
-                                              type="button"
-                                              variant="outline"
-                                              size="sm"
-                                              onClick={() => {
-                                                // Apply night preset
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 80)
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.type`, "fixed")
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.description`, t("workingHours.nightHours"))
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, "22:00")
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, "06:00")
-                                                fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 75)
-                                                fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.type`, "percentage")
-                                              }}
-                                              className="text-xs h-7"
-                                              title={t("workingHours.nightPresetDesc")}
-                                            >
-                                              🌙 {t("workingHours.nightHours")}
-                                            </Button>
+                                        <div className="flex gap-1 flex-wrap">
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 30)
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.type`, "fixed")
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, "08:00")
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, "22:00")
+                                              fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 65)
+                                            }}
+                                            className="text-xs h-7"
+                                          >
+                                            יום מלא +30₪
+                                          </Button>
+                                          
+                                          <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 50)
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.type`, "fixed")
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, "20:00")
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, "22:00")
+                                              fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 70)
+                                            }}
+                                            className="text-xs h-7"
+                                          >
+                                            ערב +50₪
+                                          </Button>
 
-                                            <Button
-                                              type="button"
-                                              variant="ghost"
-                                              size="sm"
-                                              onClick={() => {
-                                                // Clear all settings
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 0)
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.type`, "fixed")
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.description`, "")
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, null)
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, null)
-                                                fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 70)
-                                                fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.type`, "percentage")
-                                              }}
-                                              className="text-xs h-7"
-                                            >
-                                              🗑️ {t("workingHours.clearPreset")}
-                                            </Button>
-                                          </div>
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => {
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 0)
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, null)
+                                              fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, null)
+                                              fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 70)
+                                            }}
+                                            className="text-xs h-7"
+                                          >
+                                            נקה
+                                          </Button>
                                         </div>
 
-                                        {/* Price Addition Description */}
-                                        <FormField
-                                          control={fixedHoursForm.control}
-                                          name={`fixedHours.${index}.priceAddition.description`}
-                                          render={({ field }) => (
-                                            <FormItem>
-                                              <FormLabel className="text-xs">{t("workingHours.priceAdditionDescription")}</FormLabel>
-                                              <FormControl>
-                                                <Input
-                                                  {...field}
-                                                  placeholder={t("workingHours.priceAdditionDescriptionPlaceholder")}
-                                                  className="h-8"
-                                                />
-                                              </FormControl>
-                                              <FormMessage />
-                                            </FormItem>
-                                          )}
-                                        />
-
-                                        {/* Amount and Type */}
-                                        <div className="flex gap-2">
+                                        {/* Simple inputs */}
+                                        <div className="flex gap-2 items-end">
                                           <FormField
                                             control={fixedHoursForm.control}
                                             name={`fixedHours.${index}.priceAddition.amount`}
                                             render={({ field }) => (
                                               <FormItem>
-                                                <FormLabel className="text-xs">{t("workingHours.amount")}</FormLabel>
                                                 <FormControl>
                                                   <Input
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
-                                                    placeholder="0"
+                                                    placeholder="סכום"
                                                     {...field}
-                                                    onChange={(e) =>
-                                                      field.onChange(Number.parseFloat(e.target.value) || 0)
-                                                    }
+                                                    onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 0)}
                                                     className="w-20 h-8"
-                                                    aria-label={`${t("workingHours.amount")} for ${dayNames[dayOfWeek]}`}
                                                   />
                                                 </FormControl>
-                                                <FormMessage />
                                               </FormItem>
                                             )}
                                           />
@@ -950,16 +898,9 @@ export default function WorkingHoursClient() {
                                             name={`fixedHours.${index}.priceAddition.type`}
                                             render={({ field }) => (
                                               <FormItem>
-                                                <FormLabel className="text-xs">{t("workingHours.type")}</FormLabel>
-                                                <Select
-                                                  onValueChange={field.onChange}
-                                                  defaultValue={field.value || "fixed"}
-                                                >
+                                                <Select onValueChange={field.onChange} defaultValue={field.value || "fixed"}>
                                                   <FormControl>
-                                                    <SelectTrigger
-                                                      className="w-[90px] h-8"
-                                                      aria-label={`${t("workingHours.type")} for ${dayNames[dayOfWeek]}`}
-                                                    >
+                                                    <SelectTrigger className="w-[60px] h-8">
                                                       <SelectValue />
                                                     </SelectTrigger>
                                                   </FormControl>
@@ -968,63 +909,64 @@ export default function WorkingHoursClient() {
                                                     <SelectItem value="percentage">%</SelectItem>
                                                   </SelectContent>
                                                 </Select>
-                                                <FormMessage />
                                               </FormItem>
                                             )}
                                           />
-                                        </div>
-                                        
-                                        {/* Time Range Fields */}
-                        <div className="bg-muted/50 p-2 rounded border">
-                          <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                                          {t("workingHours.priceAdditionTimeRangeHelp")}
-                                        </div>
-                                        <div className="flex gap-2">
                                           <FormField
                                             control={fixedHoursForm.control}
                                             name={`fixedHours.${index}.priceAddition.priceAdditionStartTime`}
                                             render={({ field }) => (
                                               <FormItem>
-                                  <FormLabel className="text-xs">{t("workingHours.priceAdditionStartTime")}</FormLabel>
                                                 <FormControl>
                                                   <Input
                                                     type="time"
                                                     {...field}
                                                     value={field.value || ""}
-                                                    placeholder={t("workingHours.priceAdditionStartTimePlaceholder")}
-                                      className="w-[120px] h-8"
-                                                    aria-label={`${t("workingHours.priceAdditionStartTime")} for ${dayNames[dayOfWeek]}`}
+                                                    placeholder="מ-"
+                                                    className="w-[90px] h-8"
                                                   />
                                                 </FormControl>
-                                                <FormMessage />
                                               </FormItem>
                                             )}
                                           />
-                            <div className="flex items-center justify-center mt-5">
-                              <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                            </div>
+                                          <span className="text-muted-foreground">-</span>
                                           <FormField
                                             control={fixedHoursForm.control}
                                             name={`fixedHours.${index}.priceAddition.priceAdditionEndTime`}
                                             render={({ field }) => (
                                               <FormItem>
-                                  <FormLabel className="text-xs">{t("workingHours.priceAdditionEndTime")}</FormLabel>
                                                 <FormControl>
                                                   <Input
                                                     type="time"
                                                     {...field}
                                                     value={field.value || ""}
-                                                    placeholder={t("workingHours.priceAdditionEndTimePlaceholder")}
-                                      className="w-[120px] h-8"
-                                                    aria-label={`${t("workingHours.priceAdditionEndTime")} for ${dayNames[dayOfWeek]}`}
+                                                    placeholder="עד"
+                                                    className="w-[90px] h-8"
                                                   />
                                                 </FormControl>
-                                                <FormMessage />
                                               </FormItem>
                                             )}
                                           />
-                          </div>
+                                          <FormField
+                                            control={fixedHoursForm.control}
+                                            name={`fixedHours.${index}.professionalShare.amount`}
+                                            render={({ field }) => (
+                                              <FormItem>
+                                                <FormControl>
+                                                  <Input
+                                                    type="number"
+                                                    min="0"
+                                                    max="100"
+                                                    placeholder="70"
+                                                    {...field}
+                                                    onChange={(e) => field.onChange(Number.parseFloat(e.target.value) || 70)}
+                                                    className="w-16 h-8"
+                                                  />
+                                                </FormControl>
+                                              </FormItem>
+                                            )}
+                                          />
+                                          <span className="text-xs text-muted-foreground">%</span>
                                         </div>
                                       </div>
                                     )}
@@ -1152,35 +1094,24 @@ export default function WorkingHoursClient() {
                                 {hasPriceAddition && (
                                   <div className="space-y-4">
                                     {/* Price Addition Summary for Mobile */}
-                                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                                    <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
                                       {(() => {
                                         const amount = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.amount`) || 0
                                         const type = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.type`) || "fixed"
-                                        const description = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.description`) || ""
                                         const startTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionStartTime`)
                                         const endTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionEndTime`)
                                         const professionalShare = fixedHoursForm.watch(`fixedHours.${index}.professionalShare.amount`) || 70
                                         
                                         return (
-                                          <div className="space-y-2">
-                                            <div className="text-center">
-                                              <div className="font-bold text-blue-900 text-lg">
-                                                💰 {amount}{type === "fixed" ? "₪" : "%"} {t("workingHours.priceAddition")}
-                                              </div>
-                                              {description && (
-                                                <div className="text-sm text-blue-700">{description}</div>
+                                          <div className="text-center">
+                                            <div className="font-bold text-blue-900 text-lg">
+                                              +{amount}{type === "fixed" ? "₪" : "%"}
+                                              {(startTime && endTime) && (
+                                                <span className="text-blue-600 text-sm block">({startTime}-{endTime})</span>
                                               )}
                                             </div>
-                                            
-                                            {(startTime && endTime) && (
-                                              <div className="flex items-center justify-center gap-2 text-blue-700 bg-blue-100 px-3 py-1 rounded">
-                                                <Clock className="w-4 h-4" />
-                                                <span className="font-medium">{startTime} - {endTime}</span>
-                                              </div>
-                                            )}
-                                            
-                                            <div className="flex items-center justify-center gap-2 text-green-700 bg-green-100 px-3 py-1 rounded">
-                                              <span className="text-sm">👨‍⚕️ {t("workingHours.professionalShare")}: {professionalShare}%</span>
+                                            <div className="text-green-700 font-medium text-sm mt-1">
+                                              {professionalShare}% למטפל
                                             </div>
                                           </div>
                                         )

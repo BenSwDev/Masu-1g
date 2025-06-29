@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/common/ui/checkbox"
 import { PhoneInput } from "@/components/common/phone-input"
 import { useToast } from "@/components/common/ui/use-toast"
-import { createUserByAdmin, updateUserByAdmin } from "@/actions/admin-actions"
+import { createUserByAdmin, updateUserByAdmin, resetPasswordToDefault } from "@/actions/admin-actions"
 import { useTranslation } from "@/lib/translations/i18n"
 import { format } from "date-fns"
 import type { UserData } from "./user-management"
@@ -44,27 +44,75 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
   const form = useForm<UserFormData>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
-      name: initialData?.name || "",
-      phone: initialData?.phone || "",
-      email: initialData?.email || "",
+      name: "",
+      phone: "",
+      email: "",
       password: "",
-      gender: (initialData?.gender as "male" | "female" | "other") || "male",
-      roles: (initialData?.roles as ("admin" | "professional" | "member" | "partner")[]) || ["member"],
-      dateOfBirth: initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "yyyy-MM-dd") : "",
+      gender: "male",
+      roles: ["member"],
+      dateOfBirth: "",
     },
   })
 
   useEffect(() => {
-    form.reset({
-      name: initialData?.name || "",
-      phone: initialData?.phone || "",
-      email: initialData?.email || "",
+    // Only reset the form if initialData actually changed or if it's the first time
+    if (!initialData) {
+      form.reset({
+        name: "",
+        phone: "",
+        email: "",
+        password: "",
+        gender: "male",
+        roles: ["member"],
+        dateOfBirth: "",
+      })
+      return
+    }
+
+    const getFormattedDate = (dateString?: string | null): string => {
+      if (!dateString) return ""
+      try {
+        const date = new Date(dateString)
+        if (isNaN(date.getTime())) return ""
+        return format(date, "yyyy-MM-dd")
+      } catch (error) {
+        console.warn("Invalid date format:", dateString)
+        return ""
+      }
+    }
+
+    const getValidGender = (gender?: "male" | "female" | "other" | null): "male" | "female" | "other" => {
+      if (gender && ["male", "female", "other"].includes(gender)) {
+        return gender
+      }
+      return "male"
+    }
+
+    const getValidRoles = (roles?: ("admin" | "professional" | "member" | "partner")[]): ("admin" | "professional" | "member" | "partner")[] => {
+      if (roles && Array.isArray(roles) && roles.length > 0) {
+        return roles.filter(role => ["admin", "professional", "member", "partner"].includes(role))
+      }
+      return ["member"]
+    }
+
+    const newFormData = {
+      name: initialData.name || "",
+      phone: initialData.phone || "",
+      email: initialData.email || "",
       password: "",
-      gender: (initialData?.gender as "male" | "female" | "other") || "male",
-      roles: (initialData?.roles as ("admin" | "professional" | "member" | "partner")[]) || ["member"],
-      dateOfBirth: initialData?.dateOfBirth ? format(new Date(initialData.dateOfBirth), "yyyy-MM-dd") : "",
-    })
-  }, [initialData, form])
+      gender: getValidGender(initialData.gender),
+      roles: getValidRoles(initialData.roles),
+      dateOfBirth: getFormattedDate(initialData.dateOfBirth),
+    }
+
+    // Only reset if the current form values are different
+    const currentValues = form.getValues()
+    const hasChanged = JSON.stringify(currentValues) !== JSON.stringify(newFormData)
+    
+    if (hasChanged) {
+      form.reset(newFormData)
+    }
+  }, [initialData?.id, form]) // Only depend on the user ID, not the entire object
 
   async function onSubmit(values: UserFormData) {
     try {
@@ -111,6 +159,40 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
       toast({ 
         title: t("common.error"), 
         description: "An unexpected error occurred. Please try again.", 
+        variant: "destructive" 
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResetPassword() {
+    if (!initialData) return
+
+    try {
+      setLoading(true)
+      const result = await resetPasswordToDefault(initialData.id)
+
+      if (!result || !result.success) {
+        console.error("Password reset failed:", result)
+        toast({ 
+          title: t("common.error"), 
+          description: result?.message || "Failed to reset password", 
+          variant: "destructive" 
+        })
+        return
+      }
+
+      toast({ 
+        title: t("common.success"), 
+        description: result.message,
+        duration: 5000
+      })
+    } catch (error) {
+      console.error("Password reset error:", error)
+      toast({ 
+        title: t("common.error"), 
+        description: "An unexpected error occurred while resetting password.", 
         variant: "destructive" 
       })
     } finally {
@@ -195,7 +277,7 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t("admin.users.form.gender")}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger disabled={loading}>
                         <SelectValue placeholder={t("admin.users.form.genderPlaceholder") || ""} />
@@ -261,9 +343,22 @@ export function UserFormDialog({ isOpen, onOpenChange, initialData, onSuccess }:
               )}
             />
             <DialogFooter className="pt-4">
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-                {loading ? t("common.loading") : initialData ? t("common.saveChanges") : t("common.create")}
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                {initialData && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={handleResetPassword}
+                    disabled={loading}
+                    className="w-full sm:w-auto"
+                  >
+                    {loading ? t("common.loading") : "איפוס סיסמה ל-User123!"}
+                  </Button>
+                )}
+                <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+                  {loading ? t("common.loading") : initialData ? t("common.saveChanges") : t("common.create")}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

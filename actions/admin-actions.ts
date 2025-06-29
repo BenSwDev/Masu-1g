@@ -336,3 +336,40 @@ export async function initiatePasswordResetByAdmin(userId: string) {
     return { success: false, message: "passwordResetFailed" }
   }
 }
+
+/**
+ * Resets a user's password to the default password "User123!"
+ * @param userId - ID of the user to reset password for
+ * @returns Promise<{ success: boolean; message: string }>
+ */
+export async function resetPasswordToDefault(userId: string) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "Not authorized" }
+    }
+
+    await dbConnect()
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return { success: false, message: "User not found" }
+    }
+
+    // Hash the default password "User123!"
+    const defaultPassword = "User123!"
+    const hashedPassword = await bcrypt.hash(defaultPassword, 12)
+
+    // Update user's password
+    user.password = hashedPassword
+    await user.save()
+
+    return { 
+      success: true, 
+      message: `Password reset to default for user ${user.name || user.email}. New password: ${defaultPassword}`
+    }
+  } catch (error) {
+    console.error("Error resetting password to default:", error)
+    return { success: false, message: "Failed to reset password" }
+  }
+}

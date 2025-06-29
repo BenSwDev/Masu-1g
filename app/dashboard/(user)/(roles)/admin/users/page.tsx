@@ -1,25 +1,9 @@
 import { redirect } from "next/navigation"
 import { requireUserSession } from "@/lib/auth/require-session"
 import { getAllUsers, getUserStatistics } from "./actions"
-import { UserManagement } from "@/components/dashboard/admin/user-management/user-management"
+import { UserManagement, type UserData } from "@/components/dashboard/admin/user-management/user-management"
 
 export const dynamic = "force-dynamic"
-
-// Define a more specific type for the user data expected by UserManagement
-// This can be co-located or defined where UserManagement expects it.
-// For now, keeping it here for clarity of what the page provides.
-export interface PageUserData {
-  id: string
-  name: string | null
-  email: string | null
-  image?: string | null
-  phone?: string | null
-  roles: string[]
-  activeRole?: string | null
-  dateOfBirth?: string | null // ISO string
-  gender?: string | null
-  createdAt: string // ISO string
-}
 
 export interface RoleCounts {
   members: number
@@ -46,7 +30,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
 
   const page = Number.parseInt(searchParams.page || "1")
   const search = searchParams.search
-  // const roleFilterParams = searchParams.roles ? searchParams.roles.split(",") : undefined; // If role filter is kept
+  const roleFilterParams = searchParams.roles ? searchParams.roles.split(",") : undefined
   const sortField = searchParams.sortField || "name"
   const sortDirection = searchParams.sortDirection || "asc"
 
@@ -55,23 +39,12 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
     page,
     10,
     search,
-    undefined, // roleFilterParams - temporarily undefined as per new reqs
+    roleFilterParams,
     sortField,
     sortDirection as "asc" | "desc",
   )
 
-  const users: PageUserData[] = usersResult.success
-    ? usersResult.users.map((u) => ({
-        ...u,
-        name: u.name || null,
-        email: u.email || null,
-        image: u.image || null,
-        phone: u.phone || null,
-        dateOfBirth: u.dateOfBirth || null,
-        gender: u.gender || null,
-        createdAt: u.createdAt, // Already an ISO string from the action
-      }))
-    : []
+  const users: UserData[] = usersResult.success ? usersResult.users : []
   const totalPages = usersResult.totalPages || 1
 
   // Fetch user statistics
@@ -92,7 +65,7 @@ export default async function AdminUsersPage({ searchParams }: AdminUsersPagePro
         totalPages={totalPages}
         currentPage={page}
         initialSearchTerm={search}
-        // initialRoleFilter={roleFilterParams} // If role filter is kept
+        initialRoleFilter={roleFilterParams}
         initialSortField={sortField}
         initialSortDirection={sortDirection as "asc" | "desc"}
         roleCounts={roleCounts}

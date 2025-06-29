@@ -17,10 +17,10 @@ export interface UserData {
   email: string | null
   image?: string | null
   phone?: string | null
-  roles: string[]
+  roles: ("admin" | "professional" | "member" | "partner")[]
   activeRole?: string | null
   dateOfBirth?: string | null
-  gender?: string | null
+  gender?: "male" | "female" | "other" | null
   createdAt: string
 }
 
@@ -49,6 +49,11 @@ export interface DeleteUserResult {
 }
 
 export interface InitiatePasswordResetResult {
+  success: boolean
+  message: string
+}
+
+export interface ResetPasswordToDefaultResult {
   success: boolean
   message: string
 }
@@ -382,5 +387,44 @@ export async function updateUserByAdmin(userId: string, formData: FormData): Pro
   } catch (error) {
     console.error("Error updating user:", error)
     return { success: false, message: "Failed to update user" }
+  }
+}
+
+/**
+ * Resets a user's password to the default password "User123!"
+ * @param userId - ID of the user to reset password for
+ * @returns Promise<ResetPasswordToDefaultResult>
+ */
+export async function resetPasswordToDefault(userId: string): Promise<ResetPasswordToDefaultResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id || !session.user.roles.includes("admin")) {
+      return { success: false, message: "Not authorized" }
+    }
+
+    await dbConnect()
+
+    const user = await User.findById(userId)
+    if (!user) {
+      return { success: false, message: "User not found" }
+    }
+
+    // Hash the default password "User123!"
+    const defaultPassword = "User123!"
+    const hashedPassword = await bcrypt.hash(defaultPassword, 12)
+
+    // Update user's password
+    user.password = hashedPassword
+    await user.save()
+
+    revalidatePath("/dashboard/admin/users")
+
+    return { 
+      success: true, 
+      message: `Password reset to default for user ${user.name || user.email}. New password: ${defaultPassword}`
+    }
+  } catch (error) {
+    console.error("Error resetting password to default:", error)
+    return { success: false, message: "Failed to reset password" }
   }
 } 

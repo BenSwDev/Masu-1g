@@ -61,6 +61,11 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
   }
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Don't allow changes if the input is disabled
+    if (props.disabled) {
+      return
+    }
+
     const value = e.target.value.replace(/\D/g, "") // Remove non-digits
 
     // If the number starts with 0, remove it
@@ -92,7 +97,7 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
       fullNumber = selectedCode + (phoneNumber.startsWith("0") ? phoneNumber.substring(1) : phoneNumber)
     }
 
-    // Always call onPhoneChange, even with empty string
+    // Only call onPhoneChange if the value has actually changed or if it's the initial load
     if (onPhoneChange) {
       onPhoneChange(fullNumber)
     }
@@ -104,6 +109,10 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
   }, [selectedCode, phoneNumber, onPhoneChange])
 
   const handleCodeChange = (code: string) => {
+    // Don't allow changes if the input is disabled
+    if (props.disabled) {
+      return
+    }
     setSelectedCode(code)
   }
 
@@ -130,15 +139,18 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
           newPhoneNumber = newPhoneNumber.substring(1)
         }
 
-        setSelectedCode(newSelectedCode)
-        setPhoneNumber(newPhoneNumber)
+        // Only update state if the values are actually different to prevent infinite loops
+        if (selectedCode !== newSelectedCode || phoneNumber !== newPhoneNumber) {
+          setSelectedCode(newSelectedCode)
+          setPhoneNumber(newPhoneNumber)
+        }
       }
-    } else if (propsDefaultValue) {
-      // Fallback to propsDefaultValue if fullNumberValue is not provided
+    } else if (propsDefaultValue && phoneNumber === "") {
+      // Only set default value if phoneNumber is empty to prevent overriding
       setPhoneNumber(propsDefaultValue)
       setSelectedCode(defaultCountryCode)
     }
-  }, [fullNumberValue, defaultCountryCode, propsDefaultValue])
+  }, [fullNumberValue, defaultCountryCode, propsDefaultValue, selectedCode, phoneNumber])
 
   return (
     <div className="relative flex">

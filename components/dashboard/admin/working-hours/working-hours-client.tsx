@@ -795,9 +795,8 @@ export default function WorkingHoursClient() {
                                       )}
                                     />
                                     
-                                    {/* Quick summary of active surcharge */}
                                     {hasPriceAddition && (
-                                      <div className="text-xs text-muted-foreground bg-muted/30 p-1 rounded">
+                                      <div className="text-xs bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-2">
                                         {(() => {
                                           const amount = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.amount`) || 0
                                           const type = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.type`) || "fixed"
@@ -807,18 +806,25 @@ export default function WorkingHoursClient() {
                                           const professionalShare = fixedHoursForm.watch(`fixedHours.${index}.professionalShare.amount`) || 70
                                           
                                           return (
-                                            <div className="space-y-1">
-                                              <div className="font-medium">
-                                                {description || "תוספת מחיר"}: {amount}{type === "fixed" ? "₪" : "%"}
+                                            <div className="space-y-2">
+                                              <div className="flex items-center justify-between">
+                                                <div className="font-medium text-blue-900">
+                                                  💰 {description || t("workingHours.priceAddition")}: 
+                                                  <span className="text-lg font-bold mx-2 text-blue-700">
+                                                    {amount}{type === "fixed" ? "₪" : "%"}
+                                                  </span>
+                                                </div>
                                               </div>
-                                              {(startTime || endTime) && (
-                                                <div className="flex items-center gap-1">
-                                                  <Clock className="w-3 h-3" />
-                                                  {startTime || "התחלה"} - {endTime || "סוף"}
+                                              
+                                              {(startTime && endTime) && (
+                                                <div className="flex items-center gap-2 text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                                                  <Clock className="w-4 h-4" />
+                                                  <span className="font-medium">{startTime} - {endTime}</span>
                                                 </div>
                                               )}
-                                              <div className="text-green-600">
-                                                למטפל: {professionalShare}%
+                                              
+                                              <div className="flex items-center gap-2 text-green-700 bg-green-100 px-2 py-1 rounded">
+                                                <span className="text-sm">👨‍⚕️ {t("workingHours.professionalShare")}: {professionalShare}%</span>
                                               </div>
                                             </div>
                                           )
@@ -861,7 +867,7 @@ export default function WorkingHoursClient() {
                                                 // Apply night preset
                                                 fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.amount`, 80)
                                                 fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.type`, "fixed")
-                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.description`, "שעות לילה")
+                                                fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.description`, t("workingHours.nightHours"))
                                                 fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionStartTime`, "22:00")
                                                 fixedHoursForm.setValue(`fixedHours.${index}.priceAddition.priceAdditionEndTime`, "06:00")
                                                 fixedHoursForm.setValue(`fixedHours.${index}.professionalShare.amount`, 75)
@@ -870,7 +876,7 @@ export default function WorkingHoursClient() {
                                               className="text-xs h-7"
                                               title={t("workingHours.nightPresetDesc")}
                                             >
-                                              🌙 לילה
+                                              🌙 {t("workingHours.nightHours")}
                                             </Button>
 
                                             <Button
@@ -1145,6 +1151,42 @@ export default function WorkingHoursClient() {
 
                                 {hasPriceAddition && (
                                   <div className="space-y-4">
+                                    {/* Price Addition Summary for Mobile */}
+                                    <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                                      {(() => {
+                                        const amount = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.amount`) || 0
+                                        const type = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.type`) || "fixed"
+                                        const description = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.description`) || ""
+                                        const startTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionStartTime`)
+                                        const endTime = fixedHoursForm.watch(`fixedHours.${index}.priceAddition.priceAdditionEndTime`)
+                                        const professionalShare = fixedHoursForm.watch(`fixedHours.${index}.professionalShare.amount`) || 70
+                                        
+                                        return (
+                                          <div className="space-y-2">
+                                            <div className="text-center">
+                                              <div className="font-bold text-blue-900 text-lg">
+                                                💰 {amount}{type === "fixed" ? "₪" : "%"} {t("workingHours.priceAddition")}
+                                              </div>
+                                              {description && (
+                                                <div className="text-sm text-blue-700">{description}</div>
+                                              )}
+                                            </div>
+                                            
+                                            {(startTime && endTime) && (
+                                              <div className="flex items-center justify-center gap-2 text-blue-700 bg-blue-100 px-3 py-1 rounded">
+                                                <Clock className="w-4 h-4" />
+                                                <span className="font-medium">{startTime} - {endTime}</span>
+                                              </div>
+                                            )}
+                                            
+                                            <div className="flex items-center justify-center gap-2 text-green-700 bg-green-100 px-3 py-1 rounded">
+                                              <span className="text-sm">👨‍⚕️ {t("workingHours.professionalShare")}: {professionalShare}%</span>
+                                            </div>
+                                          </div>
+                                        )
+                                      })()}
+                                    </div>
+                                    
                                     <div className="grid grid-cols-2 gap-4">
                                       <FormField
                                         control={fixedHoursForm.control}

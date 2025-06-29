@@ -1,480 +1,485 @@
 "use server"
 
-import { getServerSession } from "next-auth/next"
+import { revalidatePath } from "next/cache"
+import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
 import dbConnect from "@/lib/db/mongoose"
-import User, { type IUser } from "@/lib/db/models/user"
-import PasswordResetToken from "@/lib/db/models/password-reset-token"
-import { emailService } from "@/lib/notifications/email-service"
-import { revalidatePath } from "next/cache"
-import crypto from "crypto"
+import User, { type IUser, UserRole } from "@/lib/db/models/user"
 import bcrypt from "bcryptjs"
+import { Types } from "mongoose"
 
-// Types
+// Types for user management
 export interface UserData {
-  id: string
-  name: string | null
-  email: string | null
-  image?: string | null
-  phone?: string | null
+  _id: string
+  name: string
+  email?: string
+  phone: string
+  gender: "male" | "female" | "other"
+  dateOfBirth?: Date
   roles: ("admin" | "professional" | "member" | "partner")[]
-  activeRole?: string | null
-  dateOfBirth?: string | null
-  gender?: "male" | "female" | "other" | null
-  createdAt: string
+  activeRole?: string
+  emailVerified?: Date
+  phoneVerified?: Date
+  createdAt: Date
+  updatedAt: Date
 }
 
-export interface GetAllUsersResult {
-  success: boolean
-  message?: string
+export interface CreateUserData {
+  name: string
+  email?: string
+  phone: string
+  password: string
+  gender: "male" | "female" | "other"
+  dateOfBirth?: Date
+  roles: ("admin" | "professional" | "member" | "partner")[]
+}
+
+export interface UpdateUserData {
+  name?: string
+  email?: string
+  phone?: string
+  gender?: "male" | "female" | "other"
+  dateOfBirth?: Date
+  roles?: ("admin" | "professional" | "member" | "partner")[]
+  activeRole?: string
+}
+
+export interface UserFilters {
+  search?: string
+  role?: string
+  gender?: string
+  emailVerified?: boolean
+  phoneVerified?: boolean
+  page?: number
+  limit?: number
+  sortBy?: string
+  sortOrder?: "asc" | "desc"
+}
+
+export interface GetUsersResult {
   users: UserData[]
-  total: number
-  page: number
+  totalUsers: number
   totalPages: number
+  currentPage: number
 }
 
-export interface GetUserStatisticsResult {
+export interface ActionResult {
   success: boolean
-  message?: string
-  roleCounts: {
-    members: number
-    professionals: number
-    partners: number
-  } | null
-}
-
-export interface DeleteUserResult {
-  success: boolean
-  message: string
-}
-
-export interface InitiatePasswordResetResult {
-  success: boolean
-  message: string
-}
-
-export interface ResetPasswordToDefaultResult {
-  success: boolean
-  message: string
-}
-
-export interface GetUserByIdResult {
-  success: boolean
-  message?: string
-  user?: UserData
-}
-
-// Helper function to sanitize user object
-const sanitizeUser = (userDoc: any): Omit<IUser, "password" | "_id"> & { id: string } => {
-  const userObject = userDoc.toObject ? userDoc.toObject() : { ...userDoc }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { password, _id, __v, ...rest } = userObject
-  return { ...rest, id: _id.toString() }
+  error?: string
+  data?: any
 }
 
 /**
- * Fetches a paginated list of users with optional filtering and sorting
- * @param page - Page number (1-based)
- * @param limit - Number of items per page
- * @param searchTerm - Optional search term for name, email, or phone
- * @param roleFilter - Optional array of roles to filter by
- * @param sortField - Field to sort by
- * @param sortDirection - Sort direction (asc/desc)
- * @returns Promise<GetAllUsersResult>
+ * Get all users with filters and pagination
  */
-export async function getAllUsers(
-  page = 1,
-  limit = 10,
-  searchTerm?: string,
-  roleFilter?: string[],
-  sortField = "name",
-  sortDirection: "asc" | "desc" = "asc",
-): Promise<GetAllUsersResult> {
+export async function getAllUsers(filters: UserFilters = {}): Promise<GetUsersResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized", users: [], total: 0, totalPages: 0, page }
+    if (!session?.user?.roles?.includes("admin")) {
+      throw new Error("Unauthorized: Admin access required")
     }
 
     await dbConnect()
 
+    const {
+      search = "",
+      role = "",
+      gender = "",
+      emailVerified,
+      phoneVerified,
+      page = 1,
+      limit = 20,
+      sortBy = "createdAt",
+      sortOrder = "desc"
+    } = filters
+
+    // Build query
     const query: any = {}
-    if (searchTerm) {
+
+    // Search filter
+    if (search) {
       query.$or = [
-        { name: { $regex: searchTerm, $options: "i" } },
-        { email: { $regex: searchTerm, $options: "i" } },
-        { phone: { $regex: searchTerm, $options: "i" } },
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } }
       ]
     }
-    if (roleFilter && roleFilter.length > 0) {
-      query.roles = { $in: roleFilter }
+
+    // Role filter
+    if (role) {
+      query.roles = { $in: [role] }
     }
 
-    const sortOptions: any = {}
-    sortOptions[sortField] = sortDirection === "asc" ? 1 : -1
-
-    const skip = (page - 1) * limit
-    const [usersFromDb, total] = await Promise.all([
-      User.find(query)
-        .sort(sortOptions)
-        .skip(skip)
-        .limit(limit)
-        .select("name email phone image roles dateOfBirth gender createdAt")
-        .lean(),
-      User.countDocuments(query),
-    ])
-
-    const users = usersFromDb.map((user) => ({
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      image: user.image,
-      roles: user.roles,
-      dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString() : undefined,
-      gender: user.gender,
-      createdAt: new Date(user.createdAt).toISOString(),
-    }))
-
-    return {
-      success: true,
-      users,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
-    }
-  } catch (error) {
-    console.error("Error in getAllUsers:", error)
-    return { success: false, message: "fetchFailed", users: [], total: 0, totalPages: 0, page }
-  }
-}
-
-/**
- * Fetches a single user by ID
- * @param userId - ID of the user to fetch
- * @returns Promise<GetUserByIdResult>
- */
-export async function getUserById(userId: string): Promise<GetUserByIdResult> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
+    // Gender filter
+    if (gender) {
+      query.gender = gender
     }
 
-    await dbConnect()
+    // Email verification filter
+    if (emailVerified !== undefined) {
+      query.emailVerified = emailVerified ? { $exists: true, $ne: null } : { $exists: false }
+    }
 
-    const userFromDb = await User.findById(userId)
-      .select("name email phone image roles dateOfBirth gender createdAt")
+    // Phone verification filter
+    if (phoneVerified !== undefined) {
+      query.phoneVerified = phoneVerified ? { $exists: true, $ne: null } : { $exists: false }
+    }
+
+    // Get total count
+    const totalUsers = await User.countDocuments(query)
+    const totalPages = Math.ceil(totalUsers / limit)
+
+    // Get users with pagination and sorting
+    const users = await User.find(query)
+      .select("-password") // Exclude password
+      .sort({ [sortBy]: sortOrder === "desc" ? -1 : 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
       .lean()
 
-    if (!userFromDb) {
-      return { success: false, message: "userNotFound" }
-    }
-
-    const user: UserData = {
-      id: userFromDb._id.toString(),
-      name: userFromDb.name,
-      email: userFromDb.email,
-      phone: userFromDb.phone,
-      image: userFromDb.image,
-      roles: userFromDb.roles,
-      dateOfBirth: userFromDb.dateOfBirth ? new Date(userFromDb.dateOfBirth).toISOString() : null,
-      gender: userFromDb.gender,
-      createdAt: new Date(userFromDb.createdAt).toISOString(),
-    }
-
     return {
-      success: true,
-      user
+      users: users.map(user => ({
+        ...user,
+        _id: user._id.toString()
+      })) as UserData[],
+      totalUsers,
+      totalPages,
+      currentPage: page
     }
   } catch (error) {
-    console.error("Error in getUserById:", error)
-    return { success: false, message: "fetchFailed" }
+    console.error("Error getting users:", error)
+    throw new Error("Failed to get users")
   }
 }
 
 /**
- * Fetches statistics about user roles
- * @returns Promise<GetUserStatisticsResult>
+ * Get user by ID
  */
-export async function getUserStatistics(): Promise<GetUserStatisticsResult> {
+export async function getUserById(userId: string): Promise<ActionResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized", roleCounts: null }
+    if (!session?.user?.roles?.includes("admin")) {
+      throw new Error("Unauthorized: Admin access required")
     }
 
     await dbConnect()
 
-    const [memberCount, professionalCount, partnerCount] = await Promise.all([
-      User.countDocuments({ roles: "member" }),
-      User.countDocuments({ roles: "professional" }),
-      User.countDocuments({ roles: "partner" }),
-    ])
-
-    return {
-      success: true,
-      roleCounts: {
-        members: memberCount,
-        professionals: professionalCount,
-        partners: partnerCount,
-      },
-    }
-  } catch (error) {
-    console.error("Error in getUserStatistics:", error)
-    return { success: false, message: "fetchFailed", roleCounts: null }
-  }
-}
-
-/**
- * Deletes a user by ID
- * @param userId - ID of the user to delete
- * @returns Promise<DeleteUserResult>
- */
-export async function deleteUserByAdmin(userId: string): Promise<DeleteUserResult> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
-
-    await dbConnect()
-
-    const user = await User.findById(userId)
+    const user = await User.findById(userId).select("-password").lean()
+    
     if (!user) {
-      return { success: false, message: "userNotFound" }
+      return { success: false, error: "User not found" }
     }
 
-    // Prevent deleting the last admin
-    if (user.roles.includes("admin")) {
-      const adminCount = await User.countDocuments({ roles: "admin" })
-      if (adminCount <= 1) {
-        return { success: false, message: "cannotDeleteLastAdmin" }
+    return {
+      success: true,
+      data: {
+        ...user,
+        _id: user._id.toString()
+      } as UserData
+    }
+  } catch (error) {
+    console.error("Error getting user:", error)
+    return { success: false, error: "Failed to get user" }
+  }
+}
+
+/**
+ * Create new user
+ */
+export async function createUser(userData: CreateUserData): Promise<ActionResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      throw new Error("Unauthorized: Admin access required")
+    }
+
+    await dbConnect()
+
+    // Check if phone already exists
+    const existingUser = await User.findOne({ phone: userData.phone })
+    if (existingUser) {
+      return { success: false, error: "User with this phone number already exists" }
+    }
+
+    // Check if email already exists (if provided)
+    if (userData.email) {
+      const existingEmail = await User.findOne({ email: userData.email })
+      if (existingEmail) {
+        return { success: false, error: "User with this email already exists" }
       }
     }
 
-    await User.findByIdAndDelete(userId)
-    revalidatePath("/dashboard/admin/users")
-    return { success: true, message: "userDeleted" }
-  } catch (error) {
-    console.error("Error in deleteUserByAdmin:", error)
-    return { success: false, message: "deleteFailed" }
-  }
-}
-
-/**
- * Initiates a password reset for a user
- * @param userId - ID of the user to reset password for
- * @returns Promise<InitiatePasswordResetResult>
- */
-export async function initiatePasswordResetByAdmin(userId: string): Promise<InitiatePasswordResetResult> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "notAuthorized" }
-    }
-
-    await dbConnect()
-
-    const user = await User.findById(userId)
-    if (!user) {
-      return { success: false, message: "userNotFound" }
-    }
-
-    // Generate reset token
-    const token = crypto.randomBytes(32).toString("hex")
-    const hashedToken = await bcrypt.hash(token, 10)
-
-    // Save token to database
-    await PasswordResetToken.create({
-      userId: user._id,
-      token: hashedToken,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-    })
-
-    // Send email using the centralized notification system
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`
-
-    const notificationData: NotificationData = {
-      type: "password-reset",
-      resetUrl: resetLink,
-      expiresIn: 60 * 24, // 24 hours
-    }
-
-    const emailResult = await emailService.sendNotification(
-      { value: user.email, name: user.name || user.email, language: "en" },
-      notificationData,
-    )
-
-    if (!emailResult.success) {
-      console.error("Failed to send password reset email:", emailResult.error)
-      return { success: false, message: "passwordResetFailed" }
-    }
-
-    return { success: true, message: "passwordResetInitiated" }
-  } catch (error) {
-    console.error("Error in initiatePasswordResetByAdmin:", error)
-    return { success: false, message: "passwordResetFailed" }
-  }
-}
-
-/**
- * Creates a new user
- * @param formData - Form data containing user information
- * @returns Promise<{ success: boolean; message: string; user?: any }>
- */
-export async function createUserByAdmin(formData: FormData): Promise<{ success: boolean; message: string; user?: any }> {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "Not authorized" }
-    }
-
-    await dbConnect()
-
-    const name = formData.get("name") as string
-    const email = formData.get("email") as string
-    const phone = formData.get("phone") as string
-    const password = formData.get("password") as string
-    const gender = formData.get("gender") as string
-    const dateOfBirth = formData.get("dateOfBirth") as string
-    const roles = formData.getAll("roles[]") as string[]
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email })
-    if (existingUser) {
-      return { success: false, message: "User with this email already exists" }
-    }
-
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12)
+    const hashedPassword = await bcrypt.hash(userData.password, 12)
 
     // Create user
     const newUser = new User({
-      name,
-      email,
-      phone,
+      ...userData,
       password: hashedPassword,
-      gender,
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-      roles,
-      activeRole: roles[0],
-      emailVerified: new Date(), // Auto-verify admin created users
+      createdAt: new Date(),
+      updatedAt: new Date()
     })
 
-    await newUser.save()
+    const savedUser = await newUser.save()
 
     revalidatePath("/dashboard/admin/users")
 
-    return { 
-      success: true, 
-      message: "User created successfully",
-      user: sanitizeUser(newUser)
+    return {
+      success: true,
+      data: {
+        ...savedUser.toObject(),
+        _id: savedUser._id.toString()
+      } as UserData
     }
   } catch (error) {
     console.error("Error creating user:", error)
-    return { success: false, message: "Failed to create user" }
+    return { success: false, error: "Failed to create user" }
   }
 }
 
 /**
- * Updates an existing user
- * @param userId - ID of the user to update
- * @param formData - Form data containing updated user information
- * @returns Promise<{ success: boolean; message: string; user?: any }>
+ * Update user
  */
-export async function updateUserByAdmin(userId: string, formData: FormData): Promise<{ success: boolean; message: string; user?: any }> {
+export async function updateUser(userId: string, userData: UpdateUserData): Promise<ActionResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "Not authorized" }
+    if (!session?.user?.roles?.includes("admin")) {
+      throw new Error("Unauthorized: Admin access required")
     }
 
     await dbConnect()
 
-    const user = await User.findById(userId)
-    if (!user) {
-      return { success: false, message: "User not found" }
+    // Check if user exists
+    const existingUser = await User.findById(userId)
+    if (!existingUser) {
+      return { success: false, error: "User not found" }
     }
 
-    const name = formData.get("name") as string
-    const email = formData.get("email") as string
-    const phone = formData.get("phone") as string
-    const gender = formData.get("gender") as string
-    const dateOfBirth = formData.get("dateOfBirth") as string
-    const roles = formData.getAll("roles[]") as string[]
+    // Check if phone is being changed and already exists
+    if (userData.phone && userData.phone !== existingUser.phone) {
+      const phoneExists = await User.findOne({ 
+        phone: userData.phone, 
+        _id: { $ne: userId } 
+      })
+      if (phoneExists) {
+        return { success: false, error: "Phone number already exists" }
+      }
+    }
 
-    // Check if email is taken by another user
-    if (email !== user.email) {
-      const existingUser = await User.findOne({ email, _id: { $ne: userId } })
-      if (existingUser) {
-        return { success: false, message: "Email is already taken by another user" }
+    // Check if email is being changed and already exists
+    if (userData.email && userData.email !== existingUser.email) {
+      const emailExists = await User.findOne({ 
+        email: userData.email, 
+        _id: { $ne: userId } 
+      })
+      if (emailExists) {
+        return { success: false, error: "Email already exists" }
       }
     }
 
     // Update user
-    user.name = name
-    user.email = email
-    user.phone = phone || undefined
-    user.gender = gender
-    user.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : undefined
-    user.roles = roles
-    
-    // Update active role if current one is not in new roles
-    if (!roles.includes(user.activeRole || "")) {
-      user.activeRole = roles[0]
-    }
-
-    await user.save()
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        ...userData,
+        updatedAt: new Date()
+      },
+      { new: true, runValidators: true }
+    ).select("-password").lean()
 
     revalidatePath("/dashboard/admin/users")
 
-    return { 
-      success: true, 
-      message: "User updated successfully",
-      user: sanitizeUser(user)
+    return {
+      success: true,
+      data: {
+        ...updatedUser,
+        _id: updatedUser!._id.toString()
+      } as UserData
     }
   } catch (error) {
     console.error("Error updating user:", error)
-    return { success: false, message: "Failed to update user" }
+    return { success: false, error: "Failed to update user" }
   }
 }
 
 /**
- * Resets a user's password to the default password "User123!"
- * @param userId - ID of the user to reset password for
- * @returns Promise<ResetPasswordToDefaultResult>
+ * Delete user
  */
-export async function resetPasswordToDefault(userId: string): Promise<ResetPasswordToDefaultResult> {
+export async function deleteUser(userId: string): Promise<ActionResult> {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id || !session.user.roles.includes("admin")) {
-      return { success: false, message: "Not authorized" }
+    if (!session?.user?.roles?.includes("admin")) {
+      throw new Error("Unauthorized: Admin access required")
+    }
+
+    await dbConnect()
+
+    // Check if user exists
+    const user = await User.findById(userId)
+    if (!user) {
+      return { success: false, error: "User not found" }
+    }
+
+    // Prevent deleting admin users (safety check)
+    if (user.roles.includes("admin")) {
+      return { success: false, error: "Cannot delete admin users" }
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(userId)
+
+    revalidatePath("/dashboard/admin/users")
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting user:", error)
+    return { success: false, error: "Failed to delete user" }
+  }
+}
+
+/**
+ * Reset user password to default
+ */
+export async function resetUserPassword(userId: string, newPassword: string = "User123!"): Promise<ActionResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      throw new Error("Unauthorized: Admin access required")
+    }
+
+    await dbConnect()
+
+    // Check if user exists
+    const user = await User.findById(userId)
+    if (!user) {
+      return { success: false, error: "User not found" }
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 12)
+
+    // Update password
+    await User.findByIdAndUpdate(userId, {
+      password: hashedPassword,
+      updatedAt: new Date()
+    })
+
+    revalidatePath("/dashboard/admin/users")
+
+    return { success: true, data: { newPassword } }
+  } catch (error) {
+    console.error("Error resetting password:", error)
+    return { success: false, error: "Failed to reset password" }
+  }
+}
+
+/**
+ * Toggle user role
+ */
+export async function toggleUserRole(userId: string, role: string): Promise<ActionResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      throw new Error("Unauthorized: Admin access required")
     }
 
     await dbConnect()
 
     const user = await User.findById(userId)
     if (!user) {
-      return { success: false, message: "User not found" }
+      return { success: false, error: "User not found" }
     }
 
-    // Hash the default password "User123!"
-    const defaultPassword = "User123!"
-    const hashedPassword = await bcrypt.hash(defaultPassword, 12)
+    // Toggle role
+    const currentRoles = user.roles || []
+    const hasRole = currentRoles.includes(role as any)
+    
+    let newRoles
+    if (hasRole) {
+      // Remove role
+      newRoles = currentRoles.filter(r => r !== role)
+    } else {
+      // Add role
+      newRoles = [...currentRoles, role]
+    }
 
-    // Update user's password
-    user.password = hashedPassword
-    await user.save()
+    // Ensure at least one role remains
+    if (newRoles.length === 0) {
+      newRoles = ["member"]
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        roles: newRoles,
+        updatedAt: new Date()
+      },
+      { new: true }
+    ).select("-password").lean()
 
     revalidatePath("/dashboard/admin/users")
 
-    return { 
-      success: true, 
-      message: `Password reset to default for user ${user.name || user.email}. New password: ${defaultPassword}`
+    return {
+      success: true,
+      data: {
+        ...updatedUser,
+        _id: updatedUser!._id.toString()
+      } as UserData
     }
   } catch (error) {
-    console.error("Error resetting password to default:", error)
-    return { success: false, message: "Failed to reset password" }
+    console.error("Error toggling user role:", error)
+    return { success: false, error: "Failed to toggle user role" }
+  }
+}
+
+/**
+ * Get user statistics
+ */
+export async function getUserStats(): Promise<ActionResult> {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.roles?.includes("admin")) {
+      throw new Error("Unauthorized: Admin access required")
+    }
+
+    await dbConnect()
+
+    const [
+      totalUsers,
+      adminUsers,
+      professionalUsers,
+      memberUsers,
+      partnerUsers,
+      verifiedEmails,
+      verifiedPhones
+    ] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ roles: { $in: ["admin"] } }),
+      User.countDocuments({ roles: { $in: ["professional"] } }),
+      User.countDocuments({ roles: { $in: ["member"] } }),
+      User.countDocuments({ roles: { $in: ["partner"] } }),
+      User.countDocuments({ emailVerified: { $exists: true, $ne: null } }),
+      User.countDocuments({ phoneVerified: { $exists: true, $ne: null } })
+    ])
+
+    return {
+      success: true,
+      data: {
+        totalUsers,
+        roleStats: {
+          admin: adminUsers,
+          professional: professionalUsers,
+          member: memberUsers,
+          partner: partnerUsers
+        },
+        verificationStats: {
+          emailVerified: verifiedEmails,
+          phoneVerified: verifiedPhones
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error getting user stats:", error)
+    return { success: false, error: "Failed to get user statistics" }
   }
 } 

@@ -203,3 +203,4 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
 PhoneInput.displayName = "PhoneInput"
 
 export { PhoneInput }
+export default PhoneInput

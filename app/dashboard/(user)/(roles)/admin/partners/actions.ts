@@ -8,10 +8,12 @@ import { authOptions } from "@/lib/auth/auth"
 import { Types } from "mongoose"
 import { revalidatePath } from "next/cache"
 import {
-  createUserByAdmin,
-  updateUserByAdmin,
-  deleteUserByAdmin,
-} from "@/actions/admin-actions"
+  createUser,
+  updateUser,
+  deleteUser,
+  type CreateUserData,
+  type UpdateUserData
+} from "@/app/dashboard/(user)/(roles)/admin/users/actions"
 
 interface GetPartnersOptions {
   page?: number
@@ -122,22 +124,23 @@ export async function createPartner(formData: FormData) {
   try {
     await requireAdmin()
 
-    const userForm = new FormData()
-    userForm.append("name", String(formData.get("name") || ""))
-    userForm.append("email", String(formData.get("email") || ""))
-    userForm.append("phone", String(formData.get("phone") || ""))
-    userForm.append("gender", String(formData.get("gender") || "male"))
-    if (formData.get("password")) userForm.append("password", String(formData.get("password")))
-    userForm.append("roles[]", "partner")
+    const userData: CreateUserData = {
+      name: String(formData.get("name") || ""),
+      email: String(formData.get("email") || "") || undefined,
+      phone: String(formData.get("phone") || ""),
+      password: String(formData.get("password") || "User123!"),
+      gender: (formData.get("gender") as "male" | "female" | "other") || "male",
+      roles: ["partner"]
+    }
 
-    const userRes = await createUserByAdmin(userForm)
-    if (!userRes.success || !userRes.user) {
-      return { success: false, error: userRes.message || "Failed to create user" }
+    const userRes = await createUser(userData)
+    if (!userRes.success || !userRes.data) {
+      return { success: false, error: userRes.error || "Failed to create user" }
     }
 
     await dbConnect()
     const profile = await PartnerProfile.create({
-      userId: userRes.user.id,
+      userId: userRes.data._id,
       businessNumber: formData.get("businessNumber"),
       contactName: formData.get("contactName"),
     })
@@ -166,15 +169,16 @@ export async function updatePartner(id: string, formData: FormData) {
     const existing = await PartnerProfile.findById(id)
     if (!existing) return { success: false, error: "Partner not found" }
 
-    const userForm = new FormData()
-    userForm.append("name", String(formData.get("name") || ""))
-    userForm.append("email", String(formData.get("email") || ""))
-    userForm.append("phone", String(formData.get("phone") || ""))
-    userForm.append("gender", String(formData.get("gender") || "male"))
-    userForm.append("roles[]", "partner")
+    const userData: UpdateUserData = {
+      name: String(formData.get("name") || ""),
+      email: String(formData.get("email") || "") || undefined,
+      phone: String(formData.get("phone") || ""),
+      gender: (formData.get("gender") as "male" | "female" | "other") || "male",
+      roles: ["partner"]
+    }
 
-    const res = await updateUserByAdmin(String(existing.userId), userForm)
-    if (!res.success) return { success: false, error: res.message }
+    const res = await updateUser(String(existing.userId), userData)
+    if (!res.success) return { success: false, error: res.error }
 
     existing.businessNumber = String(formData.get("businessNumber") || "")
     existing.contactName = String(formData.get("contactName") || "")
@@ -203,7 +207,7 @@ export async function removePartner(id: string) {
     if (!existing) return { success: false, error: "Partner not found" }
 
     await PartnerProfile.findByIdAndDelete(id)
-    await deleteUserByAdmin(String(existing.userId))
+    await deleteUser(String(existing.userId))
 
     revalidatePath("/dashboard/admin/partners")
     return { success: true }

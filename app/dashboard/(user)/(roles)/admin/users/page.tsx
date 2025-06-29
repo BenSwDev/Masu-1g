@@ -1,75 +1,130 @@
-import { redirect } from "next/navigation"
-import { requireUserSession } from "@/lib/auth/require-session"
-import { getAllUsers, getUserStatistics } from "./actions"
-import { UserManagement, type UserData } from "@/components/dashboard/admin/user-management/user-management"
+import { Suspense } from "react"
+import { getAllUsers, getUserStats } from "./actions"
+import UserManagementClient from "@/components/dashboard/admin/user-management/user-management-client"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/common/ui/card"
+import { Users, UserCheck, UserX, Shield, Briefcase, User, Crown } from "lucide-react"
 
-export const dynamic = "force-dynamic"
-
-export interface RoleCounts {
-  members: number
-  professionals: number
-  partners: number
-}
-
-interface AdminUsersPageProps {
+interface UsersPageProps {
   searchParams: {
-    // No longer a Promise, Next.js 13+ provides it directly
-    page?: string
     search?: string
-    roles?: string // For filtering, if kept
-    sortField?: string
-    sortDirection?: "asc" | "desc"
+    role?: string
+    gender?: string
+    emailVerified?: string
+    phoneVerified?: string
+    page?: string
+    limit?: string
+    sortBy?: string
+    sortOrder?: string
   }
 }
 
-export default async function AdminUsersPage({ searchParams }: AdminUsersPageProps) {
-  const session = await requireUserSession()
-  if (!session.user.roles?.includes("admin")) {
-    redirect("/dashboard")
+export default async function UsersPage({ searchParams }: UsersPageProps) {
+  // Parse search params
+  const filters = {
+    search: searchParams.search || "",
+    role: searchParams.role || "",
+    gender: searchParams.gender || "",
+    emailVerified: searchParams.emailVerified === "true" ? true : 
+                   searchParams.emailVerified === "false" ? false : undefined,
+    phoneVerified: searchParams.phoneVerified === "true" ? true : 
+                   searchParams.phoneVerified === "false" ? false : undefined,
+    page: parseInt(searchParams.page || "1"),
+    limit: parseInt(searchParams.limit || "20"),
+    sortBy: searchParams.sortBy || "createdAt",
+    sortOrder: (searchParams.sortOrder as "asc" | "desc") || "desc"
   }
 
-  const page = Number.parseInt(searchParams.page || "1")
-  const search = searchParams.search
-  const roleFilterParams = searchParams.roles ? searchParams.roles.split(",") : undefined
-  const sortField = searchParams.sortField || "name"
-  const sortDirection = searchParams.sortDirection || "asc"
+  // Fetch data
+  const [usersResult, statsResult] = await Promise.all([
+    getAllUsers(filters),
+    getUserStats()
+  ])
 
-  // Fetch users
-  const usersResult = await getAllUsers(
-    page,
-    10,
-    search,
-    roleFilterParams,
-    sortField,
-    sortDirection as "asc" | "desc",
-  )
-
-  const users: UserData[] = usersResult.success ? usersResult.users : []
-  const totalPages = usersResult.totalPages || 1
-
-  // Fetch user statistics
-  const statsResult = await getUserStatistics()
-  const roleCounts: RoleCounts = statsResult.success && statsResult.roleCounts
-    ? statsResult.roleCounts
-    : { members: 0, professionals: 0, partners: 0 }
+  const stats = statsResult.success ? statsResult.data : null
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">User Management</h1>
-        <p className="text-muted-foreground">Manage users, their roles, and system access.</p>
+      {/* Page Header */}
+      <div>
+        <h1 className="text-3xl font-bold">ניהול משתמשים</h1>
+        <p className="text-muted-foreground mt-2">
+          ניהול כל המשתמשים במערכת - צפייה, עריכה, יצירה ומחיקה
+        </p>
       </div>
 
-      <UserManagement
-        initialUsers={users}
-        totalPages={totalPages}
-        currentPage={page}
-        initialSearchTerm={search}
-        initialRoleFilter={roleFilterParams}
-        initialSortField={sortField}
-        initialSortDirection={sortDirection as "asc" | "desc"}
-        roleCounts={roleCounts}
-      />
+      {/* Statistics Cards */}
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">סך הכל משתמשים</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">מנהלים</CardTitle>
+              <Crown className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.roleStats.admin}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">מטפלים</CardTitle>
+              <Briefcase className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.roleStats.professional}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">חברים</CardTitle>
+              <User className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.roleStats.member}</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Main Content */}
+      <Suspense fallback={<UserManagementSkeleton />}>
+        <UserManagementClient 
+          initialData={usersResult}
+          initialFilters={filters}
+          stats={stats}
+        />
+      </Suspense>
     </div>
   )
 }
+
+function UserManagementSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="animate-pulse space-y-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-16 bg-gray-200 rounded"></div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+} 

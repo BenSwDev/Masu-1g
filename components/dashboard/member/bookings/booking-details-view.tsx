@@ -34,7 +34,7 @@ import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { IUser } from "@/lib/db/models/user"
-import { cn, formatCurrency, formatDateTimeIsraeli } from "@/lib/utils"
+import { cn, formatCurrency, formatDateTimeIsraeli, formatPhoneForDisplay } from "@/lib/utils"
 import type { IAddress } from "@/types/address"
 
 interface BookingDetailsViewProps {
@@ -147,10 +147,10 @@ export default function BookingDetailsView({ booking }: BookingDetailsViewProps)
       // Ensure populatedTreatment is available for treatment voucher details
       const treatmentForVoucher = voucher.voucherType === "treatment" ? populatedTreatment : null
 
-      const treatmentNameForVoucher =
-        voucher.treatmentName || (treatmentForVoucher ? treatmentForVoucher.name : selectedTreatmentName)
+      let treatmentNameForVoucher =
+        (voucher as any).treatmentName || (treatmentForVoucher ? treatmentForVoucher.name : selectedTreatmentName)
 
-      let durationNameForVoucher = voucher.selectedDurationName ? ` - ${voucher.selectedDurationName}` : ""
+      let durationNameForVoucher = (voucher as any).selectedDurationName ? ` - ${(voucher as any).selectedDurationName}` : ""
       if (
         !durationNameForVoucher &&
         voucher.voucherType === "treatment" &&

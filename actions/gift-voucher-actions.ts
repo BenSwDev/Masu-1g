@@ -424,4 +424,20 @@ export async function getMemberPurchasedVouchers(userId: string): Promise<GiftVo
     ownerUserId: userId,
     status: ['active', 'partially_used', 'sent']
   })
+}
+
+// Guest purchase functions (placeholders for now)
+export async function initiateGuestPurchaseGiftVoucher(data: any): Promise<any> {
+  // TODO: Implement guest purchase initiation
+  return { success: false, error: "Not implemented yet" }
+}
+
+export async function confirmGuestGiftVoucherPurchase(data: any): Promise<any> {
+  // TODO: Implement guest purchase confirmation
+  return { success: false, error: "Not implemented yet" }
+}
+
+export async function saveAbandonedGiftVoucherPurchase(data: any): Promise<any> {
+  // TODO: Implement abandoned purchase save
+  return { success: false, error: "Not implemented yet" }
 } 

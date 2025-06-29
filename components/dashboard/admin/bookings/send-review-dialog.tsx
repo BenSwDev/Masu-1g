@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import type { PopulatedBooking } from "@/types/booking"
 import { sendReviewReminder } from "@/actions/review-actions"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 interface SendReviewDialogProps {
   booking: PopulatedBooking

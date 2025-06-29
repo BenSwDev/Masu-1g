@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Clock, MapPin, User, Phone, Mail, CreditCard, UserCheck, UserX, CheckCircle, XCircle, AlertCircle, DollarSign } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import type { Professional } from "@/lib/types/professional"
 import type { PopulatedBooking } from "@/types/booking"
 

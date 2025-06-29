@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { getPartnerById } from "@/app/dashboard/(user)/(roles)/admin/partners/actions"
 import { User, AlertTriangle } from "lucide-react"
 import type { IPartnerProfile } from "@/lib/db/models/partner-profile"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import type { IUser } from "@/lib/db/models/user"
 
 interface PartnerProfileDialogProps {

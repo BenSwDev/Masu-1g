@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { ISubscription } from "@/lib/db/models/subscription"
 import type { ITreatment } from "@/lib/db/models/treatment"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 interface GuestInfo {
   firstName?: string

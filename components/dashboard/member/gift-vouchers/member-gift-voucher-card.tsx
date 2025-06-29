@@ -8,8 +8,8 @@ import { useTranslation } from "@/lib/translations/i18n"
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
 import { Gift, CreditCard, Calendar, User, MessageCircle, Phone, Clock, Eye, ShoppingBag } from "lucide-react"
 import { format, parseISO } from "date-fns"
-import { cn } from "@/lib/utils/utils"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { cn } from "@/lib/utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 interface MemberGiftVoucherCardProps {
   voucher: GiftVoucherPlain

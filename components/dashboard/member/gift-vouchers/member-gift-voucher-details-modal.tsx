@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { GiftVoucherPlain } from "@/actions/gift-voucher-actions"
@@ -33,7 +33,7 @@ import {
   Receipt,
   Sparkles,
 } from "lucide-react"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 
 interface MemberGiftVoucherDetailsModalProps {
   voucher: GiftVoucherPlain | null

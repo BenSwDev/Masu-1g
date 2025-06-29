@@ -12,7 +12,7 @@ import { updateNotificationPreferences } from "@/actions/preferences-actions"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { INotificationPreferences } from "@/lib/db/models/user"
 import { useSession } from "next-auth/react"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 
 interface NotificationsModalProps {
   isOpen: boolean

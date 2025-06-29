@@ -1,6 +1,6 @@
 "use client"
 
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 import type { LucideIcon } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
 

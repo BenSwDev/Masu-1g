@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { CheckCircle, User, Stethoscope, Clock, MapPin, CreditCard, ArrowLeft, Send } from "lucide-react"
 import { format } from "date-fns"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 interface BookingCreateConfirmationStepProps {
   formData: any

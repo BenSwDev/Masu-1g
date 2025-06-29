@@ -1,7 +1,7 @@
 import User from "./models/user"
 import PasswordResetToken from "./models/password-reset-token"
 import VerificationToken from "./models/verification-token"
-import { createPhoneVariations } from "@/lib/utils/phone-utils"
+import { createPhoneVariations } from "@/lib/phone-utils"
 
 /**
  * Optimized query builders with proper projections and lean queries

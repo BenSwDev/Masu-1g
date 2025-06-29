@@ -19,7 +19,7 @@ import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { updateReviewResponse } from "@/app/dashboard/(user)/(roles)/admin/reviews/actions"
 import { toast } from "sonner"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 interface ReviewDetailModalProps {
   review: PopulatedReview | null

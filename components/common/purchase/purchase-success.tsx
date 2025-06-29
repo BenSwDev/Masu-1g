@@ -4,7 +4,7 @@ import { CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTranslation } from "@/lib/translations/i18n"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 
 interface PurchaseSuccessProps {
   title?: string

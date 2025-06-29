@@ -5,7 +5,7 @@ import dbConnect from "@/lib/db/mongoose"
 import User from "@/lib/db/models/user"
 import { UserQueries } from "@/lib/db/query-builders"
 import { logger } from "@/lib/logs/logger"
-import { normalizePhoneNumber, createPhoneVariations } from "@/lib/utils/phone-utils"
+import { normalizePhoneNumber, createPhoneVariations } from "@/lib/phone-utils"
 
 export async function registerUser(formData: FormData) {
   const requestId = `reg_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`

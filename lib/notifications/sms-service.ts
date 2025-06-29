@@ -176,7 +176,7 @@ export class SMSService {
   private formatPhoneNumber(phoneNumber: string): string {
     try {
       // Use centralized phone normalization
-      const { normalizePhoneNumber, validatePhoneNumber } = require("@/lib/utils/phone-utils")
+      const { normalizePhoneNumber, validatePhoneNumber } = require("@/lib/phone-utils")
       
       const normalized = normalizePhoneNumber(phoneNumber)
       

@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils/utils"
-import { formatDate } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
+import { formatDate } from "@/lib/utils"
 import type { IPartnerCouponBatch } from "@/lib/db/models/partner-coupon-batch"
 import { useTranslation } from "@/lib/translations/i18n"
 

@@ -40,7 +40,7 @@ import type { User as NextAuthUser } from "next-auth"
 import { useTranslation } from "@/lib/translations/i18n"
 import UserSubscriptionDetailsModal from "./user-subscription-details-modal"
 import { useRouter } from "next/navigation"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 interface PopulatedUserSubscription extends Omit<IUserSubscription, 'userId' | 'subscriptionId' | 'treatmentId' | 'paymentMethodId'> {
   userId?: {

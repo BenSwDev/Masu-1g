@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, Calendar, Clock, MapPin, Phone, Mail, Home, AlertCircle } from "lucide-react"
 import { format, isValid } from "date-fns"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import { he } from "date-fns/locale"
 import Link from "next/link"
 import type { BookingInitialData } from "@/types/booking"

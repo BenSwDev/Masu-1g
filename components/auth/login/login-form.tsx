@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, type ReactNode, useRef, useEffect } from "react"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"

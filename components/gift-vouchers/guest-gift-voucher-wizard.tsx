@@ -16,7 +16,7 @@ import GuestGiftVoucherConfirmation from "./guest-gift-voucher-confirmation"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { CalculatedPriceDetails } from "@/types/booking"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 interface Props {
   treatments: ITreatment[]

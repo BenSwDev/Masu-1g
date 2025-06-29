@@ -31,7 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useTranslation } from "@/lib/translations/i18n"
 import type { PurchaseFilters, TransactionType, TransactionStatus } from "@/lib/types/purchase-summary"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 
 interface PurchaseFiltersProps {
   filters: Partial<PurchaseFilters>

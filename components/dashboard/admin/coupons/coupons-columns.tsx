@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { ICoupon } from "@/lib/db/models/coupon"
-import { formatDate, formatCurrency } from "@/lib/utils/utils"
+import { formatDate, formatCurrency } from "@/lib/utils"
 import type { TFunction } from "i18next" // Or the type from your i18n setup
 
 interface CouponColumnsProps {

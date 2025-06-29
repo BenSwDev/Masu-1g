@@ -55,7 +55,7 @@ import { ProfessionalNotificationModal } from "./professional-notification-modal
 import ReviewDetailModal from "../reviews/review-detail-modal"
 import SendReviewDialog from "./send-review-dialog"
 import { getReviewByBookingId } from "@/actions/review-actions"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 type TFunction = (key: string, options?: any) => string
 

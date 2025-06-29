@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils/utils" // Assuming cn utility
-import { formatDate } from "@/lib/utils/utils" // Assuming formatDate utility
+import { cn } from "@/lib/utils" // Assuming cn utility
+import { formatDate } from "@/lib/utils" // Assuming formatDate utility
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { useTranslation } from "@/lib/translations/i18n"
 

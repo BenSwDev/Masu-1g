@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { IPartnerCouponBatch } from "@/lib/db/models/partner-coupon-batch"
-import { formatDate, formatCurrency } from "@/lib/utils/utils"
+import { formatDate, formatCurrency } from "@/lib/utils"
 import type { TFunction } from "i18next"
 
 interface PartnerCouponBatchColumnsProps {

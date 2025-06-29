@@ -9,7 +9,7 @@ import type { PopulatedReview } from "@/types/review"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
 import { ArrowUpDown } from "lucide-react"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 type TFunction = (key: string, options?: any) => string
 

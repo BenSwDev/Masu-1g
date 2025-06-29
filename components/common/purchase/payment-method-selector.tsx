@@ -7,7 +7,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { PurchaseCard } from "./purchase-card"
 import { PaymentMethodForm } from "@/components/dashboard/member/payment-methods/payment-method-form"
 import { CreditCard, PlusCircle } from "lucide-react"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 import type { IPaymentMethod } from "@/lib/db/models/payment-method"
 
 interface PaymentMethodSelectorProps {

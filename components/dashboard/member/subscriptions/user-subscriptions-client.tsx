@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
-import { formatDate } from "@/lib/utils/utils"
+import { formatDate } from "@/lib/utils"
 import { useSubscription, cancelSubscription } from "@/actions/user-subscription-actions"
 import { toast } from "sonner"
 import { AlertModal } from "@/components/common/modals/alert-modal"

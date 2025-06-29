@@ -20,7 +20,7 @@ import {
 import MemberGiftVoucherCard from "./member-gift-voucher-card"
 import { Gift, Plus, ShoppingBag, RefreshCw, TrendingUp, Clock, XCircle } from "lucide-react"
 import MemberGiftVoucherDetailsModal from "./member-gift-voucher-details-modal"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 
 interface MemberGiftVouchersClientProps {
   initialOwnedVouchers?: GiftVoucherPlain[]

@@ -8,7 +8,7 @@ import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
 import { useState } from "react"
 import { Menu, X, Home, Calendar, CreditCard, Gift, LogOut } from "lucide-react"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 import { TreatmentsMenu } from "@/components/common/treatments-menu"
 
 export function LandingHeader() {

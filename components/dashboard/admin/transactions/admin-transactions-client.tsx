@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/translations/i18n"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import {
   Table,

@@ -13,7 +13,7 @@ import type { IPartnerCouponBatch } from "@/lib/db/models/partner-coupon-batch"
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { getBatchCoupons, updateCouponsInBatch } from "@/app/dashboard/(user)/(roles)/admin/partner-coupon-batches/actions"
 import { useTranslation } from "@/lib/translations/i18n"
-import { formatDate, formatCurrency } from "@/lib/utils/utils"
+import { formatDate, formatCurrency } from "@/lib/utils"
 import { StatusBadge } from "../coupons/coupons-columns"
 import type { ColumnDef } from "@tanstack/react-table"
 

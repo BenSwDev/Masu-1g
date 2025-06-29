@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useTranslation } from "@/lib/translations/i18n"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 
 interface PurchaseNavigationProps {
   onNext?: () => void

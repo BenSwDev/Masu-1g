@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { User, Mail, Phone, FileText, Calendar as CalendarIcon, Users } from "lucide-react"
 import { format } from "date-fns"
 import { he } from "date-fns/locale"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 
 interface GuestInfo {
   firstName: string

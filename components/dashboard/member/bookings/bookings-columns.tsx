@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
 import { he, enUS, ru } from "date-fns/locale"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
 import { 

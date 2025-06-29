@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 
 interface AnimatedContainerProps {
   children: React.ReactNode

@@ -29,7 +29,7 @@ import type { PopulatedBooking } from "@/types/booking"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { getAvailableProfessionals, assignProfessionalToBooking, updateBookingByAdmin } from "@/actions/booking-actions"
 import { PhoneInput } from "@/components/common/phone-input"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 
 type TFunction = (key: string, options?: any) => string
 

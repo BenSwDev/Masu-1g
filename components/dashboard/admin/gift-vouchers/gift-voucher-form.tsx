@@ -20,7 +20,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { CalendarIcon, Loader2 } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils/utils"
+import { cn } from "@/lib/utils"
 import { useTranslation } from "@/lib/translations/i18n"
 
 const giftVoucherStatuses = [

@@ -4,7 +4,7 @@ import { Edit, MoreVertical, Trash2, Eye } from "lucide-react"
 import type { TFunction } from "i18next"
 
 import type { IPartnerCouponBatch } from "@/lib/db/models/partner-coupon-batch"
-import { formatDate, formatCurrency } from "@/lib/utils/utils"
+import { formatDate, formatCurrency } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

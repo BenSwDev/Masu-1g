@@ -56,7 +56,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import { 
   type UserData, 
   type GetUsersResult, 

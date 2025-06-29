@@ -3,7 +3,7 @@
 import type { ICoupon } from "@/lib/db/models/coupon"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { formatDate, formatCurrency } from "@/lib/utils/utils"
+import { formatDate, formatCurrency } from "@/lib/utils"
 import { CheckCircle, Info, Copy, Clock, AlertTriangle, PowerOff } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { Button } from "@/components/ui/button"

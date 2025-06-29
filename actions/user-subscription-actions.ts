@@ -100,7 +100,7 @@ function validateGuestInfo(guestInfo: any): { valid: boolean; errors: string[] }
     errors.push('Phone is required')
   } else {
     // Use centralized phone validation
-    const { validatePhoneNumber } = require("@/lib/utils/phone-utils")
+    const { validatePhoneNumber } = require("@/lib/phone-utils")
     if (!validatePhoneNumber(guestInfo.phone)) {
       errors.push('Invalid phone number format')
     }

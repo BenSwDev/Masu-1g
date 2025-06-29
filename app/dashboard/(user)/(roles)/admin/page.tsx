@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import PurchaseStatsOverview from "@/components/common/purchase/purchase-stats-overview"
-import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
+import { formatPhoneForDisplay } from "@/lib/phone-utils"
 import Link from "next/link"
 import { ChevronLeft } from "lucide-react"
 

@@ -15,16 +15,7 @@ import { useToast } from "@/components/common/ui/use-toast"
 import { createUserByAdmin, updateUserByAdmin } from "@/actions/admin-actions"
 import { useTranslation } from "@/lib/translations/i18n"
 import { format } from "date-fns"
-
-export interface UserData {
-  id: string
-  name: string | null
-  email: string | null
-  phone?: string | null
-  roles: ("admin" | "professional" | "member" | "partner")[]
-  gender?: "male" | "female" | "other" | null
-  dateOfBirth?: string | null
-}
+import type { UserData } from "./user-management"
 
 interface UserFormDialogProps {
   isOpen: boolean

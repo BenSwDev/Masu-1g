@@ -70,10 +70,10 @@ export interface UserData {
   email: string | null
   image?: string | null
   phone?: string | null
-  roles: string[]
+  roles: ("admin" | "professional" | "member" | "partner")[]
   activeRole?: string | null
   dateOfBirth?: string | null // ISO string
-  gender?: string | null
+  gender?: "male" | "female" | "other" | null
   createdAt: string // ISO string
 }
 
@@ -142,7 +142,7 @@ const getAvatarGradient = (name?: string | null): string => {
 }
 
 // Fix role badge styling function
-const getRoleBadgeStyle = (role: string) => {
+const getRoleBadgeStyle = (role: "admin" | "professional" | "member" | "partner") => {
   const styles: Record<string, string> = {
     admin: "bg-red-50 text-red-700 border-red-200 hover:bg-red-100",
     professional: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
@@ -192,13 +192,13 @@ export function UserManagement({
   const [isLoading, setIsLoading] = useState(false) // General loading state for table actions
 
   // Fix role translation function
-  const getRoleTranslation = (role: string) => {
+  const getRoleTranslation = (role: "admin" | "professional" | "member" | "partner") => {
     const roleKey = `roles.${role.toLowerCase()}` as const
     return t(roleKey)
   }
 
   // Fix gender translation function  
-  const getGenderTranslation = (gender: string) => {
+  const getGenderTranslation = (gender: "male" | "female" | "other") => {
     const genderKey = `gender.${gender.toLowerCase()}` as const
     return t(genderKey)
   }
@@ -242,7 +242,7 @@ export function UserManagement({
   }
 
   // Display all roles for a user
-  const getRolesDisplay = (roles: string[]): React.ReactNode => {
+  const getRolesDisplay = (roles: ("admin" | "professional" | "member" | "partner")[]): React.ReactNode => {
     if (roles.length === 0) return <Badge variant="outline">{t("common.notApplicable")}</Badge>
 
     return (
@@ -256,7 +256,7 @@ export function UserManagement({
     )
   }
 
-  const getGenderDisplay = (gender?: string | null): string => {
+  const getGenderDisplay = (gender?: "male" | "female" | "other" | null): string => {
     if (!gender) return t("common.notSet")
     return getGenderTranslation(gender)
   }
@@ -473,12 +473,12 @@ export function UserManagement({
     )
   }
 
-  const getRoleLabel = (role: string) => {
+  const getRoleLabel = (role: "admin" | "professional" | "member" | "partner") => {
     const roleKey = `admin.users.roles.${role}` as const
     return t(roleKey)
   }
 
-  const getGenderLabel = (gender: string) => {
+  const getGenderLabel = (gender: "male" | "female" | "other") => {
     const genderKey = `admin.users.genders.${gender}` as const
     return t(genderKey)
   }
@@ -604,7 +604,7 @@ export function UserManagement({
                     onCheckedChange={() => handleRoleFilterChange(role)}
                     className="transition-colors duration-200"
                   >
-                    {getRoleTranslation(role)}
+                    {getRoleTranslation(role as "admin" | "professional" | "member" | "partner")}
                     {roleFilter.includes(role) && <Check className="ml-auto h-4 w-4 text-primary" />}
                   </DropdownMenuCheckboxItem>
                 ))}
@@ -645,7 +645,7 @@ export function UserManagement({
               )}
               {roleFilter.map((role) => (
                 <Badge key={role} variant="secondary" className="flex items-center gap-1">
-                  {getRoleTranslation(role)}
+                  {getRoleTranslation(role as "admin" | "professional" | "member" | "partner")}
                   <Button
                     variant="ghost"
                     size="icon"

@@ -14,6 +14,9 @@ interface CustomUser {
   email: string
   name?: string | null
   image?: string | null
+  phone?: string
+  gender?: "male" | "female" | "other"
+  dateOfBirth?: Date
   roles?: string[]
   password?: string
   activeRole?: string
@@ -112,7 +115,7 @@ export const authOptions: NextAuthOptions = {
         }
         
         const user = (await User.findOne(query).select(
-          "+password email name image roles activeRole treatmentPreferences notificationPreferences",
+          "+password email name image phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
         )) as CustomUser // Include preferences and activeRole
         if (!user) {
           throw new Error("No user found with this identifier")
@@ -132,6 +135,9 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           image: user.image,
+          phone: user.phone,
+          gender: user.gender,
+          dateOfBirth: user.dateOfBirth,
           roles: userRoles,
           activeRole: activeRole,
           treatmentPreferences: user.treatmentPreferences || defaultTreatmentPreferences,
@@ -151,7 +157,7 @@ export const authOptions: NextAuthOptions = {
         }
         await dbConnect()
         const user = (await User.findById(credentials.userId).select(
-          "email name image roles activeRole treatmentPreferences notificationPreferences",
+          "email name image phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
         )) as CustomUser // Include preferences and activeRole
         if (!user) {
           throw new Error("User not found")
@@ -164,6 +170,9 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           name: user.name,
           image: user.image,
+          phone: user.phone,
+          gender: user.gender,
+          dateOfBirth: user.dateOfBirth,
           roles: userRoles,
           activeRole: activeRole,
           treatmentPreferences: user.treatmentPreferences || defaultTreatmentPreferences,
@@ -183,12 +192,15 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id
         const customUserFromAuth = user as unknown as CustomUser // User from authorize callback
+        token.phone = customUserFromAuth.phone
+        token.gender = customUserFromAuth.gender
+        token.dateOfBirth = customUserFromAuth.dateOfBirth
         token.roles =
           customUserFromAuth.roles && customUserFromAuth.roles.length > 0 ? customUserFromAuth.roles : ["member"]
 
         // Fetch from DB to ensure latest activeRole and preferences
         const dbUser = await User.findById(token.id).select(
-          "roles activeRole treatmentPreferences notificationPreferences",
+          "phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
         )
 
         let activeRole = dbUser?.activeRole
@@ -206,7 +218,7 @@ export const authOptions: NextAuthOptions = {
       // On session update (e.g., role switch or preference update)
       else if (trigger === "update" && session) {
         const dbUser = await User.findById(token.id).select(
-          "roles activeRole treatmentPreferences notificationPreferences",
+          "phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
         )
         if (dbUser) {
           token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
@@ -220,6 +232,9 @@ export const authOptions: NextAuthOptions = {
           }
           // If preferences were updated, they should be in the session object passed to update()
           // However, it's safer to re-fetch from DB to ensure consistency
+          token.phone = dbUser.phone
+          token.gender = dbUser.gender
+          token.dateOfBirth = dbUser.dateOfBirth
           token.treatmentPreferences = dbUser.treatmentPreferences || defaultTreatmentPreferences
           token.notificationPreferences = dbUser.notificationPreferences || defaultNotificationPreferences
         }
@@ -228,7 +243,7 @@ export const authOptions: NextAuthOptions = {
       // For simplicity and to ensure freshness, we can always fetch if not first login or update
       else if (token.id) {
         const dbUser = await User.findById(token.id).select(
-          "roles activeRole treatmentPreferences notificationPreferences",
+          "phone gender dateOfBirth roles activeRole treatmentPreferences notificationPreferences",
         )
         if (dbUser) {
           token.roles = dbUser.roles && dbUser.roles.length > 0 ? dbUser.roles : ["member"]
@@ -239,6 +254,9 @@ export const authOptions: NextAuthOptions = {
             // await dbUser.save();
           }
           token.activeRole = activeRole
+          token.phone = dbUser.phone
+          token.gender = dbUser.gender
+          token.dateOfBirth = dbUser.dateOfBirth
           token.treatmentPreferences = dbUser.treatmentPreferences || defaultTreatmentPreferences
           token.notificationPreferences = dbUser.notificationPreferences || defaultNotificationPreferences
         }
@@ -254,6 +272,9 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string
         session.user.roles = token.roles as string[]
         session.user.activeRole = token.activeRole as string
+        session.user.phone = token.phone as string
+        session.user.gender = token.gender as "male" | "female" | "other"
+        session.user.dateOfBirth = token.dateOfBirth as Date
         session.user.treatmentPreferences = token.treatmentPreferences as ITreatmentPreferences // Add to session
         session.user.notificationPreferences = token.notificationPreferences as INotificationPreferences // Add to session
       }

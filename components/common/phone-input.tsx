@@ -125,24 +125,33 @@ const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>((args, re
         let newSelectedCode = defaultCountryCode
         let newPhoneNumber = ""
 
-        const matchedCountry = countryCodes.find((cc) => fullNumberValue.startsWith(cc.code))
+        // Sort country codes by length (descending) to match longer codes first
+        // This prevents +1 from matching before +12 for example
+        const sortedCountryCodes = [...countryCodes].sort((a, b) => b.code.length - a.code.length)
+        
+        const matchedCountry = sortedCountryCodes.find((cc) => fullNumberValue.startsWith(cc.code))
         if (matchedCountry) {
           newSelectedCode = matchedCountry.code
           newPhoneNumber = fullNumberValue.substring(matchedCountry.code.length)
+          
+          // Remove leading zero for Israeli numbers if code is +972 and number starts with 0
+          if (newSelectedCode === "+972" && newPhoneNumber.startsWith("0")) {
+            newPhoneNumber = newPhoneNumber.substring(1)
+          }
         } else {
           // If no country code matches, assume it's a local number for the default country code
-          // or it's already just the number part.
           newPhoneNumber = fullNumberValue
+          
+          // Remove leading zero for Israeli numbers if using default +972
+          if (newSelectedCode === "+972" && newPhoneNumber.startsWith("0")) {
+            newPhoneNumber = newPhoneNumber.substring(1)
+          }
         }
-        // Remove leading zero for Israeli numbers if code is +972 and number starts with 0
-        if (newSelectedCode === "+972" && newPhoneNumber.startsWith("0")) {
-          newPhoneNumber = newPhoneNumber.substring(1)
-        }
-
+        
         // Only update state if the values are actually different to prevent infinite loops
         if (selectedCode !== newSelectedCode || phoneNumber !== newPhoneNumber) {
-        setSelectedCode(newSelectedCode)
-        setPhoneNumber(newPhoneNumber)
+          setSelectedCode(newSelectedCode)
+          setPhoneNumber(newPhoneNumber)
         }
       }
     } else if (propsDefaultValue && phoneNumber === "") {

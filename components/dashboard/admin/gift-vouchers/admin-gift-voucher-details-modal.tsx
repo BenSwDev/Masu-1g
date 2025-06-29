@@ -250,7 +250,7 @@ export default function AdminGiftVoucherDetailsModal({
                     <span className="text-sm">
                       {daysUntilExpiry === 0 
                         ? t("giftVouchers.expiringToday")
-                        : t("giftVouchers.expiringIn", { days: daysUntilExpiry })
+                        : t("giftVouchers.expiringIn")
                       }
                     </span>
                   </div>

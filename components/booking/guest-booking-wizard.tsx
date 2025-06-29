@@ -87,6 +87,8 @@ interface UniversalBookingWizardProps {
     name?: string
     email?: string
     phone?: string
+    gender?: "male" | "female" | "other"
+    dateOfBirth?: Date
     roles?: string[]
   } | null // User session data if logged in
   initialCategory?: string
@@ -122,6 +124,8 @@ export default function UniversalBookingWizard({
         lastName: rest.join(" ") || "",
         email: currentUser.email || "",
         phone: currentUser.phone || "",
+        birthDate: (currentUser as any).dateOfBirth ? new Date((currentUser as any).dateOfBirth) : undefined,
+        gender: (currentUser as any).gender,
         isBookingForSomeoneElse: false,
         bookerNotificationMethod: "email", // Default for logged in users
         bookerNotificationLanguage: "he"
@@ -232,7 +236,10 @@ export default function UniversalBookingWizard({
   const lockedFields = useMemo(() => {
     // If user is logged in, lock their basic info
     if (currentUser) {
-      return ["firstName", "lastName", "email", "phone"] as const
+      const baseFields = ["firstName", "lastName"] as const
+      const fieldsWithPhone = currentUser.phone ? [...baseFields, "phone"] as const : baseFields
+      const fieldsWithEmail = currentUser.email ? [...fieldsWithPhone, "email"] as const : fieldsWithPhone
+      return fieldsWithEmail
     }
     
     // Check redemption data from code input first

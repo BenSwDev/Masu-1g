@@ -78,6 +78,9 @@ export default async function UniversalBookTreatmentPage({
             id: session.user.id,
             name: session.user.name || undefined,
             email: session.user.email || undefined,
+            phone: session.user.phone || undefined,
+            gender: session.user.gender || undefined,
+            dateOfBirth: session.user.dateOfBirth || undefined,
             roles: session.user.roles || undefined,
           } : null}
           voucher={voucher}

@@ -19,7 +19,8 @@ import {
   Phone,
   Mail,
   UserCheck,
-  UserX
+  UserX,
+  Eye
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -44,6 +45,7 @@ import {
   SelectValue,
 } from "@/components/common/ui/select"
 import { toast } from "sonner"
+import { useToast } from "@/components/common/ui/use-toast"
 import type { PopulatedBooking } from "@/types/booking"
 import { assignProfessionalToBooking, getAvailableProfessionals, getSuitableProfessionalsForBooking, unassignProfessionalFromBooking } from "@/actions/booking-actions"
 // Removed unused import - now using unified notification system
@@ -102,10 +104,12 @@ const formatCreatedAtSafe = (date: string | Date | null | undefined): string => 
 // Admin Actions Component
 const AdminBookingActions = ({ 
   booking, 
-  t 
+  t,
+  onViewBooking
 }: { 
   booking: PopulatedBooking; 
   t: TFunction;
+  onViewBooking?: (booking: PopulatedBooking) => void;
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [showNotesModal, setShowNotesModal] = useState(false)
@@ -114,6 +118,7 @@ const AdminBookingActions = ({
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [showNotificationModal, setShowNotificationModal] = useState(false)
   const queryClient = useQueryClient()
+  const { toast } = useToast()
 
   const { data: existingReview, isLoading: loadingReview, refetch: refetchReview } = useQuery({
     queryKey: ["bookingReview", booking._id],
@@ -133,17 +138,36 @@ const AdminBookingActions = ({
   const canViewResponses = ["confirmed", "in_process"].includes(booking.status)
 
   const handleDropdownClick = (e: React.MouseEvent) => {
-    e.preventDefault() // Prevent any default behavior
-    e.stopPropagation() // Prevent row click when clicking dropdown
-    e.nativeEvent.stopImmediatePropagation() // Stop all event propagation
+    e.preventDefault()
+    e.stopPropagation()
+    e.nativeEvent.stopImmediatePropagation()
   }
 
   const handleSendReviewReminder = () => {
-    setShowSendReviewModal(true)
+    toast({
+      title: t("adminBookings.actions.reviewReminderSent"),
+      description: t("adminBookings.actions.reviewReminderDescription"),
+    })
   }
 
   return (
-    <>
+    <div className="flex items-center space-x-1">
+      {/* View Booking Button */}
+      {onViewBooking && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation()
+            onViewBooking(booking)
+          }}
+          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+        >
+          <Eye className="h-4 w-4 mr-1" />
+          {t("adminBookings.actions.viewBooking")}
+        </Button>
+      )}
+      
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button
@@ -296,7 +320,7 @@ const AdminBookingActions = ({
           onUpdate={refetchReview}
         />
       )}
-    </>
+    </div>
   )
 }
 
@@ -1134,6 +1158,7 @@ export const getAdminBookingColumns = (
         <AdminBookingActions 
           booking={row.original} 
           t={t} 
+          onViewBooking={onRowClick}
         />
       </div>
     ),

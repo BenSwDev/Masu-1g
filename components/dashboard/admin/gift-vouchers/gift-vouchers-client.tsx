@@ -470,15 +470,17 @@ export function GiftVouchersClient({ initialVouchers, initialPagination }: GiftV
                 </div>
               ) : (
                 <div className="rounded-md border bg-card">
-                  <div className="hidden md:grid grid-cols-8 gap-4 p-4 font-semibold text-sm text-muted-foreground border-b">
-                    <div>{t("giftVouchers.fields.code")}</div>
-                    <div>{t("giftVouchers.fields.voucherType")}</div>
-                    <div>{t("giftVouchers.fields.owner")}</div>
-                    <div>{t("giftVouchers.fields.purchaseDate")}</div>
-                    <div>{t("giftVouchers.fields.validUntil")}</div>
-                    <div>{t("giftVouchers.fields.status")}</div>
-                    <div>{t("giftVouchers.purchase.sendAsGift")}</div>
-                    <div className="text-right">{t("common.actions")}</div>
+                  <div className="hidden md:grid grid-cols-12 gap-4 p-4 font-semibold text-sm text-muted-foreground border-b">
+                    <div className="col-span-1">{t("giftVouchers.fields.code")}</div>
+                    <div className="col-span-1">{t("giftVouchers.fields.voucherType")}</div>
+                    <div className="col-span-2">{t("giftVouchers.fields.owner")}</div>
+                    <div className="col-span-2">{t("giftVouchers.purchase.guestInfo")}</div>
+                    <div className="col-span-1">{t("giftVouchers.fields.amount")}</div>
+                    <div className="col-span-1">{t("giftVouchers.fields.purchaseDate")}</div>
+                    <div className="col-span-1">{t("giftVouchers.fields.validUntil")}</div>
+                    <div className="col-span-1">{t("giftVouchers.fields.status")}</div>
+                    <div className="col-span-1">{t("giftVouchers.purchase.sendAsGift")}</div>
+                    <div className="col-span-1 text-right">{t("common.actions")}</div>
                   </div>
                   {vouchers.map((voucher) => (
                     <GiftVoucherRow

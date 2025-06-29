@@ -489,6 +489,11 @@
     "usedQuantity": "כמות בשימוש",
     "userId": "מזהה משתמש",
     "view": "צפייה",
+    "actions": {
+      "viewBooking": "צפייה בהזמנה",
+      "reviewReminderSent": "תזכורת חוות דעת נשלחה",
+      "reviewReminderDescription": "תזכורת לכתיבת חוות דעת נשלחה ללקוח"
+    },
     "resendToClient": "שליחה חוזרת ללקוח",
     "assignEditRemoveProfessional": "הסר/ערוך/שייך מטפל",
     "sendToProfessionals": "שלח לתפוצת מטפלים",
@@ -1552,6 +1557,7 @@
         "value": "ערך",
         "voucherType": "סוג שובר"
       },
+      "noOwner": "אין בעלים",
       "filterByStatus": "סנן לפי סטטוס",
       "isGiftBadge": "מתנה",
       "myVouchers": {
@@ -1637,7 +1643,8 @@
         "step5_confirmation": "שלב 5: אישור",
         "title": "רכישת שובר מתנה",
         "totalPrice": "מחיר כולל",
-        "treatmentVoucher": "שובר טיפול"
+        "treatmentVoucher": "שובר טיפול",
+        "guestInfo": "מידע רוכש"
       },
       "redeem": {
         "applyVoucher": "החל שובר",
@@ -4444,6 +4451,8 @@
     "sendNow": "שלח עכשיו",
     "sendOnDate": "שלח בתאריך מסוים",
     "selectTime": "בחר שעה",
+    "selectDate": "בחר תאריך",
+    "pickDate": "בחר תאריך",
     "paymentDetailsTitle": "פרטי תשלום",
     "paymentDetailsDescription": "בדוק את פרטי התשלום לפני השליחה",
     "selectPaymentMethod": "בחר אמצעי תשלום",

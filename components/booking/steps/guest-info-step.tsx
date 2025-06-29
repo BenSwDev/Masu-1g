@@ -613,21 +613,63 @@ export function GuestInfoStep({
                     <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <div className="flex items-center gap-2 text-blue-800">
                         <span className="font-medium">שובר מתנה</span>
-                        <span className="text-sm">(כל השוברים הם מתנות)</span>
+                        <span className="text-sm">(השובר יישלח למקבל המתנה)</span>
                       </div>
                     </div>
 
-                    {watchIsGift && (
-                      <>
+                    <FormField
+                      control={form.control}
+                      name="greetingMessage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("purchaseGiftVoucher.greetingMessage")}</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder={t("purchaseGiftVoucher.greetingPlaceholder")} rows={3} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="sendOption"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("purchaseGiftVoucher.sendDate")}</FormLabel>
+                          <div className="flex gap-4">
+                            <Button type="button" variant={field.value === "immediate" ? "default" : "outline"} onClick={() => field.onChange("immediate")} className="flex-1">
+                              {t("purchaseGiftVoucher.sendNow")}
+                            </Button>
+                            <Button type="button" variant={field.value === "scheduled" ? "default" : "outline"} onClick={() => field.onChange("scheduled")} className="flex-1">
+                              {t("purchaseGiftVoucher.sendOnDate")}
+                            </Button>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    {form.watch("sendOption") === "scheduled" && (
+                      <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
-                          name="greetingMessage"
+                          name="sendDate"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t("purchaseGiftVoucher.greetingMessage")}</FormLabel>
-                              <FormControl>
-                                <Textarea placeholder={t("purchaseGiftVoucher.greetingPlaceholder")} rows={3} {...field} />
-                              </FormControl>
+                              <FormLabel>{t("purchaseGiftVoucher.selectDate")}</FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button variant="outline" className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>
+                                      {field.value ? format(field.value, "PPP") : <span>{t("purchaseGiftVoucher.pickDate")}</span>}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar mode="single" selected={field.value} onSelect={field.onChange} disabled={(date) => date < new Date()} initialFocus />
+                                </PopoverContent>
+                              </Popover>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -635,67 +677,24 @@ export function GuestInfoStep({
 
                         <FormField
                           control={form.control}
-                          name="sendOption"
+                          name="sendTime"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t("purchaseGiftVoucher.sendDate")}</FormLabel>
-                              <div className="flex gap-4">
-                                <Button type="button" variant={field.value === "immediate" ? "default" : "outline"} onClick={() => field.onChange("immediate")} className="flex-1">
-                                  {t("purchaseGiftVoucher.sendNow")}
-                                </Button>
-                                <Button type="button" variant={field.value === "scheduled" ? "default" : "outline"} onClick={() => field.onChange("scheduled")} className="flex-1">
-                                  {t("purchaseGiftVoucher.sendOnDate")}
-                                </Button>
-                              </div>
+                              <FormLabel>{t("purchaseGiftVoucher.selectTime")}</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger className="h-11">
+                                  <SelectValue placeholder={t("purchaseGiftVoucher.selectTime")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {timeOptions.map((time) => (
+                                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </FormItem>
                           )}
                         />
-
-                        {watchSendOption === "scheduled" && (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
-                            <FormField
-                              control={form.control}
-                              name="sendDate"
-                              render={({ field }) => (
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-start text-start font-normal h-11">
-                                      <CalendarIcon className={cn("h-4 w-4", dir === "rtl" ? "ml-2" : "mr-2")} />
-                                      {field.value ? format(field.value, "PPP") : <span>{t("common.pickDate")}</span>}
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-auto p-0">
-                                    <Calendar
-                                      mode="single"
-                                      selected={field.value}
-                                      onSelect={field.onChange}
-                                      initialFocus
-                                      disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))}
-                                    />
-                                  </PopoverContent>
-                                </Popover>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="sendTime"
-                              render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <SelectTrigger className="h-11">
-                                    <SelectValue placeholder={t("purchaseGiftVoucher.selectTime")} />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {timeOptions.map((time) => (
-                                      <SelectItem key={time} value={time}>{time}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              )}
-                            />
-                          </div>
-                        )}
-                      </>
+                      </div>
                     )}
                   </div>
                 )}

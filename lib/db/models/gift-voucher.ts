@@ -18,6 +18,11 @@ export interface GiftVoucherPlain {
   purchaserName?: string // For display
   ownerUserId: string
   ownerName?: string // For display
+  guestInfo?: { // Guest information for non-user purchases
+    name: string
+    email: string
+    phone: string
+  }
   isGift: boolean
   recipientName?: string
   recipientPhone?: string

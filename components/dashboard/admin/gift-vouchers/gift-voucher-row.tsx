@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Clock,
   Send,
+  Gift,
 } from "lucide-react"
 import { Button } from "@/components/common/ui/button" // Corrected import path
 import { Badge } from "@/components/common/ui/badge" // Corrected import path
@@ -85,175 +86,103 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
   const statusDisplay = t(`giftVouchers.statuses.${voucher.status}`)
 
   return (
-    <TooltipProvider delayDuration={100}>
+    <TooltipProvider>
       <div
-        className="grid grid-cols-1 md:grid-cols-8 gap-4 items-center p-4 border-b last:border-b-0 hover:bg-gray-50/50 transition-colors text-sm cursor-pointer"
+        className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors"
         onClick={() => onViewDetails?.(voucher)}
       >
-        <div className="font-medium truncate">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="cursor-default">{voucher.code}</span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {t("giftVouchers.fields.code")}: {voucher.code}
-              </p>
-            </TooltipContent>
-          </Tooltip>
+        {/* Code */}
+        <div className="col-span-1">
+          <div className="font-mono text-sm font-medium">
+            {voucher.code}
+          </div>
         </div>
 
-        <div className="truncate">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center">
-                {voucher.voucherType === "monetary" ? (
-                  <CircleDollarSign className="h-4 w-4 mr-1 text-green-600" />
-                ) : (
-                  <Tag className="h-4 w-4 mr-1 text-purple-600" />
-                )}
-                {voucher.voucherType === "monetary"
-                  ? `${voucher.monetaryValue?.toFixed(2)} ILS (Rem: ${voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)})`
-                  : voucher.treatmentName || "N/A"}
-                {voucher.voucherType === "treatment" && voucher.selectedDurationName && (
-                  <span className="text-xs text-gray-500 ml-1">({voucher.selectedDurationName})</span>
-                )}
+        {/* Voucher Type */}
+        <div className="col-span-1">
+          <Badge variant={voucher.voucherType === "treatment" ? "default" : "secondary"}>
+            {voucher.voucherType === "treatment" ? t("giftVouchers.treatmentVoucher") : t("giftVouchers.monetaryVoucher")}
+          </Badge>
+        </div>
+
+        {/* Owner */}
+        <div className="col-span-2">
+          <div className="space-y-1">
+            <div className="font-medium text-sm">
+              {voucher.ownerName || t("giftVouchers.noOwner")}
+            </div>
+            {voucher.ownerUserId && (
+              <div className="text-xs text-gray-500">
+                ID: {voucher.ownerUserId.toString().slice(-6)}
               </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {t("giftVouchers.fields.voucherType")}: {voucher.voucherType}
-              </p>
-              {voucher.voucherType === "monetary" && (
-                <p>
-                  {t("giftVouchers.fields.value")}: {voucher.monetaryValue?.toFixed(2)} ILS
-                </p>
-              )}
-              {voucher.voucherType === "monetary" && (
-                <p>
-                  {t("giftVouchers.fields.remainingAmount")}:{" "}
-                  {voucher.remainingAmount?.toFixed(2) ?? voucher.monetaryValue?.toFixed(2)} ILS
-                </p>
-              )}
-              {voucher.voucherType === "treatment" && (
-                <p>
-                  {t("giftVouchers.fields.treatment")}: {voucher.treatmentName || "N/A"}
-                </p>
-              )}
-              {voucher.voucherType === "treatment" && voucher.selectedDurationName && (
-                <p>
-                  {t("giftVouchers.fields.duration")}: {voucher.selectedDurationName}
-                </p>
-              )}
-            </TooltipContent>
-          </Tooltip>
+            )}
+          </div>
         </div>
 
-        <div className="truncate">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center">
-                <UserCircle className="h-4 w-4 mr-1 text-gray-600" />
-                {/* Display Owner (for gifts this is the recipient) */}
-                {voucher.isGift ? (
-                  <div className="flex items-center gap-1">
-                    <span>{voucher.recipientName || voucher.ownerName || t("common.unknown")}</span>
-                    <Badge variant="outline" className="text-xs">
-                      {t("giftVouchers.myVouchers.giftedTo")}
-                    </Badge>
-                  </div>
-                ) : (
-                  <span>{voucher.ownerName || (voucher.ownerUserId ? voucher.ownerUserId : `${t("userSubscriptions.guest")}: ${(voucher as any).guestInfo?.name || t("common.unknown")}`)}</span>
+        {/* Guest Info */}
+        <div className="col-span-2">
+          <div className="space-y-1">
+            {voucher.purchaserName && (
+              <div className="text-sm font-medium">
+                {voucher.purchaserName}
+              </div>
+            )}
+            {voucher.guestInfo && (
+              <div className="text-xs text-gray-600 space-y-1">
+                <div>📧 {voucher.guestInfo.email || t("common.notProvided")}</div>
+                <div>📱 {formatPhoneForDisplay(voucher.guestInfo.phone || "")}</div>
+              </div>
+            )}
+            {voucher.isGift && (
+              <div className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                🎁 מתנה
+                {voucher.recipientName && (
+                  <div>ל: {voucher.recipientName}</div>
                 )}
               </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              {voucher.isGift ? (
-                <>
-                  <p>
-                    {t("giftVouchers.fields.recipientName")}: {voucher.recipientName || t("common.unknown")}
-                  </p>
-                  <p>
-                    {t("common.phone")}: {formatPhoneForDisplay(voucher.recipientPhone || "")}
-                  </p>
-                  <p>
-                    {t("giftVouchers.fields.purchaser")}: {voucher.purchaserName || t("common.unknown")}
-                  </p>
-                </>
-              ) : (
-                <>
-                  {voucher.ownerName ? (
-                    <>
-                      <p>
-                        {t("giftVouchers.fields.owner")}: {voucher.ownerName}
-                      </p>
-                      <p>
-                        {t("common.id")}: {voucher.ownerUserId}
-                      </p>
-                    </>
-                  ) : (voucher as any).guestInfo ? (
-                    <>
-                      <p>
-                        {t("giftVouchers.fields.owner")}: {(voucher as any).guestInfo.name} ({t("userSubscriptions.guest")})
-                      </p>
-                      <p>
-                        {t("common.email")}: {(voucher as any).guestInfo.email}
-                      </p>
-                      <p>
-                        {t("common.phone")}: {formatPhoneForDisplay((voucher as any).guestInfo.phone || "")}
-                      </p>
-                    </>
-                  ) : (
-                    <p>{t("giftVouchers.fields.owner")}: {t("common.unknown")}</p>
-                  )}
-                </>
-              )}
-            </TooltipContent>
-          </Tooltip>
+            )}
+          </div>
         </div>
 
-        {/* Purchase Date Column */}
-        <div className="truncate">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center">
-                <CalendarDays className="h-4 w-4 mr-1 text-gray-600" />
-                {format(purchaseDate, "dd/MM/yy")}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {t("giftVouchers.fields.purchaseDate")}: {format(purchaseDate, "MMM d, yyyy")}
-              </p>
-            </TooltipContent>
-          </Tooltip>
+        {/* Amount */}
+        <div className="col-span-1">
+          <div className="text-sm font-medium">
+            ₪{voucher.amount || voucher.monetaryValue || 0}
+          </div>
+          {voucher.voucherType === "treatment" && voucher.treatmentName && (
+            <div className="text-xs text-gray-500">
+              {voucher.treatmentName}
+            </div>
+          )}
+          {voucher.remainingAmount !== undefined && voucher.remainingAmount !== voucher.amount && (
+            <div className="text-xs text-orange-600">
+              נותר: ₪{voucher.remainingAmount}
+            </div>
+          )}
         </div>
 
-        {/* Expiry Date (Days Remaining) Column */}
-        <div className="truncate">
+        {/* Purchase Date */}
+        <div className="col-span-1">
+          <div className="text-sm">
+            {format(
+              typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate,
+              "dd/MM/yy",
+            )}
+          </div>
+          <div className="text-xs text-gray-500">
+            {format(
+              typeof voucher.purchaseDate === "string" ? parseISO(voucher.purchaseDate) : voucher.purchaseDate,
+              "HH:mm",
+            )}
+          </div>
+        </div>
+
+        {/* Valid Until */}
+        <div className="col-span-1">
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center">
-                <CalendarDays className="h-4 w-4 mr-1 text-gray-600" />
+              <div className="text-sm">
                 {format(validUntilDate, "dd/MM/yy")}
-                {(() => {
-                  const daysLeft = differenceInDays(validUntilDate, new Date())
-                  if (daysLeft < 0) {
-                    return <span className="text-xs text-red-500 ml-1">({t("giftVouchers.expiredShort")})</span>
-                  }
-                  if (daysLeft === 0) {
-                    return (
-                      <span className="text-xs text-orange-500 ml-1">
-                        ({t(`giftVouchers.fields.expiresToday.${daysLeft}`)})
-                      </span>
-                    )
-                  }
-                  return (
-                    <span className="text-xs text-gray-500 ml-1">
-                      ({t(`giftVouchers.fields.daysRemainingShortCount.${daysLeft}`)})
-                    </span>
-                  )
-                })()}
               </div>
             </TooltipTrigger>
             <TooltipContent>
@@ -267,7 +196,8 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
           </Tooltip>
         </div>
 
-        <div>
+        {/* Status */}
+        <div className="col-span-1">
           <Tooltip>
             <TooltipTrigger asChild>
               <Badge
@@ -299,46 +229,27 @@ export function GiftVoucherRow({ voucher, onEdit, onDelete, onViewDetails }: Gif
           </Tooltip>
         </div>
 
-        <div className="truncate">
+        {/* Gift Info */}
+        <div className="col-span-1">
           {voucher.isGift ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge variant="outline" className="cursor-default">
-                  {t("giftVouchers.isGiftBadge")}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t("giftVouchers.purchase.sendAsGift")}</p>
-                {voucher.recipientName && (
-                  <p>
-                    {t("giftVouchers.myVouchers.giftedTo")}: {voucher.recipientName}
-                  </p>
-                )}
-                {voucher.greetingMessage && (
-                  <p>
-                    {t("giftVouchers.fields.greetingMessage")}: {voucher.greetingMessage}
-                  </p>
-                )}
-              </TooltipContent>
-            </Tooltip>
+            <div className="space-y-1">
+              <Badge variant="outline" className="text-purple-600 border-purple-200">
+                <Gift className="h-3 w-3 mr-1" />
+                מתנה
+              </Badge>
+              {voucher.greetingMessage && (
+                <div className="text-xs text-gray-500 truncate" title={voucher.greetingMessage}>
+                  💌 {voucher.greetingMessage}
+                </div>
+              )}
+            </div>
           ) : (
-            <span className="text-xs text-gray-500">{t("giftVouchers.myVouchers.ownedVouchers")}</span>
+            <span className="text-xs text-gray-400">לא מתנה</span>
           )}
         </div>
 
-        <div className="flex justify-end space-x-1 md:space-x-2">
-          {/* Optional View Details Button 
-        {onViewDetails && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" onClick={() => onViewDetails(voucher)} title="View Details">
-                <Eye className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent><p>View Details</p></TooltipContent>
-          </Tooltip>
-        )}
-        */}
+        {/* Actions */}
+        <div className="col-span-1 flex justify-end space-x-1 md:space-x-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

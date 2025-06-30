@@ -207,7 +207,6 @@ export async function getAvailableTimeSlots(
             timeSlots.push({
               time: formatTz(currentTime, "HH:mm", { timeZone: TIMEZONE }),
               isAvailable: true,
-              datetime: currentTime.toISOString(),
             })
           }
           
@@ -288,7 +287,7 @@ export async function isTimeSlotAvailable(
       return { available: false, reason: "Working hours not configured" }
     }
 
-    const daySettings = getDayWorkingHours(dateTime, settings as IWorkingHoursSettings)
+    const daySettings = getDayWorkingHours(dateTime, settings as unknown as IWorkingHoursSettings)
     if (!daySettings || !daySettings.isActive) {
       return { available: false, reason: "Closed on selected date" }
     }
@@ -387,7 +386,7 @@ export async function getWorkingHoursForDate(dateString: string): Promise<{
       return { success: false, error: "Working hours not configured" }
     }
 
-    const daySettings = getDayWorkingHours(date, settings)
+    const daySettings = getDayWorkingHours(date, settings as unknown as IWorkingHoursSettings)
     
     return {
       success: true,

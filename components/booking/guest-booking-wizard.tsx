@@ -530,12 +530,14 @@ export default function UniversalBookingWizard({
       const saveFormState = async () => {
         try {
           const result = await saveAbandonedBooking(userId, {
-            guestInfo,
-            guestAddress,
-            bookingOptions,
-            calculatedPrice,
-            currentStep,
-          })
+            formState: {
+              guestInfo,
+              guestAddress,
+              bookingOptions,
+              calculatedPrice,
+              currentStep,
+            }
+          } as any)
           
           if (!result.success) {
             console.warn("Failed to save form state:", result.error)

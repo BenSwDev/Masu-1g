@@ -23,7 +23,7 @@ export interface GuestInfo {
   
   // Notification preferences
   bookerNotificationMethod?: "email" | "sms" | "both"
-  bookerNotificationLanguage?: string
+  bookerNotificationLanguage?: "he" | "en" | "ru"
   recipientNotificationMethod?: "email" | "sms" | "both"
   recipientNotificationMethods?: "email" | "sms" | "both"
   

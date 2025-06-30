@@ -23,6 +23,7 @@ export interface Booking {
   treatmentCategory?: string
   selectedDurationId?: string
   selectedDurationName?: string
+  treatmentDuration?: number // Duration in minutes
   
   // Scheduling
   bookingDateTime: string

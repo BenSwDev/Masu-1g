@@ -80,8 +80,8 @@ export async function sendUnifiedProfessionalNotifications(
       })
     } else if (options.sendToAllSuitable) {
       // Automatic notifications to all suitable professionals
-      const { findSuitableProfessionals } = await import("@/actions/booking-actions")
-      const suitableResult = await findSuitableProfessionals(options.bookingId)
+      const { getSuitableProfessionalsForBooking } = await import("@/actions/booking-actions")
+      const suitableResult = await getSuitableProfessionalsForBooking(options.bookingId)
       
       if (!suitableResult.success || !suitableResult.professionals) {
         return { success: false, error: "No suitable professionals found" }
@@ -89,9 +89,9 @@ export async function sendUnifiedProfessionalNotifications(
 
       // Convert suitable professionals to notification format
       professionalsToNotify = suitableResult.professionals.map(prof => ({
-        professionalId: prof.userId._id.toString(),
-        email: !!prof.userId.email,
-        sms: !!prof.userId.phone
+        professionalId: prof._id.toString(),
+        email: !!prof.email,
+        sms: !!prof.phone
       }))
 
       logger.info("Sending notifications to all suitable professionals", {
@@ -160,7 +160,7 @@ export async function sendUnifiedProfessionalNotifications(
 
         // Prepare notification
         const responseLink = `${process.env.NEXT_PUBLIC_APP_URL}/professional/booking-response/${response._id.toString()}`
-        const userLanguage = professional.preferredLanguage || "he"
+        const userLanguage = (professional as any).preferredLanguage || "he"
 
         const notificationData = {
           type: "professional-booking-notification" as const,

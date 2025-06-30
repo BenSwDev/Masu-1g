@@ -100,6 +100,15 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
             cityName: (area as any).cityName || "",
             distanceRadius: area.distanceRadius,
             coveredCities: area.coveredCities?.map(String) || []
+          })) || [],
+          financialTransactions: result.professional.financialTransactions?.map(transaction => ({
+            type: transaction.type,
+            amount: transaction.amount,
+            description: transaction.description,
+            date: transaction.date,
+            bookingId: transaction.bookingId ? String(transaction.bookingId) : undefined,
+            adminUserId: transaction.adminUserId ? String(transaction.adminUserId) : undefined,
+            adminNote: transaction.adminNote
           })) || []
         }}
       />

@@ -427,11 +427,38 @@ export async function initiateGuestPurchaseGiftVoucher(data: any): Promise<any> 
 }
 
 export async function confirmGuestGiftVoucherPurchase(data: any): Promise<any> {
-  // TODO: Implement guest purchase confirmation
-  return { success: false, error: "Not implemented yet" }
+  // TODO: Implement guest gift voucher purchase confirmation
+  return { success: false, error: "Not implemented" }
 }
 
 export async function saveAbandonedGiftVoucherPurchase(data: any): Promise<any> {
-  // TODO: Implement abandoned purchase save
-  return { success: false, error: "Not implemented yet" }
+  // TODO: Implement abandoned gift voucher purchase saving
+  return { success: false, error: "Not implemented" }
+}
+
+/**
+ * Delete a gift voucher (admin only)
+ */
+export async function deleteGiftVoucher(voucherId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await dbConnect()
+
+    const voucher = await GiftVoucher.findById(voucherId)
+    if (!voucher) {
+      return { success: false, error: "Gift voucher not found" }
+    }
+
+    // Check if voucher has been used
+    if (voucher.status === "fully_used" || voucher.status === "partially_used") {
+      return { success: false, error: "Cannot delete a voucher that has been used" }
+    }
+
+    await GiftVoucher.findByIdAndDelete(voucherId)
+
+    logger.info("Gift voucher deleted", { voucherId, code: voucher.code })
+    return { success: true }
+  } catch (error) {
+    logger.error("Error deleting gift voucher:", { error, voucherId })
+    return { success: false, error: "Failed to delete gift voucher" }
+  }
 } 

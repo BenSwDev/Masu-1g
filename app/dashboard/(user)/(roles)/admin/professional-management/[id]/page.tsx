@@ -93,7 +93,13 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
             treatmentId: String(treatment.treatmentId),
             durationId: treatment.durationId ? String(treatment.durationId) : undefined,
             professionalPrice: treatment.professionalPrice,
-            treatmentName: treatment.treatmentName
+            treatmentName: (treatment as any).treatmentName || ""
+          })) || [],
+          workAreas: result.professional.workAreas?.map(area => ({
+            cityId: String(area.cityId),
+            cityName: (area as any).cityName || "",
+            distanceRadius: area.distanceRadius,
+            coveredCities: area.coveredCities?.map(String) || []
           })) || []
         }}
       />

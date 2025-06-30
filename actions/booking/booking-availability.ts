@@ -167,7 +167,7 @@ export async function getAvailableTimeSlots(
     }).lean()
 
     // Generate time slots based on working hours
-    if ('workingHours' in daySettings && daySettings.workingHours) {
+    if ('workingHours' in daySettings && daySettings.workingHours && Array.isArray(daySettings.workingHours)) {
       for (const workingPeriod of daySettings.workingHours) {
         const [startHour, startMinute] = workingPeriod.startTime.split(":").map(Number)
         const [endHour, endMinute] = workingPeriod.endTime.split(":").map(Number)
@@ -198,7 +198,7 @@ export async function getAvailableTimeSlots(
           // Check for conflicts with existing bookings
           const hasConflict = existingBookings.some(booking => {
             const bookingStart = new Date(booking.bookingDateTime)
-            const bookingEnd = new Date(bookingStart.getTime() + (booking.treatmentDuration || 60) * 60000)
+            const bookingEnd = new Date(bookingStart.getTime() + ((booking as any).treatmentDuration || 60) * 60000)
             
             return (currentTime < bookingEnd && slotEndTime > bookingStart)
           })
@@ -206,7 +206,7 @@ export async function getAvailableTimeSlots(
           if (!hasConflict) {
             timeSlots.push({
               time: formatTz(currentTime, "HH:mm", { timeZone: TIMEZONE }),
-              available: true,
+              isAvailable: true,
               datetime: currentTime.toISOString(),
             })
           }
@@ -273,7 +273,7 @@ export async function isTimeSlotAvailable(
 
     const hasConflict = conflictingBookings.some(booking => {
       const bookingStart = new Date(booking.bookingDateTime)
-      const bookingEnd = new Date(bookingStart.getTime() + (booking.treatmentDuration || 60) * 60000)
+      const bookingEnd = new Date(bookingStart.getTime() + ((booking as any).treatmentDuration || 60) * 60000)
       
       return dateTime < bookingEnd && slotEndTime > bookingStart
     })
@@ -288,7 +288,7 @@ export async function isTimeSlotAvailable(
       return { available: false, reason: "Working hours not configured" }
     }
 
-    const daySettings = getDayWorkingHours(dateTime, settings)
+    const daySettings = getDayWorkingHours(dateTime, settings as IWorkingHoursSettings)
     if (!daySettings || !daySettings.isActive) {
       return { available: false, reason: "Closed on selected date" }
     }
@@ -299,7 +299,7 @@ export async function isTimeSlotAvailable(
       const [hour, minute] = timeString.split(":").map(Number)
       const timeInMinutes = hour * 60 + minute
       
-      const isWithinWorkingHours = daySettings.workingHours.some(period => {
+      const isWithinWorkingHours = (daySettings.workingHours as any[])?.some((period: any) => {
         const [startHour, startMinute] = period.startTime.split(":").map(Number)
         const [endHour, endMinute] = period.endTime.split(":").map(Number)
         const startInMinutes = startHour * 60 + startMinute
@@ -350,7 +350,7 @@ export async function checkBookingConflicts(
 
     const conflictingBookings = potentialConflicts.filter(booking => {
       const bookingStart = new Date(booking.bookingDateTime)
-      const bookingEnd = new Date(bookingStart.getTime() + (booking.treatmentDuration || 60) * 60000)
+      const bookingEnd = new Date(bookingStart.getTime() + ((booking as any).treatmentDuration || 60) * 60000)
       
       return dateTime < bookingEnd && slotEndTime > bookingStart
     })

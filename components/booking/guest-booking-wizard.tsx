@@ -419,12 +419,14 @@ export default function UniversalBookingWizard({
       // Create a minimal booking with "abandoned_pending_payment" status
       // This ensures the booking appears in admin bookings list immediately
       const result = await saveAbandonedBooking(userId, {
-        guestInfo: guestInfoData,
-        guestAddress: {}, // Empty initially
-        bookingOptions: {}, // Empty initially  
-        calculatedPrice: null, // Empty initially
-        currentStep: 1,
-      })
+        formState: {
+          guestInfo: guestInfoData,
+          guestAddress: {}, // Empty initially
+          bookingOptions: {}, // Empty initially  
+          calculatedPrice: null, // Empty initially
+          currentStep: 1,
+        }
+      } as any)
       
       if (result.success) {
         toast({
@@ -447,8 +449,8 @@ export default function UniversalBookingWizard({
         try {
           const result = await getAbandonedBooking(currentUser.id)
           
-          if (result.success && result.booking) {
-            setAbandonedBooking(result.booking)
+          if (result.success && result.abandonedBooking) {
+            setAbandonedBooking(result.abandonedBooking)
             setShowRecoveryDialog(true)
           }
         } catch (error) {
@@ -464,8 +466,8 @@ export default function UniversalBookingWizard({
         try {
           const result = await getAbandonedBooking(savedUserId)
           
-          if (result.success && result.booking) {
-            setAbandonedBooking(result.booking)
+          if (result.success && result.abandonedBooking) {
+            setAbandonedBooking(result.abandonedBooking)
             setGuestUserId(savedUserId)
             setShowRecoveryDialog(true)
           }
@@ -1304,7 +1306,7 @@ export default function UniversalBookingWizard({
         return (
           <GuestPaymentStep
             calculatedPrice={calculatedPrice}
-            guestInfo={guestInfo}
+            guestInfo={guestInfo as any}
             setGuestInfo={setGuestInfo}
             onConfirm={handleFinalSubmit}
             onPrev={prevStep}

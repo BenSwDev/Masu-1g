@@ -6,19 +6,13 @@ import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
 import type {
   GiftVoucher as GiftVoucherPlain,
-  IGiftVoucherDocument,
   GiftVoucherCreateForm,
   GiftVoucherUpdateForm,
   GiftVoucherResponse,
   GiftVoucherListResponse,
-  GiftVoucherPaymentResult,
   GiftVoucherRedemption
 } from "@/types/core"
-import { NotificationManager } from "@/lib/notifications/notification-manager"
-import {
-  type EmailRecipient,
-  type PhoneRecipient,
-} from "@/lib/notifications/notification-types"
+
 
 // ============================================================================
 // UTILITY FUNCTIONS

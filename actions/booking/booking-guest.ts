@@ -124,7 +124,7 @@ export async function createGuestBooking(
 
       const newBooking = new Booking({
         ...validatedPayload,
-        userId: new mongoose.Types.ObjectId(guestUserId),
+        userId: new mongoose.Types.ObjectId(guestUserId!),
         bookingNumber,
         bookedByUserName: guestUser!.name,
         bookedByUserEmail: guestUser!.email || undefined,
@@ -496,7 +496,7 @@ export async function validateRedemptionCode(
 
     if (coupon) {
       // Check usage limits
-      if (coupon.maxUses && coupon.timesUsed >= coupon.maxUses) {
+      if ((coupon as any).maxUses && coupon.timesUsed >= (coupon as any).maxUses) {
         return { 
           success: false, 
           error: "bookings.errors.couponExhausted" 
@@ -511,7 +511,7 @@ export async function validateRedemptionCode(
           discountType: coupon.discountType,
           discountValue: coupon.discountValue,
           description: coupon.description,
-          maxDiscount: coupon.maxDiscount
+          maxDiscount: (coupon as any).maxDiscount
         }
       }
     }

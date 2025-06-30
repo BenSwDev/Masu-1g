@@ -52,7 +52,7 @@ export async function createReview(
       return { success: false, error: "Can only review completed treatments" }
     }
 
-    if (booking.userId.toString() !== session.user.id) {
+    if (booking.userId?.toString() !== session.user.id) {
       return { success: false, error: "Unauthorized" }
     }
 
@@ -475,7 +475,7 @@ export async function sendReviewReminder(
     const lang = (booking.userId as any)?.notificationPreferences?.language || "he"
     const recipientName = booking.recipientName || (booking.userId as any)?.name || ""
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || ""
-    const reviewLink = `${baseUrl}/dashboard/member/bookings?bookingId=${booking._id.toString()}`
+    const reviewLink = `${baseUrl}/dashboard/member/bookings?bookingId=${(booking._id as any)?.toString()}`
 
     const recipients: NotificationRecipient[] = []
 

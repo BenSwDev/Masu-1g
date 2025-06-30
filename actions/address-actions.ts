@@ -25,7 +25,7 @@ const addressBaseSchema = z.object({
 const apartmentSchema = addressBaseSchema.extend({
   addressType: z.literal("apartment"),
   apartmentDetails: z.object({
-    floor: z.number().min(0, "Floor cannot be negative").optional(), // Made optional to align with typical UI
+    floor: z.number().min(0, "Floor cannot be negative"), // Remove optional to match IAddress
     apartmentNumber: z.string().min(1, "Apartment number is required"),
     entrance: z.string().optional(),
   }),
@@ -143,7 +143,7 @@ export async function createAddress(data: z.infer<typeof addressSchema>) {
       userId: new mongoose.Types.ObjectId(session.user.id),
       country: "ישראל", // Default country from schema is fine, but can be explicit
       fullAddress: fullAddress, // Add the constructed fullAddress
-    }
+    } as Partial<IAddress>
 
     const address = await AddressQueries.createAddress(addressDataWithUserAndFullAddress)
 
@@ -173,7 +173,7 @@ export async function updateAddress(id: string, data: z.infer<typeof addressSche
     const addressDataWithFullAddress = {
       ...validatedData,
       fullAddress: fullAddress, // Add the constructed fullAddress
-    }
+    } as Partial<IAddress>
 
     const address = await AddressQueries.updateAddress(
       id,

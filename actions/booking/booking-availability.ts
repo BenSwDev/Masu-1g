@@ -114,7 +114,7 @@ export async function getAvailableTimeSlots(
     } else if (treatment.pricingType === "duration_based") {
       if (!selectedDurationId) return { success: false, error: "bookings.errors.durationRequired" }
       const durationObj = treatment.durations?.find(
-        d => d._id.toString() === selectedDurationId && d.isActive
+        d => d._id?.toString() === selectedDurationId && d.isActive
       )
       if (!durationObj) return { success: false, error: "bookings.errors.durationNotFound" }
       treatmentDurationMinutes = durationObj.minutes
@@ -264,7 +264,7 @@ export async function isTimeSlotAvailable(
     if (treatment.pricingType === "fixed") {
       treatmentDurationMinutes = treatment.defaultDurationMinutes || 60
     } else if (treatment.pricingType === "duration_based" && selectedDurationId) {
-      const durationObj = treatment.durations?.find(d => d._id.toString() === selectedDurationId)
+      const durationObj = treatment.durations?.find(d => d._id?.toString() === selectedDurationId)
       if (durationObj) {
         treatmentDurationMinutes = durationObj.minutes
       }
@@ -419,5 +419,13 @@ export async function getWorkingHoursForDate(dateString: string): Promise<{
   }
 }
 
-// Export the function for use in other modules
-export { getDayWorkingHours }
+// Export additional utility functions that might be needed by the index file
+export function generateTimeSlots() {
+  // Placeholder function - implement if needed
+  return []
+}
+
+export function filterAvailableSlots() {
+  // Placeholder function - implement if needed
+  return []
+}

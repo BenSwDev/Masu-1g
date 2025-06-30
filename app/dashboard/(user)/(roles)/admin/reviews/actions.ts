@@ -115,7 +115,7 @@ export async function getAllReviews(
 
     if (typeof hasProfessionalResponse === "boolean") {
       if (hasProfessionalResponse) {
-        query.professionalResponse = { $exists: true, $ne: null, $ne: "" }
+        query.professionalResponse = { $exists: true, $ne: "" }
       } else {
         query.$or = [
           { professionalResponse: { $exists: false } },
@@ -323,7 +323,7 @@ export async function getReviewStatistics(): Promise<GetReviewStatisticsResult> 
           { $sort: { _id: 1 } },
         ]),
         Review.countDocuments({
-          professionalResponse: { $exists: true, $ne: null, $ne: "" },
+          professionalResponse: { $exists: true, $ne: "" },
         }),
       ])
 

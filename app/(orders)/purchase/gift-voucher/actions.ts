@@ -17,7 +17,7 @@ export interface SerializedTreatmentDuration {
 export interface SerializedTreatment {
   _id: string
   name: string
-  description: string
+  description?: string
   category: string
   pricingType: "fixed" | "duration_based"
   fixedPrice?: number
@@ -47,7 +47,7 @@ export async function getTreatmentsForSelection(): Promise<GetTreatmentsResult> 
       treatments: treatments.map(treatment => ({
         _id: treatment._id.toString(),
         name: treatment.name,
-        description: treatment.description,
+        description: treatment.description || "",
         category: treatment.category,
         pricingType: treatment.pricingType,
         fixedPrice: treatment.fixedPrice,

@@ -1,4 +1,4 @@
-import { getGiftVouchers } from "@/actions/gift-voucher-actions"
+import { getGiftVouchersList } from "@/actions/gift-voucher-actions"
 import type { GiftVoucher } from "@/types/core"
 import { GiftVouchersClient } from "@/components/dashboard/admin/gift-vouchers/gift-vouchers-client"
 import { Suspense } from "react"
@@ -47,7 +47,7 @@ function DataFetchError({ error }: { error?: string }) {
 async function GiftVouchersData() {
   try {
     // Initial load with default parameters
-    const result = await getGiftVouchers(1, 10, "", {}) // page, limit, search, filters
+    const result = await getGiftVouchersList(1, 10, "", {}) // page, limit, search, filters
 
     if (!result.success || !result.giftVouchers || !result.pagination) {
       console.error("Failed to load gift vouchers:", result.error)

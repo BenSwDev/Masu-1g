@@ -89,13 +89,12 @@ export default function ProfessionalBookingManagementPage() {
 
   const handleAcceptBooking = async () => {
     setActionLoading(true)
-    const result = await professionalAcceptBooking(bookingId)
-    if (result.success && result.booking) {
+    const result = await professionalAcceptBooking(bookingId, currentProfessionalId || "")
+    if (result.success) {
       toast({
         title: t("professionalBookingManagement.toasts.accepted.title"),
         description: t("professionalBookingManagement.toasts.accepted.description"),
       })
-      // setBooking(prev => ({...prev, ...result.booking, status: result.booking?.status || prev?.status, professionalId: result.booking?.professionalId || prev?.professionalId  })); // Update local state
       await fetchBookingDetails() // Re-fetch to get latest state
     } else {
       toast({
@@ -110,12 +109,11 @@ export default function ProfessionalBookingManagementPage() {
   const handleMarkEnRoute = async () => {
     setActionLoading(true)
     const result = await professionalMarkEnRoute(bookingId)
-    if (result.success && result.booking) {
+    if (result.success) {
       toast({
         title: t("professionalBookingManagement.toasts.enRoute.title"),
         description: t("professionalBookingManagement.toasts.enRoute.description"),
       })
-      // setBooking(prev => ({...prev, ...result.booking, status: result.booking?.status || prev?.status }));
       await fetchBookingDetails()
     } else {
       toast({
@@ -130,12 +128,11 @@ export default function ProfessionalBookingManagementPage() {
   const handleMarkCompleted = async () => {
     setActionLoading(true)
     const result = await professionalMarkCompleted(bookingId)
-    if (result.success && result.booking) {
+    if (result.success) {
       toast({
         title: t("professionalBookingManagement.toasts.completed.title"),
         description: t("professionalBookingManagement.toasts.completed.description"),
       })
-      // setBooking(prev => ({...prev, ...result.booking, status: result.booking?.status || prev?.status }));
       await fetchBookingDetails()
     } else {
       toast({

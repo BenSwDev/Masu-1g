@@ -8,6 +8,7 @@ import Booking, { type IBooking } from "@/lib/db/models/booking"
 import type { ITreatment, ITreatmentDuration } from "@/lib/db/models/treatment"
 import type { IUser } from "@/lib/db/models/user"
 import type { IAddress } from "@/lib/db/models/address"
+import type { BookingStatus } from "@/lib/db/models/booking"
 import { logger } from "@/lib/logs/logger"
 
 // Define a more specific type for the booking details needed by the professional view
@@ -35,7 +36,7 @@ export interface BookingDetailsForProfessional
     _id: Types.ObjectId
     name?: string
   } | null
-  status: string // Ensure status is always a string
+  status: BookingStatus // Use proper BookingStatus type
 }
 
 export async function getBookingByIdForProfessional(bookingId: string): Promise<{

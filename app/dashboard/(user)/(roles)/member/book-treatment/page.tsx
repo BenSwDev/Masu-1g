@@ -24,7 +24,10 @@ export default async function BookTreatmentPage({
   return (
     <UniversalBookingWizard
       initialData={initialDataResult.data}
-      currentUser={session.user}
+      currentUser={{
+        ...session.user,
+        name: session.user.name || undefined,
+      }}
       initialCategory={searchParams?.category}
     />
   )

@@ -150,7 +150,7 @@ export async function verifyResetToken(token: string): Promise<{
 
     // Check if token has expired
     const now = new Date()
-    if (now > tokenData.expiryDate) {
+    if (now > (tokenData as any).expiryDate) {
       // TODO: Remove debug log
 
       await PasswordResetToken.deleteOne({ _id: tokenData._id })

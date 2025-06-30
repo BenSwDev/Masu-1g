@@ -36,7 +36,7 @@ export async function getSubscriptions(): Promise<{
         : null,
     }))
 
-    return { success: true, subscriptions: serializedSubscriptions }
+    return { success: true, subscriptions: serializedSubscriptions as any }
   } catch (error) {
     logger.error("Error fetching subscriptions:", error)
     return { success: false, error: "Failed to fetch subscriptions" }
@@ -76,7 +76,7 @@ export async function getSubscriptionById(id: string): Promise<{
         : null,
     }
 
-    return { success: true, subscription: serializedSubscription }
+    return { success: true, subscription: serializedSubscription as any }
   } catch (error) {
     logger.error("Error fetching subscription:", error)
     return { success: false, error: "Failed to fetch subscription" }
@@ -238,7 +238,7 @@ export async function getActiveSubscriptionsForPurchase(): Promise<{
         : null,
     }))
 
-    return { success: true, subscriptions: serializedSubscriptions }
+    return { success: true, subscriptions: serializedSubscriptions as any }
   } catch (error) {
     logger.error("Error fetching active subscriptions:", {
       error: error instanceof Error ? error.message : String(error),

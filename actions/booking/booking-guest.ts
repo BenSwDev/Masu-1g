@@ -83,10 +83,15 @@ export async function createGuestBooking(
       })
       
       await newUser.save()
-      guestUser = newUser.toObject()
-      guestUserId = String(guestUser._id)
+      guestUser = newUser.toObject() as any
+      guestUserId = String(newUser._id)
     } else {
       guestUserId = String(guestUser._id)
+    }
+
+    // Ensure guestUserId is valid before proceeding
+    if (!guestUserId) {
+      throw new Error("Failed to create or retrieve guest user ID")
     }
 
     let bookingAddressSnapshot: IBookingAddressSnapshot | undefined
@@ -193,9 +198,9 @@ export async function createGuestBooking(
         validatedPayload.priceDetails.appliedGiftVoucherId &&
         validatedPayload.priceDetails.voucherAppliedAmount > 0
       ) {
-        const voucher = (await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(
+        const voucher = await GiftVoucher.findById(validatedPayload.priceDetails.appliedGiftVoucherId).session(
           mongooseDbSession,
-        )) as IGiftVoucher | null
+        )
         if (!voucher) throw new Error("bookings.errors.voucherNotFoundDuringCreation")
         if (!voucher.isActive && voucher.status !== "sent")
           throw new Error("bookings.errors.voucherRedemptionFailedInactive")
@@ -474,7 +479,7 @@ export async function validateRedemptionCode(
           amount: giftVoucher.amount,
           remainingAmount: giftVoucher.remainingAmount || giftVoucher.amount,
           treatmentId: giftVoucher.treatmentId,
-          description: giftVoucher.description || giftVoucher.giftMessage
+          description: giftVoucher.greetingMessage || "Gift voucher"
         }
       }
     }

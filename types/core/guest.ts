@@ -4,26 +4,28 @@
  */
 
 export interface GuestInfo {
-  firstName: string
-  lastName: string
+  firstName?: string
+  lastName?: string
   email?: string
-  phone: string
+  phone?: string
   birthDate?: Date
   gender?: "male" | "female" | "other"
   
-  // Booking-specific fields
+  // Booking for someone else fields
   isBookingForSomeoneElse?: boolean
-  
-  // Recipient fields (when booking for someone else)
   recipientName?: string
-  recipientPhone?: string
+  recipientFirstName?: string
+  recipientLastName?: string
   recipientEmail?: string
+  recipientPhone?: string
   recipientBirthDate?: Date
   recipientGender?: "male" | "female" | "other"
   
   // Notification preferences
   bookerNotificationMethod?: "email" | "sms" | "both"
-  bookerNotificationLanguage?: "he" | "en" | "ru"
+  bookerNotificationLanguage?: string
+  recipientNotificationMethod?: "email" | "sms" | "both"
+  recipientNotificationMethods?: "email" | "sms" | "both"
   
   // Optional marketing consent
   marketingConsent?: boolean
@@ -37,20 +39,28 @@ export interface GuestInfo {
 }
 
 export interface GuestAddress {
-  city: string
-  street: string
+  city?: string
+  street?: string
   streetNumber?: string
+  houseNumber?: string
   apartment?: string
+  apartmentNumber?: string
   entrance?: string
   floor?: string
   notes?: string
+  
+  // Address type specific fields
+  addressType?: "house" | "apartment" | "office" | "hotel" | "other"
   doorName?: string
   buildingName?: string
   hotelName?: string
   roomNumber?: string
+  instructions?: string
   otherInstructions?: string
+  
+  // Parking
+  parking?: boolean
   hasPrivateParking?: boolean
-  fullAddress?: string
 }
 
 export interface GuestUserData {

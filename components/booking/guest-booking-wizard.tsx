@@ -496,12 +496,10 @@ export default function UniversalBookingWizard({
         guestUserCreatedRef.current = true
         try {
           const result = await createGuestUser({
-            firstName: guestInfo.firstName.trim(),
-            lastName: guestInfo.lastName.trim(),
+            name: `${guestInfo.firstName.trim()} ${guestInfo.lastName.trim()}`,
             email: guestInfo.email.trim(),
             phone: guestInfo.phone.trim(),
-            birthDate: guestInfo.birthDate,
-            gender: guestInfo.gender,
+            language: "he"
           })
           if (result.success && result.userId) {
             setGuestUserId(result.userId)
@@ -657,7 +655,7 @@ export default function UniversalBookingWizard({
         variant: "destructive",
         title: t(result.error || "bookings.errors.calculatePriceFailedTitle") || result.error || "Error calculating price",
         description: result.issues
-          ? result.issues.map((issue) => issue.message).join(", ")
+          ? result.issues.map((issue: any) => issue.message).join(", ")
           : t(result.error || "bookings.errors.calculatePriceFailedTitle"),
       })
       setCalculatedPrice(null)
@@ -741,12 +739,10 @@ export default function UniversalBookingWizard({
       if (guestInfo.firstName && guestInfo.lastName && guestInfo.email && guestInfo.phone) {
         try {
           const result = await createGuestUser({
-            firstName: guestInfo.firstName,
-            lastName: guestInfo.lastName,
-            email: guestInfo.email,
+            name: `${guestInfo.firstName} ${guestInfo.lastName}`,
+            email: guestInfo.email || "",
             phone: guestInfo.phone,
-            birthDate: guestInfo.birthDate,
-            gender: guestInfo.gender,
+            language: "he"
           })
           
           if (result.success && result.userId) {
@@ -891,20 +887,20 @@ export default function UniversalBookingWizard({
         redeemedGiftVoucherId:
           bookingOptions.source === "gift_voucher_redemption" ? bookingOptions.selectedGiftVoucherId : undefined,
         customAddressDetails: {
-          fullAddress: `${guestAddress.street} ${guestAddress.houseNumber}, ${guestAddress.city}`,
+          fullAddress: `${guestAddress.street} ${guestAddress.streetNumber}, ${guestAddress.city}`,
           city: guestAddress.city || "",
           street: guestAddress.street || "",
-          streetNumber: guestAddress.houseNumber || "",
-          apartment: guestAddress.apartmentNumber || undefined,
+          streetNumber: guestAddress.streetNumber || "",
+          apartment: guestAddress.apartment || undefined,
           entrance: guestAddress.entrance,
           floor: guestAddress.floor,
           notes: guestAddress.notes,
-          doorName: guestAddress.addressType === "house" ? guestAddress.doorName : undefined,
-          buildingName: guestAddress.addressType === "office" ? guestAddress.buildingName : undefined,
-          hotelName: guestAddress.addressType === "hotel" ? guestAddress.hotelName : undefined,
-          roomNumber: guestAddress.addressType === "hotel" ? guestAddress.roomNumber : undefined,
-          otherInstructions: guestAddress.addressType === "other" ? guestAddress.instructions : undefined,
-          hasPrivateParking: guestAddress.parking || false,
+          doorName: guestAddress.doorName,
+          buildingName: guestAddress.buildingName,
+          hotelName: guestAddress.hotelName,
+          roomNumber: guestAddress.roomNumber,
+          otherInstructions: guestAddress.otherInstructions,
+          hasPrivateParking: guestAddress.hasPrivateParking || false,
         },
         priceDetails: calculatedPrice!,
         paymentDetails: {
@@ -917,7 +913,7 @@ export default function UniversalBookingWizard({
         },
         isBookingForSomeoneElse: Boolean(guestInfo.isBookingForSomeoneElse),
         recipientName: guestInfo.isBookingForSomeoneElse 
-          ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
+          ? guestInfo.recipientName || ""
           : `${guestInfo.firstName} ${guestInfo.lastName}`,
         recipientEmail: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientEmail
@@ -935,15 +931,15 @@ export default function UniversalBookingWizard({
         notificationMethods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
                             guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
         recipientNotificationMethods: guestInfo.isBookingForSomeoneElse ? 
-          (guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
-           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"]) : undefined,
+          (guestInfo.recipientNotificationMethods === "both" ? ["email", "sms"] :
+           guestInfo.recipientNotificationMethods === "sms" ? ["sms"] : ["email"]) : undefined,
         notificationLanguage: guestInfo.bookerNotificationLanguage || "he",
         // Add required fields for schema compatibility
         // treatmentCategory will be handled in the backend to convert to ObjectId
         consents: {
           customerAlerts: guestInfo.bookerNotificationMethod === "sms" ? "sms" : "email",
           patientAlerts: guestInfo.isBookingForSomeoneElse 
-            ? (guestInfo.recipientNotificationMethod === "sms" ? "sms" : "email")
+            ? (guestInfo.recipientNotificationMethods === "sms" ? "sms" : "email")
             : (guestInfo.bookerNotificationMethod === "sms" ? "sms" : "email"),
           marketingOptIn: true,
           termsAccepted: true
@@ -1143,20 +1139,20 @@ export default function UniversalBookingWizard({
         redeemedGiftVoucherId:
           bookingOptions.source === "gift_voucher_redemption" ? bookingOptions.selectedGiftVoucherId : undefined,
         customAddressDetails: {
-          fullAddress: `${guestAddress.street} ${guestAddress.houseNumber}, ${guestAddress.city}`,
+          fullAddress: `${guestAddress.street} ${guestAddress.streetNumber}, ${guestAddress.city}`,
           city: guestAddress.city || "",
           street: guestAddress.street || "",
-          streetNumber: guestAddress.houseNumber || "",
-          apartment: guestAddress.apartmentNumber || undefined,
+          streetNumber: guestAddress.streetNumber || "",
+          apartment: guestAddress.apartment || undefined,
           entrance: guestAddress.entrance,
           floor: guestAddress.floor,
           notes: guestAddress.notes,
-          doorName: guestAddress.addressType === "house" ? guestAddress.doorName : undefined,
-          buildingName: guestAddress.addressType === "office" ? guestAddress.buildingName : undefined,
-          hotelName: guestAddress.addressType === "hotel" ? guestAddress.hotelName : undefined,
-          roomNumber: guestAddress.addressType === "hotel" ? guestAddress.roomNumber : undefined,
-          otherInstructions: guestAddress.addressType === "other" ? guestAddress.instructions : undefined,
-          hasPrivateParking: guestAddress.parking || false,
+          doorName: guestAddress.doorName,
+          buildingName: guestAddress.buildingName,
+          hotelName: guestAddress.hotelName,
+          roomNumber: guestAddress.roomNumber,
+          otherInstructions: guestAddress.otherInstructions,
+          hasPrivateParking: guestAddress.hasPrivateParking || false,
         },
         priceDetails: calculatedPrice!,
         paymentDetails: {
@@ -1170,7 +1166,7 @@ export default function UniversalBookingWizard({
         },
         isBookingForSomeoneElse: Boolean(guestInfo.isBookingForSomeoneElse),
         recipientName: guestInfo.isBookingForSomeoneElse 
-          ? `${guestInfo.recipientFirstName} ${guestInfo.recipientLastName}`
+          ? guestInfo.recipientName || ""
           : `${guestInfo.firstName} ${guestInfo.lastName}`,
         recipientEmail: guestInfo.isBookingForSomeoneElse 
           ? guestInfo.recipientEmail
@@ -1188,14 +1184,14 @@ export default function UniversalBookingWizard({
         notificationMethods: guestInfo.bookerNotificationMethod === "both" ? ["email", "sms"] :
                             guestInfo.bookerNotificationMethod === "sms" ? ["sms"] : ["email"],
         recipientNotificationMethods: guestInfo.isBookingForSomeoneElse ? 
-          (guestInfo.recipientNotificationMethod === "both" ? ["email", "sms"] :
-           guestInfo.recipientNotificationMethod === "sms" ? ["sms"] : ["email"]) : undefined,
+          (guestInfo.recipientNotificationMethods === "both" ? ["email", "sms"] :
+           guestInfo.recipientNotificationMethods === "sms" ? ["sms"] : ["email"]) : undefined,
         notificationLanguage: guestInfo.bookerNotificationLanguage || "he",
         // Add required fields for schema compatibility
         consents: {
           customerAlerts: guestInfo.bookerNotificationMethod === "sms" ? "sms" : "email",
           patientAlerts: guestInfo.isBookingForSomeoneElse 
-            ? (guestInfo.recipientNotificationMethod === "sms" ? "sms" : "email")
+            ? (guestInfo.recipientNotificationMethods === "sms" ? "sms" : "email")
             : (guestInfo.bookerNotificationMethod === "sms" ? "sms" : "email"),
           marketingOptIn: true,
           termsAccepted: true

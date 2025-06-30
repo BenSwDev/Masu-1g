@@ -88,7 +88,13 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
       <ProfessionalEditPage 
         professional={{
           ...result.professional,
-          _id: String(result.professional._id)
+          _id: String(result.professional._id),
+          treatments: result.professional.treatments?.map(treatment => ({
+            treatmentId: String(treatment.treatmentId),
+            durationId: treatment.durationId ? String(treatment.durationId) : undefined,
+            professionalPrice: treatment.professionalPrice,
+            treatmentName: treatment.treatmentName
+          })) || []
         }}
       />
     )

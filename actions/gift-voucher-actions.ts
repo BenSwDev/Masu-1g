@@ -333,7 +333,7 @@ export async function redeemGiftVoucher(redemptionData: GiftVoucherRedemption): 
     voucher.usageHistory.push({
       date: new Date(),
       amountUsed: redemptionData.orderDetails.totalAmount,
-      orderId: redemptionData.orderDetails.orderId,
+      orderId: redemptionData.orderDetails.orderId ? new mongoose.Types.ObjectId(redemptionData.orderDetails.orderId) : undefined,
       description: `Redeemed for order: ${redemptionData.orderDetails.items?.map(i => i.name).join(', ') || 'Order items'}`
     })
 

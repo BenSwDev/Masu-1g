@@ -349,13 +349,13 @@ export default function AdminGiftVoucherDetailsModal({
                           <span className="font-medium">{voucher.recipientEmail}</span>
                         </div>
                       )}
-                      {voucher.giftMessage && (
+                      {voucher.greetingMessage && (
                         <div className="pt-2">
                           <span className="text-sm text-gray-600 dark:text-gray-400 block mb-1">
                             {t("giftVouchers.fields.giftMessage")}
                           </span>
                           <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded text-sm">
-                            {voucher.giftMessage}
+                            {voucher.greetingMessage}
                           </div>
                         </div>
                       )}

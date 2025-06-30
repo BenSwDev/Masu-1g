@@ -16,12 +16,11 @@ import {
   initiateGuestPurchaseGiftVoucher,
   confirmGuestGiftVoucherPurchase,
   saveAbandonedGiftVoucherPurchase,
-  type GiftVoucherPlain,
 } from "@/actions/gift-voucher-actions"
 import { createGuestUser } from "@/actions/booking-actions"
 import type { CalculatedPriceDetails } from "@/types/booking"
 import GuestGiftVoucherConfirmation from "@/components/gift-vouchers/guest-gift-voucher-confirmation"
-import type { Treatment } from "@/types/core"
+import type { GiftVoucher } from "@/types/core"
 
 // Serialized versions for state management
 interface SerializedTreatment {
@@ -43,7 +42,7 @@ interface SerializedTreatment {
 }
 
 interface Props {
-  treatments: Treatment[]
+  treatments: ITreatment[]
 }
 
 function treatmentToSerialized(treatment: ITreatment): SerializedTreatment {
@@ -84,7 +83,7 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
   const [guestUserId, setGuestUserId] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [purchaseComplete, setPurchaseComplete] = useState<boolean>(false)
-  const [purchasedVoucher, setPurchasedVoucher] = useState<GiftVoucherPlain | null>(null)
+  const [purchasedVoucher, setPurchasedVoucher] = useState<GiftVoucher | null>(null)
 
   // Filter out undefined categories and get unique categories
   const treatmentCategories = [...new Set(treatments.map(t => t.category).filter(Boolean))]
@@ -139,7 +138,8 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
   // Save abandoned purchase
   useEffect(() => {
     if (guestUserId) {
-      saveAbandonedGiftVoucherPurchase(guestUserId, {
+      saveAbandonedGiftVoucherPurchase({
+        guestUserId,
         guestInfo,
         purchaseOptions: {
           voucherType,
@@ -475,11 +475,9 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
                   setGuestInfo(info)
                   if (!guestUserId) {
                     createGuestUser({
-                      firstName: info.firstName || "",
-                      lastName: info.lastName || "",
+                      name: (info.firstName || "") + " " + (info.lastName || ""),
                       email: info.email || "",
                       phone: info.phone || "",
-                      birthDate: info.birthDate,
                       gender: info.gender,
                     }).then((result: any) => {
                       if (result.success && result.userId) {

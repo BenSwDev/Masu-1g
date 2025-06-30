@@ -46,10 +46,14 @@ function DataFetchError({ error }: { error?: string }) {
 
 async function GiftVouchersData() {
   try {
-    // Initial load with default parameters
-    const result = await getGiftVouchersList(1, 10, "", {}) // page, limit, search, filters
+    // Initial load with default parameters - fix parameter count and property names
+    const result = await getGiftVouchersList({
+      page: 1,
+      limit: 10,
+      search: "",
+    })
 
-    if (!result.success || !result.giftVouchers || !result.pagination) {
+    if (!result.success || !result.vouchers) {
       console.error("Failed to load gift vouchers:", result.error)
       return <DataFetchError error={result.error || "Failed to load gift vouchers."} />
     }
@@ -57,8 +61,13 @@ async function GiftVouchersData() {
     return (
       <div className="p-6">
         <GiftVouchersClient
-          initialVouchers={result.giftVouchers}
-          initialPagination={result.pagination}
+          initialVouchers={result.vouchers}
+          initialPagination={{
+            total: result.total || 0,
+            page: result.page || 1,
+            limit: result.limit || 10,
+            totalPages: Math.ceil((result.total || 0) / (result.limit || 10)),
+          }}
         />
       </div>
     )

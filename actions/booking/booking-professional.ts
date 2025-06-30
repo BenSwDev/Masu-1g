@@ -2,14 +2,17 @@
 
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import dbConnect from "@/lib/db/mongoose"
-import Booking, { type IBooking } from "@/lib/db/models/booking"
+import dbConnect from "@/lib/db/mongodb"
+import Booking from "@/lib/db/models/booking"
+import Professional from "@/lib/db/models/professional"
 import User from "@/lib/db/models/user"
 import Treatment from "@/lib/db/models/treatment"
-import mongoose from "mongoose"
+import Address from "@/lib/db/models/address"
 import { logger } from "@/lib/logs/logger"
+import mongoose from "mongoose"
 import { revalidatePath } from "next/cache"
-import { unifiedNotificationService } from "@/lib/notifications/unified-professional-notifications"
+import { sendProfessionalNotification } from "@/lib/notifications/professional-notifications"
+import type { BookingStatus } from "@/types/core"
 import type {
   NotificationLanguage,
   ProfessionalBookingNotificationData,
@@ -94,7 +97,7 @@ export async function professionalAcceptBooking(
           }
 
           if (recipients.length > 0) {
-            await unifiedNotificationService.sendNotificationToMultiple(
+            await sendProfessionalNotification.sendNotificationToMultiple(
               recipients,
               notificationData
             )
@@ -349,7 +352,7 @@ export async function assignProfessionalToBooking(
           }
 
           if (clientRecipients.length > 0) {
-            await unifiedNotificationService.sendNotificationToMultiple(
+            await sendProfessionalNotification.sendNotificationToMultiple(
               clientRecipients,
               clientNotificationData
             )
@@ -389,7 +392,7 @@ export async function assignProfessionalToBooking(
           }
 
           if (professionalRecipients.length > 0) {
-            await unifiedNotificationService.sendNotificationToMultiple(
+            await sendProfessionalNotification.sendNotificationToMultiple(
               professionalRecipients,
               professionalNotificationData
             )
@@ -625,7 +628,7 @@ export async function sendNotificationToSuitableProfessionals(
         }
 
         if (recipients.length > 0) {
-          await unifiedNotificationService.sendNotificationToMultiple(recipients, notificationData)
+          await sendProfessionalNotification.sendNotificationToMultiple(recipients, notificationData)
           sentCount++
         }
       } catch (error) {

@@ -2,14 +2,16 @@
 
 import mongoose from "mongoose"
 import { logger } from "@/lib/logs/logger"
-import dbConnect from "@/lib/db/mongoose"
+import dbConnect from "@/lib/db/mongodb"
 import Booking, { type IBooking } from "@/lib/db/models/booking"
 import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
 import User, { type IUser } from "@/lib/db/models/user"
 import Address, { type IAddress, constructFullAddress } from "@/lib/db/models/address"
 import type { PopulatedBooking } from "@/types/booking"
 import type { Booking as BookingCore, BookingAddress } from "@/types/core"
-import { dbConnect as mongoDbConnect } from "@/lib/db/mongodb"
+import Counter from "@/lib/db/models/counter"
+import Professional from "@/lib/db/models/professional"
+import type { BookingStatus } from "@/types/core"
 
 // Re-export for convenience
 export { constructFullAddress }
@@ -90,7 +92,6 @@ export async function toBookingPlain(bookingDoc: any): Promise<PopulatedBooking>
 export async function generateBookingNumber(): Promise<string> {
   try {
     await dbConnect()
-    const Counter = (await import("@/lib/db/models/counter")).default
     const nextNum = await Counter.findOneAndUpdate(
       { _id: "bookingNumber" },
       { $inc: { seq: 1 } },
@@ -212,4 +213,34 @@ export function getBookingTimeStatus(dateTime: string | Date): "past" | "today" 
   if (bookingDate.toDateString() === today.toDateString()) return "today"
   if (bookingDate < today) return "past"
   return "future"
+}
+
+// Add missing exports that are expected by index.ts
+export function formatTimeSlot(date: Date, duration: number): string {
+  const startTime = date.toLocaleTimeString("he-IL", { 
+    hour: "2-digit", 
+    minute: "2-digit" 
+  })
+  const endTime = new Date(date.getTime() + duration * 60000).toLocaleTimeString("he-IL", { 
+    hour: "2-digit", 
+    minute: "2-digit" 
+  })
+  return `${startTime} - ${endTime}`
+}
+
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes} דקות`
+  }
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (remainingMinutes === 0) {
+    return `${hours} שעות`
+  }
+  return `${hours} שעות ו-${remainingMinutes} דקות`
+}
+
+export function isBookingEditable(booking: any): boolean {
+  const editableStatuses: BookingStatus[] = ["pending_payment", "in_process", "confirmed"]
+  return editableStatuses.includes(booking.status)
 }

@@ -39,11 +39,9 @@ export {
 export {
   getBookingInitialData,
   updateBookingStatusAfterPayment,
-  professionalAcceptBooking,
   findSuitableProfessionals,
   getSuitableProfessionalsForBooking,
   sendNotificationToSuitableProfessionals,
-  getAvailableProfessionals,
 } from "./booking-special"
 
 // Price calculation operations
@@ -53,13 +51,13 @@ export {
   recalculateBookingPrice,
 } from "./booking-pricing"
 
-// Professional operations
+// Booking Professional Management
 export {
-  findAvailableProfessionals,
-  assignProfessionalToBooking,
-  unassignProfessionalFromBooking,
-  getProfessionalBookings,
-  updateProfessionalStatus,
+  getAvailableProfessionals,
+  professionalAcceptBooking,
+  professionalMarkEnRoute,
+  professionalMarkCompleted,
+  getBookingByIdForProfessional,
 } from "./booking-professional"
 
 // Time and availability operations
@@ -71,10 +69,10 @@ export {
   filterAvailableSlots,
 } from "./booking-availability"
 
-// Utility functions
+// Booking Utilities
 export {
-  constructFullAddressHelper,
-  getNextSequenceValue,
+  generateBookingNumber,
+  validateBookingData,
   formatTimeSlot,
   formatDuration,
   isBookingEditable,

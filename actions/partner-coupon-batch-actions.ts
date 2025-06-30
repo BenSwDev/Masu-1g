@@ -15,6 +15,7 @@ import {
   type UpdatePartnerCouponBatchPayload,
   type UpdateCouponsInBatchPayload,
 } from "@/lib/validation/partner-coupon-batch-schemas"
+import mongoose from "mongoose"
 
 // Helper functions to check roles
 const isAdminUser = (user: { roles?: string[] } | null | undefined): boolean =>
@@ -120,9 +121,12 @@ export async function createPartnerCouponBatch(payload: CreatePartnerCouponBatch
       batch: JSON.parse(JSON.stringify(newBatch)),
       couponsCreated: savedCoupons.length,
     }
-  } catch (_error: any) {
-    console.error("Error creating partner coupon batch:", error)
-    return { success: false, error: error.message || "Failed to create partner coupon batch" }
+  } catch (_error) {
+    console.error("Error creating partner coupon batch:", { 
+      message: _error instanceof Error ? _error.message : String(_error), 
+      partnerId: payload.assignedPartnerId 
+    })
+    return { success: false, error: _error instanceof Error ? _error.message : String(_error) }
   }
 }
 

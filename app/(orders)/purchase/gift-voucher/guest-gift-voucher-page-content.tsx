@@ -4,11 +4,11 @@ import { GuestLayout } from "@/components/layout/guest-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import GuestGiftVoucherWizard from "@/components/gift-vouchers/guest-gift-voucher-wizard"
 import { useTranslation } from "@/lib/translations/i18n"
-import type { Treatment } from "@/types/core"
+import type { ITreatment } from "@/lib/db/models/treatment"
 
 interface GuestGiftVoucherPageContentProps {
   success: boolean
-  treatments: Treatment[]
+  treatments: ITreatment[]
 }
 
 export default function GuestGiftVoucherPageContent({
@@ -34,7 +34,10 @@ export default function GuestGiftVoucherPageContent({
 
   return (
     <GuestLayout>
-      <GuestGiftVoucherWizard treatments={treatments} />
+      <GuestGiftVoucherWizard 
+        treatments={treatments} 
+        currentUser={null} 
+      />
     </GuestLayout>
   )
 }

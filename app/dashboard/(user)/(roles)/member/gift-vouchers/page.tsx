@@ -3,6 +3,7 @@ import { getMemberOwnedVouchers, getMemberPurchasedVouchers } from "@/actions/gi
 import MemberGiftVouchersClient from "@/components/dashboard/member/gift-vouchers/member-gift-vouchers-client"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
+import { requireUserSession } from "@/lib/auth"
 
 export const dynamic = "force-dynamic"
 
@@ -45,25 +46,29 @@ function MemberGiftVouchersLoading() {
 }
 
 async function MemberGiftVouchersData() {
-  const [ownedResult, purchasedResult] = await Promise.all([
-    getMemberOwnedVouchers(),
-    getMemberPurchasedVouchers(),
-  ])
+  try {
+    const session = await requireUserSession()
+    if (!session.user.id) {
+      throw new Error("User not found")
+    }
 
-  if (!ownedResult.success && !purchasedResult.success) {
+    // Load initial data
+    const [ownedResult, purchasedResult] = await Promise.all([
+      getMemberOwnedVouchers(session.user.id),
+      getMemberPurchasedVouchers(session.user.id),
+    ])
+
     return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-md">
-        Error: {ownedResult.error || purchasedResult.error || "Unknown error"}
-      </div>
+      <MemberGiftVouchersClient
+        initialOwnedVouchers={ownedResult.success ? ownedResult.vouchers || [] : []}
+        initialPurchasedVouchers={purchasedResult.success ? purchasedResult.vouchers || [] : []}
+        userId={session.user.id}
+      />
     )
+  } catch (error) {
+    console.error("Error loading member gift vouchers:", error)
+    return <DataFetchError />
   }
-
-  return (
-    <MemberGiftVouchersClient
-      initialOwnedVouchers={ownedResult.success ? ownedResult.vouchers || [] : []}
-      initialPurchasedVouchers={purchasedResult.success ? purchasedResult.vouchers || [] : []}
-    />
-  )
 }
 
 export default function MemberGiftVouchersPage() {

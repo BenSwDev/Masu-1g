@@ -1,17 +1,17 @@
 "use server"
 
-import dbConnect from "@/lib/db/mongoose"
-import Treatment, { type ITreatment } from "@/lib/db/models/treatment"
-import UserSubscription, { type IUserSubscription } from "@/lib/db/models/user-subscription"
-import GiftVoucher, { type IGiftVoucher } from "@/lib/db/models/gift-voucher"
-import Coupon, { type ICoupon } from "@/lib/db/models/coupon"
-import {
-  WorkingHoursSettings,
-  type IWorkingHoursSettings,
-  type IProfessionalShare,
-} from "@/lib/db/models/working-hours"
+import dbConnect from "@/lib/db/mongodb"
+import Booking from "@/lib/db/models/booking"
+import Treatment from "@/lib/db/models/treatment"
+import Coupon from "@/lib/db/models/coupon"
+import GiftVoucher from "@/lib/db/models/gift-voucher"
+import Subscription from "@/lib/db/models/subscription"
+import User from "@/lib/db/models/user"
+import Professional from "@/lib/db/models/professional"
+import WorkingHours from "@/lib/db/models/working-hours"
 import { logger } from "@/lib/logs/logger"
-import type { CalculatedPriceDetails as ClientCalculatedPriceDetails } from "@/types/booking"
+import type { CalculatedPriceDetails } from "@/types/booking"
+import mongoose from "mongoose"
 import { format } from "date-fns"
 import { CalculatePricePayloadSchema } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
@@ -22,7 +22,7 @@ import { getDayWorkingHours } from "./booking-availability"
  */
 export async function calculateBookingPrice(payload: unknown): Promise<{
   success: boolean
-  priceDetails?: ClientCalculatedPriceDetails
+  priceDetails?: CalculatedPriceDetails
   error?: string
   issues?: z.ZodIssue[]
 }> {
@@ -61,7 +61,7 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
 
     const treatment = (await Treatment.findById(treatmentId)
       .populate("durations")
-      .lean()) as ITreatment | null
+      .lean()) as any | null
     if (!treatment || !treatment.isActive) {
       return { success: false, error: "bookings.errors.treatmentNotFound" }
     }
@@ -78,7 +78,7 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
       basePrice = duration.price
     }
 
-    const priceDetails: ClientCalculatedPriceDetails = {
+    const priceDetails: CalculatedPriceDetails = {
       basePrice,
       surcharges: [],
       totalSurchargesAmount: 0,
@@ -97,7 +97,7 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
     }
 
     // Calculate surcharges based on working hours settings
-    const settings = (await WorkingHoursSettings.findOne().lean()) as IWorkingHoursSettings | null
+    const settings = (await WorkingHours.findOne().lean()) as any | null
     if (settings) {
       const daySettings = getDayWorkingHours(bookingDatePartUTC, settings)
       if (
@@ -144,7 +144,7 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
 
           if (surchargeAmount > 0) {
             // Calculate professional share for this surcharge
-            let professionalShare: IProfessionalShare | undefined = undefined
+            let professionalShare: any | undefined = undefined
             if (
               "professionalShare" in daySettings &&
               daySettings.professionalShare &&
@@ -172,10 +172,10 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
 
     // Apply subscription discounts
     if (userSubscriptionId) {
-      const userSub = (await UserSubscription.findById(userSubscriptionId)
+      const userSub = (await Subscription.findById(userSubscriptionId)
         .populate("subscriptionId")
         .populate({ path: "treatmentId", model: "Treatment", populate: { path: "durations" } })
-        .lean()) as (IUserSubscription & { treatmentId: ITreatment }) | null
+        .lean()) as any | null
 
       if (
         userSub &&
@@ -185,7 +185,7 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
         userId &&
         userSub.userId.toString() === userId
       ) {
-        const subTreatment = userSub.treatmentId as ITreatment
+        const subTreatment = userSub.treatmentId as any
         const isTreatmentMatch =
           subTreatment && (subTreatment._id as any).toString() === treatmentId
         let isDurationMatch = true
@@ -211,7 +211,7 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
         code: giftVoucherCode,
         status: { $in: ["active", "partially_used", "sent"] },
         validUntil: { $gte: new Date() },
-      }).lean()) as IGiftVoucher | null
+      }).lean()) as any | null
 
       if (voucher && (voucher.isActive || voucher.status === "sent")) {
         priceDetails.appliedGiftVoucherId = voucher._id.toString()
@@ -250,7 +250,7 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
     if (priceDetails.appliedGiftVoucherId && subtotalBeforeGeneralReductions > 0) {
       const voucherToApply = (await GiftVoucher.findById(
         priceDetails.appliedGiftVoucherId
-      ).lean()) as IGiftVoucher | null
+      ).lean()) as any | null
       if (
         voucherToApply &&
         voucherToApply.isActive &&
@@ -325,9 +325,9 @@ export async function calculateBookingPrice(payload: unknown): Promise<{
  * Calculate professional payment breakdown
  */
 function calculateProfessionalPayment(
-  treatment: ITreatment,
+  treatment: any,
   selectedDurationId?: string,
-  priceDetails?: ClientCalculatedPriceDetails
+  priceDetails?: CalculatedPriceDetails
 ): {
   totalProfessionalPayment: number
   totalOfficeCommission: number
@@ -386,12 +386,11 @@ export async function recalculateBookingPrice(
     treatmentId?: string
     selectedDurationId?: string
   }
-): Promise<{ success: boolean; priceDetails?: ClientCalculatedPriceDetails; error?: string }> {
+): Promise<{ success: boolean; priceDetails?: CalculatedPriceDetails; error?: string }> {
   try {
     await dbConnect()
 
-    const booking = await require("@/lib/db/models/booking")
-      .default.findById(bookingId)
+    const booking = await Booking.findById(bookingId)
       .populate("treatmentId")
       .lean()
 
@@ -425,7 +424,7 @@ export async function recalculateBookingPrice(
  */
 export async function calculateGuestBookingPrice(payload: unknown): Promise<{
   success: boolean
-  priceDetails?: ClientCalculatedPriceDetails
+  priceDetails?: CalculatedPriceDetails
   error?: string
   issues?: z.ZodIssue[]
 }> {
@@ -456,7 +455,7 @@ export async function validateCouponForBooking(
   couponCode: string,
   treatmentId: string,
   userId?: string
-): Promise<{ valid: boolean; coupon?: ICoupon; error?: string }> {
+): Promise<{ valid: boolean; coupon?: any; error?: string }> {
   try {
     await dbConnect()
 
@@ -484,8 +483,8 @@ export async function validateCouponForBooking(
     }
 
     // Check if coupon is applicable to this treatment
-    if (coupon.applicableTreatments && coupon.applicableTreatments.length > 0) {
-      const isApplicable = coupon.applicableTreatments.some(
+    if ((coupon as any).applicableTreatments && (coupon as any).applicableTreatments.length > 0) {
+      const isApplicable = (coupon as any).applicableTreatments.some(
         (id: any) => id.toString() === treatmentId
       )
       if (!isApplicable) {

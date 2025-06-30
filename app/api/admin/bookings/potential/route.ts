@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
           : booking.treatmentId.toString()
 
       const canHandleTreatment = professionalProfile.treatments.some(
-        treatment => treatment.treatmentId.toString() === treatmentId
+        treatment => treatment.treatmentId?.toString() === treatmentId
       )
 
       if (!canHandleTreatment) {

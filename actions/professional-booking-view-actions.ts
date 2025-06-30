@@ -149,7 +149,7 @@ export async function getBookingByIdForProfessional(bookingId: string): Promise<
       }
     }
 
-    return { success: true, booking: JSON.parse(JSON.stringify(bookingForPro)) } // Ensure plain object for client component
+    return { success: true, booking: bookingForPro as BookingDetailsForProfessional }
   } catch (error) {
     logger.error("Error fetching booking for professional view:", { bookingId, error })
     return { success: false, error: "bookings.errors.fetchBookingForProFailed" }

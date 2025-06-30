@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
       ])
       .toArray()
 
-    const _data = results.map(r => ({ professionalId: r._id, count: r.count }))
+    const data = results.map(r => ({ professionalId: r._id, count: r.count }))
 
     return NextResponse.json({ success: true, data })
   } catch (error) {

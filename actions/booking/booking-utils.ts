@@ -9,6 +9,7 @@ import User, { type IUser } from "@/lib/db/models/user"
 import Address, { type IAddress, constructFullAddress } from "@/lib/db/models/address"
 import type { PopulatedBooking } from "@/types/booking"
 import type { Booking as BookingCore, BookingAddress } from "@/types/core"
+import { dbConnect as mongoDbConnect } from "@/lib/db/mongodb"
 
 // Re-export for convenience
 export { constructFullAddress }

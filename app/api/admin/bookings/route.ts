@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAllBookings } from "@/app/dashboard/(user)/(roles)/admin/bookings/actions"
+import { getAllBookings } from "@/actions/booking/booking-crud"
 
 export async function GET(request: NextRequest) {
   try {

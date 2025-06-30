@@ -35,13 +35,6 @@ export type {
   // Utility Types
   GiftVoucherSummary,
   GiftVoucherDetails,
-  GiftVoucherCreateRequest,
-  GiftVoucherCreateResponse,
-  GiftVoucherPurchaseRequest,
-  GiftVoucherPurchaseResponse,
-  GiftVoucherRedemptionRequest,
-  GiftVoucherRedemptionResponse,
-  GiftVoucherUsageHistoryEntry,
 } from "./gift-voucher"
 
 export {

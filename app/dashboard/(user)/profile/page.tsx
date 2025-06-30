@@ -1,5 +1,5 @@
 import { ProfileForm } from "@/components/dashboard/profile/profile-form"
-import { getUserProfile } from "@/actions/profile-actions"
+import { getUserProfile } from "@/actions/account-actions"
 import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"

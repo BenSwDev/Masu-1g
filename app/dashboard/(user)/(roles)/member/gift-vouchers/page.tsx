@@ -60,8 +60,8 @@ async function MemberGiftVouchersData() {
 
   return (
     <MemberGiftVouchersClient
-      initialOwnedVouchers={ownedResult.success ? ownedResult.giftVouchers : []}
-      initialPurchasedVouchers={purchasedResult.success ? purchasedResult.giftVouchers : []}
+      initialOwnedVouchers={ownedResult.success ? ownedResult.vouchers || [] : []}
+      initialPurchasedVouchers={purchasedResult.success ? purchasedResult.vouchers || [] : []}
     />
   )
 }

@@ -49,7 +49,7 @@ async function SubscriptionsData() {
 
   return (
     <UserSubscriptionsClient
-      userSubscriptions={result.userSubscriptions}
+      userSubscriptions={result.subscriptions || []}
       pagination={result.pagination}
     />
   )

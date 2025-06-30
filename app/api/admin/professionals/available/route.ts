@@ -43,24 +43,24 @@ export async function GET(request: NextRequest) {
     // Create a map of profiles by userId
     const profileMap = new Map()
     profiles.forEach(profile => {
-      profileMap.set(profile.userId.toString(), profile)
+      profileMap.set(profile.userId?.toString() || '', profile)
     })
 
     // Combine user data with profile data
     const result = professionals
       .filter(prof => {
-        const profile = profileMap.get(prof._id.toString())
+        const profile = profileMap.get(prof._id?.toString() || '')
         return profile && profile.isActive
       })
       .map(prof => {
-        const profile = profileMap.get(prof._id.toString())
+        const profile = profileMap.get(prof._id?.toString() || '')
         return {
-          _id: prof._id,
+          _id: prof._id?.toString() || '',
           name: prof.name,
           email: prof.email,
           phone: prof.phone,
           gender: prof.gender,
-          profileId: profile._id,
+          profileId: profile._id?.toString() || '',
           workAreas: profile.workAreas || [],
           treatments: profile.treatments || [],
           preferredLanguage: prof.preferredLanguage,

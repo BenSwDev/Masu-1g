@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth/auth"
-import { getBookingInitialData } from "@/actions/booking-actions"
+import { getBookingInitialData } from "@/actions/booking/booking-special"
 import UniversalBookingWizard from "@/components/booking/guest-booking-wizard"
 
 // Force dynamic rendering to prevent build-time database connections

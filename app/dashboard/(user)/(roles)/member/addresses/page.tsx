@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { AddressCard } from "@/components/dashboard/member/addresses/address-card"
 import { AddressForm } from "@/components/dashboard/member/addresses/address-form"
 import { getUserAddresses } from "@/actions/address-actions"
-import type { IAddress } from "@/lib/db/models/address"
+import type { Address } from "@/types/core"
 import { useTranslation } from "@/lib/translations/i18n"
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
@@ -15,7 +15,7 @@ import { PlusCircle } from "lucide-react"
 export default function AddressesPage() {
   const { t } = useTranslation()
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
-  const [editingAddress, setEditingAddress] = useState<IAddress | undefined>()
+  const [editingAddress, setEditingAddress] = useState<Address | undefined>()
 
   const {
     data: addresses,
@@ -32,7 +32,7 @@ export default function AddressesPage() {
     },
   })
 
-  const handleEdit = (address: IAddress) => {
+  const handleEdit = (address: Address) => {
     setEditingAddress(address)
     setIsAddressModalOpen(true)
   }
@@ -105,7 +105,7 @@ export default function AddressesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {addresses?.map(address => (
-            <AddressCard key={address._id.toString()} address={address} onEdit={handleEdit} />
+            <AddressCard key={address._id} address={address} onEdit={handleEdit} />
           ))}
         </div>
       )}

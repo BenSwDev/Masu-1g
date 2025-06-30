@@ -5,7 +5,7 @@ import { requireUserSession } from "@/lib/auth/require-session"
 import { ProfessionalManagement } from "@/components/dashboard/admin/professional-management/professional-management"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getProfessionals } from "./actions"
+import { getProfessionals } from "@/actions/professional-actions"
 
 // Force dynamic rendering to prevent build-time database connections
 export const dynamic = "force-dynamic"

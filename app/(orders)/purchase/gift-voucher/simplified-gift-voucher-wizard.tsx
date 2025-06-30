@@ -21,6 +21,7 @@ import {
 import { createGuestUser } from "@/actions/booking-actions"
 import type { CalculatedPriceDetails } from "@/types/booking"
 import GuestGiftVoucherConfirmation from "@/components/gift-vouchers/guest-gift-voucher-confirmation"
+import type { Treatment } from "@/types/core"
 
 // Serialized versions for state management
 interface SerializedTreatment {
@@ -42,7 +43,7 @@ interface SerializedTreatment {
 }
 
 interface Props {
-  treatments: ITreatment[]
+  treatments: Treatment[]
 }
 
 function treatmentToSerialized(treatment: ITreatment): SerializedTreatment {
@@ -210,7 +211,7 @@ export default function SimplifiedGiftVoucherWizard({ treatments: propTreatments
         // ✅ תיקון: מזהה תשלום אמיתי עם בדיקת סביבה
         paymentId:
           process.env.NODE_ENV === "production"
-            ? `LIVE-PAY-${Date.now()}-${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`
+            ? `LIVE-PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
             : `DEV-PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         amount: price,
         success: true,

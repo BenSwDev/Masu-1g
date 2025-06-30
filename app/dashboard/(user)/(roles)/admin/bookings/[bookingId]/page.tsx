@@ -5,7 +5,7 @@ import { requireUserSession } from "@/lib/auth/require-session"
 import { BookingEditPage } from "@/components/dashboard/admin/bookings/booking-edit-page"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getBookingById } from "../actions"
+import { getBookingById } from "@/actions/booking/booking-crud"
 
 // Force dynamic rendering to prevent build-time database connections
 export const dynamic = "force-dynamic"

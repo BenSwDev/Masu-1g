@@ -192,7 +192,7 @@ export default function ProfessionalBookingManagementPage() {
     )
   }
 
-  const isAssignedToCurrentPro = booking.professionalId?._id.toString() === currentProfessionalId
+  const isAssignedToCurrentPro = booking.professionalId?._id?.toString() === currentProfessionalId
   const clientName =
     booking.userId?.name || t("professionalBookingManagement.details.anonymousClient")
   const clientPhone = booking.userId?.phone || t("common.notAvailable")
@@ -245,7 +245,7 @@ export default function ProfessionalBookingManagementPage() {
             {booking.treatmentId?.name || t("common.unknownTreatment")}
           </CardTitle>
           <CardDescription>
-            {t("professionalBookingManagement.bookingId")}: {booking._id.toString()}
+            {t("professionalBookingManagement.bookingId")}: {booking._id?.toString() || ''}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

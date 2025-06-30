@@ -37,7 +37,7 @@ function isSameDay(dateLeft: Date, dateRight: Date): boolean {
 /**
  * Get working hours for a specific date
  */
-function getDayWorkingHours(
+export function getDayWorkingHours(
   date: Date,
   settings: IWorkingHoursSettings
 ): IFixedHours | ISpecialDate | ISpecialDateEvent | null {
@@ -418,3 +418,6 @@ export async function getWorkingHoursForDate(dateString: string): Promise<{
     return { success: false, error: "System error" }
   }
 }
+
+// Export the function for use in other modules
+export { getDayWorkingHours }

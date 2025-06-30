@@ -1,4 +1,4 @@
-import { getTreatmentsForSelection } from "@/actions/gift-voucher-actions"
+import { getTreatmentsForSelection } from "@/app/(orders)/purchase/gift-voucher/actions"
 import GuestGiftVoucherWizard from "@/components/gift-vouchers/guest-gift-voucher-wizard"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Heading } from "@/components/ui/heading"

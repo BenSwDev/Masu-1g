@@ -209,7 +209,7 @@ export async function removePartner(id: string) {
     if (!existing) return { success: false, error: "Partner not found" }
 
     await PartnerProfile.findByIdAndDelete(id)
-    await deleteUser(String(existing.userId))
+    await deleteUser(existing.userId?.toString() || '')
 
     revalidatePath("/dashboard/admin/partners")
     return { success: true }

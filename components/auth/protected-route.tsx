@@ -13,7 +13,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, redirectTo = "/auth/login" }: ProtectedRouteProps) {
-  const { _data: session, status } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useTranslation()
 

@@ -1,4 +1,5 @@
-import { getGiftVouchers, type GiftVoucherPlain } from "./actions"
+import { getGiftVouchers } from "@/actions/gift-voucher-actions"
+import type { GiftVoucher } from "@/types/core"
 import { GiftVouchersClient } from "@/components/dashboard/admin/gift-vouchers/gift-vouchers-client"
 import { Suspense } from "react"
 import { redirect } from "next/navigation"

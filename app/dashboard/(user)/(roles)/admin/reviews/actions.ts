@@ -162,21 +162,21 @@ export async function getAllReviews(
     ])
 
     const reviewsData: ReviewData[] = reviews.map((review: any) => ({
-      _id: review._id.toString(),
-      bookingId: review.bookingId._id.toString(),
+      _id: review._id?.toString() || '',
+      bookingId: review.bookingId?._id?.toString() || '',
       bookingNumber: review.bookingId?.bookingNumber,
-      userId: review.userId._id.toString(),
+      userId: review.userId?._id?.toString() || '',
       userName: review.userId?.name || "Unknown",
       userEmail: review.userId?.email || "",
-      professionalId: review.professionalId._id.toString(),
+      professionalId: review.professionalId?._id?.toString() || '',
       professionalName: review.professionalId?.name || "Unknown",
-      treatmentId: review.treatmentId._id.toString(),
+      treatmentId: review.treatmentId?._id?.toString() || '',
       treatmentName: review.treatmentId?.name || "Unknown",
       rating: review.rating,
       comment: review.comment,
       professionalResponse: review.professionalResponse,
-      createdAt: review.createdAt.toISOString(),
-      updatedAt: review.updatedAt.toISOString(),
+      createdAt: review.createdAt?.toISOString?.() || new Date().toISOString(),
+      updatedAt: review.updatedAt?.toISOString?.() || new Date().toISOString(),
     }))
 
     return {

@@ -52,7 +52,7 @@ export async function getTreatmentsForSelection(): Promise<GetTreatmentsResult> 
         pricingType: treatment.pricingType,
         fixedPrice: treatment.fixedPrice,
         durations: treatment.durations?.map(d => ({
-          _id: d._id.toString(),
+          _id: d._id?.toString() || '',
           minutes: d.minutes,
           price: d.price,
           professionalPrice: d.professionalPrice,

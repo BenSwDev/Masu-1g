@@ -9,6 +9,7 @@
 export type {
   // Core Interface
   GiftVoucher,
+  GiftVoucher as GiftVoucherPlain,
   GiftVoucherGuestInfo,
   GiftVoucherStatus,
   GiftVoucherUsage,
@@ -34,6 +35,13 @@ export type {
   // Utility Types
   GiftVoucherSummary,
   GiftVoucherDetails,
+  GiftVoucherCreateRequest,
+  GiftVoucherCreateResponse,
+  GiftVoucherPurchaseRequest,
+  GiftVoucherPurchaseResponse,
+  GiftVoucherRedemptionRequest,
+  GiftVoucherRedemptionResponse,
+  GiftVoucherUsageHistoryEntry
 } from './gift-voucher'
 
 export {
@@ -280,26 +288,4 @@ export type {
   CreateGuestUserResult,
   GuestBookingData,
   AbandonedBookingResult
-} from "./guest"
-
-// ============================================================================
-// SUBSCRIPTION TYPES
-// ============================================================================
-export type {
-  Subscription,
-  UserSubscription,
-  PopulatedUserSubscription,
-  IUserSubscriptionDocument,
-  UserSubscriptionStatus,
-  SubscriptionPurchaseData,
-  SubscriptionResponse,
-  UserSubscriptionResponse,
-  UserSubscriptionListResponse,
-  SubscriptionFilters
-} from "./subscription"
-
-export {
-  isSubscriptionActive,
-  canUseSubscription,
-  getSubscriptionDisplayStatus
-} from "./subscription" 
+} from "./guest" 

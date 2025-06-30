@@ -15,17 +15,17 @@ import { logger } from "@/lib/logs/logger"
 import { revalidatePath } from "next/cache"
 import { 
   CreateBookingPayloadSchema, 
-  type CreateBookingPayloadSchemaType 
+  type CreateBookingPayloadType 
 } from "@/lib/validation/booking-schemas"
 import type { z } from "zod"
 import type { 
   PopulatedBooking, 
-  BookingStatus,
-  IBookingAddressSnapshot,
-  IPriceDetails,
   CalculatedPriceDetails as ClientCalculatedPriceDetails
 } from "@/types/booking"
-import { constructFullAddressHelper, getNextSequenceValue } from "./booking-utils"
+import type { BookingStatus } from "@/types/core"
+import type { IBookingAddressSnapshot, IPriceDetails } from "@/lib/db/models/booking"
+import { constructFullAddressHelper } from "./booking-utils"
+import { getNextSequenceValue } from "@/lib/db/models/counter"
 import { sendGuestNotification } from "@/actions/notification-service"
 import bcrypt from "bcryptjs"
 
@@ -40,7 +40,7 @@ export async function createGuestBooking(
     logger.warn("Invalid payload for createGuestBooking:", { issues: validationResult.error.issues })
     return { success: false, error: "common.invalidInput", issues: validationResult.error.issues }
   }
-  const validatedPayload = validationResult.data as CreateBookingPayloadSchemaType & {
+  const validatedPayload = validationResult.data as CreateBookingPayloadType & {
     priceDetails: ClientCalculatedPriceDetails
     guestInfo: {
       name: string

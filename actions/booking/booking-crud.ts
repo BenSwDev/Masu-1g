@@ -24,7 +24,7 @@ import type {
   CalculatedPriceDetails as ClientCalculatedPriceDetails
 } from "@/types/booking"
 import type { BookingStatus } from "@/types/core"
-import { sendBookingConfirmationToUser, sendGuestNotification } from "@/lib/notifications/notification-manager"
+import { sendBookingConfirmationToUser, sendGuestNotification } from "@/actions/notification-service"
 
 /**
  * Create a new booking for authenticated user
@@ -698,7 +698,7 @@ export async function cancelBooking(
 export async function updateBookingByAdmin(
   bookingId: string,
   updates: {
-    status?: BookingStatus
+    status?: import("@/lib/db/models/booking").BookingStatus
     bookingDateTime?: Date
     recipientName?: string
     recipientPhone?: string

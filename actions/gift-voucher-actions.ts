@@ -4,7 +4,7 @@ import User from "@/lib/db/models/user"
 import Treatment from "@/lib/db/models/treatment"
 import { logger } from "@/lib/logs/logger"
 import mongoose from "mongoose"
-import type { 
+import type {
   GiftVoucher as GiftVoucherPlain,
   IGiftVoucherDocument,
   GiftVoucherCreateForm,
@@ -195,7 +195,7 @@ async function toGiftVoucherPlain(voucherDocOrPlain: any): Promise<GiftVoucherPl
 export async function createGiftVoucher(formData: GiftVoucherCreateForm): Promise<GiftVoucherResponse> {
   try {
     await dbConnect()
-    
+
     const code = await generateUniqueVoucherCode()
     
     const voucherData = {
@@ -267,16 +267,16 @@ export async function getGiftVoucherById(id: string): Promise<GiftVoucherRespons
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return { success: false, error: "Invalid voucher ID format" }
     }
-    
+
     await dbConnect()
     const voucherDoc = await GiftVoucher.findById(id).lean()
-    
+
     if (!voucherDoc) {
       return { success: false, error: "Voucher not found" }
     }
-    
+
     const voucher = await toGiftVoucherPlain(voucherDoc)
-    
+
     return { success: true, voucher }
   } catch (error) {
     logger.error("Error fetching gift voucher by ID:", { id, error })
@@ -319,8 +319,8 @@ export async function redeemGiftVoucher(redemptionData: GiftVoucherRedemption): 
     
     // Use the voucher
     if (voucher.voucherType === "treatment") {
-      voucher.status = "fully_used"
-      voucher.remainingAmount = 0
+        voucher.status = "fully_used"
+        voucher.remainingAmount = 0
       voucher.isActive = false
     } else if (voucher.voucherType === "monetary") {
       const amountToUse = Math.min(redemptionData.orderDetails.totalAmount, voucher.remainingAmount || voucher.amount)
@@ -336,9 +336,9 @@ export async function redeemGiftVoucher(redemptionData: GiftVoucherRedemption): 
       orderId: redemptionData.orderDetails.orderId,
       description: `Redeemed for order: ${redemptionData.orderDetails.items?.map(i => i.name).join(', ') || 'Order items'}`
     })
-    
+
     await voucher.save()
-    
+
     const plainVoucher = await toGiftVoucherPlain(voucher)
     
     return { success: true, voucher: plainVoucher }
@@ -397,7 +397,7 @@ export async function getGiftVouchersList(options: {
     const vouchers = await Promise.all(
       voucherDocs.map(doc => toGiftVoucherPlain(doc))
     )
-    
+
     return {
       success: true,
       vouchers,

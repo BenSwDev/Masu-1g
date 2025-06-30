@@ -86,7 +86,10 @@ async function ProfessionalEditPageContent({ id }: { id: string }) {
 
     return (
       <ProfessionalEditPage 
-        professional={result.professional}
+        professional={{
+          ...result.professional,
+          _id: String(result.professional._id)
+        }}
       />
     )
   } catch (error) {

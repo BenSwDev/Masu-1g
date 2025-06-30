@@ -34,7 +34,8 @@ import type { IBookingAddressSnapshot } from "@/lib/db/models/booking"
 import type { ITreatment } from "@/lib/db/models/treatment"
 import type { IGiftVoucher } from "@/lib/db/models/gift-voucher"
 import type { IUser } from "@/lib/db/models/user"
-import { cn, formatCurrency, formatDateTimeIsraeli, formatPhoneForDisplay } from "@/lib/utils"
+import { cn, formatCurrency, formatDateTimeIsraeli } from "@/lib/utils"
+import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"
 import type { IAddress } from "@/types/address"
 
 interface BookingDetailsViewProps {

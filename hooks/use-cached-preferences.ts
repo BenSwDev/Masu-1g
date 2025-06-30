@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getCacheItem, setCacheItem, CACHE_KEYS, CACHE_EXPIRY } from "@/lib/cache/client-cache"
+import { getCacheItem, setCacheItem, CACHE_KEYS, CACHE_EXPIRY } from "../lib/cache/client-cache"
 
 export interface UserPreferences {
   theme: "light" | "dark" | "system"

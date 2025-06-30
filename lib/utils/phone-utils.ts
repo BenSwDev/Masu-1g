@@ -1,6 +1,6 @@
 /**
  * UNIFIED PHONE UTILITIES - SINGLE SOURCE OF TRUTH
- * Following ROLE OF ONE principle - one function per phone operation
+ * Following ROLE OF ONE principle - one file for all phone-related utilities
  */
 
 /**
@@ -9,22 +9,45 @@
 export function normalizePhoneNumber(phone: string): string {
   if (!phone) return ""
   
-  // Remove all non-digit characters
-  let cleaned = phone.replace(/\D/g, "")
+  // Remove any non-digit characters except +
+  const cleaned = phone.replace(/[^\d+]/g, "")
   
-  // Handle Israeli phone numbers
-  if (cleaned.startsWith("972")) {
-    // +972 format
-    cleaned = "0" + cleaned.substring(3)
-  } else if (cleaned.startsWith("0")) {
-    // Already in 0XX format
-    // Keep as is
-  } else if (cleaned.length === 9) {
-    // Missing leading 0
-    cleaned = "0" + cleaned
+  // If already in international format, return as-is
+  if (cleaned.startsWith("+")) {
+    return cleaned
   }
   
-  return cleaned
+  // If starts with 972, add +
+  if (cleaned.startsWith("972")) {
+    return `+${cleaned}`
+  }
+  
+  // If starts with 0 (Israeli local format), convert to international
+  if (cleaned.startsWith("0") && cleaned.length === 10) {
+    return `+972${cleaned.substring(1)}`
+  }
+  
+  // If 9 digits without leading 0, assume Israeli
+  if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+    return `+972${cleaned}`
+  }
+  
+  // For local formatting, handle Israeli numbers
+  let localCleaned = phone.replace(/\D/g, "")
+  
+  // Handle Israeli phone numbers for local display
+  if (localCleaned.startsWith("972")) {
+    // +972 format
+    localCleaned = "0" + localCleaned.substring(3)
+  } else if (localCleaned.startsWith("0")) {
+    // Already in 0XX format
+    // Keep as is
+  } else if (localCleaned.length === 9) {
+    // Missing leading 0
+    localCleaned = "0" + localCleaned
+  }
+  
+  return localCleaned
 }
 
 /**
@@ -33,23 +56,37 @@ export function normalizePhoneNumber(phone: string): string {
 export function formatPhoneForDisplay(phone: string): string {
   if (!phone) return ""
   
-  const normalized = normalizePhoneNumber(phone)
+  // Remove any non-digit characters except +
+  const cleaned = phone.replace(/[^\d+]/g, "")
   
-  // Format Israeli mobile numbers: 0XX-XXX-XXXX
-  if (normalized.length === 10 && normalized.startsWith("05")) {
-    return `${normalized.substring(0, 3)}-${normalized.substring(3, 6)}-${normalized.substring(6)}`
-  }
-  
-  // Format Israeli landline numbers: 0X-XXX-XXXX
-  if (normalized.length === 9 || normalized.length === 10) {
-    if (normalized.startsWith("02") || normalized.startsWith("03") || normalized.startsWith("04") || 
-        normalized.startsWith("08") || normalized.startsWith("09")) {
-      return `${normalized.substring(0, 2)}-${normalized.substring(2, 5)}-${normalized.substring(5)}`
+  // If it starts with +972, format as Israeli number
+  if (cleaned.startsWith("+972")) {
+    const number = cleaned.substring(4)
+    if (number.length === 9) {
+      return `${number.substring(0, 3)}-${number.substring(3, 6)}-${number.substring(6)}`
     }
   }
   
-  // Fallback: return as is
-  return normalized
+  // If it starts with 972, format as Israeli number
+  if (cleaned.startsWith("972")) {
+    const number = cleaned.substring(3)
+    if (number.length === 9) {
+      return `${number.substring(0, 3)}-${number.substring(3, 6)}-${number.substring(6)}`
+    }
+  }
+  
+  // If it's a 10-digit Israeli number starting with 0
+  if (cleaned.startsWith("0") && cleaned.length === 10) {
+    return `${cleaned.substring(0, 3)}-${cleaned.substring(3, 6)}-${cleaned.substring(6)}`
+  }
+  
+  // If it's a 9-digit Israeli number without leading 0
+  if (cleaned.length === 9 && !cleaned.startsWith("0")) {
+    return `${cleaned.substring(0, 3)}-${cleaned.substring(3, 6)}-${cleaned.substring(6)}`
+  }
+  
+  // Return as-is if doesn't match Israeli format
+  return phone
 }
 
 /**
@@ -60,17 +97,9 @@ export function validateIsraeliPhone(phone: string): boolean {
   
   const normalized = normalizePhoneNumber(phone)
   
-  // Israeli mobile: 05X-XXXXXXX (10 digits total)
-  if (/^05[0-9]\d{7}$/.test(normalized)) {
-    return true
-  }
-  
-  // Israeli landline: 0[2-4,8-9]-XXXXXXX (9-10 digits)
-  if (/^0[2-4,8-9]\d{6,7}$/.test(normalized)) {
-    return true
-  }
-  
-  return false
+  // Check if it's a valid Israeli number (+972 followed by 9 digits)
+  const israeliPattern = /^\+972[5-9]\d{8}$/
+  return israeliPattern.test(normalized)
 }
 
 /**
@@ -142,4 +171,20 @@ export function maskPhoneNumber(phone: string): string {
   }
   
   return normalized
+}
+
+/**
+ * Extract country code from phone number
+ */
+export function extractCountryCode(phone: string): string {
+  if (!phone) return ""
+  
+  const cleaned = phone.replace(/[^\d+]/g, "")
+  
+  if (cleaned.startsWith("+972")) return "+972"
+  if (cleaned.startsWith("972")) return "+972"
+  if (cleaned.startsWith("+1")) return "+1"
+  if (cleaned.startsWith("+44")) return "+44"
+  
+  return ""
 } 

@@ -39,7 +39,8 @@ import {
   Copy,
   QrCode,
 } from "lucide-react"
-import { deleteGiftVoucher, type GiftVoucherPlain } from "@/actions/gift-voucher-actions"
+import { deleteGiftVoucher } from "@/actions/gift-voucher-actions"
+import type { GiftVoucherPlain } from "@/types/core"
 import { useTranslation } from "@/lib/translations/i18n"
 import AdminGiftVoucherDetailsModal from "./admin-gift-voucher-details-modal"
 import { formatPhoneForDisplay } from "@/lib/utils/phone-utils"

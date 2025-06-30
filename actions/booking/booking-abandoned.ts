@@ -6,7 +6,6 @@ import dbConnect from "@/lib/db/mongoose"
 import mongoose from "mongoose"
 import { logger } from "@/lib/logs/logger"
 import { revalidatePath } from "next/cache"
-import type { BookingStatus } from "@/types/booking"
 
 // Define abandoned booking interface
 interface AbandonedBooking {

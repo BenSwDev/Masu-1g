@@ -86,7 +86,7 @@ export default function BookingCustomerTab({ booking, onUpdate }: BookingCustome
               ) : (
                 <div className="flex items-center gap-2">
                   <User className="w-4 h-4 text-muted-foreground" />
-                  <span>{booking.bookedByUserName || booking.userId?.name || "לא צוין"}</span>
+                  <span>{booking.bookedByUserName || (typeof booking.userId === 'object' ? booking.userId.name : undefined) || "לא צוין"}</span>
                 </div>
               )}
             </div>
